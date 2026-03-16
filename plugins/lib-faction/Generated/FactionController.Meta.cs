@@ -66,8 +66,21 @@ public partial class FactionController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Parent faction for hierarchy (null for top-level)"
+                },
+                "authorityLevel": {
+                    "$ref": "#/$defs/AuthorityLevel",
+                    "description": "Authority level for the new faction (defaults to Influence if not specified)"
                 }
             }
+        },
+        "AuthorityLevel": {
+            "type": "string",
+            "description": "Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.",
+            "enum": [
+                "Influence",
+                "Delegated",
+                "Sovereign"
+            ]
         }
     }
 }
@@ -90,6 +103,7 @@ public partial class FactionController
                 "realmId",
                 "isRealmBaseline",
                 "status",
+                "authorityLevel",
                 "isDeprecated",
                 "memberCount",
                 "createdAt",
@@ -149,6 +163,10 @@ public partial class FactionController
                     "$ref": "#/$defs/FactionStatus",
                     "description": "Current operational lifecycle status (orthogonal to deprecation)"
                 },
+                "authorityLevel": {
+                    "$ref": "#/$defs/AuthorityLevel",
+                    "description": "Authority classification for governance power. Defaults to Influence. Sovereign is set by DesignateRealmBaseline. Delegated is set via delegation endpoints."
+                },
                 "currentPhase": {
                     "type": "string",
                     "nullable": true,
@@ -194,6 +212,15 @@ public partial class FactionController
             "enum": [
                 "Active",
                 "Dissolved"
+            ]
+        },
+        "AuthorityLevel": {
+            "type": "string",
+            "description": "Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.",
+            "enum": [
+                "Influence",
+                "Delegated",
+                "Sovereign"
             ]
         }
     }
@@ -297,6 +324,7 @@ public partial class FactionController
                 "realmId",
                 "isRealmBaseline",
                 "status",
+                "authorityLevel",
                 "isDeprecated",
                 "memberCount",
                 "createdAt",
@@ -356,6 +384,10 @@ public partial class FactionController
                     "$ref": "#/$defs/FactionStatus",
                     "description": "Current operational lifecycle status (orthogonal to deprecation)"
                 },
+                "authorityLevel": {
+                    "$ref": "#/$defs/AuthorityLevel",
+                    "description": "Authority classification for governance power. Defaults to Influence. Sovereign is set by DesignateRealmBaseline. Delegated is set via delegation endpoints."
+                },
                 "currentPhase": {
                     "type": "string",
                     "nullable": true,
@@ -401,6 +433,15 @@ public partial class FactionController
             "enum": [
                 "Active",
                 "Dissolved"
+            ]
+        },
+        "AuthorityLevel": {
+            "type": "string",
+            "description": "Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.",
+            "enum": [
+                "Influence",
+                "Delegated",
+                "Sovereign"
             ]
         }
     }
@@ -511,6 +552,7 @@ public partial class FactionController
                 "realmId",
                 "isRealmBaseline",
                 "status",
+                "authorityLevel",
                 "isDeprecated",
                 "memberCount",
                 "createdAt",
@@ -570,6 +612,10 @@ public partial class FactionController
                     "$ref": "#/$defs/FactionStatus",
                     "description": "Current operational lifecycle status (orthogonal to deprecation)"
                 },
+                "authorityLevel": {
+                    "$ref": "#/$defs/AuthorityLevel",
+                    "description": "Authority classification for governance power. Defaults to Influence. Sovereign is set by DesignateRealmBaseline. Delegated is set via delegation endpoints."
+                },
                 "currentPhase": {
                     "type": "string",
                     "nullable": true,
@@ -615,6 +661,15 @@ public partial class FactionController
             "enum": [
                 "Active",
                 "Dissolved"
+            ]
+        },
+        "AuthorityLevel": {
+            "type": "string",
+            "description": "Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.",
+            "enum": [
+                "Influence",
+                "Delegated",
+                "Sovereign"
             ]
         }
     }
@@ -797,6 +852,7 @@ public partial class FactionController
                 "realmId",
                 "isRealmBaseline",
                 "status",
+                "authorityLevel",
                 "isDeprecated",
                 "memberCount",
                 "createdAt",
@@ -856,6 +912,10 @@ public partial class FactionController
                     "$ref": "#/$defs/FactionStatus",
                     "description": "Current operational lifecycle status (orthogonal to deprecation)"
                 },
+                "authorityLevel": {
+                    "$ref": "#/$defs/AuthorityLevel",
+                    "description": "Authority classification for governance power. Defaults to Influence. Sovereign is set by DesignateRealmBaseline. Delegated is set via delegation endpoints."
+                },
                 "currentPhase": {
                     "type": "string",
                     "nullable": true,
@@ -901,6 +961,15 @@ public partial class FactionController
             "enum": [
                 "Active",
                 "Dissolved"
+            ]
+        },
+        "AuthorityLevel": {
+            "type": "string",
+            "description": "Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.",
+            "enum": [
+                "Influence",
+                "Delegated",
+                "Sovereign"
             ]
         }
     }
@@ -1024,6 +1093,7 @@ public partial class FactionController
                 "realmId",
                 "isRealmBaseline",
                 "status",
+                "authorityLevel",
                 "isDeprecated",
                 "memberCount",
                 "createdAt",
@@ -1083,6 +1153,10 @@ public partial class FactionController
                     "$ref": "#/$defs/FactionStatus",
                     "description": "Current operational lifecycle status (orthogonal to deprecation)"
                 },
+                "authorityLevel": {
+                    "$ref": "#/$defs/AuthorityLevel",
+                    "description": "Authority classification for governance power. Defaults to Influence. Sovereign is set by DesignateRealmBaseline. Delegated is set via delegation endpoints."
+                },
                 "currentPhase": {
                     "type": "string",
                     "nullable": true,
@@ -1128,6 +1202,15 @@ public partial class FactionController
             "enum": [
                 "Active",
                 "Dissolved"
+            ]
+        },
+        "AuthorityLevel": {
+            "type": "string",
+            "description": "Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.",
+            "enum": [
+                "Influence",
+                "Delegated",
+                "Sovereign"
             ]
         }
     }
@@ -1238,6 +1321,7 @@ public partial class FactionController
                 "realmId",
                 "isRealmBaseline",
                 "status",
+                "authorityLevel",
                 "isDeprecated",
                 "memberCount",
                 "createdAt",
@@ -1297,6 +1381,10 @@ public partial class FactionController
                     "$ref": "#/$defs/FactionStatus",
                     "description": "Current operational lifecycle status (orthogonal to deprecation)"
                 },
+                "authorityLevel": {
+                    "$ref": "#/$defs/AuthorityLevel",
+                    "description": "Authority classification for governance power. Defaults to Influence. Sovereign is set by DesignateRealmBaseline. Delegated is set via delegation endpoints."
+                },
                 "currentPhase": {
                     "type": "string",
                     "nullable": true,
@@ -1342,6 +1430,15 @@ public partial class FactionController
             "enum": [
                 "Active",
                 "Dissolved"
+            ]
+        },
+        "AuthorityLevel": {
+            "type": "string",
+            "description": "Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.",
+            "enum": [
+                "Influence",
+                "Delegated",
+                "Sovereign"
             ]
         }
     }
@@ -1445,6 +1542,7 @@ public partial class FactionController
                 "realmId",
                 "isRealmBaseline",
                 "status",
+                "authorityLevel",
                 "isDeprecated",
                 "memberCount",
                 "createdAt",
@@ -1504,6 +1602,10 @@ public partial class FactionController
                     "$ref": "#/$defs/FactionStatus",
                     "description": "Current operational lifecycle status (orthogonal to deprecation)"
                 },
+                "authorityLevel": {
+                    "$ref": "#/$defs/AuthorityLevel",
+                    "description": "Authority classification for governance power. Defaults to Influence. Sovereign is set by DesignateRealmBaseline. Delegated is set via delegation endpoints."
+                },
                 "currentPhase": {
                     "type": "string",
                     "nullable": true,
@@ -1549,6 +1651,15 @@ public partial class FactionController
             "enum": [
                 "Active",
                 "Dissolved"
+            ]
+        },
+        "AuthorityLevel": {
+            "type": "string",
+            "description": "Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.",
+            "enum": [
+                "Influence",
+                "Delegated",
+                "Sovereign"
             ]
         }
     }
@@ -1768,8 +1879,21 @@ public partial class FactionController
                     "type": "boolean",
                     "default": false,
                     "description": "Whether to designate this as the realm baseline faction"
+                },
+                "authorityLevel": {
+                    "$ref": "#/$defs/AuthorityLevel",
+                    "description": "Authority level for the seeded faction (defaults to Influence if not specified)"
                 }
             }
+        },
+        "AuthorityLevel": {
+            "type": "string",
+            "description": "Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.",
+            "enum": [
+                "Influence",
+                "Delegated",
+                "Sovereign"
+            ]
         }
     }
 }
@@ -1916,6 +2040,7 @@ public partial class FactionController
                 "realmId",
                 "isRealmBaseline",
                 "status",
+                "authorityLevel",
                 "isDeprecated",
                 "memberCount",
                 "createdAt",
@@ -1975,6 +2100,10 @@ public partial class FactionController
                     "$ref": "#/$defs/FactionStatus",
                     "description": "Current operational lifecycle status (orthogonal to deprecation)"
                 },
+                "authorityLevel": {
+                    "$ref": "#/$defs/AuthorityLevel",
+                    "description": "Authority classification for governance power. Defaults to Influence. Sovereign is set by DesignateRealmBaseline. Delegated is set via delegation endpoints."
+                },
                 "currentPhase": {
                     "type": "string",
                     "nullable": true,
@@ -2021,6 +2150,15 @@ public partial class FactionController
                 "Active",
                 "Dissolved"
             ]
+        },
+        "AuthorityLevel": {
+            "type": "string",
+            "description": "Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.",
+            "enum": [
+                "Influence",
+                "Delegated",
+                "Sovereign"
+            ]
         }
     }
 }
@@ -2029,7 +2167,7 @@ public partial class FactionController
     private static readonly string _DesignateRealmBaseline_Info = """
 {
     "summary": "Designate a faction as realm baseline",
-    "description": "Sets a faction as the realm's baseline cultural faction. The baseline\nfaction provides realm-wide default norms (honor codes, cultural taboos,\nspecies instincts) that apply to all characters in the realm unless\noverridden by more specific faction norms.\n\nOnly one faction per realm can be the baseline. Setting a new baseline\nclears the previous one. The faction must belong to the specified realm.\n",
+    "description": "Sets a faction as the realm's baseline cultural faction. The baseline\nfaction provides realm-wide default norms (honor codes, cultural taboos,\nspecies instincts) that apply to all characters in the realm unless\noverridden by more specific faction norms.\n\nAutomatically sets the designated faction's authorityLevel to Sovereign,\nas the realm baseline is the ultimate legal authority for the realm.\n\nOnly one faction per realm can be the baseline. Setting a new baseline\nclears the previous one. The faction must belong to the specified realm.\n",
     "tags": [
         "Faction CRUD"
     ],
@@ -2123,6 +2261,7 @@ public partial class FactionController
                 "realmId",
                 "isRealmBaseline",
                 "status",
+                "authorityLevel",
                 "isDeprecated",
                 "memberCount",
                 "createdAt",
@@ -2182,6 +2321,10 @@ public partial class FactionController
                     "$ref": "#/$defs/FactionStatus",
                     "description": "Current operational lifecycle status (orthogonal to deprecation)"
                 },
+                "authorityLevel": {
+                    "$ref": "#/$defs/AuthorityLevel",
+                    "description": "Authority classification for governance power. Defaults to Influence. Sovereign is set by DesignateRealmBaseline. Delegated is set via delegation endpoints."
+                },
                 "currentPhase": {
                     "type": "string",
                     "nullable": true,
@@ -2227,6 +2370,15 @@ public partial class FactionController
             "enum": [
                 "Active",
                 "Dissolved"
+            ]
+        },
+        "AuthorityLevel": {
+            "type": "string",
+            "description": "Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.",
+            "enum": [
+                "Influence",
+                "Delegated",
+                "Sovereign"
             ]
         }
     }
@@ -3676,6 +3828,7 @@ public partial class FactionController
                 "realmId",
                 "isRealmBaseline",
                 "status",
+                "authorityLevel",
                 "isDeprecated",
                 "memberCount",
                 "createdAt",
@@ -3735,6 +3888,10 @@ public partial class FactionController
                     "$ref": "#/$defs/FactionStatus",
                     "description": "Current operational lifecycle status (orthogonal to deprecation)"
                 },
+                "authorityLevel": {
+                    "$ref": "#/$defs/AuthorityLevel",
+                    "description": "Authority classification for governance power. Defaults to Influence. Sovereign is set by DesignateRealmBaseline. Delegated is set via delegation endpoints."
+                },
                 "currentPhase": {
                     "type": "string",
                     "nullable": true,
@@ -3780,6 +3937,15 @@ public partial class FactionController
             "enum": [
                 "Active",
                 "Dissolved"
+            ]
+        },
+        "AuthorityLevel": {
+            "type": "string",
+            "description": "Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.",
+            "enum": [
+                "Influence",
+                "Delegated",
+                "Sovereign"
             ]
         }
     }
@@ -4675,7 +4841,8 @@ public partial class FactionController
                 "basePenalty",
                 "severity",
                 "scope",
-                "source"
+                "source",
+                "authorityLevel"
             ],
             "properties": {
                 "normId": {
@@ -4693,6 +4860,10 @@ public partial class FactionController
                     "minLength": 1,
                     "maxLength": 256,
                     "description": "Display name of the owning faction"
+                },
+                "authorityLevel": {
+                    "$ref": "#/$defs/AuthorityLevel",
+                    "description": "Authority level of the faction that defined this norm. Sovereign norms are laws (high enforcement weight). Delegated norms are local laws. Influence norms are social costs only."
                 },
                 "violationType": {
                     "type": "string",
@@ -4725,6 +4896,15 @@ public partial class FactionController
                     "description": "Human-readable description of the norm"
                 }
             }
+        },
+        "AuthorityLevel": {
+            "type": "string",
+            "description": "Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.",
+            "enum": [
+                "Influence",
+                "Delegated",
+                "Sovereign"
+            ]
         },
         "NormSeverity": {
             "type": "string",
@@ -4761,7 +4941,8 @@ public partial class FactionController
                 "basePenalty",
                 "source",
                 "factionId",
-                "severity"
+                "severity",
+                "authorityLevel"
             ],
             "properties": {
                 "violationType": {
@@ -4788,6 +4969,10 @@ public partial class FactionController
                 "severity": {
                     "$ref": "#/$defs/NormSeverity",
                     "description": "Severity of the winning norm"
+                },
+                "authorityLevel": {
+                    "$ref": "#/$defs/AuthorityLevel",
+                    "description": "Authority level of the faction that defined the winning norm"
                 }
             }
         }
@@ -4846,6 +5031,1046 @@ public partial class FactionController
             _QueryApplicableNorms_Info,
             _QueryApplicableNorms_RequestSchema,
             _QueryApplicableNorms_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for SetGovernanceEntry
+
+    private static readonly string _SetGovernanceEntry_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/SetGovernanceEntryRequest",
+    "$defs": {
+        "SetGovernanceEntryRequest": {
+            "type": "object",
+            "description": "Request to create or update a governance entry for a faction",
+            "additionalProperties": false,
+            "required": [
+                "factionId",
+                "domain",
+                "templateCode"
+            ],
+            "properties": {
+                "factionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Faction to set governance on (must be Sovereign or Delegated)"
+                },
+                "domain": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Case type domain prefix (e.g., \"dissolution\", \"trade_dispute\")"
+                },
+                "templateCode": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Contract template code in lib-contract for this case type"
+                },
+                "governanceParameters": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Opaque governance parameters for the contract template. Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _SetGovernanceEntry_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GovernanceEntryResponse",
+    "$defs": {
+        "GovernanceEntryResponse": {
+            "type": "object",
+            "description": "A governance data entry associating a case type domain with a contract template and governance parameters",
+            "additionalProperties": false,
+            "required": [
+                "governanceId",
+                "factionId",
+                "domain",
+                "templateCode",
+                "createdAt"
+            ],
+            "properties": {
+                "governanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for this governance entry"
+                },
+                "factionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Faction owning this governance entry"
+                },
+                "domain": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Case type domain prefix (e.g., \"dissolution\", \"trade_dispute\", \"criminal\")"
+                },
+                "templateCode": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Contract template code in lib-contract for this case type"
+                },
+                "governanceParameters": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Opaque governance parameters for the contract template. Faction stores and returns these unchanged. Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this governance entry was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this governance entry was last updated"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _SetGovernanceEntry_Info = """
+{
+    "summary": "Set a governance entry for a faction",
+    "description": "Creates or updates a governance entry associating a case type domain\nwith a contract template. Faction must have Sovereign or Delegated\nauthority level. Requires governance.arbitrate.* seed capability.\nIdempotent \u2014 overwrites if domain already exists for this faction.\n\nGovernance entries are queried by lib-arbitration to instantiate\nprocedural templates for cases filed within the faction's jurisdiction.\n",
+    "tags": [
+        "Governance"
+    ],
+    "deprecated": false,
+    "operationId": "setGovernanceEntry"
+}
+""";
+
+    /// <summary>Returns endpoint information for SetGovernanceEntry</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/set/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SetGovernanceEntry_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/set",
+            _SetGovernanceEntry_Info));
+
+    /// <summary>Returns request schema for SetGovernanceEntry</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/set/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SetGovernanceEntry_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/set",
+            "request-schema",
+            _SetGovernanceEntry_RequestSchema));
+
+    /// <summary>Returns response schema for SetGovernanceEntry</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/set/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SetGovernanceEntry_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/set",
+            "response-schema",
+            _SetGovernanceEntry_ResponseSchema));
+
+    /// <summary>Returns full schema for SetGovernanceEntry</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/set/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SetGovernanceEntry_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/set",
+            _SetGovernanceEntry_Info,
+            _SetGovernanceEntry_RequestSchema,
+            _SetGovernanceEntry_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RemoveGovernanceEntry
+
+    private static readonly string _RemoveGovernanceEntry_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RemoveGovernanceEntryRequest",
+    "$defs": {
+        "RemoveGovernanceEntryRequest": {
+            "type": "object",
+            "description": "Request to remove a governance entry from a faction",
+            "additionalProperties": false,
+            "required": [
+                "factionId",
+                "domain"
+            ],
+            "properties": {
+                "factionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Faction to remove governance from"
+                },
+                "domain": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Case type domain to remove"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _RemoveGovernanceEntry_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _RemoveGovernanceEntry_Info = """
+{
+    "summary": "Remove a governance entry",
+    "description": "Removes a governance entry for a specific domain from a faction.",
+    "tags": [
+        "Governance"
+    ],
+    "deprecated": false,
+    "operationId": "removeGovernanceEntry"
+}
+""";
+
+    /// <summary>Returns endpoint information for RemoveGovernanceEntry</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/remove/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RemoveGovernanceEntry_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/remove",
+            _RemoveGovernanceEntry_Info));
+
+    /// <summary>Returns request schema for RemoveGovernanceEntry</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/remove/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RemoveGovernanceEntry_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/remove",
+            "request-schema",
+            _RemoveGovernanceEntry_RequestSchema));
+
+    /// <summary>Returns response schema for RemoveGovernanceEntry</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/remove/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RemoveGovernanceEntry_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/remove",
+            "response-schema",
+            _RemoveGovernanceEntry_ResponseSchema));
+
+    /// <summary>Returns full schema for RemoveGovernanceEntry</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/remove/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RemoveGovernanceEntry_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/remove",
+            _RemoveGovernanceEntry_Info,
+            _RemoveGovernanceEntry_RequestSchema,
+            _RemoveGovernanceEntry_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ListGovernanceEntries
+
+    private static readonly string _ListGovernanceEntries_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListGovernanceEntriesRequest",
+    "$defs": {
+        "ListGovernanceEntriesRequest": {
+            "type": "object",
+            "description": "Request to list governance entries for a faction",
+            "additionalProperties": false,
+            "required": [
+                "factionId"
+            ],
+            "properties": {
+                "factionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Faction to list governance entries for"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ListGovernanceEntries_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListGovernanceEntriesResponse",
+    "$defs": {
+        "ListGovernanceEntriesResponse": {
+            "type": "object",
+            "description": "All governance entries for a faction",
+            "additionalProperties": false,
+            "required": [
+                "entries"
+            ],
+            "properties": {
+                "entries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/GovernanceEntryResponse"
+                    },
+                    "description": "All governance entries for this faction"
+                }
+            }
+        },
+        "GovernanceEntryResponse": {
+            "type": "object",
+            "description": "A governance data entry associating a case type domain with a contract template and governance parameters",
+            "additionalProperties": false,
+            "required": [
+                "governanceId",
+                "factionId",
+                "domain",
+                "templateCode",
+                "createdAt"
+            ],
+            "properties": {
+                "governanceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for this governance entry"
+                },
+                "factionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Faction owning this governance entry"
+                },
+                "domain": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Case type domain prefix (e.g., \"dissolution\", \"trade_dispute\", \"criminal\")"
+                },
+                "templateCode": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Contract template code in lib-contract for this case type"
+                },
+                "governanceParameters": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Opaque governance parameters for the contract template. Faction stores and returns these unchanged. Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this governance entry was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this governance entry was last updated"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ListGovernanceEntries_Info = """
+{
+    "summary": "List governance entries for a faction",
+    "description": "Returns all governance entries defined by a faction.",
+    "tags": [
+        "Governance"
+    ],
+    "deprecated": false,
+    "operationId": "listGovernanceEntries"
+}
+""";
+
+    /// <summary>Returns endpoint information for ListGovernanceEntries</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListGovernanceEntries_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/list",
+            _ListGovernanceEntries_Info));
+
+    /// <summary>Returns request schema for ListGovernanceEntries</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListGovernanceEntries_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/list",
+            "request-schema",
+            _ListGovernanceEntries_RequestSchema));
+
+    /// <summary>Returns response schema for ListGovernanceEntries</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListGovernanceEntries_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/list",
+            "response-schema",
+            _ListGovernanceEntries_ResponseSchema));
+
+    /// <summary>Returns full schema for ListGovernanceEntries</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListGovernanceEntries_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/list",
+            _ListGovernanceEntries_Info,
+            _ListGovernanceEntries_RequestSchema,
+            _ListGovernanceEntries_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for QueryGovernanceData
+
+    private static readonly string _QueryGovernanceData_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/QueryGovernanceDataRequest",
+    "$defs": {
+        "QueryGovernanceDataRequest": {
+            "type": "object",
+            "description": "Request to resolve governance data for a location and case type domain",
+            "additionalProperties": false,
+            "required": [
+                "locationId",
+                "domain"
+            ],
+            "properties": {
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Location where the case would be filed"
+                },
+                "domain": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Case type domain to resolve governance for"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm for baseline sovereign lookup (resolved from location if omitted)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _QueryGovernanceData_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GovernanceDataResponse",
+    "$defs": {
+        "GovernanceDataResponse": {
+            "type": "object",
+            "description": "Resolved governance data for a location and case type domain. Returns the jurisdictional faction (sovereign or delegate) and its governance entry for the requested domain. Endpoint returns 404 when no sovereign has jurisdiction.",
+            "additionalProperties": false,
+            "required": [
+                "jurisdictionalFactionId",
+                "jurisdictionalFactionName",
+                "authorityLevel",
+                "templateCode",
+                "sovereignFactionId"
+            ],
+            "properties": {
+                "jurisdictionalFactionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The faction with jurisdiction (sovereign or delegate)"
+                },
+                "jurisdictionalFactionName": {
+                    "type": "string",
+                    "description": "Name of the jurisdictional faction for display"
+                },
+                "authorityLevel": {
+                    "$ref": "#/$defs/AuthorityLevel",
+                    "description": "Authority level of the jurisdictional faction (Sovereign or Delegated)"
+                },
+                "templateCode": {
+                    "type": "string",
+                    "description": "Contract template code for this case type"
+                },
+                "governanceParameters": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Opaque governance parameters for the contract template. Stored and returned unchanged. Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
+                },
+                "sovereignFactionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The ultimate sovereign faction in the territory hierarchy (may differ from jurisdictional faction if delegated)"
+                }
+            }
+        },
+        "AuthorityLevel": {
+            "type": "string",
+            "description": "Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.",
+            "enum": [
+                "Influence",
+                "Delegated",
+                "Sovereign"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _QueryGovernanceData_Info = """
+{
+    "summary": "Resolve governance data for a location and case type",
+    "description": "Critical integration endpoint for lib-arbitration. Given a location\nand case type domain, resolves the jurisdictional faction by walking\nthe sovereignty hierarchy:\n1. Find controlling faction at location\n2. If Sovereign and has governance for domain, return\n3. If Delegated and has governance for domain, return\n4. Walk up parent chain until Sovereign found\n5. If Sovereign has governance for domain, return\n6. Fall back to realm baseline sovereign\n7. If no sovereign exists anywhere, return 404\n\nReturns 404 when no sovereign has jurisdiction for the domain at\ nthe given location.\n\nEnclave sovereignty: a nested sovereign within an outer sovereign's\nterritory overrides completely at its location boundary.\n\nResults are cached with configurable TTL (FACTION_GOVERNANCE_CACHE_TTL_SECONDS).\n",
+    "tags": [
+        "Governance"
+    ],
+    "deprecated": false,
+    "operationId": "queryGovernanceData"
+}
+""";
+
+    /// <summary>Returns endpoint information for QueryGovernanceData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/query/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryGovernanceData_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/query",
+            _QueryGovernanceData_Info));
+
+    /// <summary>Returns request schema for QueryGovernanceData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/query/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryGovernanceData_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/query",
+            "request-schema",
+            _QueryGovernanceData_RequestSchema));
+
+    /// <summary>Returns response schema for QueryGovernanceData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/query/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryGovernanceData_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/query",
+            "response-schema",
+            _QueryGovernanceData_ResponseSchema));
+
+    /// <summary>Returns full schema for QueryGovernanceData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/query/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryGovernanceData_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/query",
+            _QueryGovernanceData_Info,
+            _QueryGovernanceData_RequestSchema,
+            _QueryGovernanceData_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DelegateAuthority
+
+    private static readonly string _DelegateAuthority_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DelegateAuthorityRequest",
+    "$defs": {
+        "DelegateAuthorityRequest": {
+            "type": "object",
+            "description": "Request to delegate authority from a sovereign faction to a child faction for specific case type domains",
+            "additionalProperties": false,
+            "required": [
+                "sovereignFactionId",
+                "targetFactionId",
+                "domains"
+            ],
+            "properties": {
+                "sovereignFactionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Sovereign faction granting delegation"
+                },
+                "targetFactionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Child faction receiving delegated authority"
+                },
+                "domains": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128
+                    },
+                    "minItems": 1,
+                    "description": "Case type domains to delegate (e.g., [\"trade_dispute\", \"dissolution\"]). Each domain grants the target faction the right to arbitrate cases of that type within its territory."
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DelegateAuthority_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/FactionResponse",
+    "$defs": {
+        "FactionResponse": {
+            "type": "object",
+            "description": "Complete faction entity with seed growth status",
+            "additionalProperties": false,
+            "required": [
+                "factionId",
+                "gameServiceId",
+                "name",
+                "code",
+                "realmId",
+                "isRealmBaseline",
+                "status",
+                "authorityLevel",
+                "isDeprecated",
+                "memberCount",
+                "createdAt",
+                "updatedAt"
+            ],
+            "properties": {
+                "factionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the faction"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Game service this faction belongs to"
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Display name of the faction"
+                },
+                "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Unique code within the game service (e.g., \"thieves_guild\")"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 2048,
+                    "description": "Human-readable description of the faction"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm this faction belongs to"
+                },
+                "isRealmBaseline": {
+                    "type": "boolean",
+                    "description": "Whether this faction is the realm's baseline cultural faction"
+                },
+                "parentFactionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Parent faction in hierarchy (null for top-level factions)"
+                },
+                "seedId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Associated seed for growth tracking (null if seed creation failed)"
+                },
+                "status": {
+                    "$ref": "#/$defs/FactionStatus",
+                    "description": "Current operational lifecycle status (orthogonal to deprecation)"
+                },
+                "authorityLevel": {
+                    "$ref": "#/$defs/AuthorityLevel",
+                    "description": "Authority classification for governance power. Defaults to Influence. Sovereign is set by DesignateRealmBaseline. Delegated is set via delegation endpoints."
+                },
+                "currentPhase": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 64,
+                    "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this faction is deprecated and should not accept new references (per IMPLEMENTATION TENETS triple-field model)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this faction was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 1024,
+                    "description": "Reason for deprecation (null if not deprecated)"
+                },
+                "memberCount": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Current number of members in this faction"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this faction was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this faction was last updated"
+                }
+            }
+        },
+        "FactionStatus": {
+            "type": "string",
+            "description": "Operational lifecycle status of a faction entity (orthogonal to deprecation)",
+            "enum": [
+                "Active",
+                "Dissolved"
+            ]
+        },
+        "AuthorityLevel": {
+            "type": "string",
+            "description": "Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.",
+            "enum": [
+                "Influence",
+                "Delegated",
+                "Sovereign"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _DelegateAuthority_Info = """
+{
+    "summary": "Delegate authority from sovereign to child faction",
+    "description": "A sovereign faction grants delegated authority to a child faction\nfor specific case type domains. The target faction's authorityLevel\nis set to Delegated. The target must be a descendant of the sovereign\nin the faction hierarchy.\n\nDelegation is per-case-type via domain strings. A sovereign can\ndelegate \"trade_dispute\" jurisdiction without delegating \"criminal\"\njurisdiction. Each domain grants the target faction the right to\narbitrate cases of that type within its territory.\n",
+    "tags": [
+        "Governance"
+    ],
+    "deprecated": false,
+    "operationId": "delegateAuthority"
+}
+""";
+
+    /// <summary>Returns endpoint information for DelegateAuthority</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/delegate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DelegateAuthority_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/delegate",
+            _DelegateAuthority_Info));
+
+    /// <summary>Returns request schema for DelegateAuthority</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/delegate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DelegateAuthority_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/delegate",
+            "request-schema",
+            _DelegateAuthority_RequestSchema));
+
+    /// <summary>Returns response schema for DelegateAuthority</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/delegate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DelegateAuthority_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/delegate",
+            "response-schema",
+            _DelegateAuthority_ResponseSchema));
+
+    /// <summary>Returns full schema for DelegateAuthority</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/delegate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DelegateAuthority_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/delegate",
+            _DelegateAuthority_Info,
+            _DelegateAuthority_RequestSchema,
+            _DelegateAuthority_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RevokeAuthority
+
+    private static readonly string _RevokeAuthority_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RevokeAuthorityRequest",
+    "$defs": {
+        "RevokeAuthorityRequest": {
+            "type": "object",
+            "description": "Request to revoke delegated authority from a child faction",
+            "additionalProperties": false,
+            "required": [
+                "sovereignFactionId",
+                "targetFactionId"
+            ],
+            "properties": {
+                "sovereignFactionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Sovereign faction revoking delegation"
+                },
+                "targetFactionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Faction whose delegation is being revoked"
+                },
+                "domains": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128
+                    },
+                    "nullable": true,
+                    "description": "Specific domains to revoke (null to revoke all delegation, reverting target to Influence)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _RevokeAuthority_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/FactionResponse",
+    "$defs": {
+        "FactionResponse": {
+            "type": "object",
+            "description": "Complete faction entity with seed growth status",
+            "additionalProperties": false,
+            "required": [
+                "factionId",
+                "gameServiceId",
+                "name",
+                "code",
+                "realmId",
+                "isRealmBaseline",
+                "status",
+                "authorityLevel",
+                "isDeprecated",
+                "memberCount",
+                "createdAt",
+                "updatedAt"
+            ],
+            "properties": {
+                "factionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the faction"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Game service this faction belongs to"
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Display name of the faction"
+                },
+                "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "Unique code within the game service (e.g., \"thieves_guild\")"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 2048,
+                    "description": "Human-readable description of the faction"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm this faction belongs to"
+                },
+                "isRealmBaseline": {
+                    "type": "boolean",
+                    "description": "Whether this faction is the realm's baseline cultural faction"
+                },
+                "parentFactionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Parent faction in hierarchy (null for top-level factions)"
+                },
+                "seedId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Associated seed for growth tracking (null if seed creation failed)"
+                },
+                "status": {
+                    "$ref": "#/$defs/FactionStatus",
+                    "description": "Current operational lifecycle status (orthogonal to deprecation)"
+                },
+                "authorityLevel": {
+                    "$ref": "#/$defs/AuthorityLevel",
+                    "description": "Authority classification for governance power. Defaults to Influence. Sovereign is set by DesignateRealmBaseline. Delegated is set via delegation endpoints."
+                },
+                "currentPhase": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 64,
+                    "description": "Current seed growth phase (denormalized from lib-seed for convenience)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this faction is deprecated and should not accept new references (per IMPLEMENTATION TENETS triple-field model)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When this faction was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 1024,
+                    "description": "Reason for deprecation (null if not deprecated)"
+                },
+                "memberCount": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Current number of members in this faction"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this faction was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this faction was last updated"
+                }
+            }
+        },
+        "FactionStatus": {
+            "type": "string",
+            "description": "Operational lifecycle status of a faction entity (orthogonal to deprecation)",
+            "enum": [
+                "Active",
+                "Dissolved"
+            ]
+        },
+        "AuthorityLevel": {
+            "type": "string",
+            "description": "Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.",
+            "enum": [
+                "Influence",
+                "Delegated",
+                "Sovereign"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _RevokeAuthority_Info = """
+{
+    "summary": "Revoke delegated authority",
+    "description": "Revokes delegated authority from a child faction. If all domains are\nrevoked (or domains is null for blanket revocation), the target\nfaction's authorityLevel reverts to Influence.\n",
+    "tags": [
+        "Governance"
+    ],
+    "deprecated": false,
+    "operationId": "revokeAuthority"
+}
+""";
+
+    /// <summary>Returns endpoint information for RevokeAuthority</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/revoke/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RevokeAuthority_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/revoke",
+            _RevokeAuthority_Info));
+
+    /// <summary>Returns request schema for RevokeAuthority</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/revoke/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RevokeAuthority_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/revoke",
+            "request-schema",
+            _RevokeAuthority_RequestSchema));
+
+    /// <summary>Returns response schema for RevokeAuthority</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/revoke/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RevokeAuthority_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/revoke",
+            "response-schema",
+            _RevokeAuthority_ResponseSchema));
+
+    /// <summary>Returns full schema for RevokeAuthority</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/faction/governance/revoke/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RevokeAuthority_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Faction",
+            "POST",
+            "/faction/governance/revoke",
+            _RevokeAuthority_Info,
+            _RevokeAuthority_RequestSchema,
+            _RevokeAuthority_ResponseSchema));
 
     #endregion
 

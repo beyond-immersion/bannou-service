@@ -125,8 +125,12 @@ try:
 
     # Extract configuration from x-service-configuration section
     config_properties = []
+    constraint_groups = {}
     if 'x-service-configuration' in schema:
         config_section = schema['x-service-configuration']
+
+        # Extract constraint groups (sibling of properties)
+        constraint_groups = config_section.get('x-constraint-groups', {}) or {}
 
         # Handle both direct properties and properties under 'properties' key
         properties_dict = config_section.get('properties', config_section)
@@ -156,6 +160,9 @@ try:
 
             # OpenAPI 3.0 multipleOf validation keyword
             prop_multiple_of = prop_info.get('multipleOf', None)
+
+            # Constraint group membership
+            prop_constraint_group = prop_info.get('constraint-group', None)
 
             # Check if this is a $ref to an external enum type
             if prop_ref:
@@ -276,7 +283,8 @@ try:
                 'min_length': prop_min_length,
                 'max_length': prop_max_length,
                 'pattern': prop_pattern,
-                'multiple_of': prop_multiple_of
+                'multiple_of': prop_multiple_of,
+                'constraint_group': prop_constraint_group
             })
 
     # Generate the configuration class
@@ -339,6 +347,29 @@ public enum {enum_type['name']}
 #pragma warning restore CS1591
 ''')
 
+    # Generate constraint group definition attributes for class level
+    constraint_group_class_attrs = ''
+    for group_name, group_def in constraint_groups.items():
+        constraint_type = group_def.get('constraint', '')
+        # Map schema constraint names to C# enum values
+        constraint_type_map = {
+            'exactly-one': 'ExactlyOne',
+            'at-most-one': 'AtMostOne',
+            'all-or-none': 'AllOrNone',
+            'sum-equals': 'SumEquals',
+            'sum-minimum': 'SumMinimum',
+            'sum-maximum': 'SumMaximum'
+        }
+        csharp_constraint = constraint_type_map.get(constraint_type, constraint_type)
+        attr_parts = [f'\"{group_name}\"', f'ConstraintGroupType.{csharp_constraint}']
+        group_value = group_def.get('value', None)
+        if group_value is not None:
+            attr_parts.append(f'Value = {group_value}')
+        group_tolerance = group_def.get('tolerance', None)
+        if group_tolerance is not None:
+            attr_parts.append(f'Tolerance = {group_tolerance}')
+        constraint_group_class_attrs += f'[ConfigConstraintGroupDefinition({", ".join(attr_parts)})]\n'
+
     print(f'''/// <summary>
 /// Configuration class for {service_pascal} service.
 /// Properties are automatically bound from environment variables.
@@ -354,7 +385,7 @@ public enum {enum_type['name']}
 /// Environment variable names follow the pattern: {{SERVICE}}_{{PROPERTY}} (e.g., AUTH_JWT_SECRET).
 /// </para>
 /// </remarks>
-[ServiceConfiguration(typeof({service_pascal}Service))]
+{constraint_group_class_attrs}[ServiceConfiguration(typeof({service_pascal}Service))]
 public class {service_pascal}ServiceConfiguration : BaseServiceConfiguration
 {{
 ''')
@@ -409,12 +440,18 @@ public class {service_pascal}ServiceConfiguration : BaseServiceConfiguration
         if prop_multiple_of is not None:
             multiple_of_attr = '    [ConfigMultipleOf(' + str(prop_multiple_of) + ')]\\n'
 
+        # Generate ConfigConstraintGroup attribute if constraint-group is specified
+        constraint_group_attr = ''
+        prop_constraint_group = prop.get('constraint_group')
+        if prop_constraint_group:
+            constraint_group_attr = '    [ConfigConstraintGroup(\\\"' + prop_constraint_group + '\\\")]\\n'
+
         escaped_prop_desc = escape_xml_description(prop['description'])
         print(f'''    /// <summary>
     /// {escaped_prop_desc}
     /// Environment variable: {prop['env_var']}
     /// </summary>
-{required_attr}{range_attr}{string_length_attr}{pattern_attr}{multiple_of_attr}    public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}
+{required_attr}{range_attr}{string_length_attr}{pattern_attr}{multiple_of_attr}{constraint_group_attr}    public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}
 ''')
 
     print('}')
@@ -435,6 +472,9 @@ public class {service_pascal}ServiceConfiguration : BaseServiceConfiguration
             helper_env_prefix = f'{service_upper}_{helper_upper}_'
 
             helper_properties = helper_section.get('properties', helper_section) if helper_section else {}
+
+            # Extract helper-specific constraint groups
+            helper_constraint_groups = (helper_section.get('x-constraint-groups', {}) or {}) if helper_section else {}
 
             # Track helper-specific enums
             helper_enum_types = []
@@ -460,6 +500,9 @@ public class {service_pascal}ServiceConfiguration : BaseServiceConfiguration
                 prop_max_length = prop_info.get('maxLength', None)
                 prop_pattern = prop_info.get('pattern', None)
                 prop_multiple_of = prop_info.get('multipleOf', None)
+
+                # Constraint group membership
+                prop_constraint_group = prop_info.get('constraint-group', None)
 
                 if prop_ref:
                     ref_type_name = prop_ref.split('/')[-1]
@@ -553,7 +596,8 @@ public class {service_pascal}ServiceConfiguration : BaseServiceConfiguration
                     'min_length': prop_min_length,
                     'max_length': prop_max_length,
                     'pattern': prop_pattern,
-                    'multiple_of': prop_multiple_of
+                    'multiple_of': prop_multiple_of,
+                    'constraint_group': prop_constraint_group
                 })
 
             # Write helper config to separate file
@@ -602,11 +646,33 @@ public enum {enum_type['name']}
 #pragma warning restore CS1591
 ''')
 
+                # Generate helper constraint group definition attributes
+                helper_cg_class_attrs = ''
+                for group_name, group_def in helper_constraint_groups.items():
+                    constraint_type = group_def.get('constraint', '')
+                    constraint_type_map = {
+                        'exactly-one': 'ExactlyOne',
+                        'at-most-one': 'AtMostOne',
+                        'all-or-none': 'AllOrNone',
+                        'sum-equals': 'SumEquals',
+                        'sum-minimum': 'SumMinimum',
+                        'sum-maximum': 'SumMaximum'
+                    }
+                    csharp_constraint = constraint_type_map.get(constraint_type, constraint_type)
+                    attr_parts = [f'"{group_name}"', f'ConstraintGroupType.{csharp_constraint}']
+                    group_value = group_def.get('value', None)
+                    if group_value is not None:
+                        attr_parts.append(f'Value = {group_value}')
+                    group_tolerance = group_def.get('tolerance', None)
+                    if group_tolerance is not None:
+                        attr_parts.append(f'Tolerance = {group_tolerance}')
+                    helper_cg_class_attrs += f'[ConfigConstraintGroupDefinition({", ".join(attr_parts)})]\n'
+
                 hf.write(f'''/// <summary>
 /// Configuration class for {helper_pascal} helper service ({service_pascal} plugin).
 /// Properties are automatically bound from environment variables with prefix {helper_env_prefix}.
 /// </summary>
-[ServiceConfiguration(\"{service_name}\", envPrefix: \"{helper_env_prefix}\")]
+{helper_cg_class_attrs}[ServiceConfiguration(\"{service_name}\", envPrefix: \"{helper_env_prefix}\")]
 public class {helper_class_name} : BaseServiceConfiguration
 {{
 ''')
@@ -649,12 +715,16 @@ public class {helper_class_name} : BaseServiceConfiguration
                     if prop.get('multiple_of') is not None:
                         multiple_of_attr = '    [ConfigMultipleOf(' + str(prop['multiple_of']) + ')]\\n'
 
+                    constraint_group_attr = ''
+                    if prop.get('constraint_group'):
+                        constraint_group_attr = '    [ConfigConstraintGroup("' + prop['constraint_group'] + '")]\\n'
+
                     escaped_prop_desc = escape_xml_description(prop['description'])
                     hf.write(f'''    /// <summary>
     /// {escaped_prop_desc}
     /// Environment variable: {prop['env_var']}
     /// </summary>
-{required_attr}{range_attr}{string_length_attr}{pattern_attr}{multiple_of_attr}    public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}
+{required_attr}{range_attr}{string_length_attr}{pattern_attr}{multiple_of_attr}{constraint_group_attr}    public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}
 
 ''')
 

@@ -1,9 +1,9 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Affix;
 using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 
 namespace BeyondImmersion.BannouService.Affix.Tests;
 

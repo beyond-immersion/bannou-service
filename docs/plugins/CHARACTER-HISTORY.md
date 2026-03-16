@@ -16,20 +16,6 @@ Historical event participation and backstory management (L4 GameFeatures) for ch
 
 ---
 
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | MySQL persistence for participation records, indexes, and backstory |
-| lib-state (`IDistributedLockProvider`) | Distributed locks for DualIndexHelper and BackstoryStorageHelper write operations (per IMPLEMENTATION TENETS: multi-instance safety) |
-| lib-messaging (`IMessageBus`) | Publishing participation and backstory lifecycle events |
-| lib-messaging (`IEventConsumer`) | Self-event subscription for BackstoryCache invalidation (backstory.created, backstory.updated, backstory.deleted, history.deleted) |
-| lib-resource (`IResourceClient`) | Hard dependency (L1): registers cleanup callbacks and compression callbacks on startup |
-| lib-resource (`IResourceClient`) | Calls `RegisterReferenceAsync`/`UnregisterReferenceAsync` for character reference tracking |
-| lib-character-history (`ICharacterHistoryClient`) | Used by `BackstoryCache` to load backstory data on cache miss |
-
----
-
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
@@ -43,135 +29,14 @@ Historical event participation and backstory management (L4 GameFeatures) for ch
 
 ---
 
-## State Storage
-
-**Store**: `character-history-statestore` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `participation-{participationId}` | `ParticipationData` | Individual participation record |
-| `participation-index-{characterId}` | Index list | List of participation IDs for a character |
-| `participation-event-{eventId}` | Index list | List of participation IDs for an event |
-| `backstory-{characterId}` | `BackstoryData` | All backstory elements for a character (single document) |
-
----
-
-### Type Field Classification
-
-| Field | Category | Type | Rationale |
-|-------|----------|------|-----------|
-| `eventCategory` | C (System State) | `EventCategory` enum | Finite set of historical event categories (WAR, NATURAL_DISASTER, POLITICAL, ECONOMIC, RELIGIOUS, CULTURAL, PERSONAL). System-defined; drives query filtering and summarization logic. |
-| `role` | C (System State) | `ParticipationRole` enum | Finite set of participation roles (LEADER, COMBATANT, VICTIM, WITNESS, BENEFICIARY, CONSPIRATOR, HERO, SURVIVOR). System-defined; drives text summarization templates. |
-| `elementType` | C (System State) | `BackstoryElementType` enum | Finite set of backstory element categories (ORIGIN, OCCUPATION, TRAINING, TRAUMA, ACHIEVEMENT, SECRET, GOAL, FEAR, BELIEF). System-defined; used as keyed dimensions in behavior system lookups. |
-| `relatedEntityType` | A (Entity Reference) | `EntityType` enum (nullable) | References the type of a related entity (location, organization, character) on a backstory element. Uses `$ref: 'common-api.yaml#/components/schemas/EntityType'` with `nullable: true` per tenets decision tree test 4 (all valid values are Bannou entity types). |
-
----
-
-## Events
-
-### Published Events
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `character-history.participation.batch-created` | `ParticipationBatchCreatedEvent` | Batch: accumulated participation recordings (via `EventBatcher`) |
-| `character-history.participation.batch-modified` | `ParticipationBatchModifiedEvent` | Batch: unused infrastructure (participations are immutable) |
-| `character-history.participation.batch-destroyed` | `ParticipationBatchDestroyedEvent` | Batch: accumulated participation deletions (via `EventBatcher`) |
-| `character-history.backstory.created` | `CharacterBackstoryCreatedEvent` | First backstory created for a character |
-| `character-history.backstory.updated` | `CharacterBackstoryUpdatedEvent` | Existing backstory modified |
-| `character-history.backstory.deleted` | `CharacterBackstoryDeletedEvent` | All backstory deleted |
-| `character-history.deleted` | `CharacterHistoryDeletedEvent` | All history (participation + backstory) deleted |
-
-### Consumed Events
-
-This plugin does not consume external events. It does subscribe to its own published events (`character-history.backstory.created`, `character-history.backstory.updated`, `character-history.backstory.deleted`, `character-history.deleted`) for cross-node BackstoryCache invalidation per Foundation Tenets (Multi-Instance Safety).
-
----
-
-## Configuration
-
-| Property | Env Var | Default | Purpose |
-|----------|---------|---------|---------|
-| `BackstoryCacheTtlMinutes` | `CHARACTER_HISTORY_BACKSTORY_CACHE_TTL_MINUTES` | 10 | TTL in minutes for backstory cache entries; backstory data is nearly immutable so longer TTLs are appropriate |
-| `MaxBackstoryElements` | `CHARACTER_HISTORY_MAX_BACKSTORY_ELEMENTS` | 100 | Maximum backstory elements per character; returns BadRequest when exceeded |
-| `MaxCompressBackstoryPoints` | `CHARACTER_HISTORY_MAX_COMPRESS_BACKSTORY_POINTS` | 10 | Maximum backstory points to include in compression archive summaries |
-| `MaxCompressLifeEvents` | `CHARACTER_HISTORY_MAX_COMPRESS_LIFE_EVENTS` | 10 | Maximum life events to include in compression archive summaries |
-| `ParticipationEventBatchIntervalSeconds` | `CHARACTER_HISTORY_PARTICIPATION_EVENT_BATCH_INTERVAL_SECONDS` | 5 | Interval between participation batch event flushes |
-| `ParticipationEventBatchStartupDelaySeconds` | `CHARACTER_HISTORY_PARTICIPATION_EVENT_BATCH_STARTUP_DELAY_SECONDS` | 10 | Delay before first batch flush after startup |
-| `IndexLockTimeoutSeconds` | `CHARACTER_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS` | 15 | Distributed lock timeout for DualIndexHelper and BackstoryStorageHelper write operations |
-
-The generated `CharacterHistoryServiceConfiguration` is injected into `BackstoryCache` (for TTL), `CharacterHistoryService` (for element limits and compression summary limits), and `ParticipationEventBatcher` (via `EventBatcherWorker` for batch interval).
-
----
-
-## DI Services & Helpers
-
-| Service | Lifetime | Role |
-|---------|----------|------|
-| `ILogger<CharacterHistoryService>` | Scoped | Structured logging |
-| `CharacterHistoryServiceConfiguration` | Singleton | Typed configuration (BackstoryCacheTtlMinutes, MaxBackstoryElements, MaxCompressBackstoryPoints, MaxCompressLifeEvents, IndexLockTimeoutSeconds); injected into service constructor and `BackstoryCache` |
-| `IStateStoreFactory` | Singleton | State store access |
-| `IMessageBus` | Scoped | Event publishing |
-| `IEventConsumer` | Scoped | Self-event subscription for cache invalidation: backstory.created, backstory.updated, backstory.deleted, history.deleted → invalidates BackstoryCache |
-| `ITelemetryProvider` | Singleton | Telemetry span creation for async helper methods (BackstoryCache, BackstoryProviderFactory, event handlers) |
-| `IDistributedLockProvider` | Singleton | Distributed locking for helper write operations |
-| `IDualIndexHelper<ParticipationData>` | (inline) | Dual-index CRUD for participations |
-| `IBackstoryStorageHelper<BackstoryData, BackstoryElementData>` | (inline) | Backstory CRUD with merge semantics |
-| `CharacterHistoryReferenceTracking` | (generated partial class) | `RegisterCharacterReferenceAsync`/`UnregisterCharacterReferenceAsync` helpers and cleanup callback registration |
-| `CharacterHistoryCompressionCallbacks` | (generated static class) | Compression callback registration with lib-resource |
-| `IBackstoryCache` | Singleton | TTL-based backstory caching for actor behavior execution |
-| `BackstoryProviderFactory` (`IVariableProviderFactory`) | Singleton | Factory for ABML expression evaluation (enables `${backstory.*}` paths) |
-| `ParticipationEventBatcher` | Singleton | Accumulates participation created/destroyed events for periodic batch flush via `EventBatcherWorker` |
-| `EventBatcherWorker` | Singleton (`IHostedService`) | Flushes `ParticipationEventBatcher` on configurable interval |
-| `CharacterHistoryTemplate` (`ResourceTemplateBase`) | Registered at startup (in plugin `OnRunningAsync`) | Compile-time path validation for ABML expressions referencing history data (namespace: `history`) |
-
-Service lifetime is **Scoped** (per-request).
-
-### ABML Expression Support
+## ABML Expression Support
 
 The plugin registers `BackstoryProviderFactory` as an `IVariableProviderFactory` for the Actor service to discover via DI collection. This enables ABML expressions like:
-- `${backstory.origin}` - Returns the value of the ORIGIN element
-- `${backstory.fear.strength}` - Returns the strength of the FEAR element
-- `${backstory.elements.TRAUMA}` - Returns all TRAUMA elements as a list
+- `${backstory.origin}` — Returns the value of the ORIGIN element
+- `${backstory.fear.strength}` — Returns the strength of the FEAR element
+- `${backstory.elements.TRAUMA}` — Returns all TRAUMA elements as a list
 
 The `CharacterHistoryTemplate` provides compile-time validation for `${candidate.history.*}` paths during ABML semantic analysis.
-
----
-
-## API Endpoints (Implementation Notes)
-
-### Participation Operations (4 endpoints)
-
-- **Record** (`/character-history/record-participation`): Checks for existing participation for same characterId+eventId (returns 409 Conflict if duplicate). Creates unique participation ID. Stores record and updates dual indexes (character and event) under distributed lock. Returns 409 Conflict if lock cannot be acquired. Registers character reference with lib-resource. Publishes recorded event.
-- **GetParticipation** (`/character-history/get-participation`): Server-side paginated query via `IJsonQueryableStateStore`. Filters by character ID, optional event category, and minimum significance at the database level. Sorts by event date descending. Bypasses DualIndexHelper for reads.
-- **GetEventParticipants** (`/character-history/get-event-participants`): Server-side paginated query via `IJsonQueryableStateStore`. Filters by event ID and optional role at the database level. Sorts by significance descending. Bypasses DualIndexHelper for reads.
-- **DeleteParticipation** (`/character-history/delete-participation`): Retrieves record first (to get index keys for cleanup), removes from both indexes under distributed lock. Returns 409 Conflict if lock cannot be acquired. Publishes deletion event.
-
-### Backstory Operations (4 endpoints)
-
-- **GetBackstory** (`/character-history/get-backstory`): Returns NotFound if no backstory exists. Filters by element types array and minimum strength. UpdatedAt is null if never updated.
-- **SetBackstory** (`/character-history/set-backstory`): Merge-or-replace semantics via `replaceExisting` flag. Merge matches by type+key pair. Validates element count against `MaxBackstoryElements` limit (returns BadRequest if exceeded). For merge mode, only truly new elements count toward the limit -- updates to existing type+key pairs are always allowed. Write operations protected by distributed lock; returns 409 Conflict if lock cannot be acquired. Publishes created or updated event with element count.
-- **AddBackstoryElement** (`/character-history/add-backstory-element`): Adds or updates single element (updates if type+key match exists). Creates backstory document if none exists. Rejects adding new elements when at `MaxBackstoryElements` limit (updates to existing type+key pairs are always allowed at any count).
-- **DeleteBackstory** (`/character-history/delete-backstory`): Removes entire backstory. Returns NotFound if no backstory exists.
-
-### Management Operations (2 endpoints)
-
-- **DeleteAll** (`/character-history/delete-all`): Unregisters all character references first, then uses `RemoveAllByPrimaryKeyAsync` with lambda to extract secondary keys for cleanup. Also deletes backstory. Returns participation count and backstory boolean. Called via lib-resource cleanup callback during character deletion.
-- **Summarize** (`/character-history/summarize`): Template-based text generation. Selects top N backstory elements by strength (default 5, max 20) and top N participations by significance (default 10, max 20). Uses switch-case text patterns.
-
-### Compression Support
-
-- **GetCompressData** (`/character-history/get-compress-data`): Called by Resource service during hierarchical character compression. Returns `HistoryCompressData` containing:
- - `hasParticipations`: Whether any historical participations exist
- - `participations`: List of `ParticipationResponse` records
- - `hasBackstory`: Whether backstory document exists
- - `backstory`: `BackstoryResponse` if exists
- - `participationCount`: Total participation count
-
- Returns NotFound only if BOTH participations and backstory are absent.
-
-- **RestoreFromArchive** (`/character-history/restore-from-archive`): Called by Resource service during decompression. Accepts Base64-encoded GZip JSON of `HistoryCompressData`. Restores participations and backstory to state store if they don't already exist (idempotent). Returns counts of restored items.
-
-**Compression Callback Registration**: Handled by the generated `CharacterHistoryCompressionCallbacks` class, called during `OnRunningAsync` in the plugin. Registers with lib-resource using priority 20 (after personality at priority 10).
 
 ---
 

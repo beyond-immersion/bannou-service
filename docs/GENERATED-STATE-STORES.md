@@ -20,6 +20,13 @@ This document lists all state store components used in Bannou.
 | `actor-pool-nodes` | Redis | Actor | Actor pool node assignments |
 | `actor-state` | Redis | Actor | Runtime actor state |
 | `actor-templates` | Redis | Actor | Actor template definitions |
+| `affix-definition-cache` | Redis | Affix | Definition hot cache with read-through from MySQL |
+| `affix-definitions` | MySQL | Affix | Affix definition templates (modifiers with tiers, stat grants, spawn weights) |
+| `affix-implicit-mappings` | MySQL | Affix | Implicit affix mappings from item template codes to definition sets |
+| `affix-instance-cache` | Redis | Affix | Instance hot cache and computed stats cache with read-through from MySQL |
+| `affix-instances` | MySQL | Affix | Per-item applied affix state (slots, rolled values, states, influences, quality) |
+| `affix-lock` | Redis | Affix | Distributed locks for definition mutation, item modification, and pool rebuild |
+| `affix-pool-cache` | Redis | Affix | Pre-computed affix generation pools with weights (cached by item class, slot type, level bucket) |
 | `agent-memories` | Redis | Behavior | Cognition pipeline memory storage (used by lib-behavior's ActorLocalMemoryStore) |
 | `analytics-history-data` | MySQL | Analytics | Controller possession history for queryable audit trails (MySQL for server-side filtering) |
 | `analytics-rating` | Redis | Analytics | Glicko-2 skill ratings |
@@ -37,6 +44,11 @@ This document lists all state store components used in Bannou.
 | `broadcast-sessions` | Redis | Broadcast | Active platform session state and tracked viewer mappings |
 | `character-encounter-statestore` | MySQL | CharacterEncounter | Encounter records and participant perspectives |
 | `character-history-statestore` | MySQL | CharacterHistory | Character historical events and backstory |
+| `character-lifecycle-bloodlines` | MySQL | CharacterLifecycle | Bloodline definitions and membership tracking |
+| `character-lifecycle-cache` | Redis | CharacterLifecycle | Cached lifecycle manifests (stage, age, phenotype, aptitudes, bloodlines) and realm population stats |
+| `character-lifecycle-heritage` | MySQL | CharacterLifecycle | Genetic profiles, heritable trait templates, lifecycle templates, hybrid templates |
+| `character-lifecycle-lock` | Redis | CharacterLifecycle | Distributed locks for aging, procreation, death, marriage, and background workers |
+| `character-lifecycle-profiles` | MySQL | CharacterLifecycle | Primary lifecycle state for characters (age, stage, marriage, death, fulfillment) |
 | `character-lock` | Redis | Character | Distributed locks for character update and compression operations |
 | `character-personality-statestore` | MySQL | CharacterPersonality | Character personality traits and combat preferences |
 | `character-statestore` | MySQL | Character | Persistent character data |
@@ -80,6 +92,7 @@ This document lists all state store components used in Bannou.
 | `escrow-status-index` | Redis | Escrow | Escrow IDs by status (sorted set for expiration/validation) |
 | `escrow-tokens` | Redis | Escrow | Token hash validation (hashed tokens to escrow/party info) |
 | `faction-cache` | Redis | Faction | Faction lookup and norm resolution cache (frequently read, TTL-based) |
+| `faction-governance-statestore` | MySQL | Faction | Governance entries (case type domain to contract template and parameters) for sovereign and delegated factions |
 | `faction-lock` | Redis | Faction | Distributed locks for faction, membership, and territory mutations |
 | `faction-membership-statestore` | MySQL | Faction | Faction membership records linking characters to factions with roles |
 | `faction-norm-statestore` | MySQL | Faction | Behavioral norm definitions per faction (durable, queryable by violation type) |
@@ -206,7 +219,7 @@ This document lists all state store components used in Bannou.
 | `worldstate-ratio-history` | MySQL | Worldstate | Time ratio change history per realm for elapsed game-time computation (append-only, compacted) |
 | `worldstate-realm-clock` | Redis | Worldstate | Current game time per realm (hot reads, updated every ClockTickIntervalSeconds) |
 
-**Total**: 196 stores (124 Redis, 72 MySQL)
+**Total**: 209 stores (130 Redis, 79 MySQL)
 
 ## Naming Conventions
 

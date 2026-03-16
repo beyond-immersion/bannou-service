@@ -17,7 +17,7 @@ public class BroadcastServiceSessionTests
     [Fact]
     public async Task StartSessionAsync_LinkNotFound_ReturnsNotFound()
     {
-        var (service, _, _) = CreateService();
+        var (service, _, _, _) = CreateService();
 
         var request = new StartSessionRequest
         {
@@ -39,7 +39,7 @@ public class BroadcastServiceSessionTests
         string? capturedTopic = null;
         object? capturedEvent = null;
 
-        var (service, messageBusMock, _) = CreateService();
+        var (service, messageBusMock, platformStoreMock, _) = CreateService();
 
         messageBusMock.Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
@@ -50,10 +50,20 @@ public class BroadcastServiceSessionTests
             })
             .ReturnsAsync(true);
 
+        var linkId = Guid.NewGuid();
+        platformStoreMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PlatformLinkModel
+            {
+                LinkId = linkId,
+                AccountId = Guid.NewGuid(),
+                Platform = PlatformType.Twitch,
+                LinkedAt = DateTimeOffset.UtcNow
+            });
+
         var request = new StartSessionRequest
         {
             WebSocketSessionId = Guid.NewGuid(),
-            LinkId = Guid.NewGuid()
+            LinkId = linkId
         };
 
         var (status, response) = await service.StartSessionAsync(request, CancellationToken.None);
@@ -71,7 +81,7 @@ public class BroadcastServiceSessionTests
     [Fact]
     public async Task StopSessionAsync_SessionNotFound_ReturnsNotFound()
     {
-        var (service, _, _) = CreateService();
+        var (service, _, _, _) = CreateService();
 
         var request = new StopSessionRequest
         {
@@ -93,7 +103,7 @@ public class BroadcastServiceSessionTests
         string? capturedTopic = null;
         object? capturedEvent = null;
 
-        var (service, messageBusMock, _) = CreateService();
+        var (service, messageBusMock, _, sessionStoreMock) = CreateService();
 
         messageBusMock.Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
@@ -104,10 +114,22 @@ public class BroadcastServiceSessionTests
             })
             .ReturnsAsync(true);
 
+        var platformSessionId = Guid.NewGuid();
+        sessionStoreMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PlatformSessionModel
+            {
+                PlatformSessionId = platformSessionId,
+                LinkId = Guid.NewGuid(),
+                AccountId = Guid.NewGuid(),
+                Platform = PlatformType.Twitch,
+                State = PlatformSessionState.Active,
+                StartTime = DateTimeOffset.UtcNow.AddMinutes(-10)
+            });
+
         var request = new StopSessionRequest
         {
             WebSocketSessionId = Guid.NewGuid(),
-            PlatformSessionId = Guid.NewGuid()
+            PlatformSessionId = platformSessionId
         };
 
         var status = await service.StopSessionAsync(request, CancellationToken.None);
@@ -123,7 +145,7 @@ public class BroadcastServiceSessionTests
     [Fact]
     public async Task AssociateSessionAsync_SessionNotFound_ReturnsNotFound()
     {
-        var (service, _, _) = CreateService();
+        var (service, _, _, _) = CreateService();
 
         var request = new AssociateSessionRequest
         {
@@ -146,7 +168,7 @@ public class BroadcastServiceSessionTests
         string? capturedTopic = null;
         object? capturedEvent = null;
 
-        var (service, messageBusMock, _) = CreateService();
+        var (service, messageBusMock, _, sessionStoreMock) = CreateService();
 
         messageBusMock.Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
@@ -157,10 +179,27 @@ public class BroadcastServiceSessionTests
             })
             .ReturnsAsync(true);
 
+        var platformSessionId = Guid.NewGuid();
+        sessionStoreMock.Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new PlatformSessionModel
+            {
+                PlatformSessionId = platformSessionId,
+                LinkId = Guid.NewGuid(),
+                AccountId = Guid.NewGuid(),
+                Platform = PlatformType.YouTube,
+                State = PlatformSessionState.Active,
+                StartTime = DateTimeOffset.UtcNow.AddMinutes(-5)
+            }, "etag-1"));
+
+        sessionStoreMock.Setup(s => s.TrySaveAsync(
+                It.IsAny<string>(), It.IsAny<PlatformSessionModel>(), It.IsAny<string>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+
         var request = new AssociateSessionRequest
         {
             WebSocketSessionId = Guid.NewGuid(),
-            PlatformSessionId = Guid.NewGuid(),
+            PlatformSessionId = platformSessionId,
             StreamSessionId = Guid.NewGuid()
         };
 
@@ -177,7 +216,7 @@ public class BroadcastServiceSessionTests
     [Fact]
     public async Task GetSessionStatusAsync_SessionNotFound_ReturnsNotFound()
     {
-        var (service, _, _) = CreateService();
+        var (service, _, _, _) = CreateService();
 
         var request = new GetSessionStatusRequest
         {
@@ -196,19 +235,34 @@ public class BroadcastServiceSessionTests
     [Fact]
     public async Task GetSessionStatusAsync_ValidRequest_ReturnsOkWithStatus()
     {
-        var (service, _, _) = CreateService();
+        var (service, _, _, sessionStoreMock) = CreateService();
+
+        var platformSessionId = Guid.NewGuid();
+        sessionStoreMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PlatformSessionModel
+            {
+                PlatformSessionId = platformSessionId,
+                LinkId = Guid.NewGuid(),
+                AccountId = Guid.NewGuid(),
+                Platform = PlatformType.Twitch,
+                State = PlatformSessionState.Active,
+                StartTime = DateTimeOffset.UtcNow.AddMinutes(-15),
+                ViewerCount = 42
+            });
 
         var request = new GetSessionStatusRequest
         {
             WebSocketSessionId = Guid.NewGuid(),
-            PlatformSessionId = Guid.NewGuid()
+            PlatformSessionId = platformSessionId
         };
 
         var (status, response) = await service.GetSessionStatusAsync(request, CancellationToken.None);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.NotEqual(Guid.Empty, response.PlatformSessionId);
+        Assert.Equal(platformSessionId, response.PlatformSessionId);
+        Assert.Equal(PlatformSessionState.Active, response.State);
+        Assert.Equal(42, response.ViewerCount);
     }
 
     /// <summary>
@@ -217,7 +271,7 @@ public class BroadcastServiceSessionTests
     [Fact]
     public async Task ListSessionsAsync_ValidRequest_ReturnsOkWithSessions()
     {
-        var (service, _, _) = CreateService();
+        var (service, _, _, _) = CreateService();
 
         var request = new ListSessionsRequest
         {
@@ -231,7 +285,7 @@ public class BroadcastServiceSessionTests
         Assert.NotNull(response.Sessions);
     }
 
-    private static (BroadcastService service, Mock<IMessageBus> messageBusMock, Mock<IStateStoreFactory> storeFactoryMock) CreateService(
+    private static (BroadcastService service, Mock<IMessageBus> messageBusMock, Mock<IStateStore<PlatformLinkModel>> platformStoreMock, Mock<IStateStore<PlatformSessionModel>> sessionStoreMock) CreateService(
         BroadcastServiceConfiguration? config = null)
     {
         var messageBus = new Mock<IMessageBus>();
@@ -239,6 +293,14 @@ public class BroadcastServiceSessionTests
         var logger = new Mock<ILogger<BroadcastService>>();
         var configuration = config ?? new BroadcastServiceConfiguration();
         var eventConsumer = new Mock<IEventConsumer>();
+
+        var platformStore = new Mock<IStateStore<PlatformLinkModel>>();
+        var sessionStore = new Mock<IStateStore<PlatformSessionModel>>();
+
+        storeFactory.Setup(f => f.GetStore<PlatformLinkModel>(It.IsAny<string>()))
+            .Returns(platformStore.Object);
+        storeFactory.Setup(f => f.GetStore<PlatformSessionModel>(It.IsAny<string>()))
+            .Returns(sessionStore.Object);
 
         messageBus.Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
@@ -251,6 +313,6 @@ public class BroadcastServiceSessionTests
             configuration,
             eventConsumer.Object);
 
-        return (service, messageBus, storeFactory);
+        return (service, messageBus, platformStore, sessionStore);
     }
 }

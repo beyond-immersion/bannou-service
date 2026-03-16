@@ -513,8 +513,8 @@ public partial class BroadcastService : IBroadcastService
         {
             Sessions = sessions.ToArray(),
             TotalCount = sessions.Count,
-            Page = body.Page ?? 1,
-            PageSize = body.PageSize ?? 20
+            Page = body.Page,
+            PageSize = body.PageSize
         });
     }
 
@@ -790,7 +790,7 @@ public partial class BroadcastService : IBroadcastService
         var broadcastStore = _stateStoreFactory.GetStore<BroadcastOutputModel>(StateStoreDefinitions.BroadcastOutputs);
         if (broadcastStore is IQueryableStateStore<BroadcastOutputModel> queryableStore)
         {
-            var activeOnly = body.ActiveOnly ?? false;
+            var activeOnly = body.ActiveOnly;
             var results = activeOnly
                 ? await queryableStore.QueryAsync(b => b.State == BroadcastState.Active, cancellationToken)
                 : await queryableStore.QueryAsync(_ => true, cancellationToken);
@@ -817,8 +817,8 @@ public partial class BroadcastService : IBroadcastService
         {
             Outputs = outputs.ToArray(),
             TotalCount = outputs.Count,
-            Page = body.Page ?? 1,
-            PageSize = body.PageSize ?? 20
+            Page = body.Page,
+            PageSize = body.PageSize
         });
     }
 

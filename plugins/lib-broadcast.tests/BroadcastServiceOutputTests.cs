@@ -19,7 +19,7 @@ public class BroadcastServiceOutputTests
     [Fact]
     public async Task AnnounceCameraAsync_OutputDisabled_ReturnsBadRequest()
     {
-        var (service, _, _) = CreateService(new BroadcastServiceConfiguration
+        var (service, _, _, _) = CreateService(new BroadcastServiceConfiguration
         {
             OutputEnabled = false
         });
@@ -41,7 +41,7 @@ public class BroadcastServiceOutputTests
     [Fact]
     public async Task AnnounceCameraAsync_OutputEnabled_ReturnsOk()
     {
-        var (service, _, _) = CreateService(new BroadcastServiceConfiguration
+        var (service, _, _, _) = CreateService(new BroadcastServiceConfiguration
         {
             OutputEnabled = true
         });
@@ -66,7 +66,7 @@ public class BroadcastServiceOutputTests
     [Fact]
     public async Task RetireCameraAsync_CameraNotFound_ReturnsNotFound()
     {
-        var (service, _, _) = CreateService(new BroadcastServiceConfiguration
+        var (service, _, _, _) = CreateService(new BroadcastServiceConfiguration
         {
             OutputEnabled = true
         });
@@ -87,10 +87,19 @@ public class BroadcastServiceOutputTests
     [Fact]
     public async Task RetireCameraAsync_CameraFound_ReturnsOk()
     {
-        var (service, _, _) = CreateService(new BroadcastServiceConfiguration
+        var (service, _, cameraStoreMock, _) = CreateService(new BroadcastServiceConfiguration
         {
             OutputEnabled = true
         });
+
+        cameraStoreMock.Setup(x => x.GetAsync(
+                BroadcastService.BuildCameraKey("camera-01"), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CameraSourceModel
+            {
+                CameraId = "camera-01",
+                RtmpInputUrl = "rtmp://localhost:1935/live/camera-01",
+                HeartbeatAt = DateTimeOffset.UtcNow
+            });
 
         var request = new RetireCameraRequest
         {
@@ -110,7 +119,7 @@ public class BroadcastServiceOutputTests
     [Fact]
     public async Task StartOutputAsync_OutputDisabled_ReturnsBadRequest()
     {
-        var (service, _, _) = CreateService(new BroadcastServiceConfiguration
+        var (service, _, _, _) = CreateService(new BroadcastServiceConfiguration
         {
             OutputEnabled = false
         });
@@ -136,7 +145,7 @@ public class BroadcastServiceOutputTests
         string? capturedTopic = null;
         object? capturedEvent = null;
 
-        var (service, messageBusMock, _) = CreateService(new BroadcastServiceConfiguration
+        var (service, messageBusMock, _, _) = CreateService(new BroadcastServiceConfiguration
         {
             OutputEnabled = true,
             MaxConcurrentOutputs = 10
@@ -175,7 +184,7 @@ public class BroadcastServiceOutputTests
     [Fact]
     public async Task StopOutputAsync_OutputNotFound_ReturnsNotFound()
     {
-        var (service, _, _) = CreateService();
+        var (service, _, _, _) = CreateService();
 
         var request = new StopOutputRequest
         {
@@ -196,7 +205,24 @@ public class BroadcastServiceOutputTests
         string? capturedTopic = null;
         object? capturedEvent = null;
 
-        var (service, messageBusMock, _) = CreateService();
+        var broadcastId = Guid.NewGuid();
+
+        var (service, messageBusMock, _, outputStoreMock) = CreateService();
+
+        outputStoreMock.Setup(x => x.GetAsync(
+                BroadcastService.BuildOutputKey(broadcastId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BroadcastOutputModel
+            {
+                BroadcastId = broadcastId,
+                SourceType = BroadcastSourceType.Camera,
+                SourceId = "camera-01",
+                EncryptedRtmpUrl = "rtmp://example.com/live/key",
+                MaskedRtmpUrl = "rtmp://example.com/live/***",
+                OwningInstanceId = "test-instance",
+                State = BroadcastState.Active,
+                StartedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+                Health = BroadcastHealth.Healthy
+            });
 
         messageBusMock.Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
@@ -209,7 +235,7 @@ public class BroadcastServiceOutputTests
 
         var request = new StopOutputRequest
         {
-            BroadcastId = Guid.NewGuid()
+            BroadcastId = broadcastId
         };
 
         var status = await service.StopOutputAsync(request, CancellationToken.None);
@@ -227,7 +253,7 @@ public class BroadcastServiceOutputTests
     [Fact]
     public async Task UpdateOutputAsync_OutputNotFound_ReturnsNotFound()
     {
-        var (service, _, _) = CreateService();
+        var (service, _, _, _) = CreateService();
 
         var request = new UpdateOutputRequest
         {
@@ -248,7 +274,32 @@ public class BroadcastServiceOutputTests
         string? capturedTopic = null;
         object? capturedEvent = null;
 
-        var (service, messageBusMock, _) = CreateService();
+        var broadcastId = Guid.NewGuid();
+
+        var (service, messageBusMock, _, outputStoreMock) = CreateService();
+
+        outputStoreMock.Setup(x => x.GetWithETagAsync(
+                BroadcastService.BuildOutputKey(broadcastId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new BroadcastOutputModel
+            {
+                BroadcastId = broadcastId,
+                SourceType = BroadcastSourceType.Camera,
+                SourceId = "camera-01",
+                EncryptedRtmpUrl = "rtmp://example.com/live/old-key",
+                MaskedRtmpUrl = "rtmp://example.com/live/***",
+                OwningInstanceId = "test-instance",
+                State = BroadcastState.Active,
+                StartedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+                Health = BroadcastHealth.Healthy
+            }, "etag-1"));
+
+        outputStoreMock.Setup(x => x.TrySaveAsync(
+                BroadcastService.BuildOutputKey(broadcastId),
+                It.IsAny<BroadcastOutputModel>(),
+                "etag-1",
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
 
         messageBusMock.Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
@@ -261,7 +312,7 @@ public class BroadcastServiceOutputTests
 
         var request = new UpdateOutputRequest
         {
-            BroadcastId = Guid.NewGuid(),
+            BroadcastId = broadcastId,
             RtmpUrl = "rtmp://example.com/live/new-key"
         };
 
@@ -280,7 +331,7 @@ public class BroadcastServiceOutputTests
     [Fact]
     public async Task GetOutputStatusAsync_OutputNotFound_ReturnsNotFound()
     {
-        var (service, _, _) = CreateService();
+        var (service, _, _, _) = CreateService();
 
         var request = new GetOutputStatusRequest
         {
@@ -298,18 +349,36 @@ public class BroadcastServiceOutputTests
     [Fact]
     public async Task GetOutputStatusAsync_OutputFound_ReturnsOkWithStatus()
     {
-        var (service, _, _) = CreateService();
+        var broadcastId = Guid.NewGuid();
+
+        var (service, _, _, outputStoreMock) = CreateService();
+
+        outputStoreMock.Setup(x => x.GetAsync(
+                BroadcastService.BuildOutputKey(broadcastId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BroadcastOutputModel
+            {
+                BroadcastId = broadcastId,
+                SourceType = BroadcastSourceType.Camera,
+                SourceId = "camera-01",
+                EncryptedRtmpUrl = "rtmp://example.com/live/key",
+                MaskedRtmpUrl = "rtmp://example.com/live/***",
+                OwningInstanceId = "test-instance",
+                State = BroadcastState.Active,
+                CurrentVideoSource = "camera-01",
+                StartedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+                Health = BroadcastHealth.Healthy
+            });
 
         var request = new GetOutputStatusRequest
         {
-            BroadcastId = Guid.NewGuid()
+            BroadcastId = broadcastId
         };
 
         var (status, response) = await service.GetOutputStatusAsync(request, CancellationToken.None);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.NotEqual(Guid.Empty, response.BroadcastId);
+        Assert.Equal(broadcastId, response.BroadcastId);
     }
 
     // ── ListOutputs ─────────────────────────────────────────────────────
@@ -320,7 +389,7 @@ public class BroadcastServiceOutputTests
     [Fact]
     public async Task ListOutputsAsync_ValidRequest_ReturnsOkWithOutputs()
     {
-        var (service, _, _) = CreateService();
+        var (service, _, _, _) = CreateService();
 
         var request = new ListOutputsRequest();
 
@@ -331,14 +400,21 @@ public class BroadcastServiceOutputTests
         Assert.NotNull(response.Outputs);
     }
 
-    private static (BroadcastService service, Mock<IMessageBus> messageBusMock, Mock<IStateStoreFactory> storeFactoryMock) CreateService(
+    private static (BroadcastService service, Mock<IMessageBus> messageBusMock, Mock<IStateStore<CameraSourceModel>> cameraStoreMock, Mock<IStateStore<BroadcastOutputModel>> outputStoreMock) CreateService(
         BroadcastServiceConfiguration? config = null)
     {
         var messageBus = new Mock<IMessageBus>();
         var storeFactory = new Mock<IStateStoreFactory>();
+        var cameraStore = new Mock<IStateStore<CameraSourceModel>>();
+        var outputStore = new Mock<IStateStore<BroadcastOutputModel>>();
         var logger = new Mock<ILogger<BroadcastService>>();
         var configuration = config ?? new BroadcastServiceConfiguration();
         var eventConsumer = new Mock<IEventConsumer>();
+
+        storeFactory.Setup(x => x.GetStore<CameraSourceModel>(StateStoreDefinitions.BroadcastCameras))
+            .Returns(cameraStore.Object);
+        storeFactory.Setup(x => x.GetStore<BroadcastOutputModel>(StateStoreDefinitions.BroadcastOutputs))
+            .Returns(outputStore.Object);
 
         messageBus.Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
@@ -351,6 +427,6 @@ public class BroadcastServiceOutputTests
             configuration,
             eventConsumer.Object);
 
-        return (service, messageBus, storeFactory);
+        return (service, messageBus, cameraStore, outputStore);
     }
 }

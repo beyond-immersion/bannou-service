@@ -114,6 +114,15 @@ public partial class FactionCreatedEvent : BaseServiceEvent
     public FactionStatus Status { get; set; } = default!;
 
     /// <summary>
+    /// Authority classification for governance power
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authorityLevel")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AuthorityLevel AuthorityLevel { get; set; } = default!;
+
+    /// <summary>
     /// Current seed growth phase
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentPhase")]
@@ -243,6 +252,15 @@ public partial class FactionUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public FactionStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Authority classification for governance power
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authorityLevel")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AuthorityLevel AuthorityLevel { get; set; } = default!;
 
     /// <summary>
     /// Current seed growth phase
@@ -382,6 +400,15 @@ public partial class FactionDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public FactionStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Authority classification for governance power
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authorityLevel")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AuthorityLevel AuthorityLevel { get; set; } = default!;
 
     /// <summary>
     /// Current seed growth phase

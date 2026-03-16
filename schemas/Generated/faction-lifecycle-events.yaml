@@ -24,6 +24,7 @@ components:
       - realmId
       - isRealmBaseline
       - status
+      - authorityLevel
       - memberCount
       - createdAt
       - updatedAt
@@ -67,11 +68,14 @@ components:
         status: &id009
           $ref: ../faction-api.yaml#/components/schemas/FactionStatus
           description: "Current operational lifecycle status"
-        currentPhase: &id010
+        authorityLevel: &id010
+          $ref: ../faction-api.yaml#/components/schemas/AuthorityLevel
+          description: "Authority classification for governance power"
+        currentPhase: &id011
           type: string
           nullable: true
           description: "Current seed growth phase"
-        memberCount: &id011
+        memberCount: &id012
           type: integer
           description: "Current number of members"
         createdAt:
@@ -112,6 +116,7 @@ components:
       - realmId
       - isRealmBaseline
       - status
+      - authorityLevel
       - memberCount
       - createdAt
       - updatedAt
@@ -131,8 +136,9 @@ components:
         parentFactionId: *id007
         seedId: *id008
         status: *id009
-        currentPhase: *id010
-        memberCount: *id011
+        authorityLevel: *id010
+        currentPhase: *id011
+        memberCount: *id012
         createdAt:
           type: string
           format: date-time
@@ -176,6 +182,7 @@ components:
       - realmId
       - isRealmBaseline
       - status
+      - authorityLevel
       - memberCount
       - createdAt
       - updatedAt
@@ -194,8 +201,9 @@ components:
         parentFactionId: *id007
         seedId: *id008
         status: *id009
-        currentPhase: *id010
-        memberCount: *id011
+        authorityLevel: *id010
+        currentPhase: *id011
+        memberCount: *id012
         createdAt:
           type: string
           format: date-time

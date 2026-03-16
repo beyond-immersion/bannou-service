@@ -11,12 +11,15 @@ Variable providers supply entity data to behavior expressions via the
 
 | Namespace | Service | Purpose |
 |-----------|---------|---------|
+| `${affix.*}` | Affix | Item affix data for NPC GOAP evaluation of equipment quality (${affix.*}) |
 | `${backstory.*}` | CharacterHistory | Character backstory elements for ABML expressions (${backstory.*}) |
 | `${combat.*}` | CharacterPersonality | Combat preference data for ABML expressions (${combat.*}) |
 | `${currency.*}` | Currency | Currency balance and wallet data for ABML expressions (${currency.*}) |
 | `${encounters.*}` | CharacterEncounter | Encounter history and sentiment for ABML expressions (${encounters.*}) |
 | `${faction.*}` | Faction | Faction membership and status data for ABML expressions (${faction.*}) |
+| `${heritage.*}` | CharacterLifecycle | Genetic heritage data — phenotype traits, aptitudes, bloodline membership, species, generation depth (${heritage.*}) |
 | `${inventory.*}` | Inventory | Item possession and container data for ABML expressions (${inventory.*}) |
+| `${lifecycle.*}` | CharacterLifecycle | Lifecycle state data — age, stage, fertility, health modifier, marriage status, child count, fulfillment (${lifecycle.*}) |
 | `${location.*}` | Location | Location context data for ABML expressions (${location.*}) |
 | `${obligations.*}` | Obligation | Contract obligation action cost modifiers for ABML expressions (${obligations.*}) |
 | `${personality.*}` | CharacterPersonality | Personality trait values for ABML expressions (${personality.*}) |
@@ -26,7 +29,7 @@ Variable providers supply entity data to behavior expressions via the
 | `${transit.*}` | Transit | Transit mode availability, journey state, and route data for ABML expressions (${transit.*}) |
 | `${world.*}` | Worldstate | Game time, calendar, and season data for ABML expressions (${world.*}) |
 
-**Total**: 14 providers
+**Total**: 17 providers
 
 ## How Providers Work
 

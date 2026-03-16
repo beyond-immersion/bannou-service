@@ -199,6 +199,234 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/affix/definition/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a new affix definition
+     * @description Creates a modifier template with stat grants, spawn weights, and classification.
+     *     Definitions are scoped to a game service. Code must be unique within game service.
+     */
+    post: operations['affix_createDefinition'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/affix/definition/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get an affix definition
+     * @description Retrieve a definition by ID or by gameServiceId + code. Supports cache read-through.
+     */
+    post: operations['affix_getDefinition'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/affix/definition/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List affix definitions
+     * @description Query definitions for a game service with optional filtering by slot type, mod group, category, tags, tier range, influence, and deprecation status.
+     */
+    post: operations['affix_listDefinitions'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/affix/definition/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update an affix definition
+     * @description Partial update of a definition. Identity fields (code, gameServiceId, slotType, modGroup)
+     *     cannot be changed. Generation-relevant field changes invalidate pool caches.
+     */
+    post: operations['affix_updateDefinition'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/affix/definition/deprecate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Deprecate an affix definition
+     * @description Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+     *     no delete. Idempotent — returns OK if already deprecated. Deprecated definitions
+     *     cannot be applied to new items. Pool caches are invalidated.
+     */
+    post: operations['affix_deprecateDefinition'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/affix/definition/seed': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Bulk seed affix definitions
+     * @description Creates multiple definitions in a single call, skipping any that already exist
+     *     (by code within game service). Used for initial game setup.
+     */
+    post: operations['affix_seedDefinitions'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/affix/definition/list-mod-groups': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List mod groups for a game service
+     * @description Returns all unique mod groups with definition counts. Filters by deprecation status.
+     */
+    post: operations['affix_listModGroups'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/affix/implicit/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create an implicit mapping for an item template
+     * @description Maps an item template code to a set of implicit affix definitions.
+     *     Items created from this template automatically receive these implicits.
+     */
+    post: operations['affix_createImplicitMapping'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/affix/implicit/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get implicit mapping for an item template
+     * @description Retrieves the implicit affix definitions mapped to an item template code.
+     */
+    post: operations['affix_getImplicitMapping'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/affix/implicit/seed': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Bulk seed implicit mappings
+     * @description Creates multiple implicit mappings, skipping any that already exist.
+     */
+    post: operations['affix_seedImplicitMappings'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/affix/implicit/roll': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Roll implicit values for an item template
+     * @description Pure computation endpoint — rolls random values for the implicit definitions
+     *     mapped to an item template. Does not persist state. Used by loot generation
+     *     to preview implicit rolls before item creation.
+     */
+    post: operations['affix_rollImplicits'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/assets/upload/request': {
     parameters: {
       query?: never;
@@ -1527,6 +1755,315 @@ export interface paths {
      *     no delete. Idempotent — returns OK if already deprecated.
      */
     post: operations['characterEncounter_deprecateEncounterType'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-lifecycle/profile/set-death-year': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Override a character's projected natural death year
+     * @description Administrative override for divine intervention (extending/shortening lifespan)
+     *     or testing. Publishes no event (silent adjustment).
+     */
+    post: operations['characterLifecycle_setNaturalDeathYear'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-lifecycle/profile/seed': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Bulk seed lifecycle profiles for first-generation characters
+     * @description Creates lifecycle profiles for seeded (first-generation) characters.
+     *     Accepts character IDs with birth years, stages, and optional heritage data.
+     *     Per-item error isolation. Used during world initialization.
+     */
+    post: operations['characterLifecycle_seedLifecycleProfile'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-lifecycle/heritage/get-genetic-profile': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get full genetic profile for a character
+     * @description Returns full genetic profile including genotype, phenotype, aptitudes, bloodlines, mutations, parent references.
+     */
+    post: operations['characterLifecycle_getGeneticProfile'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-lifecycle/heritage/get-phenotype': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get expressed phenotype traits and aptitudes for a character
+     * @description Lightweight version of GetGeneticProfile returning only expressed phenotype traits and derived aptitudes.
+     */
+    post: operations['characterLifecycle_getPhenotype'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-lifecycle/heritage/seed-genetic-profile': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create genetic profile for a first-generation character
+     * @description Accepts explicit phenotype values or generates from species defaults with random variation.
+     *     First-gen characters have genotype equal to phenotype (both alleles equal expressed value).
+     *     Immutable after creation (returns 409 if profile already exists).
+     */
+    post: operations['characterLifecycle_seedGeneticProfile'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-lifecycle/heritage/get-family-tree': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get multi-generational family tree rooted at a character
+     * @description Returns parents, grandparents, siblings, children, grandchildren with heritage
+     *     trait summaries per generation. Depth configurable.
+     */
+    post: operations['characterLifecycle_getFamilyTree'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-lifecycle/template/seed-lifecycle': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create lifecycle stage definitions for a species
+     * @description Validates stage boundaries are contiguous (no age gaps or overlaps). Returns 409 if template already exists for this species/game.
+     */
+    post: operations['characterLifecycle_seedLifecycleTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-lifecycle/template/seed-heritable-traits': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create heritable trait definitions for a species
+     * @description Defines which traits exist, their dominance models, mutation parameters, expression delays, and personality/aptitude mappings.
+     */
+    post: operations['characterLifecycle_seedHeritableTraitTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-lifecycle/template/seed-hybrid': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create cross-species hybridization rules for a species pair
+     * @description Defines trait dominance overrides, fertility modifiers, and hybrid-specific traits for a cross-species combination.
+     */
+    post: operations['characterLifecycle_seedHybridTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-lifecycle/template/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List all lifecycle and heritage templates for a game service
+     * @description Returns all lifecycle templates, heritable trait templates, and hybrid templates. Supports includeDeprecated for Category B deprecation.
+     */
+    post: operations['characterLifecycle_listTemplates'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-lifecycle/bloodline/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get bloodline definition
+     * @description Returns bloodline definition including origin, trait signature, member count, generation span.
+     */
+    post: operations['characterLifecycle_getBloodline'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-lifecycle/bloodline/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List bloodlines within a game service
+     * @description Paged list filterable by trait signature, minimum generation depth, and minimum member count.
+     */
+    post: operations['characterLifecycle_listBloodlines'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-lifecycle/bloodline/establish': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Manually establish a bloodline
+     * @description Creates bloodline (divine intervention, noble declaration). Assigns to origin character
+     *     and specified ancestors retroactively. Publishes bloodline.formed and bloodline.created events.
+     */
+    post: operations['characterLifecycle_establishBloodline'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-lifecycle/bloodline/delete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Delete a bloodline (immediate hard delete)
+     * @description Immediate hard delete. Calls ExecuteCleanupAsync via lib-resource to CASCADE-clean
+     *     membership indexes. Immutable GeneticProfile.bloodlines arrays are unaffected.
+     *     HeritageProviderFactory filters deleted bloodlines from variable resolution.
+     */
+    post: operations['characterLifecycle_deleteBloodline'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-lifecycle/bloodline/query-members': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Query living members of a bloodline
+     * @description Returns living members with their generation depth and trait expression.
+     */
+    post: operations['characterLifecycle_queryBloodlineMembers'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4119,6 +4656,9 @@ export interface paths {
      *     species instincts) that apply to all characters in the realm unless
      *     overridden by more specific faction norms.
      *
+     *     Automatically sets the designated faction's authorityLevel to Sovereign,
+     *     as the realm baseline is the ultimate legal authority for the realm.
+     *
      *     Only one faction per realm can be the baseline. Setting a new baseline
      *     clears the previous one. The faction must belong to the specified realm.
      */
@@ -4465,6 +5005,122 @@ export interface paths {
      *     by severity and scope.
      */
     post: operations['faction_listNorms'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/faction/governance/set': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Set a governance entry for a faction
+     * @description Creates or updates a governance entry associating a case type domain
+     *     with a contract template. Faction must have Sovereign or Delegated
+     *     authority level. Requires governance.arbitrate.* seed capability.
+     *     Idempotent — overwrites if domain already exists for this faction.
+     *
+     *     Governance entries are queried by lib-arbitration to instantiate
+     *     procedural templates for cases filed within the faction's jurisdiction.
+     */
+    post: operations['faction_setGovernanceEntry'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/faction/governance/remove': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Remove a governance entry
+     * @description Removes a governance entry for a specific domain from a faction.
+     */
+    post: operations['faction_removeGovernanceEntry'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/faction/governance/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List governance entries for a faction
+     * @description Returns all governance entries defined by a faction.
+     */
+    post: operations['faction_listGovernanceEntries'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/faction/governance/delegate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Delegate authority from sovereign to child faction
+     * @description A sovereign faction grants delegated authority to a child faction
+     *     for specific case type domains. The target faction's authorityLevel
+     *     is set to Delegated. The target must be a descendant of the sovereign
+     *     in the faction hierarchy.
+     *
+     *     Delegation is per-case-type via domain strings. A sovereign can
+     *     delegate "trade_dispute" jurisdiction without delegating "criminal"
+     *     jurisdiction. Each domain grants the target faction the right to
+     *     arbitrate cases of that type within its territory.
+     */
+    post: operations['faction_delegateAuthority'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/faction/governance/revoke': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Revoke delegated authority
+     * @description Revokes delegated authority from a child faction. If all domains are
+     *     revoked (or domains is null for blanket revocation), the target
+     *     faction's authorityLevel reverts to Influence.
+     */
+    post: operations['faction_revokeAuthority'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11311,6 +11967,66 @@ export interface components {
       /** @description Events that occurred during this leg */
       incidents?: components['schemas']['JourneyIncident'][] | null;
     };
+    /** @description Full affix definition response */
+    AffixDefinitionResponse: {
+      /**
+       * Format: uuid
+       * @description Unique definition identifier
+       */
+      definitionId: string;
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /** @description Unique code within game service */
+      code: string;
+      /** @description Slot type (e.g., "prefix", "suffix", "implicit") */
+      slotType: string;
+      /** @description Exclusivity group */
+      modGroup: string;
+      /** @description Power tier within mod group (1 = best) */
+      tier: number;
+      /** @description Broad classification */
+      category?: string | null;
+      /** @description Generation tags */
+      tags?: string[] | null;
+      /** @description Stat contributions */
+      statGrants: components['schemas']['StatGrant'][];
+      /** @description Base weight for generation */
+      spawnWeight: number;
+      /** @description Per-tag weight multipliers */
+      spawnTagModifiers?: components['schemas']['SpawnTagModifier'][] | null;
+      /** @description Minimum item level to spawn */
+      requiredItemLevel: number;
+      /** @description Required influence types */
+      requiredInfluences?: string[] | null;
+      /** @description Item classes this appears on */
+      validItemClasses?: string[] | null;
+      /** @description Human-readable display name */
+      displayName?: string | null;
+      /** @description Sorting priority */
+      displayOrder: number;
+      /** @description Whether this definition is deprecated */
+      isDeprecated: boolean;
+      /**
+       * Format: date-time
+       * @description When this definition was deprecated (null if not deprecated)
+       */
+      deprecatedAt?: string | null;
+      /** @description Reason for deprecation (null if not deprecated) */
+      deprecationReason?: string | null;
+      /**
+       * Format: date-time
+       * @description When this definition was created
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description When this definition was last updated
+       */
+      updatedAt?: string | null;
+    };
     /**
      * @description Describes a capability or interaction mode for a node.
      *     Used by AI systems to understand what actions are possible and by
@@ -11442,6 +12158,16 @@ export interface components {
       sdpAnswer: string;
       /** @description ICE candidates for NAT traversal (can be trickled later) */
       iceCandidates?: string[] | null;
+    };
+    /** @description Derived skill aptitude from phenotype traits */
+    AptitudeEntry: {
+      /** @description Skill domain code (e.g., smithing, enchanting) */
+      domain: string;
+      /**
+       * Format: float
+       * @description Inherited aptitude value representing innate potential (0.0-1.0)
+       */
+      value: number;
     };
     /**
      * @description Emotional arc shapes from Reagan et al. research.
@@ -11607,13 +12333,6 @@ export interface components {
       /** @description Searchable tags for the asset (null to omit) */
       tags?: string[] | null;
     };
-    /**
-     * @description Type of asset owner per FOUNDATION TENETS (Account Identity Boundary).
-     *     Session: user-initiated operation identified by WebSocket session ID (UUID).
-     *     Service: service-initiated operation identified by service name.
-     * @enum {string}
-     */
-    AssetOwnerType: 'Session' | 'Service';
     /** @description Reference to an asset in lib-asset */
     AssetReference: {
       /**
@@ -11933,6 +12652,11 @@ export interface components {
       /** @description Checkout authority token */
       authorityToken: string;
     };
+    /**
+     * @description Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.
+     * @enum {string}
+     */
+    AuthorityLevel: 'Influence' | 'Delegated' | 'Sovereign';
     /** @description Configuration for instantiate-on-access behavior */
     AutoSpawnConfig: {
       /**
@@ -12211,6 +12935,67 @@ export interface components {
      * @enum {string}
      */
     BindingStatus: 'Pending' | 'Syncing' | 'Synced' | 'Error' | 'Disabled';
+    /** @description Bloodline membership record for a character */
+    BloodlineEntry: {
+      /**
+       * Format: uuid
+       * @description Bloodline identifier
+       */
+      bloodlineId: string;
+      /** @description Human-readable bloodline code */
+      bloodlineCode: string;
+      /**
+       * Format: uuid
+       * @description Character who founded or was first tracked member
+       */
+      originCharacterId: string;
+      /** @description When the bloodline was first identified */
+      originGameYear: number;
+      /** @description Trait codes that characterize this bloodline */
+      traitSignature: string[];
+      /** @description Generations from origin to this character */
+      generationFrom: number;
+    };
+    /** @description Summary of a bloodline member with generation and trait data */
+    BloodlineMemberSummary: {
+      /**
+       * Format: uuid
+       * @description Character who is a member of this bloodline
+       */
+      characterId: string;
+      /** @description Generations from bloodline origin to this character */
+      generationFrom: number;
+      /** @description Expressed signature traits for this member */
+      traitExpression?: components['schemas']['PhenotypeEntry'][] | null;
+    };
+    /** @description Bloodline definition data returned by get and list endpoints */
+    BloodlineSummary: {
+      /**
+       * Format: uuid
+       * @description Bloodline identifier
+       */
+      bloodlineId: string;
+      /** @description Human-readable bloodline code */
+      bloodlineCode: string;
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /**
+       * Format: uuid
+       * @description Character who founded or was first tracked member
+       */
+      originCharacterId: string;
+      /** @description Game year when the bloodline was first identified */
+      originGameYear: number;
+      /** @description Trait codes that characterize this bloodline */
+      traitSignature: string[];
+      /** @description Number of living members */
+      memberCount: number;
+      /** @description Number of generations from origin to most recent member */
+      generationSpan: number;
+    };
     /** @description State of a single license node on a board, including unlock status */
     BoardNodeState: {
       /** @description Unique license code within this board template */
@@ -12770,10 +13555,8 @@ export interface components {
       name?: string | null;
       /** @description Bundle description */
       description?: string | null;
-      /** @description Type of owner (null for system-owned bundles) */
-      ownerType?: components['schemas']['AssetOwnerType'] | null;
-      /** @description Owner identifier - session ID or service name (null for system-owned bundles) */
-      ownerId?: string | null;
+      /** @description Informational field recording who created this bundle. Not used for access control. */
+      createdBy: string;
       /** @description Game realm this bundle belongs to. Null for cross-realm bundles. */
       realm?: components['schemas']['GameRealm'] | null;
       /** @description Key-value tags for categorization and filtering */
@@ -12863,13 +13646,8 @@ export interface components {
     BundleType: 'Source' | 'Metabundle';
     /** @description Request to upload a pre-built asset bundle file */
     BundleUploadRequest: {
-      /** @description Type of owner uploading this bundle */
-      ownerType: components['schemas']['AssetOwnerType'];
-      /**
-       * @description Owner identifier. For Session type: the WebSocket session ID (UUID format).
-       *     For Service type: the service name (e.g., "behavior", "orchestrator").
-       */
-      ownerId: string;
+      /** @description Informational field recording who uploaded this bundle. Not used for access control. */
+      createdBy: string;
       /** @description Must end with .bannou or .zip */
       filename: string;
       /**
@@ -15275,13 +16053,8 @@ export interface components {
     };
     /** @description Request to create a new asset bundle from multiple assets */
     CreateBundleRequest: {
-      /** @description Type of owner creating this bundle */
-      ownerType: components['schemas']['AssetOwnerType'];
-      /**
-       * @description Owner identifier. For Session type: the WebSocket session ID (UUID format).
-       *     For Service type: the service name (e.g., "behavior", "orchestrator").
-       */
-      ownerId: string;
+      /** @description Informational field recording who created this bundle. Not used for access control. */
+      createdBy: string;
       /** @description Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1") */
       bundleId: string;
       /**
@@ -15492,20 +16265,47 @@ export interface components {
         [key: string]: unknown;
       } | null;
     };
-    /** @description Request to create a map definition */
+    /** @description Request to create a new affix definition */
     CreateDefinitionRequest: {
-      /** @description Human-readable name */
-      name: string;
-      /** @description Description of the map template */
-      description?: string | null;
-      /** @description Layer configurations */
-      layers?: components['schemas']['LayerDefinition'][] | null;
-      /** @description Default bounds for regions using this definition */
-      defaultBounds?: components['schemas']['Bounds'] | null;
-      /** @description Client-provided definition metadata. No Bannou plugin reads specific keys from this field by convention. */
-      metadata?: {
-        [key: string]: unknown;
-      } | null;
+      /**
+       * Format: uuid
+       * @description Game service scope for this definition
+       */
+      gameServiceId: string;
+      /** @description Unique definition code within game service */
+      code: string;
+      /** @description Slot type (e.g., "prefix", "suffix", "implicit", "enchant") */
+      slotType: string;
+      /** @description Exclusivity group (one affix per mod group per item) */
+      modGroup: string;
+      /** @description Power tier within mod group (1 = best) */
+      tier: number;
+      /** @description Broad classification (e.g., "defense", "offense") */
+      category?: string | null;
+      /** @description Generation tags for pool filtering */
+      tags?: string[] | null;
+      /** @description Stat contributions from this affix (minimum 1) */
+      statGrants: components['schemas']['StatGrant'][];
+      /** @description Base weight for weighted random selection */
+      spawnWeight: number;
+      /** @description Per-tag weight multipliers */
+      spawnTagModifiers?: components['schemas']['SpawnTagModifier'][] | null;
+      /**
+       * @description Minimum item level to spawn this definition
+       * @default 0
+       */
+      requiredItemLevel: number;
+      /** @description Required influence types (empty = no requirement) */
+      requiredInfluences?: string[] | null;
+      /** @description Item classes this definition can appear on */
+      validItemClasses?: string[] | null;
+      /** @description Human-readable display name (e.g., "Blazing", "of the Godslayer") */
+      displayName?: string | null;
+      /**
+       * @description Sorting priority within slot type
+       * @default 0
+       */
+      displayOrder: number;
     };
     /** @description Request to create a new documentation entry */
     CreateDocumentRequest: {
@@ -15630,6 +16430,20 @@ export interface components {
        * @description Parent faction for hierarchy (null for top-level)
        */
       parentFactionId?: string | null;
+      /** @description Authority level for the new faction (defaults to Influence if not specified) */
+      authorityLevel?: components['schemas']['AuthorityLevel'];
+    };
+    /** @description Request to map implicit affix definitions to an item template code */
+    CreateImplicitMappingRequest: {
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /** @description Item template code to map */
+      itemTemplateCode: string;
+      /** @description Implicit affix definition IDs (must be slotType "implicit") */
+      implicitDefinitionIds: string[];
     };
     /** @description Request to create a new item instance */
     CreateItemInstanceRequest: {
@@ -15938,13 +16752,8 @@ export interface components {
        * @default 1.0.0
        */
       version: string;
-      /** @description Type of owner creating this metabundle */
-      ownerType: components['schemas']['AssetOwnerType'];
-      /**
-       * @description Owner identifier. For Session type: the WebSocket session ID (UUID format).
-       *     For Service type: the service name (e.g., "behavior", "orchestrator").
-       */
-      ownerId: string;
+      /** @description Informational field recording who created this metabundle. Not used for access control. */
+      createdBy: string;
       /** @description Game realm for this metabundle */
       realm: components['schemas']['GameRealm'];
       /** @description Human-readable description */
@@ -16555,6 +17364,11 @@ export interface components {
       /** @description True if this period has sunlight, used by ${world.time.is_day} and ${world.time.is_night} */
       isDaylight: boolean;
     };
+    /**
+     * @description Statistical distribution model for natural death year calculation
+     * @enum {string}
+     */
+    DeathDistribution: 'Uniform' | 'Normal' | 'WeightedLate';
     /** @description Request to decline a formed match */
     DeclineMatchRequest: {
       /**
@@ -16609,6 +17423,21 @@ export interface components {
       /** @description Human-readable description of the norm */
       description?: string | null;
     };
+    /** @description Request to delegate authority from a sovereign faction to a child faction for specific case type domains */
+    DelegateAuthorityRequest: {
+      /**
+       * Format: uuid
+       * @description Sovereign faction granting delegation
+       */
+      sovereignFactionId: string;
+      /**
+       * Format: uuid
+       * @description Child faction receiving delegated authority
+       */
+      targetFactionId: string;
+      /** @description Case type domains to delegate (e.g., ["trade_dispute", "dissolution"]). Each domain grants the target faction the right to arbitrate cases of that type within its territory. */
+      domains: string[];
+    };
     /** @description Request to delete an action tag mapping */
     DeleteActionMappingRequest: {
       /** @description The GOAP action tag whose mapping should be deleted */
@@ -16650,6 +17479,16 @@ export interface components {
        */
       areaConfigId: string;
     };
+    /** @description Request to delete a bloodline */
+    DeleteBloodlineRequest: {
+      /**
+       * Format: uuid
+       * @description Bloodline to delete
+       */
+      bloodlineId: string;
+    };
+    /** @description Empty response. HTTP 200 confirms the bloodline was deleted. */
+    DeleteBloodlineResponse: Record<string, never>;
     /** @description Request to delete a board instance */
     DeleteBoardRequest: {
       /**
@@ -16952,6 +17791,16 @@ export interface components {
        */
       definitionId: string;
       /** @description Reason for deprecation (audit context for Category B entities) */
+      reason?: string | null;
+    };
+    /** @description Request to deprecate a definition (Category B — one-way, no delete) */
+    DeprecateDefinitionRequest: {
+      /**
+       * Format: uuid
+       * @description Definition to deprecate
+       */
+      definitionId: string;
+      /** @description Reason for deprecation (recommended for audit trail) */
       reason?: string | null;
     };
     /** @description Request to deprecate an encounter type (Category B — one-way, no delete). Idempotent — returns OK if already deprecated. */
@@ -17274,6 +18123,17 @@ export interface components {
        */
       weight: number;
     };
+    /**
+     * @description Genetic dominance model determining how alleles combine to produce phenotype
+     * @enum {string}
+     */
+    DominanceModel:
+      | 'DominantHigh'
+      | 'DominantLow'
+      | 'Blending'
+      | 'Codominant'
+      | 'Maternal'
+      | 'Random';
     /** @description Download details for a specific game client version and platform */
     DownloadInfo: {
       /** @description Target platform for this download */
@@ -18137,6 +18997,33 @@ export interface components {
      * @enum {string}
      */
     EscrowType: 'TwoParty' | 'MultiParty' | 'Conditional' | 'Auction';
+    /** @description Request to manually establish a bloodline */
+    EstablishBloodlineRequest: {
+      /** @description Human-readable bloodline code */
+      bloodlineCode: string;
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /**
+       * Format: uuid
+       * @description Character who founded or is the first tracked member
+       */
+      originCharacterId: string;
+      /** @description Trait codes that characterize this bloodline */
+      traitSignature: string[];
+      /** @description Additional ancestor characters to retroactively assign to this bloodline */
+      ancestorCharacterIds?: string[] | null;
+    };
+    /** @description Result of bloodline establishment */
+    EstablishBloodlineResponse: {
+      /**
+       * Format: uuid
+       * @description Identifier of the newly created bloodline
+       */
+      bloodlineId: string;
+    };
     /** @description Request to execute contract clauses */
     ExecuteContractRequest: {
       /**
@@ -18292,6 +19179,8 @@ export interface components {
       seedId?: string | null;
       /** @description Current operational lifecycle status (orthogonal to deprecation) */
       status: components['schemas']['FactionStatus'];
+      /** @description Authority classification for governance power. Defaults to Influence. Sovereign is set by DesignateRealmBaseline. Delegated is set via delegation endpoints. */
+      authorityLevel: components['schemas']['AuthorityLevel'];
       /** @description Current seed growth phase (denormalized from lib-seed for convenience) */
       currentPhase?: string | null;
       /** @description Whether this faction is deprecated and should not accept new references (per IMPLEMENTATION TENETS triple-field model) */
@@ -18347,6 +19236,24 @@ export interface components {
       /** @description Whether the related character is alive */
       isAlive: boolean;
     };
+    /** @description A node in a multi-generational family tree */
+    FamilyTreeNode: {
+      /**
+       * Format: uuid
+       * @description Character at this tree node
+       */
+      characterId: string;
+      /** @description Species code of this character */
+      speciesCode?: string | null;
+      /** @description Generation relative to root (negative for ancestors, positive for descendants) */
+      generation: number;
+      /** @description Relationship to the root character (parent, grandparent, child, sibling, etc.) */
+      relationship?: string | null;
+      /** @description Key phenotype traits for this character (summarized) */
+      phenotypeSummary?: components['schemas']['PhenotypeEntry'][] | null;
+      /** @description Bloodline codes this character belongs to */
+      bloodlineCodes?: string[] | null;
+    };
     /** @description Family relationships for a character */
     FamilyTreeResponse: {
       /** @description Parent relationships (biological and adoptive) */
@@ -18359,6 +19266,18 @@ export interface components {
       spouses: components['schemas']['FamilyMember'][];
       /** @description Previous incarnations (if reincarnation tracked) */
       pastLives: components['schemas']['PastLifeReference'][];
+    };
+    /** @description Species fertility peak and decline configuration */
+    FertilityWindow: {
+      /** @description Age when fertility peaks */
+      peakStartAge: number;
+      /** @description Age when peak ends */
+      peakEndAge: number;
+      /**
+       * Format: float
+       * @description How fast fertility drops after peak (0.0-1.0)
+       */
+      declineRate: number;
     };
     /** @description Request to find asset usage */
     FindAssetUsageRequest: {
@@ -18734,6 +19653,23 @@ export interface components {
       /** @description Analysis of the progression */
       analysis?: components['schemas']['ProgressionAnalysis'];
     };
+    /** @description Inherited allele pair for a single genetic trait */
+    GenotypeEntry: {
+      /** @description Game-configurable genetic trait identifier */
+      traitCode: string;
+      /**
+       * Format: float
+       * @description Value from parent A (0.0-1.0)
+       */
+      alleleA: number;
+      /**
+       * Format: float
+       * @description Value from parent B (0.0-1.0)
+       */
+      alleleB: number;
+      /** @description How alleles combine to produce phenotype */
+      dominance: components['schemas']['DominanceModel'];
+    };
     /** @description Request to get achievement progress */
     GetAchievementProgressRequest: {
       /**
@@ -18837,6 +19773,19 @@ export interface components {
       earnCapInfo?: components['schemas']['EarnCapInfo'];
       /** @description Autogain status (null if autogain not enabled) */
       autogainInfo?: components['schemas']['AutogainInfo'];
+    };
+    /** @description Request to get a bloodline definition */
+    GetBloodlineRequest: {
+      /**
+       * Format: uuid
+       * @description Bloodline to retrieve
+       */
+      bloodlineId: string;
+    };
+    /** @description Bloodline definition */
+    GetBloodlineResponse: {
+      /** @description Bloodline definition data */
+      bloodline: components['schemas']['BloodlineSummary'];
     };
     /** @description Request to get a board instance by ID */
     GetBoardRequest: {
@@ -19081,13 +20030,20 @@ export interface components {
        */
       locationId: string;
     };
-    /** @description Request to get a map definition */
+    /** @description Request to get a definition by ID or by gameServiceId + code */
     GetDefinitionRequest: {
       /**
        * Format: uuid
-       * @description Definition ID to retrieve
+       * @description Definition ID (takes precedence over code lookup)
        */
-      definitionId: string;
+      definitionId?: string | null;
+      /**
+       * Format: uuid
+       * @description Game service scope (required for code lookup)
+       */
+      gameServiceId?: string | null;
+      /** @description Definition code (used with gameServiceId) */
+      code?: string | null;
     };
     /** @description Request to get deposit status for a party */
     GetDepositStatusRequest: {
@@ -19254,6 +20210,34 @@ export interface components {
        */
       factionId: string;
     };
+    /** @description Request to get a multi-generational family tree */
+    GetFamilyTreeRequest: {
+      /**
+       * Format: uuid
+       * @description Root character of the family tree
+       */
+      characterId: string;
+      /**
+       * @description Generations to traverse upward
+       * @default 3
+       */
+      ancestorDepth: number;
+      /**
+       * @description Generations to traverse downward
+       * @default 2
+       */
+      descendantDepth: number;
+    };
+    /** @description Multi-generational family tree */
+    GetFamilyTreeResponse: {
+      /**
+       * Format: uuid
+       * @description Character at the root of the tree
+       */
+      rootCharacterId: string;
+      /** @description All nodes in the family tree */
+      nodes: components['schemas']['FamilyTreeNode'][];
+    };
     /** @description Request to get a specific game session */
     GetGameSessionRequest: {
       /**
@@ -19270,6 +20254,48 @@ export interface components {
        */
       sessionId: string;
     };
+    /** @description Request to get a genetic profile */
+    GetGeneticProfileRequest: {
+      /**
+       * Format: uuid
+       * @description Character to retrieve genetic profile for
+       */
+      characterId: string;
+    };
+    /** @description Full genetic profile for a character */
+    GetGeneticProfileResponse: {
+      /**
+       * Format: uuid
+       * @description Character this profile belongs to
+       */
+      characterId: string;
+      /** @description Primary species code */
+      speciesCode: string;
+      /** @description Secondary species code (non-null for hybrids) */
+      secondarySpecies?: string | null;
+      /**
+       * Format: uuid
+       * @description First parent (null for seeded/first-generation)
+       */
+      parentAId?: string | null;
+      /**
+       * Format: uuid
+       * @description Second parent (null for seeded/first-generation)
+       */
+      parentBId?: string | null;
+      /** @description Generations from earliest tracked ancestor */
+      generationDepth: number;
+      /** @description Inherited allele pairs */
+      genotype: components['schemas']['GenotypeEntry'][];
+      /** @description Expressed trait values */
+      phenotype: components['schemas']['PhenotypeEntry'][];
+      /** @description Derived skill aptitudes */
+      aptitudes: components['schemas']['AptitudeEntry'][];
+      /** @description Bloodline memberships */
+      bloodlines: components['schemas']['BloodlineEntry'][];
+      /** @description Random mutations applied during creation */
+      mutations: components['schemas']['MutationEntry'][];
+    };
     /** @description Request to get the current growth phase. */
     GetGrowthPhaseRequest: {
       /**
@@ -19285,6 +20311,65 @@ export interface components {
        * @description The seed whose growth to retrieve.
        */
       seedId: string;
+    };
+    /** @description Heritable trait template for a species */
+    GetHeritableTraitTemplateResponse: {
+      /** @description Species code */
+      speciesCode: string;
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /** @description Heritable trait definitions */
+      traits: components['schemas']['HeritableTraitDefinition'][];
+      /** @description Whether this template is deprecated */
+      isDeprecated?: boolean;
+      /**
+       * Format: date-time
+       * @description When the template was deprecated (null if not deprecated)
+       */
+      deprecatedAt?: string | null;
+      /** @description Why the template was deprecated (null if not deprecated) */
+      deprecationReason?: string | null;
+    };
+    /** @description Hybrid trait template for a species pair */
+    GetHybridTraitTemplateResponse: {
+      /** @description First species in the pair */
+      speciesA: string;
+      /** @description Second species in the pair */
+      speciesB: string;
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /** @description Dominance overrides for specific traits in hybrid offspring */
+      traitOverrides: components['schemas']['HybridTraitOverride'][];
+      /**
+       * Format: float
+       * @description Fertility modifier for hybrid offspring (0.0 = sterile, 1.0 = normal)
+       */
+      hybridFertilityModifier: number;
+      /** @description Whether this template is deprecated */
+      isDeprecated?: boolean;
+      /**
+       * Format: date-time
+       * @description When the template was deprecated (null if not deprecated)
+       */
+      deprecatedAt?: string | null;
+      /** @description Why the template was deprecated (null if not deprecated) */
+      deprecationReason?: string | null;
+    };
+    /** @description Request to get implicit mapping for a template code */
+    GetImplicitMappingRequest: {
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /** @description Item template code to look up */
+      itemTemplateCode: string;
     };
     /** @description Request to get an item instance */
     GetItemInstanceRequest: {
@@ -19399,6 +20484,31 @@ export interface components {
       /** @description License code to look up */
       code: string;
     };
+    /** @description Lifecycle template for a species */
+    GetLifecycleTemplateResponse: {
+      /** @description Species code */
+      speciesCode: string;
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /** @description Lifecycle stage definitions */
+      stages: components['schemas']['LifecycleStageDefinition'][];
+      /** @description Natural death year calculation parameters */
+      naturalDeathRange: components['schemas']['NaturalDeathRange'];
+      /** @description Fertility peak and decline parameters */
+      fertilityWindow: components['schemas']['FertilityWindow'];
+      /** @description Whether this template is deprecated */
+      isDeprecated?: boolean;
+      /**
+       * Format: date-time
+       * @description When the template was deprecated (null if not deprecated)
+       */
+      deprecatedAt?: string | null;
+      /** @description Why the template was deprecated (null if not deprecated) */
+      deprecationReason?: string | null;
+    };
     /** @description Request to get matchmaking statistics */
     GetMatchmakingStatsRequest: {
       /** @description Filter by specific queue (null for all queues) */
@@ -19496,6 +20606,26 @@ export interface components {
     GetPhaseConfigRequest: Record<string, never>;
     /** @description Request to get phase metrics */
     GetPhaseMetricsRequest: Record<string, never>;
+    /** @description Request to get phenotype data */
+    GetPhenotypeRequest: {
+      /**
+       * Format: uuid
+       * @description Character to retrieve phenotype for
+       */
+      characterId: string;
+    };
+    /** @description Expressed phenotype traits and aptitudes */
+    GetPhenotypeResponse: {
+      /**
+       * Format: uuid
+       * @description Character this data belongs to
+       */
+      characterId: string;
+      /** @description Expressed phenotype traits */
+      phenotype: components['schemas']['PhenotypeEntry'][];
+      /** @description Derived skill aptitudes */
+      aptitudes: components['schemas']['AptitudeEntry'][];
+    };
     /** @description Request to retrieve a cached plan */
     GetPlanRequest: {
       /**
@@ -20024,6 +21154,37 @@ export interface components {
         [key: string]: string;
       } | null;
     };
+    /** @description A governance data entry associating a case type domain with a contract template and governance parameters */
+    GovernanceEntryResponse: {
+      /**
+       * Format: uuid
+       * @description Unique identifier for this governance entry
+       */
+      governanceId: string;
+      /**
+       * Format: uuid
+       * @description Faction owning this governance entry
+       */
+      factionId: string;
+      /** @description Case type domain prefix (e.g., "dissolution", "trade_dispute", "criminal") */
+      domain: string;
+      /** @description Contract template code in lib-contract for this case type */
+      templateCode: string;
+      /** @description Opaque governance parameters for the contract template. Faction stores and returns these unchanged. Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
+      governanceParameters?: {
+        [key: string]: unknown;
+      } | null;
+      /**
+       * Format: date-time
+       * @description When this governance entry was created
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description When this governance entry was last updated
+       */
+      updatedAt?: string | null;
+    };
     /** @description Request to grant/unlock an entry in a collection */
     GrantEntryRequest: {
       /**
@@ -20349,6 +21510,33 @@ export interface components {
       /** @description Number of extensions remaining */
       extensionsRemaining: number;
     };
+    /** @description Definition of a heritable genetic trait for a species */
+    HeritableTraitDefinition: {
+      /** @description Unique trait identifier within species */
+      traitCode: string;
+      /** @description Human-readable trait name */
+      displayName: string;
+      /** @description Trait category (physical, mental, magical, social) */
+      category: string;
+      /** @description How alleles combine for this trait */
+      dominanceModel: components['schemas']['DominanceModel'];
+      /**
+       * Format: float
+       * @description Probability of mutation per trait during procreation (0.0-1.0)
+       */
+      mutationChance: number;
+      /**
+       * Format: float
+       * @description Maximum allele shift on mutation
+       */
+      mutationRange: number;
+      /** @description Stage at which trait fully expresses (null for immediate expression at birth) */
+      expressionDelay?: string | null;
+      /** @description Which personality trait this feeds (e.g., aggression) */
+      personalityMapping?: string | null;
+      /** @description Which aptitude domain this feeds (e.g., smithing) */
+      aptitudeMapping?: string | null;
+    };
     /** @description Request for scene version history */
     HistoryRequest: {
       /**
@@ -20379,6 +21567,48 @@ export interface components {
      * @enum {string}
      */
     HttpMethodType: 'Get' | 'Post' | 'Put' | 'Delete' | 'Patch';
+    /** @description Dominance override for a specific trait in cross-species hybridization */
+    HybridTraitOverride: {
+      /** @description Trait being overridden */
+      traitCode: string;
+      /** @description Dominance model override for this trait in hybrid offspring */
+      dominanceOverride: components['schemas']['DominanceModel'];
+    };
+    /** @description Reference to an implicit definition with optional value override ranges */
+    ImplicitDefinitionRef: {
+      /**
+       * Format: uuid
+       * @description Implicit affix definition ID
+       */
+      definitionId: string;
+      /**
+       * Format: double
+       * @description Override minimum value for rolling (null uses definition default)
+       */
+      minValueOverride?: number | null;
+      /**
+       * Format: double
+       * @description Override maximum value for rolling (null uses definition default)
+       */
+      maxValueOverride?: number | null;
+    };
+    /** @description Implicit mapping for an item template */
+    ImplicitMappingResponse: {
+      /**
+       * Format: uuid
+       * @description Unique mapping identifier
+       */
+      mappingId: string;
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /** @description Item template code */
+      itemTemplateCode: string;
+      /** @description Mapped implicit affix definition IDs */
+      implicitDefinitionIds: string[];
+    };
     /** @description A single document to import with required fields */
     ImportDocument: {
       /** @description URL-friendly unique identifier for the document */
@@ -21245,6 +22475,33 @@ export interface components {
      * @enum {string}
      */
     LicenseStatus: 'Locked' | 'Unlockable' | 'Unlocked';
+    /** @description Definition of a single lifecycle stage within a species template */
+    LifecycleStageDefinition: {
+      /** @description Stage code (species-configurable, e.g., infant, child, adult) */
+      code: string;
+      /** @description Minimum age in game years for this stage */
+      minAge: number;
+      /** @description Maximum age for this stage (null for open-ended stages like dying) */
+      maxAge?: number | null;
+      /**
+       * Format: float
+       * @description Multiplier applied to character health at this stage
+       */
+      healthModifier: number;
+      /**
+       * Format: float
+       * @description Base fertility at this stage (0.0-1.0)
+       */
+      fertilityBase: number;
+      /** @description Whether marriage is permitted at this stage */
+      canMarry: boolean;
+      /** @description Whether procreation is permitted at this stage */
+      canProcreate: boolean;
+      /** @description Whether character can own organizations at this stage */
+      canOwnOrg: boolean;
+      /** @description Whether guardian spirit can possess character at this stage */
+      canBePossessed: boolean;
+    };
     /** @description Request to link a streaming platform account */
     LinkPlatformRequest: {
       /**
@@ -21378,6 +22635,37 @@ export interface components {
     ListAvailableQuestsResponse: {
       /** @description Available quest definitions */
       available: components['schemas']['QuestDefinitionResponse'][];
+    };
+    /** @description Request to list bloodlines within a game service */
+    ListBloodlinesRequest: {
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /** @description Filter by bloodlines containing these trait codes */
+      traitSignatureFilter?: string[] | null;
+      /** @description Minimum generation span filter */
+      minGenerationDepth?: number | null;
+      /** @description Minimum living member count filter */
+      minMemberCount?: number | null;
+      /**
+       * @description Page number
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Results per page
+       * @default 20
+       */
+      pageSize: number;
+    };
+    /** @description Paged list of bloodlines */
+    ListBloodlinesResponse: {
+      /** @description Matching bloodlines */
+      bloodlines: components['schemas']['BloodlineSummary'][];
+      /** @description Total matching count */
+      totalCount: number;
     };
     /** @description Request to list board templates with cursor-based pagination */
     ListBoardTemplatesRequest: {
@@ -21570,27 +22858,55 @@ export interface components {
       /** @description Whether more results exist beyond this page. */
       hasMore: boolean;
     };
-    /** @description Request to list map definitions */
+    /** @description Request to list definitions with optional filters */
     ListDefinitionsRequest: {
-      /** @description Filter by name (partial match) */
-      nameFilter?: string | null;
       /**
-       * @description Pagination offset
-       * @default 0
+       * Format: uuid
+       * @description Game service scope
        */
-      offset: number;
+      gameServiceId: string;
+      /** @description Filter by slot type */
+      slotType?: string | null;
+      /** @description Filter by mod group */
+      modGroup?: string | null;
+      /** @description Filter by category */
+      category?: string | null;
+      /** @description Filter by tags (any match) */
+      tags?: string[] | null;
+      /** @description Filter by minimum tier */
+      tierMin?: number | null;
+      /** @description Filter by maximum tier */
+      tierMax?: number | null;
+      /** @description Filter by required influence type */
+      requiredInfluence?: string | null;
       /**
-       * @description Max results to return
-       * @default 50
+       * @description Include deprecated definitions in results (excluded by default)
+       * @default false
        */
-      limit: number;
+      includeDeprecated: boolean;
+      /**
+       * @description Page number
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Items per page
+       * @default 20
+       */
+      pageSize: number;
     };
-    /** @description Response containing list of map definitions */
+    /** @description Paginated list of affix definitions */
     ListDefinitionsResponse: {
-      /** @description List of definitions */
-      definitions: components['schemas']['MapDefinition'][];
-      /** @description Total count matching filter */
-      total: number;
+      /** @description Definitions on this page */
+      definitions: components['schemas']['AffixDefinitionResponse'][];
+      /** @description Total definitions matching filters */
+      totalCount: number;
+      /** @description Current page number */
+      page: number;
+      /** @description Items per page */
+      pageSize: number;
+      /** @description Whether more pages exist */
+      hasNextPage: boolean;
     };
     /** @description Request to list connections an entity has discovered */
     ListDiscoveriesRequest: {
@@ -21727,6 +23043,19 @@ export interface components {
       nextCursor?: string | null;
       /** @description Whether more pages are available */
       hasMore: boolean;
+    };
+    /** @description Request to list governance entries for a faction */
+    ListGovernanceEntriesRequest: {
+      /**
+       * Format: uuid
+       * @description Faction to list governance entries for
+       */
+      factionId: string;
+    };
+    /** @description All governance entries for a faction */
+    ListGovernanceEntriesResponse: {
+      /** @description All governance entries for this faction */
+      entries: components['schemas']['GovernanceEntryResponse'][];
     };
     /** @description Request to list item templates */
     ListItemTemplatesRequest: {
@@ -21909,6 +23238,24 @@ export interface components {
     ListMembershipsByCharacterResponse: {
       /** @description All faction memberships for the character */
       memberships: components['schemas']['CharacterMembershipEntry'][];
+    };
+    /** @description Request to list mod groups for a game service */
+    ListModGroupsRequest: {
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /**
+       * @description Include deprecated definitions in mod group counts
+       * @default false
+       */
+      includeDeprecated: boolean;
+    };
+    /** @description List of mod groups with definition counts */
+    ListModGroupsResponse: {
+      /** @description Mod group summaries */
+      modGroups: components['schemas']['ModGroupSummary'][];
     };
     /** @description Request to list transit modes with optional filters */
     ListModesRequest: {
@@ -22550,42 +23897,27 @@ export interface components {
       /** @description Total number of styles matching filter */
       total: number;
     };
-    /** @description Request to list templates with optional filters */
+    /** @description Request to list all templates for a game service */
     ListTemplatesRequest: {
-      /** @description Filter by category */
-      category?: components['schemas']['ScenarioCategory'];
-      /** @description Filter by connectivity mode */
-      connectivityMode?: components['schemas']['ConnectivityMode'];
-      /** @description Filter by deployment phase availability */
-      deploymentPhase?: components['schemas']['DeploymentPhase'];
-      /** @description Filter by template status */
-      status?: components['schemas']['TemplateStatus'];
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
       /**
        * @description Whether to include deprecated templates in results
        * @default false
        */
       includeDeprecated: boolean;
-      /**
-       * @description Page number (1-based)
-       * @default 1
-       */
-      page: number;
-      /**
-       * @description Items per page
-       * @default 50
-       */
-      pageSize: number;
     };
-    /** @description Paginated list of scenario templates */
+    /** @description All lifecycle and heritage templates for a game service */
     ListTemplatesResponse: {
-      /** @description Templates on this page */
-      templates: components['schemas']['ScenarioTemplateResponse'][];
-      /** @description Total number of matching templates */
-      totalCount: number;
-      /** @description Current page number */
-      page: number;
-      /** @description Items per page */
-      pageSize: number;
+      /** @description All lifecycle stage templates */
+      lifecycleTemplates: components['schemas']['GetLifecycleTemplateResponse'][];
+      /** @description All heritable trait templates */
+      heritableTraitTemplates: components['schemas']['GetHeritableTraitTemplateResponse'][];
+      /** @description All hybrid trait templates */
+      hybridTemplates: components['schemas']['GetHybridTraitTemplateResponse'][];
     };
     /** @description Request to list territory claims for a faction */
     ListTerritoryClaimsRequest: {
@@ -23411,6 +24743,13 @@ export interface components {
      * @enum {string}
      */
     MilestoneStatus: 'Pending' | 'Active' | 'Completed' | 'Failed' | 'Skipped';
+    /** @description Mod group summary with definition count */
+    ModGroupSummary: {
+      /** @description Mod group code */
+      code: string;
+      /** @description Number of definitions in this mod group */
+      definitionCount: number;
+    };
     /** @description Availability result for a single transit mode for an entity */
     ModeAvailabilityResult: {
       /** @description Transit mode code */
@@ -23602,6 +24941,21 @@ export interface components {
       /** @description Pre-signed URLs for each part of the multipart upload */
       uploadUrls?: components['schemas']['PartUploadInfo'][] | null;
     };
+    /** @description Random mutation applied during recombination */
+    MutationEntry: {
+      /** @description Trait that was mutated */
+      traitCode: string;
+      /**
+       * Format: float
+       * @description Amount the allele value was shifted
+       */
+      shift: number;
+      /**
+       * Format: float
+       * @description Value before mutation (null if unavailable)
+       */
+      originalValue?: number | null;
+    };
     /**
      * @description Types of state mutations a scenario can apply.
      *     PersonalityEvolve: Apply experience to evolve personality traits
@@ -23678,6 +25032,15 @@ export interface components {
       targetEmotion?: components['schemas']['EmotionalStateInput'];
       /** @description Preferred tension curve shape throughout the composition */
       tensionProfile?: components['schemas']['TensionProfile'];
+    };
+    /** @description Configuration for natural death year calculation */
+    NaturalDeathRange: {
+      /** @description Earliest possible natural death age */
+      minAge: number;
+      /** @description Latest possible natural death age */
+      maxAge: number;
+      /** @description Statistical distribution for death year selection */
+      distribution: components['schemas']['DeathDistribution'];
     };
     /** @description A navigation menu entry with optional nested children for dropdowns */
     NavigationItem: {
@@ -24321,6 +25684,18 @@ export interface components {
       /** @description Human-readable description of this state range */
       rangeDescription?: string | null;
     };
+    /** @description Expressed phenotype value for a single genetic trait */
+    PhenotypeEntry: {
+      /** @description Same code as genotype */
+      traitCode: string;
+      /**
+       * Format: float
+       * @description The expressed phenotype value
+       */
+      value: number;
+      /** @description Which dominance model produced this value */
+      expressionRule: components['schemas']['DominanceModel'];
+    };
     /** @description Request to pin a message in a room */
     PinMessageRequest: {
       /**
@@ -24798,6 +26173,31 @@ export interface components {
       /** @description Active contracts */
       contracts: components['schemas']['ContractSummary'][];
     };
+    /** @description Request to query living members of a bloodline */
+    QueryBloodlineMembersRequest: {
+      /**
+       * Format: uuid
+       * @description Bloodline to query members of
+       */
+      bloodlineId: string;
+      /**
+       * @description Page number
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Results per page
+       * @default 20
+       */
+      pageSize: number;
+    };
+    /** @description Living members of a bloodline with generation and trait data */
+    QueryBloodlineMembersResponse: {
+      /** @description Matching bloodline members */
+      members: components['schemas']['BloodlineMemberSummary'][];
+      /** @description Total matching count */
+      totalCount: number;
+    };
     /** @description Query map data within bounds */
     QueryBoundsRequest: {
       /**
@@ -24876,10 +26276,8 @@ export interface components {
       createdBefore?: string | null;
       /** @description Filter bundles with name containing this string (case-insensitive) */
       nameContains?: string | null;
-      /** @description Filter by owner type (null for any type) */
-      ownerType?: components['schemas']['AssetOwnerType'] | null;
-      /** @description Filter by owner identifier (session ID or service name) */
-      ownerId?: string | null;
+      /** @description Filter by creator (null for all creators) */
+      createdBy?: string | null;
       /** @description Filter by realm */
       realm?: components['schemas']['GameRealm'] | null;
       /** @description Filter by bundle type (source or metabundle) */
@@ -26215,6 +27613,16 @@ export interface components {
        */
       sourceId: string;
     };
+    /** @description Request to remove a governance entry from a faction */
+    RemoveGovernanceEntryRequest: {
+      /**
+       * Format: uuid
+       * @description Faction to remove governance from
+       */
+      factionId: string;
+      /** @description Case type domain to remove */
+      domain: string;
+    };
     /** @description Request to remove a license definition from a board template */
     RemoveLicenseDefinitionRequest: {
       /**
@@ -26563,6 +27971,21 @@ export interface components {
       /** @description The discovery record */
       discovery: components['schemas']['DiscoveryRecord'];
     };
+    /** @description Request to revoke delegated authority from a child faction */
+    RevokeAuthorityRequest: {
+      /**
+       * Format: uuid
+       * @description Sovereign faction revoking delegation
+       */
+      sovereignFactionId: string;
+      /**
+       * Format: uuid
+       * @description Faction whose delegation is being revoked
+       */
+      targetFactionId: string;
+      /** @description Specific domains to revoke (null to revoke all delegation, reverting target to Influence) */
+      domains?: string[] | null;
+    };
     /** @description Reward granted when a quest is completed */
     RewardDefinition: {
       /** @description Type of reward */
@@ -26588,6 +28011,35 @@ export interface components {
      * @enum {string}
      */
     RiskSeverity: 'Low' | 'Medium' | 'High';
+    /** @description Request to roll implicit values for an item template */
+    RollImplicitsRequest: {
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /** @description Item template code for implicit mapping lookup */
+      itemTemplateCode: string;
+      /** @description Optional value range overrides per definition */
+      overrides?: components['schemas']['ImplicitDefinitionRef'][] | null;
+    };
+    /** @description Rolled implicit values for an item template */
+    RollImplicitsResponse: {
+      /** @description Rolled implicit slots with values */
+      rolledSlots: components['schemas']['RolledSlot'][];
+    };
+    /** @description Result of rolling implicit values for one slot */
+    RolledSlot: {
+      /**
+       * Format: uuid
+       * @description Implicit definition ID
+       */
+      definitionId: string;
+      /** @description Implicit definition code */
+      definitionCode: string;
+      /** @description Rolled values for each stat grant */
+      rolledValues: number[];
+    };
     /** @description Room type definition with current configuration and status */
     RoomTypeResponse: {
       /** @description Unique room type code */
@@ -27571,6 +29023,90 @@ export interface components {
       /** @description Named time spans for display purposes (optional) */
       eraLabels?: components['schemas']['EraLabel'][] | null;
     };
+    /** @description Individual character entry for bulk lifecycle profile seeding */
+    SeedCharacterEntry: {
+      /**
+       * Format: uuid
+       * @description Character to seed lifecycle profile for
+       */
+      characterId: string;
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /**
+       * Format: uuid
+       * @description Realm for worldstate time queries
+       */
+      realmId: string;
+      /** @description Species code for template resolution */
+      speciesCode: string;
+      /** @description Game year of birth */
+      birthGameYear: number;
+      /** @description Season of birth */
+      birthSeason?: string | null;
+      /** @description Current age in game years */
+      currentAge: number;
+      /** @description Current lifecycle stage code */
+      currentStage: string;
+      /** @description Optional explicit phenotype values for seeded first-generation characters */
+      heritageData?: components['schemas']['PhenotypeEntry'][] | null;
+    };
+    /** @description A single definition entry for bulk seeding */
+    SeedDefinitionEntry: {
+      /** @description Unique definition code within game service */
+      code: string;
+      /** @description Slot type for this definition (e.g., "prefix", "suffix", "implicit") */
+      slotType: string;
+      /** @description Exclusivity group */
+      modGroup: string;
+      /** @description Power tier within mod group (1 = best) */
+      tier: number;
+      /** @description Broad classification */
+      category?: string | null;
+      /** @description Generation tags for pool filtering */
+      tags?: string[] | null;
+      /** @description Stat contributions from this affix */
+      statGrants: components['schemas']['StatGrant'][];
+      /** @description Base weight for weighted random selection */
+      spawnWeight: number;
+      /** @description Per-tag weight multipliers */
+      spawnTagModifiers?: components['schemas']['SpawnTagModifier'][] | null;
+      /**
+       * @description Minimum item level to spawn
+       * @default 0
+       */
+      requiredItemLevel: number;
+      /** @description Required influence types (empty = no requirement) */
+      requiredInfluences?: string[] | null;
+      /** @description Item classes this definition can appear on */
+      validItemClasses?: string[] | null;
+      /** @description Human-readable display name */
+      displayName?: string | null;
+      /**
+       * @description Sorting priority within slot type
+       * @default 0
+       */
+      displayOrder: number;
+    };
+    /** @description Bulk seed request for affix definitions */
+    SeedDefinitionsRequest: {
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /** @description Definitions to seed (duplicates by code are skipped) */
+      definitions: components['schemas']['SeedDefinitionEntry'][];
+    };
+    /** @description Result of bulk definition seeding */
+    SeedDefinitionsResponse: {
+      /** @description Number of definitions created */
+      createdCount: number;
+      /** @description Number of definitions skipped (already exist) */
+      skippedCount: number;
+    };
     /** @description A single seed-derived passive effect entry */
     SeedEffectEntry: {
       /** @description Capability code from the seed's capability manifest */
@@ -27607,6 +29143,124 @@ export interface components {
       /** @description Number of templates skipped (duplicates) */
       skipped: number;
     };
+    /** @description Request to create a genetic profile for a first-generation character */
+    SeedGeneticProfileRequest: {
+      /**
+       * Format: uuid
+       * @description Character to create genetic profile for
+       */
+      characterId: string;
+      /** @description Species code for trait template resolution */
+      speciesCode: string;
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /** @description Explicit phenotype values (null to generate from species defaults with random variation) */
+      phenotypeValues?: components['schemas']['PhenotypeEntry'][] | null;
+    };
+    /** @description Empty response. HTTP 200 confirms the genetic profile was created. */
+    SeedGeneticProfileResponse: Record<string, never>;
+    /** @description Request to create heritable trait definitions for a species */
+    SeedHeritableTraitTemplateRequest: {
+      /** @description Species code this template applies to */
+      speciesCode: string;
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /** @description Heritable trait definitions */
+      traits: components['schemas']['HeritableTraitDefinition'][];
+    };
+    /** @description Empty response. HTTP 200 confirms the template was created. */
+    SeedHeritableTraitTemplateResponse: Record<string, never>;
+    /** @description Request to create cross-species hybridization rules */
+    SeedHybridTemplateRequest: {
+      /** @description First species in the pair */
+      speciesA: string;
+      /** @description Second species in the pair */
+      speciesB: string;
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /** @description Dominance overrides for specific traits in hybrid offspring */
+      traitOverrides: components['schemas']['HybridTraitOverride'][];
+      /**
+       * Format: float
+       * @description Fertility modifier for hybrid offspring (0.0 = sterile, 1.0 = normal)
+       */
+      hybridFertilityModifier: number;
+    };
+    /** @description Empty response. HTTP 200 confirms the template was created. */
+    SeedHybridTemplateResponse: Record<string, never>;
+    /** @description A single implicit mapping entry for bulk seeding */
+    SeedImplicitMappingEntry: {
+      /** @description Item template code to map */
+      itemTemplateCode: string;
+      /** @description Implicit affix definition IDs to map to this template */
+      implicitDefinitionIds: string[];
+    };
+    /** @description Bulk seed request for implicit mappings */
+    SeedImplicitMappingsRequest: {
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /** @description Mappings to seed (duplicates by template code are skipped) */
+      mappings: components['schemas']['SeedImplicitMappingEntry'][];
+    };
+    /** @description Result of bulk implicit mapping seeding */
+    SeedImplicitMappingsResponse: {
+      /** @description Number of mappings created */
+      createdCount: number;
+      /** @description Number of mappings skipped (already exist) */
+      skippedCount: number;
+    };
+    /** @description Error encountered during per-item processing in a bulk seed operation */
+    SeedItemError: {
+      /**
+       * Format: uuid
+       * @description Character that failed seeding
+       */
+      characterId: string;
+      /** @description Error description */
+      error: string;
+    };
+    /** @description Request to bulk seed lifecycle profiles for first-generation characters */
+    SeedLifecycleProfileRequest: {
+      /** @description Characters to seed lifecycle profiles for */
+      characters: components['schemas']['SeedCharacterEntry'][];
+    };
+    /** @description Result of bulk lifecycle profile seeding */
+    SeedLifecycleProfileResponse: {
+      /** @description Number of profiles successfully created */
+      createdCount: number;
+      /** @description Per-item errors encountered during seeding */
+      errors?: components['schemas']['SeedItemError'][] | null;
+    };
+    /** @description Request to create lifecycle stage definitions for a species */
+    SeedLifecycleTemplateRequest: {
+      /** @description Species code this template applies to */
+      speciesCode: string;
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /** @description Lifecycle stage definitions (must be contiguous) */
+      stages: components['schemas']['LifecycleStageDefinition'][];
+      /** @description Configuration for natural death year calculation */
+      naturalDeathRange: components['schemas']['NaturalDeathRange'];
+      /** @description Species fertility peak and decline configuration */
+      fertilityWindow: components['schemas']['FertilityWindow'];
+    };
+    /** @description Empty response. HTTP 200 confirms the template was created. */
+    SeedLifecycleTemplateResponse: Record<string, never>;
     /** @description Location data for seeding operations, using codes instead of IDs for references */
     SeedLocation: {
       /** @description Unique code for the location within realm */
@@ -28041,6 +29695,22 @@ export interface components {
       /** @description The combat preferences to set */
       preferences: components['schemas']['CombatPreferences'];
     };
+    /** @description Request to create or update a governance entry for a faction */
+    SetGovernanceEntryRequest: {
+      /**
+       * Format: uuid
+       * @description Faction to set governance on (must be Sovereign or Delegated)
+       */
+      factionId: string;
+      /** @description Case type domain prefix (e.g., "dissolution", "trade_dispute") */
+      domain: string;
+      /** @description Contract template code in lib-contract for this case type */
+      templateCode: string;
+      /** @description Opaque governance parameters for the contract template. Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
+      governanceParameters?: {
+        [key: string]: unknown;
+      } | null;
+    };
     /** @description Request to set or change a location's parent in the hierarchy */
     SetLocationParentRequest: {
       /**
@@ -28054,6 +29724,18 @@ export interface components {
        */
       parentLocationId: string;
     };
+    /** @description Request to override a character's natural death year */
+    SetNaturalDeathYearRequest: {
+      /**
+       * Format: uuid
+       * @description Character to update
+       */
+      characterId: string;
+      /** @description New projected natural death year */
+      naturalDeathYear: number;
+    };
+    /** @description Empty response. HTTP 200 confirms the update succeeded. */
+    SetNaturalDeathYearResponse: Record<string, never>;
     /** @description Request payload for creating or updating a character's personality */
     SetPersonalityRequest: {
       /**
@@ -28283,6 +29965,13 @@ export interface components {
        */
       existingStackInstanceId?: string | null;
     };
+    /** @description Per-tag weight multiplier for affix generation pool filtering */
+    SpawnTagModifier: {
+      /** @description Item class tag (e.g., "amulet", "ring", "body_armour") */
+      tag: string;
+      /** @description Weight multiplier (0 = cannot appear, 1000 = normal, 1500 = more likely) */
+      weightMultiplier: number;
+    };
     /**
      * @description The 10 Story Grid Life Value spectrums.
      *     These are bipolar axes for emotional progression.
@@ -28430,6 +30119,21 @@ export interface components {
       watchersExisted: number;
       /** @description All watchers now active for this realm */
       watchers: components['schemas']['WatcherInfo'][];
+    };
+    /** @description A single stat contribution from an affix definition */
+    StatGrant: {
+      /** @description Stat identifier (e.g., "maximum_life", "fire_resistance") */
+      statCode: string;
+      /**
+       * Format: double
+       * @description Minimum rolled value for this stat
+       */
+      minValue: number;
+      /**
+       * Format: double
+       * @description Maximum rolled value for this stat
+       */
+      maxValue: number;
     };
     /**
      * @description Classification of status effects for filtering and cleanse targeting.
@@ -30286,25 +31990,35 @@ export interface components {
       /** @description Active status */
       isActive?: boolean | null;
     };
-    /** @description Request to update a map definition */
+    /** @description Partial update request for a definition. Identity fields cannot be changed. */
     UpdateDefinitionRequest: {
       /**
        * Format: uuid
-       * @description Definition ID to update
+       * @description Definition to update
        */
       definitionId: string;
-      /** @description New name (optional) */
-      name?: string | null;
-      /** @description New description (optional) */
-      description?: string | null;
-      /** @description New layer configurations (replaces existing) */
-      layers?: components['schemas']['LayerDefinition'][] | null;
-      /** @description New default bounds */
-      defaultBounds?: components['schemas']['Bounds'] | null;
-      /** @description Updated client-provided definition metadata (replaces existing). No Bannou plugin reads specific keys from this field by convention. */
-      metadata?: {
-        [key: string]: unknown;
-      } | null;
+      /** @description Updated tier */
+      tier?: number | null;
+      /** @description Updated category */
+      category?: string | null;
+      /** @description Updated tags */
+      tags?: string[] | null;
+      /** @description Updated stat grants */
+      statGrants?: components['schemas']['StatGrant'][] | null;
+      /** @description Updated spawn weight */
+      spawnWeight?: number | null;
+      /** @description Updated tag modifiers */
+      spawnTagModifiers?: components['schemas']['SpawnTagModifier'][] | null;
+      /** @description Updated required item level */
+      requiredItemLevel?: number | null;
+      /** @description Updated required influences */
+      requiredInfluences?: string[] | null;
+      /** @description Updated valid item classes */
+      validItemClasses?: string[] | null;
+      /** @description Updated display name */
+      displayName?: string | null;
+      /** @description Updated display order */
+      displayOrder?: number | null;
     };
     /** @description Request to update an existing document's fields */
     UpdateDocumentRequest: {
@@ -31012,13 +32726,8 @@ export interface components {
     };
     /** @description Request to initiate an asset upload and receive a pre-signed URL */
     UploadRequest: {
-      /** @description Type of owner initiating this upload */
-      ownerType: components['schemas']['AssetOwnerType'];
-      /**
-       * @description Owner identifier. For Session type: the WebSocket session ID (UUID format).
-       *     For Service type: the service name (e.g., "behavior", "orchestrator").
-       */
-      ownerId: string;
+      /** @description Informational field recording who initiated this upload. Not used for access control. */
+      createdBy: string;
       /** @description Original filename with extension */
       filename: string;
       /**
@@ -31986,6 +33695,354 @@ export interface operations {
         content: {
           'application/json': components['schemas']['DeleteActorTemplateResponse'];
         };
+      };
+    };
+  };
+  affix_createDefinition: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateDefinitionRequest'];
+      };
+    };
+    responses: {
+      /** @description Definition created successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AffixDefinitionResponse'];
+        };
+      };
+      /** @description Invalid request (game service not found, empty stat grants, limit exceeded) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Definition with this code already exists in game service */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  affix_getDefinition: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetDefinitionRequest'];
+      };
+    };
+    responses: {
+      /** @description Definition retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AffixDefinitionResponse'];
+        };
+      };
+      /** @description Definition not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  affix_listDefinitions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListDefinitionsRequest'];
+      };
+    };
+    responses: {
+      /** @description Definitions retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListDefinitionsResponse'];
+        };
+      };
+    };
+  };
+  affix_updateDefinition: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateDefinitionRequest'];
+      };
+    };
+    responses: {
+      /** @description Definition updated successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AffixDefinitionResponse'];
+        };
+      };
+      /** @description Invalid request (attempted identity field change) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Definition not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Concurrent modification conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  affix_deprecateDefinition: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeprecateDefinitionRequest'];
+      };
+    };
+    responses: {
+      /** @description Definition deprecated successfully (or already deprecated) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AffixDefinitionResponse'];
+        };
+      };
+      /** @description Definition not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  affix_seedDefinitions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SeedDefinitionsRequest'];
+      };
+    };
+    responses: {
+      /** @description Seed operation completed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SeedDefinitionsResponse'];
+        };
+      };
+      /** @description Game service not found */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  affix_listModGroups: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListModGroupsRequest'];
+      };
+    };
+    responses: {
+      /** @description Mod groups retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListModGroupsResponse'];
+        };
+      };
+    };
+  };
+  affix_createImplicitMapping: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateImplicitMappingRequest'];
+      };
+    };
+    responses: {
+      /** @description Implicit mapping created successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ImplicitMappingResponse'];
+        };
+      };
+      /** @description Referenced definition not found or not implicit slot type */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Mapping already exists for this template code in game service */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  affix_getImplicitMapping: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetImplicitMappingRequest'];
+      };
+    };
+    responses: {
+      /** @description Mapping retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ImplicitMappingResponse'];
+        };
+      };
+      /** @description No implicit mapping for this template code */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  affix_seedImplicitMappings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SeedImplicitMappingsRequest'];
+      };
+    };
+    responses: {
+      /** @description Seed operation completed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SeedImplicitMappingsResponse'];
+        };
+      };
+    };
+  };
+  affix_rollImplicits: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RollImplicitsRequest'];
+      };
+    };
+    responses: {
+      /** @description Implicit values rolled successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RollImplicitsResponse'];
+        };
+      };
+      /** @description No implicit mapping for this template code */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };
@@ -34106,6 +36163,485 @@ export interface operations {
         };
       };
       /** @description Encounter type not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  characterLifecycle_setNaturalDeathYear: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetNaturalDeathYearRequest'];
+      };
+    };
+    responses: {
+      /** @description Natural death year updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SetNaturalDeathYearResponse'];
+        };
+      };
+      /** @description Character lifecycle profile not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description ETag conflict (concurrent modification) */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  characterLifecycle_seedLifecycleProfile: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SeedLifecycleProfileRequest'];
+      };
+    };
+    responses: {
+      /** @description Seed operation completed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SeedLifecycleProfileResponse'];
+        };
+      };
+    };
+  };
+  characterLifecycle_getGeneticProfile: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetGeneticProfileRequest'];
+      };
+    };
+    responses: {
+      /** @description Genetic profile found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetGeneticProfileResponse'];
+        };
+      };
+      /** @description Genetic profile not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  characterLifecycle_getPhenotype: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetPhenotypeRequest'];
+      };
+    };
+    responses: {
+      /** @description Phenotype data found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetPhenotypeResponse'];
+        };
+      };
+      /** @description Genetic profile not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  characterLifecycle_seedGeneticProfile: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SeedGeneticProfileRequest'];
+      };
+    };
+    responses: {
+      /** @description Genetic profile created */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SeedGeneticProfileResponse'];
+        };
+      };
+      /** @description Heritable trait template not found for species */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Genetic profile already exists (immutable) */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  characterLifecycle_getFamilyTree: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetFamilyTreeRequest'];
+      };
+    };
+    responses: {
+      /** @description Family tree assembled */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetFamilyTreeResponse'];
+        };
+      };
+      /** @description Character lifecycle profile not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  characterLifecycle_seedLifecycleTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SeedLifecycleTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Lifecycle template created */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SeedLifecycleTemplateResponse'];
+        };
+      };
+      /** @description Invalid game service ID or non-contiguous stage boundaries */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Lifecycle template already exists for this species/game */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  characterLifecycle_seedHeritableTraitTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SeedHeritableTraitTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Heritable trait template created */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SeedHeritableTraitTemplateResponse'];
+        };
+      };
+      /** @description Invalid game service ID */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Heritable trait template already exists for this species/game */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  characterLifecycle_seedHybridTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SeedHybridTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Hybrid trait template created */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SeedHybridTemplateResponse'];
+        };
+      };
+      /** @description Invalid game service ID */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Hybrid template already exists for this species pair/game */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  characterLifecycle_listTemplates: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListTemplatesRequest'];
+      };
+    };
+    responses: {
+      /** @description Template listing */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListTemplatesResponse'];
+        };
+      };
+    };
+  };
+  characterLifecycle_getBloodline: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetBloodlineRequest'];
+      };
+    };
+    responses: {
+      /** @description Bloodline found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetBloodlineResponse'];
+        };
+      };
+      /** @description Bloodline not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  characterLifecycle_listBloodlines: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListBloodlinesRequest'];
+      };
+    };
+    responses: {
+      /** @description Bloodline listing */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListBloodlinesResponse'];
+        };
+      };
+    };
+  };
+  characterLifecycle_establishBloodline: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EstablishBloodlineRequest'];
+      };
+    };
+    responses: {
+      /** @description Bloodline established */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EstablishBloodlineResponse'];
+        };
+      };
+      /** @description Bloodline code already exists for this game service */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  characterLifecycle_deleteBloodline: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeleteBloodlineRequest'];
+      };
+    };
+    responses: {
+      /** @description Bloodline deleted */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DeleteBloodlineResponse'];
+        };
+      };
+      /** @description Bloodline not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  characterLifecycle_queryBloodlineMembers: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['QueryBloodlineMembersRequest'];
+      };
+    };
+    responses: {
+      /** @description Member listing */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QueryBloodlineMembersResponse'];
+        };
+      };
+      /** @description Bloodline not found */
       404: {
         headers: {
           [name: string]: unknown;
@@ -38374,6 +40910,187 @@ export interface operations {
         };
       };
       /** @description Faction not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  faction_setGovernanceEntry: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetGovernanceEntryRequest'];
+      };
+    };
+    responses: {
+      /** @description Governance entry set */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GovernanceEntryResponse'];
+        };
+      };
+      /** @description Faction is not Sovereign or Delegated */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Faction seed lacks governance.arbitrate capability */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Faction not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  faction_removeGovernanceEntry: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RemoveGovernanceEntryRequest'];
+      };
+    };
+    responses: {
+      /** @description Governance entry removed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Governance entry not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  faction_listGovernanceEntries: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListGovernanceEntriesRequest'];
+      };
+    };
+    responses: {
+      /** @description Governance entries retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListGovernanceEntriesResponse'];
+        };
+      };
+      /** @description Faction not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  faction_delegateAuthority: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DelegateAuthorityRequest'];
+      };
+    };
+    responses: {
+      /** @description Authority delegated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FactionResponse'];
+        };
+      };
+      /** @description Sovereign faction is not Sovereign, or target is not a descendant */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Sovereign or target faction not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  faction_revokeAuthority: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RevokeAuthorityRequest'];
+      };
+    };
+    responses: {
+      /** @description Authority revoked */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FactionResponse'];
+        };
+      };
+      /** @description Target faction is not Delegated */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Sovereign or target faction not found */
       404: {
         headers: {
           [name: string]: unknown;

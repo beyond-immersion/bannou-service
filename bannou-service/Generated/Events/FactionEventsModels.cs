@@ -448,6 +448,192 @@ public partial class FactionRealmBaselineDesignatedEvent : BaseServiceEvent
 
 }
 
+/// <summary>
+/// Published when a governance entry is created or updated (upsert by domain)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class FactionGovernanceDefinedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: faction.governance.defined
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "faction.governance.defined";
+
+    /// <summary>
+    /// Faction that owns the governance entry
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("factionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid FactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier for the governance entry
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("governanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GovernanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Case type domain prefix
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("domain")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
+    public string Domain { get; set; } = default!;
+
+    /// <summary>
+    /// Contract template code for this case type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    public string TemplateCode { get; set; } = default!;
+
+    /// <summary>
+    /// Fields that changed when updating an existing governance entry (null when creating a new entry)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changedFields")]
+    public System.Collections.Generic.ICollection<string>? ChangedFields { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when a governance entry is removed from a faction
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class FactionGovernanceDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: faction.governance.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "faction.governance.deleted";
+
+    /// <summary>
+    /// Faction that owned the governance entry
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("factionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid FactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Governance entry that was removed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("governanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GovernanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Case type domain that was removed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("domain")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
+    public string Domain { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when a sovereign faction delegates authority to a child faction for specific case type domains
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class FactionAuthorityDelegatedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: faction.authority.delegated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "faction.authority.delegated";
+
+    /// <summary>
+    /// Sovereign faction that granted delegation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sovereignFactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SovereignFactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Child faction that received delegated authority
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetFactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetFactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Case type domains that were delegated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("domains")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> Domains { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
+/// <summary>
+/// Published when delegated authority is revoked from a faction
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class FactionAuthorityRevokedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: faction.authority.revoked
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "faction.authority.revoked";
+
+    /// <summary>
+    /// Sovereign faction that revoked delegation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sovereignFactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SovereignFactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Faction whose delegation was revoked
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetFactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetFactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Specific domains that were revoked (null if all delegation was revoked)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("revokedDomains")]
+    public System.Collections.Generic.ICollection<string>? RevokedDomains { get; set; } = default!;
+
+    /// <summary>
+    /// Target faction's authority level after revocation (Delegated if some domains remain, Influence if all revoked)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resultingAuthorityLevel")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AuthorityLevel ResultingAuthorityLevel { get; set; } = default!;
+
+}
+
 
 
 #pragma warning restore  108

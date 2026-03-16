@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Broadcast;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 
 namespace BeyondImmersion.BannouService.Broadcast.Tests;
 
@@ -37,17 +38,41 @@ public class BroadcastServiceAdminTests
     [Fact]
     public async Task GetLatestPulseAsync_SessionFound_ReturnsOkWithPulse()
     {
-        var (service, _, _) = CreateService();
+        var (service, _, sessionStoreMock) = CreateService();
+
+        var platformSessionId = Guid.NewGuid();
+        var streamSessionId = Guid.NewGuid();
+
+        var storedSession = new PlatformSessionModel
+        {
+            PlatformSessionId = platformSessionId,
+            LinkId = Guid.NewGuid(),
+            AccountId = Guid.NewGuid(),
+            Platform = PlatformType.Twitch,
+            ViewerCount = 42,
+            PeakViewerCount = 100,
+            StartTime = DateTimeOffset.UtcNow.AddHours(-1),
+            StreamSessionId = streamSessionId,
+            State = PlatformSessionState.Active
+        };
+
+        sessionStoreMock.Setup(x => x.GetAsync(
+                BroadcastService.BuildSessionKey(platformSessionId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(storedSession);
 
         var request = new GetLatestPulseRequest
         {
-            PlatformSessionId = Guid.NewGuid()
+            PlatformSessionId = platformSessionId
         };
 
         var (status, response) = await service.GetLatestPulseAsync(request, CancellationToken.None);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
+        Assert.NotNull(response.Pulse);
+        Assert.Equal(platformSessionId, response.Pulse.PlatformSessionId);
+        Assert.Equal(streamSessionId, response.Pulse.StreamSessionId);
+        Assert.Equal(42, response.Pulse.ApproximateViewerCount);
     }
 
     // ── TestSentiment ───────────────────────────────────────────────────
@@ -123,14 +148,18 @@ public class BroadcastServiceAdminTests
         Assert.Equal(StatusCodes.OK, status);
     }
 
-    private static (BroadcastService service, Mock<IMessageBus> messageBusMock, Mock<IStateStoreFactory> storeFactoryMock) CreateService(
+    private static (BroadcastService service, Mock<IMessageBus> messageBusMock, Mock<IStateStore<PlatformSessionModel>> sessionStoreMock) CreateService(
         BroadcastServiceConfiguration? config = null)
     {
         var messageBus = new Mock<IMessageBus>();
         var storeFactory = new Mock<IStateStoreFactory>();
+        var sessionStore = new Mock<IStateStore<PlatformSessionModel>>();
         var logger = new Mock<ILogger<BroadcastService>>();
         var configuration = config ?? new BroadcastServiceConfiguration();
         var eventConsumer = new Mock<IEventConsumer>();
+
+        storeFactory.Setup(x => x.GetStore<PlatformSessionModel>(StateStoreDefinitions.BroadcastSessions))
+            .Returns(sessionStore.Object);
 
         messageBus.Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
@@ -143,6 +172,6 @@ public class BroadcastServiceAdminTests
             configuration,
             eventConsumer.Object);
 
-        return (service, messageBus, storeFactory);
+        return (service, messageBus, sessionStore);
     }
 }

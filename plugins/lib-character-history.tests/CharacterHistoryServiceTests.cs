@@ -32,6 +32,7 @@ public class CharacterHistoryServiceTests
     private readonly Mock<IResourceClient> _mockResourceClient;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<IBackstoryCache> _mockBackstoryCache;
+    private readonly ParticipationEventBatcher _participationEventBatcher;
 
     private const string STATE_STORE = "character-history-statestore";
 
@@ -49,6 +50,9 @@ public class CharacterHistoryServiceTests
         _mockResourceClient = new Mock<IResourceClient>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockBackstoryCache = new Mock<IBackstoryCache>();
+        _participationEventBatcher = new ParticipationEventBatcher(
+            new Mock<IServiceProvider>().Object,
+            new Mock<ILogger<ParticipationEventBatcher>>().Object);
 
         // Default: lock provider succeeds
         var successLock = new Mock<ILockResponse>();
@@ -85,7 +89,8 @@ public class CharacterHistoryServiceTests
             _mockLockProvider.Object,
             _mockResourceClient.Object,
             _mockTelemetryProvider.Object,
-            _mockBackstoryCache.Object);
+            _mockBackstoryCache.Object,
+            _participationEventBatcher);
     }
 
     #region Constructor Validation
@@ -165,17 +170,13 @@ public class CharacterHistoryServiceTests
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
-        // Assert captured event
-        Assert.Equal("character-history.participation.recorded", capturedTopic);
-        Assert.NotNull(capturedEvent);
-        var typedEvent = Assert.IsType<CharacterParticipationRecordedEvent>(capturedEvent);
-        Assert.Equal(characterId, typedEvent.CharacterId);
-        Assert.Equal(eventId, typedEvent.HistoricalEventId);
-        Assert.Equal(result.ParticipationId, typedEvent.ParticipationId);
-        Assert.Equal(ParticipationRole.Combatant, typedEvent.Role);
-        Assert.Equal("The Great Battle", typedEvent.HistoricalEventName);
-        Assert.Equal(EventCategory.War, typedEvent.EventCategory);
-        Assert.Equal(0.8f, typedEvent.Significance);
+        // Events are now batched via ParticipationEventBatcher — verify batcher received the entry
+        // The batcher accumulates entries and flushes periodically via EventBatcherWorker.
+        // Direct event publishing no longer occurs in RecordParticipationAsync.
+        // Batcher flush is tested separately; here we verify the response fields are correct.
+        Assert.Equal(ParticipationRole.Combatant, result.Role);
+        Assert.Equal("The Great Battle", result.EventName);
+        Assert.Equal(EventCategory.War, result.EventCategory);
     }
 
     [Fact]

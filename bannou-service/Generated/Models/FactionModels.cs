@@ -128,6 +128,26 @@ public enum NormSource
 #pragma warning restore CS1591
 
 /// <summary>
+/// Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AuthorityLevel
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Influence")]
+    Influence = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Delegated")]
+    Delegated = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Sovereign")]
+    Sovereign = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Lifecycle status of a territory claim
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -229,6 +249,15 @@ public partial class FactionResponse
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public FactionStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Authority classification for governance power. Defaults to Influence. Sovereign is set by DesignateRealmBaseline. Delegated is set via delegation endpoints.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authorityLevel")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AuthorityLevel AuthorityLevel { get; set; } = default!;
 
     /// <summary>
     /// Current seed growth phase (denormalized from lib-seed for convenience)
@@ -334,6 +363,13 @@ public partial class CreateFactionRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentFactionId")]
     public System.Guid? ParentFactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Authority level for the new faction (defaults to Influence if not specified)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authorityLevel")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AuthorityLevel AuthorityLevel { get; set; } = default!;
 
 }
 
@@ -626,6 +662,13 @@ public partial class SeedFactionDefinition
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isRealmBaseline")]
     public bool IsRealmBaseline { get; set; } = false;
+
+    /// <summary>
+    /// Authority level for the seeded faction (defaults to Influence if not specified)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authorityLevel")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AuthorityLevel AuthorityLevel { get; set; } = default!;
 
 }
 
@@ -1628,6 +1671,15 @@ public partial class ApplicableNormEntry
     public string FactionName { get; set; } = default!;
 
     /// <summary>
+    /// Authority level of the faction that defined this norm. Sovereign norms are laws (high enforcement weight). Delegated norms are local laws. Influence norms are social costs only.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authorityLevel")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AuthorityLevel AuthorityLevel { get; set; } = default!;
+
+    /// <summary>
     /// Violation type code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("violationType")]
@@ -1727,6 +1779,15 @@ public partial class MergedNormEntry
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public NormSeverity Severity { get; set; } = default!;
+
+    /// <summary>
+    /// Authority level of the faction that defined the winning norm
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authorityLevel")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AuthorityLevel AuthorityLevel { get; set; } = default!;
 
 }
 
@@ -1988,6 +2049,323 @@ public partial class RestoreFromArchiveResponse
     [System.Text.Json.Serialization.JsonPropertyName("membershipsRestoredCount")]
     [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int MembershipsRestoredCount { get; set; } = default!;
+
+}
+
+/// <summary>
+/// A governance data entry associating a case type domain with a contract template and governance parameters
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GovernanceEntryResponse
+{
+
+    /// <summary>
+    /// Unique identifier for this governance entry
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("governanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GovernanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Faction owning this governance entry
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("factionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid FactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Case type domain prefix (e.g., "dissolution", "trade_dispute", "criminal")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("domain")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
+    public string Domain { get; set; } = default!;
+
+    /// <summary>
+    /// Contract template code in lib-contract for this case type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    public string TemplateCode { get; set; } = default!;
+
+    /// <summary>
+    /// Opaque governance parameters for the contract template. Faction stores and returns these unchanged. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("governanceParameters")]
+    public object? GovernanceParameters { get; set; } = default!;
+
+    /// <summary>
+    /// When this governance entry was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When this governance entry was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to create or update a governance entry for a faction
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SetGovernanceEntryRequest
+{
+
+    /// <summary>
+    /// Faction to set governance on (must be Sovereign or Delegated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("factionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid FactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Case type domain prefix (e.g., "dissolution", "trade_dispute")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("domain")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
+    public string Domain { get; set; } = default!;
+
+    /// <summary>
+    /// Contract template code in lib-contract for this case type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    public string TemplateCode { get; set; } = default!;
+
+    /// <summary>
+    /// Opaque governance parameters for the contract template. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("governanceParameters")]
+    public object? GovernanceParameters { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to remove a governance entry from a faction
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RemoveGovernanceEntryRequest
+{
+
+    /// <summary>
+    /// Faction to remove governance from
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("factionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid FactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Case type domain to remove
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("domain")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
+    public string Domain { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to list governance entries for a faction
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ListGovernanceEntriesRequest
+{
+
+    /// <summary>
+    /// Faction to list governance entries for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("factionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid FactionId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// All governance entries for a faction
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ListGovernanceEntriesResponse
+{
+
+    /// <summary>
+    /// All governance entries for this faction
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entries")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<GovernanceEntryResponse> Entries { get; set; } = new System.Collections.ObjectModel.Collection<GovernanceEntryResponse>();
+
+}
+
+/// <summary>
+/// Request to resolve governance data for a location and case type domain
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class QueryGovernanceDataRequest
+{
+
+    /// <summary>
+    /// Location where the case would be filed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locationId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid LocationId { get; set; } = default!;
+
+    /// <summary>
+    /// Case type domain to resolve governance for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("domain")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
+    public string Domain { get; set; } = default!;
+
+    /// <summary>
+    /// Realm for baseline sovereign lookup (resolved from location if omitted)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    public System.Guid? RealmId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Resolved governance data for a location and case type domain. Returns the jurisdictional faction (sovereign or delegate) and its governance entry for the requested domain. Endpoint returns 404 when no sovereign has jurisdiction.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GovernanceDataResponse
+{
+
+    /// <summary>
+    /// The faction with jurisdiction (sovereign or delegate)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("jurisdictionalFactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid JurisdictionalFactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Name of the jurisdictional faction for display
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("jurisdictionalFactionName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string JurisdictionalFactionName { get; set; } = default!;
+
+    /// <summary>
+    /// Authority level of the jurisdictional faction (Sovereign or Delegated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authorityLevel")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AuthorityLevel AuthorityLevel { get; set; } = default!;
+
+    /// <summary>
+    /// Contract template code for this case type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TemplateCode { get; set; } = default!;
+
+    /// <summary>
+    /// Opaque governance parameters for the contract template. Stored and returned unchanged. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("governanceParameters")]
+    public object? GovernanceParameters { get; set; } = default!;
+
+    /// <summary>
+    /// The ultimate sovereign faction in the territory hierarchy (may differ from jurisdictional faction if delegated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sovereignFactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SovereignFactionId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to delegate authority from a sovereign faction to a child faction for specific case type domains
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DelegateAuthorityRequest
+{
+
+    /// <summary>
+    /// Sovereign faction granting delegation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sovereignFactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SovereignFactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Child faction receiving delegated authority
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetFactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetFactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Case type domains to delegate (e.g., ["trade_dispute", "dissolution"]). Each domain grants the target faction the right to arbitrate cases of that type within its territory.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("domains")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
+    public System.Collections.Generic.ICollection<string> Domains { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
+/// <summary>
+/// Request to revoke delegated authority from a child faction
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RevokeAuthorityRequest
+{
+
+    /// <summary>
+    /// Sovereign faction revoking delegation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sovereignFactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SovereignFactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Faction whose delegation is being revoked
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetFactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetFactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Specific domains to revoke (null to revoke all delegation, reverting target to Influence)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("domains")]
+    public System.Collections.Generic.ICollection<string>? Domains { get; set; } = default!;
 
 }
 

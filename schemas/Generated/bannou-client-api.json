@@ -485,6 +485,449 @@
         }
       }
     },
+    "/affix/definition/create": {
+      "post": {
+        "summary": "Create a new affix definition",
+        "description": "Creates a modifier template with stat grants, spawn weights, and classification.\nDefinitions are scoped to a game service. Code must be unique within game service.\n",
+        "operationId": "affix_createDefinition",
+        "tags": [
+          "Definition"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDefinitionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Definition created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AffixDefinitionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (game service not found, empty stat grants, limit exceeded)"
+          },
+          "409": {
+            "description": "Definition with this code already exists in game service"
+          }
+        }
+      }
+    },
+    "/affix/definition/get": {
+      "post": {
+        "summary": "Get an affix definition",
+        "description": "Retrieve a definition by ID or by gameServiceId + code. Supports cache read-through.",
+        "operationId": "affix_getDefinition",
+        "tags": [
+          "Definition"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetDefinitionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Definition retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AffixDefinitionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Definition not found"
+          }
+        }
+      }
+    },
+    "/affix/definition/list": {
+      "post": {
+        "summary": "List affix definitions",
+        "description": "Query definitions for a game service with optional filtering by slot type, mod group, category, tags, tier range, influence, and deprecation status.",
+        "operationId": "affix_listDefinitions",
+        "tags": [
+          "Definition"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListDefinitionsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Definitions retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListDefinitionsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/affix/definition/update": {
+      "post": {
+        "summary": "Update an affix definition",
+        "description": "Partial update of a definition. Identity fields (code, gameServiceId, slotType, modGroup)\ncannot be changed. Generation-relevant field changes invalidate pool caches.\n",
+        "operationId": "affix_updateDefinition",
+        "tags": [
+          "Definition"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDefinitionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Definition updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AffixDefinitionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (attempted identity field change)"
+          },
+          "404": {
+            "description": "Definition not found"
+          },
+          "409": {
+            "description": "Concurrent modification conflict"
+          }
+        }
+      }
+    },
+    "/affix/definition/deprecate": {
+      "post": {
+        "summary": "Deprecate an affix definition",
+        "description": "Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,\nno delete. Idempotent \u2014 returns OK if already deprecated. Deprecated definitions\ncannot be applied to new items. Pool caches are invalidated.\n",
+        "operationId": "affix_deprecateDefinition",
+        "tags": [
+          "Definition"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeprecateDefinitionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Definition deprecated successfully (or already deprecated)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AffixDefinitionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Definition not found"
+          }
+        }
+      }
+    },
+    "/affix/definition/seed": {
+      "post": {
+        "summary": "Bulk seed affix definitions",
+        "description": "Creates multiple definitions in a single call, skipping any that already exist\n(by code within game service). Used for initial game setup.\n",
+        "operationId": "affix_seedDefinitions",
+        "tags": [
+          "Definition"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeedDefinitionsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Seed operation completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedDefinitionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Game service not found"
+          }
+        }
+      }
+    },
+    "/affix/definition/list-mod-groups": {
+      "post": {
+        "summary": "List mod groups for a game service",
+        "description": "Returns all unique mod groups with definition counts. Filters by deprecation status.",
+        "operationId": "affix_listModGroups",
+        "tags": [
+          "Definition"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListModGroupsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mod groups retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListModGroupsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/affix/implicit/create": {
+      "post": {
+        "summary": "Create an implicit mapping for an item template",
+        "description": "Maps an item template code to a set of implicit affix definitions.\nItems created from this template automatically receive these implicits.\n",
+        "operationId": "affix_createImplicitMapping",
+        "tags": [
+          "Implicit"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateImplicitMappingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Implicit mapping created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImplicitMappingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Referenced definition not found or not implicit slot type"
+          },
+          "409": {
+            "description": "Mapping already exists for this template code in game service"
+          }
+        }
+      }
+    },
+    "/affix/implicit/get": {
+      "post": {
+        "summary": "Get implicit mapping for an item template",
+        "description": "Retrieves the implicit affix definitions mapped to an item template code.",
+        "operationId": "affix_getImplicitMapping",
+        "tags": [
+          "Implicit"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetImplicitMappingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mapping retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImplicitMappingResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No implicit mapping for this template code"
+          }
+        }
+      }
+    },
+    "/affix/implicit/seed": {
+      "post": {
+        "summary": "Bulk seed implicit mappings",
+        "description": "Creates multiple implicit mappings, skipping any that already exist.",
+        "operationId": "affix_seedImplicitMappings",
+        "tags": [
+          "Implicit"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeedImplicitMappingsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Seed operation completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedImplicitMappingsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/affix/implicit/roll": {
+      "post": {
+        "summary": "Roll implicit values for an item template",
+        "description": "Pure computation endpoint \u2014 rolls random values for the implicit definitions\nmapped to an item template. Does not persist state. Used by loot generation\nto preview implicit rolls before item creation.\n",
+        "operationId": "affix_rollImplicits",
+        "tags": [
+          "Implicit"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RollImplicitsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Implicit values rolled successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RollImplicitsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No implicit mapping for this template code"
+          }
+        }
+      }
+    },
     "/assets/upload/request": {
       "post": {
         "summary": "Request upload URL for a new asset",
@@ -3058,6 +3501,612 @@
           },
           "404": {
             "description": "Encounter type not found"
+          }
+        }
+      }
+    },
+    "/character-lifecycle/profile/set-death-year": {
+      "post": {
+        "summary": "Override a character's projected natural death year",
+        "description": "Administrative override for divine intervention (extending/shortening lifespan)\nor testing. Publishes no event (silent adjustment).\n",
+        "operationId": "characterLifecycle_setNaturalDeathYear",
+        "tags": [
+          "CharacterLifecycle"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetNaturalDeathYearRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Natural death year updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetNaturalDeathYearResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Character lifecycle profile not found"
+          },
+          "409": {
+            "description": "ETag conflict (concurrent modification)"
+          }
+        }
+      }
+    },
+    "/character-lifecycle/profile/seed": {
+      "post": {
+        "summary": "Bulk seed lifecycle profiles for first-generation characters",
+        "description": "Creates lifecycle profiles for seeded (first-generation) characters.\nAccepts character IDs with birth years, stages, and optional heritage data.\nPer-item error isolation. Used during world initialization.\n",
+        "operationId": "characterLifecycle_seedLifecycleProfile",
+        "tags": [
+          "CharacterLifecycle"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeedLifecycleProfileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Seed operation completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedLifecycleProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/character-lifecycle/heritage/get-genetic-profile": {
+      "post": {
+        "summary": "Get full genetic profile for a character",
+        "description": "Returns full genetic profile including genotype, phenotype, aptitudes, bloodlines, mutations, parent references.",
+        "operationId": "characterLifecycle_getGeneticProfile",
+        "tags": [
+          "CharacterLifecycle"
+        ],
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetGeneticProfileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Genetic profile found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetGeneticProfileResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Genetic profile not found"
+          }
+        }
+      }
+    },
+    "/character-lifecycle/heritage/get-phenotype": {
+      "post": {
+        "summary": "Get expressed phenotype traits and aptitudes for a character",
+        "description": "Lightweight version of GetGeneticProfile returning only expressed phenotype traits and derived aptitudes.",
+        "operationId": "characterLifecycle_getPhenotype",
+        "tags": [
+          "CharacterLifecycle"
+        ],
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetPhenotypeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Phenotype data found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetPhenotypeResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Genetic profile not found"
+          }
+        }
+      }
+    },
+    "/character-lifecycle/heritage/seed-genetic-profile": {
+      "post": {
+        "summary": "Create genetic profile for a first-generation character",
+        "description": "Accepts explicit phenotype values or generates from species defaults with random variation.\nFirst-gen characters have genotype equal to phenotype (both alleles equal expressed value).\nImmutable after creation (returns 409 if profile already exists).\n",
+        "operationId": "characterLifecycle_seedGeneticProfile",
+        "tags": [
+          "CharacterLifecycle"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeedGeneticProfileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Genetic profile created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedGeneticProfileResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Heritable trait template not found for species"
+          },
+          "409": {
+            "description": "Genetic profile already exists (immutable)"
+          }
+        }
+      }
+    },
+    "/character-lifecycle/heritage/get-family-tree": {
+      "post": {
+        "summary": "Get multi-generational family tree rooted at a character",
+        "description": "Returns parents, grandparents, siblings, children, grandchildren with heritage\ntrait summaries per generation. Depth configurable.\n",
+        "operationId": "characterLifecycle_getFamilyTree",
+        "tags": [
+          "CharacterLifecycle"
+        ],
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetFamilyTreeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Family tree assembled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetFamilyTreeResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Character lifecycle profile not found"
+          }
+        }
+      }
+    },
+    "/character-lifecycle/template/seed-lifecycle": {
+      "post": {
+        "summary": "Create lifecycle stage definitions for a species",
+        "description": "Validates stage boundaries are contiguous (no age gaps or overlaps). Returns 409 if template already exists for this species/game.",
+        "operationId": "characterLifecycle_seedLifecycleTemplate",
+        "tags": [
+          "CharacterLifecycle"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeedLifecycleTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Lifecycle template created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedLifecycleTemplateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid game service ID or non-contiguous stage boundaries"
+          },
+          "409": {
+            "description": "Lifecycle template already exists for this species/game"
+          }
+        }
+      }
+    },
+    "/character-lifecycle/template/seed-heritable-traits": {
+      "post": {
+        "summary": "Create heritable trait definitions for a species",
+        "description": "Defines which traits exist, their dominance models, mutation parameters, expression delays, and personality/aptitude mappings.",
+        "operationId": "characterLifecycle_seedHeritableTraitTemplate",
+        "tags": [
+          "CharacterLifecycle"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeedHeritableTraitTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Heritable trait template created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedHeritableTraitTemplateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid game service ID"
+          },
+          "409": {
+            "description": "Heritable trait template already exists for this species/game"
+          }
+        }
+      }
+    },
+    "/character-lifecycle/template/seed-hybrid": {
+      "post": {
+        "summary": "Create cross-species hybridization rules for a species pair",
+        "description": "Defines trait dominance overrides, fertility modifiers, and hybrid-specific traits for a cross-species combination.",
+        "operationId": "characterLifecycle_seedHybridTemplate",
+        "tags": [
+          "CharacterLifecycle"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeedHybridTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Hybrid trait template created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedHybridTemplateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid game service ID"
+          },
+          "409": {
+            "description": "Hybrid template already exists for this species pair/game"
+          }
+        }
+      }
+    },
+    "/character-lifecycle/template/list": {
+      "post": {
+        "summary": "List all lifecycle and heritage templates for a game service",
+        "description": "Returns all lifecycle templates, heritable trait templates, and hybrid templates. Supports includeDeprecated for Category B deprecation.",
+        "operationId": "characterLifecycle_listTemplates",
+        "tags": [
+          "CharacterLifecycle"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListTemplatesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Template listing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListTemplatesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/character-lifecycle/bloodline/get": {
+      "post": {
+        "summary": "Get bloodline definition",
+        "description": "Returns bloodline definition including origin, trait signature, member count, generation span.",
+        "operationId": "characterLifecycle_getBloodline",
+        "tags": [
+          "CharacterLifecycle"
+        ],
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetBloodlineRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bloodline found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetBloodlineResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Bloodline not found"
+          }
+        }
+      }
+    },
+    "/character-lifecycle/bloodline/list": {
+      "post": {
+        "summary": "List bloodlines within a game service",
+        "description": "Paged list filterable by trait signature, minimum generation depth, and minimum member count.",
+        "operationId": "characterLifecycle_listBloodlines",
+        "tags": [
+          "CharacterLifecycle"
+        ],
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListBloodlinesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bloodline listing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListBloodlinesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/character-lifecycle/bloodline/establish": {
+      "post": {
+        "summary": "Manually establish a bloodline",
+        "description": "Creates bloodline (divine intervention, noble declaration). Assigns to origin character\nand specified ancestors retroactively. Publishes bloodline.formed and bloodline.created events.\n",
+        "operationId": "characterLifecycle_establishBloodline",
+        "tags": [
+          "CharacterLifecycle"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EstablishBloodlineRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bloodline established",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstablishBloodlineResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Bloodline code already exists for this game service"
+          }
+        }
+      }
+    },
+    "/character-lifecycle/bloodline/delete": {
+      "post": {
+        "summary": "Delete a bloodline (immediate hard delete)",
+        "description": "Immediate hard delete. Calls ExecuteCleanupAsync via lib-resource to CASCADE-clean\nmembership indexes. Immutable GeneticProfile.bloodlines arrays are unaffected.\nHeritageProviderFactory filters deleted bloodlines from variable resolution.\n",
+        "operationId": "characterLifecycle_deleteBloodline",
+        "tags": [
+          "CharacterLifecycle"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteBloodlineRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bloodline deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteBloodlineResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Bloodline not found"
+          }
+        }
+      }
+    },
+    "/character-lifecycle/bloodline/query-members": {
+      "post": {
+        "summary": "Query living members of a bloodline",
+        "description": "Returns living members with their generation depth and trait expression.",
+        "operationId": "characterLifecycle_queryBloodlineMembers",
+        "tags": [
+          "CharacterLifecycle"
+        ],
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryBloodlineMembersRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Member listing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryBloodlineMembersResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Bloodline not found"
           }
         }
       }
@@ -7957,7 +9006,7 @@
         "tags": [
           "Faction CRUD"
         ],
-        "description": "Sets a faction as the realm's baseline cultural faction. The baseline\nfaction provides realm-wide default norms (honor codes, cultural taboos,\nspecies instincts) that apply to all characters in the realm unless\noverridden by more specific faction norms.\n\nOnly one faction per realm can be the baseline. Setting a new baseline\nclears the previous one. The faction must belong to the specified realm.\n",
+        "description": "Sets a faction as the realm's baseline cultural faction. The baseline\nfaction provides realm-wide default norms (honor codes, cultural taboos,\nspecies instincts) that apply to all characters in the realm unless\noverridden by more specific faction norms.\n\nAutomatically sets the designated faction's authorityLevel to Sovereign,\nas the realm baseline is the ultimate legal authority for the realm.\n\nOnly one faction per realm can be the baseline. Setting a new baseline\nclears the previous one. The faction must belong to the specified realm.\n",
         "x-permissions": [
           {
             "role": "developer"
@@ -8580,6 +9629,211 @@
           },
           "404": {
             "description": "Faction not found"
+          }
+        }
+      }
+    },
+    "/faction/governance/set": {
+      "post": {
+        "summary": "Set a governance entry for a faction",
+        "operationId": "faction_setGovernanceEntry",
+        "tags": [
+          "Governance"
+        ],
+        "description": "Creates or updates a governance entry associating a case type domain\nwith a contract template. Faction must have Sovereign or Delegated\nauthority level. Requires governance.arbitrate.* seed capability.\nIdempotent \u2014 overwrites if domain already exists for this faction.\n\nGovernance entries are queried by lib-arbitration to instantiate\nprocedural templates for cases filed within the faction's jurisdiction.\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetGovernanceEntryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Governance entry set",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernanceEntryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Faction is not Sovereign or Delegated"
+          },
+          "403": {
+            "description": "Faction seed lacks governance.arbitrate capability"
+          },
+          "404": {
+            "description": "Faction not found"
+          }
+        }
+      }
+    },
+    "/faction/governance/remove": {
+      "post": {
+        "summary": "Remove a governance entry",
+        "operationId": "faction_removeGovernanceEntry",
+        "tags": [
+          "Governance"
+        ],
+        "description": "Removes a governance entry for a specific domain from a faction.",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveGovernanceEntryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Governance entry removed"
+          },
+          "404": {
+            "description": "Governance entry not found"
+          }
+        }
+      }
+    },
+    "/faction/governance/list": {
+      "post": {
+        "summary": "List governance entries for a faction",
+        "operationId": "faction_listGovernanceEntries",
+        "tags": [
+          "Governance"
+        ],
+        "description": "Returns all governance entries defined by a faction.",
+        "x-permissions": [
+          {
+            "role": "user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListGovernanceEntriesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Governance entries retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListGovernanceEntriesResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Faction not found"
+          }
+        }
+      }
+    },
+    "/faction/governance/delegate": {
+      "post": {
+        "summary": "Delegate authority from sovereign to child faction",
+        "operationId": "faction_delegateAuthority",
+        "tags": [
+          "Governance"
+        ],
+        "description": "A sovereign faction grants delegated authority to a child faction\nfor specific case type domains. The target faction's authorityLevel\nis set to Delegated. The target must be a descendant of the sovereign\nin the faction hierarchy.\n\nDelegation is per-case-type via domain strings. A sovereign can\ndelegate \"trade_dispute\" jurisdiction without delegating \"criminal\"\njurisdiction. Each domain grants the target faction the right to\narbitrate cases of that type within its territory.\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DelegateAuthorityRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authority delegated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Sovereign faction is not Sovereign, or target is not a descendant"
+          },
+          "404": {
+            "description": "Sovereign or target faction not found"
+          }
+        }
+      }
+    },
+    "/faction/governance/revoke": {
+      "post": {
+        "summary": "Revoke delegated authority",
+        "operationId": "faction_revokeAuthority",
+        "tags": [
+          "Governance"
+        ],
+        "description": "Revokes delegated authority from a child faction. If all domains are\nrevoked (or domains is null for blanket revocation), the target\nfaction's authorityLevel reverts to Influence.\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokeAuthorityRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authority revoked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Target faction is not Delegated"
+          },
+          "404": {
+            "description": "Sovereign or target faction not found"
           }
         }
       }
@@ -21790,6 +23044,141 @@
           }
         }
       },
+      "AffixDefinitionResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Full affix definition response",
+        "required": [
+          "definitionId",
+          "gameServiceId",
+          "code",
+          "slotType",
+          "modGroup",
+          "tier",
+          "statGrants",
+          "spawnWeight",
+          "requiredItemLevel",
+          "displayOrder",
+          "isDeprecated",
+          "createdAt"
+        ],
+        "properties": {
+          "definitionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique definition identifier"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "code": {
+            "type": "string",
+            "description": "Unique code within game service"
+          },
+          "slotType": {
+            "type": "string",
+            "description": "Slot type (e.g., \"prefix\", \"suffix\", \"implicit\")"
+          },
+          "modGroup": {
+            "type": "string",
+            "description": "Exclusivity group"
+          },
+          "tier": {
+            "type": "integer",
+            "description": "Power tier within mod group (1 = best)"
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "description": "Broad classification"
+          },
+          "tags": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Generation tags"
+          },
+          "statGrants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatGrant"
+            },
+            "description": "Stat contributions"
+          },
+          "spawnWeight": {
+            "type": "integer",
+            "description": "Base weight for generation"
+          },
+          "spawnTagModifiers": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/SpawnTagModifier"
+            },
+            "description": "Per-tag weight multipliers"
+          },
+          "requiredItemLevel": {
+            "type": "integer",
+            "description": "Minimum item level to spawn"
+          },
+          "requiredInfluences": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Required influence types"
+          },
+          "validItemClasses": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Item classes this appears on"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Human-readable display name"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "description": "Sorting priority"
+          },
+          "isDeprecated": {
+            "type": "boolean",
+            "description": "Whether this definition is deprecated"
+          },
+          "deprecatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When this definition was deprecated (null if not deprecated)"
+          },
+          "deprecationReason": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500,
+            "description": "Reason for deprecation (null if not deprecated)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this definition was created"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When this definition was last updated"
+          }
+        }
+      },
       "Affordance": {
         "type": "object",
         "additionalProperties": false,
@@ -22066,6 +23455,30 @@
               "type": "string"
             },
             "description": "ICE candidates for NAT traversal (can be trickled later)"
+          }
+        }
+      },
+      "AptitudeEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Derived skill aptitude from phenotype traits",
+        "required": [
+          "domain",
+          "value"
+        ],
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "Skill domain code (e.g., smithing, enchanting)",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "value": {
+            "type": "number",
+            "format": "float",
+            "description": "Inherited aptitude value representing innate potential (0.0-1.0)",
+            "minimum": 0.0,
+            "maximum": 1.0
           }
         }
       },
@@ -22388,14 +23801,6 @@
             "description": "Searchable tags for the asset (null to omit)"
           }
         }
-      },
-      "AssetOwnerType": {
-        "type": "string",
-        "enum": [
-          "Session",
-          "Service"
-        ],
-        "description": "Type of asset owner per FOUNDATION TENETS (Account Identity Boundary).\nSession: user-initiated operation identified by WebSocket session ID (UUID).\nService: service-initiated operation identified by service name.\n"
       },
       "AssetReference": {
         "type": "object",
@@ -23030,6 +24435,15 @@
           }
         }
       },
+      "AuthorityLevel": {
+        "type": "string",
+        "description": "Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.",
+        "enum": [
+          "Influence",
+          "Delegated",
+          "Sovereign"
+        ]
+      },
       "AutoSpawnConfig": {
         "type": "object",
         "additionalProperties": false,
@@ -23560,6 +24974,141 @@
           "Disabled"
         ],
         "description": "Status of a repository binding"
+      },
+      "BloodlineEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Bloodline membership record for a character",
+        "required": [
+          "bloodlineId",
+          "bloodlineCode",
+          "originCharacterId",
+          "originGameYear",
+          "traitSignature",
+          "generationFrom"
+        ],
+        "properties": {
+          "bloodlineId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Bloodline identifier"
+          },
+          "bloodlineCode": {
+            "type": "string",
+            "description": "Human-readable bloodline code",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "originCharacterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character who founded or was first tracked member"
+          },
+          "originGameYear": {
+            "type": "integer",
+            "description": "When the bloodline was first identified"
+          },
+          "traitSignature": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Trait codes that characterize this bloodline"
+          },
+          "generationFrom": {
+            "type": "integer",
+            "description": "Generations from origin to this character",
+            "minimum": 0
+          }
+        }
+      },
+      "BloodlineMemberSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Summary of a bloodline member with generation and trait data",
+        "required": [
+          "characterId",
+          "generationFrom"
+        ],
+        "properties": {
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character who is a member of this bloodline"
+          },
+          "generationFrom": {
+            "type": "integer",
+            "description": "Generations from bloodline origin to this character",
+            "minimum": 0
+          },
+          "traitExpression": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/PhenotypeEntry"
+            },
+            "description": "Expressed signature traits for this member"
+          }
+        }
+      },
+      "BloodlineSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Bloodline definition data returned by get and list endpoints",
+        "required": [
+          "bloodlineId",
+          "bloodlineCode",
+          "gameServiceId",
+          "originCharacterId",
+          "originGameYear",
+          "traitSignature",
+          "memberCount",
+          "generationSpan"
+        ],
+        "properties": {
+          "bloodlineId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Bloodline identifier"
+          },
+          "bloodlineCode": {
+            "type": "string",
+            "description": "Human-readable bloodline code",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "originCharacterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character who founded or was first tracked member"
+          },
+          "originGameYear": {
+            "type": "integer",
+            "description": "Game year when the bloodline was first identified"
+          },
+          "traitSignature": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Trait codes that characterize this bloodline"
+          },
+          "memberCount": {
+            "type": "integer",
+            "description": "Number of living members",
+            "minimum": 0
+          },
+          "generationSpan": {
+            "type": "integer",
+            "description": "Number of generations from origin to most recent member",
+            "minimum": 0
+          }
+        }
       },
       "BoardNodeState": {
         "type": "object",
@@ -24664,7 +26213,8 @@
           "metadataVersion",
           "status",
           "assetCount",
-          "createdAt"
+          "createdAt",
+          "createdBy"
         ],
         "properties": {
           "bundleId": {
@@ -24693,19 +26243,10 @@
             "nullable": true,
             "description": "Bundle description"
           },
-          "ownerType": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AssetOwnerType"
-              }
-            ],
-            "nullable": true,
-            "description": "Type of owner (null for system-owned bundles)"
-          },
-          "ownerId": {
+          "createdBy": {
             "type": "string",
-            "nullable": true,
-            "description": "Owner identifier - session ID or service name (null for system-owned bundles)"
+            "minLength": 1,
+            "description": "Informational field recording who created this bundle. Not used for access control."
           },
           "realm": {
             "allOf": [
@@ -24869,17 +26410,13 @@
         "required": [
           "filename",
           "size",
-          "ownerType",
-          "ownerId"
+          "createdBy"
         ],
         "properties": {
-          "ownerType": {
-            "$ref": "#/components/schemas/AssetOwnerType",
-            "description": "Type of owner uploading this bundle"
-          },
-          "ownerId": {
+          "createdBy": {
             "type": "string",
-            "description": "Owner identifier. For Session type: the WebSocket session ID (UUID format).\nFor Service type: the service name (e.g., \"behavior\", \"orchestrator\").\n"
+            "minLength": 1,
+            "description": "Informational field recording who uploaded this bundle. Not used for access control."
           },
           "filename": {
             "type": "string",
@@ -29639,17 +31176,13 @@
         "required": [
           "bundleId",
           "assetIds",
-          "ownerType",
-          "ownerId"
+          "createdBy"
         ],
         "properties": {
-          "ownerType": {
-            "$ref": "#/components/schemas/AssetOwnerType",
-            "description": "Type of owner creating this bundle"
-          },
-          "ownerId": {
+          "createdBy": {
             "type": "string",
-            "description": "Owner identifier. For Session type: the WebSocket session ID (UUID format).\nFor Service type: the service name (e.g., \"behavior\", \"orchestrator\").\n"
+            "minLength": 1,
+            "description": "Informational field recording who created this bundle. Not used for access control."
           },
           "bundleId": {
             "type": "string",
@@ -30067,46 +31600,112 @@
       },
       "CreateDefinitionRequest": {
         "type": "object",
-        "description": "Request to create a map definition",
         "additionalProperties": false,
+        "description": "Request to create a new affix definition",
         "required": [
-          "name"
+          "gameServiceId",
+          "code",
+          "slotType",
+          "modGroup",
+          "tier",
+          "statGrants",
+          "spawnWeight"
         ],
         "properties": {
-          "name": {
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope for this definition"
+          },
+          "code": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 256,
-            "description": "Human-readable name"
+            "maxLength": 200,
+            "description": "Unique definition code within game service"
           },
-          "description": {
+          "slotType": {
             "type": "string",
-            "maxLength": 2048,
-            "description": "Description of the map template",
-            "nullable": true
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "Slot type (e.g., \"prefix\", \"suffix\", \"implicit\", \"enchant\")"
           },
-          "layers": {
+          "modGroup": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Exclusivity group (one affix per mod group per item)"
+          },
+          "tier": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Power tier within mod group (1 = best)"
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100,
+            "description": "Broad classification (e.g., \"defense\", \"offense\")"
+          },
+          "tags": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Generation tags for pool filtering"
+          },
+          "statGrants": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/LayerDefinition"
+              "$ref": "#/components/schemas/StatGrant"
             },
-            "description": "Layer configurations",
-            "nullable": true
+            "description": "Stat contributions from this affix (minimum 1)"
           },
-          "defaultBounds": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Bounds"
-              }
-            ],
-            "description": "Default bounds for regions using this definition",
-            "nullable": true
+          "spawnWeight": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Base weight for weighted random selection"
           },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": true,
-            "description": "Client-provided definition metadata. No Bannou plugin reads specific keys from this field by convention.",
-            "nullable": true
+          "spawnTagModifiers": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/SpawnTagModifier"
+            },
+            "description": "Per-tag weight multipliers"
+          },
+          "requiredItemLevel": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "description": "Minimum item level to spawn this definition"
+          },
+          "requiredInfluences": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Required influence types (empty = no requirement)"
+          },
+          "validItemClasses": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Item classes this definition can appear on"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 200,
+            "description": "Human-readable display name (e.g., \"Blazing\", \"of the Godslayer\")"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "default": 0,
+            "description": "Sorting priority within slot type"
           }
         }
       },
@@ -30398,6 +31997,41 @@
             "format": "uuid",
             "nullable": true,
             "description": "Parent faction for hierarchy (null for top-level)"
+          },
+          "authorityLevel": {
+            "$ref": "#/components/schemas/AuthorityLevel",
+            "description": "Authority level for the new faction (defaults to Influence if not specified)"
+          }
+        }
+      },
+      "CreateImplicitMappingRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to map implicit affix definitions to an item template code",
+        "required": [
+          "gameServiceId",
+          "itemTemplateCode",
+          "implicitDefinitionIds"
+        ],
+        "properties": {
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "itemTemplateCode": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Item template code to map"
+          },
+          "implicitDefinitionIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Implicit affix definition IDs (must be slotType \"implicit\")"
           }
         }
       },
@@ -30948,9 +32582,8 @@
         "description": "Request to create a metabundle from source bundles and/or standalone assets.\nAt least one of sourceBundleIds or standaloneAssetIds must be provided.\nThis enables packaging behaviors/scripts with 3D assets as a complete unit.\n",
         "required": [
           "metabundleId",
-          "ownerType",
-          "ownerId",
-          "realm"
+          "realm",
+          "createdBy"
         ],
         "properties": {
           "metabundleId": {
@@ -30978,13 +32611,10 @@
             "default": "1.0.0",
             "description": "Metabundle version string"
           },
-          "ownerType": {
-            "$ref": "#/components/schemas/AssetOwnerType",
-            "description": "Type of owner creating this metabundle"
-          },
-          "ownerId": {
+          "createdBy": {
             "type": "string",
-            "description": "Owner identifier. For Session type: the WebSocket session ID (UUID format).\nFor Service type: the service name (e.g., \"behavior\", \"orchestrator\").\n"
+            "minLength": 1,
+            "description": "Informational field recording who created this metabundle. Not used for access control."
           },
           "realm": {
             "$ref": "#/components/schemas/GameRealm",
@@ -32203,6 +33833,15 @@
           }
         }
       },
+      "DeathDistribution": {
+        "type": "string",
+        "description": "Statistical distribution model for natural death year calculation",
+        "enum": [
+          "Uniform",
+          "Normal",
+          "WeightedLate"
+        ]
+      },
       "DeclineMatchRequest": {
         "type": "object",
         "description": "Request to decline a formed match",
@@ -32300,6 +33939,38 @@
           }
         }
       },
+      "DelegateAuthorityRequest": {
+        "type": "object",
+        "description": "Request to delegate authority from a sovereign faction to a child faction for specific case type domains",
+        "additionalProperties": false,
+        "required": [
+          "sovereignFactionId",
+          "targetFactionId",
+          "domains"
+        ],
+        "properties": {
+          "sovereignFactionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Sovereign faction granting delegation"
+          },
+          "targetFactionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Child faction receiving delegated authority"
+          },
+          "domains": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "minItems": 1,
+            "description": "Case type domains to delegate (e.g., [\"trade_dispute\", \"dissolution\"]). Each domain grants the target faction the right to arbitrate cases of that type within its territory."
+          }
+        }
+      },
       "DeleteActionMappingRequest": {
         "type": "object",
         "description": "Request to delete an action tag mapping",
@@ -32385,6 +34056,27 @@
             "description": "Area content config to delete"
           }
         }
+      },
+      "DeleteBloodlineRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to delete a bloodline",
+        "required": [
+          "bloodlineId"
+        ],
+        "properties": {
+          "bloodlineId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Bloodline to delete"
+          }
+        }
+      },
+      "DeleteBloodlineResponse": {
+        "type": "object",
+        "description": "Empty response. HTTP 200 confirms the bloodline was deleted.",
+        "additionalProperties": false,
+        "properties": {}
       },
       "DeleteBoardRequest": {
         "type": "object",
@@ -33019,6 +34711,27 @@
             "nullable": true,
             "maxLength": 500,
             "description": "Reason for deprecation (audit context for Category B entities)"
+          }
+        }
+      },
+      "DeprecateDefinitionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to deprecate a definition (Category B \u2014 one-way, no delete)",
+        "required": [
+          "definitionId"
+        ],
+        "properties": {
+          "definitionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Definition to deprecate"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500,
+            "description": "Reason for deprecation (recommended for audit trail)"
           }
         }
       },
@@ -33690,6 +35403,18 @@
             "description": "Weight applied to this domain on scenario completion"
           }
         }
+      },
+      "DominanceModel": {
+        "type": "string",
+        "description": "Genetic dominance model determining how alleles combine to produce phenotype",
+        "enum": [
+          "DominantHigh",
+          "DominantLow",
+          "Blending",
+          "Codominant",
+          "Maternal",
+          "Random"
+        ]
       },
       "DownloadInfo": {
         "description": "Download details for a specific game client version and platform",
@@ -35200,6 +36925,66 @@
           "Auction"
         ]
       },
+      "EstablishBloodlineRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to manually establish a bloodline",
+        "required": [
+          "bloodlineCode",
+          "gameServiceId",
+          "originCharacterId",
+          "traitSignature"
+        ],
+        "properties": {
+          "bloodlineCode": {
+            "type": "string",
+            "description": "Human-readable bloodline code",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "originCharacterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character who founded or is the first tracked member"
+          },
+          "traitSignature": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Trait codes that characterize this bloodline"
+          },
+          "ancestorCharacterIds": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Additional ancestor characters to retroactively assign to this bloodline"
+          }
+        }
+      },
+      "EstablishBloodlineResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Result of bloodline establishment",
+        "required": [
+          "bloodlineId"
+        ],
+        "properties": {
+          "bloodlineId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifier of the newly created bloodline"
+          }
+        }
+      },
       "ExecuteContractRequest": {
         "type": "object",
         "description": "Request to execute contract clauses",
@@ -35453,6 +37238,7 @@
           "realmId",
           "isRealmBaseline",
           "status",
+          "authorityLevel",
           "isDeprecated",
           "memberCount",
           "createdAt",
@@ -35511,6 +37297,10 @@
           "status": {
             "$ref": "#/components/schemas/FactionStatus",
             "description": "Current operational lifecycle status (orthogonal to deprecation)"
+          },
+          "authorityLevel": {
+            "$ref": "#/components/schemas/AuthorityLevel",
+            "description": "Authority classification for governance power. Defaults to Influence. Sovereign is set by DesignateRealmBaseline. Delegated is set via delegation endpoints."
           },
           "currentPhase": {
             "type": "string",
@@ -35615,6 +37405,54 @@
           }
         }
       },
+      "FamilyTreeNode": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "A node in a multi-generational family tree",
+        "required": [
+          "characterId",
+          "generation"
+        ],
+        "properties": {
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character at this tree node"
+          },
+          "speciesCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Species code of this character",
+            "maxLength": 100
+          },
+          "generation": {
+            "type": "integer",
+            "description": "Generation relative to root (negative for ancestors, positive for descendants)"
+          },
+          "relationship": {
+            "type": "string",
+            "nullable": true,
+            "description": "Relationship to the root character (parent, grandparent, child, sibling, etc.)",
+            "maxLength": 50
+          },
+          "phenotypeSummary": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/PhenotypeEntry"
+            },
+            "description": "Key phenotype traits for this character (summarized)"
+          },
+          "bloodlineCodes": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Bloodline codes this character belongs to"
+          }
+        }
+      },
       "FamilyTreeResponse": {
         "description": "Family relationships for a character",
         "type": "object",
@@ -35661,6 +37499,35 @@
               "$ref": "#/components/schemas/PastLifeReference"
             },
             "description": "Previous incarnations (if reincarnation tracked)"
+          }
+        }
+      },
+      "FertilityWindow": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Species fertility peak and decline configuration",
+        "required": [
+          "peakStartAge",
+          "peakEndAge",
+          "declineRate"
+        ],
+        "properties": {
+          "peakStartAge": {
+            "type": "integer",
+            "description": "Age when fertility peaks",
+            "minimum": 0
+          },
+          "peakEndAge": {
+            "type": "integer",
+            "description": "Age when peak ends",
+            "minimum": 0
+          },
+          "declineRate": {
+            "type": "number",
+            "format": "float",
+            "description": "How fast fertility drops after peak (0.0-1.0)",
+            "minimum": 0.0,
+            "maximum": 1.0
           }
         }
       },
@@ -36429,6 +38296,43 @@
           }
         }
       },
+      "GenotypeEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Inherited allele pair for a single genetic trait",
+        "required": [
+          "traitCode",
+          "alleleA",
+          "alleleB",
+          "dominance"
+        ],
+        "properties": {
+          "traitCode": {
+            "type": "string",
+            "description": "Game-configurable genetic trait identifier",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "alleleA": {
+            "type": "number",
+            "format": "float",
+            "description": "Value from parent A (0.0-1.0)",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "alleleB": {
+            "type": "number",
+            "format": "float",
+            "description": "Value from parent B (0.0-1.0)",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "dominance": {
+            "$ref": "#/components/schemas/DominanceModel",
+            "description": "How alleles combine to produce phenotype"
+          }
+        }
+      },
       "GetAchievementProgressRequest": {
         "type": "object",
         "description": "Request to get achievement progress",
@@ -36627,6 +38531,35 @@
             "$ref": "#/components/schemas/AutogainInfo",
             "nullable": true,
             "description": "Autogain status (null if autogain not enabled)"
+          }
+        }
+      },
+      "GetBloodlineRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to get a bloodline definition",
+        "required": [
+          "bloodlineId"
+        ],
+        "properties": {
+          "bloodlineId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Bloodline to retrieve"
+          }
+        }
+      },
+      "GetBloodlineResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Bloodline definition",
+        "required": [
+          "bloodline"
+        ],
+        "properties": {
+          "bloodline": {
+            "$ref": "#/components/schemas/BloodlineSummary",
+            "description": "Bloodline definition data"
           }
         }
       },
@@ -37089,16 +39022,25 @@
       },
       "GetDefinitionRequest": {
         "type": "object",
-        "description": "Request to get a map definition",
         "additionalProperties": false,
-        "required": [
-          "definitionId"
-        ],
+        "description": "Request to get a definition by ID or by gameServiceId + code",
         "properties": {
           "definitionId": {
             "type": "string",
             "format": "uuid",
-            "description": "Definition ID to retrieve"
+            "nullable": true,
+            "description": "Definition ID (takes precedence over code lookup)"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Game service scope (required for code lookup)"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Definition code (used with gameServiceId)"
           }
         }
       },
@@ -37413,6 +39355,58 @@
           }
         }
       },
+      "GetFamilyTreeRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to get a multi-generational family tree",
+        "required": [
+          "characterId"
+        ],
+        "properties": {
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Root character of the family tree"
+          },
+          "ancestorDepth": {
+            "type": "integer",
+            "default": 3,
+            "description": "Generations to traverse upward",
+            "minimum": 0,
+            "maximum": 10
+          },
+          "descendantDepth": {
+            "type": "integer",
+            "default": 2,
+            "description": "Generations to traverse downward",
+            "minimum": 0,
+            "maximum": 10
+          }
+        }
+      },
+      "GetFamilyTreeResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Multi-generational family tree",
+        "required": [
+          "rootCharacterId",
+          "nodes"
+        ],
+        "properties": {
+          "rootCharacterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character at the root of the tree"
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FamilyTreeNode"
+            },
+            "description": "All nodes in the family tree"
+          }
+        }
+      },
       "GetGameSessionRequest": {
         "type": "object",
         "description": "Request to get a specific game session",
@@ -37439,6 +39433,106 @@
             "type": "string",
             "format": "uuid",
             "description": "WebSocket session ID of the player"
+          }
+        }
+      },
+      "GetGeneticProfileRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to get a genetic profile",
+        "required": [
+          "characterId"
+        ],
+        "properties": {
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character to retrieve genetic profile for"
+          }
+        }
+      },
+      "GetGeneticProfileResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Full genetic profile for a character",
+        "required": [
+          "characterId",
+          "speciesCode",
+          "generationDepth",
+          "genotype",
+          "phenotype",
+          "aptitudes",
+          "bloodlines",
+          "mutations"
+        ],
+        "properties": {
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character this profile belongs to"
+          },
+          "speciesCode": {
+            "type": "string",
+            "description": "Primary species code",
+            "maxLength": 100
+          },
+          "secondarySpecies": {
+            "type": "string",
+            "nullable": true,
+            "description": "Secondary species code (non-null for hybrids)",
+            "maxLength": 100
+          },
+          "parentAId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "First parent (null for seeded/first-generation)"
+          },
+          "parentBId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Second parent (null for seeded/first-generation)"
+          },
+          "generationDepth": {
+            "type": "integer",
+            "description": "Generations from earliest tracked ancestor",
+            "minimum": 0
+          },
+          "genotype": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GenotypeEntry"
+            },
+            "description": "Inherited allele pairs"
+          },
+          "phenotype": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhenotypeEntry"
+            },
+            "description": "Expressed trait values"
+          },
+          "aptitudes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AptitudeEntry"
+            },
+            "description": "Derived skill aptitudes"
+          },
+          "bloodlines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BloodlineEntry"
+            },
+            "description": "Bloodline memberships"
+          },
+          "mutations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MutationEntry"
+            },
+            "description": "Random mutations applied during creation"
           }
         }
       },
@@ -37469,6 +39563,130 @@
             "type": "string",
             "format": "uuid",
             "description": "The seed whose growth to retrieve."
+          }
+        }
+      },
+      "GetHeritableTraitTemplateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Heritable trait template for a species",
+        "required": [
+          "speciesCode",
+          "gameServiceId",
+          "traits"
+        ],
+        "properties": {
+          "speciesCode": {
+            "type": "string",
+            "description": "Species code",
+            "maxLength": 100
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "traits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HeritableTraitDefinition"
+            },
+            "description": "Heritable trait definitions"
+          },
+          "isDeprecated": {
+            "type": "boolean",
+            "description": "Whether this template is deprecated"
+          },
+          "deprecatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the template was deprecated (null if not deprecated)"
+          },
+          "deprecationReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the template was deprecated (null if not deprecated)",
+            "maxLength": 500
+          }
+        }
+      },
+      "GetHybridTraitTemplateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Hybrid trait template for a species pair",
+        "required": [
+          "speciesA",
+          "speciesB",
+          "gameServiceId",
+          "traitOverrides",
+          "hybridFertilityModifier"
+        ],
+        "properties": {
+          "speciesA": {
+            "type": "string",
+            "description": "First species in the pair",
+            "maxLength": 100
+          },
+          "speciesB": {
+            "type": "string",
+            "description": "Second species in the pair",
+            "maxLength": 100
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "traitOverrides": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HybridTraitOverride"
+            },
+            "description": "Dominance overrides for specific traits in hybrid offspring"
+          },
+          "hybridFertilityModifier": {
+            "type": "number",
+            "format": "float",
+            "description": "Fertility modifier for hybrid offspring (0.0 = sterile, 1.0 = normal)",
+            "minimum": 0.0,
+            "maximum": 2.0
+          },
+          "isDeprecated": {
+            "type": "boolean",
+            "description": "Whether this template is deprecated"
+          },
+          "deprecatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the template was deprecated (null if not deprecated)"
+          },
+          "deprecationReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the template was deprecated (null if not deprecated)",
+            "maxLength": 500
+          }
+        }
+      },
+      "GetImplicitMappingRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to get implicit mapping for a template code",
+        "required": [
+          "gameServiceId",
+          "itemTemplateCode"
+        ],
+        "properties": {
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "itemTemplateCode": {
+            "type": "string",
+            "description": "Item template code to look up"
           }
         }
       },
@@ -37666,6 +39884,61 @@
           "code": {
             "type": "string",
             "description": "License code to look up"
+          }
+        }
+      },
+      "GetLifecycleTemplateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Lifecycle template for a species",
+        "required": [
+          "speciesCode",
+          "gameServiceId",
+          "stages",
+          "naturalDeathRange",
+          "fertilityWindow"
+        ],
+        "properties": {
+          "speciesCode": {
+            "type": "string",
+            "description": "Species code",
+            "maxLength": 100
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LifecycleStageDefinition"
+            },
+            "description": "Lifecycle stage definitions"
+          },
+          "naturalDeathRange": {
+            "$ref": "#/components/schemas/NaturalDeathRange",
+            "description": "Natural death year calculation parameters"
+          },
+          "fertilityWindow": {
+            "$ref": "#/components/schemas/FertilityWindow",
+            "description": "Fertility peak and decline parameters"
+          },
+          "isDeprecated": {
+            "type": "boolean",
+            "description": "Whether this template is deprecated"
+          },
+          "deprecatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the template was deprecated (null if not deprecated)"
+          },
+          "deprecationReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the template was deprecated (null if not deprecated)",
+            "maxLength": 500
           }
         }
       },
@@ -37868,6 +40141,52 @@
         "type": "object",
         "description": "Request to get phase metrics",
         "properties": {}
+      },
+      "GetPhenotypeRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to get phenotype data",
+        "required": [
+          "characterId"
+        ],
+        "properties": {
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character to retrieve phenotype for"
+          }
+        }
+      },
+      "GetPhenotypeResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Expressed phenotype traits and aptitudes",
+        "required": [
+          "characterId",
+          "phenotype",
+          "aptitudes"
+        ],
+        "properties": {
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character this data belongs to"
+          },
+          "phenotype": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhenotypeEntry"
+            },
+            "description": "Expressed phenotype traits"
+          },
+          "aptitudes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AptitudeEntry"
+            },
+            "description": "Derived skill aptitudes"
+          }
+        }
       },
       "GetPlanRequest": {
         "type": "object",
@@ -38893,6 +41212,59 @@
           }
         }
       },
+      "GovernanceEntryResponse": {
+        "type": "object",
+        "description": "A governance data entry associating a case type domain with a contract template and governance parameters",
+        "additionalProperties": false,
+        "required": [
+          "governanceId",
+          "factionId",
+          "domain",
+          "templateCode",
+          "createdAt"
+        ],
+        "properties": {
+          "governanceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for this governance entry"
+          },
+          "factionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Faction owning this governance entry"
+          },
+          "domain": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "Case type domain prefix (e.g., \"dissolution\", \"trade_dispute\", \"criminal\")"
+          },
+          "templateCode": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "Contract template code in lib-contract for this case type"
+          },
+          "governanceParameters": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Opaque governance parameters for the contract template. Faction stores and returns these unchanged. Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this governance entry was created"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When this governance entry was last updated"
+          }
+        }
+      },
       "GrantEntryRequest": {
         "type": "object",
         "description": "Request to grant/unlock an entry in a collection",
@@ -39509,6 +41881,75 @@
           }
         }
       },
+      "HeritableTraitDefinition": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Definition of a heritable genetic trait for a species",
+        "required": [
+          "traitCode",
+          "displayName",
+          "category",
+          "dominanceModel",
+          "mutationChance",
+          "mutationRange"
+        ],
+        "properties": {
+          "traitCode": {
+            "type": "string",
+            "description": "Unique trait identifier within species",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable trait name",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "category": {
+            "type": "string",
+            "description": "Trait category (physical, mental, magical, social)",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "dominanceModel": {
+            "$ref": "#/components/schemas/DominanceModel",
+            "description": "How alleles combine for this trait"
+          },
+          "mutationChance": {
+            "type": "number",
+            "format": "float",
+            "description": "Probability of mutation per trait during procreation (0.0-1.0)",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "mutationRange": {
+            "type": "number",
+            "format": "float",
+            "description": "Maximum allele shift on mutation",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "expressionDelay": {
+            "type": "string",
+            "nullable": true,
+            "description": "Stage at which trait fully expresses (null for immediate expression at birth)",
+            "maxLength": 50
+          },
+          "personalityMapping": {
+            "type": "string",
+            "nullable": true,
+            "description": "Which personality trait this feeds (e.g., aggression)",
+            "maxLength": 100
+          },
+          "aptitudeMapping": {
+            "type": "string",
+            "nullable": true,
+            "description": "Which aptitude domain this feeds (e.g., smithing)",
+            "maxLength": 100
+          }
+        }
+      },
       "HistoryRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -39570,6 +42011,89 @@
           "Delete",
           "Patch"
         ]
+      },
+      "HybridTraitOverride": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Dominance override for a specific trait in cross-species hybridization",
+        "required": [
+          "traitCode",
+          "dominanceOverride"
+        ],
+        "properties": {
+          "traitCode": {
+            "type": "string",
+            "description": "Trait being overridden",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "dominanceOverride": {
+            "$ref": "#/components/schemas/DominanceModel",
+            "description": "Dominance model override for this trait in hybrid offspring"
+          }
+        }
+      },
+      "ImplicitDefinitionRef": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Reference to an implicit definition with optional value override ranges",
+        "required": [
+          "definitionId"
+        ],
+        "properties": {
+          "definitionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Implicit affix definition ID"
+          },
+          "minValueOverride": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "Override minimum value for rolling (null uses definition default)"
+          },
+          "maxValueOverride": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "Override maximum value for rolling (null uses definition default)"
+          }
+        }
+      },
+      "ImplicitMappingResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Implicit mapping for an item template",
+        "required": [
+          "mappingId",
+          "gameServiceId",
+          "itemTemplateCode",
+          "implicitDefinitionIds"
+        ],
+        "properties": {
+          "mappingId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique mapping identifier"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "itemTemplateCode": {
+            "type": "string",
+            "description": "Item template code"
+          },
+          "implicitDefinitionIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Mapped implicit affix definition IDs"
+          }
+        }
       },
       "ImportDocument": {
         "description": "A single document to import with required fields",
@@ -41241,6 +43765,69 @@
           "Unlocked"
         ]
       },
+      "LifecycleStageDefinition": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Definition of a single lifecycle stage within a species template",
+        "required": [
+          "code",
+          "minAge",
+          "healthModifier",
+          "fertilityBase",
+          "canMarry",
+          "canProcreate",
+          "canOwnOrg",
+          "canBePossessed"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Stage code (species-configurable, e.g., infant, child, adult)",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "minAge": {
+            "type": "integer",
+            "description": "Minimum age in game years for this stage",
+            "minimum": 0
+          },
+          "maxAge": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Maximum age for this stage (null for open-ended stages like dying)"
+          },
+          "healthModifier": {
+            "type": "number",
+            "format": "float",
+            "description": "Multiplier applied to character health at this stage",
+            "minimum": 0.0,
+            "maximum": 2.0
+          },
+          "fertilityBase": {
+            "type": "number",
+            "format": "float",
+            "description": "Base fertility at this stage (0.0-1.0)",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "canMarry": {
+            "type": "boolean",
+            "description": "Whether marriage is permitted at this stage"
+          },
+          "canProcreate": {
+            "type": "boolean",
+            "description": "Whether procreation is permitted at this stage"
+          },
+          "canOwnOrg": {
+            "type": "boolean",
+            "description": "Whether character can own organizations at this stage"
+          },
+          "canBePossessed": {
+            "type": "boolean",
+            "description": "Whether guardian spirit can possess character at this stage"
+          }
+        }
+      },
       "LinkPlatformRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -41532,6 +44119,77 @@
               "$ref": "#/components/schemas/QuestDefinitionResponse"
             },
             "description": "Available quest definitions"
+          }
+        }
+      },
+      "ListBloodlinesRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to list bloodlines within a game service",
+        "required": [
+          "gameServiceId"
+        ],
+        "properties": {
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "traitSignatureFilter": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter by bloodlines containing these trait codes"
+          },
+          "minGenerationDepth": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Minimum generation span filter",
+            "minimum": 1
+          },
+          "minMemberCount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Minimum living member count filter",
+            "minimum": 1
+          },
+          "page": {
+            "type": "integer",
+            "default": 1,
+            "description": "Page number",
+            "minimum": 1
+          },
+          "pageSize": {
+            "type": "integer",
+            "default": 20,
+            "description": "Results per page",
+            "minimum": 1,
+            "maximum": 100
+          }
+        }
+      },
+      "ListBloodlinesResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Paged list of bloodlines",
+        "required": [
+          "bloodlines",
+          "totalCount"
+        ],
+        "properties": {
+          "bloodlines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BloodlineSummary"
+            },
+            "description": "Matching bloodlines"
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Total matching count",
+            "minimum": 0
           }
         }
       },
@@ -41944,50 +44602,109 @@
       },
       "ListDefinitionsRequest": {
         "type": "object",
-        "description": "Request to list map definitions",
         "additionalProperties": false,
+        "description": "Request to list definitions with optional filters",
+        "required": [
+          "gameServiceId"
+        ],
         "properties": {
-          "nameFilter": {
+          "gameServiceId": {
             "type": "string",
-            "maxLength": 256,
-            "description": "Filter by name (partial match)",
-            "nullable": true
+            "format": "uuid",
+            "description": "Game service scope"
           },
-          "offset": {
-            "type": "integer",
-            "minimum": 0,
-            "default": 0,
-            "description": "Pagination offset"
+          "slotType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Filter by slot type"
           },
-          "limit": {
+          "modGroup": {
+            "type": "string",
+            "nullable": true,
+            "description": "Filter by mod group"
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "description": "Filter by category"
+          },
+          "tags": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter by tags (any match)"
+          },
+          "tierMin": {
             "type": "integer",
+            "nullable": true,
+            "description": "Filter by minimum tier"
+          },
+          "tierMax": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Filter by maximum tier"
+          },
+          "requiredInfluence": {
+            "type": "string",
+            "nullable": true,
+            "description": "Filter by required influence type"
+          },
+          "includeDeprecated": {
+            "type": "boolean",
+            "default": false,
+            "description": "Include deprecated definitions in results (excluded by default)"
+          },
+          "page": {
+            "type": "integer",
+            "default": 1,
             "minimum": 1,
-            "maximum": 200,
-            "default": 50,
-            "description": "Max results to return"
+            "description": "Page number"
+          },
+          "pageSize": {
+            "type": "integer",
+            "default": 20,
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Items per page"
           }
         }
       },
       "ListDefinitionsResponse": {
         "type": "object",
-        "description": "Response containing list of map definitions",
         "additionalProperties": false,
+        "description": "Paginated list of affix definitions",
         "required": [
           "definitions",
-          "total"
+          "totalCount",
+          "page",
+          "pageSize",
+          "hasNextPage"
         ],
         "properties": {
           "definitions": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/MapDefinition"
+              "$ref": "#/components/schemas/AffixDefinitionResponse"
             },
-            "description": "List of definitions"
+            "description": "Definitions on this page"
           },
-          "total": {
+          "totalCount": {
             "type": "integer",
-            "minimum": 0,
-            "description": "Total count matching filter"
+            "description": "Total definitions matching filters"
+          },
+          "page": {
+            "type": "integer",
+            "description": "Current page number"
+          },
+          "pageSize": {
+            "type": "integer",
+            "description": "Items per page"
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "Whether more pages exist"
           }
         }
       },
@@ -42267,6 +44984,38 @@
           "hasMore": {
             "type": "boolean",
             "description": "Whether more pages are available"
+          }
+        }
+      },
+      "ListGovernanceEntriesRequest": {
+        "type": "object",
+        "description": "Request to list governance entries for a faction",
+        "additionalProperties": false,
+        "required": [
+          "factionId"
+        ],
+        "properties": {
+          "factionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Faction to list governance entries for"
+          }
+        }
+      },
+      "ListGovernanceEntriesResponse": {
+        "type": "object",
+        "description": "All governance entries for a faction",
+        "additionalProperties": false,
+        "required": [
+          "entries"
+        ],
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GovernanceEntryResponse"
+            },
+            "description": "All governance entries for this faction"
           }
         }
       },
@@ -42634,6 +45383,43 @@
               "$ref": "#/components/schemas/CharacterMembershipEntry"
             },
             "description": "All faction memberships for the character"
+          }
+        }
+      },
+      "ListModGroupsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to list mod groups for a game service",
+        "required": [
+          "gameServiceId"
+        ],
+        "properties": {
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "includeDeprecated": {
+            "type": "boolean",
+            "default": false,
+            "description": "Include deprecated definitions in mod group counts"
+          }
+        }
+      },
+      "ListModGroupsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "List of mod groups with definition counts",
+        "required": [
+          "modGroups"
+        ],
+        "properties": {
+          "modGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModGroupSummary"
+            },
+            "description": "Mod group summaries"
           }
         }
       },
@@ -43954,73 +46740,54 @@
       },
       "ListTemplatesRequest": {
         "type": "object",
-        "description": "Request to list templates with optional filters",
+        "additionalProperties": false,
+        "description": "Request to list all templates for a game service",
+        "required": [
+          "gameServiceId"
+        ],
         "properties": {
-          "category": {
-            "$ref": "#/components/schemas/ScenarioCategory",
-            "nullable": true,
-            "description": "Filter by category"
-          },
-          "connectivityMode": {
-            "$ref": "#/components/schemas/ConnectivityMode",
-            "nullable": true,
-            "description": "Filter by connectivity mode"
-          },
-          "deploymentPhase": {
-            "$ref": "#/components/schemas/DeploymentPhase",
-            "nullable": true,
-            "description": "Filter by deployment phase availability"
-          },
-          "status": {
-            "$ref": "#/components/schemas/TemplateStatus",
-            "nullable": true,
-            "description": "Filter by template status"
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
           },
           "includeDeprecated": {
             "type": "boolean",
             "default": false,
             "description": "Whether to include deprecated templates in results"
-          },
-          "page": {
-            "type": "integer",
-            "default": 1,
-            "description": "Page number (1-based)"
-          },
-          "pageSize": {
-            "type": "integer",
-            "default": 50,
-            "description": "Items per page"
           }
         }
       },
       "ListTemplatesResponse": {
         "type": "object",
-        "description": "Paginated list of scenario templates",
+        "additionalProperties": false,
+        "description": "All lifecycle and heritage templates for a game service",
         "required": [
-          "templates",
-          "totalCount",
-          "page",
-          "pageSize"
+          "lifecycleTemplates",
+          "heritableTraitTemplates",
+          "hybridTemplates"
         ],
         "properties": {
-          "templates": {
+          "lifecycleTemplates": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ScenarioTemplateResponse"
+              "$ref": "#/components/schemas/GetLifecycleTemplateResponse"
             },
-            "description": "Templates on this page"
+            "description": "All lifecycle stage templates"
           },
-          "totalCount": {
-            "type": "integer",
-            "description": "Total number of matching templates"
+          "heritableTraitTemplates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetHeritableTraitTemplateResponse"
+            },
+            "description": "All heritable trait templates"
           },
-          "page": {
-            "type": "integer",
-            "description": "Current page number"
-          },
-          "pageSize": {
-            "type": "integer",
-            "description": "Items per page"
+          "hybridTemplates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetHybridTraitTemplateResponse"
+            },
+            "description": "All hybrid trait templates"
           }
         }
       },
@@ -45746,6 +48513,25 @@
           "Skipped"
         ]
       },
+      "ModGroupSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Mod group summary with definition count",
+        "required": [
+          "code",
+          "definitionCount"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Mod group code"
+          },
+          "definitionCount": {
+            "type": "integer",
+            "description": "Number of definitions in this mod group"
+          }
+        }
+      },
       "ModeAvailabilityResult": {
         "type": "object",
         "additionalProperties": false,
@@ -46115,6 +48901,34 @@
           }
         }
       },
+      "MutationEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Random mutation applied during recombination",
+        "required": [
+          "traitCode",
+          "shift"
+        ],
+        "properties": {
+          "traitCode": {
+            "type": "string",
+            "description": "Trait that was mutated",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "shift": {
+            "type": "number",
+            "format": "float",
+            "description": "Amount the allele value was shifted"
+          },
+          "originalValue": {
+            "type": "number",
+            "format": "float",
+            "nullable": true,
+            "description": "Value before mutation (null if unavailable)"
+          }
+        }
+      },
       "MutationType": {
         "type": "string",
         "enum": [
@@ -46243,6 +49057,32 @@
             "$ref": "#/components/schemas/TensionProfile",
             "nullable": true,
             "description": "Preferred tension curve shape throughout the composition"
+          }
+        }
+      },
+      "NaturalDeathRange": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Configuration for natural death year calculation",
+        "required": [
+          "minAge",
+          "maxAge",
+          "distribution"
+        ],
+        "properties": {
+          "minAge": {
+            "type": "integer",
+            "description": "Earliest possible natural death age",
+            "minimum": 1
+          },
+          "maxAge": {
+            "type": "integer",
+            "description": "Latest possible natural death age",
+            "minimum": 1
+          },
+          "distribution": {
+            "$ref": "#/components/schemas/DeathDistribution",
+            "description": "Statistical distribution for death year selection"
           }
         }
       },
@@ -47530,6 +50370,35 @@
           }
         }
       },
+      "PhenotypeEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Expressed phenotype value for a single genetic trait",
+        "required": [
+          "traitCode",
+          "value",
+          "expressionRule"
+        ],
+        "properties": {
+          "traitCode": {
+            "type": "string",
+            "description": "Same code as genotype",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "value": {
+            "type": "number",
+            "format": "float",
+            "description": "The expressed phenotype value",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "expressionRule": {
+            "$ref": "#/components/schemas/DominanceModel",
+            "description": "Which dominance model produced this value"
+          }
+        }
+      },
       "PinMessageRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -48519,6 +51388,57 @@
           }
         }
       },
+      "QueryBloodlineMembersRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to query living members of a bloodline",
+        "required": [
+          "bloodlineId"
+        ],
+        "properties": {
+          "bloodlineId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Bloodline to query members of"
+          },
+          "page": {
+            "type": "integer",
+            "default": 1,
+            "description": "Page number",
+            "minimum": 1
+          },
+          "pageSize": {
+            "type": "integer",
+            "default": 20,
+            "description": "Results per page",
+            "minimum": 1,
+            "maximum": 100
+          }
+        }
+      },
+      "QueryBloodlineMembersResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Living members of a bloodline with generation and trait data",
+        "required": [
+          "members",
+          "totalCount"
+        ],
+        "properties": {
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BloodlineMemberSummary"
+            },
+            "description": "Matching bloodline members"
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Total matching count",
+            "minimum": 0
+          }
+        }
+      },
       "QueryBoundsRequest": {
         "type": "object",
         "description": "Query map data within bounds",
@@ -48705,19 +51625,10 @@
             "nullable": true,
             "description": "Filter bundles with name containing this string (case-insensitive)"
           },
-          "ownerType": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/AssetOwnerType"
-              }
-            ],
-            "nullable": true,
-            "description": "Filter by owner type (null for any type)"
-          },
-          "ownerId": {
+          "createdBy": {
             "type": "string",
             "nullable": true,
-            "description": "Filter by owner identifier (session ID or service name)"
+            "description": "Filter by creator (null for all creators)"
           },
           "realm": {
             "allOf": [
@@ -51394,6 +54305,28 @@
           }
         }
       },
+      "RemoveGovernanceEntryRequest": {
+        "type": "object",
+        "description": "Request to remove a governance entry from a faction",
+        "additionalProperties": false,
+        "required": [
+          "factionId",
+          "domain"
+        ],
+        "properties": {
+          "factionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Faction to remove governance from"
+          },
+          "domain": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "Case type domain to remove"
+          }
+        }
+      },
       "RemoveLicenseDefinitionRequest": {
         "type": "object",
         "description": "Request to remove a license definition from a board template",
@@ -52144,6 +55077,37 @@
           }
         }
       },
+      "RevokeAuthorityRequest": {
+        "type": "object",
+        "description": "Request to revoke delegated authority from a child faction",
+        "additionalProperties": false,
+        "required": [
+          "sovereignFactionId",
+          "targetFactionId"
+        ],
+        "properties": {
+          "sovereignFactionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Sovereign faction revoking delegation"
+          },
+          "targetFactionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Faction whose delegation is being revoked"
+          },
+          "domains": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "nullable": true,
+            "description": "Specific domains to revoke (null to revoke all delegation, reverting target to Influence)"
+          }
+        }
+      },
       "RewardDefinition": {
         "type": "object",
         "description": "Reward granted when a quest is completed",
@@ -52203,6 +55167,80 @@
           "High"
         ],
         "description": "Severity level for identified plan risks"
+      },
+      "RollImplicitsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to roll implicit values for an item template",
+        "required": [
+          "gameServiceId",
+          "itemTemplateCode"
+        ],
+        "properties": {
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "itemTemplateCode": {
+            "type": "string",
+            "description": "Item template code for implicit mapping lookup"
+          },
+          "overrides": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/ImplicitDefinitionRef"
+            },
+            "description": "Optional value range overrides per definition"
+          }
+        }
+      },
+      "RollImplicitsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Rolled implicit values for an item template",
+        "required": [
+          "rolledSlots"
+        ],
+        "properties": {
+          "rolledSlots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RolledSlot"
+            },
+            "description": "Rolled implicit slots with values"
+          }
+        }
+      },
+      "RolledSlot": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Result of rolling implicit values for one slot",
+        "required": [
+          "definitionId",
+          "definitionCode",
+          "rolledValues"
+        ],
+        "properties": {
+          "definitionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Implicit definition ID"
+          },
+          "definitionCode": {
+            "type": "string",
+            "description": "Implicit definition code"
+          },
+          "rolledValues": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "Rolled values for each stat grant"
+          }
+        }
       },
       "RoomTypeResponse": {
         "allOf": [
@@ -54197,6 +57235,219 @@
           }
         }
       },
+      "SeedCharacterEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Individual character entry for bulk lifecycle profile seeding",
+        "required": [
+          "characterId",
+          "gameServiceId",
+          "realmId",
+          "speciesCode",
+          "birthGameYear",
+          "currentAge",
+          "currentStage"
+        ],
+        "properties": {
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character to seed lifecycle profile for"
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "realmId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Realm for worldstate time queries"
+          },
+          "speciesCode": {
+            "type": "string",
+            "description": "Species code for template resolution",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "birthGameYear": {
+            "type": "integer",
+            "description": "Game year of birth"
+          },
+          "birthSeason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Season of birth",
+            "maxLength": 50
+          },
+          "currentAge": {
+            "type": "integer",
+            "description": "Current age in game years",
+            "minimum": 0
+          },
+          "currentStage": {
+            "type": "string",
+            "description": "Current lifecycle stage code",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "heritageData": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/PhenotypeEntry"
+            },
+            "description": "Optional explicit phenotype values for seeded first-generation characters"
+          }
+        }
+      },
+      "SeedDefinitionEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "A single definition entry for bulk seeding",
+        "required": [
+          "code",
+          "slotType",
+          "modGroup",
+          "tier",
+          "statGrants",
+          "spawnWeight"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Unique definition code within game service"
+          },
+          "slotType": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "Slot type for this definition (e.g., \"prefix\", \"suffix\", \"implicit\")"
+          },
+          "modGroup": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Exclusivity group"
+          },
+          "tier": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Power tier within mod group (1 = best)"
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100,
+            "description": "Broad classification"
+          },
+          "tags": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Generation tags for pool filtering"
+          },
+          "statGrants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatGrant"
+            },
+            "description": "Stat contributions from this affix"
+          },
+          "spawnWeight": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Base weight for weighted random selection"
+          },
+          "spawnTagModifiers": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/SpawnTagModifier"
+            },
+            "description": "Per-tag weight multipliers"
+          },
+          "requiredItemLevel": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "description": "Minimum item level to spawn"
+          },
+          "requiredInfluences": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Required influence types (empty = no requirement)"
+          },
+          "validItemClasses": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Item classes this definition can appear on"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 200,
+            "description": "Human-readable display name"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "default": 0,
+            "description": "Sorting priority within slot type"
+          }
+        }
+      },
+      "SeedDefinitionsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Bulk seed request for affix definitions",
+        "required": [
+          "gameServiceId",
+          "definitions"
+        ],
+        "properties": {
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "definitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeedDefinitionEntry"
+            },
+            "description": "Definitions to seed (duplicates by code are skipped)"
+          }
+        }
+      },
+      "SeedDefinitionsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Result of bulk definition seeding",
+        "required": [
+          "createdCount",
+          "skippedCount"
+        ],
+        "properties": {
+          "createdCount": {
+            "type": "integer",
+            "description": "Number of definitions created"
+          },
+          "skippedCount": {
+            "type": "integer",
+            "description": "Number of definitions skipped (already exist)"
+          }
+        }
+      },
       "SeedEffectEntry": {
         "type": "object",
         "description": "A single seed-derived passive effect entry",
@@ -54291,6 +57542,309 @@
             "description": "Number of templates skipped (duplicates)"
           }
         }
+      },
+      "SeedGeneticProfileRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to create a genetic profile for a first-generation character",
+        "required": [
+          "characterId",
+          "speciesCode",
+          "gameServiceId"
+        ],
+        "properties": {
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character to create genetic profile for"
+          },
+          "speciesCode": {
+            "type": "string",
+            "description": "Species code for trait template resolution",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "phenotypeValues": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/PhenotypeEntry"
+            },
+            "description": "Explicit phenotype values (null to generate from species defaults with random variation)"
+          }
+        }
+      },
+      "SeedGeneticProfileResponse": {
+        "type": "object",
+        "description": "Empty response. HTTP 200 confirms the genetic profile was created.",
+        "additionalProperties": false,
+        "properties": {}
+      },
+      "SeedHeritableTraitTemplateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to create heritable trait definitions for a species",
+        "required": [
+          "speciesCode",
+          "gameServiceId",
+          "traits"
+        ],
+        "properties": {
+          "speciesCode": {
+            "type": "string",
+            "description": "Species code this template applies to",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "traits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HeritableTraitDefinition"
+            },
+            "description": "Heritable trait definitions"
+          }
+        }
+      },
+      "SeedHeritableTraitTemplateResponse": {
+        "type": "object",
+        "description": "Empty response. HTTP 200 confirms the template was created.",
+        "additionalProperties": false,
+        "properties": {}
+      },
+      "SeedHybridTemplateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to create cross-species hybridization rules",
+        "required": [
+          "speciesA",
+          "speciesB",
+          "gameServiceId",
+          "traitOverrides",
+          "hybridFertilityModifier"
+        ],
+        "properties": {
+          "speciesA": {
+            "type": "string",
+            "description": "First species in the pair",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "speciesB": {
+            "type": "string",
+            "description": "Second species in the pair",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "traitOverrides": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HybridTraitOverride"
+            },
+            "description": "Dominance overrides for specific traits in hybrid offspring"
+          },
+          "hybridFertilityModifier": {
+            "type": "number",
+            "format": "float",
+            "description": "Fertility modifier for hybrid offspring (0.0 = sterile, 1.0 = normal)",
+            "minimum": 0.0,
+            "maximum": 2.0
+          }
+        }
+      },
+      "SeedHybridTemplateResponse": {
+        "type": "object",
+        "description": "Empty response. HTTP 200 confirms the template was created.",
+        "additionalProperties": false,
+        "properties": {}
+      },
+      "SeedImplicitMappingEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "A single implicit mapping entry for bulk seeding",
+        "required": [
+          "itemTemplateCode",
+          "implicitDefinitionIds"
+        ],
+        "properties": {
+          "itemTemplateCode": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Item template code to map"
+          },
+          "implicitDefinitionIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Implicit affix definition IDs to map to this template"
+          }
+        }
+      },
+      "SeedImplicitMappingsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Bulk seed request for implicit mappings",
+        "required": [
+          "gameServiceId",
+          "mappings"
+        ],
+        "properties": {
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "mappings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeedImplicitMappingEntry"
+            },
+            "description": "Mappings to seed (duplicates by template code are skipped)"
+          }
+        }
+      },
+      "SeedImplicitMappingsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Result of bulk implicit mapping seeding",
+        "required": [
+          "createdCount",
+          "skippedCount"
+        ],
+        "properties": {
+          "createdCount": {
+            "type": "integer",
+            "description": "Number of mappings created"
+          },
+          "skippedCount": {
+            "type": "integer",
+            "description": "Number of mappings skipped (already exist)"
+          }
+        }
+      },
+      "SeedItemError": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Error encountered during per-item processing in a bulk seed operation",
+        "required": [
+          "characterId",
+          "error"
+        ],
+        "properties": {
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character that failed seeding"
+          },
+          "error": {
+            "type": "string",
+            "description": "Error description",
+            "maxLength": 500
+          }
+        }
+      },
+      "SeedLifecycleProfileRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to bulk seed lifecycle profiles for first-generation characters",
+        "required": [
+          "characters"
+        ],
+        "properties": {
+          "characters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeedCharacterEntry"
+            },
+            "description": "Characters to seed lifecycle profiles for"
+          }
+        }
+      },
+      "SeedLifecycleProfileResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Result of bulk lifecycle profile seeding",
+        "required": [
+          "createdCount"
+        ],
+        "properties": {
+          "createdCount": {
+            "type": "integer",
+            "description": "Number of profiles successfully created",
+            "minimum": 0
+          },
+          "errors": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/SeedItemError"
+            },
+            "description": "Per-item errors encountered during seeding"
+          }
+        }
+      },
+      "SeedLifecycleTemplateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to create lifecycle stage definitions for a species",
+        "required": [
+          "speciesCode",
+          "gameServiceId",
+          "stages",
+          "naturalDeathRange",
+          "fertilityWindow"
+        ],
+        "properties": {
+          "speciesCode": {
+            "type": "string",
+            "description": "Species code this template applies to",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LifecycleStageDefinition"
+            },
+            "description": "Lifecycle stage definitions (must be contiguous)"
+          },
+          "naturalDeathRange": {
+            "$ref": "#/components/schemas/NaturalDeathRange",
+            "description": "Configuration for natural death year calculation"
+          },
+          "fertilityWindow": {
+            "$ref": "#/components/schemas/FertilityWindow",
+            "description": "Species fertility peak and decline configuration"
+          }
+        }
+      },
+      "SeedLifecycleTemplateResponse": {
+        "type": "object",
+        "description": "Empty response. HTTP 200 confirms the template was created.",
+        "additionalProperties": false,
+        "properties": {}
       },
       "SeedLocation": {
         "description": "Location data for seeding operations, using codes instead of IDs for references",
@@ -55197,6 +58751,41 @@
           }
         }
       },
+      "SetGovernanceEntryRequest": {
+        "type": "object",
+        "description": "Request to create or update a governance entry for a faction",
+        "additionalProperties": false,
+        "required": [
+          "factionId",
+          "domain",
+          "templateCode"
+        ],
+        "properties": {
+          "factionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Faction to set governance on (must be Sovereign or Delegated)"
+          },
+          "domain": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "Case type domain prefix (e.g., \"dissolution\", \"trade_dispute\")"
+          },
+          "templateCode": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "Contract template code in lib-contract for this case type"
+          },
+          "governanceParameters": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Opaque governance parameters for the contract template. Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
+          }
+        }
+      },
       "SetLocationParentRequest": {
         "description": "Request to set or change a location's parent in the hierarchy",
         "type": "object",
@@ -55217,6 +58806,33 @@
             "description": "ID of the new parent location (must be in same realm)"
           }
         }
+      },
+      "SetNaturalDeathYearRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to override a character's natural death year",
+        "required": [
+          "characterId",
+          "naturalDeathYear"
+        ],
+        "properties": {
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Character to update"
+          },
+          "naturalDeathYear": {
+            "type": "integer",
+            "description": "New projected natural death year",
+            "minimum": 0
+          }
+        }
+      },
+      "SetNaturalDeathYearResponse": {
+        "type": "object",
+        "description": "Empty response. HTTP 200 confirms the update succeeded.",
+        "additionalProperties": false,
+        "properties": {}
       },
       "SetPersonalityRequest": {
         "type": "object",
@@ -55679,6 +59295,28 @@
           }
         }
       },
+      "SpawnTagModifier": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Per-tag weight multiplier for affix generation pool filtering",
+        "required": [
+          "tag",
+          "weightMultiplier"
+        ],
+        "properties": {
+          "tag": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Item class tag (e.g., \"amulet\", \"ring\", \"body_armour\")"
+          },
+          "weightMultiplier": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Weight multiplier (0 = cannot appear, 1000 = normal, 1500 = more likely)"
+          }
+        }
+      },
       "SpectrumType": {
         "type": "string",
         "enum": [
@@ -55957,6 +59595,34 @@
             "items": {
               "$ref": "#/components/schemas/WatcherInfo"
             }
+          }
+        }
+      },
+      "StatGrant": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "A single stat contribution from an affix definition",
+        "required": [
+          "statCode",
+          "minValue",
+          "maxValue"
+        ],
+        "properties": {
+          "statCode": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Stat identifier (e.g., \"maximum_life\", \"fire_resistance\")"
+          },
+          "minValue": {
+            "type": "number",
+            "format": "double",
+            "description": "Minimum rolled value for this stat"
+          },
+          "maxValue": {
+            "type": "number",
+            "format": "double",
+            "description": "Maximum rolled value for this stat"
           }
         }
       },
@@ -59588,8 +63254,8 @@
       },
       "UpdateDefinitionRequest": {
         "type": "object",
-        "description": "Request to update a map definition",
         "additionalProperties": false,
+        "description": "Partial update request for a definition. Identity fields cannot be changed.",
         "required": [
           "definitionId"
         ],
@@ -59597,43 +63263,80 @@
           "definitionId": {
             "type": "string",
             "format": "uuid",
-            "description": "Definition ID to update"
+            "description": "Definition to update"
           },
-          "name": {
+          "tier": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 1,
+            "description": "Updated tier"
+          },
+          "category": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 256,
-            "description": "New name (optional)",
-            "nullable": true
+            "nullable": true,
+            "description": "Updated category"
           },
-          "description": {
-            "type": "string",
-            "maxLength": 2048,
-            "description": "New description (optional)",
-            "nullable": true
-          },
-          "layers": {
+          "tags": {
             "type": "array",
+            "nullable": true,
             "items": {
-              "$ref": "#/components/schemas/LayerDefinition"
+              "type": "string"
             },
-            "description": "New layer configurations (replaces existing)",
-            "nullable": true
+            "description": "Updated tags"
           },
-          "defaultBounds": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/Bounds"
-              }
-            ],
-            "description": "New default bounds",
-            "nullable": true
+          "statGrants": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/StatGrant"
+            },
+            "description": "Updated stat grants"
           },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": true,
-            "description": "Updated client-provided definition metadata (replaces existing). No Bannou plugin reads specific keys from this field by convention.",
-            "nullable": true
+          "spawnWeight": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "description": "Updated spawn weight"
+          },
+          "spawnTagModifiers": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/SpawnTagModifier"
+            },
+            "description": "Updated tag modifiers"
+          },
+          "requiredItemLevel": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "description": "Updated required item level"
+          },
+          "requiredInfluences": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Updated required influences"
+          },
+          "validItemClasses": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Updated valid item classes"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Updated display name"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Updated display order"
           }
         }
       },
@@ -61297,18 +65000,13 @@
           "filename",
           "size",
           "contentType",
-          "ownerType",
-          "ownerId"
+          "createdBy"
         ],
         "properties": {
-          "ownerType": {
-            "$ref": "#/components/schemas/AssetOwnerType",
-            "description": "Type of owner initiating this upload"
-          },
-          "ownerId": {
+          "createdBy": {
             "type": "string",
             "minLength": 1,
-            "description": "Owner identifier. For Session type: the WebSocket session ID (UUID format).\nFor Service type: the service name (e.g., \"behavior\", \"orchestrator\").\n"
+            "description": "Informational field recording who initiated this upload. Not used for access control."
           },
           "filename": {
             "type": "string",
@@ -62745,6 +66443,10 @@
       "description": "Achievement and trophy system with progress tracking and platform synchronization."
     },
     {
+      "name": "Bannou Affix",
+      "description": "Item modifier definition, instance management, and stat computation service."
+    },
+    {
       "name": "Bannou Auth",
       "description": "Authentication and session management service (Internet-facing)."
     },
@@ -62759,6 +66461,10 @@
     {
       "name": "Bannou Character Encounter",
       "description": "Character encounter tracking service for memorable interactions between characters."
+    },
+    {
+      "name": "Bannou Character Lifecycle",
+      "description": "Generational cycle orchestration and genetic heritage service (L4 GameFeatures)."
     },
     {
       "name": "Bannou Character Personality",

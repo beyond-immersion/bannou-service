@@ -89,6 +89,36 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_STATE_PERSISTENCE_RETRY_DELAY_MS` | int | `50` | Base delay in milliseconds between state persistence retry a... |
 | `ACTOR_STOP_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds for graceful actor stop operations |
 
+### Affix
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `AFFIX_COMPUTED_STATS_CACHE_TTL_SECONDS` | int | `60` | Cached computed item stats TTL in seconds (1 minute default,... |
+| `AFFIX_DEFAULT_MAX_PREFIXES` | int | `3` | Default max prefix slots for rare rarity when no capability ... |
+| `AFFIX_DEFAULT_MAX_SUFFIXES` | int | `3` | Default max suffix slots for rare rarity when no capability ... |
+| `AFFIX_DEFAULT_SPAWN_WEIGHT` | int | `1000` | Default spawn weight for new definitions when not explicitly... |
+| `AFFIX_DEFINITION_CACHE_TTL_SECONDS` | int | `3600` | Definition cache TTL in seconds (1 hour default) |
+| `AFFIX_EQUIPMENT_STATS_CACHE_TTL_SECONDS` | int | `30` | Cached aggregate equipment stats TTL in seconds (30s default... |
+| `AFFIX_GENERATION_EVENT_BATCH_MAX_SIZE` | int | `100` | Maximum records per batched generation event |
+| `AFFIX_GENERATION_EVENT_DEDUPLICATION_WINDOW_SECONDS` | int | `60` | Deduplication window for batched generation events in second... |
+| `AFFIX_INCLUDE_SOCKET_STATS_IN_EQUIPMENT` | bool | `true` | Whether equipment stat computation includes socketed gem con... |
+| `AFFIX_INSTANCE_CACHE_TTL_SECONDS` | int | `300` | Affix instance cache TTL in seconds (5 minutes default) |
+| `AFFIX_INSTANCE_EVENT_BATCH_INTERVAL_SECONDS` | int | `5` | Flush interval for batched instance lifecycle events in seco... |
+| `AFFIX_INSTANCE_EVENT_BATCH_MAX_SIZE` | int | `500` | Maximum entries per batch lifecycle event flush |
+| `AFFIX_INSTANCE_EVENT_BATCH_STARTUP_DELAY_SECONDS` | int | `10` | Startup delay before first batch lifecycle event flush in se... |
+| `AFFIX_ITEM_LEVEL_BUCKET_SIZE` | int | `10` | Item level range per cache bucket (levels 71-80 share a pool... |
+| `AFFIX_ITEM_TRAITS_SEED_TYPE_CODE` | string | `item-traits` | Seed type code for item trait progression (registered at sta... |
+| `AFFIX_LIST_OPERATION_MAX_RETRIES` | int | `3` | Maximum retry attempts for string list index operations (rev... |
+| `AFFIX_LOCK_TIMEOUT_SECONDS` | int | `30` | Distributed lock timeout in seconds for definition and item ... |
+| `AFFIX_MAX_AFFIXES_PER_ITEM` | int | `12` | Hard cap on total affixes per item across all slot types |
+| `AFFIX_MAX_CONCURRENCY_RETRIES` | int | `3` | Maximum retry attempts for ETag conflicts during optimistic ... |
+| `AFFIX_MAX_DEFINITIONS_PER_GAME_SERVICE` | int | `5000` | Safety limit for definition count per game service |
+| `AFFIX_MAX_ITEM_LEVEL` | int | `100` | Maximum supported item level (determines bucket count for po... |
+| `AFFIX_ORPHAN_RECONCILIATION_BATCH_SIZE` | int | `500` | Items checked per orphan reconciliation cycle |
+| `AFFIX_ORPHAN_RECONCILIATION_INTERVAL_MINUTES` | int | `60` | Interval for background orphan instance cleanup worker in mi... |
+| `AFFIX_ORPHAN_RECONCILIATION_STARTUP_DELAY_SECONDS` | int | `30` | Startup delay before first orphan reconciliation cycle in se... |
+| `AFFIX_POOL_CACHE_TTL_SECONDS` | int | `3600` | Pre-computed pool cache TTL in seconds (1 hour default) |
+
 ### Analytics
 
 | Environment Variable | Type | Default | Description |
@@ -110,7 +140,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ANALYTICS_GLICKO2_MIN_RATING` | double | `100.0` | Minimum allowed Glicko-2 rating (floor for clamping) |
 | `ANALYTICS_GLICKO2_SYSTEM_CONSTANT` | double | `0.5` | Glicko-2 system constant (tau) - controls volatility change ... |
 | `ANALYTICS_GLICKO2_VOLATILITY_CONVERGENCE_TOLERANCE` | double | `1e-06` | Convergence tolerance for Glicko-2 volatility iteration (sma... |
-| `ANALYTICS_MILESTONE_THRESHOLDS` | string | `10,25,50,100,250,500,1000,2500,5000,10000,25000,50000,100000` | Comma-separated list of score thresholds that trigger milest... |
+| `ANALYTICS_MILESTONE_THRESHOLDS` | string[] | `[10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000]` | Score thresholds that trigger milestone events (comma-separa... |
 | `ANALYTICS_RATING_UPDATE_LOCK_EXPIRY_SECONDS` | int | `30` | Lock expiry time in seconds for skill rating update operatio... |
 | `ANALYTICS_RESOLUTION_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for resolution caches (game service, realm, c... |
 | `ANALYTICS_SESSION_MAPPING_TTL_SECONDS` | int | `3600` | TTL in seconds for game session mappings (should exceed typi... |
@@ -119,9 +149,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `ASSET_ADDITIONAL_EXTENSION_MAPPINGS` | string | **REQUIRED** | Comma-separated ext=type pairs for additional extension mapp... |
-| `ASSET_ADDITIONAL_FORBIDDEN_CONTENT_TYPES` | string | **REQUIRED** | Comma-separated list of additional forbidden content types |
-| `ASSET_ADDITIONAL_PROCESSABLE_CONTENT_TYPES` | string | **REQUIRED** | Comma-separated list of additional processable content types... |
+| `ASSET_ADDITIONAL_EXTENSION_MAPPINGS` | string[] | **REQUIRED** | Additional file extension to MIME type mappings as "ext=type... |
+| `ASSET_ADDITIONAL_FORBIDDEN_CONTENT_TYPES` | string[] | **REQUIRED** | Additional MIME content types to reject on upload (e.g., "ap... |
+| `ASSET_ADDITIONAL_PROCESSABLE_CONTENT_TYPES` | string[] | **REQUIRED** | Additional processable MIME content types beyond built-in de... |
 | `ASSET_AUDIO_BITRATE_KBPS` | int | `192` | Default audio bitrate in kbps |
 | `ASSET_AUDIO_LARGE_FILE_WARNING_THRESHOLD_MB` | int | `100` | File size in MB above which audio processing logs a warning |
 | `ASSET_AUDIO_OUTPUT_FORMAT` | string | `mp3` | Default audio output format |
@@ -265,7 +295,6 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `BEHAVIOR_BUNDLE_MEMBERSHIP_KEY_PREFIX` | string | `bundle-membership:` | Key prefix for bundle membership entries |
 | `BEHAVIOR_COMPILER_MAX_CONSTANTS` | int | `256` | Maximum constants in behavior constant pool |
 | `BEHAVIOR_COMPILER_MAX_STRINGS` | int | `65536` | Maximum strings in behavior string table |
 | `BEHAVIOR_DEFAULT_EMOTIONAL_WEIGHT` | double | `0.4` | Weight for emotional significance in perception scoring |
@@ -278,7 +307,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `BEHAVIOR_DEFAULT_STORAGE_THRESHOLD` | double | `0.7` | Significance score threshold for storing memories (0.0-1.0) |
 | `BEHAVIOR_DEFAULT_THREAT_FAST_TRACK_THRESHOLD` | double | `0.8` | Urgency threshold for fast-tracking threat perceptions (0.0-... |
 | `BEHAVIOR_DEFAULT_THREAT_WEIGHT` | double | `10.0` | Attention priority weight for threat perceptions |
-| `BEHAVIOR_GOAP_METADATA_KEY_PREFIX` | string | `goap-metadata:` | Key prefix for GOAP metadata entries |
 | `BEHAVIOR_HIGH_URGENCY_MAX_PLAN_DEPTH` | int | `3` | Maximum depth for GOAP planning search at high urgency |
 | `BEHAVIOR_HIGH_URGENCY_MAX_PLAN_NODES` | int | `200` | Maximum nodes to explore during GOAP planning at high urgenc... |
 | `BEHAVIOR_HIGH_URGENCY_PLAN_TIMEOUT_MS` | int | `20` | Maximum time in ms for GOAP planning at high urgency |
@@ -292,14 +320,11 @@ This document lists all configuration options defined in Bannou's configuration 
 | `BEHAVIOR_MEDIUM_URGENCY_PLAN_TIMEOUT_MS` | int | `50` | Maximum time in ms for GOAP planning at medium urgency |
 | `BEHAVIOR_MEMORY_CATEGORY_MATCH_WEIGHT` | double | `0.3` | Weight for category match in memory relevance scoring |
 | `BEHAVIOR_MEMORY_CONTENT_OVERLAP_WEIGHT` | double | `0.4` | Weight for content keyword overlap in memory relevance scori... |
-| `BEHAVIOR_MEMORY_INDEX_KEY_PREFIX` | string | `memory-index:` | Key prefix for memory index entries |
-| `BEHAVIOR_MEMORY_KEY_PREFIX` | string | `memory:` | Key prefix for memory entries |
 | `BEHAVIOR_MEMORY_METADATA_OVERLAP_WEIGHT` | double | `0.2` | Weight for metadata key overlap in memory relevance scoring |
 | `BEHAVIOR_MEMORY_MINIMUM_RELEVANCE_THRESHOLD` | double | `0.1` | Minimum relevance score for memory retrieval (0.0-1.0) |
 | `BEHAVIOR_MEMORY_RECENCY_BONUS_WEIGHT` | double | `0.1` | Maximum recency bonus for memories less than 1 hour old |
 | `BEHAVIOR_MEMORY_SIGNIFICANCE_BONUS_WEIGHT` | double | `0.1` | Weight for memory significance in relevance scoring |
 | `BEHAVIOR_MEMORY_STORE_MAX_RETRIES` | int | `3` | Max retries for memory store operations |
-| `BEHAVIOR_METADATA_KEY_PREFIX` | string | `behavior-metadata:` | Key prefix for behavior metadata entries |
 
 ### Broadcast
 
@@ -393,6 +418,34 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CHARACTER_HISTORY_MAX_BACKSTORY_ELEMENTS` | int | `100` | Maximum number of backstory elements allowed per character. ... |
 | `CHARACTER_HISTORY_MAX_COMPRESS_BACKSTORY_POINTS` | int | `10` | Maximum number of backstory points to include in compression... |
 | `CHARACTER_HISTORY_MAX_COMPRESS_LIFE_EVENTS` | int | `10` | Maximum number of life events to include in compression arch... |
+| `CHARACTER_HISTORY_PARTICIPATION_EVENT_BATCH_INTERVAL_SECONDS` | int | `5` | Interval in seconds between participation batch event flushe... |
+| `CHARACTER_HISTORY_PARTICIPATION_EVENT_BATCH_STARTUP_DELAY_SECONDS` | int | `10` | Delay in seconds before the participation event batcher star... |
+
+### Character Lifecycle
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `CHARACTER_LIFECYCLE_AGING_BATCH_SIZE` | int | `200` | Characters per batch in aging worker processing |
+| `CHARACTER_LIFECYCLE_AGING_STARTUP_DELAY_SECONDS` | int | `30` | Delay before aging responds to first year-changed event, all... |
+| `CHARACTER_LIFECYCLE_BLOODLINE_FORMATION_GENERATIONS` | int | `3` | Consecutive generations with signature traits required to fo... |
+| `CHARACTER_LIFECYCLE_BLOODLINE_FORMATION_TRAIT_THRESHOLD` | double | `0.7` | Minimum trait value consistency across generations to qualif... |
+| `CHARACTER_LIFECYCLE_CACHE_TTL_MINUTES` | int | `5` | TTL for cached lifecycle manifests per character |
+| `CHARACTER_LIFECYCLE_DEATH_PROCESSING_TIMEOUT_SECONDS` | int | `60` | Timeout for the full death processing pipeline |
+| `CHARACTER_LIFECYCLE_DEFAULT_MUTATION_CHANCE` | double | `0.02` | Default probability of mutation per trait during procreation |
+| `CHARACTER_LIFECYCLE_DEFAULT_MUTATION_RANGE` | double | `0.1` | Maximum allele shift on mutation |
+| `CHARACTER_LIFECYCLE_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout for distributed lock acquisition |
+| `CHARACTER_LIFECYCLE_FULFILLMENT_FRUSTRATION_WEIGHT` | double | `0.5` | How much drive frustration reduces fulfillment contribution |
+| `CHARACTER_LIFECYCLE_FULFILLMENT_NEUTRAL_DEFAULT` | double | `0.3` | Fulfillment score for characters with no drives (drifters) |
+| `CHARACTER_LIFECYCLE_GUARDIAN_SPIRIT_BASE_MULTIPLIER` | double | `1.0` | Base multiplier for fulfillment to guardian spirit logos con... |
+| `CHARACTER_LIFECYCLE_GUARDIAN_TRUST_BONUS_WEIGHT` | double | `0.3` | How much guardian trust modifies spirit contribution |
+| `CHARACTER_LIFECYCLE_INHERITANCE_HEIRLOOM_SLOTS` | int | `3` | Maximum designated heirloom items transferable on death |
+| `CHARACTER_LIFECYCLE_MARRIAGE_CONTRACT_TEMPLATE_CODE` | string | `marriage-standard` | Default contract template code for marriage ceremonies |
+| `CHARACTER_LIFECYCLE_MAX_CHILDREN_PER_CHARACTER` | int | `20` | Maximum total children for a single character across all par... |
+| `CHARACTER_LIFECYCLE_MAX_CHILDREN_PER_PAIR` | int | `12` | Maximum children from a single parent pair |
+| `CHARACTER_LIFECYCLE_NATURAL_DEATH_CHECK_BATCH_SIZE` | int | `100` | Characters per batch in natural death checking |
+| `CHARACTER_LIFECYCLE_PREGNANCY_DURATION_GAME_DAYS` | int | `270` | Game-days between procreation initiation and birth |
+| `CHARACTER_LIFECYCLE_QUERY_PAGE_SIZE` | int | `20` | Default page size for paged queries |
+| `CHARACTER_LIFECYCLE_TESTAMENT_CONTRACT_TEMPLATE_CODE` | string | `testament-standard` | Default contract template code for last-will testaments |
 
 ### Character Personality
 
@@ -631,6 +684,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `FACTION_COLLECTION_GROWTH_AMOUNT` | double | `1.0` | Growth amount contributed to faction seed when a collection ... |
 | `FACTION_DEFAULT_MEMBER_ROLE` | string | `Member` | Default role assigned to new members when no role is specifi... |
 | `FACTION_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed lock acquisition on facti... |
+| `FACTION_GOVERNANCE_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for cached governance resolution results per ... |
+| `FACTION_MAX_GOVERNANCE_ENTRIES_PER_FACTION` | int | `20` | Maximum governance entries (case type domains) per faction |
 | `FACTION_MAX_HIERARCHY_DEPTH` | int | `5` | Maximum parent/child nesting depth for faction hierarchy |
 | `FACTION_MAX_NORMS_PER_FACTION` | int | `50` | Maximum number of norm definitions per faction |
 | `FACTION_MAX_TERRITORIES_PER_FACTION` | int | `20` | Maximum number of territory claims per faction |
@@ -1327,7 +1382,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `VOICE_SIP_CREDENTIAL_EXPIRATION_HOURS` | int | `24` | Hours until SIP credentials expire (clients should re-authen... |
 | `VOICE_SIP_DOMAIN` | string | `voice.bannou.local` | SIP domain for voice communication |
 | `VOICE_SIP_PASSWORD_SALT` | string | **REQUIRED** | Salt for SIP password generation. Required only when ScaledT... |
-| `VOICE_STUN_SERVERS` | string | `stun:stun.l.google.com:19302` | Comma-separated list of STUN server URLs for WebRTC |
+| `VOICE_STUN_SERVERS` | string[] | `['stun:stun.l.google.com:19302']` | List of STUN server URLs for WebRTC (comma-separated in env ... |
 | `VOICE_TIER_UPGRADE_ENABLED` | bool | `false` | Enable automatic tier upgrade from P2P to scaled |
 | `VOICE_TIER_UPGRADE_MIGRATION_DEADLINE_MS` | int | `30000` | Migration deadline in milliseconds when upgrading tiers |
 
@@ -1350,9 +1405,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 1066
+- **Total properties**: 1111
 - **Required (no default)**: 67
-- **Optional (has default)**: 999
+- **Optional (has default)**: 1044
 
 ## Environment Variable Naming Convention
 

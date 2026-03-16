@@ -458,4 +458,97 @@ export class FactionProxy {
       timeout
     );
   }
+
+  /**
+   * Set a governance entry for a faction
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async factionSetGovernanceEntryAsync(
+    request: Schemas['SetGovernanceEntryRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['GovernanceEntryResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['SetGovernanceEntryRequest'],
+      Schemas['GovernanceEntryResponse']
+    >('/faction/governance/set', request, channel, timeout);
+  }
+
+  /**
+   * Remove a governance entry
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @returns Promise that completes when the event is sent.
+   */
+  async factionRemoveGovernanceEntryEventAsync(
+    request: Schemas['RemoveGovernanceEntryRequest'],
+    channel: number = 0
+  ): Promise<void> {
+    return this.client.sendEventAsync<Schemas['RemoveGovernanceEntryRequest']>(
+      '/faction/governance/remove',
+      request,
+      channel
+    );
+  }
+
+  /**
+   * List governance entries for a faction
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async factionListGovernanceEntriesAsync(
+    request: Schemas['ListGovernanceEntriesRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['ListGovernanceEntriesResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['ListGovernanceEntriesRequest'],
+      Schemas['ListGovernanceEntriesResponse']
+    >('/faction/governance/list', request, channel, timeout);
+  }
+
+  /**
+   * Delegate authority from sovereign to child faction
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async factionDelegateAuthorityAsync(
+    request: Schemas['DelegateAuthorityRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['FactionResponse']>> {
+    return this.client.invokeAsync<Schemas['DelegateAuthorityRequest'], Schemas['FactionResponse']>(
+      '/faction/governance/delegate',
+      request,
+      channel,
+      timeout
+    );
+  }
+
+  /**
+   * Revoke delegated authority
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async factionRevokeAuthorityAsync(
+    request: Schemas['RevokeAuthorityRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['FactionResponse']>> {
+    return this.client.invokeAsync<Schemas['RevokeAuthorityRequest'], Schemas['FactionResponse']>(
+      '/faction/governance/revoke',
+      request,
+      channel,
+      timeout
+    );
+  }
 }

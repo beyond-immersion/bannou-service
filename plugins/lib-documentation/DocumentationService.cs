@@ -2445,8 +2445,7 @@ public partial class DocumentationService : IDocumentationService
             {
                 var uploadResponse = await assetClient.RequestBundleUploadAsync(new BundleUploadRequest
                 {
-                    OwnerType = AssetOwnerType.Service,
-                    OwnerId = "documentation",
+                    CreatedBy = "documentation",
                     Filename = $"docs-{body.Namespace}-{archiveId:N}.bannou",
                     Size = bundleData.Length
                 }, cancellationToken);
@@ -2622,18 +2621,18 @@ public partial class DocumentationService : IDocumentationService
                 _logger.LogDebug("Asset service not enabled, skipping bundle cleanup for archive {ArchiveId}", archive.ArchiveId);
             }
             else try
-            {
-                await assetClient.DeleteBundleAsync(new DeleteBundleRequest
                 {
-                    BundleId = archive.BundleAssetId.Value.ToString(),
-                    Reason = "Documentation archive deleted"
-                }, cancellationToken);
-                _logger.LogInformation("Deleted archive bundle {BundleId} from Asset Service", archive.BundleAssetId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to delete archive bundle {BundleId} from Asset Service, bundle may be orphaned", archive.BundleAssetId);
-            }
+                    await assetClient.DeleteBundleAsync(new DeleteBundleRequest
+                    {
+                        BundleId = archive.BundleAssetId.Value.ToString(),
+                        Reason = "Documentation archive deleted"
+                    }, cancellationToken);
+                    _logger.LogInformation("Deleted archive bundle {BundleId} from Asset Service", archive.BundleAssetId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to delete archive bundle {BundleId} from Asset Service, bundle may be orphaned", archive.BundleAssetId);
+                }
         }
 
         // Publish archive deleted event per FOUNDATION TENETS (event-driven architecture)

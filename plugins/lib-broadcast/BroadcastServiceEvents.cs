@@ -84,12 +84,12 @@ public partial class BroadcastService
     public async Task HandleSessionDisconnectedAsync(SessionDisconnectedEvent evt)
     {
         var sessionStore = _stateStoreFactory.GetStore<PlatformSessionModel>(StateStoreDefinitions.BroadcastSessions);
-        if (sessionStore == null)
+        if (sessionStore == null || evt.AccountId == null)
         {
             return;
         }
 
-        var session = await sessionStore.GetAsync(BuildSessionAccountKey(evt.AccountId), CancellationToken.None);
+        var session = await sessionStore.GetAsync(BuildSessionAccountKey(evt.AccountId.Value), CancellationToken.None);
         if (session == null || session.State != PlatformSessionState.Active)
         {
             return;
@@ -99,7 +99,7 @@ public partial class BroadcastService
         var duration = (int)(now - session.StartTime).TotalSeconds;
 
         await sessionStore.DeleteAsync(BuildSessionKey(session.PlatformSessionId), CancellationToken.None);
-        await sessionStore.DeleteAsync(BuildSessionAccountKey(evt.AccountId), CancellationToken.None);
+        await sessionStore.DeleteAsync(BuildSessionAccountKey(evt.AccountId.Value), CancellationToken.None);
 
         await _messageBus.PublishPlatformSessionDeletedAsync(new PlatformSessionDeletedEvent
         {

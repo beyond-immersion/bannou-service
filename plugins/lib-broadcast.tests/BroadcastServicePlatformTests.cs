@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Broadcast;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 
 namespace BeyondImmersion.BannouService.Broadcast.Tests;
 
@@ -155,7 +156,7 @@ public class BroadcastServicePlatformTests
         string? capturedTopic = null;
         object? capturedEvent = null;
 
-        var (service, messageBusMock, _) = CreateService(new BroadcastServiceConfiguration
+        var (service, messageBusMock, platformStoreMock) = CreateService(new BroadcastServiceConfiguration
         {
             BroadcastEnabled = true
         });
@@ -169,10 +170,22 @@ public class BroadcastServicePlatformTests
             })
             .ReturnsAsync(true);
 
+        var linkId = Guid.NewGuid();
+        platformStoreMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PlatformLinkModel
+            {
+                LinkId = linkId,
+                AccountId = Guid.NewGuid(),
+                Platform = PlatformType.Custom,
+                LinkedAt = DateTimeOffset.UtcNow,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
         var request = new UnlinkPlatformRequest
         {
             WebSocketSessionId = Guid.NewGuid(),
-            LinkId = Guid.NewGuid()
+            LinkId = linkId
         };
 
         var status = await service.UnlinkPlatformAsync(request, CancellationToken.None);
@@ -205,7 +218,7 @@ public class BroadcastServicePlatformTests
         Assert.NotNull(response.Links);
     }
 
-    private static (BroadcastService service, Mock<IMessageBus> messageBusMock, Mock<IStateStoreFactory> storeFactoryMock) CreateService(
+    private static (BroadcastService service, Mock<IMessageBus> messageBusMock, Mock<IStateStore<PlatformLinkModel>> platformStoreMock) CreateService(
         BroadcastServiceConfiguration? config = null)
     {
         var messageBus = new Mock<IMessageBus>();
@@ -213,6 +226,11 @@ public class BroadcastServicePlatformTests
         var logger = new Mock<ILogger<BroadcastService>>();
         var configuration = config ?? new BroadcastServiceConfiguration();
         var eventConsumer = new Mock<IEventConsumer>();
+
+        var platformStore = new Mock<IStateStore<PlatformLinkModel>>();
+
+        storeFactory.Setup(f => f.GetStore<PlatformLinkModel>(It.IsAny<string>()))
+            .Returns(platformStore.Object);
 
         messageBus.Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
@@ -225,6 +243,6 @@ public class BroadcastServicePlatformTests
             configuration,
             eventConsumer.Object);
 
-        return (service, messageBus, storeFactory);
+        return (service, messageBus, platformStore);
     }
 }

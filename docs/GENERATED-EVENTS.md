@@ -53,6 +53,18 @@ This document lists all events defined in Bannou's event schemas.
 | `PoolNodeRegisteredEvent` | Registration | `pool-node.registered` | Published when a pool node starts and registers wi... |
 | `PoolNodeUnhealthyEvent` | Custom | `pool-node-unhealthy` | Published by control plane when a pool node is det... |
 
+### Affix
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `AffixBatchGeneratedEvent` | Custom | `affix-batch-generated` | Published when a batch generation completes (dedup... |
+| `AffixInfluenceChangedEvent` | Custom | `affix-influence-changed` | Published when influence types change on an item |
+| `AffixInstanceStateChangedEvent` | Custom | `affix-instance-state-changed` | Published when item state flags change |
+| `AffixModifierAppliedEvent` | Custom | `affix-modifier-applied` | Published when an affix is applied to an item |
+| `AffixModifierRemovedEvent` | Custom | `affix-modifier-removed` | Published when an affix is removed from an item |
+| `AffixModifierRerolledEvent` | Custom | `affix-modifier-rerolled` | Published when affix values are rerolled on an ite... |
+| `AffixRarityChangedEvent` | Custom | `affix-rarity-changed` | Published when an item's effective rarity transiti... |
+
 ### Analytics
 
 | Event | Type | Likely Topic | Description |
@@ -151,6 +163,15 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `CharacterCompressedEvent` | Custom | `character-compressed` | Published when a character is compressed to archiv... |
+| `CharacterLifecycleBirthEvent` | Custom | `character-lifecycle-birth` | Published when a character is born through procrea... |
+| `CharacterLifecycleBloodlineFormedEvent` | Custom | `character-lifecycle-bloodline-formed` | Published when a new bloodline is identified from ... |
+| `CharacterLifecycleDeathEvent` | Custom | `character-lifecycle-death` | Published when a character dies and death processi... |
+| `CharacterLifecycleDivorceEvent` | Custom | `character-lifecycle-divorce` | Published when a marriage ends |
+| `CharacterLifecycleDyingEvent` | Custom | `character-lifecycle-dying` | Published when a character enters the dying state |
+| `CharacterLifecycleInheritanceProcessedEvent` | Custom | `character-lifecycle-inheritance-processed` | Published when inheritance is distributed after de... |
+| `CharacterLifecycleMarriageEvent` | Custom | `character-lifecycle-marriage` | Published when two characters marry |
+| `CharacterLifecycleStageChangedEvent` | Custom | `character-lifecycle-stage-changed` | Published when a character transitions lifecycle s... |
+| `CharacterLifecycleTraitExpressedEvent` | Custom | `character-lifecycle-trait-expressed` | Published when a latent heritage trait activates (... |
 | `CharacterRealmJoinedEvent` | Custom | `character-realm-joined` | Event published when a character joins a realm (cr... |
 | `CharacterRealmLeftEvent` | Custom | `character-realm-left` | Event published when a character leaves a realm (d... |
 
@@ -179,8 +200,6 @@ This document lists all events defined in Bannou's event schemas.
 | `CharacterBackstoryDeletedEvent` | Lifecycle (Deleted) | `character-backstory.deleted` | Published when a character's backstory is deleted |
 | `CharacterBackstoryUpdatedEvent` | Lifecycle (Updated) | `character-backstory.updated` | Published when a character's backstory is updated |
 | `CharacterHistoryDeletedEvent` | Lifecycle (Deleted) | `character-history.deleted` | Published when all history data for a character is... |
-| `CharacterParticipationDeletedEvent` | Lifecycle (Deleted) | `character-participation.deleted` | Published when a character's participation record ... |
-| `CharacterParticipationRecordedEvent` | Custom | `character-participation-recorded` | Published when a character's participation in a hi... |
 
 ### Character Personality
 
@@ -329,6 +348,7 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `DocumentationArchiveCreatedEvent` | Lifecycle (Created) | `documentation-archive.created` | Published when a documentation archive is created |
+| `DocumentationArchiveDeletedEvent` | Lifecycle (Deleted) | `documentation-archive.deleted` | Published when a documentation archive is deleted |
 | `DocumentationBindingCreatedEvent` | Lifecycle (Created) | `documentation-binding.created` | Published when a repository binding is created |
 | `DocumentationBindingRemovedEvent` | Custom | `documentation-binding-removed` | Published when a repository binding is removed |
 | `DocumentationQueriedEvent` | Custom | `documentation-queried` | Published when documentation is queried with natur... |
@@ -360,6 +380,10 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `FactionAuthorityDelegatedEvent` | Custom | `faction-authority-delegated` | Published when a sovereign faction delegates autho... |
+| `FactionAuthorityRevokedEvent` | Expiration | `faction-authority.revoked` | Published when delegated authority is revoked from... |
+| `FactionGovernanceDefinedEvent` | Custom | `faction-governance-defined` | Published when a governance entry is created or up... |
+| `FactionGovernanceDeletedEvent` | Lifecycle (Deleted) | `faction-governance.deleted` | Published when a governance entry is removed from ... |
 | `FactionMemberAddedEvent` | Custom | `faction-member-added` | Published when a character joins a faction |
 | `FactionMemberRemovedEvent` | Custom | `faction-member-removed` | Published when a character leaves or is removed fr... |
 | `FactionMemberRoleChangedEvent` | Custom | `faction-member-role-changed` | Published when a member's role is updated |

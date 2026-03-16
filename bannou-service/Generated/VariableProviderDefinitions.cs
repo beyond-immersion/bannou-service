@@ -20,6 +20,10 @@ public static class VariableProviderDefinitions
 {
     #region Provider Name Constants
 
+    // Affix Service
+    /// <summary>Item affix data for NPC GOAP evaluation of equipment quality (${affix.*})</summary>
+    public const string Affix = "affix";
+
     // CharacterEncounter Service
     /// <summary>Encounter history and sentiment for ABML expressions (${encounters.*})</summary>
     public const string Encounters = "encounters";
@@ -27,6 +31,12 @@ public static class VariableProviderDefinitions
     // CharacterHistory Service
     /// <summary>Character backstory elements for ABML expressions (${backstory.*})</summary>
     public const string Backstory = "backstory";
+
+    // CharacterLifecycle Service
+    /// <summary>Genetic heritage data — phenotype traits, aptitudes, bloodline membership, species, generation depth (${heritage.*})</summary>
+    public const string Heritage = "heritage";
+    /// <summary>Lifecycle state data — age, stage, fertility, health modifier, marriage status, child count, fulfillment (${lifecycle.*})</summary>
+    public const string Lifecycle = "lifecycle";
 
     // CharacterPersonality Service
     /// <summary>Combat preference data for ABML expressions (${combat.*})</summary>
@@ -84,12 +94,15 @@ public static class VariableProviderDefinitions
     public static readonly IReadOnlyDictionary<string, ProviderMetadata> Metadata =
         new Dictionary<string, ProviderMetadata>
         {
+            [Affix] = new ProviderMetadata("Affix", "Item affix data for NPC GOAP evaluation of equipment quality (${affix.*})"),
             [Backstory] = new ProviderMetadata("CharacterHistory", "Character backstory elements for ABML expressions (${backstory.*})"),
             [Combat] = new ProviderMetadata("CharacterPersonality", "Combat preference data for ABML expressions (${combat.*})"),
             [Currency] = new ProviderMetadata("Currency", "Currency balance and wallet data for ABML expressions (${currency.*})"),
             [Encounters] = new ProviderMetadata("CharacterEncounter", "Encounter history and sentiment for ABML expressions (${encounters.*})"),
             [Faction] = new ProviderMetadata("Faction", "Faction membership and status data for ABML expressions (${faction.*})"),
+            [Heritage] = new ProviderMetadata("CharacterLifecycle", "Genetic heritage data — phenotype traits, aptitudes, bloodline membership, species, generation depth (${heritage.*})"),
             [Inventory] = new ProviderMetadata("Inventory", "Item possession and container data for ABML expressions (${inventory.*})"),
+            [Lifecycle] = new ProviderMetadata("CharacterLifecycle", "Lifecycle state data — age, stage, fertility, health modifier, marriage status, child count, fulfillment (${lifecycle.*})"),
             [Location] = new ProviderMetadata("Location", "Location context data for ABML expressions (${location.*})"),
             [Obligations] = new ProviderMetadata("Obligation", "Contract obligation action cost modifiers for ABML expressions (${obligations.*})"),
             [Personality] = new ProviderMetadata("CharacterPersonality", "Personality trait values for ABML expressions (${personality.*})"),

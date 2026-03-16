@@ -1,3 +1,4 @@
+global using BeyondImmersion.BannouService.State;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
 global using Moq;

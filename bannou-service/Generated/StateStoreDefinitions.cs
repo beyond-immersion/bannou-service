@@ -49,6 +49,22 @@ public static class StateStoreDefinitions
     /// <summary>Actor template definitions</summary>
     public const string ActorTemplates = "actor-templates";
 
+    // Affix Service
+    /// <summary>Definition hot cache with read-through from MySQL</summary>
+    public const string AffixDefinitionCache = "affix-definition-cache";
+    /// <summary>Affix definition templates (modifiers with tiers, stat grants, spawn weights)</summary>
+    public const string AffixDefinitions = "affix-definitions";
+    /// <summary>Implicit affix mappings from item template codes to definition sets</summary>
+    public const string AffixImplicitMappings = "affix-implicit-mappings";
+    /// <summary>Instance hot cache and computed stats cache with read-through from MySQL</summary>
+    public const string AffixInstanceCache = "affix-instance-cache";
+    /// <summary>Per-item applied affix state (slots, rolled values, states, influences, quality)</summary>
+    public const string AffixInstances = "affix-instances";
+    /// <summary>Distributed locks for definition mutation, item modification, and pool rebuild</summary>
+    public const string AffixLock = "affix-lock";
+    /// <summary>Pre-computed affix generation pools with weights (cached by item class, slot type, level bucket)</summary>
+    public const string AffixPoolCache = "affix-pool-cache";
+
     // Analytics Service
     /// <summary>Controller possession history for queryable audit trails (MySQL for server-side filtering)</summary>
     public const string AnalyticsHistoryData = "analytics-history-data";
@@ -104,6 +120,18 @@ public static class StateStoreDefinitions
     // CharacterHistory Service
     /// <summary>Character historical events and backstory</summary>
     public const string CharacterHistory = "character-history-statestore";
+
+    // CharacterLifecycle Service
+    /// <summary>Bloodline definitions and membership tracking</summary>
+    public const string CharacterLifecycleBloodlines = "character-lifecycle-bloodlines";
+    /// <summary>Cached lifecycle manifests (stage, age, phenotype, aptitudes, bloodlines) and realm population stats</summary>
+    public const string CharacterLifecycleCache = "character-lifecycle-cache";
+    /// <summary>Genetic profiles, heritable trait templates, lifecycle templates, hybrid templates</summary>
+    public const string CharacterLifecycleHeritage = "character-lifecycle-heritage";
+    /// <summary>Distributed locks for aging, procreation, death, marriage, and background workers</summary>
+    public const string CharacterLifecycleLock = "character-lifecycle-lock";
+    /// <summary>Primary lifecycle state for characters (age, stage, marriage, death, fulfillment)</summary>
+    public const string CharacterLifecycleProfiles = "character-lifecycle-profiles";
 
     // CharacterPersonality Service
     /// <summary>Character personality traits and combat preferences</summary>
@@ -204,6 +232,8 @@ public static class StateStoreDefinitions
     // Faction Service
     /// <summary>Faction lookup and norm resolution cache (frequently read, TTL-based)</summary>
     public const string FactionCache = "faction-cache";
+    /// <summary>Governance entries (case type domain to contract template and parameters) for sovereign and delegated factions</summary>
+    public const string FactionGovernance = "faction-governance-statestore";
     /// <summary>Distributed locks for faction, membership, and territory mutations</summary>
     public const string FactionLock = "faction-lock";
     /// <summary>Faction membership records linking characters to factions with roles</summary>
@@ -541,6 +571,13 @@ public static class StateStoreDefinitions
             [ActorPoolNodes] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "actor:pool" },
             [ActorState] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "actor:state" },
             [ActorTemplates] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "actor:tpl" },
+            [AffixDefinitionCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "affix:def" },
+            [AffixDefinitions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "affix_definitions" },
+            [AffixImplicitMappings] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "affix_implicit_mappings" },
+            [AffixInstanceCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "affix:inst" },
+            [AffixInstances] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "affix_instances" },
+            [AffixLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "affix:lock" },
+            [AffixPoolCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "affix:pool" },
             [AgentMemories] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "agent:mem" },
             [AnalyticsHistoryData] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "analytics_history_data" },
             [AnalyticsRating] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "analytics:rating" },
@@ -558,6 +595,11 @@ public static class StateStoreDefinitions
             [BroadcastSessions] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "broadcast-sess" },
             [CharacterEncounter] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_encounter_statestore" },
             [CharacterHistory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_history_statestore" },
+            [CharacterLifecycleBloodlines] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_lifecycle_bloodlines" },
+            [CharacterLifecycleCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "character-lifecycle:cache" },
+            [CharacterLifecycleHeritage] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_lifecycle_heritage" },
+            [CharacterLifecycleLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "character-lifecycle:lock" },
+            [CharacterLifecycleProfiles] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_lifecycle_profiles" },
             [CharacterLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "character:lock" },
             [CharacterPersonality] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_personality_statestore" },
             [Character] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_statestore" },
@@ -601,6 +643,7 @@ public static class StateStoreDefinitions
             [EscrowStatusIndex] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "escrow:status" },
             [EscrowTokens] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "escrow:token" },
             [FactionCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "faction:cache" },
+            [FactionGovernance] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "faction_governance_statestore" },
             [FactionLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "faction:lock" },
             [FactionMembership] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "faction_membership_statestore" },
             [FactionNorm] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "faction_norm_statestore" },
@@ -749,6 +792,13 @@ public static class StateStoreDefinitions
             [ActorPoolNodes] = new StoreMetadata("Actor", "Actor pool node assignments", "redis", false),
             [ActorState] = new StoreMetadata("Actor", "Runtime actor state", "redis", false),
             [ActorTemplates] = new StoreMetadata("Actor", "Actor template definitions", "redis", false),
+            [AffixDefinitionCache] = new StoreMetadata("Affix", "Definition hot cache with read-through from MySQL", "redis", false),
+            [AffixDefinitions] = new StoreMetadata("Affix", "Affix definition templates (modifiers with tiers, stat grants, spawn weights)", "mysql", false),
+            [AffixImplicitMappings] = new StoreMetadata("Affix", "Implicit affix mappings from item template codes to definition sets", "mysql", false),
+            [AffixInstanceCache] = new StoreMetadata("Affix", "Instance hot cache and computed stats cache with read-through from MySQL", "redis", false),
+            [AffixInstances] = new StoreMetadata("Affix", "Per-item applied affix state (slots, rolled values, states, influences, quality)", "mysql", false),
+            [AffixLock] = new StoreMetadata("Affix", "Distributed locks for definition mutation, item modification, and pool rebuild", "redis", false),
+            [AffixPoolCache] = new StoreMetadata("Affix", "Pre-computed affix generation pools with weights (cached by item class, slot type, level bucket)", "redis", false),
             [AgentMemories] = new StoreMetadata("Behavior", "Cognition pipeline memory storage (used by lib-behavior's ActorLocalMemoryStore)", "redis", false),
             [AnalyticsHistoryData] = new StoreMetadata("Analytics", "Controller possession history for queryable audit trails (MySQL for server-side filtering)", "mysql", false),
             [AnalyticsRating] = new StoreMetadata("Analytics", "Glicko-2 skill ratings", "redis", false),
@@ -766,6 +816,11 @@ public static class StateStoreDefinitions
             [BroadcastSessions] = new StoreMetadata("Broadcast", "Active platform session state and tracked viewer mappings", "redis", false),
             [CharacterEncounter] = new StoreMetadata("CharacterEncounter", "Encounter records and participant perspectives", "mysql", false),
             [CharacterHistory] = new StoreMetadata("CharacterHistory", "Character historical events and backstory", "mysql", false),
+            [CharacterLifecycleBloodlines] = new StoreMetadata("CharacterLifecycle", "Bloodline definitions and membership tracking", "mysql", false),
+            [CharacterLifecycleCache] = new StoreMetadata("CharacterLifecycle", "Cached lifecycle manifests (stage, age, phenotype, aptitudes, bloodlines) and realm population stats", "redis", false),
+            [CharacterLifecycleHeritage] = new StoreMetadata("CharacterLifecycle", "Genetic profiles, heritable trait templates, lifecycle templates, hybrid templates", "mysql", false),
+            [CharacterLifecycleLock] = new StoreMetadata("CharacterLifecycle", "Distributed locks for aging, procreation, death, marriage, and background workers", "redis", false),
+            [CharacterLifecycleProfiles] = new StoreMetadata("CharacterLifecycle", "Primary lifecycle state for characters (age, stage, marriage, death, fulfillment)", "mysql", false),
             [CharacterLock] = new StoreMetadata("Character", "Distributed locks for character update and compression operations", "redis", false),
             [CharacterPersonality] = new StoreMetadata("CharacterPersonality", "Character personality traits and combat preferences", "mysql", false),
             [Character] = new StoreMetadata("Character", "Persistent character data", "mysql", false),
@@ -809,6 +864,7 @@ public static class StateStoreDefinitions
             [EscrowStatusIndex] = new StoreMetadata("Escrow", "Escrow IDs by status (sorted set for expiration/validation)", "redis", false),
             [EscrowTokens] = new StoreMetadata("Escrow", "Token hash validation (hashed tokens to escrow/party info)", "redis", false),
             [FactionCache] = new StoreMetadata("Faction", "Faction lookup and norm resolution cache (frequently read, TTL-based)", "redis", false),
+            [FactionGovernance] = new StoreMetadata("Faction", "Governance entries (case type domain to contract template and parameters) for sovereign and delegated factions", "mysql", false),
             [FactionLock] = new StoreMetadata("Faction", "Distributed locks for faction, membership, and territory mutations", "redis", false),
             [FactionMembership] = new StoreMetadata("Faction", "Faction membership records linking characters to factions with roles", "mysql", false),
             [FactionNorm] = new StoreMetadata("Faction", "Behavioral norm definitions per faction (durable, queryable by violation type)", "mysql", false),

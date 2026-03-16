@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
 > **State Stores**: divine-deities (MySQL), divine-blessings (MySQL), divine-attention (Redis), divine-divinity-events (Redis), divine-lock (Redis)
+> **Planning**: [docs/plans/DIVINE.md](../plans/DIVINE.md)
 > **Short**: Pantheon management, divinity economy, blessing orchestration (composes Currency/Seed/Collection/Status)
 
 ## Overview
@@ -293,6 +294,7 @@ Paginated queries by entityId+entityType or deityId+tier use `IJsonQueryableStat
 
 | Topic | Handler | Action |
 |-------|---------|--------|
+| `genesis.entity.phase-changed` | `HandleGenesisEntityPhaseChanged` | Reacts to deity genesis entity lifecycle transitions — initializes attention slots at Stirring, activates follower management and divinity economy at Awakened (hard dependency) |
 | `analytics.score.updated` | `HandleAnalyticsScoreUpdated` | Maps analytics categories to domain codes, queues divinity generation events for domain-relevant deities (soft dependency -- no-op if Analytics disabled) |
 
 ### Resource Cleanup
@@ -489,6 +491,12 @@ All 22 endpoints are currently stubbed (return `NotImplemented`). The following 
 
 ## Known Quirks & Caveats
 
+### Bugs (Fix Immediately)
+
+1. **Blessing grant flow missing multi-service compensation**: The planned blessing grant flow debits divinity via `ICurrencyClient` then grants via `ICollectionClient` (Greater/Supreme) or `IStatusClient` (Minor/Standard). If the grant step fails after the currency debit succeeds, divinity is lost with no compensation or self-healing mechanism described. Per Implementation Tenets (Multi-Service Call Compensation), the implementation must either re-credit divinity in a catch block or document a specific self-healing mechanism (e.g., a reconciliation worker that detects debits without matching blessing records).
+
+2. **Consumed Events section missing `genesis.entity.phase-changed`**: The Overview and Dependencies sections describe subscribing to `genesis.entity.phase-changed` for deity lifecycle transitions (attention slot initialization, follower management setup, divinity economy activation), but the Consumed Events table only lists `analytics.score.updated`. The events schema must include this subscription and the Consumed Events section must document it.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Entity-agnostic blessings**: Unlike the original plan which was character-specific, the implemented schema uses `entityId` + `entityType` polymorphism for blessings. Characters, accounts, deities, or any entity type can receive blessings, matching the entity-agnostic patterns of lib-collection and lib-status.
@@ -507,7 +515,7 @@ All 22 endpoints are currently stubbed (return `NotImplemented`). The following 
 
 ### Design Considerations (Requires Planning)
 
-1. **Domain-to-analytics mapping**: The `HandleAnalyticsScoreUpdated` handler needs a mapping from analytics categories to domain codes. The plan suggests either a config property (`DomainAnalyticsMappings` as JSON string) or a dedicated mapping state store. This must be resolved during implementation.
+1. **Domain-to-analytics mapping**: The `HandleAnalyticsScoreUpdated` handler needs a mapping from analytics categories to domain codes. The plan suggests either a config property (`DomainAnalyticsMappings` as JSON string) or a dedicated mapping state store. **Note**: The JSON string config option would violate Implementation Tenets (Configuration-First — no structured data as parseable strings). A dedicated mapping state store with CRUD endpoints, or individual typed config properties per domain, are the tenet-compliant alternatives.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-11:https://github.com/beyond-immersion/bannou-service/issues/636 -->
 
 2. **Blessing template management on startup**: `OnRunningAsync` should create collection entry templates and status templates if they don't exist. The exact set of templates depends on game configuration, not lib-divine itself.

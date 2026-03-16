@@ -9,8 +9,8 @@ need deprecation marker interfaces, and the current state of Category B complian
 
 ## Summary
 
-- **Total deprecatable entities**: 20
-- **With `instanceEntity` declared**: 12
+- **Total deprecatable entities**: 21
+- **With `instanceEntity` declared**: 13
 - **Missing `instanceEntity`**: 8
 
 ## All Deprecatable Entities
@@ -18,6 +18,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 | Service | Entity | `instanceEntity` | Status |
 |---------|--------|-------------------|--------|
 | Achievement | `AchievementDefinition` | `AchievementProgressRecord` | OK |
+| Affix | `AffixDefinition` | `AffixInstance` | OK |
 | Character Encounter | `EncounterType` | `EncounterRecord` | OK |
 | Chat | `ChatRoomType` | `ChatRoom` | OK |
 | Collection | `CollectionEntryTemplate` | `Collection` | OK |
@@ -47,6 +48,14 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Topic prefix**: `achievement`
 - **Instance entity**: `AchievementProgressRecord`
 - **Model fields**: `gameServiceId`, `achievementId`, `displayName`, `description`, `hiddenDescription`, `category`, `achievementType`, `entityTypes`, `progressTarget`, `points`, `iconUrl`, `platforms`, `platformMappings`, `prerequisites`, `scoreType`, `milestoneType`, `milestoneValue`, `milestoneName`, `leaderboardId`, `rankThreshold`, `isActive`, `earnedCount`, `metadata`
+
+### Affix: AffixDefinition
+
+- **Service**: `affix`
+- **Schema**: `schemas/affix-events.yaml`
+- **Topic prefix**: `affix`
+- **Instance entity**: `AffixInstance`
+- **Model fields**: `definitionId`, `gameServiceId`, `code`, `slotType`, `modGroup`, `tier`, `category`, `tags`, `statGrants`, `spawnWeight`, `spawnTagModifiers`, `requiredItemLevel`, `requiredInfluences`, `validItemClasses`, `displayName`, `displayOrder`
 
 ### Character Encounter: EncounterType
 
@@ -94,7 +103,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Schema**: `schemas/faction-events.yaml`
 - **Topic prefix**: `*(none — Pattern A)*`
 - **Instance entity**: `*(not declared)*`
-- **Model fields**: `factionId`, `gameServiceId`, `name`, `code`, `realmId`, `isRealmBaseline`, `parentFactionId`, `seedId`, `status`, `currentPhase`, `memberCount`
+- **Model fields**: `factionId`, `gameServiceId`, `name`, `code`, `realmId`, `isRealmBaseline`, `parentFactionId`, `seedId`, `status`, `authorityLevel`, `currentPhase`, `memberCount`
 
 ### Gardener: ScenarioTemplate
 

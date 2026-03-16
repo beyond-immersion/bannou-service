@@ -426,6 +426,9 @@ paths:
         species instincts) that apply to all characters in the realm unless
         overridden by more specific faction norms.
 
+        Automatically sets the designated faction's authorityLevel to Sovereign,
+        as the realm baseline is the ultimate legal authority for the realm.
+
         Only one faction per realm can be the baseline. Setting a new baseline
         clears the previous one. The faction must belong to the specified realm.
       x-permissions:
@@ -925,6 +928,200 @@ paths:
                 $ref: '#/components/schemas/QueryApplicableNormsResponse'
 
   # ===========================================================================
+  # Governance (6 endpoints)
+  # ===========================================================================
+
+  /faction/governance/set:
+    post:
+      summary: Set a governance entry for a faction
+      operationId: setGovernanceEntry
+      tags:
+      - Governance
+      description: |
+        Creates or updates a governance entry associating a case type domain
+        with a contract template. Faction must have Sovereign or Delegated
+        authority level. Requires governance.arbitrate.* seed capability.
+        Idempotent — overwrites if domain already exists for this faction.
+
+        Governance entries are queried by lib-arbitration to instantiate
+        procedural templates for cases filed within the faction's jurisdiction.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetGovernanceEntryRequest'
+      responses:
+        '200':
+          description: Governance entry set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GovernanceEntryResponse'
+        '400':
+          description: Faction is not Sovereign or Delegated
+        '403':
+          description: Faction seed lacks governance.arbitrate capability
+        '404':
+          description: Faction not found
+
+  /faction/governance/remove:
+    post:
+      summary: Remove a governance entry
+      operationId: removeGovernanceEntry
+      tags:
+      - Governance
+      description: Removes a governance entry for a specific domain from a faction.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveGovernanceEntryRequest'
+      responses:
+        '200':
+          description: Governance entry removed
+        '404':
+          description: Governance entry not found
+
+  /faction/governance/list:
+    post:
+      summary: List governance entries for a faction
+      operationId: listGovernanceEntries
+      tags:
+      - Governance
+      description: Returns all governance entries defined by a faction.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListGovernanceEntriesRequest'
+      responses:
+        '200':
+          description: Governance entries retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListGovernanceEntriesResponse'
+        '404':
+          description: Faction not found
+
+  /faction/governance/query:
+    post:
+      summary: Resolve governance data for a location and case type
+      operationId: queryGovernanceData
+      tags:
+      - Governance
+      description: |
+        Critical integration endpoint for lib-arbitration. Given a location
+        and case type domain, resolves the jurisdictional faction by walking
+        the sovereignty hierarchy:
+        1. Find controlling faction at location
+        2. If Sovereign and has governance for domain, return
+        3. If Delegated and has governance for domain, return
+        4. Walk up parent chain until Sovereign found
+        5. If Sovereign has governance for domain, return
+        6. Fall back to realm baseline sovereign
+        7. If no sovereign exists anywhere, return 404
+
+        Returns 404 when no sovereign has jurisdiction for the domain at
+        the given location.
+
+        Enclave sovereignty: a nested sovereign within an outer sovereign's
+        territory overrides completely at its location boundary.
+
+        Results are cached with configurable TTL (FACTION_GOVERNANCE_CACHE_TTL_SECONDS).
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryGovernanceDataRequest'
+      responses:
+        '200':
+          description: Governance data resolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GovernanceDataResponse'
+        '404':
+          description: No sovereign has jurisdiction for this domain at this location
+
+  /faction/governance/delegate:
+    post:
+      summary: Delegate authority from sovereign to child faction
+      operationId: delegateAuthority
+      tags:
+      - Governance
+      description: |
+        A sovereign faction grants delegated authority to a child faction
+        for specific case type domains. The target faction's authorityLevel
+        is set to Delegated. The target must be a descendant of the sovereign
+        in the faction hierarchy.
+
+        Delegation is per-case-type via domain strings. A sovereign can
+        delegate "trade_dispute" jurisdiction without delegating "criminal"
+        jurisdiction. Each domain grants the target faction the right to
+        arbitrate cases of that type within its territory.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DelegateAuthorityRequest'
+      responses:
+        '200':
+          description: Authority delegated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionResponse'
+        '400':
+          description: Sovereign faction is not Sovereign, or target is not a descendant
+        '404':
+          description: Sovereign or target faction not found
+
+  /faction/governance/revoke:
+    post:
+      summary: Revoke delegated authority
+      operationId: revokeAuthority
+      tags:
+      - Governance
+      description: |
+        Revokes delegated authority from a child faction. If all domains are
+        revoked (or domains is null for blanket revocation), the target
+        faction's authorityLevel reverts to Influence.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeAuthorityRequest'
+      responses:
+        '200':
+          description: Authority revoked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionResponse'
+        '400':
+          description: Target faction is not Delegated
+        '404':
+          description: Sovereign or target faction not found
+
+  # ===========================================================================
   # Resource Cleanup (3 endpoints)
   # ===========================================================================
 
@@ -1106,6 +1303,16 @@ components:
       - Territory
       - RealmBaseline
 
+    AuthorityLevel:
+      type: string
+      description: Authority classification determining a faction's governance power. Influence factions impose social 
+        costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. 
+        Sovereign factions define law within their territory.
+      enum:
+      - Influence
+      - Delegated
+      - Sovereign
+
     TerritoryClaimStatus:
       type: string
       description: Lifecycle status of a territory claim
@@ -1130,6 +1337,7 @@ components:
       - realmId
       - isRealmBaseline
       - status
+      - authorityLevel
       - isDeprecated
       - memberCount
       - createdAt
@@ -1178,6 +1386,10 @@ components:
         status:
           $ref: '#/components/schemas/FactionStatus'
           description: Current operational lifecycle status (orthogonal to deprecation)
+        authorityLevel:
+          $ref: '#/components/schemas/AuthorityLevel'
+          description: Authority classification for governance power. Defaults to Influence. Sovereign is set by 
+            DesignateRealmBaseline. Delegated is set via delegation endpoints.
         currentPhase:
           type: string
           nullable: true
@@ -1248,6 +1460,9 @@ components:
           format: uuid
           nullable: true
           description: Parent faction for hierarchy (null for top-level)
+        authorityLevel:
+          $ref: '#/components/schemas/AuthorityLevel'
+          description: Authority level for the new faction (defaults to Influence if not specified)
 
     GetFactionRequest:
       type: object
@@ -1457,6 +1672,9 @@ components:
           type: boolean
           default: false
           description: Whether to designate this as the realm baseline faction
+        authorityLevel:
+          $ref: '#/components/schemas/AuthorityLevel'
+          description: Authority level for the seeded faction (defaults to Influence if not specified)
 
     SeedFactionsRequest:
       type: object
@@ -2142,6 +2360,7 @@ components:
       - severity
       - scope
       - source
+      - authorityLevel
       properties:
         normId:
           type: string
@@ -2156,6 +2375,10 @@ components:
           minLength: 1
           maxLength: 256
           description: Display name of the owning faction
+        authorityLevel:
+          $ref: '#/components/schemas/AuthorityLevel'
+          description: Authority level of the faction that defined this norm. Sovereign norms are laws (high enforcement
+            weight). Delegated norms are local laws. Influence norms are social costs only.
         violationType:
           type: string
           minLength: 1
@@ -2191,6 +2414,7 @@ components:
       - source
       - factionId
       - severity
+      - authorityLevel
       properties:
         violationType:
           type: string
@@ -2212,6 +2436,9 @@ components:
         severity:
           $ref: '#/components/schemas/NormSeverity'
           description: Severity of the winning norm
+        authorityLevel:
+          $ref: '#/components/schemas/AuthorityLevel'
+          description: Authority level of the faction that defined the winning norm
 
     QueryApplicableNormsResponse:
       type: object
@@ -2413,6 +2640,243 @@ components:
           type: integer
           minimum: 0
           description: Number of faction memberships restored from archive
+
+    # =========================================================================
+    # Governance Models
+    # =========================================================================
+
+    GovernanceEntryResponse:
+      type: object
+      description: A governance data entry associating a case type domain with a contract template and governance 
+        parameters
+      additionalProperties: false
+      required:
+      - governanceId
+      - factionId
+      - domain
+      - templateCode
+      - createdAt
+      properties:
+        governanceId:
+          type: string
+          format: uuid
+          description: Unique identifier for this governance entry
+        factionId:
+          type: string
+          format: uuid
+          description: Faction owning this governance entry
+        domain:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Case type domain prefix (e.g., "dissolution", "trade_dispute", "criminal")
+        templateCode:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Contract template code in lib-contract for this case type
+        governanceParameters:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Opaque governance parameters for the contract template. Faction stores and returns these 
+            unchanged. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+        createdAt:
+          type: string
+          format: date-time
+          description: When this governance entry was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this governance entry was last updated
+
+    SetGovernanceEntryRequest:
+      type: object
+      description: Request to create or update a governance entry for a faction
+      additionalProperties: false
+      required:
+      - factionId
+      - domain
+      - templateCode
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction to set governance on (must be Sovereign or Delegated)
+        domain:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Case type domain prefix (e.g., "dissolution", "trade_dispute")
+        templateCode:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Contract template code in lib-contract for this case type
+        governanceParameters:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Opaque governance parameters for the contract template. Client-only metadata. No Bannou plugin 
+            reads specific keys from this field by convention.
+
+    RemoveGovernanceEntryRequest:
+      type: object
+      description: Request to remove a governance entry from a faction
+      additionalProperties: false
+      required:
+      - factionId
+      - domain
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction to remove governance from
+        domain:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Case type domain to remove
+
+    ListGovernanceEntriesRequest:
+      type: object
+      description: Request to list governance entries for a faction
+      additionalProperties: false
+      required:
+      - factionId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction to list governance entries for
+
+    ListGovernanceEntriesResponse:
+      type: object
+      description: All governance entries for a faction
+      additionalProperties: false
+      required:
+      - entries
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/GovernanceEntryResponse'
+          description: All governance entries for this faction
+
+    QueryGovernanceDataRequest:
+      type: object
+      description: Request to resolve governance data for a location and case type domain
+      additionalProperties: false
+      required:
+      - locationId
+      - domain
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Location where the case would be filed
+        domain:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Case type domain to resolve governance for
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm for baseline sovereign lookup (resolved from location if omitted)
+
+    GovernanceDataResponse:
+      type: object
+      description: Resolved governance data for a location and case type domain. Returns the jurisdictional faction 
+        (sovereign or delegate) and its governance entry for the requested domain. Endpoint returns 404 when no 
+        sovereign has jurisdiction.
+      additionalProperties: false
+      required:
+      - jurisdictionalFactionId
+      - jurisdictionalFactionName
+      - authorityLevel
+      - templateCode
+      - sovereignFactionId
+      properties:
+        jurisdictionalFactionId:
+          type: string
+          format: uuid
+          description: The faction with jurisdiction (sovereign or delegate)
+        jurisdictionalFactionName:
+          type: string
+          description: Name of the jurisdictional faction for display
+        authorityLevel:
+          $ref: '#/components/schemas/AuthorityLevel'
+          description: Authority level of the jurisdictional faction (Sovereign or Delegated)
+        templateCode:
+          type: string
+          description: Contract template code for this case type
+        governanceParameters:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Opaque governance parameters for the contract template. Stored and returned unchanged. 
+            Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+        sovereignFactionId:
+          type: string
+          format: uuid
+          description: The ultimate sovereign faction in the territory hierarchy (may differ from jurisdictional faction
+            if delegated)
+
+    DelegateAuthorityRequest:
+      type: object
+      description: Request to delegate authority from a sovereign faction to a child faction for specific case type 
+        domains
+      additionalProperties: false
+      required:
+      - sovereignFactionId
+      - targetFactionId
+      - domains
+      properties:
+        sovereignFactionId:
+          type: string
+          format: uuid
+          description: Sovereign faction granting delegation
+        targetFactionId:
+          type: string
+          format: uuid
+          description: Child faction receiving delegated authority
+        domains:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 128
+          minItems: 1
+          description: Case type domains to delegate (e.g., ["trade_dispute", "dissolution"]). Each domain grants the 
+            target faction the right to arbitrate cases of that type within its territory.
+
+    RevokeAuthorityRequest:
+      type: object
+      description: Request to revoke delegated authority from a child faction
+      additionalProperties: false
+      required:
+      - sovereignFactionId
+      - targetFactionId
+      properties:
+        sovereignFactionId:
+          type: string
+          format: uuid
+          description: Sovereign faction revoking delegation
+        targetFactionId:
+          type: string
+          format: uuid
+          description: Faction whose delegation is being revoked
+        domains:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 128
+          nullable: true
+          description: Specific domains to revoke (null to revoke all delegation, reverting target to Influence)
     ResourceArchiveBase:
       type: object
       description: |

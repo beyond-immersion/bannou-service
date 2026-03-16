@@ -56,11 +56,11 @@ Two logical key namespaces within the same physical store, separated by prefix. 
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `personality.created` | `PersonalityCreatedEvent` | SetPersonality when no personality exists |
+| `personality.created` | `PersonalityCreatedEvent` | SetPersonality when no personality exists; RestoreFromArchive when personality data restored |
 | `personality.updated` | `PersonalityUpdatedEvent` | SetPersonality when personality already exists |
 | `personality.evolved` | `PersonalityEvolvedEvent` | RecordExperience when evolution occurs and ETag save succeeds |
 | `personality.deleted` | `PersonalityDeletedEvent` | DeletePersonality; CleanupByCharacter (if personality existed) |
-| `combat-preferences.created` | `CombatPreferencesCreatedEvent` | SetCombatPreferences when no combat prefs exist |
+| `combat-preferences.created` | `CombatPreferencesCreatedEvent` | SetCombatPreferences when no combat prefs exist; RestoreFromArchive when combat data restored |
 | `combat-preferences.updated` | `CombatPreferencesUpdatedEvent` | SetCombatPreferences when combat prefs already exist |
 | `combat-preferences.evolved` | `CombatPreferencesEvolvedEvent` | EvolveCombatPreferences when evolution occurs and ETag save succeeds |
 | `combat-preferences.deleted` | `CombatPreferencesDeletedEvent` | DeleteCombatPreferences; CleanupByCharacter (if combat prefs existed) |

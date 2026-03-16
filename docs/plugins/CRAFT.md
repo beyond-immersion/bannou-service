@@ -555,6 +555,7 @@ Sessions are cleaned up on completion, cancellation, or expiration.
 |-------|-----------|---------|
 | `craft.recipe.created` | `CraftRecipeCreatedEvent` | Recipe definition created (x-lifecycle auto-generated) |
 | `craft.recipe.updated` | `CraftRecipeUpdatedEvent` | Recipe definition updated (x-lifecycle auto-generated); deprecation is signaled via `changedFields` containing `isDeprecated`, `deprecatedAt`, `deprecationReason` |
+| `craft.recipe.deleted` | `CraftRecipeDeletedEvent` | Recipe definition permanently removed by clean-deprecated sweep (unused Category B infrastructure — exists for future safe deletion pattern) |
 | `craft.session.started` | `CraftSessionStartedEvent` | Crafting session started |
 | `craft.session.step-completed` | `CraftSessionStepCompletedEvent` | A recipe step completed (includes quality contribution) |
 | `craft.session.completed` | `CraftSessionCompletedEvent` | Session completed successfully (includes output items, quality score) |
@@ -627,7 +628,7 @@ Sessions are cleaned up on completion, cancellation, or expiration.
 
 ## API Endpoints (Implementation Notes)
 
-### Recipe Management (7 endpoints)
+### Recipe Management (8 endpoints)
 
 Write endpoints (`CreateRecipe`, `UpdateRecipe`, `DeprecateRecipe`, `SeedRecipes`) require `developer` role. Read endpoints (`GetRecipe`, `ListRecipes`, `ListDomains`) use `x-permissions: []` (internal queries called by NPC GOAP and game engine).
 
@@ -644,6 +645,8 @@ Write endpoints (`CreateRecipe`, `UpdateRecipe`, `DeprecateRecipe`, `SeedRecipes
 - **SeedRecipes** (`/craft/recipe/seed`): Bulk creation, skipping existing codes (idempotent). Validates game service once. Returns created/skipped counts.
 
 - **ListDomains** (`/craft/recipe/list-domains`): Returns distinct proficiency domains for a game service with recipe counts per domain. Supports `includeDeprecated: boolean (default: false)` for whether deprecated recipes count toward domain totals.
+
+- **CleanDeprecatedRecipes** (`/craft/recipe/clean-deprecated`): Category B cleanup sweep (per Implementation Tenets). Permanently removes deprecated recipe definitions with zero active sessions and past the configurable grace period. Uses shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` from `common-api.yaml`. `x-permissions: [role: admin]`. Supports dry-run mode. Implementation uses `DeprecationCleanupHelper.ExecuteCleanupSweepAsync`. Publishes `craft.recipe.deleted` for each permanently removed recipe.
 
 ### Session Management (5 endpoints)
 
@@ -901,7 +904,7 @@ Crafting Session Lifecycle (Production)
 
 4. **Recipe experimentation with partial results**: Failed discovery attempts that are "close" to a valid recipe produce a degraded or unexpected output instead of nothing. Encourages experimentation.
 
-5. **Environmental factors**: Location-specific quality bonuses (mountain forges produce better metal, coastal alchemy produces better water-based potions). Reads location metadata to apply quality modifiers.
+5. **Environmental factors**: Location-specific quality bonuses (mountain forges produce better metal, coastal alchemy produces better water-based potions). Environmental bonuses must be owned by lib-craft or a dedicated L4 service (e.g., Environment) via service-owned bindings, not read from Location's `additionalProperties` metadata bag (per Foundation Tenets, No Metadata Bag Contracts).
 
 6. **Crafting events as spectacle**: Publish real-time step progress as client events so nearby players can watch an NPC craft. "The blacksmith raises the hammer, strikes the blade, sparks fly" -- driven by step completion events.
 
@@ -921,7 +924,9 @@ Crafting Session Lifecycle (Production)
 
 ### Bugs (Fix Immediately)
 
-*No bugs — service code does not exist yet (aspirational plugin).*
+1. ~~**Missing `craft.recipe.deleted` event publication**~~: **FIXED** (2026-03-16) - Added `craft.recipe.deleted` to the Published Events table. Category B infrastructure event published by clean-deprecated sweep.
+
+2. ~~**Missing `clean-deprecated` endpoint for RecipeDefinition**~~: **FIXED** (2026-03-16) - Added `POST /craft/recipe/clean-deprecated` to Recipe Management endpoints (now 8 endpoints). Uses shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse`, `x-permissions: [role: admin]`, `DeprecationCleanupHelper.ExecuteCleanupSweepAsync`.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -945,21 +950,13 @@ Crafting Session Lifecycle (Production)
 
 ### Design Considerations (Requires Planning)
 
-1. ~~**Quality-to-affix mapping**~~: **RESOLVED** (2026-03-15, #607) — **lib-craft owns the quality-to-affix parameter mapping; lib-affix stays a pure modifier engine with no knowledge of crafting semantics.** At modification recipe session completion, lib-craft translates its computed quality score (0-1) into two affix-native parameters: `weightModifiers` (a `Dictionary<string, decimal>` that biases tier selection — higher quality increases weight of better tiers relative to worse ones) and `valuePercentileTarget` (a 0-1 float that biases value rolls within a tier's min/max range toward the target percentile — e.g., quality 0.8 → `valuePercentileTarget: 0.8` biases rolls toward the 80th percentile of each stat grant's range). These parameters are passed to `/affix/apply` (for direct application) and `/affix/generate/set` (for full set generation). The quality-to-parameter translation is lib-craft configuration (per-game configurable quality curves in `craft-configuration.yaml`) — lib-affix never sees a "quality" concept, only generic weight modifiers and percentile targets that any caller can provide. `/affix/generate/pool` already accepts `externalWeightModifiers` for pool-level bias.
-
-2. ~~**Concurrent crafting and item modification**~~: **RESOLVED** (2026-03-08) - Not a design question. lib-affix's internal per-operation distributed lock on `item:{itemInstanceId}` already serializes concurrent modifications (returns 409 Conflict). lib-craft does not need to check lock state — it attempts the affix operation at session completion and handles 409 as a session failure. First caller wins. This follows the same advisory reservation pattern as Quirk #4 (material reservation). No lock-checking API exists or is needed.
-
-3. ~~**Real-time step durations**~~: **RESOLVED** (2026-03-08) - Contract timer milestones are the correct mechanism. Steps with `durationSeconds` map to Contract milestones with timer-based auto-completion, consistent with lib-contract's existing milestone progression infrastructure. No background polling or client-side-only timers needed.
-
-4. ~~**Proficiency seed type registration**~~: **RESOLVED** (2026-03-08) - Implementation ordering constraint, not a design question. lib-craft registers `proficiency:{domain}` seed types on startup for each domain it discovers in recipe definitions. Seed type registration happens after recipe seeding. Moved to Intentional Quirks #9.
-
-5. **Cross-entity crafting**: Can entity A start a session and entity B advance a step? (e.g., an apprentice assists a master). The current model assumes single-entity sessions. Multi-entity crafting could use Contract's multi-party model.
+1. **Cross-entity crafting**: Can entity A start a session and entity B advance a step? (e.g., an apprentice assists a master). The current model assumes single-entity sessions. Multi-entity crafting could use Contract's multi-party model.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/613 -->
 
-6. ~~**Material quality propagation**~~: **RESOLVED** (2026-03-08) - Not a lib-craft design question. lib-craft reads material quality from item instance metadata (set by the creating system). Production recipe outputs carry quality from the session. Raw material quality is set at creation time by the source system (mining, harvesting, looting, or game-specific logic). lib-craft is the consumer, not the producer, of material quality data.
-
-7. **Offline NPC crafting**: When an NPC's actor is running and they're crafting, step advancement happens through GOAP actions. But what about when the NPC's actor is suspended? Options: (a) sessions pause when actor suspends, (b) sessions auto-complete on a timer, (c) sessions are represented as Contract timer milestones that progress independently of the actor, (d) NPC crafting delegates to lib-workshop blueprints that reference lib-craft recipes — Workshop's lazy evaluation pattern handles "production continues when nobody is watching" natively via piecewise rate segments and background materialization, avoiding duplicate infrastructure. Option (d) would mean player crafting uses Contract-backed live sessions (interactive, skill checks) while NPC crafting uses Workshop (lazy, scalable to 100k+ artisans). Workshop already has a soft dependency on lib-craft for recipe-referenced blueprints.
+2. **Offline NPC crafting**: When an NPC's actor is running and they're crafting, step advancement happens through GOAP actions. But what about when the NPC's actor is suspended? Options: (a) sessions pause when actor suspends, (b) sessions auto-complete on a timer, (c) sessions are represented as Contract timer milestones that progress independently of the actor, (d) NPC crafting delegates to lib-workshop blueprints that reference lib-craft recipes — Workshop's lazy evaluation pattern handles "production continues when nobody is watching" natively via piecewise rate segments and background materialization, avoiding duplicate infrastructure. Option (d) would mean player crafting uses Contract-backed live sessions (interactive, skill checks) while NPC crafting uses Workshop (lazy, scalable to 100k+ artisans). Workshop already has a soft dependency on lib-craft for recipe-referenced blueprints.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/614 -->
+
+3. **Category B `instanceEntity` for RecipeDefinition**: RecipeDefinition's instance entity is CraftingSession — an ephemeral entity that completes/cancels/expires rather than persisting indefinitely. Per Implementation Tenets (ephemeral instance entities), the clean-deprecated sweep's `hasActiveInstancesAsync` delegate checks for active sessions referencing the recipe via a direct store query rather than a maintained reverse index. Sessions self-resolve within `SessionTimeoutSeconds`, so the count converges to zero naturally. CraftingSession must still be declared as an x-lifecycle entity in the events schema to satisfy B10a/B10b structural requirements.
 
 ---
 
@@ -970,6 +967,8 @@ Crafting Session Lifecycle (Production)
 **Predecessor**: [#285](https://github.com/beyond-immersion/bannou-service/issues/285) (World Events and Crafting as Contract-Orchestrated Systems) — crafting portion superseded by this deep dive. World Events portion is a separate concern.
 
 **Audit History**:
+- **2026-03-16**: Audit pass (`/audit-plugin`). Marked Bugs #1-#2 as FIXED — documentation gaps (missing event, missing endpoint) were already corrected during the same-day maintain-plugin pass. Pre-implementation plugin: no further actionable gaps (all remaining items are planned implementation phases, potential extensions, or design considerations with issue tracking).
+- **2026-03-16**: Maintenance pass (`/maintain-plugin`). Added 2 bugs: missing `craft.recipe.deleted` event (B11), missing `clean-deprecated` endpoint (B17-B19). Added Design Consideration #3: Category B `instanceEntity` for ephemeral CraftingSession — resolved by augmenting IMPLEMENTATION-BEHAVIOR.md T31 with ephemeral instance entity guidance. Deleted 5 resolved strikethrough Design Considerations (#1 quality-to-affix, #2 concurrent crafting, #3 real-time durations, #4 seed type registration, #6 material quality). Updated Extension #5 with T29 metadata bag clarification. Updated Recipe Management endpoint count (7→8).
 - **2026-03-15**: Issue #607: Resolved quality-to-affix tier mapping — lib-craft owns the quality→affix-param translation (weightModifiers + valuePercentileTarget). lib-affix accepts generic parameters with no crafting knowledge. Quality curve configuration belongs in craft-configuration.yaml. Updated Design Consideration #1.
 - **2026-03-08**: Pre-implementation audit (pass 4). Created issue for remaining design question: #7 (offline NPC crafting → [#614](https://github.com/beyond-immersion/bannou-service/issues/614)). All design considerations now have AUDIT markers.
 - **2026-03-08**: Pre-implementation audit (pass 3). Created issues for remaining design questions: #5 (cross-entity crafting → [#613](https://github.com/beyond-immersion/bannou-service/issues/613)), #7 (offline NPC crafting → pending).

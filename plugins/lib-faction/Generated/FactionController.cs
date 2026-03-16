@@ -199,6 +199,9 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <br/>species instincts) that apply to all characters in the realm unless
     /// <br/>overridden by more specific faction norms.
     /// <br/>
+    /// <br/>Automatically sets the designated faction's authorityLevel to Sovereign,
+    /// <br/>as the realm baseline is the ultimate legal authority for the realm.
+    /// <br/>
     /// <br/>Only one faction per realm can be the baseline. Setting a new baseline
     /// <br/>clears the previous one. The faction must belong to the specified realm.
     /// </remarks>
@@ -504,6 +507,129 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
     /// <returns>Applicable norms resolved</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryApplicableNormsResponse>> QueryApplicableNorms(QueryApplicableNormsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Set a governance entry for a faction
+    /// </summary>
+
+    /// <remarks>
+    /// Creates or updates a governance entry associating a case type domain
+    /// <br/>with a contract template. Faction must have Sovereign or Delegated
+    /// <br/>authority level. Requires governance.arbitrate.* seed capability.
+    /// <br/>Idempotent — overwrites if domain already exists for this faction.
+    /// <br/>
+    /// <br/>Governance entries are queried by lib-arbitration to instantiate
+    /// <br/>procedural templates for cases filed within the faction's jurisdiction.
+    /// </remarks>
+
+
+
+    /// <returns>Governance entry set</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GovernanceEntryResponse>> SetGovernanceEntry(SetGovernanceEntryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Remove a governance entry
+    /// </summary>
+
+    /// <remarks>
+    /// Removes a governance entry for a specific domain from a faction.
+    /// </remarks>
+
+
+
+    /// <returns>Governance entry removed</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveGovernanceEntry(RemoveGovernanceEntryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// List governance entries for a faction
+    /// </summary>
+
+    /// <remarks>
+    /// Returns all governance entries defined by a faction.
+    /// </remarks>
+
+
+
+    /// <returns>Governance entries retrieved</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListGovernanceEntriesResponse>> ListGovernanceEntries(ListGovernanceEntriesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Resolve governance data for a location and case type
+    /// </summary>
+
+    /// <remarks>
+    /// Critical integration endpoint for lib-arbitration. Given a location
+    /// <br/>and case type domain, resolves the jurisdictional faction by walking
+    /// <br/>the sovereignty hierarchy:
+    /// <br/>1. Find controlling faction at location
+    /// <br/>2. If Sovereign and has governance for domain, return
+    /// <br/>3. If Delegated and has governance for domain, return
+    /// <br/>4. Walk up parent chain until Sovereign found
+    /// <br/>5. If Sovereign has governance for domain, return
+    /// <br/>6. Fall back to realm baseline sovereign
+    /// <br/>7. If no sovereign exists anywhere, return 404
+    /// <br/>
+    /// <br/>Returns 404 when no sovereign has jurisdiction for the domain at
+    /// <br/>the given location.
+    /// <br/>
+    /// <br/>Enclave sovereignty: a nested sovereign within an outer sovereign's
+    /// <br/>territory overrides completely at its location boundary.
+    /// <br/>
+    /// <br/>Results are cached with configurable TTL (FACTION_GOVERNANCE_CACHE_TTL_SECONDS).
+    /// </remarks>
+
+
+
+    /// <returns>Governance data resolved</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GovernanceDataResponse>> QueryGovernanceData(QueryGovernanceDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Delegate authority from sovereign to child faction
+    /// </summary>
+
+    /// <remarks>
+    /// A sovereign faction grants delegated authority to a child faction
+    /// <br/>for specific case type domains. The target faction's authorityLevel
+    /// <br/>is set to Delegated. The target must be a descendant of the sovereign
+    /// <br/>in the faction hierarchy.
+    /// <br/>
+    /// <br/>Delegation is per-case-type via domain strings. A sovereign can
+    /// <br/>delegate "trade_dispute" jurisdiction without delegating "criminal"
+    /// <br/>jurisdiction. Each domain grants the target faction the right to
+    /// <br/>arbitrate cases of that type within its territory.
+    /// </remarks>
+
+
+
+    /// <returns>Authority delegated</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> DelegateAuthority(DelegateAuthorityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Revoke delegated authority
+    /// </summary>
+
+    /// <remarks>
+    /// Revokes delegated authority from a child faction. If all domains are
+    /// <br/>revoked (or domains is null for blanket revocation), the target
+    /// <br/>faction's authorityLevel reverts to Influence.
+    /// </remarks>
+
+
+
+    /// <returns>Authority revoked</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> RevokeAuthority(RevokeAuthorityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 
     /// <summary>
@@ -1105,6 +1231,9 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// <br/>faction provides realm-wide default norms (honor codes, cultural taboos,
     /// <br/>species instincts) that apply to all characters in the realm unless
     /// <br/>overridden by more specific faction norms.
+    /// <br/>
+    /// <br/>Automatically sets the designated faction's authorityLevel to Sovereign,
+    /// <br/>as the realm baseline is the ultimate legal authority for the realm.
     /// <br/>
     /// <br/>Only one faction per realm can be the baseline. Setting a new baseline
     /// <br/>clears the previous one. The faction must belong to the specified realm.
@@ -1968,6 +2097,327 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:faction/norm/query-applicable",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Set a governance entry for a faction
+    /// </summary>
+    /// <remarks>
+    /// Creates or updates a governance entry associating a case type domain
+    /// <br/>with a contract template. Faction must have Sovereign or Delegated
+    /// <br/>authority level. Requires governance.arbitrate.* seed capability.
+    /// <br/>Idempotent — overwrites if domain already exists for this faction.
+    /// <br/>
+    /// <br/>Governance entries are queried by lib-arbitration to instantiate
+    /// <br/>procedural templates for cases filed within the faction's jurisdiction.
+    /// </remarks>
+    /// <returns>Governance entry set</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("faction/governance/set")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GovernanceEntryResponse>> SetGovernanceEntry([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SetGovernanceEntryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.SetGovernanceEntry",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/governance/set");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.SetGovernanceEntryAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/governance/set");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:faction/governance/set");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "faction",
+                "SetGovernanceEntry",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:faction/governance/set",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Remove a governance entry
+    /// </summary>
+    /// <remarks>
+    /// Removes a governance entry for a specific domain from a faction.
+    /// </remarks>
+    /// <returns>Governance entry removed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("faction/governance/remove")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveGovernanceEntry([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RemoveGovernanceEntryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.RemoveGovernanceEntry",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/governance/remove");
+        try
+        {
+
+            var statusCode = await _implementation.RemoveGovernanceEntryAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/governance/remove");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:faction/governance/remove");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "faction",
+                "RemoveGovernanceEntry",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:faction/governance/remove",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// List governance entries for a faction
+    /// </summary>
+    /// <remarks>
+    /// Returns all governance entries defined by a faction.
+    /// </remarks>
+    /// <returns>Governance entries retrieved</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("faction/governance/list")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListGovernanceEntriesResponse>> ListGovernanceEntries([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListGovernanceEntriesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.ListGovernanceEntries",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/governance/list");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.ListGovernanceEntriesAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/governance/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:faction/governance/list");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "faction",
+                "ListGovernanceEntries",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:faction/governance/list",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Resolve governance data for a location and case type
+    /// </summary>
+    /// <remarks>
+    /// Critical integration endpoint for lib-arbitration. Given a location
+    /// <br/>and case type domain, resolves the jurisdictional faction by walking
+    /// <br/>the sovereignty hierarchy:
+    /// <br/>1. Find controlling faction at location
+    /// <br/>2. If Sovereign and has governance for domain, return
+    /// <br/>3. If Delegated and has governance for domain, return
+    /// <br/>4. Walk up parent chain until Sovereign found
+    /// <br/>5. If Sovereign has governance for domain, return
+    /// <br/>6. Fall back to realm baseline sovereign
+    /// <br/>7. If no sovereign exists anywhere, return 404
+    /// <br/>
+    /// <br/>Returns 404 when no sovereign has jurisdiction for the domain at
+    /// <br/>the given location.
+    /// <br/>
+    /// <br/>Enclave sovereignty: a nested sovereign within an outer sovereign's
+    /// <br/>territory overrides completely at its location boundary.
+    /// <br/>
+    /// <br/>Results are cached with configurable TTL (FACTION_GOVERNANCE_CACHE_TTL_SECONDS).
+    /// </remarks>
+    /// <returns>Governance data resolved</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("faction/governance/query")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GovernanceDataResponse>> QueryGovernanceData([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryGovernanceDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.QueryGovernanceData",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/governance/query");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.QueryGovernanceDataAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/governance/query");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:faction/governance/query");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "faction",
+                "QueryGovernanceData",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:faction/governance/query",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Delegate authority from sovereign to child faction
+    /// </summary>
+    /// <remarks>
+    /// A sovereign faction grants delegated authority to a child faction
+    /// <br/>for specific case type domains. The target faction's authorityLevel
+    /// <br/>is set to Delegated. The target must be a descendant of the sovereign
+    /// <br/>in the faction hierarchy.
+    /// <br/>
+    /// <br/>Delegation is per-case-type via domain strings. A sovereign can
+    /// <br/>delegate "trade_dispute" jurisdiction without delegating "criminal"
+    /// <br/>jurisdiction. Each domain grants the target faction the right to
+    /// <br/>arbitrate cases of that type within its territory.
+    /// </remarks>
+    /// <returns>Authority delegated</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("faction/governance/delegate")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> DelegateAuthority([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DelegateAuthorityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.DelegateAuthority",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/governance/delegate");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.DelegateAuthorityAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/governance/delegate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:faction/governance/delegate");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "faction",
+                "DelegateAuthority",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:faction/governance/delegate",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Revoke delegated authority
+    /// </summary>
+    /// <remarks>
+    /// Revokes delegated authority from a child faction. If all domains are
+    /// <br/>revoked (or domains is null for blanket revocation), the target
+    /// <br/>faction's authorityLevel reverts to Influence.
+    /// </remarks>
+    /// <returns>Authority revoked</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("faction/governance/revoke")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> RevokeAuthority([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RevokeAuthorityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.RevokeAuthority",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/governance/revoke");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.RevokeAuthorityAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/governance/revoke");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:faction/governance/revoke");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "faction",
+                "RevokeAuthority",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:faction/governance/revoke",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

@@ -113,6 +113,15 @@ Over simulated time, factions should undergo recognizable arcs. A street gang gr
 | `nrm:{normId}` | `NormDefinitionModel` | Primary lookup by norm ID |
 | `nrm:fac:{factionId}` | `NormListModel` | All norms for a faction |
 
+### Governance Store
+**Store**: `faction-governance-statestore` (Backend: MySQL)
+
+| Key Pattern | Data Type | Purpose |
+|-------------|-----------|---------|
+| `gov:{governanceId}` | `GovernanceEntryModel` | Primary lookup by governance entry ID |
+| `gov:fac:{factionId}` | `GovernanceEntryListModel` | All governance entries for a faction |
+| `gov:fac:{factionId}:dom:{domain}` | `GovernanceEntryModel` | Domain uniqueness lookup within a faction |
+
 ### Faction Cache
 **Store**: `faction-cache` (Backend: Redis, prefix: `faction:cache`)
 
@@ -132,6 +141,8 @@ Used for faction create/update/delete, membership add/remove/role-change, territ
 | `violationType` | B (Game Content Type) | Opaque string | Norm violation type code (e.g., `"theft"`, `"deception"`, `"violence"`, `"contraband"`). Vocabulary defined externally by contract templates and lib-obligation's action tag mappings. New violation types require no schema changes. |
 | `seedTypeCode` | B (Game Content Type) | Opaque string | Seed type identifier for faction growth tracking (default: `"faction"`). Configured per game via `FACTION_SEED_TYPE_CODE`. Follows the Seed service's opaque code pattern. |
 | `currentPhase` | B (Game Content Type) | Opaque string (nullable) | Current seed growth phase label (e.g., `"nascent"`, `"established"`, `"influential"`, `"dominant"`). Phase labels are defined per seed type in lib-seed configuration, not by lib-faction. |
+| `authorityLevel` | C (System State/Mode) | `AuthorityLevel` enum | Governance power classification (`Influence`, `Delegated`, `Sovereign`). Determines whether faction norms carry legal weight or social influence only. Defaults to Influence. |
+| `domain` (on governance entries) | B (Game Content Type) | Opaque string | Case type domain prefix (e.g., `"dissolution"`, `"trade_dispute"`, `"criminal"`). Game-configurable. Delegation is scoped per domain. Adding new domains never requires schema changes. |
 | `status` (on `FactionResponse`) | C (System State/Mode) | `FactionStatus` enum | Faction operational lifecycle state (`Active`, `Dissolved`). Orthogonal to deprecation — a faction can be Active but deprecated (no new references) or Dissolved but not deprecated (dissolved is an operational end-state, deprecation prevents new references). |
 | `role` | C (System State/Mode) | `FactionMemberRole` enum | Membership role hierarchy (`Leader`, `Officer`, `Member`, `Recruit`). Determines permissions within the faction. |
 | `severity` | C (System State/Mode) | `NormSeverity` enum | Norm enforcement intensity (`Advisory`, `Standard`, `Strict`). Controls how strongly a norm is enforced. |
@@ -159,6 +170,10 @@ Used for faction create/update/delete, membership add/remove/role-change, territ
 | `faction.norm.updated` | `FactionNormUpdatedEvent` | Norm definition modified |
 | `faction.norm.deleted` | `FactionNormDeletedEvent` | Norm definition removed |
 | `faction.realm-baseline.designated` | `FactionRealmBaselineDesignatedEvent` | Faction designated as realm baseline |
+| `faction.governance.defined` | `FactionGovernanceDefinedEvent` | Governance entry created or updated (includes changedFields on overwrite) |
+| `faction.governance.deleted` | `FactionGovernanceDeletedEvent` | Governance entry removed |
+| `faction.authority.delegated` | `FactionAuthorityDelegatedEvent` | Sovereign delegates authority to child faction |
+| `faction.authority.revoked` | `FactionAuthorityRevokedEvent` | Delegated authority revoked |
 
 ### Consumed Events
 
@@ -389,7 +404,16 @@ The territory variable requires knowing the character's current location, which 
 
 ## Stubs & Unimplemented Features
 
-None. All 31 endpoints are fully implemented with business logic.
+### Governance Endpoints (6 endpoints — schema defined, implementation pending)
+
+Sovereignty and governance data management. Schema added by #601 (2026-03-16). Service code implementation is pending.
+
+- **SetGovernanceEntry** (`/faction/governance/set`): Upsert governance entry (domain + template code + parameters). Requires Sovereign/Delegated authority and `governance.arbitrate.*` seed capability.
+- **RemoveGovernanceEntry** (`/faction/governance/remove`): Remove governance entry for a domain.
+- **ListGovernanceEntries** (`/faction/governance/list`): All governance entries for a faction.
+- **QueryGovernanceData** (`/faction/governance/query`): Critical arbitration integration endpoint. Walks sovereignty hierarchy to resolve jurisdictional faction and procedural template for a location + domain. Returns 404 when no sovereign has jurisdiction.
+- **DelegateAuthority** (`/faction/governance/delegate`): Sovereign grants per-domain delegated authority to a child faction.
+- **RevokeAuthority** (`/faction/governance/revoke`): Revoke delegation (reverts to Influence when all domains revoked).
 
 ## Potential Extensions
 
@@ -430,6 +454,10 @@ None currently.
 
 9. **SeedFactions allows setting IsRealmBaseline directly**: Unlike `CreateFactionAsync` (which always sets `IsRealmBaseline = false`), the `SeedFactionsAsync` endpoint passes through `def.IsRealmBaseline` from the seed definition, allowing baseline designation during bulk seeding without a separate `DesignateRealmBaseline` call.
 
+10. **Sovereignty is emergent, not required**: `authorityLevel` defaults to `Influence` on every faction. Sovereignty is only acquired through `DesignateRealmBaseline` (which sets Sovereign automatically) or delegation endpoints. If no sovereign exists in a territory, `QueryGovernanceData` returns 404 and `QueryApplicableNorms` continues with the existing "most specific wins" behavior where all norms are social/personal. The legal channel only activates when a Sovereign faction exists.
+
+11. **authorityLevel is not directly mutable via UpdateFaction**: Sovereignty is managed exclusively through `DesignateRealmBaseline` (→ Sovereign), `DelegateAuthority` (→ Delegated), and `RevokeAuthority` (→ Influence). This prevents accidental sovereignty assignment via the general update endpoint.
+
 ### Design Considerations (Requires Planning)
 
 1. **No owner validation for territory claims**: Like Collection/Seed, faction trusts that callers pass valid entity IDs. Location existence is validated via lib-location, but no check that the faction "should" be able to claim that location beyond seed capability gating.
@@ -443,44 +471,15 @@ None currently.
 
 5. **Missing lib-contract integration for guild charters (plan gap)**: Issue #410 decision Q3 states: "When a character joins a faction (formal guild membership), the guild contract is created explicitly through lib-contract." The plan lists `lib-contract (L1) — formal membership agreements, guild charters` as a dependency. The current implementation does not use `IContractClient` at all -- membership is managed directly without contract backing. This means guild charters are not formalized as binding agreements, and lib-obligation cannot discover faction-sourced contractual obligations through lib-contract.
 
-6. **Faction sovereignty: authorityLevel field and governance data model (prerequisite for lib-arbitration)**: The current norm resolution hierarchy treats all factions equally -- norms differ only in numerical weight and hierarchy position (most specific wins). This breaks down when factions **contradict** each other on binary or procedural questions (e.g., a guild permits divorce but the territorial sovereign forbids it). The resolution is distinguishing **legal authority** from **social influence** via a new `authorityLevel` field on FactionModel:
-
- | Level | Meaning | Enforcement Power |
- |-------|---------|-------------------|
- | **Influence** | Default. Social norms only. | Cannot arbitrate or enforce legally. Imposes GOAP cost modifiers and reputation damage only. |
- | **Delegated** | Authority granted by a sovereign. | Inherits sovereign's law. Can add local rules within scope of delegation. Can arbitrate within delegated jurisdiction. |
- | **Sovereign** | Law-making authority. | Final word within controlled territory. Defines what is legal vs. illegal. Can arbitrate, exile, impose legal penalties. |
-
- **Norm resolution changes from "most specific wins" to authority-aware hierarchy**:
- 1. Find the sovereign in the territory hierarchy (walk up faction parents until Sovereign)
- 2. Sovereign's norms = LAWS (high enforcement weight, triggers guard/justice system)
- 3. Delegated authority norms = LOCAL LAWS (override sovereign on specifics, inherit on gaps)
- 4. Influence norms = SOCIAL COSTS (existing behavior -- GOAP cost modifiers, reputation damage)
- 5. Guild membership norms = PERSONAL OBLIGATIONS (existing behavior)
- 6. A nested sovereign (enclave) overrides the outer sovereign completely within its territory
-
- **IsRealmBaseline integration**: The realm baseline faction should automatically be Sovereign -- it's the realm-wide legal authority by definition. `DesignateRealmBaseline` should set `AuthorityLevel = Sovereign` (or validate that it's already Sovereign). A realm can have multiple Sovereign factions (the baseline + enclaves), but only one realm baseline.
-
- **Enclave sovereignty**: Sovereignty applies at the location boundary. Nesting is naturally bounded by lib-location's hierarchy and `MaxHierarchyDepth` (currently 5). A dwarven enclave controlling a nested Location node within a human kingdom switches legal jurisdiction at the boundary -- same as existing territory-controlling faction transitions. `QueryApplicableNorms` already takes a `locationId` parameter; the sovereignty enhancement changes how it interprets the controlling faction's authority level.
-
- **Governance data model (procedural norms)**: Sovereign and Delegated factions gain a new norm type alongside cost norms: `{ caseType, templateCode, governanceParameters }`, gated by `governance.arbitrate.*` seed capability. This associates case types (opaque strings like `dissolution`, `criminal_proceeding`, `trade_dispute`) with contract template codes in lib-contract. lib-arbitration queries this governance data to instantiate the correct procedural template for cases filed within the jurisdiction.
-
- **New endpoints needed**: (a) Delegation endpoint for sovereign factions to grant `Delegated` authority to child factions, (b) `QueryGovernanceData` -- given a location and case type, resolve the jurisdictional faction and return its procedural template reference and governance parameters.
-
- **Sovereignty acquisition paths** (initial implementation: first two only):
- - Realm baseline: `DesignateRealmBaseline` automatically sets Sovereign
- - Delegation: sovereign grants Delegated authority to a child faction
- - Conquest: seed-gated `sovereignty.claim` capability at dominant growth phase (future)
- - Treaty: via lib-arbitration `sovereignty_recognition` case type (future)
- - Divine mandate: via Puppetmaster regional watcher (future)
-
- **Backward-compatible**: If no sovereign exists (sovereignty not yet implemented for a deployment), `QueryApplicableNorms` continues with the existing "most specific wins" behavior -- all norms are social/personal. The legal channel only activates when a Sovereign faction exists.
-
- This is the single largest prerequisite for lib-arbitration. See the [Arbitration deep dive's Faction Sovereignty Dependency section](ARBITRATION.md#faction-sovereignty-dependency) for the complete list of changes from lib-arbitration's perspective, and the [Obligation deep dive's multi-channel costs design consideration](OBLIGATION.md#design-considerations-requires-planning) for how costs become authority-tagged.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/601 -->
+6. ~~**Faction sovereignty: authorityLevel field and governance data model (prerequisite for lib-arbitration)**~~: **SCHEMA DESIGNED** (2026-03-16, #601) — `AuthorityLevel` enum (`Influence`, `Delegated`, `Sovereign`) added to `faction-api.yaml`. `authorityLevel` field on `FactionResponse` (required, defaults to Influence). Governance data model (`domain` + `templateCode` + `governanceParameters`) with 6 new governance endpoints. `ApplicableNormEntry` and `MergedNormEntry` gain `authorityLevel` for authority-aware cost tagging. `DesignateRealmBaseline` sets Sovereign automatically. Delegation is per-case-type via opaque `domain` strings. `QueryGovernanceData` walks sovereignty hierarchy and returns 404 when no sovereign has jurisdiction. Sovereignty is a nullable/emergent concept. Service code implementation pending. See [Arbitration deep dive](ARBITRATION.md#faction-sovereignty-dependency) for the downstream consumer perspective.
+<!-- AUDIT:DESIGNED:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/601 -->
 
 ## Work Tracking
 
+### Completed
+- **2026-03-16**: Issue #601 — Faction sovereignty schema designed. `AuthorityLevel` enum, `authorityLevel` field on FactionResponse/lifecycle, governance data model (6 endpoints), enhanced `ApplicableNormEntry`/`MergedNormEntry` with authority level. Service code implementation pending.
+
+### History
 - **GitHub Issue**: [#410 - Feature: Second Thoughts -- Prospective Consequence Evaluation for NPC Cognition](https://github.com/beyond-immersion/bannou-service/issues/410)
  - lib-faction was extracted from the original lib-moral proposal during architecture review
  - Part of the larger lib-obligation + lib-faction system for NPC "second thoughts" cognition

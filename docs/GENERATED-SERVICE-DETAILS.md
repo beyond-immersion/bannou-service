@@ -25,7 +25,7 @@ Distributed actor management and execution (L2 GameFoundation) for NPC brains, e
 
 ## Affix {#affix}
 
-**Deep Dive**: [docs/plugins/AFFIX.md](plugins/AFFIX.md) | **Map**: [docs/maps/AFFIX.md](maps/AFFIX.md)
+**Version**: 1.0.0 | **Schema**: `schemas/affix-api.yaml` | **Endpoints**: 28 | **Deep Dive**: [docs/plugins/AFFIX.md](plugins/AFFIX.md) | **Map**: [docs/maps/AFFIX.md](maps/AFFIX.md)
 
 Item modifier definition, instance management, and stat computation service (L4 GameFeatures). Owns two layers of data: **definitions** (modifier templates with tiers, mod groups, spawn weights, stat grants) and **instances** (per-item applied modifier state stored in Affix's own state store). Any system that needs to answer "what modifiers does this item have?" or "what is this item worth?" queries lib-affix's typed API. Game-agnostic (PoE-style prefix/suffix tiers, Diablo-style legendary affixes, or simple "quality stars" are all valid configurations). Internal-only, never internet-facing.
 
@@ -43,7 +43,7 @@ The Analytics plugin (L4 GameFeatures) is the central event aggregation point fo
 
 ## Arbitration {#arbitration}
 
-**Deep Dive**: [docs/plugins/ARBITRATION.md](plugins/ARBITRATION.md)
+**Deep Dive**: [docs/plugins/ARBITRATION.md](plugins/ARBITRATION.md) | **Map**: [docs/maps/ARBITRATION.md](maps/ARBITRATION.md)
 
 Authoritative dispute resolution service (L4 GameFeatures) for competing claims that need jurisdictional ruling and enforcement. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item, Divine over Currency/Seed/Collection) that composes existing Bannou primitives to deliver adjudication game mechanics. Game-agnostic: procedural templates, arbiter selection rules, and cultural attitudes toward litigation are configured through contract templates and faction governance data at deployment time. Internal-only, never internet-facing.
 
@@ -65,6 +65,8 @@ The Auth plugin is the internet-facing authentication and session management ser
 
 ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action Planning) runtime (L4 GameFeatures) for NPC behavior management. Provides three core subsystems: a multi-phase ABML compiler producing portable stack-based bytecode, an A*-based GOAP planner for action sequence generation from world state and goals, and a 5-stage cognition pipeline for NPC perception and intention formation. Compiled bytecode is interpreted by both the server-side ActorRunner (L2) and client SDKs. Supports streaming composition, variant-based model caching with fallback chains, and behavior bundling through the Asset service.
 
+The plugin is unusually self-contained for L4 — no L1 or L2 service client dependencies. It depends on in-process SDK libraries (`BehaviorCompiler`, `GoapPlanner`, `DocumentParser` from `sdks/behavior-compiler/`) and shared cognition infrastructure (`CognitionConstants`, `IMemoryStore`, `IActionHandler` from `bannou-service/`). lib-asset (L3) is the only inter-service dependency, used as a soft dependency for bytecode storage.
+
 ## Broadcast {#broadcast}
 
 **Version**: 1.0.0 | **Schema**: `schemas/broadcast-api.yaml` | **Endpoints**: 22 | **Deep Dive**: [docs/plugins/BROADCAST.md](plugins/BROADCAST.md) | **Map**: [docs/maps/BROADCAST.md](maps/BROADCAST.md)
@@ -81,19 +83,19 @@ The Character service (L2 GameFoundation) manages game world characters for Arca
 
 ## Character Encounter {#character-encounter}
 
-**Version**: 1.0.0 | **Schema**: `schemas/character-encounter-api.yaml` | **Endpoints**: 22 | **Deep Dive**: [docs/plugins/CHARACTER-ENCOUNTER.md](plugins/CHARACTER-ENCOUNTER.md)
+**Version**: 1.0.0 | **Schema**: `schemas/character-encounter-api.yaml` | **Endpoints**: 22 | **Deep Dive**: [docs/plugins/CHARACTER-ENCOUNTER.md](plugins/CHARACTER-ENCOUNTER.md) | **Map**: [docs/maps/CHARACTER-ENCOUNTER.md](maps/CHARACTER-ENCOUNTER.md)
 
 Character encounter tracking service (L4 GameFeatures) for memorable interactions between characters, enabling NPC memory, dialogue triggers, grudges/alliances, and quest hooks. Manages encounters (shared interaction records) with per-participant perspectives, time-based memory decay, weighted sentiment aggregation, and configurable encounter type codes. Features automatic pruning per-character and per-pair limits, and provides `${encounters.*}` ABML variables to the Actor service's behavior system via the Variable Provider Factory pattern.
 
 ## Character History {#character-history}
 
-**Version**: 1.0.0 | **Schema**: `schemas/character-history-api.yaml` | **Endpoints**: 12 | **Deep Dive**: [docs/plugins/CHARACTER-HISTORY.md](plugins/CHARACTER-HISTORY.md)
+**Version**: 1.0.0 | **Schema**: `schemas/character-history-api.yaml` | **Endpoints**: 12 | **Deep Dive**: [docs/plugins/CHARACTER-HISTORY.md](plugins/CHARACTER-HISTORY.md) | **Map**: [docs/maps/CHARACTER-HISTORY.md](maps/CHARACTER-HISTORY.md)
 
 Historical event participation and backstory management (L4 GameFeatures) for characters. Tracks when characters participate in world events (wars, disasters, political upheavals) with role and significance tracking, and maintains machine-readable backstory elements (origin, occupation, training, trauma, fears, goals) for behavior system consumption. Provides template-based text summarization for character compression via lib-resource. Shares storage helper abstractions with the realm-history service.
 
 ## Character Lifecycle {#character-lifecycle}
 
-**Deep Dive**: [docs/plugins/CHARACTER-LIFECYCLE.md](plugins/CHARACTER-LIFECYCLE.md)
+**Version**: 1.0.0 | **Schema**: `schemas/character-lifecycle-api.yaml` | **Endpoints**: 29 | **Deep Dive**: [docs/plugins/CHARACTER-LIFECYCLE.md](plugins/CHARACTER-LIFECYCLE.md) | **Map**: [docs/maps/CHARACTER-LIFECYCLE.md](maps/CHARACTER-LIFECYCLE.md)
 
 Generational cycle orchestration and genetic heritage service (L4 GameFeatures) for character aging, marriage, procreation, death processing, and cross-generational trait inheritance. The temporal engine that drives the content flywheel by ensuring characters are born, live, age, reproduce, and die -- and that each death produces archives feeding future content. Game-agnostic: lifecycle stages, genetic trait definitions, marriage customs, and death processing are configured through lifecycle configuration and seed data at deployment time. Internal-only, never internet-facing.
 
@@ -193,7 +195,7 @@ Species-level behavioral archetype registry and nature resolution service (L4 Ga
 
 ## Faction {#faction}
 
-**Version**: 1.0.0 | **Schema**: `schemas/faction-api.yaml` | **Endpoints**: 31 | **Deep Dive**: [docs/plugins/FACTION.md](plugins/FACTION.md)
+**Version**: 1.0.0 | **Schema**: `schemas/faction-api.yaml` | **Endpoints**: 37 | **Deep Dive**: [docs/plugins/FACTION.md](plugins/FACTION.md)
 
 The Faction service (L4 GameFeatures) models factions as seed-based living entities whose capabilities emerge from growth, not static assignment. As a faction's seed grows through phases (nascent, established, influential, dominant), capabilities unlock: norm definition, enforcement tiers, territory claiming, and trade regulation. Its primary consumer is lib-obligation, which queries faction norms to produce GOAP action cost modifiers for NPC cognition -- resolving a hierarchy of guild, location, and realm baseline norms into a merged norm set. Supports guild memberships with role hierarchy, parent/child organizational structure, territory claims, and inter-faction political connections modeled as seed bonds via lib-seed. Internal-only, never internet-facing.
 
@@ -498,7 +500,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Total services**: 77
-- **Total endpoints**: 947
+- **Total endpoints**: 1010
 
 ---
 

@@ -404,6 +404,55 @@ Each helper config class:
 
 **Property rules**: Same as [Configuration Schema Rules](#configuration-schema-rules) — every property needs `env`, proper prefix, and follows NRT/default conventions.
 
+### x-constraint-groups (Cross-Property Configuration Validation)
+
+Defined inside `x-service-configuration` or `x-helper-configurations` blocks in `{service}-configuration.yaml`. Declares collective validation constraints across groups of configuration properties, validated at startup.
+
+> **Full specification**: [X-CONSTRAINT-GROUP.md](specifications/X-CONSTRAINT-GROUP.md) — complete schema syntax, all constraint types, generated output, runtime behavior, structural tests, and worked examples.
+
+**Group definitions** are siblings of `properties` inside a configuration block. **Properties** reference their group via `constraint-group: {name}`.
+
+```yaml
+x-service-configuration:
+  x-constraint-groups:
+    stage-weights:
+      constraint: sum-equals
+      value: 1.0
+      description: Stage weights must collectively equal 1.0
+    auth-provider:
+      constraint: exactly-one
+      description: Exactly one authentication provider must be configured
+  properties:
+    GatheringWeight:
+      type: number
+      nullable: true
+      constraint-group: stage-weights
+      env: CRAFT_GATHERING_WEIGHT
+      default: 0.25
+      description: Weight for gathering stage
+    MysqlConnectionString:
+      type: string
+      nullable: true
+      constraint-group: auth-provider
+      env: CRAFT_MYSQL_CONNECTION_STRING
+      description: MySQL connection string (mutually exclusive with other providers)
+```
+
+**Constraint types**:
+
+| Constraint | Value Required | Description |
+|---|---|---|
+| `exactly-one` | No | Exactly one property must be non-null |
+| `at-most-one` | No | Zero or one property may be non-null |
+| `all-or-none` | No | All properties set or all null |
+| `sum-equals` | Yes | Sum must equal `value` (within optional `tolerance`, default `0.0001`) |
+| `sum-minimum` | Yes | Sum must be >= `value` |
+| `sum-maximum` | Yes | Sum must be <= `value` |
+
+**Scoping**: Groups are scoped to their configuration block. The same group name in different config blocks (main vs helper, or different helpers) does not conflict. A property may belong to at most one group.
+
+**Generated output**: `[ConfigConstraintGroupDefinition]` class-level attributes and `[ConfigConstraintGroup]` property-level attributes. Validated at startup by `IServiceConfiguration.ValidateConstraintGroups()` — fail-fast with `InvalidOperationException`.
+
 ### x-references (Resource Reference Tracking)
 
 Defined in consumer service API schemas (`*-api.yaml`), declares references to foundational resources for lifecycle management via lib-resource. Higher-layer services (L2/L3/L4) declare their references to foundational resources; the code generator produces helper methods for reference registration and cleanup/migration callback registration.
@@ -1465,5 +1514,7 @@ Before submitting schema changes, verify:
 **x-compression-callback**: `compressEndpoint` exists in paths. `priority` set appropriately (0 base, 10-30 extension, 50-100 optional). Plugin calls generated `*CompressionCallbacks.RegisterAsync()`.
 
 **x-event-template**: `name` is unique across services. Plugin calls generated `*EventTemplates.RegisterAll()`. No manual `EventTemplate` definitions remain.
+
+**x-constraint-groups**: Every `constraint-group` reference on a property matches a defined group. Every group has at least 2 member properties. Sum constraints only on numeric properties. Presence constraints only on nullable properties. `value` set for sum constraints, absent for presence constraints. `tolerance` only on `sum-equals`.
 
 **Metadata Bags**: Any property with `additionalProperties: true` includes description stating "Client-only metadata. No Bannou plugin reads specific keys from this field by convention." No cross-service data contracts via metadata bags. No documentation specifying convention-based keys for other services to read.

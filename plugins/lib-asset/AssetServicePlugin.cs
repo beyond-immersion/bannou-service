@@ -193,9 +193,10 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
             "Waiting for MinIO connectivity at {Endpoint} (max {MaxRetries} attempts, {Delay}ms between retries)",
             options.Endpoint, maxRetries, retryDelayMs);
 
-        // MinioClient fluent API returns 'this' from Build() — using disposes correctly
-        using var minioClient = new MinioClient()
-            .WithEndpoint(options.Endpoint)
+        // Separate creation from fluent configuration to satisfy CA2000 —
+        // if a fluent call throws, the using var still disposes the object.
+        using var minioClient = new MinioClient();
+        minioClient.WithEndpoint(options.Endpoint)
             .WithCredentials(options.AccessKey, options.SecretKey)
             .WithRegion(options.Region);
 

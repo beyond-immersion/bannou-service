@@ -43,8 +43,8 @@ FeelingEntry:
  baseValue: float # Computed from source services — range [-1.0, 1.0]
  modifier: float # Persistent emotional residue — range [-1.0, 1.0]
  modifierDecayRate: float # How fast the modifier decays toward 0 (per day) — range [0.0, 1.0]
- lastSynthesizedAt: DateTime # When base was last recomputed from sources
- lastModifiedAt: DateTime # When modifier was last changed
+ lastSynthesizedAt: DateTimeOffset # When base was last recomputed from sources
+ lastModifiedAt: DateTimeOffset # When modifier was last changed
  sourceBreakdown: SynthesisBreakdown # Typed breakdown of source contributions to base value
 ```
 
@@ -164,9 +164,9 @@ DriveEntry:
  frustration: float # 0.0 (no obstacles) to 1.0 (blocked at every turn) — range [0.0, 1.0]
  originType: DriveOriginType # How this drive formed: Personality, Experience, Backstory, Circumstance
  originEventId: Guid? # The event/experience that catalyzed this drive (null for personality-innate)
- acquiredAt: DateTime # When the drive formed
- lastProgressAt: DateTime? # When satisfaction last increased
- lastFrustrationAt: DateTime? # When frustration last increased
+ acquiredAt: DateTimeOffset # When the drive formed
+ lastProgressAt: DateTimeOffset? # When satisfaction last increased
+ lastFrustrationAt: DateTimeOffset? # When frustration last increased
 ```
 
 ### Drive Categories
@@ -593,7 +593,7 @@ weight their personal experience higher.
 | `disposition.drive.fulfilled` | `DispositionDriveFulfilledEvent` | Drive satisfaction reached fulfillment threshold. Includes drive code, total duration. |
 | `disposition.guardian.shifted` | `DispositionGuardianShiftedEvent` | Guardian spirit feeling changed. Includes axis, old/new value. Published separately for client event forwarding. |
 
-All feeling and drive events carry `characterId`. Per SCHEMA-RULES, events schema should declare `x-resource-mapping: { characterId: character }` on character-scoped event models so lib-resource can correlate events with resource lifecycle.
+All feeling and drive events carry `characterId`.
 
 ### Event Publications (x-event-publications per SCHEMA-RULES)
 
@@ -1254,7 +1254,7 @@ History (my PAST) ─┤ (what I WANT) GOAP
 
 2. **Drive codes are opaque strings**: Same extensibility pattern. `master_craft`, `protect_family`, `gain_wealth` are conventions. Games define their own aspiration vocabulary.
 
-3. **Feelings persist after relationship ends**: When a relationship is soft-deleted (Relationship.End), the feelings toward that entity remain. The relationship component of the base value drops to 0, but the modifier persists. Emotional residue outlasts formal bonds.
+3. **Feelings persist after relationship ends**: When a relationship is deleted (hard delete per Foundation Tenets), the feelings toward that entity remain. The relationship component of the base value drops to 0, but the modifier persists. Emotional residue outlasts formal bonds.
 
 4. **Guardian feelings are per-character, not per-account**: Each character has an independent emotional relationship with the guardian spirit. A spirit's second character starts with zero familiarity even though the spirit has experience from the first character. The spirit knows the character; the character doesn't know the spirit.
 
@@ -1266,7 +1266,7 @@ History (my PAST) ─┤ (what I WANT) GOAP
 
 8. **Multiple feelings about the same target coexist**: A character can feel `trust: 0.7` AND `fear: 0.3` toward the same character simultaneously. These are not contradictory -- they represent different emotional dimensions. "I trust them but they also scare me" is a coherent emotional state.
 
-9. **Synthesis weights must sum to 1.0**: The four source weights (encounter, hearsay, relationship, personality) are configured independently but should sum to approximately 1.0. If a source is unavailable, its weight redistributes proportionally to remaining sources. The system does not enforce the sum constraint at configuration time.
+9. **Synthesis weights redistribute proportionally**: The four source weights (encounter, hearsay, relationship, personality) are configured independently. If a source is unavailable, its weight redistributes proportionally to remaining sources (`new_w_i = w_i / (1 - w_unavailable)`). See Design Considerations #4 for the open question about sum validation.
 
 10. **Guardian compliance is a derived value, not a feeling**: `${disposition.guardian.compliance}` is computed from the feeling axes (trust, resentment, familiarity, defiance) using a weighted formula. It is not stored independently. This ensures compliance always reflects current emotional state.
 
@@ -1275,19 +1275,13 @@ History (my PAST) ─┤ (what I WANT) GOAP
 1. **Scale considerations**: With 100,000+ NPCs, each potentially having 200 feelings and 10 drives, storage and synthesis processing could become significant. The synthesis worker must be efficient. May need spatial partitioning or priority-based synthesis (active actors synthesize more frequently than background NPCs).
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/616 -->
 
-2. ~~**Synthesis source ordering**~~: **RESOLVED** (2026-03-08) - Addressed by three mechanisms already in this document: (a) proportional weight redistribution is order-independent — `new_w_i = w_i / (1 - w_unavailable)` for remaining sources, (b) SynthesisBreakdown model stores effective weights after redistribution, making the actual algorithm auditable per feeling, and (c) graceful degradation § "If ALL sources are unavailable, base defaults to 0.0" handles the degenerate case. No ordering concern exists because the formula is a mathematical weighted sum, not a sequential pipeline.
-
-3. ~~**Drive formation conditions**~~: **RESOLVED** (2026-03-08) - Addressed by the document's own specification: drive codes and categories are opaque strings (same extensibility pattern as collection types, seed types, violation type codes), formation thresholds are configurable via the Configuration table (`DriveMinIntensityThreshold`, `DriveFulfillmentThreshold`, etc.), and the four formation paths (personality-innate, experience-catalyzed, backstory-seeded, circumstance-derived) each define clear trigger conditions. The mapping between personality traits and eligible drives follows the standard Bannou pattern of configuration-driven opaque code mapping at deployment time — no architectural design decision remains.
-
-4. **Guardian spirit input tracking**: The Actor service needs to record spirit nudge events in a format Disposition can consume. The exact event schema and the boundary between "Actor tracks spirit input" and "Disposition computes alignment" needs design.
+2. **Guardian spirit input tracking**: The Actor service needs to record spirit nudge events in a format Disposition can consume. The exact event schema and the boundary between "Actor tracks spirit input" and "Disposition computes alignment" needs design.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/621 -->
 
-5. **Game-time vs real-time for decay rates**: Modifier decay rates and drive satisfaction decay are specified as "per day" but the time domain (game-time via Worldstate or real-time) is unspecified. At a 72:1 time ratio, this is a 72x difference in decay speed. Affects all three background workers and may require `IWorldstateClient` (L2) as an additional hard dependency. Related to GH #545 (Currency/Seed game-time migration).
+3. **Game-time vs real-time for decay rates**: Modifier decay rates and drive satisfaction decay are specified as "per day" but the time domain (game-time via Worldstate or real-time) is unspecified. At a 72:1 time ratio, this is a 72x difference in decay speed. Affects all three background workers and may require `IWorldstateClient` (L2) as an additional hard dependency. Related to GH #545 (Currency/Seed game-time migration).
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/623 -->
 
-6. ~~**Variable provider performance**~~: **RESOLVED** (2026-03-08) - Addressed by three mechanisms already in this document: (a) Redis-backed manifest cache (`disposition-cache`, key `manifest:{characterId}`) with configurable TTL (`CacheTtlMinutes`, default 5min) and event-driven invalidation, (b) confidence threshold filtering (`MinConfidenceForProvider`, default 0.05) excluding low-magnitude feelings from the provider payload, and (c) `DispositionSynthesisWorkerService` periodically resynthesizing base values to keep the cache current. Whether additional sub-caching is needed for frequently accessed feelings is an implementation-time optimization concern, not a design question.
-
-7. ~~**Hearsay dependency timing**~~: **RESOLVED** (2026-03-08) - Addressed by three mechanisms already in this document: (a) graceful degradation via weight redistribution when hearsay is unavailable (see Core Mechanics § Base Value Synthesis), (b) phased implementation deferring hearsay to Phase 4 (see Stubs § Phase 4), and (c) explicit "Phase 4+" deferral markers on hearsay consumed event handlers.
+4. ~~**Synthesis weight sum validation**~~: **RESOLVED** (2026-03-16) — Runtime validation at startup: verify the four source weights (encounter, hearsay, relationship, personality) sum to approximately 1.0 and log a warning or reject if they don't. OpenAPI has no grouped constraint mechanism for cross-property arithmetic validation, so this must be a code-level check. Misconfiguration is expected to be exceptionally rare.
 
 ---
 

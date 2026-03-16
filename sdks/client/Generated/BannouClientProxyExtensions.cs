@@ -17,6 +17,7 @@ public partial class BannouClient
     private AccountProxy? _account;
     private AchievementProxy? _achievement;
     private ActorProxy? _actor;
+    private AffixProxy? _affix;
     private AnalyticsProxy? _analytics;
     private AssetProxy? _asset;
     private AuthProxy? _auth;
@@ -25,6 +26,7 @@ public partial class BannouClient
     private CharacterProxy? _character;
     private CharacterEncounterProxy? _characterEncounter;
     private CharacterHistoryProxy? _characterHistory;
+    private CharacterLifecycleProxy? _characterLifecycle;
     private CharacterPersonalityProxy? _characterPersonality;
     private ChatProxy? _chat;
     private CollectionProxy? _collection;
@@ -90,6 +92,12 @@ public partial class BannouClient
         _actor ??= new ActorProxy(this);
 
     /// <summary>
+    /// Gets the typed proxy for Bannou Affix Service API operations.
+    /// </summary>
+    public AffixProxy Affix =>
+        _affix ??= new AffixProxy(this);
+
+    /// <summary>
     /// Gets the typed proxy for Bannou Analytics Service API operations.
     /// </summary>
     public AnalyticsProxy Analytics =>
@@ -136,6 +144,12 @@ public partial class BannouClient
     /// </summary>
     public CharacterHistoryProxy CharacterHistory =>
         _characterHistory ??= new CharacterHistoryProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Bannou Character Lifecycle Service API operations.
+    /// </summary>
+    public CharacterLifecycleProxy CharacterLifecycle =>
+        _characterLifecycle ??= new CharacterLifecycleProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Bannou Character Personality Service API operations.

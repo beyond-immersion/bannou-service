@@ -181,6 +181,9 @@ public partial interface IFactionClient
     /// <br/>species instincts) that apply to all characters in the realm unless
     /// <br/>overridden by more specific faction norms.
     /// <br/>
+    /// <br/>Automatically sets the designated faction's authorityLevel to Sovereign,
+    /// <br/>as the realm baseline is the ultimate legal authority for the realm.
+    /// <br/>
     /// <br/>Only one faction per realm can be the baseline. Setting a new baseline
     /// <br/>clears the previous one. The faction must belong to the specified realm.
     /// </remarks>
@@ -435,6 +438,111 @@ public partial interface IFactionClient
     /// <returns>Applicable norms resolved</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<QueryApplicableNormsResponse> QueryApplicableNormsAsync(QueryApplicableNormsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Set a governance entry for a faction
+    /// </summary>
+    /// <remarks>
+    /// Creates or updates a governance entry associating a case type domain
+    /// <br/>with a contract template. Faction must have Sovereign or Delegated
+    /// <br/>authority level. Requires governance.arbitrate.* seed capability.
+    /// <br/>Idempotent — overwrites if domain already exists for this faction.
+    /// <br/>
+    /// <br/>Governance entries are queried by lib-arbitration to instantiate
+    /// <br/>procedural templates for cases filed within the faction's jurisdiction.
+    /// </remarks>
+    /// <returns>Governance entry set</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<GovernanceEntryResponse> SetGovernanceEntryAsync(SetGovernanceEntryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Remove a governance entry
+    /// </summary>
+    /// <remarks>
+    /// Removes a governance entry for a specific domain from a faction.
+    /// </remarks>
+    /// <returns>Governance entry removed</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task RemoveGovernanceEntryAsync(RemoveGovernanceEntryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// List governance entries for a faction
+    /// </summary>
+    /// <remarks>
+    /// Returns all governance entries defined by a faction.
+    /// </remarks>
+    /// <returns>Governance entries retrieved</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<ListGovernanceEntriesResponse> ListGovernanceEntriesAsync(ListGovernanceEntriesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Resolve governance data for a location and case type
+    /// </summary>
+    /// <remarks>
+    /// Critical integration endpoint for lib-arbitration. Given a location
+    /// <br/>and case type domain, resolves the jurisdictional faction by walking
+    /// <br/>the sovereignty hierarchy:
+    /// <br/>1. Find controlling faction at location
+    /// <br/>2. If Sovereign and has governance for domain, return
+    /// <br/>3. If Delegated and has governance for domain, return
+    /// <br/>4. Walk up parent chain until Sovereign found
+    /// <br/>5. If Sovereign has governance for domain, return
+    /// <br/>6. Fall back to realm baseline sovereign
+    /// <br/>7. If no sovereign exists anywhere, return 404
+    /// <br/>
+    /// <br/>Returns 404 when no sovereign has jurisdiction for the domain at
+    /// <br/>the given location.
+    /// <br/>
+    /// <br/>Enclave sovereignty: a nested sovereign within an outer sovereign's
+    /// <br/>territory overrides completely at its location boundary.
+    /// <br/>
+    /// <br/>Results are cached with configurable TTL (FACTION_GOVERNANCE_CACHE_TTL_SECONDS).
+    /// </remarks>
+    /// <returns>Governance data resolved</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<GovernanceDataResponse> QueryGovernanceDataAsync(QueryGovernanceDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Delegate authority from sovereign to child faction
+    /// </summary>
+    /// <remarks>
+    /// A sovereign faction grants delegated authority to a child faction
+    /// <br/>for specific case type domains. The target faction's authorityLevel
+    /// <br/>is set to Delegated. The target must be a descendant of the sovereign
+    /// <br/>in the faction hierarchy.
+    /// <br/>
+    /// <br/>Delegation is per-case-type via domain strings. A sovereign can
+    /// <br/>delegate "trade_dispute" jurisdiction without delegating "criminal"
+    /// <br/>jurisdiction. Each domain grants the target faction the right to
+    /// <br/>arbitrate cases of that type within its territory.
+    /// </remarks>
+    /// <returns>Authority delegated</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<FactionResponse> DelegateAuthorityAsync(DelegateAuthorityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Revoke delegated authority
+    /// </summary>
+    /// <remarks>
+    /// Revokes delegated authority from a child faction. If all domains are
+    /// <br/>revoked (or domains is null for blanket revocation), the target
+    /// <br/>faction's authorityLevel reverts to Influence.
+    /// </remarks>
+    /// <returns>Authority revoked</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<FactionResponse> RevokeAuthorityAsync(RevokeAuthorityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -1587,6 +1695,9 @@ public partial class FactionClient : IFactionClient, BeyondImmersion.BannouServi
     /// <br/>faction provides realm-wide default norms (honor codes, cultural taboos,
     /// <br/>species instincts) that apply to all characters in the realm unless
     /// <br/>overridden by more specific faction norms.
+    /// <br/>
+    /// <br/>Automatically sets the designated faction's authorityLevel to Sovereign,
+    /// <br/>as the realm baseline is the ultimate legal authority for the realm.
     /// <br/>
     /// <br/>Only one faction per realm can be the baseline. Setting a new baseline
     /// <br/>clears the previous one. The faction must belong to the specified realm.
@@ -3276,6 +3387,640 @@ public partial class FactionClient : IFactionClient, BeyondImmersion.BannouServi
                             throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Set a governance entry for a faction
+    /// </summary>
+    /// <remarks>
+    /// Creates or updates a governance entry associating a case type domain
+    /// <br/>with a contract template. Faction must have Sovereign or Delegated
+    /// <br/>authority level. Requires governance.arbitrate.* seed capability.
+    /// <br/>Idempotent — overwrites if domain already exists for this faction.
+    /// <br/>
+    /// <br/>Governance entries are queried by lib-arbitration to instantiate
+    /// <br/>procedural templates for cases filed within the faction's jurisdiction.
+    /// </remarks>
+    /// <returns>Governance entry set</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<GovernanceEntryResponse> SetGovernanceEntryAsync(SetGovernanceEntryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GovernanceEntryResponse>(
+                _directDispatchProvider, _serviceName, "SetGovernanceEntryAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "faction/governance/set"
+        urlBuilder_.Append("faction/governance/set");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<GovernanceEntryResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 400)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Faction is not Sovereign or Delegated", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 403)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Faction seed lacks governance.arbitrate capability", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Faction not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Remove a governance entry
+    /// </summary>
+    /// <remarks>
+    /// Removes a governance entry for a specific domain from a faction.
+    /// </remarks>
+    /// <returns>Governance entry removed</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task RemoveGovernanceEntryAsync(RemoveGovernanceEntryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
+                _directDispatchProvider, _serviceName, "RemoveGovernanceEntryAsync",
+                body, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "faction/governance/remove"
+        urlBuilder_.Append("faction/governance/remove");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        return;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Governance entry not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// List governance entries for a faction
+    /// </summary>
+    /// <remarks>
+    /// Returns all governance entries defined by a faction.
+    /// </remarks>
+    /// <returns>Governance entries retrieved</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<ListGovernanceEntriesResponse> ListGovernanceEntriesAsync(ListGovernanceEntriesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListGovernanceEntriesResponse>(
+                _directDispatchProvider, _serviceName, "ListGovernanceEntriesAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "faction/governance/list"
+        urlBuilder_.Append("faction/governance/list");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<ListGovernanceEntriesResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Faction not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Resolve governance data for a location and case type
+    /// </summary>
+    /// <remarks>
+    /// Critical integration endpoint for lib-arbitration. Given a location
+    /// <br/>and case type domain, resolves the jurisdictional faction by walking
+    /// <br/>the sovereignty hierarchy:
+    /// <br/>1. Find controlling faction at location
+    /// <br/>2. If Sovereign and has governance for domain, return
+    /// <br/>3. If Delegated and has governance for domain, return
+    /// <br/>4. Walk up parent chain until Sovereign found
+    /// <br/>5. If Sovereign has governance for domain, return
+    /// <br/>6. Fall back to realm baseline sovereign
+    /// <br/>7. If no sovereign exists anywhere, return 404
+    /// <br/>
+    /// <br/>Returns 404 when no sovereign has jurisdiction for the domain at
+    /// <br/>the given location.
+    /// <br/>
+    /// <br/>Enclave sovereignty: a nested sovereign within an outer sovereign's
+    /// <br/>territory overrides completely at its location boundary.
+    /// <br/>
+    /// <br/>Results are cached with configurable TTL (FACTION_GOVERNANCE_CACHE_TTL_SECONDS).
+    /// </remarks>
+    /// <returns>Governance data resolved</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<GovernanceDataResponse> QueryGovernanceDataAsync(QueryGovernanceDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GovernanceDataResponse>(
+                _directDispatchProvider, _serviceName, "QueryGovernanceDataAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "faction/governance/query"
+        urlBuilder_.Append("faction/governance/query");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<GovernanceDataResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("No sovereign has jurisdiction for this domain at this location", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Delegate authority from sovereign to child faction
+    /// </summary>
+    /// <remarks>
+    /// A sovereign faction grants delegated authority to a child faction
+    /// <br/>for specific case type domains. The target faction's authorityLevel
+    /// <br/>is set to Delegated. The target must be a descendant of the sovereign
+    /// <br/>in the faction hierarchy.
+    /// <br/>
+    /// <br/>Delegation is per-case-type via domain strings. A sovereign can
+    /// <br/>delegate "trade_dispute" jurisdiction without delegating "criminal"
+    /// <br/>jurisdiction. Each domain grants the target faction the right to
+    /// <br/>arbitrate cases of that type within its territory.
+    /// </remarks>
+    /// <returns>Authority delegated</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<FactionResponse> DelegateAuthorityAsync(DelegateAuthorityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<FactionResponse>(
+                _directDispatchProvider, _serviceName, "DelegateAuthorityAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "faction/governance/delegate"
+        urlBuilder_.Append("faction/governance/delegate");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<FactionResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 400)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Sovereign faction is not Sovereign, or target is not a descendant", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Sovereign or target faction not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Revoke delegated authority
+    /// </summary>
+    /// <remarks>
+    /// Revokes delegated authority from a child faction. If all domains are
+    /// <br/>revoked (or domains is null for blanket revocation), the target
+    /// <br/>faction's authorityLevel reverts to Influence.
+    /// </remarks>
+    /// <returns>Authority revoked</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<FactionResponse> RevokeAuthorityAsync(RevokeAuthorityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<FactionResponse>(
+                _directDispatchProvider, _serviceName, "RevokeAuthorityAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "faction/governance/revoke"
+        urlBuilder_.Append("faction/governance/revoke");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<FactionResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 400)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Target faction is not Delegated", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Sovereign or target faction not found", status_, responseText_, headers_, null);
                     }
                     else
                     {

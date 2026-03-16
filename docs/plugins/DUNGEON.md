@@ -460,6 +460,7 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 | lib-actor (`IActorClient`) | Injecting perceptions into the bonded master's character Actor for indirect influence (L2) |
 | lib-character (`ICharacterClient`) | Validating character existence for willing bond formation (L2). Character creation in system realm at Awakened phase is handled by Genesis. |
 | lib-game-service (`IGameServiceClient`) | Validating game service existence for dungeon scoping (L2) |
+| lib-seed (`ISeedClient`) | Seed type registration, growth recording, capability queries (L2) |
 | lib-resource (`IResourceClient`) | Reference tracking, cleanup callback registration (L1) |
 | lib-item (`IItemClient`) | Memory item creation (data crystals, memory fragments), loot generation (L2) |
 | lib-inventory (`IInventoryClient`) | Trap/treasure container management within dungeon rooms (L2) |
@@ -949,7 +950,7 @@ Bond dissolution is NOT deprecation — it is an operational state change (contr
 - Seed the dungeon system realm (`DUNGEON_CORES` with `isSystemType: true`) and dungeon species
 
 ### Phase 1.5: Cognitive Progression (Dynamic Character Binding)
-- Implement `HandleSeedPhaseChangedAsync` handler for cognitive stage transitions:
+- Implement `HandleGenesisPhaseChangedAsync` handler for cognitive stage transitions:
  - **Stirring phase**: Start dungeon core actor via Puppetmaster (event brain, no character)
  - **Awakened phase**: Create Character in dungeon system realm, seed personality traits from dungeon personality type, call `/actor/bind-character` to transition actor to character brain, store characterId on DungeonCoreModel
 - Handle failure cases: retry binding if character exists but binding failed (idempotency via characterId on model)
@@ -994,31 +995,33 @@ Bond dissolution is NOT deprecation — it is an operational state change (contr
 
 ## Potential Extensions
 
-1. ~~**Mana as Currency wallet vs. virtual resource**~~: **RESOLVED** — Currency wallet in DUNGEON_CORES system realm (see Design Consideration #1). The `dungeon_core` seed tracks `mana_reserves` growth (long-term capacity); the Currency wallet tracks volatile mana balance. Dungeon-realm-scoped economy enables dungeon-to-dungeon trade and dungeon merchant interaction without polluting the live NPC economy.
+1. **Mega-dungeon coordination**: Multiple dungeon cores in a mega-dungeon complex. Each core has its own `dungeon_core` seed and actor. Coordination via shared territory Contracts or a parent-child dungeon hierarchy.
 
-2. **Mega-dungeon coordination**: Multiple dungeon cores in a mega-dungeon complex. Each core has its own `dungeon_core` seed and actor. Coordination via shared territory Contracts or a parent-child dungeon hierarchy.
+2. **Cross-realm aberrant dungeons**: Dungeons that span realm boundaries. Requires design decisions about seed GameServiceId constraints and cross-realm actor communication.
 
-3. **Cross-realm aberrant dungeons**: Dungeons that span realm boundaries. Requires design decisions about seed GameServiceId constraints and cross-realm actor communication.
+3. **Seed cross-pollination mechanism**: Cross-pollination between dungeon_master and guardian seeds is core to both patterns but the mechanism needs design. Pattern A: account-level cross-pollination (both seeds are on the same account, growth in one feeds the other at a configurable rate). Pattern B: transient cross-pollination (only while the player is controlling the bonded character, at a reduced rate). Requires a cross-pollination API or listener in lib-seed -- configurable multiplier per seed-type pair (default 0.0, enabled for dungeon_master -> guardian).
 
-4. **Seed cross-pollination mechanism**: Cross-pollination between dungeon_master and guardian seeds is core to both patterns but the mechanism needs design. Pattern A: account-level cross-pollination (both seeds are on the same account, growth in one feeds the other at a configurable rate). Pattern B: transient cross-pollination (only while the player is controlling the bonded character, at a reduced rate). Requires a cross-pollination API or listener in lib-seed -- configurable multiplier per seed-type pair (default 0.0, enabled for dungeon_master -> guardian).
+4. **Dungeon political integration**: Officially-sanctioned dungeons interact with faction/political systems. `dungeon_core` seed growth phases could map to political recognition tiers.
 
-5. **Dungeon political integration**: Officially-sanctioned dungeons interact with faction/political systems. `dungeon_core` seed growth phases could map to political recognition tiers.
+5. **Client events**: `dungeon-client-events.yaml` for pushing dungeon state changes (intrusion alerts, memory manifestations, bond communication) to the master's WebSocket client.
 
-6. **Client events**: `dungeon-client-events.yaml` for pushing dungeon state changes (intrusion alerts, memory manifestations, bond communication) to the master's WebSocket client.
+6. **Variable provider for Status**: NPCs inside a dungeon need to know dungeon-specific effects (`${dungeon.miasma_level}`, `${dungeon.room_hazard}`) for GOAP decision-making.
 
-7. **Variable provider for Status**: NPCs inside a dungeon need to know dungeon-specific effects (`${dungeon.miasma_level}`, `${dungeon.room_hazard}`) for GOAP decision-making.
+7. **Dungeon economy integration**: Dungeons as economic actors -- trading monster parts, selling access, purchasing materials for trap construction through the Currency/Escrow system.
 
-8. **Dungeon economy integration**: Dungeons as economic actors -- trading monster parts, selling access, purchasing materials for trap construction through the Currency/Escrow system.
+8. **Procedural generation via Houdini**: When lib-procedural is implemented, dungeon growth (domain_expansion capabilities) triggers HDA execution to generate chamber geometry. Deterministic seeds enable cached, reproducible layouts. HDA templates define visual style; dungeon personality + parameters customize output.
 
-9. **Procedural generation via Houdini**: When lib-procedural is implemented, dungeon growth (domain_expansion capabilities) triggers HDA execution to generate chamber geometry. Deterministic seeds enable cached, reproducible layouts. HDA templates define visual style; dungeon personality + parameters customize output.
+9. **Dungeon personality evolution**: Once a dungeon has a character record (Stage 3), CharacterPersonality's experience-driven trait evolution applies. Defeating adventurers might shift the dungeon toward cruelty; a dungeon that repeatedly loses might shift toward cunning or patience. This creates emergent dungeon personalities that change based on what happens to them -- the same system that makes NPC personalities evolve over time.
 
-10. **Dungeon personality evolution**: Once a dungeon has a character record (Stage 3), CharacterPersonality's experience-driven trait evolution applies. Defeating adventurers might shift the dungeon toward cruelty; a dungeon that repeatedly loses might shift toward cunning or patience. This creates emergent dungeon personalities that change based on what happens to them -- the same system that makes NPC personalities evolve over time.
-
-11. **Dungeon encounter memory integration**: Stage 3 dungeons with CharacterEncounter records can develop grudges against specific adventurers, remember which tactics worked against which party compositions, and adjust their behavior accordingly. A dungeon that was defeated by a fire-heavy party might invest more heavily in fire-resistant monsters next time.
+10. **Dungeon encounter memory integration**: Stage 3 dungeons with CharacterEncounter records can develop grudges against specific adventurers, remember which tactics worked against which party compositions, and adjust their behavior accordingly. A dungeon that was defeated by a fire-heavy party might invest more heavily in fire-resistant monsters next time.
 
 ---
 
 ## Known Quirks & Caveats
+
+### Bugs (Fix Immediately)
+
+*(None identified)*
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -1042,37 +1045,35 @@ Bond dissolution is NOT deprecation — it is an operational state change (contr
 
 ### Design Considerations (Requires Planning)
 
-1. **Mana economy model**: ~~Should dungeons have their own Currency wallet or use `current_mana` as a virtual resource in actor state?~~ **RESOLVED**: Currency wallet in the DUNGEON_CORES system realm. Dungeons participate in *dungeon economies* (trading between dungeon cores, purchasing from dungeon-realm merchants, exchanging mana for materials) but NOT directly in NPC economies in live realms. The `realm_specific` currency scope pointed at the dungeon system realm keeps dungeon mana isolated from the live economy while still enabling economic participation through the standard Currency service APIs. This mirrors Divine's divinity economy pattern (realm-scoped to the PANTHEON system realm).
+1. **Dungeon garden type design (Pattern A only)**: The dungeon-as-garden concept requires: a registered garden type in Gardener, entity association rules for the dungeon context, ABML action handlers for Gardener APIs (analogous to Puppetmaster's `spawn_watcher:`, `watch:` handlers), and a gardener behavior document for the dungeon core actor. Pattern B does not use a dungeon garden -- the dungeon influence is routed through the character's Actor perception pipeline. This is a cross-service design effort.
 
-2. **Dungeon garden type design (Pattern A only)**: The dungeon-as-garden concept requires: a registered garden type in Gardener, entity association rules for the dungeon context, ABML action handlers for Gardener APIs (analogous to Puppetmaster's `spawn_watcher:`, `watch:` handlers), and a gardener behavior document for the dungeon core actor. Pattern B does not use a dungeon garden -- the dungeon influence is routed through the character's Actor perception pipeline. This is a cross-service design effort.
+2. **Growth contribution debouncing**: Dungeons generate many growth events per tick (every monster kill, every trap trigger). Growth contributions to lib-seed need debouncing (`GrowthContributionDebounceMs` config property, default 5000ms) to avoid overwhelming the seed service with individual growth API calls.
 
-3. ~~**Actor type registration**~~: **RESOLVED** (2026-03-06). The `creature_base` cognition template exists in `CognitionTemplateRegistry` (implemented via [#422](https://github.com/beyond-immersion/bannou-service/issues/422)). The dungeon core actor template (event_brain, category: dungeon_core, domain: "dungeon") will use this existing template. No design decisions remain.
+3. **Memory-to-archive pipeline**: Dungeon memories should feed into the Content Flywheel -- when a dungeon is destroyed or goes dormant, its accumulated memories become generative input for Storyline. This requires design decisions about the compression/archive format and the handoff to lib-resource.
 
-4. **Growth contribution debouncing**: Dungeons generate many growth events per tick (every monster kill, every trap trigger). Growth contributions to lib-seed need debouncing (`GrowthContributionDebounceMs` config property, default 5000ms) to avoid overwhelming the seed service with individual growth API calls.
+4. **Entity Session Registry for dungeon master (Pattern A only)**: The dungeon master's garden needs entity session registrations (dungeon -> session, inhabitants -> session, master character -> session) via the Entity Session Registry in Connect (L1). Entity Session Registry infrastructure exists (resolved via [#426](https://github.com/beyond-immersion/bannou-service/issues/426)), but dungeon-specific registration design (which entities to register, when to register/unregister during bond lifecycle) still needs planning. Pattern B does not need entity session registration for the dungeon -- the character's existing entity session registrations suffice.
 
-5. **Memory-to-archive pipeline**: Dungeon memories should feed into the Content Flywheel -- when a dungeon is destroyed or goes dormant, its accumulated memories become generative input for Storyline. This requires design decisions about the compression/archive format and the handoff to lib-resource.
-
-6. **Entity Session Registry for dungeon master (Pattern A only)**: The dungeon master's garden needs entity session registrations (dungeon -> session, inhabitants -> session, master character -> session) via the Entity Session Registry in Connect (L1). This depends on the Entity Session Registry being implemented first (see [Gardener Design #7](GARDENER.md)). Pattern B does not need entity session registration for the dungeon -- the character's existing entity session registrations suffice.
-
-7. **Household split mechanic (cross-cutting dependency)**: Pattern A depends on a general household split mechanic that doesn't exist yet. This mechanic is needed for the game regardless of dungeons (branch families, divorces, exile) and involves Contract (split terms), Faction (cultural norms determining amicability), Obligation (post-split moral costs), Relationship (bond type changes), Seed (potential account seed creation), and Organization (the household IS an organization per Organization.md -- the split is an organization dissolution). lib-dungeon consumes the result of a household split but does not implement it. The split mechanic must be designed as a cross-cutting feature involving multiple services. Pattern B has no dependency on the household split mechanic. Additional implications from cross-service analysis:
- - **Temporal delay**: Arbitration's procedural templates impose timelines (`waitingPeriodDays` governance parameter). Pattern A is not instant -- the split proceeds through filing, service, response, evidence, ruling, appeal window, and enforcement phases. The `dungeon_master` seed promotion (Design Consideration #8) cannot occur until the ruling is enforced. Character death during proceedings, player withdrawal (`WithdrawCase`), and the intermediate state (Pattern B remains active during proceedings) all need design.
+5. **Household split mechanic (cross-cutting dependency)**: Pattern A depends on a general household split mechanic that doesn't exist yet. This mechanic is needed for the game regardless of dungeons (branch families, divorces, exile) and involves Contract (split terms), Faction (cultural norms determining amicability), Obligation (post-split moral costs), Relationship (bond type changes), Seed (potential account seed creation), and Organization (the household IS an organization per Organization.md -- the split is an organization dissolution). lib-dungeon consumes the result of a household split but does not implement it. The split mechanic must be designed as a cross-cutting feature involving multiple services. Pattern B has no dependency on the household split mechanic. Additional implications from cross-service analysis:
+ - **Temporal delay**: Arbitration's procedural templates impose timelines (`waitingPeriodDays` governance parameter). Pattern A is not instant -- the split proceeds through filing, service, response, evidence, ruling, appeal window, and enforcement phases. The `dungeon_master` seed promotion (Design Consideration #6) cannot occur until the ruling is enforced. Character death during proceedings, player withdrawal (`WithdrawCase`), and the intermediate state (Pattern B remains active during proceedings) all need design.
  - **Household seed impact**: Per Organization.md Design Consideration #4, the household organization's own seed (type `household`) should lose growth proportional to the departing member. This is a separate concern from the `dungeon_master` seed promotion (#437) -- it requires lib-seed to support growth transfer between seeds.
  - **Disposition consequences**: Remaining household members develop emotional responses via Disposition (resentment, grief, relief). The departed character may develop feelings about their former family (guilt, relief, longing). The guardian spirit's relationship with the departed character changes. These emotional states feed into NPC GOAP decisions and the content flywheel when characters are archived.
  - **Asset division**: Organization.md tracks registered assets (wallets, inventories, locations, contracts). The departing character takes their share per the arbitration ruling's terms, orchestrated through Escrow.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-15:https://github.com/beyond-immersion/bannou-service/issues/436 -->
 
-8. **Seed promotion mechanic**: Pattern A requires a mechanism to "promote" a character-owned dungeon_master seed to account-owned. The seed always starts character-owned (Pattern B is the default on bond formation). Promotion happens when the player commits an account seed slot through the household split flow. This requires lib-seed to support re-parenting a seed from one owner type to another (character -> account) while preserving all growth data. Alternatively, the promotion could create a new account-owned seed and transfer growth from the character-owned one. Additional constraints from cross-service analysis:
- - **Timing dependency on #7**: Seed promotion is a consequence of the household split completing (Design Consideration #7), not a standalone operation. The promotion should execute as a prebound API call in the arbitration ruling's enforcement phase. The player's choice initiates the process but does not trigger immediate promotion.
+6. **Seed promotion mechanic**: Pattern A requires a mechanism to "promote" a character-owned dungeon_master seed to account-owned. The seed always starts character-owned (Pattern B is the default on bond formation). Promotion happens when the player commits an account seed slot through the household split flow. This requires lib-seed to support re-parenting a seed from one owner type to another (character -> account) while preserving all growth data. Alternatively, the promotion could create a new account-owned seed and transfer growth from the character-owned one. Additional constraints from cross-service analysis:
+ - **Timing dependency on #5**: Seed promotion is a consequence of the household split completing (Design Consideration #5), not a standalone operation. The promotion should execute as a prebound API call in the arbitration ruling's enforcement phase. The player's choice initiates the process but does not trigger immediate promotion.
  - **Account seed slot validation**: The account must have an available seed slot (out of the 3 maximum). If all slots are full, Pattern A cannot proceed until the player releases a slot. This validation must occur before the arbitration case is filed, not at enforcement time (to avoid wasted proceedings).
  - **Distinct from household seed splitting**: The `dungeon_master` seed being promoted (owner type change) is separate from the household organization seed being split (growth transfer). Both happen in the same flow but are different seed operations requiring different lib-seed APIs. See Organization.md Design Consideration #4.
  - **Reverse promotion is deliberately unsupported**: Once the character has left the household, they're gone. The reverse (Pattern A back to B) is not possible -- the household split is permanent. This is a deliberate non-requirement.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-15:https://github.com/beyond-immersion/bannou-service/issues/437 -->
 
-9. **Pattern B transient UX routing**: When the player switches characters within a garden, the dungeon UX modules need to appear/disappear based on whether the currently-controlled character has a dungeon_master seed. This requires the client's UX capability manifest to be dynamically updated on character switch -- likely via the same Permission/Connect capability manifest push mechanism, extended to include seed-derived UX capabilities.
+7. **Pattern B transient UX routing**: When the player switches characters within a garden, the dungeon UX modules need to appear/disappear based on whether the currently-controlled character has a dungeon_master seed. This requires the client's UX capability manifest to be dynamically updated on character switch -- likely via the same Permission/Connect capability manifest push mechanism, extended to include seed-derived UX capabilities.
 
-10. **Dungeon system realm provisioning**: The dungeon system realm (e.g., `DUNGEON_CORES` with `isSystemType: true`) must be seeded on startup, analogous to the divine system realm for gods. Design decisions: Is there one global dungeon system realm or one per game service? What dungeon species are registered (one per personality type, or a generic "dungeon core" species)? How does species assignment map to personality type? The system realm is seeded via `/realm/seed` -- configuration, not code. See [DIVINE.md: Broader System Realm Implications](DIVINE.md#broader-system-realm-implications) for the established pattern.
+8. **Dungeon system realm provisioning**: The dungeon system realm (e.g., `DUNGEON_CORES` with `isSystemType: true`) must be seeded on startup, analogous to the divine system realm for gods. Design decisions: Is there one global dungeon system realm or one per game service? What dungeon species are registered (one per personality type, or a generic "dungeon core" species)? How does species assignment map to personality type? The system realm is seeded via `/realm/seed` -- configuration, not code. See [DIVINE.md: Broader System Realm Implications](DIVINE.md#broader-system-realm-implications) for the established pattern.
 
-11. **Character creation timing at Awakened phase**: When `HandleSeedPhaseChangedAsync` detects the transition to Awakened, it must orchestrate: character creation (ICharacterClient), personality trait seeding (ICharacterPersonalityClient, soft), backstory initialization (ICharacterHistoryClient, soft), and actor binding (IActorClient). This is a multi-service orchestration that needs failure handling -- if character creation succeeds but binding fails, the dungeon should retry binding on the next event rather than creating duplicate characters. The characterId stored on DungeonCoreModel serves as the idempotency check.
+9. **Character creation timing at Awakened phase**: When `HandleGenesisPhaseChangedAsync` detects the transition to Awakened, it must orchestrate: character creation (ICharacterClient), personality trait seeding (ICharacterPersonalityClient, soft), backstory initialization (ICharacterHistoryClient, soft), and actor binding (IActorClient). This is a multi-service orchestration that needs failure handling -- if character creation succeeds but binding fails, the dungeon should retry binding on the next event rather than creating duplicate characters. The characterId stored on DungeonCoreModel serves as the idempotency check.
+
+10. **Multi-service compensation in Delete flow**: The Delete endpoint orchestrates 7+ service calls (deactivate, dissolve bond, remove inhabitants, delete memories, delete seed, destroy wallet, lib-resource cleanup, delete record). Per Implementation Tenets on multi-service call compensation, this must either implement catch-block compensation for partial failures or document a specific self-healing mechanism. The current design lists the steps sequentially but does not specify what happens when an intermediate step fails after earlier steps have succeeded.
 
 ---
 
@@ -1100,6 +1101,7 @@ Bond dissolution is NOT deprecation — it is an operational state change (contr
 
 ### Resolved
 
+- ~~Design Consideration #1 (Mana economy model)~~: Resolved — Currency wallet in DUNGEON_CORES system realm, mirroring Divine's divinity economy pattern
 - ~~Design Consideration #3 (creature_base template)~~: Resolved by [#422](https://github.com/beyond-immersion/bannou-service/issues/422) — `creature_base` exists in `CognitionTemplateRegistry`
 - ~~Design Consideration #6 (Entity Session Registry)~~: Infrastructure exists via [#426](https://github.com/beyond-immersion/bannou-service/issues/426) — specific dungeon registration still needs design
 - ~~#365 (Push seed capability updates)~~: Superseded by [#497](https://github.com/beyond-immersion/bannou-service/issues/497)
@@ -1108,13 +1110,13 @@ Bond dissolution is NOT deprecation — it is an operational state change (contr
 
 | Design Consideration | Description | Priority |
 |---------------------|-------------|----------|
-| #1 — Mana economy model | Currency wallet vs virtual actor state for mana | High (Phase 1) |
-| #10 — Dungeon system realm provisioning | Global vs per-game-service realm, species registration | High (Phase 1) |
-| #11 — Character creation timing | Multi-service orchestration failure handling at Awakened phase | High (Phase 1.5) |
-| #2 — Dungeon garden type design | Gardener registration, ABML action handlers, entity associations | Medium (Phase 6) |
-| #4 — Growth contribution debouncing | Seed growth batching to avoid overwhelming lib-seed | Medium (Phase 3) |
-| #5 — Memory-to-archive pipeline | Dungeon memory compression for Content Flywheel | Medium (Phase 4) |
-| #9 — Pattern B transient UX routing | Dynamic UX capability manifest on character switch | Medium (Phase 7) |
+| #8 — Dungeon system realm provisioning | Global vs per-game-service realm, species registration | High (Phase 1) |
+| #9 — Character creation timing | Multi-service orchestration failure handling at Awakened phase | High (Phase 1.5) |
+| #10 — Multi-service compensation in Delete flow | Compensation or self-healing for partial failure during delete orchestration | High (Phase 1) |
+| #1 — Dungeon garden type design | Gardener registration, ABML action handlers, entity associations | Medium (Phase 6) |
+| #2 — Growth contribution debouncing | Seed growth batching to avoid overwhelming lib-seed | Medium (Phase 3) |
+| #3 — Memory-to-archive pipeline | Dungeon memory compression for Content Flywheel | Medium (Phase 4) |
+| #7 — Pattern B transient UX routing | Dynamic UX capability manifest on character switch | Medium (Phase 7) |
 
 ### Audit History
 

@@ -52,4 +52,16 @@ public static class FactionPublishedTopics
 
     /// <summary>Published when a faction is designated as realm baseline.</summary>
     public const string FactionRealmBaselineDesignated = "faction.realm-baseline.designated";
+
+    /// <summary>Published when a governance entry is created or updated (includes changedFields when overwriting existing entry).</summary>
+    public const string FactionGovernanceDefined = "faction.governance.defined";
+
+    /// <summary>Published when a governance entry is removed.</summary>
+    public const string FactionGovernanceDeleted = "faction.governance.deleted";
+
+    /// <summary>Published when a sovereign delegates authority to a child faction.</summary>
+    public const string FactionAuthorityDelegated = "faction.authority.delegated";
+
+    /// <summary>Published when delegated authority is revoked.</summary>
+    public const string FactionAuthorityRevoked = "faction.authority.revoked";
 }

@@ -333,8 +333,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
         // Upload to storage
         var uploadRequest = new UploadRequest
         {
-            OwnerType = AssetOwnerType.Service,
-            OwnerId = "save-load",
+            CreatedBy = "save-load",
             Filename = $"{slot.SlotId}_{newVersionNumber}.save",
             ContentType = "application/octet-stream",
             Size = compressedData.Length,

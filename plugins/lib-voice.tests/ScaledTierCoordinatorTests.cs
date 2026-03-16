@@ -31,7 +31,7 @@ public class ScaledTierCoordinatorTests
             KamailioHost = "localhost",
             RtpEngineHost = "localhost",
             RtpEnginePort = 22222,
-            StunServers = "stun:stun.l.google.com:19302,stun:stun2.l.google.com:19302"
+            StunServers = ["stun:stun.l.google.com:19302", "stun:stun2.l.google.com:19302"]
         };
     }
 

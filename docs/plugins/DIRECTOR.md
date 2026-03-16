@@ -160,84 +160,6 @@ All of these methods are existing service capabilities. Director orchestrates th
 
 ---
 
-## The Deployment Gradient
-
-Director supports varying levels of human involvement, from "required for all major events" to "entirely unused":
-
-| Maturity Level | Director Usage | Autonomous System | Hardware Implication |
-|---|---|---|---|
-| **Early / Minimal hardware** | Director required for all major events. Divine actors handle routine only. Developer drives god-actors during climax moments. | Gods run basic patrol behaviors. Content flywheel turns slowly. | Minimal actor pool. Gods may not have enough compute for complex GOAP evaluation. |
-| **Growing / Moderate hardware** | Director assists. Developer steers god-actors and amplifies reach. Autonomous system generates events; developer ensures audience. | Gods compose narratives, spawn quests. Gardener routes players. Some events fire without developer involvement. | Moderate actor pool. Gods run full cognition with personality-driven decisions. |
-| **Mature / Full hardware** | Director observes. Developer monitors dashboards and intervenes only for exceptional moments. Most events are fully automated. | Full content flywheel. Gods orchestrate complex multi-service event chains. Gardener provides responsive player experiences. | Full actor pool (100K+ NPCs). Gods run rich cognitive behaviors. Automated broadcast decisions. |
-| **Maximum automation** | Director unused or pure observer. All orchestration through divine actors. Developer only reviews post-hoc analytics. | Complete autonomous world management. Gods compete, cooperate, and generate events that naturally attract players. | Hardware scales to demand. Orchestrator manages pool dynamically. |
-
-**The transition is smooth** because Director and divine actors use the same APIs. A developer steering a god-actor through Tier 2 (STEER) and a god-actor's ABML behavior document producing the same API calls are indistinguishable. As ABML behaviors mature, the developer's role shifts from "driving the event" to "monitoring the event" to "reviewing the event afterwards."
-
----
-
-## Broadcast & Showtime Integration
-
-Director is the coordination point between "something interesting is happening" (detected by observation) and "the world should see this" (delivered by Broadcast and Showtime).
-
-### The Broadcast Coordination Flow
-
-```
-1. Developer observes actor tap data
- "Moira is about to commission a legendary ghost quest from the archive
- of Seraphina the Dragonslayer"
- │
- ▼
-2. Developer creates directed event
- POST /director/event/create
- { name: "Ghost of Seraphina", realmId: ..., broadcastPriority: 8 }
- │
- ▼
-3. Developer adds actors and targets
- POST /director/event/add-actor (Moira's actor, tier: steer)
- POST /director/event/add-actor (nearby NPC actors, tier: observe)
- POST /director/event/add-target (players in the region, method: rumor_seeding)
- POST /director/event/add-target (players in void, method: poi_injection)
- │
- ▼
-4. Developer activates event
- POST /director/event/activate
- Director begins Gardener amplification and Hearsay injection.
- Broadcast service notified: "high-priority event starting in region X"
- │
- ▼
-5. Event unfolds (minutes to hours)
- Moira's actor runs its ABML behavior (steering adjusts timing)
- Players arrive organically (Gardener POIs, NPC rumors, quest hooks)
- Showtime session created (audience pools, hype train primed)
- Broadcast camera pointed at event region
- │
- ▼
-6. Developer signals climax
- POST /director/event/set-phase { phase: "Climax" }
- Broadcast priority maximized. Showtime hype amplified.
- Developer may drive Moira directly for the critical moment.
- │
- ▼
-7. Wind-down and completion
- Developer releases actors, removes overrides
- Event consequences propagate normally through event system
- Director publishes analytics events. Broadcast archives footage.
- POST /director/event/complete
-```
-
-### Showtime Hype Amplification
-
-During directed events, Director can signal Showtime to prime its hype mechanics:
-
-- **Pre-event**: Showtime increases audience pool churn rate, bringing in audience members with interest tags matching the event's content
-- **During event**: Hype train trigger thresholds lowered (events become more likely to start trains). Content tags injected to match event themes.
-- **Climax**: Hype train level advancement rates boosted. Peak hype events generate realm-history-level content flywheel contributions.
-- **Post-event**: Normal thresholds restored. Director publishes analytics events for the event timeline.
-
-This uses Showtime's existing APIs (`/showtime/audience/set-tags`, `/showtime/hype/inject`) -- Director provides timing and context, not new mechanics.
-
----
-
 ## Dependencies (What This Plugin Relies On)
 
 ### Hard Dependencies (constructor injection -- crash if missing)
@@ -375,7 +297,7 @@ This uses Showtime's existing APIs (`/showtime/audience/set-tags`, `/showtime/hy
 
 | Topic | Handler | Action |
 |---|---|---|
-| `actor.instance.deleted` | `HandleActorDeletedAsync` | Clean up all taps, overrides, and drive sessions for the deleted actor. Remove actor from any active directed events. **note**: Actor instances are ephemeral game objects, not persistent resources -- lib-resource registration is inappropriate. Actors run on pool nodes across the cluster, so DI Listener is infeasible (not co-located). Event subscription is the correct mechanism; Director's Redis-ephemeral data (taps, overrides, drives) expires naturally via TTL/timeout workers as a fallback if the event is lost. |
+| `actor.instance.deleted` | `HandleActorDeletedAsync` | Clean up all taps, overrides, and drive sessions for the deleted actor (Redis-ephemeral, acceptable as live session management). Remove actor from any active directed events (MySQL persistent data -- **see Bug #1: this mutation requires lib-resource, not event subscription**). |
 | `actor.instance.status-changed` | `HandleActorStatusChangedAsync` | Update directed event actor status. If a driven actor errors, auto-release and alert the developer. |
 | `session.disconnected` | `HandleSessionDisconnectedAsync` | If the disconnected session belongs to a developer with an active director session, release all driven actors (fail-open) and suspend taps. Session can be resumed on reconnection. |
 
@@ -384,10 +306,14 @@ This uses Showtime's existing APIs (`/showtime/audience/set-tags`, `/showtime/hy
 | Target Resource | Source Type | On Delete | Cleanup Endpoint |
 |---|---|---|---|
 | game-service | director | CASCADE | `/director/cleanup-by-game-service` |
+| actor | director | DETACH | `/director/cleanup-by-actor` (**missing -- see Bug #1**) |
+| realm | director | DETACH | `/director/cleanup-by-realm` (**missing -- see Bug #2**) |
 
 | Trigger | Cleanup Endpoint | Action |
 |---|---|---|
 | Game service deleted | `/director/cleanup-by-game-service` | Cancel all active directed events for the game service, end active director sessions, clean up all taps/overrides/targets |
+| Actor deleted | `/director/cleanup-by-actor` | Remove actor from all active directed events, clean up taps/overrides/drive sessions for that actor |
+| Realm deleted | `/director/cleanup-by-realm` | Null the `realmId` on directed events scoped to the deleted realm (or cancel them) |
 
 **Note**: No `cleanup-by-account` is needed. Director identifies developers by `webSocketSessionId`, not `accountId` (per FOUNDATION TENETS Account Identity Boundary). Developer session cleanup is handled by the `session.disconnected` event (live session management) and the session timeout background worker (stale session expiry).
 
@@ -693,7 +619,55 @@ The Director follows the same structural pattern as lib-divine, lib-showtime, li
 
 ---
 
+## The Deployment Gradient
+
+Director supports varying levels of human involvement, from "required for all major events" to "entirely unused":
+
+| Maturity Level | Director Usage | Autonomous System | Hardware Implication |
+|---|---|---|---|
+| **Early / Minimal hardware** | Director required for all major events. Divine actors handle routine only. Developer drives god-actors during climax moments. | Gods run basic patrol behaviors. Content flywheel turns slowly. | Minimal actor pool. Gods may not have enough compute for complex GOAP evaluation. |
+| **Growing / Moderate hardware** | Director assists. Developer steers god-actors and amplifies reach. Autonomous system generates events; developer ensures audience. | Gods compose narratives, spawn quests. Gardener routes players. Some events fire without developer involvement. | Moderate actor pool. Gods run full cognition with personality-driven decisions. |
+| **Mature / Full hardware** | Director observes. Developer monitors dashboards and intervenes only for exceptional moments. Most events are fully automated. | Full content flywheel. Gods orchestrate complex multi-service event chains. Gardener provides responsive player experiences. | Full actor pool (100K+ NPCs). Gods run rich cognitive behaviors. Automated broadcast decisions. |
+| **Maximum automation** | Director unused or pure observer. All orchestration through divine actors. Developer only reviews post-hoc analytics. | Complete autonomous world management. Gods compete, cooperate, and generate events that naturally attract players. | Hardware scales to demand. Orchestrator manages pool dynamically. |
+
+**The transition is smooth** because Director and divine actors use the same APIs. A developer steering a god-actor through Tier 2 (STEER) and a god-actor's ABML behavior document producing the same API calls are indistinguishable. As ABML behaviors mature, the developer's role shifts from "driving the event" to "monitoring the event" to "reviewing the event afterwards."
+
+---
+
+## Broadcast & Showtime Integration
+
+Director is the coordination point between "something interesting is happening" (detected by observation) and "the world should see this" (delivered by Broadcast and Showtime).
+
+### The Broadcast Coordination Flow
+
+1. Developer observes actor tap data — "Moira is about to commission a legendary ghost quest from the archive of Seraphina the Dragonslayer"
+2. Developer creates directed event — `POST /director/event/create` with name, realmId, broadcastPriority
+3. Developer adds actors and targets — associates actors at various control tiers, adds player targeting records
+4. Developer activates event — Director begins Gardener amplification and Hearsay injection; Broadcast notified
+5. Event unfolds (minutes to hours) — actors run ABML behaviors (steering adjusts timing), players arrive organically, Showtime session created, Broadcast camera pointed at event region
+6. Developer signals climax — Broadcast priority maximized, Showtime hype amplified, developer may drive key actors directly
+7. Wind-down and completion — developer releases actors, removes overrides, event consequences propagate, Director publishes analytics events
+
+### Showtime Hype Amplification
+
+During directed events, Director can signal Showtime to prime its hype mechanics:
+
+- **Pre-event**: Showtime increases audience pool churn rate, bringing in audience members with interest tags matching the event's content
+- **During event**: Hype train trigger thresholds lowered (events become more likely to start trains). Content tags injected to match event themes.
+- **Climax**: Hype train level advancement rates boosted. Peak hype events generate realm-history-level content flywheel contributions.
+- **Post-event**: Normal thresholds restored. Director publishes analytics events for the event timeline.
+
+This uses Showtime's existing APIs (`/showtime/audience/set-tags`, `/showtime/hype/inject`) -- Director provides timing and context, not new mechanics.
+
+---
+
 ## Known Quirks & Caveats
+
+### Bugs (Fix Immediately)
+
+1. **Event-based cleanup of persistent data for actor deletion**: Director subscribes to `actor.instance.deleted` and removes the actor from active directed events stored in MySQL (`DirectedEventModel`). This modifies persistent dependent data via event subscription, which violates Foundation Tenets (Resource-Managed Cleanup): "never subscribe to lifecycle events for destruction." Director should declare `x-references` targeting `actor` with `onDelete: detach` policy and a cleanup callback endpoint (e.g., `/director/cleanup-by-actor`) that removes the actor from directed events. The Redis-ephemeral cleanup (taps, overrides, drives) is acceptable as live session management, but the MySQL mutation requires lib-resource.
+
+2. **Missing lib-resource declaration for realm references**: `DirectedEventModel` stores an optional `realmId` referencing realm entities. No `x-references` entry for realm exists. Realm is a Category A entity with deprecation lifecycle -- when a realm is deleted after deprecation, directed events scoped to that realm would be orphaned with invalid realm references. Director should declare `x-references` targeting `realm` with `onDelete: detach` policy (null the `realmId`) or `onDelete: cascade` (cancel events scoped to the deleted realm), with a cleanup callback endpoint.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -721,15 +695,7 @@ The Director follows the same structural pattern as lib-divine, lib-showtime, li
 2. **Drive session checkpoint mechanism**: When a developer releases a driven actor, the ABML execution must resume from a meaningful point. The simplest approach: resume from the `on_tick` entry point with all state changes preserved (feelings, goals, memories the developer set during the drive session are available to ABML). This avoids needing to track execution position within the ABML document, which would be complex. The trade-off is that any in-progress ABML action chain is abandoned on drive, then restarted from tick entry on release.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/612 -->
 
-3. ~~**GOAP override provider discovery**~~: **FIXED** (2026-03-08) - Resolved via established Variable Provider Factory caching pattern. All 15 existing `IVariableProviderFactory` implementations do per-tick state store reads via `CreateAsync()` (called by `ActorRunner.CreateExecutionScopeAsync()` every tick). The standard approach — factory injects an `IDirectorOverrideCache`, calls `GetOrLoadAsync()`, cache handles Redis reads — applies directly. For non-directed actors, a Redis GET returning null is a fast miss identical to what every other provider does at 100K+ scale. No ConcurrentDictionary+RabbitMQ invalidation needed at baseline; if scale testing reveals a bottleneck, it becomes a Potential Extension.
-
-4. ~~**Cross-node actor driving**~~: **FIXED** (2026-03-08) - Resolved via established Actor pool forwarding pattern. Actor's encounter operations (`StartEncounter`, `UpdateEncounterPhase`, `EndEncounter`, `GetEncounter`) already implement transparent cross-node forwarding: check local registry → read `actor-assignments` Redis → forward via `IMeshInvocationClient.InvokeMethodAsync(nodeAppId, route, body)` → return result. Director's drive commands follow this identical pattern — the mesh client handles routing to the correct pool node. Note: `InjectPerception` is currently local-only (no pool forwarding) but applying the same encounter forwarding pattern is a straightforward Actor enhancement, not a Director design question. The Tier 3 (Drive) Actor-side prerequisites (pause/resume behavior loop, external action handler access) are tracked in Actor issue #599. Interactive latency is an empirical performance concern for post-implementation testing, not an architectural decision.
-
-5. ~~**Directed event persistence scope**~~: **FIXED** (2026-03-08) - "Restart interrupts active coordination" is the correct failure mode, consistent with every comparable Bannou service. No Bannou service reconstructs Redis ephemeral state from MySQL backup: Connect accepts session loss (clients reconnect), Permission accepts capability loss (recompiled on next heartbeat), Actor accepts scheduled event loss (behavior re-execution re-schedules). Director follows the same pattern: the directed event record (MySQL) survives; active taps, overrides, and drive sessions (Redis) are lost; the developer — who is human and present during active coordination — re-establishes state through normal Director APIs. This is also consistent with Director's own Intentional Quirk #1 (fail-open everywhere): drive sessions auto-release, events auto-complete, the autonomous system never waits for human recovery.
-
-6. ~~**Gardener integration depth**~~: **FIXED** (2026-03-08) - Resolved per FOUNDATION TENETS (Cross-Service Communication Discipline). Director (L4) and Gardener (L4) are same-layer services. mandates direct API calls for same-layer dependencies: `GetService<IGardenerClient>()` + null check with graceful degradation. Option B (publishing targeting intents for Gardener to consume) is the forbidden Inverted Subscription Anti-Pattern — a disguised API call with no synchronous confirmation, no validation feedback, and fire-and-forget semantics for operations requiring reliability. The deep dive already correctly classifies Gardener as a soft dependency with the right degradation behavior ("Player steering unavailable; actors still controllable, event still trackable"). No new pattern needed; this is the standard L4-to-L4 optional dependency pattern used across the codebase.
-
-7. ~~**Action handler pipeline access for drive sessions**~~: **FIXED** (2026-03-08) - Resolved as a subset of Design Consideration #4 (cross-node actor driving). In bannou mode, `ExecuteAction` routes through the ActorRunner's `IActionHandler` pipeline directly. In pool mode, Director uses the same `IMeshInvocationClient` forwarding pattern that Actor encounter operations already use — forward the request to the pool node's Actor service instance, which executes locally and returns the response through the mesh. No RabbitMQ request-reply variant needed; the existing mesh HTTP forwarding is synchronous request-response. The Actor-side requirement (exposing `IActionHandler` pipeline for external commands) is tracked in Actor issue #599 as a prerequisite for Tier 3 (Drive).
+3. **Action gate approval mechanism design**: The action gate description says "Actor's execution pauses before those actions and publishes an approval request to `director.approval.{actorId}`" with timeout-based auto-approve. The mechanism for how Actor (L2) receives the approval/denial response from Director (L4) is unspecified. If Actor subscribes to a Director response topic, that creates a lower-layer subscribing to higher-layer events (forbidden per Foundation Tenets Cross-Service Communication Discipline). If Actor polls a Redis key that Director writes, Actor's correctness depends on Director's Redis state. The implementation must use only generic hooks in Actor (e.g., a generic pre-action gate via DI Provider that any plugin can implement) to avoid L2→L4 conceptual coupling. Needs design before implementation.
 
 ---
 

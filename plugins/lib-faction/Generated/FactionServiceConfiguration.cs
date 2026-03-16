@@ -93,6 +93,20 @@ public class FactionServiceConfiguration : BaseServiceConfiguration
     public int MaxTerritoriesPerFaction { get; set; } = 20;
 
     /// <summary>
+    /// Maximum governance entries (case type domains) per faction
+    /// Environment variable: FACTION_MAX_GOVERNANCE_ENTRIES_PER_FACTION
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
+    public int MaxGovernanceEntriesPerFaction { get; set; } = 20;
+
+    /// <summary>
+    /// TTL in seconds for cached governance resolution results per location and domain
+    /// Environment variable: FACTION_GOVERNANCE_CACHE_TTL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 3600)]
+    public int GovernanceCacheTtlSeconds { get; set; } = 300;
+
+    /// <summary>
     /// TTL in seconds for cached norm resolution results per character+location
     /// Environment variable: FACTION_NORM_QUERY_CACHE_TTL_SECONDS
     /// </summary>

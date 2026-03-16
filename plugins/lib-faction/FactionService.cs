@@ -2224,4 +2224,62 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             MembershipsRestoredCount = membershipsRestoredCount,
         });
     }
+
+    #region Governance (Stub — schema defined #601, implementation pending)
+
+    /// <summary>Creates or updates a governance entry for a faction. Requires Sovereign/Delegated authority and governance.arbitrate.* seed capability.</summary>
+    public async Task<(StatusCodes, GovernanceEntryResponse?)> SetGovernanceEntryAsync(
+        SetGovernanceEntryRequest body, CancellationToken ct = default)
+    {
+        _logger.LogWarning("SetGovernanceEntry is not yet implemented (schema-only, #601)");
+        await Task.CompletedTask;
+        return (StatusCodes.NotImplemented, null);
+    }
+
+    /// <summary>Removes a governance entry for a specific domain from a faction.</summary>
+    public async Task<StatusCodes> RemoveGovernanceEntryAsync(
+        RemoveGovernanceEntryRequest body, CancellationToken ct = default)
+    {
+        _logger.LogWarning("RemoveGovernanceEntry is not yet implemented (schema-only, #601)");
+        await Task.CompletedTask;
+        return StatusCodes.NotImplemented;
+    }
+
+    /// <summary>Returns all governance entries defined by a faction.</summary>
+    public async Task<(StatusCodes, ListGovernanceEntriesResponse?)> ListGovernanceEntriesAsync(
+        ListGovernanceEntriesRequest body, CancellationToken ct = default)
+    {
+        _logger.LogWarning("ListGovernanceEntries is not yet implemented (schema-only, #601)");
+        await Task.CompletedTask;
+        return (StatusCodes.NotImplemented, null);
+    }
+
+    /// <summary>Resolves governance data for a location and case type domain by walking the sovereignty hierarchy.</summary>
+    public async Task<(StatusCodes, GovernanceDataResponse?)> QueryGovernanceDataAsync(
+        QueryGovernanceDataRequest body, CancellationToken ct = default)
+    {
+        _logger.LogWarning("QueryGovernanceData is not yet implemented (schema-only, #601)");
+        await Task.CompletedTask;
+        return (StatusCodes.NotImplemented, null);
+    }
+
+    /// <summary>Delegates authority from a sovereign faction to a child faction for specific case type domains.</summary>
+    public async Task<(StatusCodes, FactionResponse?)> DelegateAuthorityAsync(
+        DelegateAuthorityRequest body, CancellationToken ct = default)
+    {
+        _logger.LogWarning("DelegateAuthority is not yet implemented (schema-only, #601)");
+        await Task.CompletedTask;
+        return (StatusCodes.NotImplemented, null);
+    }
+
+    /// <summary>Revokes delegated authority from a child faction.</summary>
+    public async Task<(StatusCodes, FactionResponse?)> RevokeAuthorityAsync(
+        RevokeAuthorityRequest body, CancellationToken ct = default)
+    {
+        _logger.LogWarning("RevokeAuthority is not yet implemented (schema-only, #601)");
+        await Task.CompletedTask;
+        return (StatusCodes.NotImplemented, null);
+    }
+
+    #endregion
 }

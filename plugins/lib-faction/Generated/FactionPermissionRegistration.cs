@@ -420,6 +420,81 @@ public static class FactionPermissionRegistration
             }
         });
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/faction/governance/set",
+            Method = ServiceEndpointMethod.Post,
+            Description = "setGovernanceEntry",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/faction/governance/remove",
+            Method = ServiceEndpointMethod.Post,
+            Description = "removeGovernanceEntry",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/faction/governance/list",
+            Method = ServiceEndpointMethod.Post,
+            Description = "listGovernanceEntries",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/faction/governance/delegate",
+            Method = ServiceEndpointMethod.Post,
+            Description = "delegateAuthority",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/faction/governance/revoke",
+            Method = ServiceEndpointMethod.Post,
+            Description = "revokeAuthority",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
         return endpoints;
     }
 

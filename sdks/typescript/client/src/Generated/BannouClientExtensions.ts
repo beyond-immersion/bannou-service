@@ -15,12 +15,14 @@ import { BannouClient } from '../BannouClient.js';
 import { AccountProxy } from './proxies/AccountProxy.js';
 import { AchievementProxy } from './proxies/AchievementProxy.js';
 import { ActorProxy } from './proxies/ActorProxy.js';
+import { AffixProxy } from './proxies/AffixProxy.js';
 import { AssetsProxy } from './proxies/AssetsProxy.js';
 import { AuthProxy } from './proxies/AuthProxy.js';
 import { BroadcastProxy } from './proxies/BroadcastProxy.js';
 import { BundlesProxy } from './proxies/BundlesProxy.js';
 import { CharacterProxy } from './proxies/CharacterProxy.js';
 import { CharacterEncounterProxy } from './proxies/CharacterEncounterProxy.js';
+import { CharacterLifecycleProxy } from './proxies/CharacterLifecycleProxy.js';
 import { CharacterPersonalityProxy } from './proxies/CharacterPersonalityProxy.js';
 import { ChatProxy } from './proxies/ChatProxy.js';
 import { ClientCapabilitiesProxy } from './proxies/ClientCapabilitiesProxy.js';
@@ -67,12 +69,14 @@ interface ProxyCache {
   account?: AccountProxy;
   achievement?: AchievementProxy;
   actor?: ActorProxy;
+  affix?: AffixProxy;
   assets?: AssetsProxy;
   auth?: AuthProxy;
   broadcast?: BroadcastProxy;
   bundles?: BundlesProxy;
   character?: CharacterProxy;
   characterEncounter?: CharacterEncounterProxy;
+  characterLifecycle?: CharacterLifecycleProxy;
   characterPersonality?: CharacterPersonalityProxy;
   chat?: ChatProxy;
   clientCapabilities?: ClientCapabilitiesProxy;
@@ -152,6 +156,18 @@ Object.defineProperty(BannouClient.prototype, 'actor', {
 });
 
 /**
+ * Add lazy-initialized affix proxy property to BannouClient.
+ */
+Object.defineProperty(BannouClient.prototype, 'affix', {
+  get(this: BannouClientWithCache): AffixProxy {
+    const cache = (this[PROXY_CACHE] ??= {});
+    return (cache.affix ??= new AffixProxy(this));
+  },
+  configurable: true,
+  enumerable: true,
+});
+
+/**
  * Add lazy-initialized assets proxy property to BannouClient.
  */
 Object.defineProperty(BannouClient.prototype, 'assets', {
@@ -218,6 +234,18 @@ Object.defineProperty(BannouClient.prototype, 'characterEncounter', {
   get(this: BannouClientWithCache): CharacterEncounterProxy {
     const cache = (this[PROXY_CACHE] ??= {});
     return (cache.characterEncounter ??= new CharacterEncounterProxy(this));
+  },
+  configurable: true,
+  enumerable: true,
+});
+
+/**
+ * Add lazy-initialized characterLifecycle proxy property to BannouClient.
+ */
+Object.defineProperty(BannouClient.prototype, 'characterLifecycle', {
+  get(this: BannouClientWithCache): CharacterLifecycleProxy {
+    const cache = (this[PROXY_CACHE] ??= {});
+    return (cache.characterLifecycle ??= new CharacterLifecycleProxy(this));
   },
   configurable: true,
   enumerable: true,
@@ -683,6 +711,10 @@ declare module '../BannouClient.js' {
      */
     readonly actor: ActorProxy;
     /**
+     * Typed proxy for Affix API endpoints.
+     */
+    readonly affix: AffixProxy;
+    /**
      * Typed proxy for Assets API endpoints.
      */
     readonly assets: AssetsProxy;
@@ -706,6 +738,10 @@ declare module '../BannouClient.js' {
      * Typed proxy for CharacterEncounter API endpoints.
      */
     readonly characterEncounter: CharacterEncounterProxy;
+    /**
+     * Typed proxy for CharacterLifecycle API endpoints.
+     */
+    readonly characterLifecycle: CharacterLifecycleProxy;
     /**
      * Typed proxy for CharacterPersonality API endpoints.
      */

@@ -30,18 +30,13 @@ public partial class AssetController
                 "filename",
                 "size",
                 "contentType",
-                "ownerType",
-                "ownerId"
+                "createdBy"
             ],
             "properties": {
-                "ownerType": {
-                    "$ref": "#/$defs/AssetOwnerType",
-                    "description": "Type of owner initiating this upload"
-                },
-                "ownerId": {
+                "createdBy": {
                     "type": "string",
                     "minLength": 1,
-                    "description": "Owner identifier. For Session type: the WebSocket session ID (UUID format).\nFor Service type: the service name (e.g., \"behavior\", \"orchestrator\").\n"
+                    "description": "Informational field recording who initiated this upload. Not used for access control."
                 },
                 "filename": {
                     "type": "string",
@@ -70,14 +65,6 @@ public partial class AssetController
                     "description": "Optional metadata for asset categorization (null to skip)"
                 }
             }
-        },
-        "AssetOwnerType": {
-            "type": "string",
-            "enum": [
-                "Session",
-                "Service"
-            ],
-            "description": "Type of asset owner per FOUNDATION TENETS (Account Identity Boundary).\nSession: user-initiated operation identified by WebSocket session ID (UUID).\nService: service-initiated operation identified by service name.\n"
         },
         "AssetMetadataInput": {
             "type": "object",
@@ -1344,17 +1331,13 @@ public partial class AssetController
             "required": [
                 "bundleId",
                 "assetIds",
-                "ownerType",
-                "ownerId"
+                "createdBy"
             ],
             "properties": {
-                "ownerType": {
-                    "$ref": "#/$defs/AssetOwnerType",
-                    "description": "Type of owner creating this bundle"
-                },
-                "ownerId": {
+                "createdBy": {
                     "type": "string",
-                    "description": "Owner identifier. For Session type: the WebSocket session ID (UUID format).\ nFor Service type: the service name (e.g., \"behavior\", \"orchestrator\").\n"
+                    "minLength": 1,
+                    "description": "Informational field recording who created this bundle. Not used for access control."
                 },
                 "bundleId": {
                     "type": "string",
@@ -1374,7 +1357,7 @@ public partial class AssetController
                         }
                     ],
                     "nullable": true,
-                    "description": "Game realm this bundle belongs to.\nNull for realm-agnostic bundles available across all realms.\n"
+                    "description": "Game realm this bundle belongs to.\ nNull for realm-agnostic bundles available across all realms.\n"
                 },
                 "assetIds": {
                     "type": "array",
@@ -1395,14 +1378,6 @@ public partial class AssetController
                     "description": "Custom metadata for the bundle (null if none). No Bannou plugin reads specific keys from this field by convention."
                 }
             }
-        },
-        "AssetOwnerType": {
-            "type": "string",
-            "enum": [
-                "Session",
-                "Service"
-            ],
-            "description": "Type of asset owner per FOUNDATION TENETS (Account Identity Boundary).\nSession: user-initiated operation identified by WebSocket session ID (UUID).\ nService: service-initiated operation identified by service name.\n"
         },
         "GameRealm": {
             "type": "string",
@@ -1697,17 +1672,13 @@ public partial class AssetController
             "required": [
                 "filename",
                 "size",
-                "ownerType",
-                "ownerId"
+                "createdBy"
             ],
             "properties": {
-                "ownerType": {
-                    "$ref": "#/$defs/AssetOwnerType",
-                    "description": "Type of owner uploading this bundle"
-                },
-                "ownerId": {
+                "createdBy": {
                     "type": "string",
-                    "description": "Owner identifier. For Session type: the WebSocket session ID (UUID format).\ nFor Service type: the service name (e.g., \"behavior\", \"orchestrator\").\n"
+                    "minLength": 1,
+                    "description": "Informational field recording who uploaded this bundle. Not used for access control."
                 },
                 "filename": {
                     "type": "string",
@@ -1728,14 +1699,6 @@ public partial class AssetController
                     "description": "Optional preview of bundle manifest for validation"
                 }
             }
-        },
-        "AssetOwnerType": {
-            "type": "string",
-            "enum": [
-                "Session",
-                "Service"
-            ],
-            "description": "Type of asset owner per FOUNDATION TENETS (Account Identity Boundary).\nSession: user-initiated operation identified by WebSocket session ID (UUID).\nService: service-initiated operation identified by service name.\n"
         },
         "BundleManifestPreview": {
             "type": "object",
@@ -1942,9 +1905,8 @@ public partial class AssetController
             "description": "Request to create a metabundle from source bundles and/or standalone assets.\ nAt least one of sourceBundleIds or standaloneAssetIds must be provided.\nThis enables packaging behaviors/scripts with 3D assets as a complete unit.\n",
             "required": [
                 "metabundleId",
-                "ownerType",
-                "ownerId",
-                "realm"
+                "realm",
+                "createdBy"
             ],
             "properties": {
                 "metabundleId": {
@@ -1972,13 +1934,10 @@ public partial class AssetController
                     "default": "1.0.0",
                     "description": "Metabundle version string"
                 },
-                "ownerType": {
-                    "$ref": "#/$defs/AssetOwnerType",
-                    "description": "Type of owner creating this metabundle"
-                },
-                "ownerId": {
+                "createdBy": {
                     "type": "string",
-                    "description": "Owner identifier. For Session type: the WebSocket session ID (UUID format).\nFor Service type: the service name (e.g., \"behavior\", \"orchestrator\").\n"
+                    "minLength": 1,
+                    "description": "Informational field recording who created this metabundle. Not used for access control."
                 },
                 "realm": {
                     "$ref": "#/$defs/GameRealm",
@@ -2005,18 +1964,10 @@ public partial class AssetController
                 }
             }
         },
-        "AssetOwnerType": {
-            "type": "string",
-            "enum": [
-                "Session",
-                "Service"
-            ],
-            "description": "Type of asset owner per FOUNDATION TENETS (Account Identity Boundary).\ nSession: user-initiated operation identified by WebSocket session ID (UUID).\nService: service-initiated operation identified by service name.\n"
-        },
         "GameRealm": {
             "type": "string",
             "minLength": 1,
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\ nNull for assets that are available across all realms.\n"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nNull for assets that are available across all realms.\n"
         }
     }
 }
@@ -3412,19 +3363,10 @@ public partial class AssetController
                     "nullable": true,
                     "description": "Filter bundles with name containing this string (case-insensitive)"
                 },
-                "ownerType": {
-                    "allOf": [
-                        {
-                            "$ref": "#/$defs/AssetOwnerType"
-                        }
-                    ],
-                    "nullable": true,
-                    "description": "Filter by owner type (null for any type)"
-                },
-                "ownerId": {
+                "createdBy": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Filter by owner identifier (session ID or service name)"
+                    "description": "Filter by creator (null for all creators)"
                 },
                 "realm": {
                     "allOf": [
@@ -3481,14 +3423,6 @@ public partial class AssetController
                 "Processing"
             ],
             "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- processing: Bundle is being processed (metabundle creation)\n"
-        },
-        "AssetOwnerType": {
-            "type": "string",
-            "enum": [
-                "Session",
-                "Service"
-            ],
-            "description": "Type of asset owner per FOUNDATION TENETS (Account Identity Boundary).\nSession: user-initiated operation identified by WebSocket session ID (UUID).\nService: service-initiated operation identified by service name.\n"
         },
         "GameRealm": {
             "type": "string",
@@ -3573,7 +3507,8 @@ public partial class AssetController
                 "metadataVersion",
                 "status",
                 "assetCount",
-                "createdAt"
+                "createdAt",
+                "createdBy"
             ],
             "properties": {
                 "bundleId": {
@@ -3602,19 +3537,10 @@ public partial class AssetController
                     "nullable": true,
                     "description": "Bundle description"
                 },
-                "ownerType": {
-                    "allOf": [
-                        {
-                            "$ref": "#/$defs/AssetOwnerType"
-                        }
-                    ],
-                    "nullable": true,
-                    "description": "Type of owner (null for system-owned bundles)"
-                },
-                "ownerId": {
+                "createdBy": {
                     "type": "string",
-                    "nullable": true,
-                    "description": "Owner identifier - session ID or service name (null for system-owned bundles)"
+                    "minLength": 1,
+                    "description": "Informational field recording who created this bundle. Not used for access control."
                 },
                 "realm": {
                     "allOf": [
@@ -3668,14 +3594,6 @@ public partial class AssetController
             ],
             "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         },
-        "AssetOwnerType": {
-            "type": "string",
-            "enum": [
-                "Session",
-                "Service"
-            ],
-            "description": "Type of asset owner per FOUNDATION TENETS (Account Identity Boundary).\nSession: user-initiated operation identified by WebSocket session ID (UUID).\nService: service-initiated operation identified by service name.\n"
-        },
         "GameRealm": {
             "type": "string",
             "minLength": 1,
@@ -3687,7 +3605,7 @@ public partial class AssetController
                 "Active",
                 "Processing"
             ],
-            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- processing: Bundle is being processed (metabundle creation)\n"
+            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\ n- processing: Bundle is being processed (metabundle creation)\n"
         }
     }
 }
@@ -3881,7 +3799,8 @@ public partial class AssetController
                 "metadataVersion",
                 "status",
                 "assetCount",
-                "createdAt"
+                "createdAt",
+                "createdBy"
             ],
             "properties": {
                 "bundleId": {
@@ -3910,19 +3829,10 @@ public partial class AssetController
                     "nullable": true,
                     "description": "Bundle description"
                 },
-                "ownerType": {
-                    "allOf": [
-                        {
-                            "$ref": "#/$defs/AssetOwnerType"
-                        }
-                    ],
-                    "nullable": true,
-                    "description": "Type of owner (null for system-owned bundles)"
-                },
-                "ownerId": {
+                "createdBy": {
                     "type": "string",
-                    "nullable": true,
-                    "description": "Owner identifier - session ID or service name (null for system-owned bundles)"
+                    "minLength": 1,
+                    "description": "Informational field recording who created this bundle. Not used for access control."
                 },
                 "realm": {
                     "allOf": [
@@ -3976,14 +3886,6 @@ public partial class AssetController
             ],
             "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         },
-        "AssetOwnerType": {
-            "type": "string",
-            "enum": [
-                "Session",
-                "Service"
-            ],
-            "description": "Type of asset owner per FOUNDATION TENETS (Account Identity Boundary).\nSession: user-initiated operation identified by WebSocket session ID (UUID).\nService: service-initiated operation identified by service name.\n"
-        },
         "GameRealm": {
             "type": "string",
             "minLength": 1,
@@ -3995,7 +3897,7 @@ public partial class AssetController
                 "Active",
                 "Processing"
             ],
-            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\ n- processing: Bundle is being processed (metabundle creation)\n"
+            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- processing: Bundle is being processed (metabundle creation)\n"
         }
     }
 }

@@ -487,6 +487,112 @@ public sealed class FactionProxy
     }
 
     /// <summary>
+    /// Set a governance entry for a faction
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing GovernanceEntryResponse on success.</returns>
+    public Task<ApiResponse<GovernanceEntryResponse>> SetGovernanceEntryAsync(
+        SetGovernanceEntryRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<SetGovernanceEntryRequest, GovernanceEntryResponse>(
+            "/faction/governance/set", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Remove a governance entry
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Task that completes when the event is sent.</returns>
+    public Task RemoveGovernanceEntryEventAsync(
+        RemoveGovernanceEntryRequest request,
+        ushort channel = 0,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.SendEventAsync<RemoveGovernanceEntryRequest>(
+            "/faction/governance/remove", request, channel, cancellationToken);
+    }
+
+    /// <summary>
+    /// List governance entries for a faction
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ListGovernanceEntriesResponse on success.</returns>
+    public Task<ApiResponse<ListGovernanceEntriesResponse>> ListGovernanceEntriesAsync(
+        ListGovernanceEntriesRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ListGovernanceEntriesRequest, ListGovernanceEntriesResponse>(
+            "/faction/governance/list", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Resolve governance data for a location and case type
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing GovernanceDataResponse on success.</returns>
+    public Task<ApiResponse<GovernanceDataResponse>> QueryGovernanceDataAsync(
+        QueryGovernanceDataRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<QueryGovernanceDataRequest, GovernanceDataResponse>(
+            "/faction/governance/query", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Delegate authority from sovereign to child faction
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing FactionResponse on success.</returns>
+    public Task<ApiResponse<FactionResponse>> DelegateAuthorityAsync(
+        DelegateAuthorityRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<DelegateAuthorityRequest, FactionResponse>(
+            "/faction/governance/delegate", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Revoke delegated authority
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing FactionResponse on success.</returns>
+    public Task<ApiResponse<FactionResponse>> RevokeAuthorityAsync(
+        RevokeAuthorityRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<RevokeAuthorityRequest, FactionResponse>(
+            "/faction/governance/revoke", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Cleanup faction data for a deleted character
     /// </summary>
     /// <param name="request">The request payload.</param>

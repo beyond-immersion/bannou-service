@@ -70,6 +70,19 @@ info:
     - topic: faction.realm-baseline.designated
       event: FactionRealmBaselineDesignatedEvent
       description: Published when a faction is designated as realm baseline
+    # Custom events - Governance
+    - topic: faction.governance.defined
+      event: FactionGovernanceDefinedEvent
+      description: Published when a governance entry is created or updated (includes changedFields when overwriting existing entry)
+    - topic: faction.governance.deleted
+      event: FactionGovernanceDeletedEvent
+      description: Published when a governance entry is removed
+    - topic: faction.authority.delegated
+      event: FactionAuthorityDelegatedEvent
+      description: Published when a sovereign delegates authority to a child faction
+    - topic: faction.authority.revoked
+      event: FactionAuthorityRevokedEvent
+      description: Published when delegated authority is revoked
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/faction-lifecycle-events.yaml
@@ -86,6 +99,7 @@ x-lifecycle:
       parentFactionId: { type: string, format: uuid, nullable: true, description: "Parent faction in hierarchy" }
       seedId: { type: string, format: uuid, nullable: true, description: "Associated seed for growth tracking" }
       status: { $ref: 'faction-api.yaml#/components/schemas/FactionStatus', required: true, description: "Current operational lifecycle status" }
+      authorityLevel: { $ref: 'faction-api.yaml#/components/schemas/AuthorityLevel', required: true, description: "Authority classification for governance power" }
       currentPhase: { type: string, nullable: true, description: "Current seed growth phase" }
       memberCount: { type: integer, required: true, description: "Current number of members" }
     sensitive: []
@@ -413,3 +427,148 @@ components:
           format: uuid
           nullable: true
           description: Previous baseline faction that was replaced (null if none existed)
+
+    # --- Governance Events ---
+
+    FactionGovernanceDefinedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a governance entry is created or updated (upsert by domain)
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - factionId
+        - governanceId
+        - domain
+        - templateCode
+      properties:
+        eventName:
+          type: string
+          default: faction.governance.defined
+          description: 'Event type identifier: faction.governance.defined'
+        factionId:
+          type: string
+          format: uuid
+          description: Faction that owns the governance entry
+        governanceId:
+          type: string
+          format: uuid
+          description: Unique identifier for the governance entry
+        domain:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Case type domain prefix
+        templateCode:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Contract template code for this case type
+        changedFields:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Fields that changed when updating an existing governance entry (null when creating a new entry)
+
+    FactionGovernanceDeletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a governance entry is removed from a faction
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - factionId
+        - governanceId
+        - domain
+      properties:
+        eventName:
+          type: string
+          default: faction.governance.deleted
+          description: 'Event type identifier: faction.governance.deleted'
+        factionId:
+          type: string
+          format: uuid
+          description: Faction that owned the governance entry
+        governanceId:
+          type: string
+          format: uuid
+          description: Governance entry that was removed
+        domain:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Case type domain that was removed
+
+    FactionAuthorityDelegatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a sovereign faction delegates authority to a child faction for specific case type domains
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - sovereignFactionId
+        - targetFactionId
+        - domains
+      properties:
+        eventName:
+          type: string
+          default: faction.authority.delegated
+          description: 'Event type identifier: faction.authority.delegated'
+        sovereignFactionId:
+          type: string
+          format: uuid
+          description: Sovereign faction that granted delegation
+        targetFactionId:
+          type: string
+          format: uuid
+          description: Child faction that received delegated authority
+        domains:
+          type: array
+          items:
+            type: string
+          description: Case type domains that were delegated
+
+    FactionAuthorityRevokedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when delegated authority is revoked from a faction
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - sovereignFactionId
+        - targetFactionId
+      properties:
+        eventName:
+          type: string
+          default: faction.authority.revoked
+          description: 'Event type identifier: faction.authority.revoked'
+        sovereignFactionId:
+          type: string
+          format: uuid
+          description: Sovereign faction that revoked delegation
+        targetFactionId:
+          type: string
+          format: uuid
+          description: Faction whose delegation was revoked
+        revokedDomains:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Specific domains that were revoked (null if all delegation was revoked)
+        resultingAuthorityLevel:
+          $ref: 'faction-api.yaml#/components/schemas/AuthorityLevel'
+          description: Target faction's authority level after revocation (Delegated if some domains remain, Influence if all revoked)

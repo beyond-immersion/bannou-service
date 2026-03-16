@@ -29,8 +29,8 @@ Compliant properties include one of these phrases in their description:
 
 | Metric | Count |
 |--------|-------|
-| Total metadata bag properties | 168 |
-| Compliant (has marker) | 150 |
+| Total metadata bag properties | 171 |
+| Compliant (has marker) | 153 |
 | Non-compliant (missing marker) | 18 |
 | Compliance rate | 89% |
 
@@ -300,6 +300,14 @@ Compliant properties include one of these phrases in their description:
 | `VerifyConditionRequest` | `verificationData` | `escrow-api.yaml` | Y | Caller-provided proof/evidence data for condition verification. No Bannou plu... |
 | `ReleaseAllocationWithConfirmation` | `confirmationShortcut` | `escrow-events.yaml` | Y | Prebound API shortcut for client confirmation (pushed via WebSocket). No Bann... |
 | `ValidationFailureInfo` | `details` | `escrow-events.yaml` | Y | Additional failure details. No Bannou plugin reads specific keys from this fi... |
+
+#### Faction
+
+| Schema Type | Property | Schema File | Compliant | Description |
+|-------------|----------|-------------|-----------|-------------|
+| `GovernanceDataResponse` | `governanceParameters` | `faction-api.yaml` | Y | Opaque governance parameters for the contract template. Stored and returned u... |
+| `GovernanceEntryResponse` | `governanceParameters` | `faction-api.yaml` | Y | Opaque governance parameters for the contract template. Faction stores and re... |
+| `SetGovernanceEntryRequest` | `governanceParameters` | `faction-api.yaml` | Y | Opaque governance parameters for the contract template. Client-only metadata.... |
 
 #### Leaderboard
 

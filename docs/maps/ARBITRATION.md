@@ -135,6 +135,10 @@
 | `contract.terminated` | `HandleContractTerminatedAsync` | Handles abnormal closure (withdrawal, dismissal), publishes `arbitration.case.closed`. |
 | `faction.territory.claimed` | `HandleTerritoryClaimedAsync` | Invalidates jurisdiction cache for affected location. |
 | `faction.territory.released` | `HandleTerritoryReleasedAsync` | Invalidates jurisdiction cache for affected location. |
+| `faction.governance.defined` | `HandleGovernanceDefinedAsync` | // Future: not yet published by Faction — see #601. Invalidates jurisdiction cache for affected faction's locations + domain. |
+| `faction.governance.deleted` | `HandleGovernanceDeletedAsync` | // Future: not yet published by Faction — see #601. Invalidates jurisdiction cache for affected faction + domain. |
+| `faction.authority.delegated` | `HandleAuthorityDelegatedAsync` | // Future: not yet published by Faction — see #601. Invalidates jurisdiction cache for delegated locations + domain. |
+| `faction.authority.revoked` | `HandleAuthorityRevokedAsync` | // Future: not yet published by Faction — see #601. Invalidates jurisdiction cache for revoked delegation scope. |
 
 ---
 
@@ -365,7 +369,7 @@ IF case.arbiterEntityId != null                                  -> 409 (already
 IF selectionMode == FactionLeader
   CALL _factionClient.GetFactionLeaderAsync(sovereignFactionId)  -> 400 if Faction unavailable
 ELSE IF selectionMode == AppointedOfficial
-  // Read designated arbiter from governance data
+  // Resolve appointed arbiter from case.governanceParametersSnapshot (arbiter ID configured in governance record)
 ELSE IF selectionMode == DivineArbiter
   PUBLISH arbitration.case.divine-requested { caseId, timeoutAt }
   // Deferred assignment — divine actor responds via API

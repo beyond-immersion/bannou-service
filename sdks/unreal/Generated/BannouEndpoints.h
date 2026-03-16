@@ -52,6 +52,40 @@ namespace Bannou
         /** Delete an actor template */
         constexpr const TCHAR* ActorDeleteActorTemplate = TEXT("POST:/actor/template/delete");
 
+        // Affix Service
+        /** Create a new affix definition */
+        constexpr const TCHAR* AffixCreateDefinition = TEXT("POST:/affix/definition/create");
+
+        /** Get an affix definition */
+        constexpr const TCHAR* AffixGetDefinition = TEXT("POST:/affix/definition/get");
+
+        /** List affix definitions */
+        constexpr const TCHAR* AffixListDefinitions = TEXT("POST:/affix/definition/list");
+
+        /** Update an affix definition */
+        constexpr const TCHAR* AffixUpdateDefinition = TEXT("POST:/affix/definition/update");
+
+        /** Deprecate an affix definition */
+        constexpr const TCHAR* AffixDeprecateDefinition = TEXT("POST:/affix/definition/deprecate");
+
+        /** Bulk seed affix definitions */
+        constexpr const TCHAR* AffixSeedDefinitions = TEXT("POST:/affix/definition/seed");
+
+        /** List mod groups for a game service */
+        constexpr const TCHAR* AffixListModGroups = TEXT("POST:/affix/definition/list-mod-groups");
+
+        /** Create an implicit mapping for an item template */
+        constexpr const TCHAR* AffixCreateImplicitMapping = TEXT("POST:/affix/implicit/create");
+
+        /** Get implicit mapping for an item template */
+        constexpr const TCHAR* AffixGetImplicitMapping = TEXT("POST:/affix/implicit/get");
+
+        /** Bulk seed implicit mappings */
+        constexpr const TCHAR* AffixSeedImplicitMappings = TEXT("POST:/affix/implicit/seed");
+
+        /** Roll implicit values for an item template */
+        constexpr const TCHAR* AffixRollImplicits = TEXT("POST:/affix/implicit/roll");
+
         // Assets Service
         /** Request upload URL for a new asset */
         constexpr const TCHAR* AssetRequestUpload = TEXT("POST:/assets/upload/request");
@@ -240,6 +274,52 @@ namespace Bannou
 
         /** Deprecate encounter type */
         constexpr const TCHAR* CharacterEncounterDeprecateEncounterType = TEXT("POST:/character-encounter/type/deprecate");
+
+        // CharacterLifecycle Service
+        /** Override a character's projected natural death year */
+        constexpr const TCHAR* CharacterLifecycleSetNaturalDeathYear = TEXT("POST:/character-lifecycle/profile/set-death-year");
+
+        /** Bulk seed lifecycle profiles for first-generation characters */
+        constexpr const TCHAR* CharacterLifecycleSeedLifecycleProfile = TEXT("POST:/character-lifecycle/profile/seed");
+
+        /** Get full genetic profile for a character */
+        constexpr const TCHAR* CharacterLifecycleGetGeneticProfile = TEXT("POST:/character-lifecycle/heritage/get-genetic-profile");
+
+        /** Get expressed phenotype traits and aptitudes for a character */
+        constexpr const TCHAR* CharacterLifecycleGetPhenotype = TEXT("POST:/character-lifecycle/heritage/get-phenotype");
+
+        /** Create genetic profile for a first-generation character */
+        constexpr const TCHAR* CharacterLifecycleSeedGeneticProfile = TEXT("POST:/character-lifecycle/heritage/seed-genetic-profile");
+
+        /** Get multi-generational family tree rooted at a character */
+        constexpr const TCHAR* CharacterLifecycleGetFamilyTree = TEXT("POST:/character-lifecycle/heritage/get-family-tree");
+
+        /** Create lifecycle stage definitions for a species */
+        constexpr const TCHAR* CharacterLifecycleSeedLifecycleTemplate = TEXT("POST:/character-lifecycle/template/seed-lifecycle");
+
+        /** Create heritable trait definitions for a species */
+        constexpr const TCHAR* CharacterLifecycleSeedHeritableTraitTemplate = TEXT("POST:/character-lifecycle/template/seed-heritable-traits");
+
+        /** Create cross-species hybridization rules for a species pair */
+        constexpr const TCHAR* CharacterLifecycleSeedHybridTemplate = TEXT("POST:/character-lifecycle/template/seed-hybrid");
+
+        /** List all lifecycle and heritage templates for a game service */
+        constexpr const TCHAR* CharacterLifecycleListTemplates = TEXT("POST:/character-lifecycle/template/list");
+
+        /** Get bloodline definition */
+        constexpr const TCHAR* CharacterLifecycleGetBloodline = TEXT("POST:/character-lifecycle/bloodline/get");
+
+        /** List bloodlines within a game service */
+        constexpr const TCHAR* CharacterLifecycleListBloodlines = TEXT("POST:/character-lifecycle/bloodline/list");
+
+        /** Manually establish a bloodline */
+        constexpr const TCHAR* CharacterLifecycleEstablishBloodline = TEXT("POST:/character-lifecycle/bloodline/establish");
+
+        /** Delete a bloodline (immediate hard delete) */
+        constexpr const TCHAR* CharacterLifecycleDeleteBloodline = TEXT("POST:/character-lifecycle/bloodline/delete");
+
+        /** Query living members of a bloodline */
+        constexpr const TCHAR* CharacterLifecycleQueryBloodlineMembers = TEXT("POST:/character-lifecycle/bloodline/query-members");
 
         // CharacterPersonality Service
         /** Create or update personality for a character */
@@ -670,6 +750,21 @@ namespace Bannou
 
         /** List norms defined by a faction */
         constexpr const TCHAR* FactionListNorms = TEXT("POST:/faction/norm/list");
+
+        /** Set a governance entry for a faction */
+        constexpr const TCHAR* FactionSetGovernanceEntry = TEXT("POST:/faction/governance/set");
+
+        /** Remove a governance entry */
+        constexpr const TCHAR* FactionRemoveGovernanceEntry = TEXT("POST:/faction/governance/remove");
+
+        /** List governance entries for a faction */
+        constexpr const TCHAR* FactionListGovernanceEntries = TEXT("POST:/faction/governance/list");
+
+        /** Delegate authority from sovereign to child faction */
+        constexpr const TCHAR* FactionDelegateAuthority = TEXT("POST:/faction/governance/delegate");
+
+        /** Revoke delegated authority */
+        constexpr const TCHAR* FactionRevokeAuthority = TEXT("POST:/faction/governance/revoke");
 
         // Gardener Service
         /** Enter the garden */
@@ -1738,6 +1833,94 @@ namespace Bannou
                 TEXT("FDeleteActorTemplateResponse"),
                 TEXT("Delete an actor template")
             });
+            Registry.Add(TEXT("AffixCreateDefinition"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/affix/definition/create"),
+                TEXT("affix"),
+                TEXT("FCreateDefinitionRequest"),
+                TEXT("FAffixDefinitionResponse"),
+                TEXT("Create a new affix definition")
+            });
+            Registry.Add(TEXT("AffixGetDefinition"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/affix/definition/get"),
+                TEXT("affix"),
+                TEXT("FGetDefinitionRequest"),
+                TEXT("FAffixDefinitionResponse"),
+                TEXT("Get an affix definition")
+            });
+            Registry.Add(TEXT("AffixListDefinitions"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/affix/definition/list"),
+                TEXT("affix"),
+                TEXT("FListDefinitionsRequest"),
+                TEXT("FListDefinitionsResponse"),
+                TEXT("List affix definitions")
+            });
+            Registry.Add(TEXT("AffixUpdateDefinition"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/affix/definition/update"),
+                TEXT("affix"),
+                TEXT("FUpdateDefinitionRequest"),
+                TEXT("FAffixDefinitionResponse"),
+                TEXT("Update an affix definition")
+            });
+            Registry.Add(TEXT("AffixDeprecateDefinition"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/affix/definition/deprecate"),
+                TEXT("affix"),
+                TEXT("FDeprecateDefinitionRequest"),
+                TEXT("FAffixDefinitionResponse"),
+                TEXT("Deprecate an affix definition")
+            });
+            Registry.Add(TEXT("AffixSeedDefinitions"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/affix/definition/seed"),
+                TEXT("affix"),
+                TEXT("FSeedDefinitionsRequest"),
+                TEXT("FSeedDefinitionsResponse"),
+                TEXT("Bulk seed affix definitions")
+            });
+            Registry.Add(TEXT("AffixListModGroups"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/affix/definition/list-mod-groups"),
+                TEXT("affix"),
+                TEXT("FListModGroupsRequest"),
+                TEXT("FListModGroupsResponse"),
+                TEXT("List mod groups for a game service")
+            });
+            Registry.Add(TEXT("AffixCreateImplicitMapping"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/affix/implicit/create"),
+                TEXT("affix"),
+                TEXT("FCreateImplicitMappingRequest"),
+                TEXT("FImplicitMappingResponse"),
+                TEXT("Create an implicit mapping for an item template")
+            });
+            Registry.Add(TEXT("AffixGetImplicitMapping"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/affix/implicit/get"),
+                TEXT("affix"),
+                TEXT("FGetImplicitMappingRequest"),
+                TEXT("FImplicitMappingResponse"),
+                TEXT("Get implicit mapping for an item template")
+            });
+            Registry.Add(TEXT("AffixSeedImplicitMappings"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/affix/implicit/seed"),
+                TEXT("affix"),
+                TEXT("FSeedImplicitMappingsRequest"),
+                TEXT("FSeedImplicitMappingsResponse"),
+                TEXT("Bulk seed implicit mappings")
+            });
+            Registry.Add(TEXT("AffixRollImplicits"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/affix/implicit/roll"),
+                TEXT("affix"),
+                TEXT("FRollImplicitsRequest"),
+                TEXT("FRollImplicitsResponse"),
+                TEXT("Roll implicit values for an item template")
+            });
             Registry.Add(TEXT("AssetRequestUpload"), FEndpointInfo{
                 TEXT("POST"),
                 TEXT("/assets/upload/request"),
@@ -2225,6 +2408,126 @@ namespace Bannou
                 TEXT("FDeprecateEncounterTypeRequest"),
                 TEXT("FEncounterTypeResponse"),
                 TEXT("Deprecate encounter type")
+            });
+            Registry.Add(TEXT("CharacterLifecycleSetNaturalDeathYear"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-lifecycle/profile/set-death-year"),
+                TEXT("character-lifecycle"),
+                TEXT("FSetNaturalDeathYearRequest"),
+                TEXT("FSetNaturalDeathYearResponse"),
+                TEXT("Override a character's projected natural death year")
+            });
+            Registry.Add(TEXT("CharacterLifecycleSeedLifecycleProfile"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-lifecycle/profile/seed"),
+                TEXT("character-lifecycle"),
+                TEXT("FSeedLifecycleProfileRequest"),
+                TEXT("FSeedLifecycleProfileResponse"),
+                TEXT("Bulk seed lifecycle profiles for first-generation characters")
+            });
+            Registry.Add(TEXT("CharacterLifecycleGetGeneticProfile"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-lifecycle/heritage/get-genetic-profile"),
+                TEXT("character-lifecycle"),
+                TEXT("FGetGeneticProfileRequest"),
+                TEXT("FGetGeneticProfileResponse"),
+                TEXT("Get full genetic profile for a character")
+            });
+            Registry.Add(TEXT("CharacterLifecycleGetPhenotype"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-lifecycle/heritage/get-phenotype"),
+                TEXT("character-lifecycle"),
+                TEXT("FGetPhenotypeRequest"),
+                TEXT("FGetPhenotypeResponse"),
+                TEXT("Get expressed phenotype traits and aptitudes for a character")
+            });
+            Registry.Add(TEXT("CharacterLifecycleSeedGeneticProfile"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-lifecycle/heritage/seed-genetic-profile"),
+                TEXT("character-lifecycle"),
+                TEXT("FSeedGeneticProfileRequest"),
+                TEXT("FSeedGeneticProfileResponse"),
+                TEXT("Create genetic profile for a first-generation character")
+            });
+            Registry.Add(TEXT("CharacterLifecycleGetFamilyTree"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-lifecycle/heritage/get-family-tree"),
+                TEXT("character-lifecycle"),
+                TEXT("FGetFamilyTreeRequest"),
+                TEXT("FGetFamilyTreeResponse"),
+                TEXT("Get multi-generational family tree rooted at a character")
+            });
+            Registry.Add(TEXT("CharacterLifecycleSeedLifecycleTemplate"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-lifecycle/template/seed-lifecycle"),
+                TEXT("character-lifecycle"),
+                TEXT("FSeedLifecycleTemplateRequest"),
+                TEXT("FSeedLifecycleTemplateResponse"),
+                TEXT("Create lifecycle stage definitions for a species")
+            });
+            Registry.Add(TEXT("CharacterLifecycleSeedHeritableTraitTemplate"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-lifecycle/template/seed-heritable-traits"),
+                TEXT("character-lifecycle"),
+                TEXT("FSeedHeritableTraitTemplateRequest"),
+                TEXT("FSeedHeritableTraitTemplateResponse"),
+                TEXT("Create heritable trait definitions for a species")
+            });
+            Registry.Add(TEXT("CharacterLifecycleSeedHybridTemplate"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-lifecycle/template/seed-hybrid"),
+                TEXT("character-lifecycle"),
+                TEXT("FSeedHybridTemplateRequest"),
+                TEXT("FSeedHybridTemplateResponse"),
+                TEXT("Create cross-species hybridization rules for a species pair")
+            });
+            Registry.Add(TEXT("CharacterLifecycleListTemplates"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-lifecycle/template/list"),
+                TEXT("character-lifecycle"),
+                TEXT("FListTemplatesRequest"),
+                TEXT("FListTemplatesResponse"),
+                TEXT("List all lifecycle and heritage templates for a game service")
+            });
+            Registry.Add(TEXT("CharacterLifecycleGetBloodline"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-lifecycle/bloodline/get"),
+                TEXT("character-lifecycle"),
+                TEXT("FGetBloodlineRequest"),
+                TEXT("FGetBloodlineResponse"),
+                TEXT("Get bloodline definition")
+            });
+            Registry.Add(TEXT("CharacterLifecycleListBloodlines"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-lifecycle/bloodline/list"),
+                TEXT("character-lifecycle"),
+                TEXT("FListBloodlinesRequest"),
+                TEXT("FListBloodlinesResponse"),
+                TEXT("List bloodlines within a game service")
+            });
+            Registry.Add(TEXT("CharacterLifecycleEstablishBloodline"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-lifecycle/bloodline/establish"),
+                TEXT("character-lifecycle"),
+                TEXT("FEstablishBloodlineRequest"),
+                TEXT("FEstablishBloodlineResponse"),
+                TEXT("Manually establish a bloodline")
+            });
+            Registry.Add(TEXT("CharacterLifecycleDeleteBloodline"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-lifecycle/bloodline/delete"),
+                TEXT("character-lifecycle"),
+                TEXT("FDeleteBloodlineRequest"),
+                TEXT("FDeleteBloodlineResponse"),
+                TEXT("Delete a bloodline (immediate hard delete)")
+            });
+            Registry.Add(TEXT("CharacterLifecycleQueryBloodlineMembers"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-lifecycle/bloodline/query-members"),
+                TEXT("character-lifecycle"),
+                TEXT("FQueryBloodlineMembersRequest"),
+                TEXT("FQueryBloodlineMembersResponse"),
+                TEXT("Query living members of a bloodline")
             });
             Registry.Add(TEXT("CharacterPersonalitySetPersonality"), FEndpointInfo{
                 TEXT("POST"),
@@ -3345,6 +3648,46 @@ namespace Bannou
                 TEXT("FListNormsRequest"),
                 TEXT("FListNormsResponse"),
                 TEXT("List norms defined by a faction")
+            });
+            Registry.Add(TEXT("FactionSetGovernanceEntry"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/faction/governance/set"),
+                TEXT("faction"),
+                TEXT("FSetGovernanceEntryRequest"),
+                TEXT("FGovernanceEntryResponse"),
+                TEXT("Set a governance entry for a faction")
+            });
+            Registry.Add(TEXT("FactionRemoveGovernanceEntry"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/faction/governance/remove"),
+                TEXT("faction"),
+                TEXT("FRemoveGovernanceEntryRequest"),
+                TEXT(""),
+                TEXT("Remove a governance entry")
+            });
+            Registry.Add(TEXT("FactionListGovernanceEntries"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/faction/governance/list"),
+                TEXT("faction"),
+                TEXT("FListGovernanceEntriesRequest"),
+                TEXT("FListGovernanceEntriesResponse"),
+                TEXT("List governance entries for a faction")
+            });
+            Registry.Add(TEXT("FactionDelegateAuthority"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/faction/governance/delegate"),
+                TEXT("faction"),
+                TEXT("FDelegateAuthorityRequest"),
+                TEXT("FFactionResponse"),
+                TEXT("Delegate authority from sovereign to child faction")
+            });
+            Registry.Add(TEXT("FactionRevokeAuthority"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/faction/governance/revoke"),
+                TEXT("faction"),
+                TEXT("FRevokeAuthorityRequest"),
+                TEXT("FFactionResponse"),
+                TEXT("Revoke delegated authority")
             });
             Registry.Add(TEXT("GardenerEnterGarden"), FEndpointInfo{
                 TEXT("POST"),

@@ -46,6 +46,7 @@ struct FAdvanceClockResponse;
 struct FAdvanceDiscoveryRequest;
 struct FAdvanceDiscoveryResponse;
 struct FAdvanceJourneyRequest;
+struct FAffixDefinitionResponse;
 struct FAffordance;
 struct FAffordanceFreshness;
 struct FAffordanceLocation;
@@ -55,6 +56,7 @@ struct FAffordanceType;
 struct FAnalytics;
 struct FAnnounceCameraRequest;
 struct FAnswerPeerRequest;
+struct FAptitudeEntry;
 struct FArcType;
 struct FArchiveInfo;
 struct FArchiveRoomRequest;
@@ -64,7 +66,6 @@ struct FArriveJourneyRequest;
 struct FAssetConflict;
 struct FAssetMetadata;
 struct FAssetMetadataInput;
-struct FAssetOwnerType;
 struct FAssetReference;
 struct FAssetRequirementInfo;
 struct FAssetSearchRequest;
@@ -86,6 +87,7 @@ struct FAuthoringCheckoutResponse;
 struct FAuthoringCommitRequest;
 struct FAuthoringCommitResponse;
 struct FAuthoringReleaseRequest;
+struct FAuthorityLevel;
 struct FAutoSpawnConfig;
 struct FAutogainInfo;
 struct FAutogainMode;
@@ -105,6 +107,9 @@ struct FBindItemInstanceRequest;
 struct FBindRepositoryRequest;
 struct FBindRepositoryResponse;
 struct FBindingStatus;
+struct FBloodlineEntry;
+struct FBloodlineMemberSummary;
+struct FBloodlineSummary;
 struct FBoardNodeState;
 struct FBoardResponse;
 struct FBoardStateRequest;
@@ -300,6 +305,7 @@ struct FCreateDocumentResponse;
 struct FCreateEncounterTypeRequest;
 struct FCreateEntryTemplateRequest;
 struct FCreateFactionRequest;
+struct FCreateImplicitMappingRequest;
 struct FCreateItemInstanceRequest;
 struct FCreateItemTemplateRequest;
 struct FCreateJourneyRequest;
@@ -324,16 +330,20 @@ struct FCurrencyTransactionRecord;
 struct FCustomAffordance;
 struct FCustomScripts;
 struct FDayPeriodDefinition;
+struct FDeathDistribution;
 struct FDeclineMatchRequest;
 struct FDeclinePoiRequest;
 struct FDeclinePoiResponse;
 struct FDefineNormRequest;
+struct FDelegateAuthorityRequest;
 struct FDeleteActionMappingRequest;
 struct FDeleteActorTemplateRequest;
 struct FDeleteActorTemplateResponse;
 struct FDeleteArchiveRequest;
 struct FDeleteArchiveResponse;
 struct FDeleteAreaContentConfigRequest;
+struct FDeleteBloodlineRequest;
+struct FDeleteBloodlineResponse;
 struct FDeleteBoardRequest;
 struct FDeleteBundleRequest;
 struct FDeleteCalendarRequest;
@@ -368,6 +378,7 @@ struct FDepositResponse;
 struct FDeprecateAchievementDefinitionRequest;
 struct FDeprecateBoardTemplateRequest;
 struct FDeprecateCurrencyDefinitionRequest;
+struct FDeprecateDefinitionRequest;
 struct FDeprecateEncounterTypeRequest;
 struct FDeprecateEntryTemplateRequest;
 struct FDeprecateFactionRequest;
@@ -397,6 +408,7 @@ struct FDisputeResponse;
 struct FDocumentCategory;
 struct FDocumentationOwnerType;
 struct FDomainWeight;
+struct FDominanceModel;
 struct FDownloadInfo;
 struct FDownloadsResponse;
 struct FDowntimePolicy;
@@ -433,6 +445,8 @@ struct FEscrowResolution;
 struct FEscrowStatus;
 struct FEscrowTrustMode;
 struct FEscrowType;
+struct FEstablishBloodlineRequest;
+struct FEstablishBloodlineResponse;
 struct FExecuteContractRequest;
 struct FExecuteContractResponse;
 struct FExecutionMetadata;
@@ -446,7 +460,9 @@ struct FFactionResponse;
 struct FFactionStatus;
 struct FFailMilestoneRequest;
 struct FFamilyMember;
+struct FFamilyTreeNode;
 struct FFamilyTreeResponse;
+struct FFertilityWindow;
 struct FFindAssetUsageRequest;
 struct FFindAssetUsageResponse;
 struct FFindReferencesRequest;
@@ -470,6 +486,7 @@ struct FGenerateMelodyRequest;
 struct FGenerateMelodyResponse;
 struct FGenerateProgressionRequest;
 struct FGenerateProgressionResponse;
+struct FGenotypeEntry;
 struct FGetAchievementProgressRequest;
 struct FGetActiveScenariosRequest;
 struct FGetActiveScenariosResponse;
@@ -478,6 +495,8 @@ struct FGetAreaContentConfigRequest;
 struct FGetAssetRequest;
 struct FGetBalanceRequest;
 struct FGetBalanceResponse;
+struct FGetBloodlineRequest;
+struct FGetBloodlineResponse;
 struct FGetBoardRequest;
 struct FGetBoardTemplateRequest;
 struct FGetBondForSeedRequest;
@@ -516,10 +535,17 @@ struct FGetExchangeRateRequest;
 struct FGetExchangeRateResponse;
 struct FGetFactionByCodeRequest;
 struct FGetFactionRequest;
+struct FGetFamilyTreeRequest;
+struct FGetFamilyTreeResponse;
 struct FGetGameSessionRequest;
 struct FGetGardenStateRequest;
+struct FGetGeneticProfileRequest;
+struct FGetGeneticProfileResponse;
 struct FGetGrowthPhaseRequest;
 struct FGetGrowthRequest;
+struct FGetHeritableTraitTemplateResponse;
+struct FGetHybridTraitTemplateResponse;
+struct FGetImplicitMappingRequest;
 struct FGetItemInstanceRequest;
 struct FGetItemTemplateRequest;
 struct FGetJobStatusRequest;
@@ -527,6 +553,7 @@ struct FGetJobStatusResponse;
 struct FGetJourneyRequest;
 struct FGetLatestPulseRequest;
 struct FGetLicenseDefinitionRequest;
+struct FGetLifecycleTemplateResponse;
 struct FGetMatchmakingStatsRequest;
 struct FGetMatchmakingStatusRequest;
 struct FGetMilestoneRequest;
@@ -537,6 +564,8 @@ struct FGetOrCreateContainerRequest;
 struct FGetOutputStatusRequest;
 struct FGetPhaseConfigRequest;
 struct FGetPhaseMetricsRequest;
+struct FGetPhenotypeRequest;
+struct FGetPhenotypeResponse;
 struct FGetPlanRequest;
 struct FGetPlanResponse;
 struct FGetQuestDefinitionRequest;
@@ -581,6 +610,7 @@ struct FGetTransactionHistoryResponse;
 struct FGetValidationRulesRequest;
 struct FGetValidationRulesResponse;
 struct FGoapGoal;
+struct FGovernanceEntryResponse;
 struct FGrantEntryRequest;
 struct FGrantEntryResponse;
 struct FGrantResult;
@@ -601,9 +631,13 @@ struct FHasStatusRequest;
 struct FHasStatusResponse;
 struct FHeartbeatRequest;
 struct FHeartbeatResponse;
+struct FHeritableTraitDefinition;
 struct FHistoryRequest;
 struct FHistoryResponse;
 struct FHttpMethodType;
+struct FHybridTraitOverride;
+struct FImplicitDefinitionRef;
+struct FImplicitMappingResponse;
 struct FImportDocument;
 struct FImportDocumentationRequest;
 struct FImportDocumentationResponse;
@@ -654,6 +688,7 @@ struct FLeaveRoomRequest;
 struct FLeaveVoiceRoomRequest;
 struct FLicenseDefinitionResponse;
 struct FLicenseStatus;
+struct FLifecycleStageDefinition;
 struct FLinkPlatformRequest;
 struct FLinkPlatformResponse;
 struct FListAchievementDefinitionsRequest;
@@ -666,6 +701,8 @@ struct FListAreaContentConfigsRequest;
 struct FListAreaContentConfigsResponse;
 struct FListAvailableQuestsRequest;
 struct FListAvailableQuestsResponse;
+struct FListBloodlinesRequest;
+struct FListBloodlinesResponse;
 struct FListBoardTemplatesRequest;
 struct FListBoardTemplatesResponse;
 struct FListBoardsByOwnerRequest;
@@ -691,6 +728,8 @@ struct FListEscrowsRequest;
 struct FListEscrowsResponse;
 struct FListFactionsRequest;
 struct FListFactionsResponse;
+struct FListGovernanceEntriesRequest;
+struct FListGovernanceEntriesResponse;
 struct FListItemTemplatesRequest;
 struct FListItemTemplatesResponse;
 struct FListItemsByContainerRequest;
@@ -703,6 +742,8 @@ struct FListMembersRequest;
 struct FListMembersResponse;
 struct FListMembershipsByCharacterRequest;
 struct FListMembershipsByCharacterResponse;
+struct FListModGroupsRequest;
+struct FListModGroupsResponse;
 struct FListModesRequest;
 struct FListModesResponse;
 struct FListNormsRequest;
@@ -804,6 +845,7 @@ struct FMilestoneInstanceResponse;
 struct FMilestoneProgressSummary;
 struct FMilestoneResponse;
 struct FMilestoneStatus;
+struct FModGroupSummary;
 struct FModeAvailabilityResult;
 struct FModeDistribution;
 struct FModeResponse;
@@ -814,11 +856,13 @@ struct FMood;
 struct FMoveItemRequest;
 struct FMoveItemResponse;
 struct FMultipartConfig;
+struct FMutationEntry;
 struct FMutationType;
 struct FMuteParticipantRequest;
 struct FNamespaceStatsResponse;
 struct FNarrativeEffect;
 struct FNarrativeOptions;
+struct FNaturalDeathRange;
 struct FNavigationItem;
 struct FNewsItem;
 struct FNewsResponse;
@@ -861,6 +905,7 @@ struct FPhaseConfigResponse;
 struct FPhaseMetricsResponse;
 struct FPhasePosition;
 struct FPhaseTargetState;
+struct FPhenotypeEntry;
 struct FPinMessageRequest;
 struct FPinVersionRequest;
 struct FPitch;
@@ -903,6 +948,8 @@ struct FQuantityModel;
 struct FQuaternion;
 struct FQueryActiveContractsRequest;
 struct FQueryActiveContractsResponse;
+struct FQueryBloodlineMembersRequest;
+struct FQueryBloodlineMembersResponse;
 struct FQueryBoundsRequest;
 struct FQueryBoundsResponse;
 struct FQueryBundlesByAssetRequest;
@@ -969,6 +1016,7 @@ struct FReleaseMode;
 struct FReleaseTerritoryRequest;
 struct FRemoveByCategoryRequest;
 struct FRemoveBySourceRequest;
+struct FRemoveGovernanceEntryRequest;
 struct FRemoveLicenseDefinitionRequest;
 struct FRemoveLocationParentRequest;
 struct FRemoveMemberRequest;
@@ -995,9 +1043,13 @@ struct FResumeJourneyRequest;
 struct FRetireCameraRequest;
 struct FRevealDiscoveryRequest;
 struct FRevealDiscoveryResponse;
+struct FRevokeAuthorityRequest;
 struct FRewardDefinition;
 struct FRewardType;
 struct FRiskSeverity;
+struct FRollImplicitsRequest;
+struct FRollImplicitsResponse;
+struct FRolledSlot;
 struct FRoomTypeResponse;
 struct FRoomTypeStatus;
 struct FRouteSortBy;
@@ -1043,10 +1095,28 @@ struct FSeasonalRouteWarning;
 struct FSeedBoardTemplateRequest;
 struct FSeedBoardTemplateResponse;
 struct FSeedCalendarRequest;
+struct FSeedCharacterEntry;
+struct FSeedDefinitionEntry;
+struct FSeedDefinitionsRequest;
+struct FSeedDefinitionsResponse;
 struct FSeedEffectEntry;
 struct FSeedEffectsResponse;
 struct FSeedEntryTemplatesRequest;
 struct FSeedEntryTemplatesResponse;
+struct FSeedGeneticProfileRequest;
+struct FSeedGeneticProfileResponse;
+struct FSeedHeritableTraitTemplateRequest;
+struct FSeedHeritableTraitTemplateResponse;
+struct FSeedHybridTemplateRequest;
+struct FSeedHybridTemplateResponse;
+struct FSeedImplicitMappingEntry;
+struct FSeedImplicitMappingsRequest;
+struct FSeedImplicitMappingsResponse;
+struct FSeedItemError;
+struct FSeedLifecycleProfileRequest;
+struct FSeedLifecycleProfileResponse;
+struct FSeedLifecycleTemplateRequest;
+struct FSeedLifecycleTemplateResponse;
 struct FSeedLocation;
 struct FSeedLocationsRequest;
 struct FSeedLocationsResponse;
@@ -1073,7 +1143,10 @@ struct FSessionsResponse;
 struct FSetActionMappingRequest;
 struct FSetAreaContentConfigRequest;
 struct FSetCombatPreferencesRequest;
+struct FSetGovernanceEntryRequest;
 struct FSetLocationParentRequest;
+struct FSetNaturalDeathYearRequest;
+struct FSetNaturalDeathYearResponse;
 struct FSetPersonalityRequest;
 struct FSetTemplateValuesRequest;
 struct FSetTemplateValuesResponse;
@@ -1089,6 +1162,7 @@ struct FSortOrder;
 struct FSoulboundType;
 struct FSourceBundleReference;
 struct FSpaceCandidate;
+struct FSpawnTagModifier;
 struct FSpectrumType;
 struct FSplitStackRequest;
 struct FSplitStackResponse;
@@ -1101,6 +1175,7 @@ struct FStartWatcherRequest;
 struct FStartWatcherResponse;
 struct FStartWatchersForRealmRequest;
 struct FStartWatchersForRealmResponse;
+struct FStatGrant;
 struct FStatusCategory;
 struct FStatusEffectSummary;
 struct FStatusInstanceResponse;
@@ -2097,6 +2172,100 @@ struct FAdvanceJourneyRequest
 };
 
 /**
+ * Full affix definition response
+ */
+USTRUCT(BlueprintType)
+struct FAffixDefinitionResponse
+{
+    GENERATED_BODY()
+
+    /** Unique definition identifier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid DefinitionId;
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Unique code within game service */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Code;
+
+    /** Slot type (e.g., "prefix", "suffix", "implicit") */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SlotType;
+
+    /** Exclusivity group */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ModGroup;
+
+    /** Power tier within mod group (1 = best) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 Tier = 0;
+
+    /** Broad classification */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Category;
+
+    /** Generation tags */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> Tags;
+
+    /** Stat contributions */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FStatGrant> StatGrants;
+
+    /** Base weight for generation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 SpawnWeight = 0;
+
+    /** Per-tag weight multipliers */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FSpawnTagModifier> SpawnTagModifiers;
+
+    /** Minimum item level to spawn */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 RequiredItemLevel = 0;
+
+    /** Required influence types */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> RequiredInfluences;
+
+    /** Item classes this appears on */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> ValidItemClasses;
+
+    /** Human-readable display name */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DisplayName;
+
+    /** Sorting priority */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 DisplayOrder = 0;
+
+    /** Whether this definition is deprecated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsDeprecated = false;
+
+    /** When this definition was deprecated (null if not deprecated) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> DeprecatedAt;
+
+    /** Reason for deprecation (null if not deprecated) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DeprecationReason;
+
+    /** When this definition was created */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FDateTime CreatedAt;
+
+    /** When this definition was last updated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> UpdatedAt;
+
+};
+
+/**
  * Describes a capability or interaction mode for a node.
  */
 USTRUCT(BlueprintType)
@@ -2303,6 +2472,24 @@ struct FAnswerPeerRequest
     /** ICE candidates for NAT traversal (can be trickled later) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FString> IceCandidates;
+
+};
+
+/**
+ * Derived skill aptitude from phenotype traits
+ */
+USTRUCT(BlueprintType)
+struct FAptitudeEntry
+{
+    GENERATED_BODY()
+
+    /** Skill domain code (e.g., smithing, enchanting) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Domain;
+
+    /** Inherited aptitude value representing innate potential (0.0-1.0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    float Value = 0.0f;
 
 };
 
@@ -2553,16 +2740,6 @@ struct FAssetMetadataInput
     /** Searchable tags for the asset (null to omit) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FString> Tags;
-
-};
-
-/**
- * Type of asset owner per FOUNDATION TENETS (Account Identity Boundary).
- */
-USTRUCT(BlueprintType)
-struct FAssetOwnerType
-{
-    GENERATED_BODY()
 
 };
 
@@ -3081,6 +3258,16 @@ struct FAuthoringReleaseRequest
 };
 
 /**
+ * Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.
+ */
+USTRUCT(BlueprintType)
+struct FAuthorityLevel
+{
+    GENERATED_BODY()
+
+};
+
+/**
  * Configuration for instantiate-on-access behavior
  */
 USTRUCT(BlueprintType)
@@ -3495,6 +3682,104 @@ USTRUCT(BlueprintType)
 struct FBindingStatus
 {
     GENERATED_BODY()
+
+};
+
+/**
+ * Bloodline membership record for a character
+ */
+USTRUCT(BlueprintType)
+struct FBloodlineEntry
+{
+    GENERATED_BODY()
+
+    /** Bloodline identifier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid BloodlineId;
+
+    /** Human-readable bloodline code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString BloodlineCode;
+
+    /** Character who founded or was first tracked member */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid OriginCharacterId;
+
+    /** When the bloodline was first identified */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 OriginGameYear = 0;
+
+    /** Trait codes that characterize this bloodline */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> TraitSignature;
+
+    /** Generations from origin to this character */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 GenerationFrom = 0;
+
+};
+
+/**
+ * Summary of a bloodline member with generation and trait data
+ */
+USTRUCT(BlueprintType)
+struct FBloodlineMemberSummary
+{
+    GENERATED_BODY()
+
+    /** Character who is a member of this bloodline */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid CharacterId;
+
+    /** Generations from bloodline origin to this character */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 GenerationFrom = 0;
+
+    /** Expressed signature traits for this member */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FPhenotypeEntry> TraitExpression;
+
+};
+
+/**
+ * Bloodline definition data returned by get and list endpoints
+ */
+USTRUCT(BlueprintType)
+struct FBloodlineSummary
+{
+    GENERATED_BODY()
+
+    /** Bloodline identifier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid BloodlineId;
+
+    /** Human-readable bloodline code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString BloodlineCode;
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Character who founded or was first tracked member */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid OriginCharacterId;
+
+    /** Game year when the bloodline was first identified */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 OriginGameYear = 0;
+
+    /** Trait codes that characterize this bloodline */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> TraitSignature;
+
+    /** Number of living members */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 MemberCount = 0;
+
+    /** Number of generations from origin to most recent member */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 GenerationSpan = 0;
 
 };
 
@@ -4378,13 +4663,9 @@ struct FBundleInfo
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Description;
 
-    /** Type of owner (null for system-owned bundles) */
+    /** Informational field recording who created this bundle. Not used for access control. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TMap<FString, FString> OwnerType;
-
-    /** Owner identifier - session ID or service name (null for system-owned bundles) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString OwnerId;
+    FString CreatedBy;
 
     /** Game realm this bundle belongs to. Null for cross-realm bundles. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -4524,13 +4805,9 @@ struct FBundleUploadRequest
 {
     GENERATED_BODY()
 
-    /** Type of owner uploading this bundle */
+    /** Informational field recording who uploaded this bundle. Not used for access control. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FAssetOwnerType OwnerType;
-
-    /** Owner identifier. For Session type: the WebSocket session ID (UUID format). */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString OwnerId;
+    FString CreatedBy;
 
     /** Must end with .bannou or .zip */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -8316,13 +8593,9 @@ struct FCreateBundleRequest
 {
     GENERATED_BODY()
 
-    /** Type of owner creating this bundle */
+    /** Informational field recording who created this bundle. Not used for access control. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FAssetOwnerType OwnerType;
-
-    /** Owner identifier. For Session type: the WebSocket session ID (UUID format). */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString OwnerId;
+    FString CreatedBy;
 
     /** Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1") */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -8613,32 +8886,72 @@ struct FCreateContractInstanceRequest
 };
 
 /**
- * Request to create a map definition
+ * Request to create a new affix definition
  */
 USTRUCT(BlueprintType)
 struct FCreateDefinitionRequest
 {
     GENERATED_BODY()
 
-    /** Human-readable name */
+    /** Game service scope for this definition */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString Name;
+    FGuid GameServiceId;
 
-    /** Description of the map template */
+    /** Unique definition code within game service */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString Description;
+    FString Code;
 
-    /** Layer configurations */
+    /** Slot type (e.g., "prefix", "suffix", "implicit", "enchant") */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TArray<FLayerDefinition> Layers;
+    FString SlotType;
 
-    /** Default bounds for regions using this definition */
+    /** Exclusivity group (one affix per mod group per item) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TMap<FString, FString> DefaultBounds;
+    FString ModGroup;
 
-    /** Client-provided definition metadata. No Bannou plugin reads specific keys from this field by convention. */
+    /** Power tier within mod group (1 = best) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TMap<FString, FString> Metadata;
+    int32 Tier = 0;
+
+    /** Broad classification (e.g., "defense", "offense") */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Category;
+
+    /** Generation tags for pool filtering */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> Tags;
+
+    /** Stat contributions from this affix (minimum 1) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FStatGrant> StatGrants;
+
+    /** Base weight for weighted random selection */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 SpawnWeight = 0;
+
+    /** Per-tag weight multipliers */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FSpawnTagModifier> SpawnTagModifiers;
+
+    /** Minimum item level to spawn this definition */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> RequiredItemLevel;
+
+    /** Required influence types (empty = no requirement) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> RequiredInfluences;
+
+    /** Item classes this definition can appear on */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> ValidItemClasses;
+
+    /** Human-readable display name (e.g., "Blazing", "of the Godslayer") */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DisplayName;
+
+    /** Sorting priority within slot type */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> DisplayOrder;
 
 };
 
@@ -8849,6 +9162,32 @@ struct FCreateFactionRequest
     /** Parent faction for hierarchy (null for top-level) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FGuid> ParentFactionId;
+
+    /** Authority level for the new faction (defaults to Influence if not specified) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FAuthorityLevel> AuthorityLevel;
+
+};
+
+/**
+ * Request to map implicit affix definitions to an item template code
+ */
+USTRUCT(BlueprintType)
+struct FCreateImplicitMappingRequest
+{
+    GENERATED_BODY()
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Item template code to map */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ItemTemplateCode;
+
+    /** Implicit affix definition IDs (must be slotType "implicit") */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FGuid> ImplicitDefinitionIds;
 
 };
 
@@ -9258,13 +9597,9 @@ struct FCreateMetabundleRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Version;
 
-    /** Type of owner creating this metabundle */
+    /** Informational field recording who created this metabundle. Not used for access control. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FAssetOwnerType OwnerType;
-
-    /** Owner identifier. For Session type: the WebSocket session ID (UUID format). */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString OwnerId;
+    FString CreatedBy;
 
     /** Game realm for this metabundle */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -10145,6 +10480,16 @@ struct FDayPeriodDefinition
 };
 
 /**
+ * Statistical distribution model for natural death year calculation
+ */
+USTRUCT(BlueprintType)
+struct FDeathDistribution
+{
+    GENERATED_BODY()
+
+};
+
+/**
  * Request to decline a formed match
  */
 USTRUCT(BlueprintType)
@@ -10229,6 +10574,28 @@ struct FDefineNormRequest
 };
 
 /**
+ * Request to delegate authority from a sovereign faction to a child faction for specific case type domains
+ */
+USTRUCT(BlueprintType)
+struct FDelegateAuthorityRequest
+{
+    GENERATED_BODY()
+
+    /** Sovereign faction granting delegation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid SovereignFactionId;
+
+    /** Child faction receiving delegated authority */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid TargetFactionId;
+
+    /** Case type domains to delegate (e.g., ["trade_dispute", "dissolution"]). Each domain grants the target faction the right to arbitrate cases of that type within its territory. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> Domains;
+
+};
+
+/**
  * Request to delete an action tag mapping
  */
 USTRUCT(BlueprintType)
@@ -10309,6 +10676,30 @@ struct FDeleteAreaContentConfigRequest
     /** Area content config to delete */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGuid AreaConfigId;
+
+};
+
+/**
+ * Request to delete a bloodline
+ */
+USTRUCT(BlueprintType)
+struct FDeleteBloodlineRequest
+{
+    GENERATED_BODY()
+
+    /** Bloodline to delete */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid BloodlineId;
+
+};
+
+/**
+ * Empty response. HTTP 200 confirms the bloodline was deleted.
+ */
+USTRUCT(BlueprintType)
+struct FDeleteBloodlineResponse
+{
+    GENERATED_BODY()
 
 };
 
@@ -10881,6 +11272,24 @@ struct FDeprecateCurrencyDefinitionRequest
 };
 
 /**
+ * Request to deprecate a definition (Category B — one-way, no delete)
+ */
+USTRUCT(BlueprintType)
+struct FDeprecateDefinitionRequest
+{
+    GENERATED_BODY()
+
+    /** Definition to deprecate */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid DefinitionId;
+
+    /** Reason for deprecation (recommended for audit trail) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Reason;
+
+};
+
+/**
  * Request to deprecate an encounter type (Category B — one-way, no delete). Idempotent — returns OK if already deprecated.
  */
 USTRUCT(BlueprintType)
@@ -11439,6 +11848,16 @@ struct FDomainWeight
     /** Weight applied to this domain on scenario completion */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     float Weight = 0.0f;
+
+};
+
+/**
+ * Genetic dominance model determining how alleles combine to produce phenotype
+ */
+USTRUCT(BlueprintType)
+struct FDominanceModel
+{
+    GENERATED_BODY()
 
 };
 
@@ -12607,6 +13026,50 @@ struct FEscrowType
 };
 
 /**
+ * Request to manually establish a bloodline
+ */
+USTRUCT(BlueprintType)
+struct FEstablishBloodlineRequest
+{
+    GENERATED_BODY()
+
+    /** Human-readable bloodline code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString BloodlineCode;
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Character who founded or is the first tracked member */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid OriginCharacterId;
+
+    /** Trait codes that characterize this bloodline */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> TraitSignature;
+
+    /** Additional ancestor characters to retroactively assign to this bloodline */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FGuid> AncestorCharacterIds;
+
+};
+
+/**
+ * Result of bloodline establishment
+ */
+USTRUCT(BlueprintType)
+struct FEstablishBloodlineResponse
+{
+    GENERATED_BODY()
+
+    /** Identifier of the newly created bloodline */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid BloodlineId;
+
+};
+
+/**
  * Request to execute contract clauses
  */
 USTRUCT(BlueprintType)
@@ -12848,6 +13311,10 @@ struct FFactionResponse
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FFactionStatus Status;
 
+    /** Authority classification for governance power. Defaults to Influence. Sovereign is set by DesignateRealmBaseline. Delegated is set via delegation endpoints. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FAuthorityLevel AuthorityLevel;
+
     /** Current seed growth phase (denormalized from lib-seed for convenience) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString CurrentPhase;
@@ -12937,6 +13404,40 @@ struct FFamilyMember
 };
 
 /**
+ * A node in a multi-generational family tree
+ */
+USTRUCT(BlueprintType)
+struct FFamilyTreeNode
+{
+    GENERATED_BODY()
+
+    /** Character at this tree node */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid CharacterId;
+
+    /** Species code of this character */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SpeciesCode;
+
+    /** Generation relative to root (negative for ancestors, positive for descendants) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 Generation = 0;
+
+    /** Relationship to the root character (parent, grandparent, child, sibling, etc.) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Relationship;
+
+    /** Key phenotype traits for this character (summarized) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FPhenotypeEntry> PhenotypeSummary;
+
+    /** Bloodline codes this character belongs to */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> BloodlineCodes;
+
+};
+
+/**
  * Family relationships for a character
  */
 USTRUCT(BlueprintType)
@@ -12963,6 +13464,28 @@ struct FFamilyTreeResponse
     /** Previous incarnations (if reincarnation tracked) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FPastLifeReference> PastLives;
+
+};
+
+/**
+ * Species fertility peak and decline configuration
+ */
+USTRUCT(BlueprintType)
+struct FFertilityWindow
+{
+    GENERATED_BODY()
+
+    /** Age when fertility peaks */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 PeakStartAge = 0;
+
+    /** Age when peak ends */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 PeakEndAge = 0;
+
+    /** How fast fertility drops after peak (0.0-1.0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    float DeclineRate = 0.0f;
 
 };
 
@@ -13581,6 +14104,32 @@ struct FGenerateProgressionResponse
 };
 
 /**
+ * Inherited allele pair for a single genetic trait
+ */
+USTRUCT(BlueprintType)
+struct FGenotypeEntry
+{
+    GENERATED_BODY()
+
+    /** Game-configurable genetic trait identifier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString TraitCode;
+
+    /** Value from parent A (0.0-1.0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    float AlleleA = 0.0f;
+
+    /** Value from parent B (0.0-1.0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    float AlleleB = 0.0f;
+
+    /** How alleles combine to produce phenotype */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FDominanceModel Dominance;
+
+};
+
+/**
  * Request to get achievement progress
  */
 USTRUCT(BlueprintType)
@@ -13745,6 +14294,34 @@ struct FGetBalanceResponse
     /** Autogain status (null if autogain not enabled) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FAutogainInfo> AutogainInfo;
+
+};
+
+/**
+ * Request to get a bloodline definition
+ */
+USTRUCT(BlueprintType)
+struct FGetBloodlineRequest
+{
+    GENERATED_BODY()
+
+    /** Bloodline to retrieve */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid BloodlineId;
+
+};
+
+/**
+ * Bloodline definition
+ */
+USTRUCT(BlueprintType)
+struct FGetBloodlineResponse
+{
+    GENERATED_BODY()
+
+    /** Bloodline definition data */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FBloodlineSummary Bloodline;
 
 };
 
@@ -14157,16 +14734,24 @@ struct FGetControllingFactionRequest
 };
 
 /**
- * Request to get a map definition
+ * Request to get a definition by ID or by gameServiceId + code
  */
 USTRUCT(BlueprintType)
 struct FGetDefinitionRequest
 {
     GENERATED_BODY()
 
-    /** Definition ID to retrieve */
+    /** Definition ID (takes precedence over code lookup) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid DefinitionId;
+    TOptional<FGuid> DefinitionId;
+
+    /** Game service scope (required for code lookup) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FGuid> GameServiceId;
+
+    /** Definition code (used with gameServiceId) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Code;
 
 };
 
@@ -14433,6 +15018,46 @@ struct FGetFactionRequest
 };
 
 /**
+ * Request to get a multi-generational family tree
+ */
+USTRUCT(BlueprintType)
+struct FGetFamilyTreeRequest
+{
+    GENERATED_BODY()
+
+    /** Root character of the family tree */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid CharacterId;
+
+    /** Generations to traverse upward */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> AncestorDepth;
+
+    /** Generations to traverse downward */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> DescendantDepth;
+
+};
+
+/**
+ * Multi-generational family tree
+ */
+USTRUCT(BlueprintType)
+struct FGetFamilyTreeResponse
+{
+    GENERATED_BODY()
+
+    /** Character at the root of the tree */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RootCharacterId;
+
+    /** All nodes in the family tree */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FFamilyTreeNode> Nodes;
+
+};
+
+/**
  * Request to get a specific game session
  */
 USTRUCT(BlueprintType)
@@ -14461,6 +15086,74 @@ struct FGetGardenStateRequest
 };
 
 /**
+ * Request to get a genetic profile
+ */
+USTRUCT(BlueprintType)
+struct FGetGeneticProfileRequest
+{
+    GENERATED_BODY()
+
+    /** Character to retrieve genetic profile for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid CharacterId;
+
+};
+
+/**
+ * Full genetic profile for a character
+ */
+USTRUCT(BlueprintType)
+struct FGetGeneticProfileResponse
+{
+    GENERATED_BODY()
+
+    /** Character this profile belongs to */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid CharacterId;
+
+    /** Primary species code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SpeciesCode;
+
+    /** Secondary species code (non-null for hybrids) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SecondarySpecies;
+
+    /** First parent (null for seeded/first-generation) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FGuid> ParentAId;
+
+    /** Second parent (null for seeded/first-generation) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FGuid> ParentBId;
+
+    /** Generations from earliest tracked ancestor */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 GenerationDepth = 0;
+
+    /** Inherited allele pairs */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FGenotypeEntry> Genotype;
+
+    /** Expressed trait values */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FPhenotypeEntry> Phenotype;
+
+    /** Derived skill aptitudes */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FAptitudeEntry> Aptitudes;
+
+    /** Bloodline memberships */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FBloodlineEntry> Bloodlines;
+
+    /** Random mutations applied during creation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FMutationEntry> Mutations;
+
+};
+
+/**
  * Request to get the current growth phase.
  */
 USTRUCT(BlueprintType)
@@ -14485,6 +15178,100 @@ struct FGetGrowthRequest
     /** The seed whose growth to retrieve. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGuid SeedId;
+
+};
+
+/**
+ * Heritable trait template for a species
+ */
+USTRUCT(BlueprintType)
+struct FGetHeritableTraitTemplateResponse
+{
+    GENERATED_BODY()
+
+    /** Species code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SpeciesCode;
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Heritable trait definitions */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FHeritableTraitDefinition> Traits;
+
+    /** Whether this template is deprecated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsDeprecated = false;
+
+    /** When the template was deprecated (null if not deprecated) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> DeprecatedAt;
+
+    /** Why the template was deprecated (null if not deprecated) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DeprecationReason;
+
+};
+
+/**
+ * Hybrid trait template for a species pair
+ */
+USTRUCT(BlueprintType)
+struct FGetHybridTraitTemplateResponse
+{
+    GENERATED_BODY()
+
+    /** First species in the pair */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SpeciesA;
+
+    /** Second species in the pair */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SpeciesB;
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Dominance overrides for specific traits in hybrid offspring */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FHybridTraitOverride> TraitOverrides;
+
+    /** Fertility modifier for hybrid offspring (0.0 = sterile, 1.0 = normal) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    float HybridFertilityModifier = 0.0f;
+
+    /** Whether this template is deprecated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsDeprecated = false;
+
+    /** When the template was deprecated (null if not deprecated) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> DeprecatedAt;
+
+    /** Why the template was deprecated (null if not deprecated) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DeprecationReason;
+
+};
+
+/**
+ * Request to get implicit mapping for a template code
+ */
+USTRUCT(BlueprintType)
+struct FGetImplicitMappingRequest
+{
+    GENERATED_BODY()
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Item template code to look up */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ItemTemplateCode;
 
 };
 
@@ -14647,6 +15434,48 @@ struct FGetLicenseDefinitionRequest
     /** License code to look up */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Code;
+
+};
+
+/**
+ * Lifecycle template for a species
+ */
+USTRUCT(BlueprintType)
+struct FGetLifecycleTemplateResponse
+{
+    GENERATED_BODY()
+
+    /** Species code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SpeciesCode;
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Lifecycle stage definitions */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FLifecycleStageDefinition> Stages;
+
+    /** Natural death year calculation parameters */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FNaturalDeathRange NaturalDeathRange;
+
+    /** Fertility peak and decline parameters */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FFertilityWindow FertilityWindow;
+
+    /** Whether this template is deprecated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsDeprecated = false;
+
+    /** When the template was deprecated (null if not deprecated) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> DeprecatedAt;
+
+    /** Why the template was deprecated (null if not deprecated) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DeprecationReason;
 
 };
 
@@ -14831,6 +15660,42 @@ USTRUCT(BlueprintType)
 struct FGetPhaseMetricsRequest
 {
     GENERATED_BODY()
+
+};
+
+/**
+ * Request to get phenotype data
+ */
+USTRUCT(BlueprintType)
+struct FGetPhenotypeRequest
+{
+    GENERATED_BODY()
+
+    /** Character to retrieve phenotype for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid CharacterId;
+
+};
+
+/**
+ * Expressed phenotype traits and aptitudes
+ */
+USTRUCT(BlueprintType)
+struct FGetPhenotypeResponse
+{
+    GENERATED_BODY()
+
+    /** Character this data belongs to */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid CharacterId;
+
+    /** Expressed phenotype traits */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FPhenotypeEntry> Phenotype;
+
+    /** Derived skill aptitudes */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FAptitudeEntry> Aptitudes;
 
 };
 
@@ -15695,6 +16560,44 @@ struct FGoapGoal
 };
 
 /**
+ * A governance data entry associating a case type domain with a contract template and governance parameters
+ */
+USTRUCT(BlueprintType)
+struct FGovernanceEntryResponse
+{
+    GENERATED_BODY()
+
+    /** Unique identifier for this governance entry */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GovernanceId;
+
+    /** Faction owning this governance entry */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid FactionId;
+
+    /** Case type domain prefix (e.g., "dissolution", "trade_dispute", "criminal") */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Domain;
+
+    /** Contract template code in lib-contract for this case type */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString TemplateCode;
+
+    /** Opaque governance parameters for the contract template. Faction stores and returns these unchanged. Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TMap<FString, FString> GovernanceParameters;
+
+    /** When this governance entry was created */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FDateTime CreatedAt;
+
+    /** When this governance entry was last updated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> UpdatedAt;
+
+};
+
+/**
  * Request to grant/unlock an entry in a collection
  */
 USTRUCT(BlueprintType)
@@ -16183,6 +17086,52 @@ struct FHeartbeatResponse
 };
 
 /**
+ * Definition of a heritable genetic trait for a species
+ */
+USTRUCT(BlueprintType)
+struct FHeritableTraitDefinition
+{
+    GENERATED_BODY()
+
+    /** Unique trait identifier within species */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString TraitCode;
+
+    /** Human-readable trait name */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DisplayName;
+
+    /** Trait category (physical, mental, magical, social) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Category;
+
+    /** How alleles combine for this trait */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FDominanceModel DominanceModel;
+
+    /** Probability of mutation per trait during procreation (0.0-1.0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    float MutationChance = 0.0f;
+
+    /** Maximum allele shift on mutation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    float MutationRange = 0.0f;
+
+    /** Stage at which trait fully expresses (null for immediate expression at birth) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ExpressionDelay;
+
+    /** Which personality trait this feeds (e.g., aggression) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString PersonalityMapping;
+
+    /** Which aptitude domain this feeds (e.g., smithing) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString AptitudeMapping;
+
+};
+
+/**
  * Request for scene version history
  */
 USTRUCT(BlueprintType)
@@ -16229,6 +17178,72 @@ USTRUCT(BlueprintType)
 struct FHttpMethodType
 {
     GENERATED_BODY()
+
+};
+
+/**
+ * Dominance override for a specific trait in cross-species hybridization
+ */
+USTRUCT(BlueprintType)
+struct FHybridTraitOverride
+{
+    GENERATED_BODY()
+
+    /** Trait being overridden */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString TraitCode;
+
+    /** Dominance model override for this trait in hybrid offspring */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FDominanceModel DominanceOverride;
+
+};
+
+/**
+ * Reference to an implicit definition with optional value override ranges
+ */
+USTRUCT(BlueprintType)
+struct FImplicitDefinitionRef
+{
+    GENERATED_BODY()
+
+    /** Implicit affix definition ID */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid DefinitionId;
+
+    /** Override minimum value for rolling (null uses definition default) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> MinValueOverride;
+
+    /** Override maximum value for rolling (null uses definition default) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> MaxValueOverride;
+
+};
+
+/**
+ * Implicit mapping for an item template
+ */
+USTRUCT(BlueprintType)
+struct FImplicitMappingResponse
+{
+    GENERATED_BODY()
+
+    /** Unique mapping identifier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid MappingId;
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Item template code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ItemTemplateCode;
+
+    /** Mapped implicit affix definition IDs */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FGuid> ImplicitDefinitionIds;
 
 };
 
@@ -17553,6 +18568,52 @@ struct FLicenseStatus
 };
 
 /**
+ * Definition of a single lifecycle stage within a species template
+ */
+USTRUCT(BlueprintType)
+struct FLifecycleStageDefinition
+{
+    GENERATED_BODY()
+
+    /** Stage code (species-configurable, e.g., infant, child, adult) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Code;
+
+    /** Minimum age in game years for this stage */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 MinAge = 0;
+
+    /** Maximum age for this stage (null for open-ended stages like dying) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> MaxAge;
+
+    /** Multiplier applied to character health at this stage */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    float HealthModifier = 0.0f;
+
+    /** Base fertility at this stage (0.0-1.0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    float FertilityBase = 0.0f;
+
+    /** Whether marriage is permitted at this stage */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool CanMarry = false;
+
+    /** Whether procreation is permitted at this stage */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool CanProcreate = false;
+
+    /** Whether character can own organizations at this stage */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool CanOwnOrg = false;
+
+    /** Whether guardian spirit can possess character at this stage */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool CanBePossessed = false;
+
+};
+
+/**
  * Request to link a streaming platform account
  */
 USTRUCT(BlueprintType)
@@ -17793,6 +18854,58 @@ struct FListAvailableQuestsResponse
     /** Available quest definitions */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FQuestDefinitionResponse> Available;
+
+};
+
+/**
+ * Request to list bloodlines within a game service
+ */
+USTRUCT(BlueprintType)
+struct FListBloodlinesRequest
+{
+    GENERATED_BODY()
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Filter by bloodlines containing these trait codes */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> TraitSignatureFilter;
+
+    /** Minimum generation span filter */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> MinGenerationDepth;
+
+    /** Minimum living member count filter */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> MinMemberCount;
+
+    /** Page number */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> Page;
+
+    /** Results per page */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> PageSize;
+
+};
+
+/**
+ * Paged list of bloodlines
+ */
+USTRUCT(BlueprintType)
+struct FListBloodlinesResponse
+{
+    GENERATED_BODY()
+
+    /** Matching bloodlines */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FBloodlineSummary> Bloodlines;
+
+    /** Total matching count */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 TotalCount = 0;
 
 };
 
@@ -18131,42 +19244,86 @@ struct FListContractTemplatesResponse
 };
 
 /**
- * Request to list map definitions
+ * Request to list definitions with optional filters
  */
 USTRUCT(BlueprintType)
 struct FListDefinitionsRequest
 {
     GENERATED_BODY()
 
-    /** Filter by name (partial match) */
+    /** Game service scope */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString NameFilter;
+    FGuid GameServiceId;
 
-    /** Pagination offset */
+    /** Filter by slot type */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int32> Offset;
+    FString SlotType;
 
-    /** Max results to return */
+    /** Filter by mod group */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int32> Limit;
+    FString ModGroup;
+
+    /** Filter by category */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Category;
+
+    /** Filter by tags (any match) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> Tags;
+
+    /** Filter by minimum tier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> TierMin;
+
+    /** Filter by maximum tier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> TierMax;
+
+    /** Filter by required influence type */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString RequiredInfluence;
+
+    /** Include deprecated definitions in results (excluded by default) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IncludeDeprecated = false;
+
+    /** Page number */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> Page;
+
+    /** Items per page */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> PageSize;
 
 };
 
 /**
- * Response containing list of map definitions
+ * Paginated list of affix definitions
  */
 USTRUCT(BlueprintType)
 struct FListDefinitionsResponse
 {
     GENERATED_BODY()
 
-    /** List of definitions */
+    /** Definitions on this page */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TArray<FMapDefinition> Definitions;
+    TArray<FAffixDefinitionResponse> Definitions;
 
-    /** Total count matching filter */
+    /** Total definitions matching filters */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    int32 Total = 0;
+    int32 TotalCount = 0;
+
+    /** Current page number */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 Page = 0;
+
+    /** Items per page */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 PageSize = 0;
+
+    /** Whether more pages exist */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool HasNextPage = false;
 
 };
 
@@ -18387,6 +19544,34 @@ struct FListFactionsResponse
     /** Whether more pages are available */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     bool HasMore = false;
+
+};
+
+/**
+ * Request to list governance entries for a faction
+ */
+USTRUCT(BlueprintType)
+struct FListGovernanceEntriesRequest
+{
+    GENERATED_BODY()
+
+    /** Faction to list governance entries for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid FactionId;
+
+};
+
+/**
+ * All governance entries for a faction
+ */
+USTRUCT(BlueprintType)
+struct FListGovernanceEntriesResponse
+{
+    GENERATED_BODY()
+
+    /** All governance entries for this faction */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FGovernanceEntryResponse> Entries;
 
 };
 
@@ -18679,6 +19864,38 @@ struct FListMembershipsByCharacterResponse
     /** All faction memberships for the character */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FCharacterMembershipEntry> Memberships;
+
+};
+
+/**
+ * Request to list mod groups for a game service
+ */
+USTRUCT(BlueprintType)
+struct FListModGroupsRequest
+{
+    GENERATED_BODY()
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Include deprecated definitions in mod group counts */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IncludeDeprecated = false;
+
+};
+
+/**
+ * List of mod groups with definition counts
+ */
+USTRUCT(BlueprintType)
+struct FListModGroupsResponse
+{
+    GENERATED_BODY()
+
+    /** Mod group summaries */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FModGroupSummary> ModGroups;
 
 };
 
@@ -19729,66 +20946,42 @@ struct FListStylesResponse
 };
 
 /**
- * Request to list templates with optional filters
+ * Request to list all templates for a game service
  */
 USTRUCT(BlueprintType)
 struct FListTemplatesRequest
 {
     GENERATED_BODY()
 
-    /** Filter by category */
+    /** Game service scope */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FScenarioCategory> Category;
-
-    /** Filter by connectivity mode */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FConnectivityMode> ConnectivityMode;
-
-    /** Filter by deployment phase availability */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FDeploymentPhase> DeploymentPhase;
-
-    /** Filter by template status */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FTemplateStatus> Status;
+    FGuid GameServiceId;
 
     /** Whether to include deprecated templates in results */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     bool IncludeDeprecated = false;
 
-    /** Page number (1-based) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int32> Page;
-
-    /** Items per page */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<int32> PageSize;
-
 };
 
 /**
- * Paginated list of scenario templates
+ * All lifecycle and heritage templates for a game service
  */
 USTRUCT(BlueprintType)
 struct FListTemplatesResponse
 {
     GENERATED_BODY()
 
-    /** Templates on this page */
+    /** All lifecycle stage templates */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TArray<FScenarioTemplateResponse> Templates;
+    TArray<FGetLifecycleTemplateResponse> LifecycleTemplates;
 
-    /** Total number of matching templates */
+    /** All heritable trait templates */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    int32 TotalCount = 0;
+    TArray<FGetHeritableTraitTemplateResponse> HeritableTraitTemplates;
 
-    /** Current page number */
+    /** All hybrid trait templates */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    int32 Page = 0;
-
-    /** Items per page */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    int32 PageSize = 0;
+    TArray<FGetHybridTraitTemplateResponse> HybridTemplates;
 
 };
 
@@ -21137,6 +22330,24 @@ struct FMilestoneStatus
 };
 
 /**
+ * Mod group summary with definition count
+ */
+USTRUCT(BlueprintType)
+struct FModGroupSummary
+{
+    GENERATED_BODY()
+
+    /** Mod group code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Code;
+
+    /** Number of definitions in this mod group */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 DefinitionCount = 0;
+
+};
+
+/**
  * Availability result for a single transit mode for an entity
  */
 USTRUCT(BlueprintType)
@@ -21409,6 +22620,28 @@ struct FMultipartConfig
 };
 
 /**
+ * Random mutation applied during recombination
+ */
+USTRUCT(BlueprintType)
+struct FMutationEntry
+{
+    GENERATED_BODY()
+
+    /** Trait that was mutated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString TraitCode;
+
+    /** Amount the allele value was shifted */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    float Shift = 0.0f;
+
+    /** Value before mutation (null if unavailable) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<float> OriginalValue;
+
+};
+
+/**
  * Types of state mutations a scenario can apply.
  */
 USTRUCT(BlueprintType)
@@ -21519,6 +22752,28 @@ struct FNarrativeOptions
     /** Preferred tension curve shape throughout the composition */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FTensionProfile> TensionProfile;
+
+};
+
+/**
+ * Configuration for natural death year calculation
+ */
+USTRUCT(BlueprintType)
+struct FNaturalDeathRange
+{
+    GENERATED_BODY()
+
+    /** Earliest possible natural death age */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 MinAge = 0;
+
+    /** Latest possible natural death age */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 MaxAge = 0;
+
+    /** Statistical distribution for death year selection */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FDeathDistribution Distribution;
 
 };
 
@@ -22583,6 +23838,28 @@ struct FPhaseTargetState
 };
 
 /**
+ * Expressed phenotype value for a single genetic trait
+ */
+USTRUCT(BlueprintType)
+struct FPhenotypeEntry
+{
+    GENERATED_BODY()
+
+    /** Same code as genotype */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString TraitCode;
+
+    /** The expressed phenotype value */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    float Value = 0.0f;
+
+    /** Which dominance model produced this value */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FDominanceModel ExpressionRule;
+
+};
+
+/**
  * Request to pin a message in a room
  */
 USTRUCT(BlueprintType)
@@ -23411,6 +24688,46 @@ struct FQueryActiveContractsResponse
 };
 
 /**
+ * Request to query living members of a bloodline
+ */
+USTRUCT(BlueprintType)
+struct FQueryBloodlineMembersRequest
+{
+    GENERATED_BODY()
+
+    /** Bloodline to query members of */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid BloodlineId;
+
+    /** Page number */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> Page;
+
+    /** Results per page */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> PageSize;
+
+};
+
+/**
+ * Living members of a bloodline with generation and trait data
+ */
+USTRUCT(BlueprintType)
+struct FQueryBloodlineMembersResponse
+{
+    GENERATED_BODY()
+
+    /** Matching bloodline members */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FBloodlineMemberSummary> Members;
+
+    /** Total matching count */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 TotalCount = 0;
+
+};
+
+/**
  * Query map data within bounds
  */
 USTRUCT(BlueprintType)
@@ -23546,13 +24863,9 @@ struct FQueryBundlesRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString NameContains;
 
-    /** Filter by owner type (null for any type) */
+    /** Filter by creator (null for all creators) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TMap<FString, FString> OwnerType;
-
-    /** Filter by owner identifier (session ID or service name) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString OwnerId;
+    FString CreatedBy;
 
     /** Filter by realm */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -25543,6 +26856,24 @@ struct FRemoveBySourceRequest
 };
 
 /**
+ * Request to remove a governance entry from a faction
+ */
+USTRUCT(BlueprintType)
+struct FRemoveGovernanceEntryRequest
+{
+    GENERATED_BODY()
+
+    /** Faction to remove governance from */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid FactionId;
+
+    /** Case type domain to remove */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Domain;
+
+};
+
+/**
  * Request to remove a license definition from a board template
  */
 USTRUCT(BlueprintType)
@@ -26155,6 +27486,28 @@ struct FRevealDiscoveryResponse
 };
 
 /**
+ * Request to revoke delegated authority from a child faction
+ */
+USTRUCT(BlueprintType)
+struct FRevokeAuthorityRequest
+{
+    GENERATED_BODY()
+
+    /** Sovereign faction revoking delegation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid SovereignFactionId;
+
+    /** Faction whose delegation is being revoked */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid TargetFactionId;
+
+    /** Specific domains to revoke (null to revoke all delegation, reverting target to Influence) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> Domains;
+
+};
+
+/**
  * Reward granted when a quest is completed
  */
 USTRUCT(BlueprintType)
@@ -26205,6 +27558,64 @@ USTRUCT(BlueprintType)
 struct FRiskSeverity
 {
     GENERATED_BODY()
+
+};
+
+/**
+ * Request to roll implicit values for an item template
+ */
+USTRUCT(BlueprintType)
+struct FRollImplicitsRequest
+{
+    GENERATED_BODY()
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Item template code for implicit mapping lookup */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ItemTemplateCode;
+
+    /** Optional value range overrides per definition */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FImplicitDefinitionRef> Overrides;
+
+};
+
+/**
+ * Rolled implicit values for an item template
+ */
+USTRUCT(BlueprintType)
+struct FRollImplicitsResponse
+{
+    GENERATED_BODY()
+
+    /** Rolled implicit slots with values */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FRolledSlot> RolledSlots;
+
+};
+
+/**
+ * Result of rolling implicit values for one slot
+ */
+USTRUCT(BlueprintType)
+struct FRolledSlot
+{
+    GENERATED_BODY()
+
+    /** Implicit definition ID */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid DefinitionId;
+
+    /** Implicit definition code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DefinitionCode;
+
+    /** Rolled values for each stat grant */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<double> RolledValues;
 
 };
 
@@ -27707,6 +29118,154 @@ struct FSeedCalendarRequest
 };
 
 /**
+ * Individual character entry for bulk lifecycle profile seeding
+ */
+USTRUCT(BlueprintType)
+struct FSeedCharacterEntry
+{
+    GENERATED_BODY()
+
+    /** Character to seed lifecycle profile for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid CharacterId;
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Realm for worldstate time queries */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RealmId;
+
+    /** Species code for template resolution */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SpeciesCode;
+
+    /** Game year of birth */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 BirthGameYear = 0;
+
+    /** Season of birth */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString BirthSeason;
+
+    /** Current age in game years */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 CurrentAge = 0;
+
+    /** Current lifecycle stage code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString CurrentStage;
+
+    /** Optional explicit phenotype values for seeded first-generation characters */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FPhenotypeEntry> HeritageData;
+
+};
+
+/**
+ * A single definition entry for bulk seeding
+ */
+USTRUCT(BlueprintType)
+struct FSeedDefinitionEntry
+{
+    GENERATED_BODY()
+
+    /** Unique definition code within game service */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Code;
+
+    /** Slot type for this definition (e.g., "prefix", "suffix", "implicit") */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SlotType;
+
+    /** Exclusivity group */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ModGroup;
+
+    /** Power tier within mod group (1 = best) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 Tier = 0;
+
+    /** Broad classification */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Category;
+
+    /** Generation tags for pool filtering */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> Tags;
+
+    /** Stat contributions from this affix */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FStatGrant> StatGrants;
+
+    /** Base weight for weighted random selection */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 SpawnWeight = 0;
+
+    /** Per-tag weight multipliers */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FSpawnTagModifier> SpawnTagModifiers;
+
+    /** Minimum item level to spawn */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> RequiredItemLevel;
+
+    /** Required influence types (empty = no requirement) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> RequiredInfluences;
+
+    /** Item classes this definition can appear on */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> ValidItemClasses;
+
+    /** Human-readable display name */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DisplayName;
+
+    /** Sorting priority within slot type */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> DisplayOrder;
+
+};
+
+/**
+ * Bulk seed request for affix definitions
+ */
+USTRUCT(BlueprintType)
+struct FSeedDefinitionsRequest
+{
+    GENERATED_BODY()
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Definitions to seed (duplicates by code are skipped) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FSeedDefinitionEntry> Definitions;
+
+};
+
+/**
+ * Result of bulk definition seeding
+ */
+USTRUCT(BlueprintType)
+struct FSeedDefinitionsResponse
+{
+    GENERATED_BODY()
+
+    /** Number of definitions created */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 CreatedCount = 0;
+
+    /** Number of definitions skipped (already exist) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 SkippedCount = 0;
+
+};
+
+/**
  * A single seed-derived passive effect entry
  */
 USTRUCT(BlueprintType)
@@ -27779,6 +29338,258 @@ struct FSeedEntryTemplatesResponse
     /** Number of templates skipped (duplicates) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     int32 Skipped = 0;
+
+};
+
+/**
+ * Request to create a genetic profile for a first-generation character
+ */
+USTRUCT(BlueprintType)
+struct FSeedGeneticProfileRequest
+{
+    GENERATED_BODY()
+
+    /** Character to create genetic profile for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid CharacterId;
+
+    /** Species code for trait template resolution */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SpeciesCode;
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Explicit phenotype values (null to generate from species defaults with random variation) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FPhenotypeEntry> PhenotypeValues;
+
+};
+
+/**
+ * Empty response. HTTP 200 confirms the genetic profile was created.
+ */
+USTRUCT(BlueprintType)
+struct FSeedGeneticProfileResponse
+{
+    GENERATED_BODY()
+
+};
+
+/**
+ * Request to create heritable trait definitions for a species
+ */
+USTRUCT(BlueprintType)
+struct FSeedHeritableTraitTemplateRequest
+{
+    GENERATED_BODY()
+
+    /** Species code this template applies to */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SpeciesCode;
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Heritable trait definitions */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FHeritableTraitDefinition> Traits;
+
+};
+
+/**
+ * Empty response. HTTP 200 confirms the template was created.
+ */
+USTRUCT(BlueprintType)
+struct FSeedHeritableTraitTemplateResponse
+{
+    GENERATED_BODY()
+
+};
+
+/**
+ * Request to create cross-species hybridization rules
+ */
+USTRUCT(BlueprintType)
+struct FSeedHybridTemplateRequest
+{
+    GENERATED_BODY()
+
+    /** First species in the pair */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SpeciesA;
+
+    /** Second species in the pair */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SpeciesB;
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Dominance overrides for specific traits in hybrid offspring */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FHybridTraitOverride> TraitOverrides;
+
+    /** Fertility modifier for hybrid offspring (0.0 = sterile, 1.0 = normal) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    float HybridFertilityModifier = 0.0f;
+
+};
+
+/**
+ * Empty response. HTTP 200 confirms the template was created.
+ */
+USTRUCT(BlueprintType)
+struct FSeedHybridTemplateResponse
+{
+    GENERATED_BODY()
+
+};
+
+/**
+ * A single implicit mapping entry for bulk seeding
+ */
+USTRUCT(BlueprintType)
+struct FSeedImplicitMappingEntry
+{
+    GENERATED_BODY()
+
+    /** Item template code to map */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ItemTemplateCode;
+
+    /** Implicit affix definition IDs to map to this template */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FGuid> ImplicitDefinitionIds;
+
+};
+
+/**
+ * Bulk seed request for implicit mappings
+ */
+USTRUCT(BlueprintType)
+struct FSeedImplicitMappingsRequest
+{
+    GENERATED_BODY()
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Mappings to seed (duplicates by template code are skipped) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FSeedImplicitMappingEntry> Mappings;
+
+};
+
+/**
+ * Result of bulk implicit mapping seeding
+ */
+USTRUCT(BlueprintType)
+struct FSeedImplicitMappingsResponse
+{
+    GENERATED_BODY()
+
+    /** Number of mappings created */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 CreatedCount = 0;
+
+    /** Number of mappings skipped (already exist) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 SkippedCount = 0;
+
+};
+
+/**
+ * Error encountered during per-item processing in a bulk seed operation
+ */
+USTRUCT(BlueprintType)
+struct FSeedItemError
+{
+    GENERATED_BODY()
+
+    /** Character that failed seeding */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid CharacterId;
+
+    /** Error description */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Error;
+
+};
+
+/**
+ * Request to bulk seed lifecycle profiles for first-generation characters
+ */
+USTRUCT(BlueprintType)
+struct FSeedLifecycleProfileRequest
+{
+    GENERATED_BODY()
+
+    /** Characters to seed lifecycle profiles for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FSeedCharacterEntry> Characters;
+
+};
+
+/**
+ * Result of bulk lifecycle profile seeding
+ */
+USTRUCT(BlueprintType)
+struct FSeedLifecycleProfileResponse
+{
+    GENERATED_BODY()
+
+    /** Number of profiles successfully created */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 CreatedCount = 0;
+
+    /** Per-item errors encountered during seeding */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FSeedItemError> Errors;
+
+};
+
+/**
+ * Request to create lifecycle stage definitions for a species
+ */
+USTRUCT(BlueprintType)
+struct FSeedLifecycleTemplateRequest
+{
+    GENERATED_BODY()
+
+    /** Species code this template applies to */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SpeciesCode;
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Lifecycle stage definitions (must be contiguous) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FLifecycleStageDefinition> Stages;
+
+    /** Configuration for natural death year calculation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FNaturalDeathRange NaturalDeathRange;
+
+    /** Species fertility peak and decline configuration */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FFertilityWindow FertilityWindow;
+
+};
+
+/**
+ * Empty response. HTTP 200 confirms the template was created.
+ */
+USTRUCT(BlueprintType)
+struct FSeedLifecycleTemplateResponse
+{
+    GENERATED_BODY()
 
 };
 
@@ -28475,6 +30286,32 @@ struct FSetCombatPreferencesRequest
 };
 
 /**
+ * Request to create or update a governance entry for a faction
+ */
+USTRUCT(BlueprintType)
+struct FSetGovernanceEntryRequest
+{
+    GENERATED_BODY()
+
+    /** Faction to set governance on (must be Sovereign or Delegated) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid FactionId;
+
+    /** Case type domain prefix (e.g., "dissolution", "trade_dispute") */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Domain;
+
+    /** Contract template code in lib-contract for this case type */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString TemplateCode;
+
+    /** Opaque governance parameters for the contract template. Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TMap<FString, FString> GovernanceParameters;
+
+};
+
+/**
  * Request to set or change a location's parent in the hierarchy
  */
 USTRUCT(BlueprintType)
@@ -28489,6 +30326,34 @@ struct FSetLocationParentRequest
     /** ID of the new parent location (must be in same realm) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGuid ParentLocationId;
+
+};
+
+/**
+ * Request to override a character's natural death year
+ */
+USTRUCT(BlueprintType)
+struct FSetNaturalDeathYearRequest
+{
+    GENERATED_BODY()
+
+    /** Character to update */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid CharacterId;
+
+    /** New projected natural death year */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 NaturalDeathYear = 0;
+
+};
+
+/**
+ * Empty response. HTTP 200 confirms the update succeeded.
+ */
+USTRUCT(BlueprintType)
+struct FSetNaturalDeathYearResponse
+{
+    GENERATED_BODY()
 
 };
 
@@ -28867,6 +30732,24 @@ struct FSpaceCandidate
 };
 
 /**
+ * Per-tag weight multiplier for affix generation pool filtering
+ */
+USTRUCT(BlueprintType)
+struct FSpawnTagModifier
+{
+    GENERATED_BODY()
+
+    /** Item class tag (e.g., "amulet", "ring", "body_armour") */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Tag;
+
+    /** Weight multiplier (0 = cannot appear, 1000 = normal, 1500 = more likely) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 WeightMultiplier = 0;
+
+};
+
+/**
  * The 10 Story Grid Life Value spectrums.
  */
 USTRUCT(BlueprintType)
@@ -29095,6 +30978,28 @@ struct FStartWatchersForRealmResponse
     /** All watchers now active for this realm */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FWatcherInfo> Watchers;
+
+};
+
+/**
+ * A single stat contribution from an affix definition
+ */
+USTRUCT(BlueprintType)
+struct FStatGrant
+{
+    GENERATED_BODY()
+
+    /** Stat identifier (e.g., "maximum_life", "fire_resistance") */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString StatCode;
+
+    /** Minimum rolled value for this stat */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double MinValue = 0.0;
+
+    /** Maximum rolled value for this stat */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double MaxValue = 0.0;
 
 };
 
@@ -31871,36 +33776,60 @@ struct FUpdateCurrencyDefinitionRequest
 };
 
 /**
- * Request to update a map definition
+ * Partial update request for a definition. Identity fields cannot be changed.
  */
 USTRUCT(BlueprintType)
 struct FUpdateDefinitionRequest
 {
     GENERATED_BODY()
 
-    /** Definition ID to update */
+    /** Definition to update */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGuid DefinitionId;
 
-    /** New name (optional) */
+    /** Updated tier */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString Name;
+    TOptional<int32> Tier;
 
-    /** New description (optional) */
+    /** Updated category */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString Description;
+    FString Category;
 
-    /** New layer configurations (replaces existing) */
+    /** Updated tags */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TArray<FLayerDefinition> Layers;
+    TArray<FString> Tags;
 
-    /** New default bounds */
+    /** Updated stat grants */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TMap<FString, FString> DefaultBounds;
+    TArray<FStatGrant> StatGrants;
 
-    /** Updated client-provided definition metadata (replaces existing). No Bannou plugin reads specific keys from this field by convention. */
+    /** Updated spawn weight */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TMap<FString, FString> Metadata;
+    TOptional<int32> SpawnWeight;
+
+    /** Updated tag modifiers */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FSpawnTagModifier> SpawnTagModifiers;
+
+    /** Updated required item level */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> RequiredItemLevel;
+
+    /** Updated required influences */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> RequiredInfluences;
+
+    /** Updated valid item classes */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> ValidItemClasses;
+
+    /** Updated display name */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DisplayName;
+
+    /** Updated display order */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> DisplayOrder;
 
 };
 
@@ -33134,13 +35063,9 @@ struct FUploadRequest
 {
     GENERATED_BODY()
 
-    /** Type of owner initiating this upload */
+    /** Informational field recording who initiated this upload. Not used for access control. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FAssetOwnerType OwnerType;
-
-    /** Owner identifier. For Session type: the WebSocket session ID (UUID format). */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString OwnerId;
+    FString CreatedBy;
 
     /** Original filename with extension */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")

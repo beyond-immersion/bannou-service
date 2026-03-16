@@ -12,6 +12,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Account Service API](#account) | `client.Account` | 18 | Internal account management service (CRUD operations only, n... |
 | [Bannou Achievement Service API](#achievement) | `client.Achievement` | 12 | Achievement and trophy system with progress tracking and pla... |
 | [Actor Service API](#actor) | `client.Actor` | 17 | Distributed actor management and execution for NPC brains, e... |
+| [Bannou Affix Service API](#affix) | `client.Affix` | 27 | Item modifier definition, instance management, and stat comp... |
 | [Bannou Analytics Service API](#analytics) | `client.Analytics` | 9 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
 | [Asset Service API](#asset) | `client.Asset` | 19 | Asset management service for storage, versioning, and distri... |
 | [Bannou Auth Service API](#auth) | `client.Auth` | 18 | Authentication and session management service (Internet-faci... |
@@ -20,6 +21,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Character Service API](#character) | `client.Character` | 13 | Character management service for game worlds. |
 | [Bannou Character Encounter Service API](#character-encounter) | `client.CharacterEncounter` | 21 | Character encounter tracking service for memorable interacti... |
 | [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 12 | Historical event participation and backstory management for ... |
+| [Bannou Character Lifecycle Service API](#character-lifecycle) | `client.CharacterLifecycle` | 29 | Generational cycle orchestration and genetic heritage servic... |
 | [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 12 | Machine-readable personality traits for NPC behavior decisio... |
 | [Chat Service API](#chat) | `client.Chat` | 32 | Typed message channel service (L1 AppFoundation) providing u... |
 | [Collection Service API](#collection) | `client.Collection` | 22 | Universal content unlock and archive system for collectible ... |
@@ -29,7 +31,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Divine Service API](#divine) | `client.Divine` | 22 | Pantheon management service (L4 GameFeatures) for deity enti... |
 | [Bannou Documentation API](#documentation) | `client.Documentation` | 25 | Knowledge base API for AI agents to query documentation. Des... |
 | [Escrow Service API](#escrow) | `client.Escrow` | 22 | Full-custody orchestration layer for multi-party asset excha... |
-| [Bannou Faction Service API](#faction) | `client.Faction` | 31 | Faction management as seed-based living entities (L4 GameFea... |
+| [Bannou Faction Service API](#faction) | `client.Faction` | 37 | Faction management as seed-based living entities (L4 GameFea... |
 | [Bannou Game Service API](#game-service) | `client.GameService` | 5 | Registry service for game services that users can subscribe ... |
 | [Bannou Game Session Service API](#game-session) | `client.GameSession` | 11 | Minimal game session management for games. |
 | [Bannou Gardener Service API](#gardener) | `client.Gardener` | 23 | Player experience orchestration service (L4 GameFeatures) fo... |
@@ -204,6 +206,76 @@ Distributed actor management and execution for NPC brains, event coordinators, a
 | `UpdateEncounterphaseAsync` | `UpdateEncounterPhaseRequest` | `UpdateEncounterPhaseResponse` | Update the phase of an active encounter |
 | `EndencounterAsync` | `EndEncounterRequest` | `EndEncounterResponse` | End an active encounter |
 | `GetEncounterAsync` | `GetEncounterRequest` | `GetEncounterResponse` | Get the current encounter state for an actor |
+
+---
+
+## Bannou Affix Service API {#affix}
+
+**Proxy**: `client.Affix` | **Version**: 1.0.0
+
+Item modifier definition, instance management, and stat computation service. Owns two layers of data: definitions (modifier templates with tiers, m...
+
+### Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbygameserviceAsync` | `CleanupByGameServiceRequest` | `CleanupByGameServiceResponse` | Clean up all affix data for a game service |
+
+### Definition
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateDefinitionAsync` | `CreateDefinitionRequest` | `AffixDefinitionResponse` | Create a new affix definition |
+| `GetDefinitionAsync` | `GetDefinitionRequest` | `AffixDefinitionResponse` | Get an affix definition |
+| `ListDefinitionsAsync` | `ListDefinitionsRequest` | `ListDefinitionsResponse` | List affix definitions |
+| `UpdateDefinitionAsync` | `UpdateDefinitionRequest` | `AffixDefinitionResponse` | Update an affix definition |
+| `DeprecatedefinitionAsync` | `DeprecateDefinitionRequest` | `AffixDefinitionResponse` | Deprecate an affix definition |
+| `SeeddefinitionsAsync` | `SeedDefinitionsRequest` | `SeedDefinitionsResponse` | Bulk seed affix definitions |
+| `ListModgroupsAsync` | `ListModGroupsRequest` | `ListModGroupsResponse` | List mod groups for a game service |
+
+### Generation
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GenerateaffixpoolAsync` | `GenerateAffixPoolRequest` | `AffixPoolResponse` | Generate a filtered affix pool |
+| `GenerateaffixsetAsync` | `GenerateAffixSetRequest` | `AffixSetDataResponse` | Generate a complete affix set for an item |
+| `BatchgenerateaffixsetsAsync` | `BatchGenerateAffixSetsRequest` | `BatchGenerateAffixSetsResponse` | Generate affix sets for multiple items |
+
+### Implicit
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateImplicitmappingAsync` | `CreateImplicitMappingRequest` | `ImplicitMappingResponse` | Create an implicit mapping for an item template |
+| `GetImplicitmappingAsync` | `GetImplicitMappingRequest` | `ImplicitMappingResponse` | Get implicit mapping for an item template |
+| `SeedimplicitmappingsAsync` | `SeedImplicitMappingsRequest` | `SeedImplicitMappingsResponse` | Bulk seed implicit mappings |
+| `RollimplicitsAsync` | `RollImplicitsRequest` | `RollImplicitsResponse` | Roll implicit values for an item template |
+
+### Instance
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `InitializeitemaffixesAsync` | `InitializeItemAffixesRequest` | `AffixInstanceResponse` | Initialize affix state for an item instance |
+| `GetAffixinstanceAsync` | `GetAffixInstanceRequest` | `AffixInstanceResponse` | Get affix instance for an item |
+
+### Modification
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ApplyaffixAsync` | `ApplyAffixRequest` | `ApplyAffixResponse` | Apply an affix to an item |
+| `RemoveaffixAsync` | `RemoveAffixRequest` | `RemoveAffixResponse` | Remove an affix from an item |
+| `RerollvaluesAsync` | `RerollValuesRequest` | `RerollValuesResponse` | Reroll values for an affix on an item |
+| `SetitemstateAsync` | `SetItemStateRequest` | `SetItemStateResponse` | Set item state flags |
+| `SetinfluenceAsync` | `SetInfluenceRequest` | `SetInfluenceResponse` | Set influence types on an item |
+
+### Query
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetItemaffixesAsync` | `GetItemAffixesRequest` | `EnrichedAffixInstanceResponse` | Get enriched affix data for an item |
+| `ComputeitemstatsAsync` | `ComputeItemStatsRequest` | `ComputedItemStatsResponse` | Compute stats for a single item |
+| `ComputeequipmentstatsAsync` | `ComputeEquipmentStatsRequest` | `EquipmentStatsResponse` | Compute aggregate equipment stats for an entity |
+| `CompareitemsAsync` | `CompareItemsRequest` | `ItemComparisonResponse` | Compare stats between two items |
+| `EstimateitemvalueAsync` | `EstimateItemValueRequest` | `ItemValueEstimateResponse` | Estimate the value of an item based on its affixes |
 
 ---
 
@@ -583,6 +655,48 @@ Historical event participation and backstory management for characters.
 |--------|---------|----------|---------|
 | `DeleteAllhistoryAsync` | `DeleteAllHistoryRequest` | `DeleteAllHistoryResponse` | Delete all history data for a character |
 | `SummarizehistoryAsync` | `SummarizeHistoryRequest` | `HistorySummaryResponse` | Generate text summaries for character compression |
+
+---
+
+## Bannou Character Lifecycle Service API {#character-lifecycle}
+
+**Proxy**: `client.CharacterLifecycle` | **Version**: 1.0.0
+
+Generational cycle orchestration and genetic heritage service (L4 GameFeatures). Manages character aging, marriage, procreation, death processing, ...
+
+### CharacterLifecycle
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `InitiatemarriageAsync` | `InitiateMarriageRequest` | `InitiateMarriageResponse` | Initiate marriage between two characters |
+| `InitiateprocreationAsync` | `InitiateProcreationRequest` | `InitiateProcreationResponse` | Initiate procreation between two characters |
+| `RecorddeathAsync` | `RecordDeathRequest` | `RecordDeathResponse` | Record a character death and execute the death processing pipeline |
+| `GetLifecycleprofileAsync` | `GetLifecycleProfileRequest` | `GetLifecycleProfileResponse` | Get lifecycle profile for a character |
+| `QuerybystageAsync` | `QueryByStageRequest` | `QueryByStageResponse` | Query characters by lifecycle stage within a realm |
+| `QuerybybloodlineAsync` | `QueryByBloodlineRequest` | `QueryByBloodlineResponse` | Query living characters with a specific bloodline |
+| `SetnaturaldeathyearAsync` | `SetNaturalDeathYearRequest` | `SetNaturalDeathYearResponse` | Override a character's projected natural death year |
+| `SeedlifecycleprofileAsync` | `SeedLifecycleProfileRequest` | `SeedLifecycleProfileResponse` | Bulk seed lifecycle profiles for first-generation characters |
+| `GetGeneticprofileAsync` | `GetGeneticProfileRequest` | `GetGeneticProfileResponse` | Get full genetic profile for a character |
+| `GetPhenotypeAsync` | `GetPhenotypeRequest` | `GetPhenotypeResponse` | Get expressed phenotype traits and aptitudes for a character |
+| `QuerybyaptitudeAsync` | `QueryByAptitudeRequest` | `QueryByAptitudeResponse` | Find characters with a specific aptitude above a threshold |
+| `SeedgeneticprofileAsync` | `SeedGeneticProfileRequest` | `SeedGeneticProfileResponse` | Create genetic profile for a first-generation character |
+| `SimulateoffspringAsync` | `SimulateOffspringRequest` | `SimulateOffspringResponse` | Simulate potential offspring traits without creating a character |
+| `GetFamilytreeAsync` | `GetFamilyTreeRequest` | `GetFamilyTreeResponse` | Get multi-generational family tree rooted at a character |
+| `SeedlifecycletemplateAsync` | `SeedLifecycleTemplateRequest` | `SeedLifecycleTemplateResponse` | Create lifecycle stage definitions for a species |
+| `SeedheritabletraittemplateAsync` | `SeedHeritableTraitTemplateRequest` | `SeedHeritableTraitTemplateResponse` | Create heritable trait definitions for a species |
+| `SeedhybridtemplateAsync` | `SeedHybridTemplateRequest` | `SeedHybridTemplateResponse` | Create cross-species hybridization rules for a species pair |
+| `GetLifecycletemplateAsync` | `GetLifecycleTemplateRequest` | `GetLifecycleTemplateResponse` | Get lifecycle template for a species |
+| `GetHeritabletraittemplateAsync` | `GetHeritableTraitTemplateRequest` | `GetHeritableTraitTemplateResponse` | Get heritable trait template for a species |
+| `ListTemplatesAsync` | `ListTemplatesRequest` | `ListTemplatesResponse` | List all lifecycle and heritage templates for a game service |
+| `GetBloodlineAsync` | `GetBloodlineRequest` | `GetBloodlineResponse` | Get bloodline definition |
+| `ListBloodlinesAsync` | `ListBloodlinesRequest` | `ListBloodlinesResponse` | List bloodlines within a game service |
+| `EstablishbloodlineAsync` | `EstablishBloodlineRequest` | `EstablishBloodlineResponse` | Manually establish a bloodline |
+| `DeleteBloodlineAsync` | `DeleteBloodlineRequest` | `DeleteBloodlineResponse` | Delete a bloodline (immediate hard delete) |
+| `QuerybloodlinemembersAsync` | `QueryBloodlineMembersRequest` | `QueryBloodlineMembersResponse` | Query living members of a bloodline |
+| `CleanupbycharacterAsync` | `CleanupByCharacterRequest` | `CleanupByCharacterResponse` | Clean up all lifecycle data for a character |
+| `CleanupbyrealmAsync` | `CleanupByRealmRequest` | `CleanupByRealmResponse` | Clean up all lifecycle data for a realm |
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `LifecycleArchive` | Get lifecycle and heritage data for character archive compression |
+| `RestorefromarchiveAsync` | `RestoreFromArchiveRequest` | `RestoreFromArchiveResponse` | Restore lifecycle and heritage data from archive |
 
 ---
 
@@ -1151,6 +1265,17 @@ Faction management as seed-based living entities (L4 GameFeatures).
 | `SeedfactionsAsync` | `SeedFactionsRequest` | `SeedFactionsResponse` | Bulk seed factions from configuration |
 | `DesignaterealmbaselineAsync` | `DesignateRealmBaselineRequest` | `FactionResponse` | Designate a faction as realm baseline |
 | `GetRealmbaselineAsync` | `GetRealmBaselineRequest` | `FactionResponse` | Get the realm baseline faction |
+
+### Governance
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `SetgovernanceentryAsync` | `SetGovernanceEntryRequest` | `GovernanceEntryResponse` | Set a governance entry for a faction |
+| `RemovegovernanceentryEventAsync` | `RemoveGovernanceEntryRequest` | *(fire-and-forget)* | Remove a governance entry |
+| `ListGovernanceentriesAsync` | `ListGovernanceEntriesRequest` | `ListGovernanceEntriesResponse` | List governance entries for a faction |
+| `QuerygovernancedataAsync` | `QueryGovernanceDataRequest` | `GovernanceDataResponse` | Resolve governance data for a location and case type |
+| `DelegateauthorityAsync` | `DelegateAuthorityRequest` | `FactionResponse` | Delegate authority from sovereign to child faction |
+| `RevokeauthorityAsync` | `RevokeAuthorityRequest` | `FactionResponse` | Revoke delegated authority |
 
 ### Membership
 
@@ -2654,8 +2779,8 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 
 ## Summary
 
-- **Total services**: 56
-- **Total methods**: 928
+- **Total services**: 58
+- **Total methods**: 990
 
 ---
 

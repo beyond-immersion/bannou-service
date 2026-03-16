@@ -8,6 +8,7 @@
 using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Achievement;
 using BeyondImmersion.BannouService.Actor;
+using BeyondImmersion.BannouService.Affix;
 using BeyondImmersion.BannouService.Analytics;
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Auth;
@@ -16,6 +17,7 @@ using BeyondImmersion.BannouService.Broadcast;
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.CharacterEncounter;
 using BeyondImmersion.BannouService.CharacterHistory;
+using BeyondImmersion.BannouService.CharacterLifecycle;
 using BeyondImmersion.BannouService.CharacterPersonality;
 using BeyondImmersion.BannouService.Chat;
 using BeyondImmersion.BannouService.Collection;
@@ -85,6 +87,11 @@ public partial interface IServiceNavigator
     IActorClient Actor { get; }
 
     /// <summary>
+    /// Gets the Affix service client.
+    /// </summary>
+    IAffixClient Affix { get; }
+
+    /// <summary>
     /// Gets the Analytics service client.
     /// </summary>
     IAnalyticsClient Analytics { get; }
@@ -123,6 +130,11 @@ public partial interface IServiceNavigator
     /// Gets the CharacterHistory service client.
     /// </summary>
     ICharacterHistoryClient CharacterHistory { get; }
+
+    /// <summary>
+    /// Gets the CharacterLifecycle service client.
+    /// </summary>
+    ICharacterLifecycleClient CharacterLifecycle { get; }
 
     /// <summary>
     /// Gets the CharacterPersonality service client.

@@ -90,17 +90,6 @@ enum class EArcType : uint8
     Oedipus UMETA(DisplayName = "Oedipus"),
 };
 
-/** Type of asset owner per FOUNDATION TENETS (Account Identity Boundary).
-Session: user-initiated operation identified by WebSocket session ID (UUID).
-Service: service-initiated operation identified by service name.
- */
-UENUM(BlueprintType)
-enum class EAssetOwnerType : uint8
-{
-    Session UMETA(DisplayName = "Session"),
-    Service UMETA(DisplayName = "Service"),
-};
-
 /** Type classification for assets */
 UENUM(BlueprintType)
 enum class EAssetType : uint8
@@ -131,6 +120,15 @@ enum class EAuthType : uint8
 {
     Oauth UMETA(DisplayName = "Oauth"),
     Ticket UMETA(DisplayName = "Ticket"),
+};
+
+/** Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory. */
+UENUM(BlueprintType)
+enum class EAuthorityLevel : uint8
+{
+    Influence UMETA(DisplayName = "Influence"),
+    Delegated UMETA(DisplayName = "Delegated"),
+    Sovereign UMETA(DisplayName = "Sovereign"),
 };
 
 /** How autogain (energy/interest) is calculated */
@@ -593,6 +591,15 @@ enum class ECurrencyScope : uint8
     MultiRealm UMETA(DisplayName = "MultiRealm"),
 };
 
+/** Statistical distribution model for natural death year calculation */
+UENUM(BlueprintType)
+enum class EDeathDistribution : uint8
+{
+    Uniform UMETA(DisplayName = "Uniform"),
+    Normal UMETA(DisplayName = "Normal"),
+    WeightedLate UMETA(DisplayName = "WeightedLate"),
+};
+
 /** Algorithm used for delta computation.
 JSON_PATCH: RFC 6902, best for structured JSON data
 BSDIFF: Binary diff, good for general binary data
@@ -659,6 +666,18 @@ enum class EDocumentationOwnerType : uint8
 {
     Session UMETA(DisplayName = "Session"),
     Service UMETA(DisplayName = "Service"),
+};
+
+/** Genetic dominance model determining how alleles combine to produce phenotype */
+UENUM(BlueprintType)
+enum class EDominanceModel : uint8
+{
+    DominantHigh UMETA(DisplayName = "DominantHigh"),
+    DominantLow UMETA(DisplayName = "DominantLow"),
+    Blending UMETA(DisplayName = "Blending"),
+    Codominant UMETA(DisplayName = "Codominant"),
+    Maternal UMETA(DisplayName = "Maternal"),
+    Random UMETA(DisplayName = "Random"),
 };
 
 /** How to handle clock gaps after service downtime */

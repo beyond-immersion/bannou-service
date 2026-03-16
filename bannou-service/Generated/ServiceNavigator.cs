@@ -12,6 +12,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Achievement;
 using BeyondImmersion.BannouService.Actor;
+using BeyondImmersion.BannouService.Affix;
 using BeyondImmersion.BannouService.Analytics;
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Auth;
@@ -20,6 +21,7 @@ using BeyondImmersion.BannouService.Broadcast;
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.CharacterEncounter;
 using BeyondImmersion.BannouService.CharacterHistory;
+using BeyondImmersion.BannouService.CharacterLifecycle;
 using BeyondImmersion.BannouService.CharacterPersonality;
 using BeyondImmersion.BannouService.Chat;
 using BeyondImmersion.BannouService.Collection;
@@ -93,6 +95,7 @@ public partial class ServiceNavigator : IServiceNavigator
     private readonly IAccountClient _account;
     private readonly IAchievementClient _achievement;
     private readonly IActorClient _actor;
+    private readonly IAffixClient _affix;
     private readonly IAnalyticsClient _analytics;
     private readonly IAssetClient _asset;
     private readonly IAuthClient _auth;
@@ -101,6 +104,7 @@ public partial class ServiceNavigator : IServiceNavigator
     private readonly ICharacterClient _character;
     private readonly ICharacterEncounterClient _characterEncounter;
     private readonly ICharacterHistoryClient _characterHistory;
+    private readonly ICharacterLifecycleClient _characterLifecycle;
     private readonly ICharacterPersonalityClient _characterPersonality;
     private readonly IChatClient _chat;
     private readonly ICollectionClient _collection;
@@ -159,6 +163,7 @@ public partial class ServiceNavigator : IServiceNavigator
         IAccountClient account,
         IAchievementClient achievement,
         IActorClient actor,
+        IAffixClient affix,
         IAnalyticsClient analytics,
         IAssetClient asset,
         IAuthClient auth,
@@ -167,6 +172,7 @@ public partial class ServiceNavigator : IServiceNavigator
         ICharacterClient character,
         ICharacterEncounterClient characterEncounter,
         ICharacterHistoryClient characterHistory,
+        ICharacterLifecycleClient characterLifecycle,
         ICharacterPersonalityClient characterPersonality,
         IChatClient chat,
         ICollectionClient collection,
@@ -221,6 +227,7 @@ public partial class ServiceNavigator : IServiceNavigator
         _account = account;
         _achievement = achievement;
         _actor = actor;
+        _affix = affix;
         _analytics = analytics;
         _asset = asset;
         _auth = auth;
@@ -229,6 +236,7 @@ public partial class ServiceNavigator : IServiceNavigator
         _character = character;
         _characterEncounter = characterEncounter;
         _characterHistory = characterHistory;
+        _characterLifecycle = characterLifecycle;
         _characterPersonality = characterPersonality;
         _chat = chat;
         _collection = collection;
@@ -337,6 +345,9 @@ public partial class ServiceNavigator : IServiceNavigator
     public IActorClient Actor => _actor;
 
     /// <inheritdoc />
+    public IAffixClient Affix => _affix;
+
+    /// <inheritdoc />
     public IAnalyticsClient Analytics => _analytics;
 
     /// <inheritdoc />
@@ -359,6 +370,9 @@ public partial class ServiceNavigator : IServiceNavigator
 
     /// <inheritdoc />
     public ICharacterHistoryClient CharacterHistory => _characterHistory;
+
+    /// <inheritdoc />
+    public ICharacterLifecycleClient CharacterLifecycle => _characterLifecycle;
 
     /// <inheritdoc />
     public ICharacterPersonalityClient CharacterPersonality => _characterPersonality;

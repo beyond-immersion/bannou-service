@@ -1,11 +1,11 @@
 # Environment Plugin Deep Dive
 
-> **Plugin**: lib-environment
-> **Schema**: schemas/environment-api.yaml
-> **Version**: 1.0.0
+> **Plugin**: lib-environment (not yet created)
+> **Schema**: `schemas/environment-api.yaml` (not yet created)
+> **Version**: N/A (Pre-Implementation)
 > **Layer**: GameFeatures
-> **State Stores**: environment-climate (MySQL), environment-weather (Redis), environment-conditions (Redis), environment-overrides (MySQL), environment-lock (Redis)
-> **Status**: Pre-implementation (architectural specification)
+> **State Stores**: environment-climate (MySQL), environment-weather (Redis), environment-conditions (Redis), environment-overrides (MySQL), environment-lock (Redis) — all planned
+> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Short**: Weather simulation, temperature modeling, and ecological resources consuming Worldstate temporal data
 
 ---
@@ -549,8 +549,8 @@ These MUST be declared as `x-event-subscriptions` in `environment-events.yaml` s
 | `ExtendWeatherEventActionHandler` | ABML action handler (`extend_weather_event`) implementing `IActionHandler`. Enables divine actors to extend weather event durations. |
 | `IWeatherResolver` / `WeatherResolver` | Internal helper for deterministic weather computation from climate templates, season, and location. Applies indoor short-circuit for `isIndoor` bindings. |
 | `ITemperatureCalculator` / `TemperatureCalculator` | Internal helper for temperature computation with seasonal curves, altitude, weather modifiers, and noise. Applies indoor short-circuit for `isIndoor` bindings. |
-| `IClimateTemplateCache` / `ClimateTemplateCache` | In-memory TTL cache for climate templates. Templates change rarely; caching avoids MySQL queries on every condition computation. |
-| `IConditionSnapshotCache` / `ConditionSnapshotCache` | In-memory TTL cache (5-10s) for condition snapshots, layered on top of the Redis condition cache. Backed by `ConcurrentDictionary<(Guid realmId, Guid locationId), ConditionSnapshotModel>` with `ConditionSnapshotCacheTtlSeconds` expiry. Critical for NPC scale: at 100,000+ actors ticking every 100-500ms, the variable provider would otherwise hit Redis 200K-1M times/second. This cache absorbs that load — actors at the same location within the same TTL window share the same in-memory snapshot. Follows the same pattern as Worldstate's `IRealmClockCache`. The background worker writes to both Redis and this in-memory cache on each refresh cycle. |
+| `IClimateTemplateCache` / `ClimateTemplateCache` | In-memory TTL cache for climate templates. Templates change rarely; caching avoids MySQL queries on every condition computation. Cross-node invalidation via self-event-subscription: subscribes to `environment.climate-template.updated` and `environment.climate-template.deleted` events via `IEventConsumer` (per Implementation Tenets: multi-instance safety). TTL provides a safety net. |
+| `IConditionSnapshotCache` / `ConditionSnapshotCache` | In-memory TTL cache (5-10s) for condition snapshots, layered on top of the Redis condition cache. Backed by `ConcurrentDictionary<(Guid realmId, Guid locationId), ConditionSnapshotModel>` with `ConditionSnapshotCacheTtlSeconds` expiry. Critical for NPC scale: at 100,000+ actors ticking every 100-500ms, the variable provider would otherwise hit Redis 200K-1M times/second. This cache absorbs that load — actors at the same location within the same TTL window share the same in-memory snapshot. Cross-node invalidation via self-event-subscription: subscribes to `environment.conditions.changed` events via `IEventConsumer` so all nodes invalidate stale entries when conditions change (per Implementation Tenets: multi-instance safety). TTL provides a safety net for missed events. The background worker writes to Redis and publishes events; the event subscription handles in-memory cache invalidation across all nodes. |
 
 ### Variable Provider Factory
 
@@ -1071,7 +1071,7 @@ Location (where) ─────────────────────
 
 ### Bugs (Fix Immediately)
 
-*No bugs identified. Plugin is pre-implementation.*
+1. **ConcurrentDictionary cache invalidation must use self-event-subscription**: Both `IConditionSnapshotCache` (ConcurrentDictionary-backed, 5s TTL) and `IClimateTemplateCache` (ConcurrentDictionary-backed, 60min TTL) are described as using inline writes from the background worker or direct invalidation at mutation sites for cache management. Per Implementation Tenets (multi-instance safety): "Services using ConcurrentDictionary caches MUST invalidate via self-event-subscription, not inline method calls. Inline invalidation only reaches the node that processed the request; other nodes serve stale data until TTL expiry." Fix: `IConditionSnapshotCache` must subscribe to the service's own `environment.conditions.changed` event for cross-node invalidation; `IClimateTemplateCache` must subscribe to `environment.climate-template.updated` and `environment.climate-template.deleted` events. TTL remains as a safety net, not the primary cross-node invalidation mechanism. The DI Services section and Intentional Quirk #7 describe the worker writing to both Redis and in-memory cache — the in-memory write is the inline invalidation that T9 prohibits for cross-node consistency.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -1087,7 +1087,7 @@ Location (where) ─────────────────────
 
 6. **Divine overrides are absolute**: A weather event with `weatherCode: "storm"` replaces the deterministic weather completely for the duration. There's no "divine influence" weighting where the override blends with natural weather. The god either controls the weather or doesn't. This prevents confusing states where the weather is "half storm, half clear."
 
-7. **Three-tier condition cache is eventually consistent**: Condition snapshots flow through three cache tiers: in-memory (`IConditionSnapshotCache`, 5s TTL) → Redis (`environment:conditions:snapshot`, 60s TTL) → full computation. When weather transitions occur, the background worker writes to both Redis and in-memory caches. Entities mid-behavior-tick use their cached snapshot until the next tick. At the in-memory 5s TTL, environmental changes propagate within ~5 seconds to NPC behavior. The 60s Redis TTL bounds the worst case for cold-start reads. This is acceptable for weather changes (which last minutes to hours) but means an instantaneous divine storm takes up to 5 seconds (not 60) to affect NPC behavior at the in-memory tier.
+7. **Three-tier condition cache is eventually consistent**: Condition snapshots flow through three cache tiers: in-memory (`IConditionSnapshotCache`, 5s TTL) → Redis (`environment:conditions:snapshot`, 60s TTL) → full computation. Cross-node invalidation of the in-memory cache must use self-event-subscription (subscribing to the service's own `environment.conditions.changed` events via `IEventConsumer`), per Implementation Tenets (multi-instance safety). The background worker writes to Redis and publishes events; all nodes invalidate their in-memory cache on event receipt. TTL provides a safety net for missed events. With self-event-subscription, environmental changes propagate to all nodes within ~1-2 seconds (RabbitMQ delivery time). The 60s Redis TTL bounds the worst case for cold-start reads. This is acceptable for weather changes (which last minutes to hours). A divine storm triggers immediate condition cache invalidation on the processing node, plus near-immediate event-driven invalidation on other nodes.
 
 8. **No wind simulation**: Wind speed and direction are looked up from climate template baselines + weather modifiers. Wind doesn't flow, interact with terrain, or create downstream effects. It's a data value that behaviors reference (`${environment.wind.speed}` for "is it too windy to fire arrows?"), not a physics simulation.
 

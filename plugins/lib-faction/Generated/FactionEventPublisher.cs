@@ -103,4 +103,32 @@ public static class FactionEventPublisher
         FactionRealmBaselineDesignatedEvent eventData,
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(FactionPublishedTopics.FactionRealmBaselineDesignated, eventData, cancellationToken);
+
+    /// <summary>Published when a governance entry is created or updated (includes changedFields when overwriting existing entry).</summary>
+    public static Task<bool> PublishFactionGovernanceDefinedAsync(
+        this IMessageBus messageBus,
+        FactionGovernanceDefinedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(FactionPublishedTopics.FactionGovernanceDefined, eventData, cancellationToken);
+
+    /// <summary>Published when a governance entry is removed.</summary>
+    public static Task<bool> PublishFactionGovernanceDeletedAsync(
+        this IMessageBus messageBus,
+        FactionGovernanceDeletedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(FactionPublishedTopics.FactionGovernanceDeleted, eventData, cancellationToken);
+
+    /// <summary>Published when a sovereign delegates authority to a child faction.</summary>
+    public static Task<bool> PublishFactionAuthorityDelegatedAsync(
+        this IMessageBus messageBus,
+        FactionAuthorityDelegatedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(FactionPublishedTopics.FactionAuthorityDelegated, eventData, cancellationToken);
+
+    /// <summary>Published when delegated authority is revoked.</summary>
+    public static Task<bool> PublishFactionAuthorityRevokedAsync(
+        this IMessageBus messageBus,
+        FactionAuthorityRevokedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(FactionPublishedTopics.FactionAuthorityRevoked, eventData, cancellationToken);
 }

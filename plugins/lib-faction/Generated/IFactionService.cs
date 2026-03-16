@@ -160,6 +160,36 @@ public partial interface IFactionService : IBannouService
         Task<(StatusCodes, QueryApplicableNormsResponse?)> QueryApplicableNormsAsync(QueryApplicableNormsRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// SetGovernanceEntry operation
+        /// </summary>
+        Task<(StatusCodes, GovernanceEntryResponse?)> SetGovernanceEntryAsync(SetGovernanceEntryRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// RemoveGovernanceEntry operation
+        /// </summary>
+        Task<StatusCodes> RemoveGovernanceEntryAsync(RemoveGovernanceEntryRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// ListGovernanceEntries operation
+        /// </summary>
+        Task<(StatusCodes, ListGovernanceEntriesResponse?)> ListGovernanceEntriesAsync(ListGovernanceEntriesRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// QueryGovernanceData operation
+        /// </summary>
+        Task<(StatusCodes, GovernanceDataResponse?)> QueryGovernanceDataAsync(QueryGovernanceDataRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// DelegateAuthority operation
+        /// </summary>
+        Task<(StatusCodes, FactionResponse?)> DelegateAuthorityAsync(DelegateAuthorityRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// RevokeAuthority operation
+        /// </summary>
+        Task<(StatusCodes, FactionResponse?)> RevokeAuthorityAsync(RevokeAuthorityRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// CleanupByCharacter operation
         /// </summary>
         Task<(StatusCodes, CleanupByCharacterResponse?)> CleanupByCharacterAsync(CleanupByCharacterRequest body, CancellationToken cancellationToken = default(CancellationToken));

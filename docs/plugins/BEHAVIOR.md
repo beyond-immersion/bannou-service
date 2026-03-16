@@ -64,63 +64,6 @@ The plugin is unusually self-contained for L4 — no L1 or L2 service client dep
 
 ---
 
-## DI Services & Helpers
-
-| Service | Lifetime | Role |
-|---------|----------|------|
-| `ILogger<BehaviorService>` | Scoped | Structured logging |
-| `BehaviorServiceConfiguration` | Singleton | All 33 config properties (urgency, attention, memory, compiler) |
-| `IStateStoreFactory` | Singleton | Access to behavior-statestore (used by BehaviorBundleManager and ActorLocalMemoryStore) |
-| `IMessageBus` | Scoped | Event publishing and error events |
-| `IServiceProvider` | Singleton | Service provider for resolving optional L3 dependencies (IAssetClient) at method scope |
-| `IHttpClientFactory` | Singleton | HTTP client for asset upload operations |
-| `ITelemetryProvider` | Singleton | Span instrumentation for async methods (compliance) |
-| `IEventConsumer` | Scoped | Event consumer registration (no subscriptions - handler call is a no-op) |
-| `IGoapPlanner` (via `GoapPlanner`) | Singleton | A* search for GOAP planning (thread-safe, stateless) |
-| `BehaviorCompiler` | Singleton | ABML-to-bytecode compilation pipeline (thread-safe, stateless) |
-| `IDocumentMerger` (via `DocumentMerger`) | Singleton | ABML document composition — merges LoadedDocument trees into flat AbmlDocuments for bytecode compilation (stateless, thread-safe) |
-| `SemanticAnalyzer` | Per-use (internal to compiler) | Pre-compilation validation pass (uses `IResourceTemplateRegistry` when available) |
-| `IBehaviorBundleManager` | Scoped | Bundle creation, membership tracking, and GOAP metadata caching |
-| `BehaviorModelCache` | Not DI-registered | Per-character interpreter caching with variant fallback chains (ConcurrentDictionary). Used by `BehaviorEvaluatorBase` subclasses but NOT registered in `BehaviorServicePlugin.ConfigureServices()` — must be manually instantiated |
-| `IMemoryStore` (via `ActorLocalMemoryStore`) | Singleton | Keyword-based memory storage and retrieval (uses `agent-memories` store) |
-| `CognitionConstants` | Static | Configurable cognition pipeline thresholds (initialized from config at startup) |
-| `IBehaviorModelInterpreterFactory` | Singleton | Runtime execution of compiled behavior models |
-| `IArchetypeRegistry` | Singleton | Pre-loaded behavior archetype definitions |
-| `IIntentEmitterRegistry` | Singleton | Core intent emitters for action/locomotion/attention/stance/vocalization channels |
-| `IControlGateRegistry` (via `ControlGateManager`) | Singleton | Per-entity control tracking for behavior gating |
-| `IEntityResolver` | Singleton | Cutscene semantic name resolution |
-| `ICutsceneCoordinator` (via `CutsceneCoordinator`) | Singleton | Multi-participant cutscene session coordination (in-memory session state via ConcurrentDictionary) |
-| `IActionHandler` (6 cognition handlers) | Singleton | FilterAttention, QueryMemory, AssessSignificance, StoreMemory, EvaluateGoalImpact, TriggerGoapReplan |
-| `IExternalDialogueLoader` | Singleton | YAML-based dialogue file loading with caching |
-| `IDialogueResolver` | Singleton | Three-step dialogue resolution pipeline |
-| `ILocalizationProvider` (via `FileLocalizationProvider`) | Singleton | String table lookups for localization |
-| `ICognitionTemplateRegistry` | Singleton | Base cognition templates (humanoid, creature, object) with embedded defaults |
-| `ICognitionBuilder` | Singleton | Pipeline construction from cognition templates with overrides |
-
-BehaviorService itself is **Scoped** (per-request). Most helper services are **Singleton** for shared, thread-safe access. `CognitionConstants` is static but initialized from `BehaviorServiceConfiguration` once at service startup. `IMemoryStore` is registered as Singleton despite using `IStateStoreFactory` (which creates per-call store instances internally).
-
----
-
-## API Endpoints (Implementation Notes)
-
-### ABML Operations (2 endpoints)
-
-- **CompileAbmlBehavior** (`/compile`): Accepts ABML YAML string with optional compilation options (`enableOptimizations`, `cacheCompiledResult`, `strictValidation`, `culturalAdaptations`, `goapIntegration`). Invokes the multi-phase compiler pipeline: YAML parsing via `DocumentParser`, semantic analysis (when `strictValidation` is true), flow compilation with action compiler registry, bytecode emission with label patching. On success with caching enabled: stores bytecode as asset via lib-asset (soft L3 dependency), records metadata in `BehaviorBundleManager`, extracts and caches GOAP metadata from document, publishes `behavior.created` or `behavior.updated` lifecycle event. On failure: publishes `behavior.compilation-failed` event (note: `ContentHash` field in event schema is defined but never populated by the code). Returns compiled bytecode size, behavior ID (SHA256 hash of bytecode), and compilation time.
-
-- **ValidateAbml** (`/validate`): Validates ABML YAML by running the full compilation pipeline (including bytecode emission) then discarding the bytecode and returning only the error/success status. Despite the "validate-only" intent, calls `_compiler.CompileYaml()` which performs the same multi-phase pipeline as `/compile`. Returns validation result with `isValid` flag and error list (undefined flows, empty conditionals, invalid continuation points, type mismatches). Semantic warnings (unreachable code, unused flows, etc.) are propagated via `result.Warnings` when `StrictMode=true` enables semantic analysis. When `StrictMode=false` (default), semantic analysis is skipped entirely and no warnings are produced. Does not modify state or publish events.
-
-### Cache Operations (2 endpoints)
-
-- **GetCachedBehavior** (`/cache/get`): Retrieves previously compiled behavior bytecode by behavior ID. Resolves `IAssetClient` via soft L3 dependency pattern (returns `ServiceUnavailable` if Asset service not loaded). Requests asset from lib-asset, downloads bytecode from pre-signed URL, returns compiled model with bytecode (base64). Falls back to providing download URL if bytecode download fails.
-
-- **InvalidateCachedBehavior** (`/cache/invalidate`): Invalidates cached behavior by ID. Removes behavior metadata and GOAP metadata from state store via `BehaviorBundleManager`. Deletes the asset from lib-asset (if available). Publishes `behavior.deleted` lifecycle event. Note: does NOT invalidate in-memory `BehaviorModelCache` entries — the cache is not referenced by `BehaviorService`; it is only used by `BehaviorEvaluatorBase` subclasses.
-
-### GOAP Operations (2 endpoints)
-
-- **GenerateGoapPlan** (`/goap/plan`): Requires `behaviorId` to retrieve pre-cached GOAP metadata from compiled behaviors. Accepts a goal definition and current world state. Actions come from cached GOAP metadata (extracted during compilation), not from the request. Uses optional planning options (max depth/timeout/max nodes) or `PlanningOptions.Default` when not specified. Invokes `GoapPlanner.PlanAsync` with A* search. On success: returns ordered action sequence, total cost, nodes expanded, planning time in ms. On failure (no plan found): returns OK with failure reason and zeroed stats. Publishes `behavior.goap.plan-generated` event on success only.
-
-- **ValidateGoapPlan** (`/goap/validate-plan`): Validates an existing plan against updated world state. Accepts the plan (goal, action sequence), current action index, current world state, and optional active goals list for priority checking. Checks: plan completion, goal already satisfied, current action preconditions still valid, higher-priority goals now actionable. Returns `PlanValidationResult` with validity flag, `ReplanReason` (None, PreconditionInvalidated, ActionFailed, BetterGoalAvailable, PlanCompleted, GoalAlreadySatisfied, SuboptimalPlan), `ValidationSuggestion` (Continue, Replan, Abort), invalidated action index, and optional better goal reference.
-
 ---
 
 ## GOAP Implementation Notes
@@ -419,9 +362,6 @@ Memory Relevance Scoring (Keyword-Based)
 3. **GOAP plan persistence**: GOAP metadata (goals/actions) is stored per behavior in state (`goap-metadata:{behaviorId}` prefix) and used internally by `GenerateGoapPlanAsync`, but there is no external retrieval endpoint or plan result history query. The `GoapPlanGeneratedEvent` provides the analytics trail for generated plans.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/608 -->
 
-4. ~~**Behavior Stack system (not DI-registered)**~~: **FIXED** (2026-03-15) - Investigation confirmed all three (`IIntentStackMerger`, `IBehaviorStackRegistry`, `ISituationalTriggerManager`) are auto-registered via `[BannouHelperService]` attributes with non-null `InterfaceType`, discovered by PluginLoader. Manual registration in `ConfigureServices()` was incorrectly added and then reverted — it would violate the `Plugins_ShouldNotManuallyRegisterAutoDiscoverableHelpers` structural test. The original stub was a documentation error — these classes were always DI-discoverable.
-
-5. ~~**Document Merger (not DI-registered)**~~: **FIXED** (2026-03-15) - Investigation confirmed `DocumentMerger` IS registered via `[BannouHelperService("document", typeof(IBehaviorService), typeof(IDocumentMerger), lifetime: ServiceLifetime.Singleton)]` auto-discovery by PluginLoader. Manual registration in `ConfigureServices()` is unnecessary and would violate the `Plugins_ShouldNotManuallyRegisterAutoDiscoverableHelpers` structural test. The original stub was a documentation error — the class was always DI-discoverable.
 
 ---
 
@@ -463,9 +403,7 @@ Memory Relevance Scoring (Keyword-Based)
 
 ### Bugs (Fix Immediately)
 
-1. ~~**State store key prefixes are configurable instead of const (Foundation Tenets)**~~: **FIXED** (2026-03-16) - Removed 5 key prefix properties from `behavior-configuration.yaml`. Added `private const string` fields and `internal static Build*Key()` methods to `BehaviorBundleManager` (3 prefixes: `BEHAVIOR_METADATA_PREFIX`, `BUNDLE_MEMBERSHIP_PREFIX`, `GOAP_METADATA_PREFIX`) and `ActorLocalMemoryStore` (2 prefixes: `MEMORY_PREFIX`, `MEMORY_INDEX_PREFIX`). Removed `BehaviorServiceConfiguration` from `BehaviorBundleManager` constructor (no remaining config usage). Key values unchanged — existing stored data is compatible.
-
-2. ~~**ContentHash field in BehaviorCompilationFailedEvent never populated**~~: **FIXED** (2026-03-16) - Populated `ContentHash` with full 64-character lowercase hex SHA256 hash of the input ABML content (`body.AbmlContent`) in the compilation failure path of `CompileAbmlBehaviorAsync`. Enables future deduplication (PE #6) and analytics correlation of repeated compilation failures for the same source content.
+*No active bugs. All previously identified bugs have been fixed and verified.*
 
 ### Intentional Quirks
 
@@ -994,10 +932,7 @@ flows:
 
 ### Completed
 
-- **2026-03-15**: Maintenance pass — processed 12 strikethrough FIXED items via code verification agent. Confirmed 10 of 12; restored 2 as active stubs (Behavior Stack DI registration and Document Merger DI registration are NOT present in BehaviorServicePlugin.cs despite prior FIXED claims). Deleted all confirmed items. Added 2 new bugs: configurable key prefixes (Foundation Tenets violation) and unpopulated ContentHash field. Verified all 14 linked GitHub issues — all remain OPEN.
-- **2026-03-15**: Audit pass — investigated Stub #4 (Behavior Stack) and Stub #5 (Document Merger). Both were false gaps: all four classes (`IntentStackMerger`, `BehaviorStackRegistry`, `SituationalTriggerManager`, `DocumentMerger`) have `[BannouHelperService]` attributes with non-null `InterfaceType`, making them auto-registered by PluginLoader. Reverted incorrectly-added manual registrations from the previous audit (would have violated `Plugins_ShouldNotManuallyRegisterAutoDiscoverableHelpers` structural test).
-- **2026-03-16**: Audit pass — fixed Bug #1 (configurable key prefixes). Removed 5 key prefix properties from `behavior-configuration.yaml`, regenerated config. Added `const` fields + `internal static Build*Key()` methods to `BehaviorBundleManager` (3 prefixes) and `ActorLocalMemoryStore` (2 prefixes). Removed `BehaviorServiceConfiguration` from `BehaviorBundleManager` constructor. Updated test constructor call. Build verified.
-- **2026-03-16**: Audit pass — fixed Bug #2 (ContentHash never populated). Added SHA256 hash computation of `body.AbmlContent` in the compilation failure path of `CompileAbmlBehaviorAsync`. Full 64-char lowercase hex format. Build verified.
+- **2026-03-16**: Full maintenance + audit cycle. Migrated 5 operational sections to implementation map. Fixed 2 bugs (configurable key prefixes → const fields with Build*Key methods; ContentHash event field → SHA256 populated). Resolved 4 false-positive stubs (DI registrations were auto-discovered via `[BannouHelperService]`). All 14 linked GitHub issues verified OPEN. Zero actionable gaps remaining.
 
 ### AUDIT Markers
 

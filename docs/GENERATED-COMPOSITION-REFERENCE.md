@@ -411,14 +411,14 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Voice | L3 | Voice room coordination with P2P mesh, Kamailio SFU, and automatic tier upgrade | 11 |
 | Website | L3 | Public-facing browser CMS (news, profiles, downloads) using REST patterns — currently stubbed | 14 |
 | Achievement | L4 | Achievement/trophy system with progressive/binary types, rarity calculation, and platform sync | 13 |
-| Affix | L4 | Item modifier definition and procedural generation for equipment customization | — |
+| Affix | L4 | Item modifier definition and procedural generation for equipment customization | 28 |
 | Agency | L4 | Guardian spirit progressive agency and UX manifest engine for player capability unlocking | — |
 | Analytics | L4 | Event aggregation, Glicko-2 skill ratings, and milestone detection (event-only observer) | 9 |
 | Arbitration | L4 | Dispute resolution orchestration composing Contract/Faction primitives for jurisdictional rulings | — |
 | Behavior | L4 | ABML compiler (YAML to bytecode), A*-based GOAP planner, and 5-stage cognition pipeline | 6 |
 | Character Encounter | L4 | NPC encounter memory with per-participant perspectives, time-decay, and sentiment aggregation | 22 |
 | Character History | L4 | Historical event participation and machine-readable backstory for behavior system consumption | 12 |
-| Character Lifecycle | L4 | Generational cycle orchestration (aging, marriage, procreation, death, genetic inheritance) | — |
+| Character Lifecycle | L4 | Generational cycle orchestration (aging, marriage, procreation, death, genetic inheritance) | 29 |
 | Character Personality | L4 | Personality traits (bipolar axes) and combat preferences with probabilistic evolution | 12 |
 | Craft | L4 | Recipe-based crafting orchestration composing Item, Inventory, Contract, Currency, and Affix | — |
 | Director | L4 | Human-in-the-loop event coordination (Observe/Steer/Drive tiers) for live content management | — |
@@ -428,7 +428,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Environment | L4 | Weather simulation, temperature modeling, and ecological resources consuming Worldstate temporal data | — |
 | Escrow | L4 | Full-custody multi-party asset exchange with 13-state FSM (currency/items/contracts) | 22 |
 | Ethology | L4 | Species-level behavioral archetype registry with hierarchical overrides and individual noise | — |
-| Faction | L4 | Seed-based faction growth with norms, enforcement tiers, territory, guild hierarchy, and political bonds | 31 |
+| Faction | L4 | Seed-based faction growth with norms, enforcement tiers, territory, guild hierarchy, and political bonds | 37 |
 | Gardener | L4 | Player experience orchestration (garden lifecycle, void/discovery, divine actor integration) | 24 |
 | Hearsay | L4 | Social information propagation and NPC belief formation (what NPCs think they know vs. reality) | — |
 | Leaderboard | L4 | Redis Sorted Set leaderboards with seasonal rotation, polymorphic entities, and Analytics ingestion | 13 |
@@ -453,7 +453,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Utility | L4 | Infrastructure network topology, flow calculation, and coverage cascading (aqueducts, power grids) | — |
 | Workshop | L4 | Time-based automated production with lazy evaluation and background materialization | — |
 
-**77 services, 947 endpoints**
+**77 services, 1010 endpoints**
 
 For full per-service details: `docs/GENERATED-*-SERVICE-DETAILS.md`
 

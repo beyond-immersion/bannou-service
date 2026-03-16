@@ -57,7 +57,8 @@ public interface IServiceConfiguration
 
     /// <summary>
     /// Performs all configuration validation checks.
-    /// Calls <see cref="ValidateNonNullableStrings"/>, <see cref="ValidateNumericRanges"/>, <see cref="ValidateStringLengths"/>, <see cref="ValidatePatterns"/>, and <see cref="ValidateMultipleOf"/>.
+    /// Calls <see cref="ValidateNonNullableStrings"/>, <see cref="ValidateNumericRanges"/>, <see cref="ValidateStringLengths"/>,
+    /// <see cref="ValidatePatterns"/>, <see cref="ValidateMultipleOf"/>, and <see cref="ValidateConstraintGroups"/>.
     /// </summary>
     /// <exception cref="InvalidOperationException">Thrown when any validation check fails.</exception>
     public void Validate()
@@ -67,6 +68,7 @@ public interface IServiceConfiguration
         ValidateStringLengths();
         ValidatePatterns();
         ValidateMultipleOf();
+        ValidateConstraintGroups();
     }
 
     /// <summary>
@@ -314,6 +316,165 @@ public interface IServiceConfiguration
                 $"Numeric properties are not multiples of their required factors. " +
                 $"The following properties have invalid values: {string.Join("; ", invalidProperties)}. " +
                 $"Check environment variable values or remove overrides to use schema defaults.");
+        }
+    }
+
+    /// <summary>
+    /// Validates that all constraint groups defined via <see cref="ConfigConstraintGroupDefinitionAttribute"/>
+    /// are satisfied by the current property values.
+    /// IMPLEMENTATION TENETS: Cross-property configuration constraints must be declared in schema and validated at startup.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown when any constraint group is violated.</exception>
+    public void ValidateConstraintGroups()
+    {
+        var configType = GetType();
+        var groupDefinitions = configType.GetCustomAttributes<ConfigConstraintGroupDefinitionAttribute>(inherit: true).ToArray();
+        if (groupDefinitions.Length == 0)
+            return;
+
+        var properties = configType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var violations = new List<string>();
+
+        foreach (var groupDef in groupDefinitions)
+        {
+            // Collect all properties in this group
+            var groupMembers = new List<(PropertyInfo Property, ConfigConstraintGroupAttribute Attr)>();
+            foreach (var property in properties)
+            {
+                var groupAttr = property.GetCustomAttribute<ConfigConstraintGroupAttribute>();
+                if (groupAttr != null && groupAttr.GroupName == groupDef.GroupName)
+                {
+                    groupMembers.Add((property, groupAttr));
+                }
+            }
+
+            if (groupMembers.Count < 2)
+                continue; // Structural test catches this; skip at runtime to avoid false positives on misconfigured attributes
+
+            if (groupDef.IsPresenceConstraint)
+            {
+                ValidatePresenceConstraint(groupDef, groupMembers, violations);
+            }
+            else if (groupDef.IsSumConstraint)
+            {
+                ValidateSumConstraint(groupDef, groupMembers, violations);
+            }
+        }
+
+        if (violations.Count > 0)
+        {
+            var configTypeName = configType.Name;
+            throw new InvalidOperationException(
+                $"Configuration validation failed for {configTypeName}: " +
+                $"{string.Join(" ", violations)} " +
+                $"Check environment variable values or remove overrides to use schema defaults.");
+        }
+    }
+
+    /// <summary>
+    /// Validates a presence-type constraint group (ExactlyOne, AtMostOne, AllOrNone).
+    /// </summary>
+    private void ValidatePresenceConstraint(
+        ConfigConstraintGroupDefinitionAttribute groupDef,
+        List<(PropertyInfo Property, ConfigConstraintGroupAttribute Attr)> members,
+        List<string> violations)
+    {
+        var setProperties = new List<string>();
+        var unsetProperties = new List<string>();
+
+        foreach (var (property, _) in members)
+        {
+            var value = property.GetValue(this);
+            if (value != null)
+                setProperties.Add(property.Name);
+            else
+                unsetProperties.Add(property.Name);
+        }
+
+        var setCount = setProperties.Count;
+        var totalCount = members.Count;
+        var isValid = groupDef.Constraint switch
+        {
+            ConstraintGroupType.ExactlyOne => setCount == 1,
+            ConstraintGroupType.AtMostOne => setCount <= 1,
+            ConstraintGroupType.AllOrNone => setCount == 0 || setCount == totalCount,
+            _ => true
+        };
+
+        if (!isValid)
+        {
+            var envPrefix = GetType().GetCustomAttribute<ServiceConfigurationAttribute>()?.EnvPrefix ?? "";
+            var propertyList = string.Join(", ", members.Select(m =>
+            {
+                var val = m.Property.GetValue(this);
+                return $"{m.Property.Name}={(val != null ? "<set>" : "<null>")}";
+            }));
+            violations.Add(
+                $"Constraint group '{groupDef.GroupName}' violated ({groupDef.Constraint}, " +
+                $"{groupDef.GetConstraintDescription()}). " +
+                $"Properties: {propertyList} ({setCount} set out of {totalCount}).");
+        }
+    }
+
+    /// <summary>
+    /// Validates a sum-type constraint group (SumEquals, SumMinimum, SumMaximum).
+    /// </summary>
+    private void ValidateSumConstraint(
+        ConfigConstraintGroupDefinitionAttribute groupDef,
+        List<(PropertyInfo Property, ConfigConstraintGroupAttribute Attr)> members,
+        List<string> violations)
+    {
+        if (!groupDef.HasValue)
+        {
+            violations.Add(
+                $"Constraint group '{groupDef.GroupName}' has sum constraint {groupDef.Constraint} " +
+                $"but no target Value is defined.");
+            return;
+        }
+
+        double sum = 0;
+        var propertyValues = new List<string>();
+
+        foreach (var (property, _) in members)
+        {
+            var rawValue = property.GetValue(this);
+            double numericValue = 0;
+
+            if (rawValue != null)
+            {
+                try
+                {
+                    numericValue = Convert.ToDouble(rawValue);
+                }
+                catch (InvalidCastException)
+                {
+                    // Non-numeric type in sum group — structural test catches this
+                    continue;
+                }
+                catch (FormatException)
+                {
+                    continue;
+                }
+            }
+
+            sum += numericValue;
+            propertyValues.Add($"{property.Name}={numericValue}");
+        }
+
+        var isValid = groupDef.Constraint switch
+        {
+            ConstraintGroupType.SumEquals => Math.Abs(sum - groupDef.Value) <= groupDef.Tolerance,
+            ConstraintGroupType.SumMinimum => sum >= groupDef.Value,
+            ConstraintGroupType.SumMaximum => sum <= groupDef.Value,
+            _ => true
+        };
+
+        if (!isValid)
+        {
+            violations.Add(
+                $"Constraint group '{groupDef.GroupName}' violated ({groupDef.Constraint}, " +
+                $"{groupDef.GetConstraintDescription()}). " +
+                $"Properties: {string.Join(", ", propertyValues)} (sum={sum}).");
         }
     }
 
