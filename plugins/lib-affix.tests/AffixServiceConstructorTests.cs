@@ -1,4 +1,3 @@
-using BeyondImmersion.BannouService.Affix;
 using BeyondImmersion.BannouService.TestUtilities;
 
 namespace BeyondImmersion.BannouService.Affix.Tests;

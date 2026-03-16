@@ -1,6 +1,3 @@
-using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Affix;
-
 namespace BeyondImmersion.BannouService.Affix.Tests;
 
 /// <summary>

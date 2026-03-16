@@ -140,7 +140,8 @@ RecipeDefinition:
  - domain: string # Must match a proficiency domain
  minimumLevel: int
 
- # Quality formula weights (all sum to 1.0)
+ # Quality formula weights (must sum to 1.0 — validated at recipe seed time)
+ # Default weights are in CraftServiceConfiguration with x-constraint-group sum-equals enforcement
  qualityWeights:
  materialQuality: decimal # How much input quality affects output (0-1)
  proficiencyLevel: decimal # How much skill affects output (0-1)
@@ -591,6 +592,8 @@ Sessions are cleaned up on completion, cancellation, or expiration.
 | `DefaultQualityMaterialWeight` | `CRAFT_DEFAULT_QUALITY_MATERIAL_WEIGHT` | `0.3` | Default material quality weight when recipe doesn't specify |
 | `DefaultQualityProficiencyWeight` | `CRAFT_DEFAULT_QUALITY_PROFICIENCY_WEIGHT` | `0.5` | Default proficiency quality weight |
 | `DefaultQualityToolWeight` | `CRAFT_DEFAULT_QUALITY_TOOL_WEIGHT` | `0.2` | Default tool quality weight |
+
+**Constraint group**: The three `DefaultQuality*Weight` properties use `x-constraint-group` with `sum-equals: 1.0` to enforce that the default quality weights collectively equal 1.0 at startup. If an operator overrides one weight without adjusting the others, the service fails fast with a descriptive error. Per-recipe `qualityWeights` are validated at the API level when recipes are seeded, not via configuration constraint groups.
 | `DiscoveryMaterialConsumptionRate` | `CRAFT_DISCOVERY_MATERIAL_CONSUMPTION_RATE` | `0.5` | Fraction of materials consumed on failed discovery attempt |
 | `MaxRecipesPerGameService` | `CRAFT_MAX_RECIPES_PER_GAME_SERVICE` | `10000` | Safety limit for recipe count per game service |
 | `LockTimeoutSeconds` | `CRAFT_LOCK_TIMEOUT_SECONDS` | `30` | Distributed lock timeout |
@@ -852,7 +855,7 @@ Crafting Session Lifecycle (Production)
 ### Phase 1: Recipe Infrastructure
 - Create craft-api.yaml schema with all endpoints
 - Create craft-events.yaml schema
-- Create craft-configuration.yaml schema
+- Create craft-configuration.yaml schema (use `x-constraint-group` with `sum-equals: 1.0` for DefaultQuality*Weight properties)
 - Generate service code
 - Implement recipe CRUD (create, get, list, update, deprecate, seed, list-domains)
 - Implement recipe cache warming and invalidation

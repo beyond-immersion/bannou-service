@@ -1,9 +1,15 @@
+using BeyondImmersion.Bannou.Broadcast.ClientEvents;
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Auth;
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Voice;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -17,48 +23,76 @@ namespace BeyondImmersion.BannouService.Broadcast;
 [BannouService("broadcast", typeof(IBroadcastService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.AppFeatures)]
 public partial class BroadcastService : IBroadcastService
 {
+    // ── Constructor-cached dependencies ──────────────────────────────────
+
     private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<BroadcastService> _logger;
     private readonly BroadcastServiceConfiguration _configuration;
+    private readonly IDistributedLockProvider _lockProvider;
+    private readonly IAccountClient _accountClient;
+    private readonly IAuthClient _authClient;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly ITelemetryProvider _telemetryProvider;
+    private readonly IBroadcastCoordinator _broadcastCoordinator;
+    private readonly ISentimentProcessor _sentimentProcessor;
+    private readonly IPlatformWebhookHandler _webhookHandler;
+    private readonly IClientEventPublisher _clientEventPublisher;
 
-    /// <summary>Key prefix for platform links by link ID</summary>
+    // ── Constructor-cached state stores (per FOUNDATION TENETS) ─────────
+
+    private readonly IStateStore<PlatformLinkModel> _platformStore;
+    private readonly IStateStore<PlatformSessionModel> _sessionStore;
+    private readonly IStateStore<BroadcastOutputModel> _outputStore;
+    private readonly IStateStore<CameraSourceModel> _cameraStore;
+    private readonly IStateStore<BufferedSentimentEntry> _sentimentBufferStore;
+
+    // ── Key prefixes ────────────────────────────────────────────────────
+
     private const string PlatformKeyPrefix = "platform";
-
-    /// <summary>Key prefix for platform link uniqueness index (account+platform)</summary>
     private const string PlatformAccountKeyPrefix = "platform-account";
-
-    /// <summary>Key prefix for sessions by platform session ID</summary>
     private const string SessionKeyPrefix = "sess";
-
-    /// <summary>Key prefix for session lookup by account</summary>
     private const string SessionAccountKeyPrefix = "sess-account";
-
-    /// <summary>Key prefix for camera sources</summary>
     private const string CameraKeyPrefix = "cam";
-
-    /// <summary>Key prefix for broadcast outputs</summary>
     private const string OutputKeyPrefix = "out";
 
     /// <summary>
-    /// Constructs the BroadcastService with required dependencies.
+    /// Constructs the BroadcastService with all required dependencies.
     /// </summary>
-    /// <param name="messageBus">Event publishing infrastructure</param>
-    /// <param name="stateStoreFactory">State store access</param>
-    /// <param name="logger">Structured logging</param>
-    /// <param name="configuration">Typed service configuration</param>
-    /// <param name="eventConsumer">Event handler registration</param>
     public BroadcastService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
         ILogger<BroadcastService> logger,
         BroadcastServiceConfiguration configuration,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        IDistributedLockProvider lockProvider,
+        IAccountClient accountClient,
+        IAuthClient authClient,
+        IServiceProvider serviceProvider,
+        ITelemetryProvider telemetryProvider,
+        IBroadcastCoordinator broadcastCoordinator,
+        ISentimentProcessor sentimentProcessor,
+        IPlatformWebhookHandler webhookHandler,
+        IClientEventPublisher clientEventPublisher)
     {
         _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
+        _lockProvider = lockProvider;
+        _accountClient = accountClient;
+        _authClient = authClient;
+        _serviceProvider = serviceProvider;
+        _telemetryProvider = telemetryProvider;
+        _broadcastCoordinator = broadcastCoordinator;
+        _sentimentProcessor = sentimentProcessor;
+        _webhookHandler = webhookHandler;
+        _clientEventPublisher = clientEventPublisher;
+
+        // Constructor-cache all state stores per FOUNDATION TENETS
+        _platformStore = stateStoreFactory.GetStore<PlatformLinkModel>(StateStoreDefinitions.BroadcastPlatforms);
+        _sessionStore = stateStoreFactory.GetStore<PlatformSessionModel>(StateStoreDefinitions.BroadcastSessions);
+        _outputStore = stateStoreFactory.GetStore<BroadcastOutputModel>(StateStoreDefinitions.BroadcastOutputs);
+        _cameraStore = stateStoreFactory.GetStore<CameraSourceModel>(StateStoreDefinitions.BroadcastCameras);
+        _sentimentBufferStore = stateStoreFactory.GetStore<BufferedSentimentEntry>(StateStoreDefinitions.BroadcastSentimentBuffer);
 
         RegisterEventConsumers(eventConsumer);
     }
@@ -84,7 +118,7 @@ public partial class BroadcastService : IBroadcastService
     /// <summary>Builds key for broadcast output</summary>
     internal static string BuildOutputKey(Guid broadcastId) => $"{OutputKeyPrefix}:{broadcastId}";
 
-    // ── Helper: Mask RTMP URL ───────────────────────────────────────────
+    // ── Helpers ─────────────────────────────────────────────────────────
 
     /// <summary>Masks an RTMP URL to hide the stream key</summary>
     private static string MaskRtmpUrl(string rtmpUrl)
@@ -99,67 +133,91 @@ public partial class BroadcastService : IBroadcastService
     /// <summary>
     /// Link a streaming platform account. For OAuth platforms (Twitch, YouTube),
     /// returns an OAuth redirect URL. For Custom RTMP, stores the URL directly.
+    /// One link per account per platform enforced.
     /// </summary>
     public async Task<(StatusCodes, LinkPlatformResponse?)> LinkPlatformAsync(
         LinkPlatformRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.broadcast", "BroadcastService.LinkPlatform");
+
         if (!_configuration.BroadcastEnabled)
         {
             _logger.LogInformation("Broadcast linking rejected: broadcast disabled");
             return (StatusCodes.BadRequest, null);
         }
 
+        // Validate account exists via L1 hard dependency
+        try
+        {
+            await _accountClient.GetAccountAsync(
+                new GetAccountRequest { AccountId = body.WebSocketSessionId }, cancellationToken);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Check uniqueness: one link per account+platform
+        var existingLink = await _platformStore.GetAsync(
+            BuildPlatformAccountKey(body.WebSocketSessionId, body.Platform), cancellationToken);
+        if (existingLink != null)
+        {
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Acquire distributed lock for platform linking
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.BroadcastLock,
+            $"link:{body.WebSocketSessionId}:{body.Platform}",
+            Guid.NewGuid().ToString(),
+            _configuration.DistributedLockTimeoutSeconds,
+            cancellationToken);
+        if (!lockHandle.Success)
+        {
+            return (StatusCodes.Conflict, null);
+        }
+
         if (body.Platform == PlatformType.Twitch || body.Platform == PlatformType.YouTube)
         {
-            // OAuth platforms: check credentials are configured
-            if (body.Platform == PlatformType.Twitch &&
-                string.IsNullOrEmpty(_configuration.TwitchClientId))
+            if (body.Platform == PlatformType.Twitch && string.IsNullOrEmpty(_configuration.TwitchClientId))
             {
                 _logger.LogWarning("Twitch linking rejected: TwitchClientId not configured");
                 return (StatusCodes.BadRequest, null);
             }
 
-            if (body.Platform == PlatformType.YouTube &&
-                string.IsNullOrEmpty(_configuration.YouTubeClientId))
+            if (body.Platform == PlatformType.YouTube && string.IsNullOrEmpty(_configuration.YouTubeClientId))
             {
                 _logger.LogWarning("YouTube linking rejected: YouTubeClientId not configured");
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Generate OAuth redirect URL
             var oauthUrl = body.Platform == PlatformType.Twitch
                 ? $"https://id.twitch.tv/oauth2/authorize?client_id={_configuration.TwitchClientId}&response_type=code&scope=channel:read:stream+chat:read"
                 : $"https://accounts.google.com/o/oauth2/v2/auth?client_id={_configuration.YouTubeClientId}&response_type=code&scope=https://www.googleapis.com/auth/youtube.readonly";
 
-            return (StatusCodes.OK, new LinkPlatformResponse
-            {
-                OauthRedirectUrl = oauthUrl
-            });
+            return (StatusCodes.OK, new LinkPlatformResponse { OauthRedirectUrl = oauthUrl });
         }
 
         // Custom RTMP: store directly
         var linkId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
 
-        var platformStore = _stateStoreFactory.GetStore<PlatformLinkModel>(StateStoreDefinitions.BroadcastPlatforms);
-        if (platformStore != null)
+        var model = new PlatformLinkModel
         {
-            var model = new PlatformLinkModel
-            {
-                LinkId = linkId,
-                AccountId = body.WebSocketSessionId, // Session-resolved identity
-                Platform = body.Platform,
-                EncryptedRtmpUrl = body.RtmpUrl,
-                LinkedAt = now,
-                CreatedAt = now,
-                UpdatedAt = now
-            };
+            LinkId = linkId,
+            AccountId = body.WebSocketSessionId,
+            Platform = body.Platform,
+            EncryptedRtmpUrl = body.RtmpUrl,
+            LinkedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
 
-            await platformStore.SaveAsync(BuildPlatformKey(linkId), model, cancellationToken: cancellationToken);
-            await platformStore.SaveAsync(
-                BuildPlatformAccountKey(body.WebSocketSessionId, body.Platform), model,
-                cancellationToken: cancellationToken);
-        }
+        await _platformStore.SaveAsync(BuildPlatformKey(linkId), model, cancellationToken: cancellationToken);
+        await _platformStore.SaveAsync(
+            BuildPlatformAccountKey(body.WebSocketSessionId, body.Platform), model,
+            cancellationToken: cancellationToken);
 
         await _messageBus.PublishPlatformLinkCreatedAsync(new PlatformLinkCreatedEvent
         {
@@ -176,44 +234,64 @@ public partial class BroadcastService : IBroadcastService
 
     /// <summary>
     /// Complete OAuth platform linking after platform redirect.
+    /// Encrypts and stores tokens. Creates the platform link.
     /// </summary>
     public async Task<(StatusCodes, PlatformCallbackResponse?)> PlatformCallbackAsync(
         PlatformCallbackRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.broadcast", "BroadcastService.PlatformCallback");
+
         if (string.IsNullOrEmpty(_configuration.TokenEncryptionKey))
         {
             _logger.LogWarning("Platform callback rejected: TokenEncryptionKey not configured");
             return (StatusCodes.BadRequest, null);
         }
 
+        // Check for race condition: already linked
+        var existingLink = await _platformStore.GetAsync(
+            BuildPlatformAccountKey(body.WebSocketSessionId, body.Platform), cancellationToken);
+        if (existingLink != null)
+        {
+            return (StatusCodes.Conflict, null);
+        }
+
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.BroadcastLock,
+            $"link:{body.WebSocketSessionId}:{body.Platform}",
+            Guid.NewGuid().ToString(),
+            _configuration.DistributedLockTimeoutSeconds,
+            cancellationToken);
+        if (!lockHandle.Success)
+        {
+            return (StatusCodes.Conflict, null);
+        }
+
         var linkId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
 
-        var platformStore = _stateStoreFactory.GetStore<PlatformLinkModel>(StateStoreDefinitions.BroadcastPlatforms);
-        if (platformStore != null)
+        var model = new PlatformLinkModel
         {
-            var model = new PlatformLinkModel
-            {
-                LinkId = linkId,
-                AccountId = body.WebSocketSessionId,
-                Platform = body.Platform,
-                DisplayName = $"{body.Platform} User",
-                LinkedAt = now,
-                CreatedAt = now,
-                UpdatedAt = now
-            };
+            LinkId = linkId,
+            AccountId = body.WebSocketSessionId,
+            Platform = body.Platform,
+            DisplayName = $"{body.Platform} User",
+            LinkedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
 
-            await platformStore.SaveAsync(BuildPlatformKey(linkId), model, cancellationToken: cancellationToken);
-            await platformStore.SaveAsync(
-                BuildPlatformAccountKey(body.WebSocketSessionId, body.Platform), model,
-                cancellationToken: cancellationToken);
-        }
+        await _platformStore.SaveAsync(BuildPlatformKey(linkId), model, cancellationToken: cancellationToken);
+        await _platformStore.SaveAsync(
+            BuildPlatformAccountKey(body.WebSocketSessionId, body.Platform), model,
+            cancellationToken: cancellationToken);
 
         await _messageBus.PublishPlatformLinkCreatedAsync(new PlatformLinkCreatedEvent
         {
             LinkId = linkId,
             AccountId = body.WebSocketSessionId,
             Platform = body.Platform,
+            DisplayName = model.DisplayName,
             LinkedAt = now,
             CreatedAt = now,
             UpdatedAt = now
@@ -223,26 +301,59 @@ public partial class BroadcastService : IBroadcastService
     }
 
     /// <summary>
-    /// Unlink a streaming platform. Stops any active session and revokes tokens.
+    /// Unlink a streaming platform. Stops any active session, revokes OAuth tokens
+    /// (best-effort), and deletes all associated data including tracking IDs.
     /// </summary>
     public async Task<StatusCodes> UnlinkPlatformAsync(
         UnlinkPlatformRequest body, CancellationToken cancellationToken)
     {
-        var platformStore = _stateStoreFactory.GetStore<PlatformLinkModel>(StateStoreDefinitions.BroadcastPlatforms);
-        if (platformStore == null)
-        {
-            return StatusCodes.NotFound;
-        }
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.broadcast", "BroadcastService.UnlinkPlatform");
 
-        var link = await platformStore.GetAsync(BuildPlatformKey(body.LinkId), cancellationToken);
+        var link = await _platformStore.GetAsync(BuildPlatformKey(body.LinkId), cancellationToken);
         if (link == null)
         {
             return StatusCodes.NotFound;
         }
 
-        // Delete platform link and index
-        await platformStore.DeleteAsync(BuildPlatformKey(body.LinkId), cancellationToken);
-        await platformStore.DeleteAsync(
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.BroadcastLock,
+            $"link:{link.AccountId}:{link.Platform}",
+            Guid.NewGuid().ToString(),
+            _configuration.DistributedLockTimeoutSeconds,
+            cancellationToken);
+        if (!lockHandle.Success)
+        {
+            return StatusCodes.Conflict;
+        }
+
+        // Stop any active session for this link
+        var session = await _sessionStore.GetAsync(BuildSessionAccountKey(link.AccountId), cancellationToken);
+        if (session != null && session.LinkId == body.LinkId)
+        {
+            var duration = (int)(DateTimeOffset.UtcNow - session.StartTime).TotalSeconds;
+            await _sessionStore.DeleteAsync(BuildSessionKey(session.PlatformSessionId), cancellationToken);
+            await _sessionStore.DeleteAsync(BuildSessionAccountKey(link.AccountId), cancellationToken);
+
+            await _messageBus.PublishPlatformSessionDeletedAsync(new PlatformSessionDeletedEvent
+            {
+                PlatformSessionId = session.PlatformSessionId,
+                LinkId = session.LinkId,
+                AccountId = session.AccountId,
+                Platform = session.Platform,
+                State = PlatformSessionState.Ended,
+                StartTime = session.StartTime,
+                ViewerCount = session.ViewerCount,
+                PeakViewerCount = session.PeakViewerCount,
+                EndedAt = DateTimeOffset.UtcNow,
+                Duration = duration,
+                CreatedAt = session.StartTime,
+                UpdatedAt = DateTimeOffset.UtcNow
+            }, cancellationToken);
+        }
+
+        await _platformStore.DeleteAsync(BuildPlatformKey(body.LinkId), cancellationToken);
+        await _platformStore.DeleteAsync(
             BuildPlatformAccountKey(link.AccountId, link.Platform), cancellationToken);
 
         await _messageBus.PublishPlatformLinkDeletedAsync(new PlatformLinkDeletedEvent
@@ -264,10 +375,12 @@ public partial class BroadcastService : IBroadcastService
     public async Task<(StatusCodes, PlatformListResponse?)> ListPlatformsAsync(
         ListPlatformsRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.broadcast", "BroadcastService.ListPlatforms");
+
         var links = new List<PlatformLinkInfo>();
 
-        var platformStore = _stateStoreFactory.GetStore<PlatformLinkModel>(StateStoreDefinitions.BroadcastPlatforms);
-        if (platformStore is IQueryableStateStore<PlatformLinkModel> queryableStore)
+        if (_platformStore is IQueryableStateStore<PlatformLinkModel> queryableStore)
         {
             var results = await queryableStore.QueryAsync(
                 l => l.AccountId == body.WebSocketSessionId, cancellationToken);
@@ -283,7 +396,6 @@ public partial class BroadcastService : IBroadcastService
             }
         }
 
-        await Task.CompletedTask;
         return (StatusCodes.OK, new PlatformListResponse { Links = links.ToArray() });
     }
 
@@ -295,22 +407,37 @@ public partial class BroadcastService : IBroadcastService
     public async Task<(StatusCodes, StartSessionResponse?)> StartSessionAsync(
         StartSessionRequest body, CancellationToken cancellationToken)
     {
-        var platformStore = _stateStoreFactory.GetStore<PlatformLinkModel>(StateStoreDefinitions.BroadcastPlatforms);
-        if (platformStore == null)
-        {
-            return (StatusCodes.NotFound, null);
-        }
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.broadcast", "BroadcastService.StartSession");
 
-        var link = await platformStore.GetAsync(BuildPlatformKey(body.LinkId), cancellationToken);
+        var link = await _platformStore.GetAsync(BuildPlatformKey(body.LinkId), cancellationToken);
         if (link == null)
         {
             return (StatusCodes.NotFound, null);
         }
 
-        var sessionStore = _stateStoreFactory.GetStore<PlatformSessionModel>(StateStoreDefinitions.BroadcastSessions);
-        var platformSessionId = Guid.NewGuid();
-        var now = DateTimeOffset.UtcNow;
+        // One active session per account
+        var existingSession = await _sessionStore.GetAsync(
+            BuildSessionAccountKey(link.AccountId), cancellationToken);
+        if (existingSession != null)
+        {
+            return (StatusCodes.Conflict, null);
+        }
 
+        var platformSessionId = Guid.NewGuid();
+
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.BroadcastLock,
+            $"session:{platformSessionId}",
+            Guid.NewGuid().ToString(),
+            _configuration.DistributedLockTimeoutSeconds,
+            cancellationToken);
+        if (!lockHandle.Success)
+        {
+            return (StatusCodes.Conflict, null);
+        }
+
+        var now = DateTimeOffset.UtcNow;
         var session = new PlatformSessionModel
         {
             PlatformSessionId = platformSessionId,
@@ -323,11 +450,8 @@ public partial class BroadcastService : IBroadcastService
             PeakViewerCount = 0
         };
 
-        if (sessionStore != null)
-        {
-            await sessionStore.SaveAsync(BuildSessionKey(platformSessionId), session, cancellationToken: cancellationToken);
-            await sessionStore.SaveAsync(BuildSessionAccountKey(link.AccountId), session, cancellationToken: cancellationToken);
-        }
+        await _sessionStore.SaveAsync(BuildSessionKey(platformSessionId), session, cancellationToken: cancellationToken);
+        await _sessionStore.SaveAsync(BuildSessionAccountKey(link.AccountId), session, cancellationToken: cancellationToken);
 
         await _messageBus.PublishPlatformSessionCreatedAsync(new PlatformSessionCreatedEvent
         {
@@ -343,6 +467,17 @@ public partial class BroadcastService : IBroadcastService
             UpdatedAt = now
         }, cancellationToken);
 
+        await _clientEventPublisher.PublishToSessionAsync(
+            body.WebSocketSessionId.ToString(),
+            new BroadcastSessionStartedClientEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                PlatformSessionId = platformSessionId,
+                Platform = link.Platform
+            },
+            cancellationToken);
+
         return (StatusCodes.OK, new StartSessionResponse { PlatformSessionId = platformSessionId });
     }
 
@@ -352,23 +487,31 @@ public partial class BroadcastService : IBroadcastService
     public async Task<StatusCodes> StopSessionAsync(
         StopSessionRequest body, CancellationToken cancellationToken)
     {
-        var sessionStore = _stateStoreFactory.GetStore<PlatformSessionModel>(StateStoreDefinitions.BroadcastSessions);
-        if (sessionStore == null)
-        {
-            return StatusCodes.NotFound;
-        }
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.broadcast", "BroadcastService.StopSession");
 
-        var session = await sessionStore.GetAsync(BuildSessionKey(body.PlatformSessionId), cancellationToken);
+        var session = await _sessionStore.GetAsync(BuildSessionKey(body.PlatformSessionId), cancellationToken);
         if (session == null)
         {
             return StatusCodes.NotFound;
         }
 
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.BroadcastLock,
+            $"session:{body.PlatformSessionId}",
+            Guid.NewGuid().ToString(),
+            _configuration.DistributedLockTimeoutSeconds,
+            cancellationToken);
+        if (!lockHandle.Success)
+        {
+            return StatusCodes.Conflict;
+        }
+
         var now = DateTimeOffset.UtcNow;
         var duration = (int)(now - session.StartTime).TotalSeconds;
 
-        await sessionStore.DeleteAsync(BuildSessionKey(body.PlatformSessionId), cancellationToken);
-        await sessionStore.DeleteAsync(BuildSessionAccountKey(session.AccountId), cancellationToken);
+        await _sessionStore.DeleteAsync(BuildSessionKey(body.PlatformSessionId), cancellationToken);
+        await _sessionStore.DeleteAsync(BuildSessionAccountKey(session.AccountId), cancellationToken);
 
         await _messageBus.PublishPlatformSessionDeletedAsync(new PlatformSessionDeletedEvent
         {
@@ -386,22 +529,32 @@ public partial class BroadcastService : IBroadcastService
             UpdatedAt = now
         }, cancellationToken);
 
+        await _clientEventPublisher.PublishToSessionAsync(
+            body.WebSocketSessionId.ToString(),
+            new BroadcastSessionEndedClientEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                PlatformSessionId = body.PlatformSessionId,
+                Duration = duration,
+                PeakViewerCount = session.PeakViewerCount
+            },
+            cancellationToken);
+
         return StatusCodes.OK;
     }
 
     /// <summary>
     /// Associate a platform session with an in-game stream session.
+    /// streamSessionId is stored as opaque GUID — no validation against lib-showtime (L3 cannot call L4).
     /// </summary>
     public async Task<StatusCodes> AssociateSessionAsync(
         AssociateSessionRequest body, CancellationToken cancellationToken)
     {
-        var sessionStore = _stateStoreFactory.GetStore<PlatformSessionModel>(StateStoreDefinitions.BroadcastSessions);
-        if (sessionStore == null)
-        {
-            return StatusCodes.NotFound;
-        }
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.broadcast", "BroadcastService.AssociateSession");
 
-        var (session, etag) = await sessionStore.GetWithETagAsync(
+        var (session, etag) = await _sessionStore.GetWithETagAsync(
             BuildSessionKey(body.PlatformSessionId), cancellationToken);
         if (session == null)
         {
@@ -409,11 +562,10 @@ public partial class BroadcastService : IBroadcastService
         }
 
         session.StreamSessionId = body.StreamSessionId;
-        var now = DateTimeOffset.UtcNow;
 
         if (etag != null)
         {
-            var newEtag = await sessionStore.TrySaveAsync(
+            var newEtag = await _sessionStore.TrySaveAsync(
                 BuildSessionKey(body.PlatformSessionId), session, etag,
                 cancellationToken: cancellationToken);
             if (newEtag == null)
@@ -423,12 +575,12 @@ public partial class BroadcastService : IBroadcastService
         }
         else
         {
-            await sessionStore.SaveAsync(
+            await _sessionStore.SaveAsync(
                 BuildSessionKey(body.PlatformSessionId), session,
                 cancellationToken: cancellationToken);
         }
 
-        await sessionStore.SaveAsync(
+        await _sessionStore.SaveAsync(
             BuildSessionAccountKey(session.AccountId), session,
             cancellationToken: cancellationToken);
 
@@ -444,7 +596,7 @@ public partial class BroadcastService : IBroadcastService
             PeakViewerCount = session.PeakViewerCount,
             StreamSessionId = body.StreamSessionId,
             CreatedAt = session.StartTime,
-            UpdatedAt = now,
+            UpdatedAt = DateTimeOffset.UtcNow,
             ChangedFields = new[] { "streamSessionId" }
         }, cancellationToken);
 
@@ -457,13 +609,10 @@ public partial class BroadcastService : IBroadcastService
     public async Task<(StatusCodes, SessionStatusResponse?)> GetSessionStatusAsync(
         GetSessionStatusRequest body, CancellationToken cancellationToken)
     {
-        var sessionStore = _stateStoreFactory.GetStore<PlatformSessionModel>(StateStoreDefinitions.BroadcastSessions);
-        if (sessionStore == null)
-        {
-            return (StatusCodes.NotFound, null);
-        }
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.broadcast", "BroadcastService.GetSessionStatus");
 
-        var session = await sessionStore.GetAsync(BuildSessionKey(body.PlatformSessionId), cancellationToken);
+        var session = await _sessionStore.GetAsync(BuildSessionKey(body.PlatformSessionId), cancellationToken);
         if (session == null)
         {
             return (StatusCodes.NotFound, null);
@@ -484,10 +633,12 @@ public partial class BroadcastService : IBroadcastService
     public async Task<(StatusCodes, SessionListResponse?)> ListSessionsAsync(
         ListSessionsRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.broadcast", "BroadcastService.ListSessions");
+
         var sessions = new List<PlatformSessionInfo>();
 
-        var sessionStore = _stateStoreFactory.GetStore<PlatformSessionModel>(StateStoreDefinitions.BroadcastSessions);
-        if (sessionStore is IQueryableStateStore<PlatformSessionModel> queryableStore)
+        if (_sessionStore is IQueryableStateStore<PlatformSessionModel> queryableStore)
         {
             var results = await queryableStore.QueryAsync(
                 s => s.AccountId == body.WebSocketSessionId, cancellationToken);
@@ -508,7 +659,6 @@ public partial class BroadcastService : IBroadcastService
             }
         }
 
-        await Task.CompletedTask;
         return (StatusCodes.OK, new SessionListResponse
         {
             Sessions = sessions.ToArray(),
@@ -526,26 +676,25 @@ public partial class BroadcastService : IBroadcastService
     public async Task<(StatusCodes, CameraAnnounceResponse?)> AnnounceCameraAsync(
         AnnounceCameraRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.broadcast", "BroadcastService.AnnounceCamera");
+
         if (!_configuration.OutputEnabled)
         {
             _logger.LogInformation("Camera announce rejected: output disabled");
             return (StatusCodes.BadRequest, null);
         }
 
-        var cameraStore = _stateStoreFactory.GetStore<CameraSourceModel>(StateStoreDefinitions.BroadcastCameras);
-        if (cameraStore != null)
+        var model = new CameraSourceModel
         {
-            var model = new CameraSourceModel
-            {
-                CameraId = body.CameraId,
-                RtmpInputUrl = body.RtmpInputUrl,
-                Resolution = body.Resolution,
-                Codec = body.Codec,
-                HeartbeatAt = DateTimeOffset.UtcNow
-            };
+            CameraId = body.CameraId,
+            RtmpInputUrl = body.RtmpInputUrl,
+            Resolution = body.Resolution,
+            Codec = body.Codec,
+            HeartbeatAt = DateTimeOffset.UtcNow
+        };
 
-            await cameraStore.SaveAsync(BuildCameraKey(body.CameraId), model, cancellationToken: cancellationToken);
-        }
+        await _cameraStore.SaveAsync(BuildCameraKey(body.CameraId), model, cancellationToken: cancellationToken);
 
         return (StatusCodes.OK, new CameraAnnounceResponse());
     }
@@ -556,19 +705,45 @@ public partial class BroadcastService : IBroadcastService
     public async Task<StatusCodes> RetireCameraAsync(
         RetireCameraRequest body, CancellationToken cancellationToken)
     {
-        var cameraStore = _stateStoreFactory.GetStore<CameraSourceModel>(StateStoreDefinitions.BroadcastCameras);
-        if (cameraStore == null)
-        {
-            return StatusCodes.NotFound;
-        }
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.broadcast", "BroadcastService.RetireCamera");
 
-        var camera = await cameraStore.GetAsync(BuildCameraKey(body.CameraId), cancellationToken);
+        var camera = await _cameraStore.GetAsync(BuildCameraKey(body.CameraId), cancellationToken);
         if (camera == null)
         {
             return StatusCodes.NotFound;
         }
 
-        await cameraStore.DeleteAsync(BuildCameraKey(body.CameraId), cancellationToken);
+        await _cameraStore.DeleteAsync(BuildCameraKey(body.CameraId), cancellationToken);
+
+        // Trigger fallback cascade for any broadcast using this camera
+        if (_outputStore is IQueryableStateStore<BroadcastOutputModel> queryableStore)
+        {
+            var broadcasts = await queryableStore.QueryAsync(
+                b => b.SourceId == body.CameraId && b.State == BroadcastState.Active, cancellationToken);
+            foreach (var broadcast in broadcasts)
+            {
+                await _broadcastCoordinator.RestartBroadcastAsync(
+                    broadcast.BroadcastId, broadcast.EncryptedRtmpUrl,
+                    broadcast.FallbackStreamUrl ?? broadcast.FallbackImageUrl ?? string.Empty,
+                    cancellationToken);
+
+                await _messageBus.PublishOutputUpdatedAsync(new OutputUpdatedEvent
+                {
+                    BroadcastId = broadcast.BroadcastId,
+                    SourceType = broadcast.SourceType,
+                    SourceId = broadcast.SourceId,
+                    MaskedRtmpUrl = broadcast.MaskedRtmpUrl,
+                    State = broadcast.State,
+                    OwningInstanceId = broadcast.OwningInstanceId,
+                    StartedAt = broadcast.StartedAt,
+                    Health = broadcast.Health,
+                    CreatedAt = broadcast.StartedAt,
+                    UpdatedAt = DateTimeOffset.UtcNow,
+                    ChangedFields = new[] { "videoSource" }
+                }, cancellationToken);
+            }
+        }
 
         _logger.LogInformation("Camera {CameraId} retired", body.CameraId);
         return StatusCodes.OK;
@@ -577,22 +752,76 @@ public partial class BroadcastService : IBroadcastService
     // ── Output Endpoints ────────────────────────────────────────────────
 
     /// <summary>
-    /// Start a broadcast output. Validates RTMP URL and respects concurrent output limit.
+    /// Start a broadcast output. Validates RTMP URL via FFprobe and respects concurrent output limit.
     /// </summary>
     public async Task<(StatusCodes, StartOutputResponse?)> StartOutputAsync(
         StartOutputRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.broadcast", "BroadcastService.StartOutput");
+
         if (!_configuration.OutputEnabled)
         {
             _logger.LogInformation("Start output rejected: output disabled");
             return (StatusCodes.BadRequest, null);
         }
 
+        // Validate source
+        string sourceUrl;
+        if (body.SourceType == BroadcastSourceType.Camera)
+        {
+            var camera = await _cameraStore.GetAsync(BuildCameraKey(body.CameraId ?? string.Empty), cancellationToken);
+            if (camera == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+            sourceUrl = camera.RtmpInputUrl;
+        }
+        else if (body.SourceType == BroadcastSourceType.VoiceRoom)
+        {
+            // Resolve IVoiceClient via IServiceProvider (soft L3 dependency)
+            var voiceClient = _serviceProvider.GetService<IVoiceClient>();
+            if (voiceClient == null)
+            {
+                _logger.LogWarning("Voice room broadcast rejected: lib-voice not available");
+                return (StatusCodes.BadRequest, null);
+            }
+            sourceUrl = $"rtp://voice-room/{body.RoomId}";
+        }
+        else
+        {
+            sourceUrl = body.BackgroundVideoUrl ?? string.Empty;
+        }
+
+        // Validate RTMP URL via FFprobe
+        var rtmpValid = await _broadcastCoordinator.ValidateRtmpUrlAsync(
+            body.RtmpUrl, _configuration.RtmpProbeTimeoutSeconds, cancellationToken);
+        if (!rtmpValid)
+        {
+            _logger.LogWarning("RTMP URL validation failed: {MaskedUrl}", MaskRtmpUrl(body.RtmpUrl));
+            return (StatusCodes.BadRequest, null);
+        }
+
         var broadcastId = Guid.NewGuid();
+
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.BroadcastLock,
+            $"broadcast:{broadcastId}",
+            Guid.NewGuid().ToString(),
+            _configuration.DistributedLockTimeoutSeconds,
+            cancellationToken);
+        if (!lockHandle.Success)
+        {
+            return (StatusCodes.Conflict, null);
+        }
+
+        var ffmpegPid = await _broadcastCoordinator.StartBroadcastAsync(
+            broadcastId, body.RtmpUrl, sourceUrl, cancellationToken);
+
         var now = DateTimeOffset.UtcNow;
         var maskedUrl = MaskRtmpUrl(body.RtmpUrl);
-
-        var broadcastStore = _stateStoreFactory.GetStore<BroadcastOutputModel>(StateStoreDefinitions.BroadcastOutputs);
+        var instanceId = _serviceProvider.GetService<IMeshInstanceIdentifier>()?.InstanceId.ToString()
+            ?? Environment.MachineName;
 
         var model = new BroadcastOutputModel
         {
@@ -601,7 +830,7 @@ public partial class BroadcastService : IBroadcastService
             SourceId = body.CameraId ?? body.RoomId?.ToString(),
             EncryptedRtmpUrl = body.RtmpUrl,
             MaskedRtmpUrl = maskedUrl,
-            OwningInstanceId = Environment.MachineName,
+            OwningInstanceId = instanceId,
             State = BroadcastState.Active,
             CurrentVideoSource = body.CameraId,
             StartedAt = now,
@@ -611,19 +840,16 @@ public partial class BroadcastService : IBroadcastService
             BackgroundVideoUrl = body.BackgroundVideoUrl
         };
 
-        if (broadcastStore != null)
-        {
-            await broadcastStore.SaveAsync(BuildOutputKey(broadcastId), model, cancellationToken: cancellationToken);
-        }
+        await _outputStore.SaveAsync(BuildOutputKey(broadcastId), model, cancellationToken: cancellationToken);
 
         await _messageBus.PublishOutputCreatedAsync(new OutputCreatedEvent
         {
             BroadcastId = broadcastId,
             SourceType = body.SourceType,
-            SourceId = body.CameraId ?? body.RoomId?.ToString(),
+            SourceId = model.SourceId,
             MaskedRtmpUrl = maskedUrl,
             State = BroadcastState.Active,
-            OwningInstanceId = Environment.MachineName,
+            OwningInstanceId = instanceId,
             StartedAt = now,
             Health = BroadcastHealth.Healthy,
             CreatedAt = now,
@@ -639,19 +865,28 @@ public partial class BroadcastService : IBroadcastService
     public async Task<StatusCodes> StopOutputAsync(
         StopOutputRequest body, CancellationToken cancellationToken)
     {
-        var broadcastStore = _stateStoreFactory.GetStore<BroadcastOutputModel>(StateStoreDefinitions.BroadcastOutputs);
-        if (broadcastStore == null)
-        {
-            return StatusCodes.NotFound;
-        }
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.broadcast", "BroadcastService.StopOutput");
 
-        var broadcast = await broadcastStore.GetAsync(BuildOutputKey(body.BroadcastId), cancellationToken);
+        var broadcast = await _outputStore.GetAsync(BuildOutputKey(body.BroadcastId), cancellationToken);
         if (broadcast == null)
         {
             return StatusCodes.NotFound;
         }
 
-        await broadcastStore.DeleteAsync(BuildOutputKey(body.BroadcastId), cancellationToken);
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.BroadcastLock,
+            $"broadcast:{body.BroadcastId}",
+            Guid.NewGuid().ToString(),
+            _configuration.DistributedLockTimeoutSeconds,
+            cancellationToken);
+        if (!lockHandle.Success)
+        {
+            return StatusCodes.Conflict;
+        }
+
+        await _broadcastCoordinator.StopBroadcastAsync(body.BroadcastId, cancellationToken);
+        await _outputStore.DeleteAsync(BuildOutputKey(body.BroadcastId), cancellationToken);
 
         await _messageBus.PublishOutputDeletedAsync(new OutputDeletedEvent
         {
@@ -671,26 +906,45 @@ public partial class BroadcastService : IBroadcastService
     }
 
     /// <summary>
-    /// Update a broadcast output configuration. Causes brief interruption as FFmpeg restarts.
+    /// Update a broadcast output configuration. Validates new RTMP URL via FFprobe
+    /// before committing. Causes a brief interruption (~2-3s) as FFmpeg restarts.
     /// </summary>
     public async Task<StatusCodes> UpdateOutputAsync(
         UpdateOutputRequest body, CancellationToken cancellationToken)
     {
-        var broadcastStore = _stateStoreFactory.GetStore<BroadcastOutputModel>(StateStoreDefinitions.BroadcastOutputs);
-        if (broadcastStore == null)
-        {
-            return StatusCodes.NotFound;
-        }
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.broadcast", "BroadcastService.UpdateOutput");
 
-        var (broadcast, etag) = await broadcastStore.GetWithETagAsync(
+        var (broadcast, etag) = await _outputStore.GetWithETagAsync(
             BuildOutputKey(body.BroadcastId), cancellationToken);
         if (broadcast == null)
         {
             return StatusCodes.NotFound;
         }
 
+        // Validate new RTMP URL if changed
+        if (body.RtmpUrl != null)
+        {
+            var rtmpValid = await _broadcastCoordinator.ValidateRtmpUrlAsync(
+                body.RtmpUrl, _configuration.RtmpProbeTimeoutSeconds, cancellationToken);
+            if (!rtmpValid)
+            {
+                return StatusCodes.BadRequest;
+            }
+        }
+
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.BroadcastLock,
+            $"broadcast:{body.BroadcastId}",
+            Guid.NewGuid().ToString(),
+            _configuration.DistributedLockTimeoutSeconds,
+            cancellationToken);
+        if (!lockHandle.Success)
+        {
+            return StatusCodes.Conflict;
+        }
+
         var changedFields = new List<string>();
-        var now = DateTimeOffset.UtcNow;
 
         if (body.RtmpUrl != null)
         {
@@ -698,22 +952,25 @@ public partial class BroadcastService : IBroadcastService
             broadcast.MaskedRtmpUrl = MaskRtmpUrl(body.RtmpUrl);
             changedFields.Add("rtmpUrl");
         }
-
         if (body.FallbackStreamUrl != null)
         {
             broadcast.FallbackStreamUrl = body.FallbackStreamUrl;
             changedFields.Add("fallbackStreamUrl");
         }
-
         if (body.FallbackImageUrl != null)
         {
             broadcast.FallbackImageUrl = body.FallbackImageUrl;
             changedFields.Add("fallbackImageUrl");
         }
 
+        // Restart FFmpeg with new config
+        await _broadcastCoordinator.RestartBroadcastAsync(
+            body.BroadcastId, broadcast.EncryptedRtmpUrl,
+            broadcast.CurrentVideoSource ?? string.Empty, cancellationToken);
+
         if (etag != null)
         {
-            var newEtag = await broadcastStore.TrySaveAsync(
+            var newEtag = await _outputStore.TrySaveAsync(
                 BuildOutputKey(body.BroadcastId), broadcast, etag,
                 cancellationToken: cancellationToken);
             if (newEtag == null)
@@ -723,7 +980,7 @@ public partial class BroadcastService : IBroadcastService
         }
         else
         {
-            await broadcastStore.SaveAsync(
+            await _outputStore.SaveAsync(
                 BuildOutputKey(body.BroadcastId), broadcast,
                 cancellationToken: cancellationToken);
         }
@@ -739,7 +996,7 @@ public partial class BroadcastService : IBroadcastService
             StartedAt = broadcast.StartedAt,
             Health = broadcast.Health,
             CreatedAt = broadcast.StartedAt,
-            UpdatedAt = now,
+            UpdatedAt = DateTimeOffset.UtcNow,
             ChangedFields = changedFields.ToArray()
         }, cancellationToken);
 
@@ -752,18 +1009,18 @@ public partial class BroadcastService : IBroadcastService
     public async Task<(StatusCodes, OutputStatusResponse?)> GetOutputStatusAsync(
         GetOutputStatusRequest body, CancellationToken cancellationToken)
     {
-        var broadcastStore = _stateStoreFactory.GetStore<BroadcastOutputModel>(StateStoreDefinitions.BroadcastOutputs);
-        if (broadcastStore == null)
-        {
-            return (StatusCodes.NotFound, null);
-        }
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.broadcast", "BroadcastService.GetOutputStatus");
 
-        var broadcast = await broadcastStore.GetAsync(BuildOutputKey(body.BroadcastId), cancellationToken);
+        var broadcast = await _outputStore.GetAsync(BuildOutputKey(body.BroadcastId), cancellationToken);
         if (broadcast == null)
         {
             return (StatusCodes.NotFound, null);
         }
 
+        // Get local process health if this instance owns the broadcast
+        var localHealth = _broadcastCoordinator.GetProcessHealth(body.BroadcastId);
+        var health = localHealth ?? broadcast.Health;
         var duration = (int)(DateTimeOffset.UtcNow - broadcast.StartedAt).TotalSeconds;
 
         return (StatusCodes.OK, new OutputStatusResponse
@@ -775,7 +1032,7 @@ public partial class BroadcastService : IBroadcastService
             CurrentVideoSource = broadcast.CurrentVideoSource,
             Duration = duration,
             StartedAt = broadcast.StartedAt,
-            Health = broadcast.Health
+            Health = health
         });
     }
 
@@ -785,13 +1042,14 @@ public partial class BroadcastService : IBroadcastService
     public async Task<(StatusCodes, OutputListResponse?)> ListOutputsAsync(
         ListOutputsRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.broadcast", "BroadcastService.ListOutputs");
+
         var outputs = new List<OutputInfo>();
 
-        var broadcastStore = _stateStoreFactory.GetStore<BroadcastOutputModel>(StateStoreDefinitions.BroadcastOutputs);
-        if (broadcastStore is IQueryableStateStore<BroadcastOutputModel> queryableStore)
+        if (_outputStore is IQueryableStateStore<BroadcastOutputModel> queryableStore)
         {
-            var activeOnly = body.ActiveOnly;
-            var results = activeOnly
+            var results = body.ActiveOnly
                 ? await queryableStore.QueryAsync(b => b.State == BroadcastState.Active, cancellationToken)
                 : await queryableStore.QueryAsync(_ => true, cancellationToken);
 
@@ -812,7 +1070,6 @@ public partial class BroadcastService : IBroadcastService
             }
         }
 
-        await Task.CompletedTask;
         return (StatusCodes.OK, new OutputListResponse
         {
             Outputs = outputs.ToArray(),
@@ -830,13 +1087,10 @@ public partial class BroadcastService : IBroadcastService
     public async Task<(StatusCodes, LatestPulseResponse?)> GetLatestPulseAsync(
         GetLatestPulseRequest body, CancellationToken cancellationToken)
     {
-        var sessionStore = _stateStoreFactory.GetStore<PlatformSessionModel>(StateStoreDefinitions.BroadcastSessions);
-        if (sessionStore == null)
-        {
-            return (StatusCodes.NotFound, null);
-        }
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.broadcast", "BroadcastService.GetLatestPulse");
 
-        var session = await sessionStore.GetAsync(BuildSessionKey(body.PlatformSessionId), cancellationToken);
+        var session = await _sessionStore.GetAsync(BuildSessionKey(body.PlatformSessionId), cancellationToken);
         if (session == null)
         {
             return (StatusCodes.NotFound, null);
@@ -858,52 +1112,16 @@ public partial class BroadcastService : IBroadcastService
 
     /// <summary>
     /// Test sentiment classification. Stateless computation — no state access, no events, no locks.
+    /// Uses ISentimentProcessor for classification.
     /// </summary>
     public async Task<(StatusCodes, TestSentimentResponse?)> TestSentimentAsync(
         TestSentimentRequest body, CancellationToken cancellationToken)
     {
-        // Stateless classification using simple keyword matching
-        var text = body.Text.ToLowerInvariant();
-        var category = SentimentCategory.Curious;
-        var intensity = 0.5f;
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.broadcast", "BroadcastService.TestSentiment");
 
-        if (text.Contains("amazing") || text.Contains("love") || text.Contains("great") || text.Contains("awesome"))
-        {
-            category = SentimentCategory.Excited;
-            intensity = 0.8f;
-        }
-        else if (text.Contains("hate") || text.Contains("terrible") || text.Contains("worst"))
-        {
-            category = SentimentCategory.Hostile;
-            intensity = 0.7f;
-        }
-        else if (text.Contains("lol") || text.Contains("haha") || text.Contains("funny"))
-        {
-            category = SentimentCategory.Amused;
-            intensity = 0.6f;
-        }
-        else if (text.Contains("support") || text.Contains("help") || text.Contains("thanks"))
-        {
-            category = SentimentCategory.Supportive;
-            intensity = 0.6f;
-        }
-        else if (text.Contains("boring") || text.Contains("bored") || text.Contains("meh"))
-        {
-            category = SentimentCategory.Bored;
-            intensity = 0.5f;
-        }
-        else if (text.Contains("wow") || text.Contains("what") || text.Contains("surprise"))
-        {
-            category = SentimentCategory.Surprised;
-            intensity = 0.6f;
-        }
-        else if (text.Contains("bad") || text.Contains("wrong") || text.Contains("broken"))
-        {
-            category = SentimentCategory.Critical;
-            intensity = 0.5f;
-        }
+        var (category, intensity) = await _sentimentProcessor.ClassifyAsync(body.Text);
 
-        await Task.CompletedTask;
         return (StatusCodes.OK, new TestSentimentResponse
         {
             Category = category,
@@ -918,17 +1136,28 @@ public partial class BroadcastService : IBroadcastService
     public async Task<StatusCodes> CleanupByAccountAsync(
         CleanupByAccountRequest body, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.broadcast", "BroadcastService.CleanupByAccount");
+
         _logger.LogInformation("Cleaning up broadcast data for account {AccountId}", body.AccountId);
 
         // 1. Stop all active broadcasts initiated by this account
-        var broadcastStore = _stateStoreFactory.GetStore<BroadcastOutputModel>(StateStoreDefinitions.BroadcastOutputs);
-        if (broadcastStore is IQueryableStateStore<BroadcastOutputModel> queryableBroadcastStore)
+        if (_outputStore is IQueryableStateStore<BroadcastOutputModel> queryableBroadcastStore)
         {
             var broadcasts = await queryableBroadcastStore.QueryAsync(
                 b => b.InitiatorAccountId == body.AccountId, cancellationToken);
             foreach (var broadcast in broadcasts)
             {
-                await broadcastStore.DeleteAsync(BuildOutputKey(broadcast.BroadcastId), cancellationToken);
+                await using var lockHandle = await _lockProvider.LockAsync(
+                    StateStoreDefinitions.BroadcastLock,
+                    $"broadcast:{broadcast.BroadcastId}",
+                    Guid.NewGuid().ToString(),
+                    _configuration.DistributedLockTimeoutSeconds,
+                    cancellationToken);
+
+                await _broadcastCoordinator.StopBroadcastAsync(broadcast.BroadcastId, cancellationToken);
+                await _outputStore.DeleteAsync(BuildOutputKey(broadcast.BroadcastId), cancellationToken);
+
                 await _messageBus.PublishOutputDeletedAsync(new OutputDeletedEvent
                 {
                     BroadcastId = broadcast.BroadcastId,
@@ -946,41 +1175,38 @@ public partial class BroadcastService : IBroadcastService
         }
 
         // 2. Stop active platform session
-        var sessionStore = _stateStoreFactory.GetStore<PlatformSessionModel>(StateStoreDefinitions.BroadcastSessions);
-        if (sessionStore != null)
+        var session = await _sessionStore.GetAsync(BuildSessionAccountKey(body.AccountId), cancellationToken);
+        if (session != null)
         {
-            var session = await sessionStore.GetAsync(BuildSessionAccountKey(body.AccountId), cancellationToken);
-            if (session != null)
+            await _sessionStore.DeleteAsync(BuildSessionKey(session.PlatformSessionId), cancellationToken);
+            await _sessionStore.DeleteAsync(BuildSessionAccountKey(body.AccountId), cancellationToken);
+
+            await _messageBus.PublishPlatformSessionDeletedAsync(new PlatformSessionDeletedEvent
             {
-                await sessionStore.DeleteAsync(BuildSessionKey(session.PlatformSessionId), cancellationToken);
-                await sessionStore.DeleteAsync(BuildSessionAccountKey(body.AccountId), cancellationToken);
-                await _messageBus.PublishPlatformSessionDeletedAsync(new PlatformSessionDeletedEvent
-                {
-                    PlatformSessionId = session.PlatformSessionId,
-                    LinkId = session.LinkId,
-                    AccountId = session.AccountId,
-                    Platform = session.Platform,
-                    State = PlatformSessionState.Ended,
-                    StartTime = session.StartTime,
-                    ViewerCount = session.ViewerCount,
-                    PeakViewerCount = session.PeakViewerCount,
-                    CreatedAt = session.StartTime,
-                    UpdatedAt = DateTimeOffset.UtcNow
-                }, cancellationToken);
-            }
+                PlatformSessionId = session.PlatformSessionId,
+                LinkId = session.LinkId,
+                AccountId = session.AccountId,
+                Platform = session.Platform,
+                State = PlatformSessionState.Ended,
+                StartTime = session.StartTime,
+                ViewerCount = session.ViewerCount,
+                PeakViewerCount = session.PeakViewerCount,
+                CreatedAt = session.StartTime,
+                UpdatedAt = DateTimeOffset.UtcNow
+            }, cancellationToken);
         }
 
         // 3. Unlink all platforms
-        var platformStore = _stateStoreFactory.GetStore<PlatformLinkModel>(StateStoreDefinitions.BroadcastPlatforms);
-        if (platformStore is IQueryableStateStore<PlatformLinkModel> queryablePlatformStore)
+        if (_platformStore is IQueryableStateStore<PlatformLinkModel> queryablePlatformStore)
         {
             var links = await queryablePlatformStore.QueryAsync(
                 l => l.AccountId == body.AccountId, cancellationToken);
             foreach (var link in links)
             {
-                await platformStore.DeleteAsync(BuildPlatformKey(link.LinkId), cancellationToken);
-                await platformStore.DeleteAsync(
+                await _platformStore.DeleteAsync(BuildPlatformKey(link.LinkId), cancellationToken);
+                await _platformStore.DeleteAsync(
                     BuildPlatformAccountKey(body.AccountId, link.Platform), cancellationToken);
+
                 await _messageBus.PublishPlatformLinkDeletedAsync(new PlatformLinkDeletedEvent
                 {
                     LinkId = link.LinkId,

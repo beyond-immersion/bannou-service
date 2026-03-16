@@ -1,5 +1,8 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Account;
+using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Broadcast;
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -157,6 +160,15 @@ public class BroadcastServiceAdminTests
         var logger = new Mock<ILogger<BroadcastService>>();
         var configuration = config ?? new BroadcastServiceConfiguration();
         var eventConsumer = new Mock<IEventConsumer>();
+        var lockProvider = new Mock<IDistributedLockProvider>();
+        var accountClient = new Mock<IAccountClient>();
+        var authClient = new Mock<IAuthClient>();
+        var serviceProvider = new Mock<IServiceProvider>();
+        var telemetryProvider = new Mock<ITelemetryProvider>();
+        var broadcastCoordinator = new Mock<IBroadcastCoordinator>();
+        var sentimentProcessor = new Mock<ISentimentProcessor>();
+        var webhookHandler = new Mock<IPlatformWebhookHandler>();
+        var clientEventPublisher = new Mock<IClientEventPublisher>();
 
         storeFactory.Setup(x => x.GetStore<PlatformSessionModel>(StateStoreDefinitions.BroadcastSessions))
             .Returns(sessionStore.Object);
@@ -165,12 +177,24 @@ public class BroadcastServiceAdminTests
                 It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
+        sentimentProcessor.Setup(x => x.ClassifyAsync(It.IsAny<string>()))
+            .ReturnsAsync((SentimentCategory.Excited, 0.8f));
+
         var service = new BroadcastService(
             messageBus.Object,
             storeFactory.Object,
             logger.Object,
             configuration,
-            eventConsumer.Object);
+            eventConsumer.Object,
+            lockProvider.Object,
+            accountClient.Object,
+            authClient.Object,
+            serviceProvider.Object,
+            telemetryProvider.Object,
+            broadcastCoordinator.Object,
+            sentimentProcessor.Object,
+            webhookHandler.Object,
+            clientEventPublisher.Object);
 
         return (service, messageBus, sessionStore);
     }

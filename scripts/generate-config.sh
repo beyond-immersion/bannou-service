@@ -368,7 +368,8 @@ public enum {enum_type['name']}
         group_tolerance = group_def.get('tolerance', None)
         if group_tolerance is not None:
             attr_parts.append(f'Tolerance = {group_tolerance}')
-        constraint_group_class_attrs += f'[ConfigConstraintGroupDefinition({", ".join(attr_parts)})]\n'
+        joined_attr_parts = ', '.join(attr_parts)
+        constraint_group_class_attrs += f'[ConfigConstraintGroupDefinition({joined_attr_parts})]\n'
 
     print(f'''/// <summary>
 /// Configuration class for {service_pascal} service.
@@ -444,7 +445,7 @@ public class {service_pascal}ServiceConfiguration : BaseServiceConfiguration
         constraint_group_attr = ''
         prop_constraint_group = prop.get('constraint_group')
         if prop_constraint_group:
-            constraint_group_attr = '    [ConfigConstraintGroup(\\\"' + prop_constraint_group + '\\\")]\\n'
+            constraint_group_attr = '    [ConfigConstraintGroup(\"' + prop_constraint_group + '\")]\\n'
 
         escaped_prop_desc = escape_xml_description(prop['description'])
         print(f'''    /// <summary>
@@ -659,14 +660,15 @@ public enum {enum_type['name']}
                         'sum-maximum': 'SumMaximum'
                     }
                     csharp_constraint = constraint_type_map.get(constraint_type, constraint_type)
-                    attr_parts = [f'"{group_name}"', f'ConstraintGroupType.{csharp_constraint}']
+                    attr_parts = [f'\"{group_name}\"', f'ConstraintGroupType.{csharp_constraint}']
                     group_value = group_def.get('value', None)
                     if group_value is not None:
                         attr_parts.append(f'Value = {group_value}')
                     group_tolerance = group_def.get('tolerance', None)
                     if group_tolerance is not None:
                         attr_parts.append(f'Tolerance = {group_tolerance}')
-                    helper_cg_class_attrs += f'[ConfigConstraintGroupDefinition({", ".join(attr_parts)})]\n'
+                    joined_attr_parts = ', '.join(attr_parts)
+                    helper_cg_class_attrs += f'[ConfigConstraintGroupDefinition({joined_attr_parts})]\n'
 
                 hf.write(f'''/// <summary>
 /// Configuration class for {helper_pascal} helper service ({service_pascal} plugin).
@@ -717,7 +719,7 @@ public class {helper_class_name} : BaseServiceConfiguration
 
                     constraint_group_attr = ''
                     if prop.get('constraint_group'):
-                        constraint_group_attr = '    [ConfigConstraintGroup("' + prop['constraint_group'] + '")]\\n'
+                        constraint_group_attr = '    [ConfigConstraintGroup(\"' + prop['constraint_group'] + '\")]\\n'
 
                     escaped_prop_desc = escape_xml_description(prop['description'])
                     hf.write(f'''    /// <summary>

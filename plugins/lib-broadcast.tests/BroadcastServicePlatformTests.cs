@@ -1,5 +1,8 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Account;
+using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Broadcast;
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -226,22 +229,50 @@ public class BroadcastServicePlatformTests
         var logger = new Mock<ILogger<BroadcastService>>();
         var configuration = config ?? new BroadcastServiceConfiguration();
         var eventConsumer = new Mock<IEventConsumer>();
+        var lockProvider = new Mock<IDistributedLockProvider>();
+        var accountClient = new Mock<IAccountClient>();
+        var authClient = new Mock<IAuthClient>();
+        var serviceProvider = new Mock<IServiceProvider>();
+        var telemetryProvider = new Mock<ITelemetryProvider>();
+        var broadcastCoordinator = new Mock<IBroadcastCoordinator>();
+        var sentimentProcessor = new Mock<ISentimentProcessor>();
+        var webhookHandler = new Mock<IPlatformWebhookHandler>();
+        var clientEventPublisher = new Mock<IClientEventPublisher>();
 
         var platformStore = new Mock<IStateStore<PlatformLinkModel>>();
+        var sessionStore = new Mock<IStateStore<PlatformSessionModel>>();
 
         storeFactory.Setup(f => f.GetStore<PlatformLinkModel>(It.IsAny<string>()))
             .Returns(platformStore.Object);
+        storeFactory.Setup(f => f.GetStore<PlatformSessionModel>(It.IsAny<string>()))
+            .Returns(sessionStore.Object);
 
         messageBus.Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
+
+        var lockResponse = new Mock<ILockResponse>();
+        lockResponse.Setup(x => x.Success).Returns(true);
+        lockProvider.Setup(x => x.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(lockResponse.Object);
 
         var service = new BroadcastService(
             messageBus.Object,
             storeFactory.Object,
             logger.Object,
             configuration,
-            eventConsumer.Object);
+            eventConsumer.Object,
+            lockProvider.Object,
+            accountClient.Object,
+            authClient.Object,
+            serviceProvider.Object,
+            telemetryProvider.Object,
+            broadcastCoordinator.Object,
+            sentimentProcessor.Object,
+            webhookHandler.Object,
+            clientEventPublisher.Object);
 
         return (service, messageBus, platformStore);
     }

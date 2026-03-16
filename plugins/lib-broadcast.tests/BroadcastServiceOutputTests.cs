@@ -1,7 +1,11 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Account;
+using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Broadcast;
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 
 namespace BeyondImmersion.BannouService.Broadcast.Tests;
 
@@ -145,11 +149,20 @@ public class BroadcastServiceOutputTests
         string? capturedTopic = null;
         object? capturedEvent = null;
 
-        var (service, messageBusMock, _, _) = CreateService(new BroadcastServiceConfiguration
+        var (service, messageBusMock, cameraStoreMock, _) = CreateService(new BroadcastServiceConfiguration
         {
             OutputEnabled = true,
             MaxConcurrentOutputs = 10
         });
+
+        cameraStoreMock.Setup(x => x.GetAsync(
+                BroadcastService.BuildCameraKey("camera-01"), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CameraSourceModel
+            {
+                CameraId = "camera-01",
+                RtmpInputUrl = "rtmp://localhost:1935/live/camera-01",
+                HeartbeatAt = DateTimeOffset.UtcNow
+            });
 
         messageBusMock.Setup(x => x.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
@@ -410,6 +423,15 @@ public class BroadcastServiceOutputTests
         var logger = new Mock<ILogger<BroadcastService>>();
         var configuration = config ?? new BroadcastServiceConfiguration();
         var eventConsumer = new Mock<IEventConsumer>();
+        var lockProvider = new Mock<IDistributedLockProvider>();
+        var accountClient = new Mock<IAccountClient>();
+        var authClient = new Mock<IAuthClient>();
+        var serviceProvider = new Mock<IServiceProvider>();
+        var telemetryProvider = new Mock<ITelemetryProvider>();
+        var broadcastCoordinator = new Mock<IBroadcastCoordinator>();
+        var sentimentProcessor = new Mock<ISentimentProcessor>();
+        var webhookHandler = new Mock<IPlatformWebhookHandler>();
+        var clientEventPublisher = new Mock<IClientEventPublisher>();
 
         storeFactory.Setup(x => x.GetStore<CameraSourceModel>(StateStoreDefinitions.BroadcastCameras))
             .Returns(cameraStore.Object);
@@ -420,12 +442,32 @@ public class BroadcastServiceOutputTests
                 It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
+        var lockResponse = new Mock<ILockResponse>();
+        lockResponse.Setup(x => x.Success).Returns(true);
+        lockProvider.Setup(x => x.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(lockResponse.Object);
+
+        broadcastCoordinator.Setup(x => x.ValidateRtmpUrlAsync(
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
         var service = new BroadcastService(
             messageBus.Object,
             storeFactory.Object,
             logger.Object,
             configuration,
-            eventConsumer.Object);
+            eventConsumer.Object,
+            lockProvider.Object,
+            accountClient.Object,
+            authClient.Object,
+            serviceProvider.Object,
+            telemetryProvider.Object,
+            broadcastCoordinator.Object,
+            sentimentProcessor.Object,
+            webhookHandler.Object,
+            clientEventPublisher.Object);
 
         return (service, messageBus, cameraStore, outputStore);
     }

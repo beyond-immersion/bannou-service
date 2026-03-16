@@ -1,3 +1,9 @@
+global using BeyondImmersion.BannouService;
+global using BeyondImmersion.BannouService.Affix;
+global using BeyondImmersion.BannouService.Events;
+global using BeyondImmersion.BannouService.Messaging;
+global using BeyondImmersion.BannouService.Services;
+global using BeyondImmersion.BannouService.State;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
 global using Moq;
