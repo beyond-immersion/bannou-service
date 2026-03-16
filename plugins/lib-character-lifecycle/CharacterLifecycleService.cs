@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Character;
@@ -46,6 +47,11 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService
     private readonly IStateStore<BloodlineMemberListModel> _memberListStore;
     private readonly IStateStore<string> _bloodlineCodeStore;
     private readonly IStateStore<LifecycleManifestModel> _cacheStore;
+    private readonly IQueryableStateStore<LifecycleTemplateModel> _queryableLifecycleTemplateStore;
+    private readonly IQueryableStateStore<HeritableTraitTemplateModel> _queryableTraitTemplateStore;
+    private readonly IQueryableStateStore<HybridTraitTemplateModel> _queryableHybridTemplateStore;
+    private readonly IQueryableStateStore<BloodlineModel> _queryableBloodlineStore;
+    private readonly IQueryableStateStore<LifecycleProfileModel> _queryableProfileStore;
     private readonly IDistributedLockProvider _lockProvider;
 
     // Hard dependencies (L0/L1/L2 — fail at startup if missing)
@@ -145,6 +151,11 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService
         _memberListStore = stateStoreFactory.GetStore<BloodlineMemberListModel>(StateStoreDefinitions.CharacterLifecycleBloodlines);
         _bloodlineCodeStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CharacterLifecycleBloodlines);
         _cacheStore = stateStoreFactory.GetStore<LifecycleManifestModel>(StateStoreDefinitions.CharacterLifecycleCache);
+        _queryableLifecycleTemplateStore = stateStoreFactory.GetQueryableStore<LifecycleTemplateModel>(StateStoreDefinitions.CharacterLifecycleHeritage);
+        _queryableTraitTemplateStore = stateStoreFactory.GetQueryableStore<HeritableTraitTemplateModel>(StateStoreDefinitions.CharacterLifecycleHeritage);
+        _queryableHybridTemplateStore = stateStoreFactory.GetQueryableStore<HybridTraitTemplateModel>(StateStoreDefinitions.CharacterLifecycleHeritage);
+        _queryableBloodlineStore = stateStoreFactory.GetQueryableStore<BloodlineModel>(StateStoreDefinitions.CharacterLifecycleBloodlines);
+        _queryableProfileStore = stateStoreFactory.GetQueryableStore<LifecycleProfileModel>(StateStoreDefinitions.CharacterLifecycleProfiles);
 
         // Hard dependencies (L1/L2)
         _characterClient = characterClient;
@@ -335,114 +346,521 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService
     }
 
     /// <summary>
-    /// Implementation of SeedLifecycleTemplate operation.
+    /// Creates lifecycle stage definitions for a species. Validates game service,
+    /// checks for existing template, validates stage boundary contiguity.
     /// </summary>
     public async Task<(StatusCodes, SeedLifecycleTemplateResponse?)> SeedLifecycleTemplateAsync(SeedLifecycleTemplateRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement SeedLifecycleTemplate
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method SeedLifecycleTemplate not yet implemented");
+        // Validate game service (per map: CALL IGameServiceClient.ValidateAsync → 400)
+        try
+        {
+            await _gameServiceClient.GetServiceAsync(
+                new GetServiceRequest { ServiceId = body.GameServiceId }, cancellationToken);
+        }
+        catch (ApiException)
+        {
+            _logger.LogWarning("Game service validation failed for {GameServiceId}", body.GameServiceId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Check existing (per map: READ → 409 if exists)
+        var key = BuildLifecycleTemplateKey(body.SpeciesCode, body.GameServiceId);
+        var existing = await _lifecycleTemplateStore.GetAsync(key, cancellationToken);
+        if (existing != null)
+            return (StatusCodes.Conflict, null);
+
+        // Validate stage boundaries are contiguous (per map line 448)
+        var sortedStages = body.Stages.OrderBy(s => s.MinAge).ToList();
+        for (var i = 0; i < sortedStages.Count - 1; i++)
+        {
+            var current = sortedStages[i];
+            var next = sortedStages[i + 1];
+            if (current.MaxAge == null || current.MaxAge + 1 != next.MinAge)
+            {
+                _logger.LogWarning("Stage boundaries not contiguous between {Current} and {Next}",
+                    current.Code, next.Code);
+                return (StatusCodes.BadRequest, null);
+            }
+        }
+
+        // Create and save model
+        var now = DateTimeOffset.UtcNow;
+        var model = new LifecycleTemplateModel
+        {
+            SpeciesCode = body.SpeciesCode,
+            GameServiceId = body.GameServiceId,
+            Stages = body.Stages.ToList(),
+            NaturalDeathRange = body.NaturalDeathRange,
+            FertilityWindow = body.FertilityWindow,
+            CreatedAt = now
+        };
+
+        await _lifecycleTemplateStore.SaveAsync(key, model, cancellationToken: cancellationToken);
+
+        // Publish lifecycle event (per map: PUBLISH character-lifecycle.lifecycle-template.created)
+        await _messageBus.PublishLifecycleTemplateCreatedAsync(
+            new LifecycleTemplateCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                SpeciesCode = body.SpeciesCode,
+                GameServiceId = body.GameServiceId,
+                Stages = body.Stages.ToList(),
+                NaturalDeathRange = body.NaturalDeathRange,
+                FertilityWindow = body.FertilityWindow,
+                CreatedAt = now
+            }, cancellationToken);
+
+        _logger.LogInformation("Created lifecycle template for species {SpeciesCode} in game {GameServiceId}",
+            body.SpeciesCode, body.GameServiceId);
+
+        return (StatusCodes.OK, new SeedLifecycleTemplateResponse());
     }
 
     /// <summary>
-    /// Implementation of SeedHeritableTraitTemplate operation.
+    /// Creates heritable trait definitions for a species. Validates game service,
+    /// checks for existing template.
     /// </summary>
     public async Task<(StatusCodes, SeedHeritableTraitTemplateResponse?)> SeedHeritableTraitTemplateAsync(SeedHeritableTraitTemplateRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement SeedHeritableTraitTemplate
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method SeedHeritableTraitTemplate not yet implemented");
+        try
+        {
+            await _gameServiceClient.GetServiceAsync(
+                new GetServiceRequest { ServiceId = body.GameServiceId }, cancellationToken);
+        }
+        catch (ApiException)
+        {
+            _logger.LogWarning("Game service validation failed for {GameServiceId}", body.GameServiceId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var key = BuildTraitTemplateKey(body.SpeciesCode, body.GameServiceId);
+        var existing = await _traitTemplateStore.GetAsync(key, cancellationToken);
+        if (existing != null)
+            return (StatusCodes.Conflict, null);
+
+        var now = DateTimeOffset.UtcNow;
+        var model = new HeritableTraitTemplateModel
+        {
+            SpeciesCode = body.SpeciesCode,
+            GameServiceId = body.GameServiceId,
+            Traits = body.Traits.ToList(),
+            CreatedAt = now
+        };
+
+        await _traitTemplateStore.SaveAsync(key, model, cancellationToken: cancellationToken);
+
+        await _messageBus.PublishHeritableTraitTemplateCreatedAsync(
+            new HeritableTraitTemplateCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                SpeciesCode = body.SpeciesCode,
+                GameServiceId = body.GameServiceId,
+                Traits = body.Traits.ToList(),
+                CreatedAt = now
+            }, cancellationToken);
+
+        _logger.LogInformation("Created heritable trait template for species {SpeciesCode} in game {GameServiceId}",
+            body.SpeciesCode, body.GameServiceId);
+
+        return (StatusCodes.OK, new SeedHeritableTraitTemplateResponse());
     }
 
     /// <summary>
-    /// Implementation of SeedHybridTemplate operation.
+    /// Creates cross-species hybridization rules for a species pair.
     /// </summary>
     public async Task<(StatusCodes, SeedHybridTemplateResponse?)> SeedHybridTemplateAsync(SeedHybridTemplateRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement SeedHybridTemplate
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method SeedHybridTemplate not yet implemented");
+        try
+        {
+            await _gameServiceClient.GetServiceAsync(
+                new GetServiceRequest { ServiceId = body.GameServiceId }, cancellationToken);
+        }
+        catch (ApiException)
+        {
+            _logger.LogWarning("Game service validation failed for {GameServiceId}", body.GameServiceId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var key = BuildHybridTemplateKey(body.SpeciesA, body.SpeciesB, body.GameServiceId);
+        var existing = await _hybridTemplateStore.GetAsync(key, cancellationToken);
+        if (existing != null)
+            return (StatusCodes.Conflict, null);
+
+        var now = DateTimeOffset.UtcNow;
+        var model = new HybridTraitTemplateModel
+        {
+            SpeciesA = body.SpeciesA,
+            SpeciesB = body.SpeciesB,
+            GameServiceId = body.GameServiceId,
+            TraitOverrides = body.TraitOverrides.ToList(),
+            HybridFertilityModifier = (float)body.HybridFertilityModifier,
+            CreatedAt = now
+        };
+
+        await _hybridTemplateStore.SaveAsync(key, model, cancellationToken: cancellationToken);
+
+        await _messageBus.PublishHybridTraitTemplateCreatedAsync(
+            new HybridTraitTemplateCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                SpeciesA = body.SpeciesA,
+                SpeciesB = body.SpeciesB,
+                GameServiceId = body.GameServiceId,
+                TraitOverrides = body.TraitOverrides.ToList(),
+                HybridFertilityModifier = model.HybridFertilityModifier,
+                CreatedAt = now
+            }, cancellationToken);
+
+        _logger.LogInformation("Created hybrid template for {SpeciesA}x{SpeciesB} in game {GameServiceId}",
+            body.SpeciesA, body.SpeciesB, body.GameServiceId);
+
+        return (StatusCodes.OK, new SeedHybridTemplateResponse());
     }
 
     /// <summary>
-    /// Implementation of GetLifecycleTemplate operation.
+    /// Returns lifecycle template for a species within a game service.
     /// </summary>
     public async Task<(StatusCodes, GetLifecycleTemplateResponse?)> GetLifecycleTemplateAsync(GetLifecycleTemplateRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement GetLifecycleTemplate
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method GetLifecycleTemplate not yet implemented");
+        var key = BuildLifecycleTemplateKey(body.SpeciesCode, body.GameServiceId);
+        var model = await _lifecycleTemplateStore.GetAsync(key, cancellationToken);
+        if (model == null)
+            return (StatusCodes.NotFound, null);
+
+        return (StatusCodes.OK, new GetLifecycleTemplateResponse
+        {
+            SpeciesCode = model.SpeciesCode,
+            GameServiceId = model.GameServiceId,
+            Stages = model.Stages.ToList(),
+            NaturalDeathRange = model.NaturalDeathRange,
+            FertilityWindow = model.FertilityWindow,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason
+        });
     }
 
     /// <summary>
-    /// Implementation of GetHeritableTraitTemplate operation.
+    /// Returns heritable trait template for a species within a game service.
     /// </summary>
     public async Task<(StatusCodes, GetHeritableTraitTemplateResponse?)> GetHeritableTraitTemplateAsync(GetHeritableTraitTemplateRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement GetHeritableTraitTemplate
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method GetHeritableTraitTemplate not yet implemented");
+        var key = BuildTraitTemplateKey(body.SpeciesCode, body.GameServiceId);
+        var model = await _traitTemplateStore.GetAsync(key, cancellationToken);
+        if (model == null)
+            return (StatusCodes.NotFound, null);
+
+        return (StatusCodes.OK, new GetHeritableTraitTemplateResponse
+        {
+            SpeciesCode = model.SpeciesCode,
+            GameServiceId = model.GameServiceId,
+            Traits = model.Traits.ToList(),
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason
+        });
     }
 
     /// <summary>
-    /// Implementation of ListTemplates operation.
+    /// Lists all lifecycle and heritage templates for a game service.
+    /// Supports Category B deprecation filtering.
     /// </summary>
     public async Task<(StatusCodes, ListTemplatesResponse?)> ListTemplatesAsync(ListTemplatesRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement ListTemplates
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method ListTemplates not yet implemented");
+        // Query all template types for this game service (MySQL queryable stores, constructor-cached)
+        var lifecycleResults = body.IncludeDeprecated
+            ? await _queryableLifecycleTemplateStore.QueryAsync(t => t.GameServiceId == body.GameServiceId, cancellationToken)
+            : await _queryableLifecycleTemplateStore.QueryAsync(t => t.GameServiceId == body.GameServiceId && !t.IsDeprecated, cancellationToken);
+
+        var lifecycleTemplates = lifecycleResults.Select(t => new GetLifecycleTemplateResponse
+        {
+            SpeciesCode = t.SpeciesCode, GameServiceId = t.GameServiceId,
+            Stages = t.Stages, NaturalDeathRange = t.NaturalDeathRange,
+            FertilityWindow = t.FertilityWindow, IsDeprecated = t.IsDeprecated,
+            DeprecatedAt = t.DeprecatedAt, DeprecationReason = t.DeprecationReason
+        }).ToList();
+
+        var traitResults = body.IncludeDeprecated
+            ? await _queryableTraitTemplateStore.QueryAsync(t => t.GameServiceId == body.GameServiceId, cancellationToken)
+            : await _queryableTraitTemplateStore.QueryAsync(t => t.GameServiceId == body.GameServiceId && !t.IsDeprecated, cancellationToken);
+
+        var traitTemplates = traitResults.Select(t => new GetHeritableTraitTemplateResponse
+        {
+            SpeciesCode = t.SpeciesCode, GameServiceId = t.GameServiceId,
+            Traits = t.Traits, IsDeprecated = t.IsDeprecated,
+            DeprecatedAt = t.DeprecatedAt, DeprecationReason = t.DeprecationReason
+        }).ToList();
+
+        var hybridResults = body.IncludeDeprecated
+            ? await _queryableHybridTemplateStore.QueryAsync(t => t.GameServiceId == body.GameServiceId, cancellationToken)
+            : await _queryableHybridTemplateStore.QueryAsync(t => t.GameServiceId == body.GameServiceId && !t.IsDeprecated, cancellationToken);
+
+        var hybridTemplates = hybridResults.Select(t => new GetHybridTraitTemplateResponse
+        {
+            SpeciesA = t.SpeciesA, SpeciesB = t.SpeciesB,
+            GameServiceId = t.GameServiceId, TraitOverrides = t.TraitOverrides,
+            HybridFertilityModifier = t.HybridFertilityModifier,
+            IsDeprecated = t.IsDeprecated, DeprecatedAt = t.DeprecatedAt,
+            DeprecationReason = t.DeprecationReason
+        }).ToList();
+
+        return (StatusCodes.OK, new ListTemplatesResponse
+        {
+            LifecycleTemplates = lifecycleTemplates,
+            HeritableTraitTemplates = traitTemplates,
+            HybridTemplates = hybridTemplates
+        });
     }
 
     /// <summary>
-    /// Implementation of GetBloodline operation.
+    /// Returns bloodline definition by ID.
     /// </summary>
     public async Task<(StatusCodes, GetBloodlineResponse?)> GetBloodlineAsync(GetBloodlineRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement GetBloodline
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method GetBloodline not yet implemented");
+        var model = await _bloodlineStore.GetAsync(BuildBloodlineKey(body.BloodlineId), cancellationToken);
+        if (model == null)
+            return (StatusCodes.NotFound, null);
+
+        return (StatusCodes.OK, new GetBloodlineResponse
+        {
+            Bloodline = MapBloodlineToSummary(model)
+        });
     }
 
     /// <summary>
-    /// Implementation of ListBloodlines operation.
+    /// Lists bloodlines within a game service with optional filters.
     /// </summary>
     public async Task<(StatusCodes, ListBloodlinesResponse?)> ListBloodlinesAsync(ListBloodlinesRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement ListBloodlines
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method ListBloodlines not yet implemented");
+        var results = await _queryableBloodlineStore.QueryAsync(
+            b => b.GameServiceId == body.GameServiceId, cancellationToken);
+
+        var filtered = results.AsEnumerable();
+
+        if (body.TraitSignatureFilter != null && body.TraitSignatureFilter.Count > 0)
+            filtered = filtered.Where(b => body.TraitSignatureFilter.All(t => b.TraitSignature.Contains(t)));
+
+        if (body.MinGenerationDepth.HasValue)
+            filtered = filtered.Where(b => b.GenerationSpan >= body.MinGenerationDepth.Value);
+
+        if (body.MinMemberCount.HasValue)
+            filtered = filtered.Where(b => b.MemberCount >= body.MinMemberCount.Value);
+
+        var filteredList = filtered.ToList();
+        var page = body.Page > 0 ? body.Page : 1;
+        var pageSize = body.PageSize > 0 ? body.PageSize : _configuration.QueryPageSize;
+        var paged = filteredList.Skip((page - 1) * pageSize).Take(pageSize);
+
+        return (StatusCodes.OK, new ListBloodlinesResponse
+        {
+            Bloodlines = paged.Select(MapBloodlineToSummary).ToList(),
+            TotalCount = filteredList.Count
+        });
     }
 
     /// <summary>
-    /// Implementation of EstablishBloodline operation.
+    /// Manually establishes a bloodline. Creates record, code lookup, assigns members retroactively.
+    /// Publishes bloodline.formed and bloodline.created events.
     /// </summary>
     public async Task<(StatusCodes, EstablishBloodlineResponse?)> EstablishBloodlineAsync(EstablishBloodlineRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement EstablishBloodline
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method EstablishBloodline not yet implemented");
+        // Check code uniqueness (per map: READ code lookup → 409 if exists)
+        var codeKey = BuildBloodlineCodeKey(body.GameServiceId, body.BloodlineCode);
+        var existingCode = await _bloodlineCodeStore.GetAsync(codeKey, cancellationToken);
+        if (existingCode != null)
+            return (StatusCodes.Conflict, null);
+
+        var bloodlineId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        // Create bloodline record
+        var model = new BloodlineModel
+        {
+            BloodlineId = bloodlineId,
+            BloodlineCode = body.BloodlineCode,
+            GameServiceId = body.GameServiceId,
+            OriginCharacterId = body.OriginCharacterId,
+            OriginGameYear = 0, // Will be set from worldstate if needed
+            TraitSignature = body.TraitSignature.ToList(),
+            MemberCount = 0,
+            GenerationSpan = 0,
+            CreatedAt = now
+        };
+
+        // Save bloodline + code lookup
+        await _bloodlineStore.SaveAsync(BuildBloodlineKey(bloodlineId), model, cancellationToken: cancellationToken);
+        await _bloodlineCodeStore.SaveAsync(codeKey, bloodlineId.ToString(), cancellationToken: cancellationToken);
+
+        // Retroactive ancestor assignment (per map lines 530-532)
+        var allMembers = new List<Guid> { body.OriginCharacterId };
+        if (body.AncestorCharacterIds != null)
+            allMembers.AddRange(body.AncestorCharacterIds);
+
+        foreach (var characterId in allMembers)
+        {
+            var memberKey = BuildBloodlineMemberKey(characterId);
+            var membership = await _membershipStore.GetAsync(memberKey, cancellationToken)
+                ?? new BloodlineMembershipModel { CharacterId = characterId, Bloodlines = new List<BloodlineEntry>() };
+
+            membership.Bloodlines.Add(new BloodlineEntry
+            {
+                BloodlineId = bloodlineId,
+                BloodlineCode = body.BloodlineCode,
+                OriginCharacterId = body.OriginCharacterId,
+                OriginGameYear = 0,
+                TraitSignature = body.TraitSignature.ToList(),
+                GenerationFrom = 0
+            });
+
+            await _membershipStore.SaveAsync(memberKey, membership, cancellationToken: cancellationToken);
+
+            // Invalidate cache manifest (per map line 533)
+            await _cacheStore.DeleteAsync(BuildManifestKey(characterId), cancellationToken);
+        }
+
+        // Save member list
+        await _memberListStore.SaveAsync(BuildBloodlineMembersKey(bloodlineId),
+            new BloodlineMemberListModel { BloodlineId = bloodlineId, MemberIds = allMembers },
+            cancellationToken: cancellationToken);
+
+        // Update member count
+        model.MemberCount = allMembers.Count;
+        await _bloodlineStore.SaveAsync(BuildBloodlineKey(bloodlineId), model, cancellationToken: cancellationToken);
+
+        // Publish events (per map lines 534-535)
+        await _messageBus.PublishCharacterLifecycleBloodlineFormedAsync(
+            new CharacterLifecycleBloodlineFormedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                BloodlineCode = body.BloodlineCode,
+                OriginCharacterId = body.OriginCharacterId,
+                TraitSignature = body.TraitSignature.ToList()
+            }, cancellationToken);
+
+        await _messageBus.PublishBloodlineCreatedAsync(
+            new BloodlineCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                BloodlineId = bloodlineId,
+                BloodlineCode = body.BloodlineCode,
+                GameServiceId = body.GameServiceId,
+                OriginCharacterId = body.OriginCharacterId,
+                OriginGameYear = 0,
+                TraitSignature = body.TraitSignature.ToList(),
+                MemberCount = allMembers.Count,
+                GenerationSpan = 0,
+                CreatedAt = now
+            }, cancellationToken);
+
+        _logger.LogInformation("Established bloodline {BloodlineCode} with {MemberCount} initial members",
+            body.BloodlineCode, allMembers.Count);
+
+        return (StatusCodes.OK, new EstablishBloodlineResponse { BloodlineId = bloodlineId });
     }
 
     /// <summary>
-    /// Implementation of DeleteBloodline operation.
+    /// Deletes a bloodline (immediate hard delete, no deprecation).
+    /// Calls lib-resource for CASCADE cleanup of membership indexes.
     /// </summary>
     public async Task<(StatusCodes, DeleteBloodlineResponse?)> DeleteBloodlineAsync(DeleteBloodlineRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement DeleteBloodline
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method DeleteBloodline not yet implemented");
+        var model = await _bloodlineStore.GetAsync(BuildBloodlineKey(body.BloodlineId), cancellationToken);
+        if (model == null)
+            return (StatusCodes.NotFound, null);
+
+        // CASCADE cleanup via lib-resource FIRST — membership indexes must be cleaned
+        // before the bloodline record is deleted. If cleanup fails, nothing has been
+        // deleted yet, so the caller can retry safely. Per IMPLEMENTATION TENETS (T7):
+        // no irreversible mutations before the operation that might fail.
+        await _resourceClient.ExecuteCleanupAsync(
+            new ExecuteCleanupRequest { ResourceId = body.BloodlineId, ResourceType = "bloodline" },
+            cancellationToken);
+
+        // Delete bloodline record and code lookup (safe — cleanup already succeeded)
+        await _bloodlineStore.DeleteAsync(BuildBloodlineKey(body.BloodlineId), cancellationToken);
+        await _bloodlineCodeStore.DeleteAsync(
+            BuildBloodlineCodeKey(model.GameServiceId, model.BloodlineCode), cancellationToken);
+
+        // Publish deleted event
+        await _messageBus.PublishBloodlineDeletedAsync(
+            new BloodlineDeletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                BloodlineId = body.BloodlineId,
+                BloodlineCode = model.BloodlineCode,
+                GameServiceId = model.GameServiceId,
+                OriginCharacterId = model.OriginCharacterId,
+                OriginGameYear = model.OriginGameYear,
+                TraitSignature = model.TraitSignature,
+                MemberCount = model.MemberCount,
+                GenerationSpan = model.GenerationSpan,
+                CreatedAt = model.CreatedAt
+            }, cancellationToken);
+
+        _logger.LogInformation("Deleted bloodline {BloodlineCode} ({BloodlineId})",
+            model.BloodlineCode, body.BloodlineId);
+
+        return (StatusCodes.OK, new DeleteBloodlineResponse());
     }
 
     /// <summary>
-    /// Implementation of QueryBloodlineMembers operation.
+    /// Returns living members of a bloodline with generation depth and trait expression.
     /// </summary>
     public async Task<(StatusCodes, QueryBloodlineMembersResponse?)> QueryBloodlineMembersAsync(QueryBloodlineMembersRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement QueryBloodlineMembers
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method QueryBloodlineMembers not yet implemented");
+        var memberList = await _memberListStore.GetAsync(
+            BuildBloodlineMembersKey(body.BloodlineId), cancellationToken);
+        if (memberList == null)
+            return (StatusCodes.NotFound, null);
+
+        // Query alive profiles for members
+        var aliveMembers = new List<BloodlineMemberSummary>();
+        foreach (var memberId in memberList.MemberIds)
+        {
+            var profile = await _profileStore.GetAsync(BuildProfileKey(memberId), cancellationToken);
+            if (profile?.Status == LifecycleStatus.Alive)
+            {
+                var membership = await _membershipStore.GetAsync(
+                    BuildBloodlineMemberKey(memberId), cancellationToken);
+                var bloodlineEntry = membership?.Bloodlines
+                    .FirstOrDefault(b => b.BloodlineId == body.BloodlineId);
+
+                aliveMembers.Add(new BloodlineMemberSummary
+                {
+                    CharacterId = memberId,
+                    GenerationFrom = bloodlineEntry?.GenerationFrom ?? 0
+                });
+            }
+        }
+
+        var page = body.Page > 0 ? body.Page : 1;
+        var pageSize = body.PageSize > 0 ? body.PageSize : _configuration.QueryPageSize;
+        var paged = aliveMembers.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+        return (StatusCodes.OK, new QueryBloodlineMembersResponse
+        {
+            Members = paged,
+            TotalCount = aliveMembers.Count
+        });
     }
+
+    private static BloodlineSummary MapBloodlineToSummary(BloodlineModel model) => new()
+    {
+        BloodlineId = model.BloodlineId,
+        BloodlineCode = model.BloodlineCode,
+        GameServiceId = model.GameServiceId,
+        OriginCharacterId = model.OriginCharacterId,
+        OriginGameYear = model.OriginGameYear,
+        TraitSignature = model.TraitSignature,
+        MemberCount = model.MemberCount,
+        GenerationSpan = model.GenerationSpan
+    };
 
     /// <summary>
     /// Implementation of CleanupByCharacter operation.

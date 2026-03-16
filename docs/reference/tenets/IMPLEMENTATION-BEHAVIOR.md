@@ -266,9 +266,9 @@ catch (Exception)
 }
 ```
 
-**Strategy 2: Documented self-healing** (acceptable for eventual consistency)
+**Strategy 2: Existing self-healing infrastructure** (acceptable for eventual consistency)
 ```csharp
-// ACCEPTABLE: Document which mechanism resolves the partial state
+// ACCEPTABLE: Cite a SPECIFIC, EXISTING mechanism that resolves the partial state
 // If consent fails after contract creation, the orphaned contract will be
 // cleaned up by ContractExpirationService within ExpirationCheckInterval (default: 60s).
 // The contract has a TTL and no consent, so it will expire naturally.
@@ -276,12 +276,32 @@ await _contractClient.CreateAsync(contract, ct);
 await _contractClient.ConsentAsync(consentRequest, ct);  // May fail
 ```
 
-**FORBIDDEN**: Acknowledging possible orphaned state in a code comment without implementing either compensation or self-healing. A comment is not a mechanism.
+**What qualifies as self-healing**: A concrete, already-implemented background worker, TTL expiration, or cleanup sweep that will automatically detect and resolve the orphaned state without human intervention. The mechanism must exist in code — not be a theoretical future addition. Examples: ContractExpirationService (TTL-based), DeprecationCleanupHelper (sweep-based), background reconciliation workers.
+
+**What does NOT qualify as self-healing**: "The orphaned data is benign," "consumers filter it out," "it can be cleaned up manually," "the variable provider ignores deleted records," "a retry will fix it" (without an actual retry mechanism). These explain why the corruption might not cause visible errors — they do not resolve the corruption. Unresolved data corruption is unacceptable regardless of whether it's currently observable.
+
+**Strategy 3: Operation reordering** (preferred when applicable)
+```csharp
+// BEST: Put the fallible call BEFORE the irreversible mutation
+// If cleanup fails, nothing has been deleted — caller retries safely
+await _resourceClient.ExecuteCleanupAsync(request, ct);  // May fail — nothing irreversible yet
+await _store.DeleteAsync(key, ct);  // Safe — cleanup already succeeded
+```
+
+When a method performs both a fallible inter-service call and an irreversible local mutation (delete, overwrite), reorder so the fallible call executes first. If it fails, no local state was changed. If it succeeds, the local mutation proceeds safely. This eliminates the need for compensation entirely.
+
+**FORBIDDEN**: Acknowledging possible orphaned state in a code comment without implementing either compensation or self-healing. A comment is not a mechanism. A comment explaining why orphaned data is "benign" or "filtered out" is not self-healing — it is the forbidden pattern with extra words.
 
 ```csharp
 // FORBIDDEN: Comment acknowledging the problem with no solution
 // NOTE: If this fails, an orphaned contract instance may exist
 await _contractClient.ConsentAsync(consentRequest, ct);
+
+// ALSO FORBIDDEN: Comment explaining why orphaned data doesn't cause visible errors
+// Self-healing: orphaned records are benign because the provider filters against
+// live definitions. Records will be cleaned up on next manual invocation.
+await _store.DeleteAsync(key, ct);  // Irreversible!
+await _resourceClient.ExecuteCleanupAsync(request, ct);  // May fail — data now orphaned
 ```
 
 > **Helpers**: See [Helpers & Common Patterns § Event & Messaging](../HELPERS-AND-COMMON-PATTERNS.md#2-event--messaging-helpers) for `TryPublishErrorAsync` and `WorkerErrorPublisher` usage patterns.

@@ -1,7 +1,9 @@
+using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Seed;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
@@ -62,6 +64,11 @@ public partial class GardenerService
         eventConsumer.RegisterHandler<IGardenerService, LocationEntityDepartedEvent>(
             "location.entity-departed",
             async (svc, evt) => await ((GardenerService)svc).HandleLocationEntityDepartedAsync(evt));
+
+        // Account deletion cleanup per FOUNDATION TENETS (Account Deletion Cleanup Obligation)
+        eventConsumer.RegisterHandler<IGardenerService, AccountDeletedEvent>(
+            "account.deleted",
+            async (svc, evt) => await ((GardenerService)svc).HandleAccountDeletedAsync(evt));
     }
 
     #region Event Handlers
@@ -266,6 +273,165 @@ public partial class GardenerService
         _logger.LogDebug(
             "Unregistered {SessionCount} session(s) from location {LocationId} for entity {EntityType}:{EntityId}",
             sessions.Count, evt.LocationId, evt.EntityType, evt.EntityId);
+    }
+
+    /// <summary>
+    /// Handles account.deleted events.
+    /// Cleans up all gardener data owned by the deleted account: garden instances,
+    /// POIs, active scenarios (with backing game sessions), scenario history records,
+    /// tracking set entries, and session-to-account mappings.
+    /// Per FOUNDATION TENETS (Account Deletion Cleanup Obligation).
+    /// </summary>
+    /// <remarks>
+    /// Event handlers have no generated controller boundary, so a top-level try-catch
+    /// with TryPublishErrorAsync is required per IMPLEMENTATION TENETS (Error Handling).
+    /// Not-found results are logged at Debug level because account.deleted is broadcast
+    /// to all nodes; only one node may hold data for a given account.
+    /// </remarks>
+    public async Task HandleAccountDeletedAsync(AccountDeletedEvent evt)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.gardener", "GardenerService.HandleAccountDeleted");
+
+        _logger.LogInformation("Handling account.deleted for account {AccountId}", evt.AccountId);
+
+        try
+        {
+            // 1. Clean up active garden instance and its POIs
+            try
+            {
+                var garden = await _gardenStore.GetAsync(GardenKey(evt.AccountId), CancellationToken.None);
+                if (garden != null)
+                {
+                    foreach (var poiId in garden.ActivePoiIds)
+                    {
+                        try
+                        {
+                            await _poiStore.DeleteAsync(
+                                PoiKey(garden.GardenInstanceId, poiId), CancellationToken.None);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex,
+                                "Failed to delete POI {PoiId} for garden {GardenInstanceId} during account cleanup",
+                                poiId, garden.GardenInstanceId);
+                        }
+                    }
+
+                    await _gardenStore.DeleteAsync(GardenKey(evt.AccountId), CancellationToken.None);
+                    await _gardenCacheStore.RemoveFromSetAsync<Guid>(
+                        ActiveGardensTrackingKey, evt.AccountId, CancellationToken.None);
+
+                    _logger.LogInformation(
+                        "Cleaned up garden instance {GardenInstanceId} with {PoiCount} POIs for account {AccountId}",
+                        garden.GardenInstanceId, garden.ActivePoiIds.Count, evt.AccountId);
+                }
+                else
+                {
+                    _logger.LogDebug(
+                        "No active garden instance found for account {AccountId}", evt.AccountId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Failed to clean up garden instance for account {AccountId}", evt.AccountId);
+            }
+
+            // 2. Clean up active scenario instance and its backing game session
+            try
+            {
+                var scenario = await _scenarioStore.GetAsync(
+                    ScenarioKey(evt.AccountId), CancellationToken.None);
+                if (scenario != null)
+                {
+                    await TryCleanupGameSessionAsync(scenario, CancellationToken.None);
+                    await _scenarioStore.DeleteAsync(ScenarioKey(evt.AccountId), CancellationToken.None);
+                    await _gardenCacheStore.RemoveFromSetAsync<Guid>(
+                        ActiveScenariosTrackingKey, evt.AccountId, CancellationToken.None);
+
+                    _logger.LogInformation(
+                        "Cleaned up active scenario {ScenarioInstanceId} for account {AccountId}",
+                        scenario.ScenarioInstanceId, evt.AccountId);
+                }
+                else
+                {
+                    _logger.LogDebug(
+                        "No active scenario found for account {AccountId}", evt.AccountId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Failed to clean up active scenario for account {AccountId}", evt.AccountId);
+            }
+
+            // 3. Clean up scenario history records (MySQL, keyed by scenarioInstanceId)
+            try
+            {
+                var historyRecords = await _historyStore.JsonQueryAsync(
+                    new List<QueryCondition>
+                    {
+                        new() { Path = "$.AccountId", Operator = QueryOperator.Equals, Value = evt.AccountId.ToString() }
+                    },
+                    CancellationToken.None);
+
+                var deletedCount = 0;
+                foreach (var record in historyRecords)
+                {
+                    try
+                    {
+                        await _historyStore.DeleteAsync(record.Key, CancellationToken.None);
+                        deletedCount++;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex,
+                            "Failed to delete history record {Key} during account cleanup",
+                            record.Key);
+                    }
+                }
+
+                if (deletedCount > 0)
+                {
+                    _logger.LogInformation(
+                        "Deleted {DeletedCount} scenario history records for account {AccountId}",
+                        deletedCount, evt.AccountId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Failed to clean up scenario history for account {AccountId}", evt.AccountId);
+            }
+
+            // 4. Remove session-to-account mappings for this account
+            var removedSessions = 0;
+            foreach (var kvp in _sessionAccountMap)
+            {
+                if (kvp.Value == evt.AccountId)
+                {
+                    _sessionAccountMap.TryRemove(kvp.Key, out _);
+                    removedSessions++;
+                }
+            }
+
+            if (removedSessions > 0)
+            {
+                _logger.LogDebug(
+                    "Removed {SessionCount} session mapping(s) for deleted account {AccountId}",
+                    removedSessions, evt.AccountId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Failed to clean up gardener data for account {AccountId}", evt.AccountId);
+            await _messageBus.TryPublishErrorAsync(
+                "gardener", "HandleAccountDeleted", "cleanup_failed", ex.Message,
+                dependency: null, endpoint: "account.deleted",
+                details: $"accountId={evt.AccountId}", stack: ex.StackTrace);
+        }
     }
 
     #endregion

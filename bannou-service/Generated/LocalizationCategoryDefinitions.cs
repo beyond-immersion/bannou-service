@@ -10,6 +10,8 @@
 
 #nullable enable
 
+using BeyondImmersion.BannouService.Localization;
+
 namespace BeyondImmersion.BannouService.Services;
 
 /// <summary>
@@ -60,16 +62,16 @@ public static class LocalizationCategoryDefinitions
     public static readonly IReadOnlyDictionary<string, LocalizationCategoryMetadata> Metadata =
         new Dictionary<string, LocalizationCategoryMetadata>
         {
-            [Collections] = new LocalizationCategoryMetadata("Collection type display names", "WarnOnMissing", new[] { "lib-collection" }),
-            [Items] = new LocalizationCategoryMetadata("Item template display names and descriptions", "RejectOnMissing", new[] { "lib-item" }),
-            [Lexicon] = new LocalizationCategoryMetadata("Lexicon concept display names for client rendering", "None", new[] { "lib-lexicon" }),
-            [Locations] = new LocalizationCategoryMetadata("Location display names", "RejectOnMissing", new[] { "lib-location" }),
-            [Quests] = new LocalizationCategoryMetadata("Quest definition names and descriptions", "WarnOnMissing", new[] { "lib-quest" }),
-            [Realms] = new LocalizationCategoryMetadata("Realm definition display names", "WarnOnMissing", new[] { "lib-realm" }),
-            [Relationships] = new LocalizationCategoryMetadata("Relationship type definition display names", "WarnOnMissing", new[] { "lib-relationship" }),
-            [Seeds] = new LocalizationCategoryMetadata("Seed type definition display names", "WarnOnMissing", new[] { "lib-seed" }),
-            [Species] = new LocalizationCategoryMetadata("Species definition display names and trait labels", "WarnOnMissing", new[] { "lib-species" }),
-            [Ui] = new LocalizationCategoryMetadata("General UI labels, buttons, tooltips, and system messages", "None", new[] { "lib-website" }),
+            [Collections] = new LocalizationCategoryMetadata("Collection type display names", ValidationMode.WarnOnMissing, new[] { "lib-collection" }),
+            [Items] = new LocalizationCategoryMetadata("Item template display names and descriptions", ValidationMode.RejectOnMissing, new[] { "lib-item" }),
+            [Lexicon] = new LocalizationCategoryMetadata("Lexicon concept display names for client rendering", ValidationMode.None, new[] { "lib-lexicon" }),
+            [Locations] = new LocalizationCategoryMetadata("Location display names", ValidationMode.RejectOnMissing, new[] { "lib-location" }),
+            [Quests] = new LocalizationCategoryMetadata("Quest definition names and descriptions", ValidationMode.WarnOnMissing, new[] { "lib-quest" }),
+            [Realms] = new LocalizationCategoryMetadata("Realm definition display names", ValidationMode.WarnOnMissing, new[] { "lib-realm" }),
+            [Relationships] = new LocalizationCategoryMetadata("Relationship type definition display names", ValidationMode.WarnOnMissing, new[] { "lib-relationship" }),
+            [Seeds] = new LocalizationCategoryMetadata("Seed type definition display names", ValidationMode.WarnOnMissing, new[] { "lib-seed" }),
+            [Species] = new LocalizationCategoryMetadata("Species definition display names and trait labels", ValidationMode.WarnOnMissing, new[] { "lib-species" }),
+            [Ui] = new LocalizationCategoryMetadata("General UI labels, buttons, tooltips, and system messages", ValidationMode.None, new[] { "lib-website" }),
         };
 
     #endregion
@@ -81,4 +83,4 @@ public static class LocalizationCategoryDefinitions
 /// <param name="Description">Human-readable description of the category's purpose.</param>
 /// <param name="ValidationMode">Validation behavior (None, WarnOnMissing, RejectOnMissing).</param>
 /// <param name="Consumers">Plugin assemblies declared as consumers of this category.</param>
-public readonly record struct LocalizationCategoryMetadata(string Description, string ValidationMode, string[] Consumers);
+public readonly record struct LocalizationCategoryMetadata(string Description, ValidationMode ValidationMode, string[] Consumers);

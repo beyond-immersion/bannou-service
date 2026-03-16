@@ -11,7 +11,7 @@
 
 ## Overview
 
-Full-custody orchestration layer (L4 GameFeatures) for multi-party asset exchanges. Manages the complete escrow lifecycle from creation through deposit collection, consent gathering, condition verification, and final release or refund. Supports four escrow types (two-party, multi-party, conditional, auction) with three trust modes and a 13-state finite state machine. Handles currency, items, contracts, and extensible custom asset types -- calling lib-currency and lib-inventory directly for asset movements. Integrates with lib-contract for conditional releases where contract fulfillment triggers escrow completion. See Release Modes section below for configurable confirmation flows.
+Full-custody orchestration layer (L4 GameFeatures) for multi-party asset exchanges. Manages the complete escrow lifecycle from creation through deposit collection, consent gathering, condition verification, and final release or refund. Supports four escrow types (two-party, multi-party, conditional, auction) with three trust modes and a 13-state finite state machine. Handles currency, items, contracts, and extensible custom asset types — designed to call lib-currency and lib-inventory directly for asset movements (not yet implemented; see stub #5). Integrates with lib-contract for conditional releases where contract fulfillment triggers escrow completion. See Release Modes section below for configurable confirmation flows.
 
 ---
 
@@ -20,8 +20,11 @@ Full-custody orchestration layer (L4 GameFeatures) for multi-party asset exchang
 | Dependency | Usage |
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | MySQL persistence for agreements and handler registry; Redis for tokens, idempotency, status indexes, party pending counts, and validation tracking |
-| lib-messaging (`IMessageBus`) | Publishing 13 escrow lifecycle events; error event publishing via `TryPublishErrorAsync` |
-| lib-messaging (`IEventConsumer`) | Subscribing to `contract.fulfilled` and `contract.terminated` events for contract-bound escrows |
+| lib-messaging (`IMessageBus`) | Publishing 15 escrow lifecycle events; error event publishing via `TryPublishErrorAsync` |
+| lib-messaging (`IEventConsumer`) | Subscribing to `account.deleted` (cleanup obligation), `contract.fulfilled` and `contract.terminated` events for contract-bound escrows |
+| lib-contract (L1) | Consumes `contract.fulfilled` and `contract.terminated` events; contract-bound escrows verify contract status for conditional release |
+| lib-currency (L2) | **Planned** — will call `/currency/debit`, `/currency/credit`, `/currency/transfer` for asset movements during deposit/release/refund (see stub #5) |
+| lib-inventory (L2) | **Planned** — will call inventory transfer APIs for item-type asset movements during deposit/release/refund (see stub #5) |
 
 ---
 
@@ -30,8 +33,6 @@ Full-custody orchestration layer (L4 GameFeatures) for multi-party asset exchang
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-contract | Guardian system locks/unlocks contracts as escrow assets; execution system checks asset requirement clauses; `BoundContractId` links contracts to escrows for conditional release |
-| lib-currency | Provides `/currency/escrow/deposit`, `/currency/escrow/release`, `/currency/escrow/refund` endpoints consumed by escrow release/refund flows |
-| lib-inventory | Provides escrow custody operations for item-type assets |
 
 ---
 
@@ -46,18 +47,18 @@ Full-custody orchestration layer (L4 GameFeatures) for multi-party asset exchang
 | `cancelledByType` (events) | A (Entity Reference) | `EntityType` enum (from `common-api.yaml`) | Identifies entity type that cancelled the escrow |
 | `reaffirmedByType` (events) | A (Entity Reference) | `EntityType` enum (from `common-api.yaml`) | Identifies entity type of the reaffirming party |
 | `recipientPartyType` (events) | A (Entity Reference) | `EntityType` enum (from `common-api.yaml`) | Identifies entity type of the release recipient |
-| `escrowType` | C (System State/Mode) | `EscrowType` enum (`two_party`, `multi_party`, `conditional`, `auction`) | Structural agreement type determining deposit/consent rules; service-specific classification |
-| `trustMode` | C (System State/Mode) | `EscrowTrustMode` enum (`full_consent`, `initiator_trusted`, `single_party_trusted`) | Trust model governing consent requirements; service-specific classification |
+| `escrowType` | C (System State/Mode) | `EscrowType` enum (`TwoParty`, `MultiParty`, `Conditional`, `Auction`) | Structural agreement type determining deposit/consent rules; service-specific classification |
+| `trustMode` | C (System State/Mode) | `EscrowTrustMode` enum (`FullConsent`, `InitiatorTrusted`, `SinglePartyTrusted`) | Trust model governing consent requirements; service-specific classification |
 | `status` | C (System State/Mode) | `EscrowStatus` enum (13 values) | Position in the 13-state escrow finite state machine |
-| `role` | C (System State/Mode) | `EscrowPartyRole` enum (`depositor`, `recipient`, `depositor_recipient`, `arbiter`, `observer`) | Party's functional role within the escrow; service-specific classification |
-| `consentType` | C (System State/Mode) | `EscrowConsentType` enum (`release`, `refund`, `dispute`, `reaffirm`) | Type of consent action being taken; service-specific state transition trigger |
+| `role` | C (System State/Mode) | `EscrowPartyRole` enum (`Depositor`, `Recipient`, `DepositorRecipient`, `Arbiter`, `Observer`) | Party's functional role within the escrow; service-specific classification |
+| `consentType` | C (System State/Mode) | `EscrowConsentType` enum (`Release`, `Refund`, `Dispute`, `Reaffirm`) | Type of consent action being taken; service-specific state transition trigger |
 | `resolution` | C (System State/Mode) | `EscrowResolution` enum (6 values) | How the escrow was resolved; terminal state classification |
-| `assetType` | C (System State/Mode) | `AssetType` enum (`currency`, `item`, `item_stack`, `contract`, `custom`) | Classifies the kind of asset held in escrow; determines which downstream service handles the asset (Currency, Inventory, Contract, or custom handler) |
-| `releaseMode` | C (System State/Mode) | `ReleaseMode` enum (`immediate`, `service_only`, `party_required`, `service_and_party`) | Confirmation flow configuration for releases |
-| `refundMode` | C (System State/Mode) | `RefundMode` enum (`immediate`, `service_only`, `party_required`) | Confirmation flow configuration for refunds |
-| `failureType` | C (System State/Mode) | `ValidationFailureType` enum (`asset_missing`, `asset_mutated`, `asset_expired`, `balance_mismatch`) | Classifies what went wrong during periodic validation |
-| `tokenType` | C (System State/Mode) | `TokenType` enum (`deposit`, `release`) | Distinguishes deposit tokens from release tokens; system authentication classification |
-| `confirmationTimeoutBehavior` | C (System State/Mode) | `ConfirmationTimeoutBehavior` enum (`auto_confirm`, `dispute`, `refund`) | Configured behavior when confirmation deadline expires |
+| `assetType` | C (System State/Mode) | `AssetType` enum (`Currency`, `Item`, `ItemStack`, `Contract`, `Custom`) | Classifies the kind of asset held in escrow; determines which downstream service handles the asset (Currency, Inventory, Contract, or custom handler) |
+| `releaseMode` | C (System State/Mode) | `ReleaseMode` enum (`Immediate`, `ServiceOnly`, `PartyRequired`, `ServiceAndParty`) | Confirmation flow configuration for releases |
+| `refundMode` | C (System State/Mode) | `RefundMode` enum (`Immediate`, `ServiceOnly`, `PartyRequired`) | Confirmation flow configuration for refunds |
+| `failureType` | C (System State/Mode) | `ValidationFailureType` enum (`AssetMissing`, `AssetMutated`, `AssetExpired`, `BalanceMismatch`) | Classifies what went wrong during periodic validation |
+| `tokenType` | C (System State/Mode) | `TokenType` enum (`Deposit`, `Release`) | Distinguishes deposit tokens from release tokens; system authentication classification |
+| `confirmationTimeoutBehavior` | C (System State/Mode) | `ConfirmationTimeoutBehavior` enum (`AutoConfirm`, `Dispute`, `Refund`) | Configured behavior when confirmation deadline expires |
 | `referenceType` | B (Game Content Type) | Opaque string | What this escrow is for (e.g., `"trade"`, `"auction"`, `"contract"`); callers provide context-specific labels without schema changes |
 | `customAssetType` | B (Game Content Type) | Opaque string | Registered handler type for `assetType=custom`; plugin-extensible asset types via handler registry |
 
@@ -120,10 +121,11 @@ Full-custody orchestration layer (L4 GameFeatures) for multi-party asset exchang
 
 | Topic | Event Type | Handler |
 |-------|-----------|---------|
+| `account.deleted` | `AccountDeletedEvent` | Cleans up all escrow data for the deleted account — agreements, tokens, status indexes, party pending counts, and validation tracking. Per FOUNDATION TENETS (Account Deletion Cleanup Obligation). |
 | `contract.fulfilled` | `ContractFulfilledEvent` | Queries for escrows with matching BoundContractId and transitions them to Finalizing (publishes EscrowFinalizingEvent). |
 | `contract.terminated` | `ContractTerminatedEvent` | Queries for escrows with matching BoundContractId and transitions them directly to Refunded (publishes EscrowRefundedEvent). |
 
-Both handlers use ETag-based optimistic concurrency with 3-attempt retry loops and respect the escrow state machine (only valid state transitions are applied).
+Contract handlers use ETag-based optimistic concurrency with 3-attempt retry loops and respect the escrow state machine (only valid state transitions are applied). Account deletion handler uses per-agreement error isolation with telemetry spans.
 
 ---
 
@@ -144,12 +146,14 @@ Both handlers use ETag-based optimistic concurrency with 3-attempt retry loops a
 | `IdempotencyTtlHours` | `ESCROW_IDEMPOTENCY_TTL_HOURS` | `24` | ✓ | TTL in hours for idempotency key storage - used in `DepositAsync` |
 | `MaxConcurrencyRetries` | `ESCROW_MAX_CONCURRENCY_RETRIES` | `3` | ✓ | Max retry attempts for optimistic concurrency operations - used throughout |
 | `DefaultListLimit` | `ESCROW_DEFAULT_LIST_LIMIT` | `50` | ✓ | Default limit for listing escrows when not specified - used in `ListEscrowsAsync` |
-| `DefaultReleaseMode` | `ESCROW_DEFAULT_RELEASE_MODE` | `service_only` | ✓ | Default release confirmation mode - used when request param is null |
-| `DefaultRefundMode` | `ESCROW_DEFAULT_REFUND_MODE` | `immediate` | ✓ | Default refund confirmation mode - used when request param is null |
+| `DefaultReleaseMode` | `ESCROW_DEFAULT_RELEASE_MODE` | `ServiceOnly` | ✓ | Default release confirmation mode - used when request param is null |
+| `DefaultRefundMode` | `ESCROW_DEFAULT_REFUND_MODE` | `Immediate` | ✓ | Default refund confirmation mode - used when request param is null |
 | `ConfirmationTimeoutSeconds` | `ESCROW_CONFIRMATION_TIMEOUT_SECONDS` | `300` | ✓ | Timeout for party confirmations - used in `ReleaseAsync` and `RecordConsentAsync` to set `ConfirmationDeadline` |
-| `ConfirmationTimeoutBehavior` | `ESCROW_CONFIRMATION_TIMEOUT_BEHAVIOR` | `auto_confirm` | ✓ | What happens when confirmation timeout expires |
+| `ConfirmationTimeoutBehavior` | `ESCROW_CONFIRMATION_TIMEOUT_BEHAVIOR` | `AutoConfirm` | ✓ | What happens when confirmation timeout expires |
 | `ConfirmationTimeoutCheckIntervalSeconds` | `ESCROW_CONFIRMATION_TIMEOUT_CHECK_INTERVAL_SECONDS` | `30` | ✓ | How often the background service checks for expired confirmations |
 | `ConfirmationTimeoutBatchSize` | `ESCROW_CONFIRMATION_TIMEOUT_BATCH_SIZE` | `100` | ✓ | Maximum escrows to process per timeout check cycle |
+| `ExpirationStartupDelaySeconds` | `ESCROW_EXPIRATION_STARTUP_DELAY_SECONDS` | `20` | ✓ | Startup delay before first expiration check - used in `EscrowExpirationService` |
+| `ConfirmationStartupDelaySeconds` | `ESCROW_CONFIRMATION_STARTUP_DELAY_SECONDS` | `15` | ✓ | Startup delay before first confirmation timeout check - used in `EscrowConfirmationTimeoutService` |
 
 ---
 
@@ -158,16 +162,17 @@ Both handlers use ETag-based optimistic concurrency with 3-attempt retry loops a
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<EscrowService>` | Scoped | Structured logging |
-| `EscrowServiceConfiguration` | Singleton | All 19 config properties |
+| `EscrowServiceConfiguration` | Singleton | All 21 config properties |
 | `IStateStoreFactory` | Singleton | MySQL+Redis state store access (7 stores) |
+| `ITelemetryProvider` | Singleton | Telemetry span instrumentation for async helpers and background services |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Scoped | Event subscription registration for contract events |
 
 Service lifetime is **Scoped** (per-request). Two background services implemented:
 - **`EscrowExpirationService`** - Checks for escrows past their `ExpiresAt + GracePeriod` in expirable states (PendingDeposits, PartiallyFunded, PendingConsent, PendingCondition) and transitions them to `Expired` status.
-- **`EscrowConfirmationTimeoutService`** - Checks for escrows in `Releasing`/`Refunding` states with expired confirmation deadlines, applies configured timeout behavior (auto_confirm, dispute, or refund).
+- **`EscrowConfirmationTimeoutService`** - Checks for escrows in `Releasing`/`Refunding` states with expired confirmation deadlines, applies configured timeout behavior (AutoConfirm, Dispute, or Refund).
 
-**Internal State Store Accessors** (lazy-initialized):
+**Internal State Store Accessors** (constructor-cached):
 - `AgreementStore` - IQueryableStateStore for escrow agreements (MySQL)
 - `TokenStore` - IStateStore for token hashes (Redis)
 - `IdempotencyStore` - IStateStore for idempotency records (Redis)
@@ -450,36 +455,24 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 ## Stubs & Unimplemented Features
 
-1. **Event consumer registration**: `RegisterEventConsumers()` registers handlers for `contract.fulfilled` (transitions bound escrows to Finalizing) and `contract.terminated` (transitions bound escrows to Refunded). Uses QueryAsync to find escrows by BoundContractId and ETag-based concurrency for state transitions. The `/escrow/verify-condition` endpoint remains available for manual verification.
-
-2. **ValidateEscrow asset checking**: The `ValidateEscrowAsync` method contains a placeholder comment "Validate deposits (placeholder - real impl would check with currency/inventory services)". No actual cross-service validation is performed. The validation always passes (empty failure list).
+1. **ValidateEscrow asset checking**: The `ValidateEscrowAsync` method contains a placeholder comment "Validate deposits (placeholder - real impl would check with currency/inventory services)". No actual cross-service validation is performed. The validation always passes (empty failure list).
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/213 -->
 
-3. **Expiration background processing**: Implemented in `EscrowExpirationService` background worker that periodically scans for escrows past their `ExpiresAt + GracePeriod`, transitions them to `Expired` status, publishes `EscrowExpiredEvent`, and if deposits exist also publishes `EscrowRefundedEvent` for downstream services. Configuration properties `ExpirationCheckInterval`, `ExpirationBatchSize`, and `ExpirationGracePeriod` are wired up.
-
-4. **Periodic validation loop**: Configuration defines `ValidationCheckInterval` (PT5M) but no background process triggers periodic validation. The `ValidationStore` tracks `NextValidationDue` but nothing reads it.
+2. **Periodic validation loop**: Configuration defines `ValidationCheckInterval` (PT5M) but no background process triggers periodic validation. The `ValidationStore` tracks `NextValidationDue` but nothing reads it.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/250 -->
 
-5. **Configuration properties not wired up**: One configuration property remains unused:
- - `ValidationCheckInterval` - defined but no background validation processor exists
+3. **Configuration property not wired up**: `ValidationCheckInterval` is defined but no background validation processor exists.
 
-6. **Custom handler invocation**: Handlers are registered with deposit/release/refund/validate endpoints, but the escrow service never actually invokes these endpoints during deposit or release flows. The handler registry is purely declarative.
+4. **Custom handler invocation**: Handlers are registered with deposit/release/refund/validate endpoints, but the escrow service never actually invokes these endpoints during deposit or release flows. The handler registry is purely declarative.
 
-7. **Asset transfer execution**: Release and refund operations set status and publish events but do not call currency/inventory services to execute actual transfers. The service is purely a coordination/tracking layer that assumes downstream consumers handle the physical movements. See [#153](https://github.com/beyond-immersion/bannou-service/issues/153) for the cross-cutting integration issue.
+5. **Asset transfer execution**: Release and refund operations set status and publish events but do not call currency/inventory services to execute actual transfers. The service is purely a coordination/tracking layer that assumes downstream consumers handle the physical movements. See [#153](https://github.com/beyond-immersion/bannou-service/issues/153) for the cross-cutting integration issue.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-04:https://github.com/beyond-immersion/bannou-service/issues/153 -->
-
-8. **Releasing state**: Now used for event-driven confirmation flow. When `ReleaseMode` is not `immediate`, escrows transition to `Releasing` and wait for service/party confirmations before completing to `Released`. The `EscrowConfirmationTimeoutService` background service handles expired confirmation deadlines.
 
 ---
 
 ## Potential Extensions
 
-
-1. **Cross-service asset validation**: Implement actual calls to currency/inventory services in `ValidateEscrowAsync` to verify deposited assets are still held and unchanged.
-
-2. **Handler invocation pipeline**: During deposit/release/refund, look up registered handlers for each asset type and invoke their endpoints via mesh, enabling plug-and-play asset type support.
-
-3. **Distributed lock for concurrent modifications**: Add lock acquisition around agreement modifications to prevent race conditions when multiple parties deposit/consent simultaneously.
+1. **Handler invocation pipeline**: During deposit/release/refund, look up registered handlers for each asset type and invoke their endpoints via mesh, enabling plug-and-play asset type support.
 
 ---
 
@@ -487,68 +480,64 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 ### Bugs (Fix Immediately)
 
-1. **Status index key pattern uses individual keys**: Status index stores entries at `status:{status}:{escrowId}` as individual key-value pairs using `IStateStore.SaveAsync`/`DeleteAsync`. This is not a Redis Set - it's keyed storage. Scanning all escrows by status requires `QueryAsync` against the agreement store, not the status index.
+1. **Missing `x-references` for lib-resource cleanup**: Escrow stores data referencing entities from other services (characters, accounts via `partyType`/`partyId`). Per Foundation Tenets (Resource-Managed Cleanup), dependent data must be cleaned up via lib-resource `x-references` declarations with CASCADE policy, not via event subscriptions. Escrow currently has no `x-references` declarations and no cleanup endpoints for when referenced entities are deleted. Without this, deleting a character that is a party in active escrows leaves orphaned agreement records.
+<!-- AUDIT:IN_PROGRESS:2026-03-16 -->
 
-2. ~~**Party pending count race on failure**~~: Fixed. Party pending counts are now tracked during increment and rolled back in a nested catch block if any subsequent operation (event publish, mid-loop increment) fails.
+2. ~~**Missing `account.deleted` event handler**~~: **FIXED** (2026-03-16) - Added `HandleAccountDeletedAsync` handler in `EscrowServiceEvents.cs` with `CleanupEscrowsForAccountAsync` cleanup logic. Queries agreements where account is a party, then removes agreement records, tokens, status index entries, party pending counts, and validation tracking. Per-agreement error isolation with telemetry spans.
+
+3. **No multi-service call compensation in release/refund flows**: Per Implementation Tenets (Multi-Service Call Compensation), multi-step orchestration methods that call multiple services must handle partial failure with catch-block compensation or documented self-healing. When asset transfer execution is implemented (stub #5), the release flow will call currency and inventory services in sequence. If step N fails after steps 1..N-1 succeeded, orphaned state results. The current design documents no compensation or self-healing mechanism for this.
+
+4. ~~**Background service `ExecuteAsync` has telemetry span**~~: **FIXED** (2026-03-16) - Removed `StartActivity` spans from `EscrowExpirationService.ExecuteAsync` and `EscrowConfirmationTimeoutService.ExecuteAsync`. Per-cycle methods retain their own spans correctly.
 
 ### Intentional Quirks (Documented Behavior)
 
-1. **Single refund consent triggers refund**: Any consent-required party submitting a `Refund` consent immediately transitions to `Refunding`. Unilateral refund right is a safety mechanism that can surprise developers expecting multi-party consensus.
+1. **Status index key pattern uses individual keys**: Status index stores entries at `status:{status}:{escrowId}` as individual key-value pairs using `IStateStore.SaveAsync`/`DeleteAsync`. This is not a Redis Set — it's keyed storage. Scanning all escrows by status requires `QueryAsync` against the agreement store, not the status index.
 
-2. **Release tokens returned on full funding**: When the last required deposit arrives, the `DepositResponse` includes all release tokens for consent-required parties. This is the only time release tokens are proactively delivered (otherwise use `GetMyToken`).
+2. **Single refund consent triggers refund**: Any consent-required party submitting a `Refund` consent immediately transitions to `Refunding`. Unilateral refund right is a safety mechanism that can surprise developers expecting multi-party consensus.
 
-3. **Token hash double-hashing**: Tokens are first generated as SHA-256 hash of random bytes + context, then stored by hashing the token again. Validation requires SHA-256(submitted_token) lookup, providing one-way token storage.
+3. **Release tokens returned on full funding**: When the last required deposit arrives, the `DepositResponse` includes all release tokens for consent-required parties. This is the only time release tokens are proactively delivered (otherwise use `GetMyToken`).
 
-4. **Escrow service SHOULD call foundation services directly (not yet implemented)**: The intended design is that when deposits, releases, or refunds occur, Escrow calls lib-currency (`/currency/debit`, `/currency/credit`, `/currency/transfer`) and lib-inventory (`/inventory/transfer`) APIs directly. Events like `escrow.released` and `escrow.refunded` would be published for observability and analytics, NOT for triggering asset movements. This respects the service hierarchy: Escrow (L4) depends on Currency/Inventory (L2), never the reverse. **Currently unimplemented** — see stub #7 and [#153](https://github.com/beyond-immersion/bannou-service/issues/153).
+4. **Token hash double-hashing**: Tokens are first generated as SHA-256 hash of random bytes + context, then stored by hashing the token again. Validation requires SHA-256(submitted_token) lookup, providing one-way token storage.
 
-5. **Contract event handlers are best-effort**: `HandleContractFulfilledAsync` and `HandleContractTerminatedAsync` use try-catch with error event emission but don't retry or queue failed operations.
+5. **Escrow service SHOULD call foundation services directly (not yet implemented)**: The intended design is that when deposits, releases, or refunds occur, Escrow calls lib-currency (`/currency/debit`, `/currency/credit`, `/currency/transfer`) and lib-inventory (`/inventory/transfer`) APIs directly. Events like `escrow.released` and `escrow.refunded` would be published for observability and analytics, NOT for triggering asset movements. This respects the service hierarchy: Escrow (L4) depends on Currency/Inventory (L2), never the reverse. **Currently unimplemented** — see stub #5 and [#153](https://github.com/beyond-immersion/bannou-service/issues/153).
+
+6. **Contract event handlers are best-effort**: `HandleContractFulfilledAsync` and `HandleContractTerminatedAsync` use try-catch with error event emission but don't retry or queue failed operations.
 
 ### Design Considerations
 
-1. ~~**POCO string defaults (`= string.Empty`)**~~: Fixed. Internal POCO string properties that must always have values now use `required` modifier instead of `= string.Empty`. Properties that can legitimately be absent remain nullable (`string?`).
+1. **Large agreement documents**: All parties, deposits, consents, allocations, and validation failures are stored in a single agreement document. Multi-party escrows with many deposits and consent records can grow large, impacting read/write performance.
 
+2. **Token storage exposes timing**: Token hashes are stored with `ExpiresAt` from the escrow expiration. However, token expiration is not checked during validation — only the `Used` flag is verified. Expired tokens remain valid if the escrow has not expired.
 
-2. **Large agreement documents**: All parties, deposits, consents, allocations, and validation failures are stored in a single agreement document. Multi-party escrows with many deposits and consent records can grow large, impacting read/write performance.
+3. **QueryAsync for listing**: `ListEscrowsAsync` uses `QueryAsync` with lambda predicates, which loads all agreements into memory for filtering. This does not scale for large datasets.
 
-3. **Token storage exposes timing**: Token hashes are stored with `ExpiresAt` from the escrow expiration. However, token expiration is not checked during validation - only the `Used` flag is verified. Expired tokens remain valid if the escrow has not expired.
+4. **Idempotency result caching stores full response**: The `IdempotencyRecord.Result` field stores the complete `DepositResponse` object including the full escrow state. This creates large Redis entries and may have serialization issues if the response model changes.
 
-4. **QueryAsync for listing**: `ListEscrowsAsync` uses `QueryAsync` with lambda predicates, which loads all agreements into memory for filtering. This does not scale for large datasets.
+5. **Event ordering not guaranteed**: Multiple events can be published in a single operation (e.g., deposit + funded), but there is no transactional guarantee on event ordering or all-or-nothing delivery.
 
-5. **Idempotency result caching stores full response**: The `IdempotencyRecord.Result` field stores the complete `DepositResponse` object including the full escrow state. This creates large Redis entries and may have serialization issues if the response model changes.
+6. **Contract termination refund doesn't verify contract binding**: `RefundForContractTerminationAsync` validates the escrow is bound to the contract via query, but doesn't re-verify the `BoundContractId` matches after loading. The query result is trusted.
 
-6. **Event ordering not guaranteed**: Multiple events can be published in a single operation (e.g., deposit + funded), but there is no transactional guarantee on event ordering or all-or-nothing delivery.
+7. **Party pending count failures silently logged**: `IncrementPartyPendingCountAsync` and `DecrementPartyPendingCountAsync` log warnings but don't fail the operation when count updates fail after max retries. This can lead to stale pending counts.
 
-7. **Contract termination refund doesn't verify contract binding**: `RefundForContractTerminationAsync` validates the escrow is bound to the contract via query, but doesn't re-verify the `BoundContractId` matches after loading. The query result is trusted.
-
-8. **Party pending count failures silently logged**: `IncrementPartyPendingCountAsync` and `DecrementPartyPendingCountAsync` log warnings but don't fail the operation when count updates fail after max retries. This can lead to stale pending counts.
+8. **No distributed lock for concurrent agreement modifications**: Multiple parties may deposit or consent simultaneously against the same agreement. The service uses ETag-based optimistic concurrency with retries, but under high contention (many parties, rapid actions) this could lead to excessive retry loops. A distributed lock per agreement ID would provide stronger serialization guarantees at the cost of added latency.
 
 ---
 
 ## Work Tracking
 
-### Recently Completed
-
-1. **Event-driven confirmation flow** - [Issue #214](https://github.com/beyond-immersion/bannou-service/issues/214) (2026-02-01)
- - Implemented `ReleaseMode` and `RefundMode` enums for configurable confirmation flows
- - `Releasing` state now used for confirmation waiting when mode is not `immediate`
- - Added `/escrow/confirm-release` and `/escrow/confirm-refund` endpoints
- - Added `EscrowConfirmationTimeoutService` background worker
- - Added `EscrowReleasingEvent` and `EscrowRefundingEvent`
-
-2. **Escrow Expiration Background Service** (2026-02-01)
- - Implemented `EscrowExpirationService` that scans for expired escrows and transitions them
- - Wired up `ExpirationCheckInterval`, `ExpirationBatchSize`, and `ExpirationGracePeriod` config
- - Publishes `EscrowExpiredEvent` and `EscrowRefundedEvent` (for auto-refund)
-
 ### Pending Design Review
 
-1. **Asset transfer integration** - [Issue #153](https://github.com/beyond-immersion/bannou-service/issues/153) (2026-01-31)
- - Release and refund operations do not execute actual asset transfers (stub #7)
- - Escrow should call lib-currency and lib-inventory directly (L4→L2, hierarchy-permitted)
- - Events should be for observability, not for triggering asset movements (per)
- - Inventory has zero escrow integration; Currency has endpoints but they're never called
+1. **Asset transfer integration** — [Issue #153](https://github.com/beyond-immersion/bannou-service/issues/153) (2026-01-31)
+   - Release and refund operations do not execute actual asset transfers (stub #5)
+   - Escrow should call lib-currency and lib-inventory directly (L4→L2, hierarchy-permitted)
+   - Events should be for observability, not for triggering asset movements
+   - Inventory has zero escrow integration; Currency has endpoints but they're never called
 
-2. **ValidateEscrow asset checking** - [Issue #213](https://github.com/beyond-immersion/bannou-service/issues/213) (2026-01-31)
- - `ValidateEscrowAsync` contains placeholder logic - validation always passes
- - Needs to call ICurrencyClient/IItemClient to verify deposited assets still held
- - Design questions: contract validation, custom handler invocation, graceful degradation policy
+2. **ValidateEscrow asset checking** — [Issue #213](https://github.com/beyond-immersion/bannou-service/issues/213) (2026-01-31)
+   - `ValidateEscrowAsync` contains placeholder logic — validation always passes
+   - Needs to call ICurrencyClient/IItemClient to verify deposited assets still held
+   - Design questions: contract validation, custom handler invocation, graceful degradation policy
+
+3. **Periodic validation background service** — [Issue #250](https://github.com/beyond-immersion/bannou-service/issues/250) (2026-02-01)
+   - `ValidationCheckInterval` config property is defined but unused (stub #2/#3)
+   - Needs a background worker to periodically trigger asset validation

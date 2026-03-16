@@ -62,6 +62,8 @@ def generate_csharp(categories: dict) -> str:
         "",
         "#nullable enable",
         "",
+        "using BeyondImmersion.BannouService.Localization;",
+        "",
         "namespace BeyondImmersion.BannouService.Services;",
         "",
         "/// <summary>",
@@ -109,7 +111,7 @@ def generate_csharp(categories: dict) -> str:
         lines.append(
             f'            [{const_name}] = new LocalizationCategoryMetadata('
             f'"{description}", '
-            f'"{validation_mode}", '
+            f'ValidationMode.{validation_mode}, '
             f'{consumers_array}),'
         )
 
@@ -124,7 +126,7 @@ def generate_csharp(categories: dict) -> str:
     lines.append("/// <param name=\"Description\">Human-readable description of the category's purpose.</param>")
     lines.append("/// <param name=\"ValidationMode\">Validation behavior (None, WarnOnMissing, RejectOnMissing).</param>")
     lines.append("/// <param name=\"Consumers\">Plugin assemblies declared as consumers of this category.</param>")
-    lines.append("public readonly record struct LocalizationCategoryMetadata(string Description, string ValidationMode, string[] Consumers);")
+    lines.append("public readonly record struct LocalizationCategoryMetadata(string Description, ValidationMode ValidationMode, string[] Consumers);")
     lines.append("")
 
     return '\n'.join(lines)

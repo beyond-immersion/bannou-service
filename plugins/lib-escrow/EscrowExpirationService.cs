@@ -66,7 +66,6 @@ public class EscrowExpirationService : BackgroundService
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowExpirationService.ExecuteAsync");
         _logger.LogInformation("Escrow expiration service starting, check interval: {Interval}, grace period: {GracePeriod}",
             CheckInterval, GracePeriod);
 

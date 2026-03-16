@@ -6,6 +6,7 @@
 > **Layer**: GameFeatures
 > **State Store**: faction-statestore (MySQL), faction-membership-statestore (MySQL), faction-territory-statestore (MySQL), faction-norm-statestore (MySQL), faction-cache (Redis), faction-lock (Redis)
 > **Guide**: [Morality System](../guides/MORALITY-SYSTEM.md) (cross-service integration with lib-obligation and lib-faction)
+> **Implementation Map**: [docs/maps/FACTION.md](../maps/FACTION.md)
 > **Short**: Seed-based faction growth with norms, enforcement tiers, territory, guild hierarchy, and political bonds
 
 ## Overview
@@ -35,7 +36,7 @@ The Faction service (L4 GameFeatures) models factions as seed-based living entit
 
 ## Factions as Emergent Governance (Architectural Target)
 
-> **Status**: All 31 faction endpoints are fully implemented (CRUD, membership, territory, norms, cleanup, compression). The seed-based growth pipeline and norm resolution hierarchy work end-to-end. The broader vision described below -- emergent governance, economic regulation, and the morality pipeline role -- is the architectural target that these mechanics serve.
+> **Status**: 31 of 37 endpoints are fully implemented (CRUD, membership, territory, norms, cleanup, compression). 6 governance endpoints are schema-defined but implementation is pending. The seed-based growth pipeline and norm resolution hierarchy work end-to-end. The broader vision described below -- emergent governance, economic regulation, and the morality pipeline role -- is the architectural target that these mechanics serve.
 
 ### Factions Are the Emergent Governance Layer of the Living World
 
@@ -59,236 +60,11 @@ Over simulated time, factions should undergo recognizable arcs. A street gang gr
 
 ---
 
-## Dependencies (What This Plugin Relies On)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | Persistence for factions (MySQL), memberships (MySQL), territory claims (MySQL), norm definitions (MySQL), faction cache (Redis), distributed locks (Redis) |
-| lib-messaging (`IMessageBus`) | Publishing lifecycle events (faction.created/updated/deleted), membership events, territory events, norm events, realm baseline designation events |
-| lib-seed (`ISeedClient`) | Creating seeds for new factions, recording growth, querying capabilities for gating norm/territory operations; seed bonds for inter-faction alliances |
-| lib-location (`ILocationClient`) | Validating location existence for territory claims (L2 hard dependency) |
-| lib-realm (`IRealmClient`) | Validating realm existence for faction creation and realm baseline designation (L2 hard dependency) |
-| lib-game-service (`IGameServiceClient`) | Validating game service existence during faction creation (L2 hard dependency) |
-| lib-resource (`IResourceClient`) | Reference tracking, cleanup callback registration, and compression callback registration (L1 hard dependency) |
-| `IDistributedLockProvider` | Distributed locks for faction, membership, territory, and norm mutations (L0 hard dependency) |
-
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-obligation (L4) | **Planned** primary consumer: will query `/faction/norm/query-applicable` to resolve merged norm sets for NPC cognition cost modifiers. Not yet wired up -- lib-obligation currently resolves faction context through contracts only. See Design Considerations #4-5. |
-
-## State Storage
-
-### Faction Store
-**Store**: `faction-statestore` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `fac:{factionId}` | `FactionModel` | Primary lookup by ID |
-| `fac:{gameServiceId}:{code}` | `FactionModel` | Code-uniqueness lookup within game service scope |
-
-### Membership Store
-**Store**: `faction-membership-statestore` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `mem:{factionId}:{characterId}` | `FactionMemberModel` | Primary lookup by faction + character (uniqueness) |
-| `mem:char:{characterId}` | `MembershipListModel` | All memberships for a character (cross-faction query) |
-
-### Territory Store
-**Store**: `faction-territory-statestore` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `tcl:{claimId}` | `TerritoryClaimModel` | Primary lookup by claim ID |
-| `tcl:loc:{locationId}` | `TerritoryClaimModel` | Controlling faction lookup by location |
-| `tcl:fac:{factionId}` | `TerritoryClaimListModel` | All territory claims for a faction |
-
-### Norm Store
-**Store**: `faction-norm-statestore` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `nrm:{normId}` | `NormDefinitionModel` | Primary lookup by norm ID |
-| `nrm:fac:{factionId}` | `NormListModel` | All norms for a faction |
-
-### Governance Store
-**Store**: `faction-governance-statestore` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `gov:{governanceId}` | `GovernanceEntryModel` | Primary lookup by governance entry ID |
-| `gov:fac:{factionId}` | `GovernanceEntryListModel` | All governance entries for a faction |
-| `gov:fac:{factionId}:dom:{domain}` | `GovernanceEntryModel` | Domain uniqueness lookup within a faction |
-
-### Faction Cache
-**Store**: `faction-cache` (Backend: Redis, prefix: `faction:cache`)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `ncache:{characterId}:{locationId}` | `ResolvedNormCacheModel` | Cached resolved norm set per character+location (with TTL). Location is "none" when no location specified. |
-
-### Distributed Locks
-**Store**: `faction-lock` (Backend: Redis, prefix: `faction:lock`)
-
-Used for faction create/update/delete, membership add/remove/role-change, territory claim/release, norm define/update/delete, and realm baseline designation.
-
-### Type Field Classification
-
-| Field | Category | Type | Rationale |
-|-------|----------|------|-----------|
-| `violationType` | B (Game Content Type) | Opaque string | Norm violation type code (e.g., `"theft"`, `"deception"`, `"violence"`, `"contraband"`). Vocabulary defined externally by contract templates and lib-obligation's action tag mappings. New violation types require no schema changes. |
-| `seedTypeCode` | B (Game Content Type) | Opaque string | Seed type identifier for faction growth tracking (default: `"faction"`). Configured per game via `FACTION_SEED_TYPE_CODE`. Follows the Seed service's opaque code pattern. |
-| `currentPhase` | B (Game Content Type) | Opaque string (nullable) | Current seed growth phase label (e.g., `"nascent"`, `"established"`, `"influential"`, `"dominant"`). Phase labels are defined per seed type in lib-seed configuration, not by lib-faction. |
-| `authorityLevel` | C (System State/Mode) | `AuthorityLevel` enum | Governance power classification (`Influence`, `Delegated`, `Sovereign`). Determines whether faction norms carry legal weight or social influence only. Defaults to Influence. |
-| `domain` (on governance entries) | B (Game Content Type) | Opaque string | Case type domain prefix (e.g., `"dissolution"`, `"trade_dispute"`, `"criminal"`). Game-configurable. Delegation is scoped per domain. Adding new domains never requires schema changes. |
-| `status` (on `FactionResponse`) | C (System State/Mode) | `FactionStatus` enum | Faction operational lifecycle state (`Active`, `Dissolved`). Orthogonal to deprecation — a faction can be Active but deprecated (no new references) or Dissolved but not deprecated (dissolved is an operational end-state, deprecation prevents new references). |
-| `role` | C (System State/Mode) | `FactionMemberRole` enum | Membership role hierarchy (`Leader`, `Officer`, `Member`, `Recruit`). Determines permissions within the faction. |
-| `severity` | C (System State/Mode) | `NormSeverity` enum | Norm enforcement intensity (`Advisory`, `Standard`, `Strict`). Controls how strongly a norm is enforced. |
-| `scope` | C (System State/Mode) | `NormScope` enum | Norm applicability (`Internal`, `External`). Whether a norm applies to faction members only or to all entities in territory. |
-| `source` (on `ApplicableNormResponse`) | C (System State/Mode) | `NormSource` enum | Resolution hierarchy layer (`Membership`, `Territory`, `RealmBaseline`). Indicates which resolution tier produced this norm. |
-| `claimStatus` | C (System State/Mode) | `TerritoryClaimStatus` enum | Territory claim lifecycle (`Active`, `Contested`, `Released`). Note: `Contested` exists in schema for future dispute mechanics but is not currently used. |
-
----
-
-## Events
-
-### Published Events
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `faction.created` | `FactionCreatedEvent` | Faction created (single or via seed) |
-| `faction.updated` | `FactionUpdatedEvent` | Faction fields updated |
-| `faction.deleted` | `FactionDeletedEvent` | Faction deleted |
-| `faction.member.added` | `FactionMemberAddedEvent` | Character joins a faction |
-| `faction.member.removed` | `FactionMemberRemovedEvent` | Character leaves or is removed |
-| `faction.member.role-changed` | `FactionMemberRoleChangedEvent` | Member's role updated |
-| `faction.territory.claimed` | `FactionTerritoryClaimedEvent` | Faction claims a location |
-| `faction.territory.released` | `FactionTerritoryReleasedEvent` | Faction releases a territory claim |
-| `faction.norm.defined` | `FactionNormDefinedEvent` | New norm defined for a faction |
-| `faction.norm.updated` | `FactionNormUpdatedEvent` | Norm definition modified |
-| `faction.norm.deleted` | `FactionNormDeletedEvent` | Norm definition removed |
-| `faction.realm-baseline.designated` | `FactionRealmBaselineDesignatedEvent` | Faction designated as realm baseline |
-| `faction.governance.defined` | `FactionGovernanceDefinedEvent` | Governance entry created or updated (includes changedFields on overwrite) |
-| `faction.governance.deleted` | `FactionGovernanceDeletedEvent` | Governance entry removed |
-| `faction.authority.delegated` | `FactionAuthorityDelegatedEvent` | Sovereign delegates authority to child faction |
-| `faction.authority.revoked` | `FactionAuthorityRevokedEvent` | Delegated authority revoked |
-
-### Consumed Events
-
-None via `x-event-subscriptions`. Cross-service integration uses DI listener patterns instead:
-
-| Pattern | Interface | Action |
-|---------|-----------|--------|
-| Seed growth/phase/capability notifications | `ISeedEvolutionListener` | Receives growth, phase change, and capability unlock notifications for faction seeds. Updates faction's `currentPhase` and gates operations based on unlocked capabilities. Writes to distributed state for multi-node safety. |
-| Member activity collection unlocks | `ICollectionUnlockListener` | Converts member activity collection entry unlocks into faction seed growth via tag prefix matching (governance, commerce, military) against seed type `collectionGrowthMappings`. Writes to distributed state via lib-seed API. |
-
-### Resource Cleanup (via x-references)
-
-| Target Resource | Source Type | On Delete | Cleanup Endpoint |
-|----------------|-------------|-----------|-----------------|
-| character | faction | CASCADE | `/faction/cleanup-by-character` |
-| realm | faction | CASCADE | `/faction/cleanup-by-realm` |
-| location | faction | CASCADE | `/faction/cleanup-by-location` |
-
-### Compression Callback (via x-compression-callback)
-
-| Resource Type | Source Type | Priority | Compress Endpoint | Decompress Endpoint |
-|--------------|-------------|----------|-------------------|---------------------|
-| character | faction | 20 | `/faction/get-compress-data` | `/faction/restore-from-archive` |
-
-Archives faction memberships, roles, and applicable norm context for character compression via lib-resource.
-
-## Configuration
-
-| Property | Env Var | Default | Purpose |
-|----------|---------|---------|---------|
-| `SeedTypeCode` | `FACTION_SEED_TYPE_CODE` | `faction` | Seed type code for faction growth |
-| `DefaultMemberRole` | `FACTION_DEFAULT_MEMBER_ROLE` | `Member` | Default role for new members when unspecified |
-| `MaxHierarchyDepth` | `FACTION_MAX_HIERARCHY_DEPTH` | `5` | Max parent/child nesting depth |
-| `MaxNormsPerFaction` | `FACTION_MAX_NORMS_PER_FACTION` | `50` | Max norm definitions per faction |
-| `MaxTerritoriesPerFaction` | `FACTION_MAX_TERRITORIES_PER_FACTION` | `20` | Max territory claims per faction |
-| `NormQueryCacheTtlSeconds` | `FACTION_NORM_QUERY_CACHE_TTL_SECONDS` | `300` | TTL for cached norm resolution results (5 minutes) |
-| `DistributedLockTimeoutSeconds` | `FACTION_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | `30` | Timeout for distributed lock acquisition |
-| `SeedBulkPageSize` | `FACTION_SEED_BULK_PAGE_SIZE` | `100` | Page size for bulk seed operations |
-
-## DI Services & Helpers
-
-| Service | Role |
-|---------|------|
-| `ILogger<FactionService>` | Structured logging |
-| `FactionServiceConfiguration` | Typed configuration access |
-| `IStateStoreFactory` | State store access (creates 4 MySQL stores + cache store); also creates `IJsonQueryableStateStore<FactionModel>` for paginated listing, `IJsonQueryableStateStore<FactionMemberModel>` for member queries and norm cache invalidation, and `IJsonQueryableStateStore<TerritoryClaimModel>` for territory claim listing |
-| `IMessageBus` | Event publishing |
-| `IResourceClient` | Reference tracking, cleanup callbacks, compression callbacks (L1) |
-| `ISeedClient` | Seed creation, growth recording, capability queries (L2) |
-| `ILocationClient` | Location existence validation for territory claims (L2) |
-| `IRealmClient` | Realm existence validation (L2) |
-| `IGameServiceClient` | Game service existence validation (L2) |
-| `IDistributedLockProvider` | Distributed lock acquisition (L0) |
-
-DI listener implementations:
-- `ISeedEvolutionListener` -- receives seed growth/phase/capability notifications
-- `ICollectionUnlockListener` -- converts member activity unlocks into faction seed growth
-
-Variable provider:
-- `IVariableProviderFactory` -- provides `${faction.*}` namespace to Actor (L2)
-
-## API Endpoints (Implementation Notes)
-
-### Faction CRUD (11 endpoints)
-
-Standard CRUD on faction entities with code-uniqueness enforcement per game service scope. All endpoints require `developer` role.
-
-- **Create** (`/faction/create`): Validates game service and realm existence. Creates a seed via lib-seed for growth tracking. Saves under both ID and code lookup keys.
-- **Get** (`/faction/get`): Primary lookup by faction ID.
-- **GetByCode** (`/faction/get-by-code`): Lookup by game service + code.
-- **List** (`/faction/list`): Paginated cursor-based listing. Filters by game service, realm, status, parent faction, top-level only, and realm baseline flags.
-- **Update** (`/faction/update`): Acquires distributed lock. Handles partial updates (null fields skipped). Publishes updated event with `changedFields` list.
-- **Deprecate** (`/faction/deprecate`): Sets `IsDeprecated = true` with triple-field model (per IMPLEMENTATION TENETS). Prevents new references. Orthogonal to operational status — a deprecated faction retains its `Active` or `Dissolved` status.
-- **Undeprecate** (`/faction/undeprecate`): Clears `IsDeprecated` flag and deprecation metadata.
-- **Delete** (`/faction/delete`): Acquires lock, cascades member removals, territory releases, and norm deletions. Publishes deleted event.
-- **Seed** (`/faction/seed`): Bulk create with two-pass parent resolution (like Location). Skips duplicates by code lookup key. Returns created/skipped/failed counts.
-- **DesignateRealmBaseline** (`/faction/designate-realm-baseline`): Marks a faction as the realm baseline cultural faction. Replaces previous baseline if one existed. Publishes designation event.
-- **GetRealmBaseline** (`/faction/get-realm-baseline`): Returns the realm baseline faction for a given realm.
-
-### Membership Management (6 endpoints)
-
-- **AddMember** (`/faction/member/add`): Validates faction exists and is Active. Assigns default role if none specified. Publishes member added event. Invalidates norm cache for character.
-- **RemoveMember** (`/faction/member/remove`): Removes membership. Publishes member removed event. Invalidates norm cache.
-- **ListMembers** (`/faction/member/list`): Paginated members within a faction with optional role filter.
-- **ListMembershipsByCharacter** (`/faction/member/list-by-character`): All factions a character belongs to with optional game service filter.
-- **UpdateMemberRole** (`/faction/member/update-role`): Changes member's role. Publishes role changed event.
-- **CheckMembership** (`/faction/member/check`): Quick membership check returning boolean + role.
-
-### Territory Management (4 endpoints)
-
-- **ClaimTerritory** (`/faction/territory/claim`): Validates location exists, faction has `territory.claim` seed capability. One controlling faction per location. Publishes claim event. Invalidates norm cache for location.
-- **ReleaseTerritory** (`/faction/territory/release`): Releases claim. Publishes release event. Invalidates norm cache.
-- **ListTerritoryClaims** (`/faction/territory/list`): Paginated claims for a faction with optional status filter.
-- **GetControllingFaction** (`/faction/territory/get-controlling`): Returns the faction controlling a location.
-
-### Norm Management (5 endpoints)
-
-- **DefineNorm** (`/faction/norm/define`): Requires `norm.define` seed capability. Validates max norms limit. Publishes norm defined event. Invalidates norm cache.
-- **UpdateNorm** (`/faction/norm/update`): Partial updates to base penalty, severity, scope, description. Publishes norm updated event. Invalidates norm cache.
-- **DeleteNorm** (`/faction/norm/delete`): Removes norm definition. Publishes norm deleted event. Invalidates norm cache.
-- **ListNorms** (`/faction/norm/list`): All norms for a faction with optional severity/scope filters.
-- **QueryApplicableNorms** (`/faction/norm/query-applicable`): **Core endpoint for lib-obligation.** Resolves the full norm hierarchy for a character at a location: aggregates guild faction norms, location controlling faction norms, and realm baseline norms. Returns both raw applicable norms and a merged norm map (most specific wins per violation type). Cached in Redis with configurable TTL; `forceRefresh` bypasses cache.
-
-### Cleanup Endpoints (3 endpoints)
-
-Resource-managed cleanup via lib-resource (per FOUNDATION TENETS,):
-
-- **CleanupByCharacter** (`/faction/cleanup-by-character`): Removes all memberships for a character. Returns count of memberships removed.
-- **CleanupByRealm** (`/faction/cleanup-by-realm`): Removes all factions in a realm and cascades (memberships, territory claims, norms).
-- **CleanupByLocation** (`/faction/cleanup-by-location`): Removes all territory claims for a location.
-
-### Compression Endpoints (2 endpoints)
-
-- **GetCompressData** (`/faction/get-compress-data`): Returns a `FactionArchive` (extends `ResourceArchiveBase`) with character's memberships for archival.
-- **RestoreFromArchive** (`/faction/restore-from-archive`): Restores memberships from a compressed archive.
 
 ## Variable Provider: `${faction.*}` Namespace
 
@@ -415,6 +191,10 @@ Sovereignty and governance data management. Schema added by #601 (2026-03-16). S
 - **DelegateAuthority** (`/faction/governance/delegate`): Sovereign grants per-domain delegated authority to a child faction.
 - **RevokeAuthority** (`/faction/governance/revoke`): Revoke delegation (reverts to Influence when all domains revoked).
 
+### Category A Merge Endpoint (pending)
+
+Faction is a Category A entity per Implementation Tenets (deprecation lifecycle). `FactionService` already implements the `IDeprecateAndMergeEntity` marker interface, but the merge endpoint logic (`MergeFactionAsync`) is not yet implemented. When implemented, the merge endpoint should use shared `MergeDeprecatedRequest`/`MergeDeprecatedResponse` models from `common-api.yaml` and migrate faction references (memberships, territory claims, norms, governance entries) from a deprecated source faction to a target faction, then optionally delete the source.
+
 ## Potential Extensions
 
 1. **Faction diplomacy system**: Formalized alliance/rivalry mechanics through seed bonds with capability-gated treaty operations.
@@ -432,7 +212,9 @@ Sovereignty and governance data management. Schema added by #601 (2026-03-16). S
 
 ### Bugs (Fix Immediately)
 
-None currently.
+1. **Cascading delete does not publish individual sub-entity events**: `DeleteFactionAsync` cascades norm, territory, and governance deletions by directly deleting from stores without publishing individual `faction.norm.deleted`, `faction.territory.released`, or `faction.governance.deleted` events for each removed sub-entity. Per Foundation Tenets (Event-Driven Architecture), all meaningful state changes MUST publish events even without current consumers. Each norm deletion, territory release, and governance entry removal is a meaningful state change. The fix is to publish the appropriate events during cascade iteration, similar to how `RemoveMemberInternalAsync` already publishes `faction.member.removed` for each cascaded member removal.
+
+2. **CleanupByRealm fails for non-deprecated factions**: The `CleanupByRealm` endpoint calls `DeleteFactionAsync` internally, which rejects deletion with `400 BadRequest` when `IsDeprecated == false` (Category A lifecycle guard). However, cleanup callbacks from lib-resource fire when the parent realm is deleted — factions in that realm are typically not deprecated first. This means realm cleanup silently fails for every non-deprecated faction, leaving orphaned faction data. The cleanup endpoint must bypass the deprecation guard, or the internal cascade path must use a force-delete that skips the deprecation check.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -450,9 +232,7 @@ None currently.
 
 7. **No event subscriptions -- DI listeners only**: Cross-service integration uses `ISeedEvolutionListener` and `ICollectionUnlockListener` DI provider patterns (per FOUNDATION TENETS,) instead of broadcast event subscriptions. Resource cleanup uses `x-references` callbacks (per FOUNDATION TENETS,), not `character.deleted` / `realm.deleted` event subscriptions.
 
-8. **Cascading delete does not publish individual norm/territory events**: `DeleteFactionAsync` cascades norm and territory deletions by directly deleting from stores without publishing individual `faction.norm.deleted` or `faction.territory.released` events. The `faction.deleted` lifecycle event is published to signal that the entire entity (and all child data) was removed. Consumers that need to react to norm deletions should listen for `faction.deleted` and treat it as implying all norms are gone.
-
-9. **SeedFactions allows setting IsRealmBaseline directly**: Unlike `CreateFactionAsync` (which always sets `IsRealmBaseline = false`), the `SeedFactionsAsync` endpoint passes through `def.IsRealmBaseline` from the seed definition, allowing baseline designation during bulk seeding without a separate `DesignateRealmBaseline` call.
+8. **SeedFactions allows setting IsRealmBaseline directly**: Unlike `CreateFactionAsync` (which always sets `IsRealmBaseline = false`), the `SeedFactionsAsync` endpoint passes through `def.IsRealmBaseline` from the seed definition, allowing baseline designation during bulk seeding without a separate `DesignateRealmBaseline` call.
 
 10. **Sovereignty is emergent, not required**: `authorityLevel` defaults to `Influence` on every faction. Sovereignty is only acquired through `DesignateRealmBaseline` (which sets Sovereign automatically) or delegation endpoints. If no sovereign exists in a territory, `QueryGovernanceData` returns 404 and `QueryApplicableNorms` continues with the existing "most specific wins" behavior where all norms are social/personal. The legal channel only activates when a Sovereign faction exists.
 
@@ -467,20 +247,17 @@ None currently.
 
 3. **Seed bond mechanics for alliances**: The schema description references seed bonds for inter-faction alliances, but no API endpoints exist for bond management. These would be managed directly through lib-seed's bond API. May need faction-level wrapper endpoints for ergonomic alliance management.
 
-4. **Variable Provider missing norm/territory variables (plan gap)**: The plan (Issue #410 + `glittery-jingling-meadow.md`) specified `${faction.has_norm.<type>}`, `${faction.norm_penalty.<type>}`, `${faction.in_controlled_territory}`, and `${faction.primary_faction}` variables. The current `FactionProviderFactory` only provides membership data (count, names, codes, per-code details). The norm and territory variables are the critical integration point for lib-obligation's `evaluate_consequences` cognition stage. Implementing them requires the provider to query norm and territory stores, and may need the character's current location passed through `CreateAsync` (currently only receives `entityId`).
+4. **Variable Provider missing territory context variable**: The Variable Provider section documents `${faction.in_controlled_territory}` as not yet implemented. This requires knowing the character's current location, which is not available through the `IVariableProviderFactory.CreateAsync(Guid? entityId)` interface. Implementing this requires either: (a) subscribing to location events to maintain a character-location cache, or (b) enhancing the provider factory interface to accept additional execution context. The membership-scoped norm variables (`has_norm`, `norm_penalty`) and aggregate/per-faction variables are documented as implemented. The territory-scoped norm resolution remains available through the full `QueryApplicableNorms` API endpoint.
 
 5. **Missing lib-contract integration for guild charters (plan gap)**: Issue #410 decision Q3 states: "When a character joins a faction (formal guild membership), the guild contract is created explicitly through lib-contract." The plan lists `lib-contract (L1) — formal membership agreements, guild charters` as a dependency. The current implementation does not use `IContractClient` at all -- membership is managed directly without contract backing. This means guild charters are not formalized as binding agreements, and lib-obligation cannot discover faction-sourced contractual obligations through lib-contract.
 
-6. ~~**Faction sovereignty: authorityLevel field and governance data model (prerequisite for lib-arbitration)**~~: **SCHEMA DESIGNED** (2026-03-16, #601) — `AuthorityLevel` enum (`Influence`, `Delegated`, `Sovereign`) added to `faction-api.yaml`. `authorityLevel` field on `FactionResponse` (required, defaults to Influence). Governance data model (`domain` + `templateCode` + `governanceParameters`) with 6 new governance endpoints. `ApplicableNormEntry` and `MergedNormEntry` gain `authorityLevel` for authority-aware cost tagging. `DesignateRealmBaseline` sets Sovereign automatically. Delegation is per-case-type via opaque `domain` strings. `QueryGovernanceData` walks sovereignty hierarchy and returns 404 when no sovereign has jurisdiction. Sovereignty is a nullable/emergent concept. Service code implementation pending. See [Arbitration deep dive](ARBITRATION.md#faction-sovereignty-dependency) for the downstream consumer perspective.
-<!-- AUDIT:DESIGNED:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/601 -->
-
 ## Work Tracking
 
-### Completed
-- **2026-03-16**: Issue #601 — Faction sovereignty schema designed. `AuthorityLevel` enum, `authorityLevel` field on FactionResponse/lifecycle, governance data model (6 endpoints), enhanced `ApplicableNormEntry`/`MergedNormEntry` with authority level. Service code implementation pending.
+### Active
+- **Governance implementation**: 6 governance endpoints are schema-defined (#601) but service code is pending. See Stubs § Governance Endpoints.
+- **Category A merge endpoint**: `IDeprecateAndMergeEntity` interface is implemented but `MergeFactionAsync` logic is pending. See Stubs § Category A Merge Endpoint.
 
 ### History
-- **GitHub Issue**: [#410 - Feature: Second Thoughts -- Prospective Consequence Evaluation for NPC Cognition](https://github.com/beyond-immersion/bannou-service/issues/410)
- - lib-faction was extracted from the original lib-moral proposal during architecture review
- - Part of the larger lib-obligation + lib-faction system for NPC "second thoughts" cognition
- - All 31 endpoints are now fully implemented (faction CRUD, membership, territory, norms, cleanup, compression)
+- **2026-03-16**: Maintenance pass — corrected DC #4 (variable provider scope), deleted confirmed-FIXED DC #6 (governance schema designed via #601), corrected Category A merge stub (interface already implemented).
+- **2026-03-16**: Issue #601 — Faction sovereignty schema designed. Design Consideration #6 resolved.
+- **Origin**: [#410 - Feature: Second Thoughts -- Prospective Consequence Evaluation for NPC Cognition](https://github.com/beyond-immersion/bannou-service/issues/410) — lib-faction extracted from original lib-moral proposal during architecture review. Part of the larger lib-obligation + lib-faction morality pipeline. All 37 endpoints (31 original + 6 governance) are now schema-defined; 31 are fully implemented.

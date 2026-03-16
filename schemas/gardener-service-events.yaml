@@ -48,6 +48,10 @@ info:
     - topic: game-session.deleted
       event: GameSessionDeletedEvent
       handler: HandleGameSessionDeleted
+    # Account deletion cleanup (FOUNDATION TENETS Account Deletion Cleanup Obligation)
+    - topic: account.deleted
+      event: AccountDeletedEvent
+      handler: HandleAccountDeleted
     # Location entity presence events for entity session registry bindings
     - topic: location.entity-arrived
       event: LocationEntityArrivedEvent

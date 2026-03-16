@@ -25,6 +25,14 @@ info:
     2. State which section applies to your change
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
+  x-references:
+    - target: character
+      sourceType: escrow
+      field: partyId
+      onDelete: cascade
+      cleanup:
+        endpoint: /escrow/cleanup-by-character
+        payloadTemplate: '{"characterId": "{{resourceId}}"}'
 
 servers:
 - url: http://localhost:5012
@@ -602,6 +610,37 @@ paths:
                 $ref: '#/components/schemas/DeregisterHandlerResponse'
         '400':
           description: Deregistration failed
+
+  # ===========================================================================
+  # Resource Cleanup (1 endpoint)
+  # ===========================================================================
+
+  /escrow/cleanup-by-character:
+    post:
+      operationId: cleanupByCharacter
+      tags:
+      - Admin
+      summary: Clean up escrow data for a deleted character
+      description: |
+        Removes all escrow agreement records and associated data (tokens, status indexes,
+        party pending counts, validation tracking) where the specified character is a party.
+        Called by lib-resource during character deletion CASCADE cleanup.
+        Service-to-service only — not exposed to WebSocket clients.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByCharacterResponse'
+
 components:
   schemas:
     # ==========================================================================
@@ -2798,4 +2837,30 @@ components:
       description: Response from deregistering an asset handler
       properties: {}
 
+    # ==========================================================================
+    # Resource Cleanup Models
+    # ==========================================================================
 
+    CleanupByCharacterRequest:
+      type: object
+      additionalProperties: false
+      description: Request to clean up escrow data for a deleted character
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character ID whose escrow data should be cleaned up
+
+    CleanupByCharacterResponse:
+      type: object
+      additionalProperties: false
+      description: Response from character cleanup operation
+      required:
+      - agreementsDeleted
+      properties:
+        agreementsDeleted:
+          type: integer
+          minimum: 0
+          description: Number of escrow agreements cleaned up

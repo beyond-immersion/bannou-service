@@ -5,6 +5,7 @@
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
 > **State Stores**: divine-deities (MySQL), divine-blessings (MySQL), divine-attention (Redis), divine-divinity-events (Redis), divine-lock (Redis)
+> **Implementation Map**: [docs/maps/DIVINE.md](../maps/DIVINE.md)
 > **Planning**: [docs/plans/DIVINE.md](../plans/DIVINE.md)
 > **Short**: Pantheon management, divinity economy, blessing orchestration (composes Currency/Seed/Collection/Status)
 
@@ -182,129 +183,12 @@ Some services that list characters may want to exclude system realms by default.
 
 ---
 
-## Dependencies (What This Plugin Relies On)
-
-### Hard Dependencies (constructor injection -- crash if missing)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | Deity records (MySQL), blessing records (MySQL), attention slots (Redis), divinity event queue (Redis), distributed locks (Redis) |
-| lib-messaging (`IMessageBus`) | Publishing lifecycle events (deity created/updated/deleted), blessing events, divinity events, follower events, deity status events |
-| lib-messaging (`IEventConsumer`) | Subscribing to `genesis.entity.phase-changed` for deity lifecycle transitions, `analytics.score.updated` for divinity generation |
-| `IDistributedLockProvider` | Concurrent modification safety for deity mutations, blessing grants/revocations |
-| lib-genesis (`IGenesisClient`) | Entity creation from "deity_domain" template (provisions seed, divinity wallet). Genesis handles actor spawning at Stirring and character creation/binding at Awakened — Divine subscribes to `genesis.entity.phase-changed` for divine-specific post-transition work. (L2) |
-| lib-currency (`ICurrencyClient`) | Divinity credit, debit, balance queries, transaction history. Wallet creation is handled by Genesis at entity creation time. (L2) |
-| lib-relationship (`IRelationshipClient`) | Follower bonds (deity-character), rivalry bonds (deity-deity) (L2) |
-| lib-character (`ICharacterClient`) | Validate character existence for follower registration (L2). Character creation in system realm at Awakened phase is handled by Genesis. |
-| lib-game-service (`IGameServiceClient`) | Validate game service existence for deity scoping (L2) |
-| lib-collection (`ICollectionClient`) | Permanent blessing grants for Greater/Supreme tiers (L2) |
-
-### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
-
-| Dependency | Usage | Behavior When Missing |
-|------------|-------|-----------------------|
-| lib-status (`IStatusClient`) | Temporary blessing grants for Minor/Standard tiers | Temporary blessings unavailable; only permanent blessings (Greater/Supreme) work |
-| lib-puppetmaster (`IPuppetmasterClient`) | Start/stop deity watcher actors on activation/deactivation | Deities have no active behavior; blessings and economy still work via API |
-| lib-analytics (`IAnalyticsClient`) | Domain-relevant score queries for divinity generation | Divinity generation from analytics events disabled; manual credit still works |
-
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
 |-----------|-------------|
 | *(none yet)* | Divine is a new L4 service with no current consumers. Future dependents may include Variable Provider Factory implementations for ABML behavior expressions (`${divine.*}`) |
 | lib-director *(planned)* | During directed events, Director queries deity state (domain power, active blessings, follower counts) for divine actor observation context, and coordinates divine actors during god-driven events. Director interacts with divine actors primarily through Actor APIs (tap, steer, drive), but calls Divine APIs for deity-specific state enrichment. See [DIRECTOR.md](DIRECTOR.md) |
-
-## Type Field Classification
-
-| Field | Category | Type | Rationale |
-|-------|----------|------|-----------|
-| `entityType` | A (Entity Reference) | `EntityType` enum (from `common-api.yaml`) | Identifies which first-class Bannou entity receives a blessing; all valid values (`character`, `account`, `deity`, etc.) are first-class Bannou entities |
-| `status` (DeityResponse) | C (System State/Mode) | `DeityStatus` enum (`active`, `dormant`, `archived`) | Deity lifecycle state machine position; system-managed lifecycle, not game content |
-| `tier` (BlessingResponse) | C (System State/Mode) | `BlessingTier` enum (`minor`, `standard`, `greater`, `supreme`) | Determines divinity cost, storage mechanism (Status vs Collection), and power level; service-specific classification |
-| `status` (BlessingResponse) | C (System State/Mode) | `BlessingStatus` enum (`active`, `revoked`) | Current blessing lifecycle state |
-| `domainCode` | B (Game Content Type) | Opaque string | Domain of divine influence (e.g., `"war"`, `"knowledge"`, `"nature"`); different games define different domains without schema changes |
-
-**Notes**:
-- `entityType` was recently migrated from plain string to the shared `EntityType` enum in `common-api.yaml`, confirming its Category A classification.
-- `domainCode` follows the same extensibility pattern as seed type codes, collection type codes, and relationship type codes -- opaque strings that are game-configurable at deployment time.
-- Follower management uses `characterId` directly (not `entityId` + `entityType` polymorphism) because only characters can be "watched" by gods in the attention system.
-
-## State Storage
-
-### Deity Store
-**Store**: `divine-deities` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `deity:{deityId}` | `DeityModel` | Primary lookup by ID |
-| `deity-code:{gameServiceId}:{code}` | `DeityModel` | Code-uniqueness lookup within game service |
-
-### Blessing Store
-**Store**: `divine-blessings` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `blessing:{blessingId}` | `BlessingModel` | Primary lookup by ID |
-
-Paginated queries by entityId+entityType or deityId+tier use `IJsonQueryableStateStore<BlessingModel>.JsonQueryPagedAsync()`.
-
-### Attention Store
-**Store**: `divine-attention` (Backend: Redis, prefix: `divine:attention`)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `attention:{deityId}:{characterId}` | `AttentionSlotModel` | Active attention slot per deity-character pair |
-
-### Divinity Event Queue
-**Store**: `divine-divinity-events` (Backend: Redis, prefix: `divine:divevt`)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `divevt:{eventId}` | `DivinityEventModel` | Pending divinity generation event awaiting batch processing |
-
-### Distributed Locks
-**Store**: `divine-lock` (Backend: Redis, prefix: `divine:lock`)
-
-| Key Pattern | Purpose |
-|-------------|---------|
-| `divine:lock:deity:{deityId}` | Deity mutation lock |
-| `divine:lock:blessing:{blessingId}` | Blessing mutation lock |
-| `divine:lock:attention-worker` | Attention decay worker singleton lock |
-| `divine:lock:divinity-generation-worker` | Divinity generation worker singleton lock |
-
-## Events
-
-### Published Events
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `divine.deity.created` | `DeityCreatedEvent` | Deity entity created (lifecycle) |
-| `divine.deity.updated` | `DeityUpdatedEvent` | Deity entity updated (lifecycle) |
-| `divine.deity.deleted` | `DeityDeletedEvent` | Deity entity deleted (lifecycle) |
-| `divine.blessing.granted` | `DivineBlessingGrantedEvent` | A god granted a blessing to an entity |
-| `divine.blessing.revoked` | `DivineBlessingRevokedEvent` | A blessing was revoked |
-| `divine.divinity.credited` | `DivineDivinityCreditedEvent` | Divinity was earned (mortal action in domain, manual credit) |
-| `divine.divinity.debited` | `DivineDivinityDebitedEvent` | Divinity was spent (blessing, miracle) |
-| `divine.follower.registered` | `DivineFollowerRegisteredEvent` | Character became a follower of a deity |
-| `divine.follower.removed` | `DivineFollowerRemovedEvent` | Character removed as follower |
-| `divine.deity.activated` | `DivineDeityActivatedEvent` | Deity became active in the world |
-| `divine.deity.dormant` | `DivineDeityDormantEvent` | Deity went dormant |
-
-### Consumed Events
-
-| Topic | Handler | Action |
-|-------|---------|--------|
-| `genesis.entity.phase-changed` | `HandleGenesisEntityPhaseChanged` | Reacts to deity genesis entity lifecycle transitions — initializes attention slots at Stirring, activates follower management and divinity economy at Awakened (hard dependency) |
-| `analytics.score.updated` | `HandleAnalyticsScoreUpdated` | Maps analytics categories to domain codes, queues divinity generation events for domain-relevant deities (soft dependency -- no-op if Analytics disabled) |
-
-### Resource Cleanup
-
-Character and game-service deletion cleanup is handled via `x-references` cleanup endpoints, NOT via event subscriptions.
-
-| Trigger | Cleanup Endpoint | Action |
-|---------|------------------|--------|
-| Character deleted | `/divine/cleanup-by-character` | Revoke all blessings targeting this character, remove follower relationships from all deities, update follower counts, clear attention slots |
-| Game service deleted | `/divine/cleanup-by-game-service` | Delete all deities for the game service along with their blessings, followers, attention slots, and associated resources |
 
 ## Configuration
 
@@ -328,83 +212,6 @@ Character and game-service deletion cleanup is handled via `x-references` cleanu
 | `DeityActorTypeCode` | `DIVINE_DEITY_ACTOR_TYPE_CODE` | `deity_watcher` | Actor type code for deity watcher actors via Puppetmaster |
 | `AttentionWorkerIntervalSeconds` | `DIVINE_ATTENTION_WORKER_INTERVAL_SECONDS` | `60` | Seconds between attention decay worker cycles |
 | `DivinityGenerationWorkerIntervalSeconds` | `DIVINE_DIVINITY_GENERATION_WORKER_INTERVAL_SECONDS` | `30` | Seconds between divinity generation worker cycles |
-
-## DI Services & Helpers
-
-| Service | Role |
-|---------|------|
-| `ILogger<DivineService>` | Structured logging |
-| `DivineServiceConfiguration` | Typed configuration access (18 properties) |
-| `IStateStoreFactory` | State store access (creates 5 stores) |
-| `IMessageBus` | Event publishing |
-| `IDistributedLockProvider` | Distributed lock acquisition (L0) |
-| `IGenesisClient` | Deity entity creation from "deity_domain" template, lifecycle queries, capability checks (L2 hard) |
-| `ICurrencyClient` | Divinity credit/debit/balance operations (L2 hard). Wallet creation handled by Genesis. |
-| `IRelationshipClient` | Follower/rivalry bond management (L2 hard) |
-| `ICharacterClient` | Character existence validation for follower registration (L2 hard). Character creation handled by Genesis. |
-| `IGameServiceClient` | Game service existence validation (L2 hard) |
-| `ICollectionClient` | Permanent blessing grants (L2 hard) |
-| `IServiceProvider` | Runtime resolution of soft L4 dependencies |
-
-### Background Workers
-
-| Worker | Purpose | Interval Config | Lock Key |
-|--------|---------|-----------------|----------|
-| `DivineAttentionWorker` | Decays attention slots for inactive followers, freeing capacity for new characters | `AttentionWorkerIntervalSeconds` (60s) | `divine:lock:attention-worker` |
-| `DivineDivinityGenerationWorker` | Drains pending divinity events from Redis, aggregates by deity, credits currency wallets in batches | `DivinityGenerationWorkerIntervalSeconds` (30s) | `divine:lock:divinity-generation-worker` |
-
-Both workers acquire distributed locks before processing to ensure multi-instance safety (only one instance processes at a time).
-
-## API Endpoints (Implementation Notes)
-
-**Current status**: All 22 endpoints return `NotImplemented`. Implementation plan at `docs/plans/DIVINE.md`.
-
-### Deity Management (8 endpoints)
-
-All endpoints are service-to-service (`x-permissions: []`).
-
-- **Create** (`/divine/deity/create`): Validates game service existence, code uniqueness per game service. Creates genesis entity via `IGenesisClient` from "deity_domain" template (provisions seed, divinity wallet, and inventories). Stores `genesisEntityId` on `DeityModel`. Saves under both ID and code lookup keys. Actor spawning and character binding happen automatically as divinity accumulates — Genesis handles the lifecycle, Divine reacts via `genesis.entity.phase-changed` subscription.
-- **Get** (`/divine/deity/get`): Load from MySQL by deityId. 404 if not found.
-- **GetByCode** (`/divine/deity/get-by-code`): JSON query by gameServiceId + code. 404 if not found.
-- **List** (`/divine/deity/list`): Paged JSON query with required gameServiceId filter, optional domainCode and status filters.
-- **Update** (`/divine/deity/update`): Acquires distributed lock. Partial update -- only non-null fields applied. Publishes lifecycle updated event.
-- **Activate** (`/divine/deity/activate`): Lock, set status Active. If actorId is null and Puppetmaster available, start watcher. Publishes `divine.deity.activated` event.
-- **Deactivate** (`/divine/deity/deactivate`): Lock, set status Dormant. If Puppetmaster available, stop watcher. Clears all attention slots. Publishes `divine.deity.dormant` event.
-- **Delete** (`/divine/deity/delete`): Lock. Deactivate if active. Revoke all blessings. Remove all follower relationships. Delete attention slots. Coordinate cleanup via lib-resource. Delete deity record. Publishes lifecycle deleted event.
-
-### Divinity Economy (4 endpoints)
-
-All endpoints are service-to-service (`x-permissions: []`). All operations proxy through `ICurrencyClient` using the deity's `currencyWalletId`.
-
-- **GetBalance** (`/divine/divinity/get-balance`): Load deity, get walletId, query `ICurrencyClient.GetBalanceAsync`.
-- **Credit** (`/divine/divinity/credit`): Validate deity exists, credit wallet. Publishes `divine.divinity.credited` event.
-- **Debit** (`/divine/divinity/debit`): Validate deity exists, validate sufficient balance, debit wallet. Publishes `divine.divinity.debited` event.
-- **GetHistory** (`/divine/divinity/get-history`): Load deity, get walletId, query `ICurrencyClient.GetTransactionHistoryAsync`.
-
-### Blessing Orchestration (5 endpoints)
-
-All endpoints are service-to-service (`x-permissions: []`). Blessings are entity-agnostic (entityId + entityType polymorphism).
-
-- **Grant** (`/divine/blessing/grant`): Full ceremony -- validate deity is Active, validate entity exists, check blessing count < `MaxBlessingsPerEntity`, calculate divinity cost from tier config, debit divinity, grant via lib-collection (Greater/Supreme) or Status Inventory (Minor/Standard), create BlessingModel record. Publishes `divine.blessing.granted` event. **Compensation (per Implementation Tenets)**: If the collection/status grant fails after divinity debit, the implementation must re-credit the divinity amount in a catch block before propagating the error.
-- **Revoke** (`/divine/blessing/revoke`): Lock. For status-type blessings: remove status item. For permanent blessings: mark revoked in collection. Update BlessingModel with revocation timestamp. Publishes `divine.blessing.revoked` event.
-- **ListByEntity** (`/divine/blessing/list-by-entity`): Paged JSON query on `divine-blessings` by entityId + entityType.
-- **ListByDeity** (`/divine/blessing/list-by-deity`): Paged JSON query on `divine-blessings` by deityId, optional tier filter.
-- **Get** (`/divine/blessing/get`): Load from MySQL by blessingId. 404 if not found.
-
-### Follower Management (3 endpoints)
-
-All endpoints are service-to-service (`x-permissions: []`). Followers are always characters (not entity-agnostic).
-
-- **Register** (`/divine/follower/register`): Validate deity and character exist. Create relationship via `IRelationshipClient` (type: `FollowerRelationshipTypeCode`). Increment deity FollowerCount. Add to attention slots if capacity available. Publishes `divine.follower.registered` event.
-- **Unregister** (`/divine/follower/unregister`): Delete relationship. Decrement FollowerCount. Remove from attention slots. Publishes `divine.follower.removed` event.
-- **GetFollowers** (`/divine/follower/get-followers`): Query relationships by deityId and type via `IRelationshipClient`. Paginate results.
-
-### Resource Cleanup (2 endpoints)
-
-All endpoints are service-to-service (`x-permissions: []`). Called by lib-resource when referenced entities are deleted (FOUNDATION TENETS: Resource-Managed Cleanup).
-
-- **CleanupByCharacter** (`/divine/cleanup-by-character`): Revoke all blessings where entityType=character and entityId matches. Remove follower relationships. Update follower counts. Clear attention slots.
-- **CleanupByGameService** (`/divine/cleanup-by-game-service`): Query all deities for the gameServiceId. For each: deactivate, revoke blessings, remove followers, delete deity record.
 
 ## Visual Aid
 
@@ -489,13 +296,26 @@ All 22 endpoints are currently stubbed (return `NotImplemented`). The following 
 12. **Underworld System Realm**: A system realm for afterlife gameplay. Dead characters are transferred (realm transfer, not deletion) to the underworld realm, continue as actors running afterlife behaviors, and generate history/encounters that feed back into the living world's narrative generation. Per VISION.md's soul architecture (logos bundle + pneuma shell + sense of self), death is transformation. The underworld system realm makes this literal: the character persists in a different conceptual space.
 13. **Guardian Spirit Characters (Nexius Realm)**: Guardian spirits as Character records in a Nexius system realm. Pair bonds from PLAYER-VISION.md become Relationships between Nexius characters. Spirit evolution becomes character growth via Seed. The same pattern as divine characters applied to the player's metaphysical entity. Would give the Agency service concrete character data to work with for manifest computation.
 
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `entityType` | A (Entity Reference) | `EntityType` enum (from `common-api.yaml`) | Identifies which first-class Bannou entity receives a blessing; all valid values (`character`, `account`, `deity`, etc.) are first-class Bannou entities |
+| `status` (DeityResponse) | C (System State/Mode) | `DeityStatus` enum (`active`, `dormant`, `archived`) | Deity lifecycle state machine position; system-managed lifecycle, not game content |
+| `tier` (BlessingResponse) | C (System State/Mode) | `BlessingTier` enum (`minor`, `standard`, `greater`, `supreme`) | Determines divinity cost, storage mechanism (Status vs Collection), and power level; service-specific classification |
+| `status` (BlessingResponse) | C (System State/Mode) | `BlessingStatus` enum (`active`, `revoked`) | Current blessing lifecycle state |
+| `domainCode` | B (Game Content Type) | Opaque string | Domain of divine influence (e.g., `"war"`, `"knowledge"`, `"nature"`); different games define different domains without schema changes |
+
+**Notes**:
+- `entityType` was recently migrated from plain string to the shared `EntityType` enum in `common-api.yaml`, confirming its Category A classification.
+- `domainCode` follows the same extensibility pattern as seed type codes, collection type codes, and relationship type codes -- opaque strings that are game-configurable at deployment time.
+- Follower management uses `characterId` directly (not `entityId` + `entityType` polymorphism) because only characters can be "watched" by gods in the attention system.
+
 ## Known Quirks & Caveats
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Blessing grant flow missing multi-service compensation**~~: **FIXED** (2026-03-16) - Added catch-block re-credit compensation requirement to the grant flow description in API Endpoints section. Implementer must re-credit divinity if the collection/status grant fails after debit.
-
-2. ~~**Consumed Events section missing `genesis.entity.phase-changed`**~~: **FIXED** (2026-03-16) - Added `genesis.entity.phase-changed` to the Consumed Events table with handler name and description. Events schema still needs the corresponding `x-event-subscriptions` entry when the plugin is implemented.
+*(No active bugs)*
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -518,9 +338,8 @@ All 22 endpoints are currently stubbed (return `NotImplemented`). The following 
 1. **Domain-to-analytics mapping**: The `HandleAnalyticsScoreUpdated` handler needs a mapping from analytics categories to domain codes. The plan suggests either a config property (`DomainAnalyticsMappings` as JSON string) or a dedicated mapping state store. **Note**: The JSON string config option would violate Implementation Tenets (Configuration-First — no structured data as parseable strings). A dedicated mapping state store with CRUD endpoints, or individual typed config properties per domain, are the tenet-compliant alternatives.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-11:https://github.com/beyond-immersion/bannou-service/issues/636 -->
 
-2. ~~**Blessing template management on startup**~~: **FIXED** (2026-03-16) - Reclassified from Design Consideration to implementation task. The pattern is established by Gardener and Faction: hardcode type definitions inline in `OnRunningAsync`, make only type code strings configurable (already defined: `DeitySeedTypeCode`, `BlessingCollectionType`), catch 409 for idempotent restart. No design question remains — captured in Stubs item #8.
-
-3. **No owner validation for blessings**: Entity existence validation depends on the `entityType` -- the service would need to resolve the correct client dynamically. The plan validates characters via `ICharacterClient`, but entity-agnostic blessings may need a pluggable validation strategy.
+2. **No owner validation for blessings**: Entity existence validation depends on the `entityType` -- the service would need to resolve the correct client dynamically. The plan validates characters via `ICharacterClient`, but entity-agnostic blessings may need a pluggable validation strategy. **Investigation (2026-03-16)**: The established codebase pattern (Relationship, Collection) is to skip entity existence validation for polymorphic references — callers are trusted services (`x-permissions: []`). However, the Grant flow spec says "validate entity exists" and follower registration validates character existence, creating an internal inconsistency. Three options: (a) skip validation entirely (match Relationship/Collection pattern), (b) validate only character type where client exists, (c) add more client dependencies. Human decision needed.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/675 -->
 
 ## Work Tracking
 

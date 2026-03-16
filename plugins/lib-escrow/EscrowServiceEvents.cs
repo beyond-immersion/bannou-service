@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using Microsoft.Extensions.Logging;
 
@@ -6,7 +7,7 @@ namespace BeyondImmersion.BannouService.Escrow;
 /// <summary>
 /// Partial class for EscrowService event handling.
 /// Contains event consumer registration and handler implementations.
-/// Handles contract lifecycle events for contract-bound escrows.
+/// Handles account deletion cleanup and contract lifecycle events for contract-bound escrows.
 /// </summary>
 public partial class EscrowService
 {
@@ -17,6 +18,10 @@ public partial class EscrowService
     /// <param name="eventConsumer">The event consumer for registering handlers.</param>
     protected void RegisterEventConsumers(IEventConsumer eventConsumer)
     {
+        eventConsumer.RegisterHandler<IEscrowService, AccountDeletedEvent>(
+            "account.deleted",
+            async (svc, evt) => await ((EscrowService)svc).HandleAccountDeletedAsync(evt));
+
         eventConsumer.RegisterHandler<IEscrowService, ContractFulfilledEvent>(
             "contract.fulfilled",
             async (svc, evt) => await ((EscrowService)svc).HandleContractFulfilledAsync(evt));
@@ -24,6 +29,126 @@ public partial class EscrowService
         eventConsumer.RegisterHandler<IEscrowService, ContractTerminatedEvent>(
             "contract.terminated",
             async (svc, evt) => await ((EscrowService)svc).HandleContractTerminatedAsync(evt));
+    }
+
+    /// <summary>
+    /// Handles account.deleted events by cleaning up all escrow data for the deleted account.
+    /// Finds all agreements where the account is a party and removes associated data.
+    /// Per FOUNDATION TENETS (Account Deletion Cleanup Obligation).
+    /// </summary>
+    /// <param name="evt">The account deleted event data.</param>
+    public async Task HandleAccountDeletedAsync(AccountDeletedEvent evt)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.escrow", "EscrowService.HandleAccountDeleted");
+        _logger.LogInformation("Handling account.deleted for account {AccountId}", evt.AccountId);
+        try
+        {
+            await CleanupEscrowsForAccountAsync(evt.AccountId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to clean up escrow data for account {AccountId}", evt.AccountId);
+            await _messageBus.TryPublishErrorAsync(
+                "escrow",
+                "CleanupEscrowsForAccount",
+                ex.GetType().Name,
+                ex.Message,
+                endpoint: "account.deleted",
+                details: $"accountId={evt.AccountId}",
+                stack: ex.StackTrace);
+        }
+    }
+
+    /// <summary>
+    /// Cleans up all escrow data for a deleted account. Queries for agreements where
+    /// the account is a party, then removes agreement records, associated tokens,
+    /// status index entries, party pending counts, idempotency records, and validation
+    /// tracking entries. Per-agreement failures are logged as warnings and do not abort
+    /// the overall cleanup. Multi-node idempotent — state store deletes are naturally
+    /// idempotent so "not found" is treated as success.
+    /// </summary>
+    /// <param name="accountId">The deleted account ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    internal async Task CleanupEscrowsForAccountAsync(Guid accountId, CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.escrow", "EscrowService.CleanupEscrowsForAccount");
+
+        var agreements = await _agreementStore.QueryAsync(
+            a => a.Parties != null && a.Parties.Any(p => p.PartyId == accountId && p.PartyType == EntityType.Account),
+            cancellationToken: cancellationToken);
+
+        if (agreements.Count == 0)
+        {
+            _logger.LogDebug("No escrow agreements found for account {AccountId}, skipping cleanup", accountId);
+            return;
+        }
+
+        var successCount = 0;
+        var failureCount = 0;
+
+        foreach (var agreement in agreements)
+        {
+            try
+            {
+                await CleanupSingleAgreementAsync(agreement, cancellationToken);
+                successCount++;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to clean up escrow {EscrowId} for account {AccountId}, continuing",
+                    agreement.EscrowId, accountId);
+                failureCount++;
+            }
+        }
+
+        _logger.LogInformation(
+            "Escrow account cleanup complete for {AccountId}: {Success} succeeded, {Failed} failed",
+            accountId, successCount, failureCount);
+    }
+
+    /// <summary>
+    /// Cleans up a single escrow agreement and all associated data (tokens, indexes, counts, validation).
+    /// </summary>
+    private async Task CleanupSingleAgreementAsync(EscrowAgreementModel agreement, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.escrow", "EscrowService.CleanupSingleAgreement");
+
+        var escrowId = agreement.EscrowId;
+
+        // Delete token hashes for all parties
+        if (agreement.Parties != null)
+        {
+            foreach (var party in agreement.Parties)
+            {
+                if (!string.IsNullOrEmpty(party.DepositToken))
+                {
+                    var depositTokenHash = HashToken(party.DepositToken);
+                    await _tokenStore.DeleteAsync(BuildTokenKey(depositTokenHash), cancellationToken: cancellationToken);
+                }
+
+                if (!string.IsNullOrEmpty(party.ReleaseToken))
+                {
+                    var releaseTokenHash = HashToken(party.ReleaseToken);
+                    await _tokenStore.DeleteAsync(BuildTokenKey(releaseTokenHash), cancellationToken: cancellationToken);
+                }
+
+                // Decrement party pending count
+                await DecrementPartyPendingCountAsync(party.PartyId, party.PartyType, cancellationToken);
+            }
+        }
+
+        // Delete status index entry
+        var statusKey = $"{BuildStatusIndexKey(agreement.Status)}:{escrowId}";
+        await _statusIndexStore.DeleteAsync(statusKey, cancellationToken: cancellationToken);
+
+        // Delete validation tracking
+        await _validationStore.DeleteAsync(BuildValidationKey(escrowId), cancellationToken: cancellationToken);
+
+        // Delete the agreement record
+        await _agreementStore.DeleteAsync(BuildAgreementKey(escrowId), cancellationToken: cancellationToken);
     }
 
     /// <summary>

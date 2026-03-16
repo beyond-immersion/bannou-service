@@ -1405,20 +1405,6 @@ public partial class AffixService : IAffixService, ICleanDeprecatedEntity
             }, cancellationToken);
         }
 
-        // Soft dependency: analytics
-        try
-        {
-            var analyticsClient = _serviceProvider.GetService<BeyondImmersion.BannouService.Analytics.IAnalyticsClient>();
-            if (analyticsClient != null)
-            {
-                _logger.LogDebug("Publishing generation statistics to analytics");
-            }
-        }
-        catch
-        {
-            // Graceful degradation per dependency table
-        }
-
         return (StatusCodes.OK, new BatchGenerateAffixSetsResponse { Results = results });
     }
 

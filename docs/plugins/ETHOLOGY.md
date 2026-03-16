@@ -50,7 +50,7 @@ Nature values are computed from three layers:
 | **Environmental override** | Realm and location modifications | "Ironpeak wolves: aggression +0.15 (harsh environment)" |
 | **Individual noise** | Deterministic hash from entity ID | "This wolf: aggression +0.03 (consistent per-entity)" |
 
-From the [Vision](../../arcadia-kb/VISION.md): "The world is alive whether or not a player is watching." For this to feel true at the ecosystem level, animals and creatures need perceptible individuality. The alpha wolf that's slightly more aggressive and territorial than the omega. The old bear that's less curious and more cautious. The pack of wild dogs where each has distinct behavioral tendencies. Without per-individual variation, ecosystems feel like tiled patterns rather than living populations.
+From the [Vision](../reference/VISION.md): "The world is alive whether or not a player is watching." For this to feel true at the ecosystem level, animals and creatures need perceptible individuality. The alpha wolf that's slightly more aggressive and territorial than the omega. The old bear that's less curious and more cautious. The pack of wild dogs where each has distinct behavioral tendencies. Without per-individual variation, ecosystems feel like tiled patterns rather than living populations.
 
 ### Archetype Definition
 
@@ -420,7 +420,7 @@ flows:
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | Archetype definitions (MySQL), environmental overrides (MySQL), nature profile cache (Redis), distributed locks (Redis) |
 | lib-messaging (`IMessageBus`) | Publishing archetype/override lifecycle events, error event publication |
-| lib-messaging (`IEventConsumer`) | Subscribing to species.deprecated event (informational logging only) |
+| lib-messaging (`IEventConsumer`) | Subscribing to species.updated event (checking changedFields for deprecation — informational logging only) |
 | lib-species (`ISpeciesClient`) | Validating species existence when creating archetypes, querying species data for trait modifier cross-reference (L2) |
 | lib-game-service (`IGameServiceClient`) | Game service scope validation for archetypes (L2) |
 | lib-location (`ILocationClient`) | Validating location existence when creating location-scoped overrides, querying location hierarchy for override stacking (L2) |
@@ -531,12 +531,12 @@ Lifecycle events are auto-generated via `x-lifecycle` in `ethology-service-event
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| `species.deprecated` | `HandleSpeciesDeprecatedAsync` | **Informational only (not cleanup).** When a species is deprecated, log a warning if active archetypes reference it. Do NOT auto-deprecate the archetype -- archetypes may outlive species deprecation for migration purposes. This is a live state reaction (logging), not dependent data destruction, so event subscription is acceptable per FOUNDATION TENETS. |
+| `species.updated` | `HandleSpeciesUpdatedAsync` | **Informational only (not cleanup).** When a species is deprecated (detected by checking `changedFields` for deprecation fields per Implementation Tenets — there is no dedicated `species.deprecated` topic), log a warning if active archetypes reference it. Do NOT auto-deprecate the archetype -- archetypes may outlive species deprecation for migration purposes. This is a live state reaction (logging), not dependent data destruction, so event subscription is acceptable per FOUNDATION TENETS. |
 
-**Events NOT consumed** (cleanup via lib-resource instead, per FOUNDATION TENETS):
-- `species.deleted` -- handled by x-references cleanup endpoint `/ethology/cleanup-by-species`
-- `location.deleted` -- handled by x-references cleanup endpoint `/ethology/cleanup-by-location`
-- `location.deprecated` -- no action needed; overrides for deprecated locations remain active until location is deleted via lib-resource cleanup
+**Events NOT consumed** (cleanup via lib-resource instead, per Foundation Tenets):
+- `species.deleted` — handled by x-references cleanup endpoint `/ethology/cleanup-by-species`
+- `location.deleted` — handled by x-references cleanup endpoint `/ethology/cleanup-by-location`
+- `location.updated` (deprecation) — no action needed; overrides for deprecated locations remain active until location is deleted via lib-resource cleanup
 
 ### Resource Cleanup (FOUNDATION TENETS)
 
@@ -583,7 +583,7 @@ Dependent data cleanup uses lib-resource exclusively (per FOUNDATION TENETS). Ev
 | `EthologyServiceConfiguration` | Typed configuration access |
 | `IStateStoreFactory` | State store access (creates 4 stores) |
 | `IMessageBus` | Event publishing |
-| `IEventConsumer` | Species event subscription (informational logging only) |
+| `IEventConsumer` | Species updated event subscription (checking changedFields for deprecation — informational logging only) |
 | `IDistributedLockProvider` | Distributed lock acquisition (L0) |
 | `ITelemetryProvider` | Telemetry span creation for async methods (L0) |
 | `ISpeciesClient` | Species validation (L2) |
@@ -633,7 +633,7 @@ All endpoints `x-permissions: [{role: developer}]`.
 
 - **SeedArchetypes** (`/ethology/archetype/seed`): Bulk creation/update of archetypes from configuration. Idempotent with `updateExisting` flag. Used during world initialization to define all species behavioral baselines at once. Acquires per-archetype distributed locks (lock key: `archetype:{archetypeCode}`) to ensure multi-instance safety per IMPLEMENTATION TENETS.
 
-### Override Management (6 endpoints)
+### Override Management (7 endpoints)
 
 All endpoints `x-permissions: [{role: developer}]`.
 
@@ -644,6 +644,8 @@ All endpoints `x-permissions: [{role: developer}]`.
 - **UpdateOverride** (`/ethology/override/update`): Partial update of axis modifiers. Publishes `ethology.override.updated`. Invalidates affected caches.
 
 - **ListOverrides** (`/ethology/override/list`): Paged list of overrides. Filterable by archetype code, scope type, scope ID.
+
+- **DeleteOverride** (`/ethology/override/delete`): Permanently removes an environmental override. Overrides are instance-level data not referenced by other entities' persistent IDs — immediate hard delete with no deprecation required (per IMPLEMENTATION TENETS deprecation lifecycle decision tree). Publishes `ethology.override.deleted`. Invalidates cached resolved archetypes for affected scope. Returns NotFound if override does not exist.
 
 - **DeactivateOverride** (`/ethology/override/deactivate`): Soft-deactivates an override (sets `isActive = false`). Override remains in storage but is excluded from resolution. Publishes `ethology.override.updated` with changedFields containing `isActive`. Useful for temporary ecosystem adjustments.
 
@@ -818,14 +820,14 @@ When a dungeon spawns a creature, the creature needs behavioral defaults. lib-et
 ### Phase 1: Archetype Definitions
 
 - Create `ethology-api.yaml` schema with all endpoints, `additionalProperties: false` on all object schemas, PascalCase enums (`ActivityPattern`, `DietType`, `SocialStructure`, `OverrideScopeType`), `x-permissions` on all endpoints, `x-references` for realm/species/location dependencies
-- Create `ethology-service-events.yaml` schema with `x-lifecycle` using `topic_prefix: ethology` for Archetype and Override entities, `x-event-subscriptions` for `species.deprecated` (informational only)
+- Create `ethology-service-events.yaml` schema with `x-lifecycle` using `topic_prefix: ethology` for Archetype and Override entities, `x-event-subscriptions` for `species.updated` (checking changedFields for deprecation — informational only)
 - Create `ethology-configuration.yaml` schema
 - Add `nature` entry to `schemas/variable-providers.yaml` (service: Ethology, purpose: "Species-level behavioral nature data for ABML expressions (${nature.*})")
 - Add state store entries to `schemas/state-stores.yaml` (ethology-archetypes, ethology-overrides, ethology-cache, ethology-lock)
 - Generate service code
 - Implement archetype CRUD (register, get, get-by-species, get-by-code, update, list, deprecate, undeprecate, delete) with Category A deprecation lifecycle
 - Implement bulk seed endpoint for world initialization (per-archetype distributed locking)
-- Implement species.deprecated event handler (informational logging only)
+- Implement species.updated event handler (checking changedFields for deprecation — informational logging only)
 - Implement lib-resource cleanup endpoints (cleanup-by-realm, cleanup-by-species, cleanup-by-location)
 - Register cleanup callbacks via IStartupTask from generated x-references code
 
@@ -936,7 +938,12 @@ Ethology provides the universal NATURE layer. Heritage refines it for characters
 
 ### Bugs (Fix Immediately)
 
-*No bugs identified. Plugin is pre-implementation.*
+1. ~~**Missing delete endpoint for environmental overrides**~~: **FIXED** (2026-03-16) - Added `DeleteOverride` (`/ethology/override/delete`) to Override Management section. Overrides are instance-level data with immediate hard delete (no deprecation), publishing `ethology.override.deleted` and invalidating affected caches. Endpoint count updated from 6 to 7.
+
+2. **CASCADE cleanup for species deletion deprecates archetypes instead of deleting them**: The `x-references` entry declares `onDelete: cascade` for species → ethology-archetype, but the described cleanup behavior is deprecation ("Deprecates all archetypes referencing the deleted species with reason..."), not deletion. CASCADE means "delete dependent data when resource is deleted." The described behavior contradicts the declared policy. Either (a) change the cleanup to actually delete archetypes and their dependent overrides (true CASCADE), or (b) change the `onDelete` policy to `detach` if the intent is to preserve archetypes as orphaned read-only data. The current design leaves permanently deprecated, species-orphaned archetypes that can never be cleaned up because the archetype delete endpoint requires the species to exist for deprecation status checks.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/677 -->
+
+3. ~~**Consumed event topic `species.deprecated` does not exist**~~: **FIXED** (2026-03-16) - All references to the consumed event throughout the document (Consumed Events table, Dependencies table, Phase 1 stubs) already correctly specify `species.updated` with changedFields checking for deprecation fields. No dedicated `species.deprecated` topic is referenced anywhere in the specification.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -965,6 +972,7 @@ Ethology provides the universal NATURE layer. Heritage refines it for characters
 1. **Scale of nature resolution at 100,000+ creatures**: With aggressive caching (resolved archetype TTL of 5 minutes, entity manifest TTL of 60 seconds), the actual MySQL queries are infrequent. The noise computation is pure CPU (single hash per axis) with no I/O. The bottleneck is cache memory, not computation. At 20 axes per archetype and 100,000 entities, the cache stores ~100,000 manifests of ~200 bytes each = ~20MB. Acceptable for Redis.
 
 2. **Species code source for non-character entities**: Characters have a `speciesId` field. Actors have template metadata. But how does the nature provider know which species code to use for a given entity ID? The actor template's metadata must include a `speciesCode` field. This is an Actor/Puppetmaster configuration concern, not an Ethology concern, but it must be documented as a requirement. **concern**: If `speciesCode` is stored in actor template `additionalProperties` metadata and Ethology reads it by convention, this is a metadata bag contract violation (see GH issue #308 for the systemic `additionalProperties: true` problem). The correct pattern is for Actor templates to have a typed `speciesCode` field in their schema, or for the caller (NatureProviderFactory) to receive the species code as a parameter from the Actor runtime rather than reading it from metadata.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/679 -->
 
 3. **Heritage phenotype axis mapping**: The mapping between Heritage trait codes (e.g., `physical_strength`) and Ethology axis codes (e.g., `aggression`) needs to be data-driven. This mapping lives in the Heritage trait template's `personalityMapping` or `aptitudeMapping` fields, or in a new `natureMapping` field added to the `HeritableTraitTemplate`. Character-Lifecycle owns this mapping; Ethology consumes it.
 
@@ -973,6 +981,9 @@ Ethology provides the universal NATURE layer. Heritage refines it for characters
 5. **Interaction with existing CognitionDefaults**: The Actor service maps actor categories to cognition templates (`creature-cognition-base`, `humanoid-cognition-base`). This is separate from ethology -- CognitionDefaults determine the cognition pipeline (perception, appraisal, memory), while ethology provides data values. They're complementary, not competing. But the documentation should clarify the distinction: CognitionDefaults = how the brain works, Ethology = what values the brain uses.
 
 6. **Warmup ordering**: The cache warmup worker should wait for Species data to be available (Species is L2, loads before L4 ethology). The `CacheWarmupDelaySeconds` configuration handles this, but the delay must be long enough for Species to be fully loaded and queryable. Default of 10 seconds should be sufficient for typical startup sequences.
+
+7. **Override stacking semantics are contradictory in the specification**: The Override Resolution section states both "Location overrides stack ON TOP of realm overrides (additive)" AND "More specific scope wins for the same axis (location replaces realm modifier for that axis)." These are mutually exclusive semantics for the same-axis case. Additive means realm +0.15 and location +0.10 produce a total +0.25 modifier. Replacement means only the location +0.10 applies. The resolution examples do not demonstrate both scopes modifying the same axis, so the intended behavior is ambiguous. This must be decided before implementation — additive is simpler to reason about but can produce extreme values; replacement is more predictable but discards realm context.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/678 -->
 
 ---
 

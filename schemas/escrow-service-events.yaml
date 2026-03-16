@@ -19,6 +19,11 @@ info:
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
   x-event-subscriptions:
+    # Account deletion cleanup — per FOUNDATION TENETS (Account Deletion Cleanup Obligation)
+    - topic: account.deleted
+      event: AccountDeletedEvent
+      handler: HandleAccountDeleted
+      description: Cleans up all escrow data for deleted accounts (agreements, tokens, indexes)
     # Escrow listens to contract fulfillment/failure events
     - topic: contract.fulfilled
       event: ContractFulfilledEvent

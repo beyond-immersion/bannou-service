@@ -1,17 +1,17 @@
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Localization;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
+using Microsoft.Extensions.Logging;
+using Moq;
+using System.Linq.Expressions;
 
 namespace BeyondImmersion.BannouService.Localization.Tests;
 
 /// <summary>
 /// Unit tests for LocalizationService derived from the implementation map pseudocode.
 /// Tests use the Capture Pattern for state saves and event publications.
-///
-/// NOTE: Internal storage models (LocalizationCategoryModel, LocalizationEntryModel)
-/// do not exist yet. Test bodies are stubbed with TODO markers until the implementation
-/// phase creates these types. After implementation, fill in Arrange/Act/Assert using
-/// the Capture Pattern from TESTING-PATTERNS.md.
-///
 /// See: docs/maps/LOCALIZATION.md, docs/reference/tenets/TESTING-PATTERNS.md
 /// </summary>
 public class LocalizationServiceConstructorTests
@@ -21,294 +21,753 @@ public class LocalizationServiceConstructorTests
         ServiceConstructorValidator.ValidateServiceConstructor<LocalizationService>();
 }
 
+#region Test Fixture Base
+
+/// <summary>
+/// Shared test fixture providing mocked dependencies and capture infrastructure.
+/// </summary>
+public abstract class LocalizationServiceTestBase
+{
+    protected readonly Mock<IStateStore<LocalizationCategoryModel>> MockCategoryStore = new();
+    protected readonly Mock<IQueryableStateStore<LocalizationCategoryModel>> MockCategoryQueryStore = new();
+    protected readonly Mock<IStateStore<string>> MockCategoryCodeStore = new();
+    protected readonly Mock<IStateStore<LocalizationEntryModel>> MockEntryStore = new();
+    protected readonly Mock<IQueryableStateStore<LocalizationEntryModel>> MockEntryQueryStore = new();
+    protected readonly Mock<IStateStore<string>> MockCompiledCache = new();
+    protected readonly Mock<IDistributedLockProvider> MockLockProvider = new();
+    protected readonly Mock<IMessageBus> MockMessageBus = new();
+    protected readonly Mock<IEventConsumer> MockEventConsumer = new();
+    protected readonly Mock<ITelemetryProvider> MockTelemetryProvider = new();
+    protected readonly LocalizationServiceConfiguration Configuration;
+    protected readonly LocalizationService Service;
+
+    // Capture fields
+    protected string? CapturedTopic;
+    protected object? CapturedEvent;
+    protected readonly List<(string Key, object Value)> CapturedSaves = new();
+
+    protected LocalizationServiceTestBase()
+    {
+        Configuration = new LocalizationServiceConfiguration
+        {
+            DefaultLanguage = "en",
+            DefaultValidationMode = ValidationMode.None,
+            MaxEntriesPerCategory = 10000,
+            LockExpirySeconds = 15,
+            CacheExpirationMinutes = 60,
+            ExportPageSize = 5000,
+        };
+
+        var mockFactory = new Mock<IStateStoreFactory>();
+        mockFactory.Setup(f => f.GetStore<LocalizationCategoryModel>(StateStoreDefinitions.LocalizationCategoryStore))
+            .Returns(MockCategoryStore.Object);
+        mockFactory.Setup(f => f.GetQueryableStore<LocalizationCategoryModel>(StateStoreDefinitions.LocalizationCategoryStore))
+            .Returns(MockCategoryQueryStore.Object);
+        // The code store uses the same store name but typed as string
+        mockFactory.Setup(f => f.GetStore<string>(StateStoreDefinitions.LocalizationCategoryStore))
+            .Returns(MockCategoryCodeStore.Object);
+        mockFactory.Setup(f => f.GetStore<LocalizationEntryModel>(StateStoreDefinitions.LocalizationEntryStore))
+            .Returns(MockEntryStore.Object);
+        mockFactory.Setup(f => f.GetQueryableStore<LocalizationEntryModel>(StateStoreDefinitions.LocalizationEntryStore))
+            .Returns(MockEntryQueryStore.Object);
+        mockFactory.Setup(f => f.GetStore<string>(StateStoreDefinitions.LocalizationCompiledCache))
+            .Returns(MockCompiledCache.Object);
+
+        // Default lock success
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        MockLockProvider.Setup(l => l.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
+
+        // Default message bus capture
+        MockMessageBus.Setup(x => x.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+            {
+                CapturedTopic = topic;
+                CapturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
+        // Default save returns valid etag
+        MockCategoryStore.Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<LocalizationCategoryModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        MockCategoryCodeStore.Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        MockEntryStore.Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<LocalizationEntryModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        MockCompiledCache.Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        Service = new LocalizationService(
+            mockFactory.Object,
+            MockLockProvider.Object,
+            MockMessageBus.Object,
+            new Mock<ILogger<LocalizationService>>().Object,
+            Configuration,
+            MockTelemetryProvider.Object,
+            MockEventConsumer.Object);
+    }
+
+    protected LocalizationCategoryModel CreateTestCategory(
+        Guid? categoryId = null,
+        string code = "test-category",
+        bool isSchemaDefinition = false,
+        int entryCount = 0)
+    {
+        return new LocalizationCategoryModel
+        {
+            CategoryId = categoryId ?? Guid.NewGuid(),
+            Code = code,
+            Description = "Test category",
+            IsSchemaDefinition = isSchemaDefinition,
+            ValidationMode = ValidationMode.None,
+            DefaultLanguage = "en",
+            EntryCount = entryCount,
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-1),
+        };
+    }
+
+    protected LocalizationEntryModel CreateTestEntry(
+        Guid categoryId,
+        string key = "test.key",
+        string language = "en",
+        string text = "Test text")
+    {
+        return new LocalizationEntryModel
+        {
+            EntryId = Guid.NewGuid(),
+            CategoryId = categoryId,
+            Key = key,
+            Language = language,
+            Text = text,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        };
+    }
+
+    protected void SetupCategoryExists(LocalizationCategoryModel model)
+    {
+        MockCategoryStore.Setup(s => s.GetAsync(
+                LocalizationService.BuildCategoryKey(model.CategoryId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        MockCategoryStore.Setup(s => s.GetWithETagAsync(
+                LocalizationService.BuildCategoryKey(model.CategoryId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((model, "etag-1"));
+
+        MockCategoryCodeStore.Setup(s => s.GetAsync(
+                LocalizationService.BuildCategoryCodeKey(model.Code), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model.CategoryId.ToString());
+
+        MockCategoryStore.Setup(s => s.TrySaveAsync(
+                It.IsAny<string>(), It.IsAny<LocalizationCategoryModel>(), It.IsAny<string>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-2");
+    }
+}
+
+#endregion
+
 /// <summary>
 /// Category endpoint tests derived from implementation map § Methods.
 /// </summary>
-public class LocalizationServiceCategoryTests
+public class LocalizationServiceCategoryTests : LocalizationServiceTestBase
 {
-    // =========================================================================
-    // CreateCategory — map: LOCK, READ code index -> 409, WRITE category + code, PUBLISH
-    // =========================================================================
-
     [Fact]
     public async Task CreateCategoryAsync_ValidRequest_ReturnsOkWithCategoryId()
     {
-        // Map: LOCK, READ category-code:{code} -> 409 if exists, WRITE category, WRITE code index
-        //   PUBLISH localization.category.created { categoryId, code, validationMode, ... }
-        // Assert: status == OK, response.CategoryId is valid Guid, state saved, event published
-        // TODO: Implement after LocalizationCategoryModel exists
-        await Task.CompletedTask;
+        var request = new CreateCategoryRequest
+        {
+            Code = "new-category",
+            Description = "A new category",
+        };
+
+        var (status, response) = await Service.CreateCategoryAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotEqual(Guid.Empty, response.CategoryId);
+        Assert.Equal("new-category", response.Code);
+        Assert.Equal(ValidationMode.None, response.ValidationMode);
+        Assert.Equal("en", response.DefaultLanguage);
+        Assert.Equal(0, response.EntryCount);
+
+        // Verify event published
+        Assert.NotNull(CapturedEvent);
+        var createdEvent = Assert.IsType<LocalizationCategoryCreatedEvent>(CapturedEvent);
+        Assert.Equal("new-category", createdEvent.Code);
+        Assert.Equal(response.CategoryId, createdEvent.CategoryId);
     }
 
     [Fact]
     public async Task CreateCategoryAsync_DuplicateCode_ReturnsConflict()
     {
-        // Map: READ category-code:{code} -> 409 if exists
-        // Assert: status == Conflict, no WRITE, no PUBLISH
-        // TODO: Implement after LocalizationCategoryModel exists
-        await Task.CompletedTask;
-    }
+        MockCategoryCodeStore.Setup(s => s.GetAsync(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("existing-id");
 
-    // =========================================================================
-    // GetCategory — map: READ by ID or code, 400 if neither, 404 if null
-    // =========================================================================
+        var request = new CreateCategoryRequest
+        {
+            Code = "existing",
+            Description = "Duplicate",
+        };
+
+        var (status, response) = await Service.CreateCategoryAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+
+        // No save or publish should have occurred
+        MockCategoryStore.Verify(s => s.SaveAsync(
+            It.IsAny<string>(), It.IsAny<LocalizationCategoryModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
 
     [Fact]
     public async Task GetCategoryAsync_ByCategoryId_ReturnsCategory()
     {
-        // Map: READ categoryStore:category:{categoryId} -> 404 if null
-        // Assert: status == OK, response fields match stored model
-        // TODO: Implement after LocalizationCategoryModel exists
-        await Task.CompletedTask;
+        var category = CreateTestCategory();
+        SetupCategoryExists(category);
+
+        var request = new GetCategoryRequest { CategoryId = category.CategoryId };
+
+        var (status, response) = await Service.GetCategoryAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(category.CategoryId, response.CategoryId);
+        Assert.Equal(category.Code, response.Code);
     }
 
     [Fact]
     public async Task GetCategoryAsync_ByCode_ReturnsCategory()
     {
-        // Map: READ category-code:{code} -> categoryId, READ category:{categoryId}
-        // Assert: status == OK, response matches
-        // TODO: Implement after LocalizationCategoryModel exists
-        await Task.CompletedTask;
+        var category = CreateTestCategory();
+        SetupCategoryExists(category);
+
+        var request = new GetCategoryRequest { Code = category.Code };
+
+        var (status, response) = await Service.GetCategoryAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(category.CategoryId, response.CategoryId);
     }
 
     [Fact]
     public async Task GetCategoryAsync_NeitherIdNorCode_ReturnsBadRequest()
     {
-        // Map: RETURN (400, null) if neither provided
-        // Assert: status == BadRequest, response is null
-        // TODO: Implement after LocalizationCategoryModel exists
-        await Task.CompletedTask;
+        var request = new GetCategoryRequest();
+
+        var (status, response) = await Service.GetCategoryAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
     }
 
     [Fact]
     public async Task GetCategoryAsync_NotFound_ReturnsNotFound()
     {
-        // Map: READ -> 404 if null
-        // Assert: status == NotFound, response is null
-        // TODO: Implement after LocalizationCategoryModel exists
-        await Task.CompletedTask;
-    }
+        var request = new GetCategoryRequest { CategoryId = Guid.NewGuid() };
 
-    // =========================================================================
-    // UpdateCategory — map: LOCK, READ -> 404, partial update, WRITE, PUBLISH
-    // =========================================================================
+        var (status, response) = await Service.GetCategoryAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
 
     [Fact]
     public async Task UpdateCategoryAsync_ValidRequest_ReturnsUpdatedCategory()
     {
-        // Map: LOCK, READ -> 404, apply changes, WRITE, PUBLISH updated { changedFields }
-        // Assert: status == OK, savedModel has updated fields, changedFields captured correctly
-        // TODO: Implement after LocalizationCategoryModel exists
-        await Task.CompletedTask;
+        var category = CreateTestCategory();
+        SetupCategoryExists(category);
+
+        var request = new UpdateCategoryRequest
+        {
+            CategoryId = category.CategoryId,
+            Description = "Updated description",
+        };
+
+        var (status, response) = await Service.UpdateCategoryAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("Updated description", response.Description);
+
+        // Verify event published with changedFields
+        Assert.NotNull(CapturedEvent);
+        var updatedEvent = Assert.IsType<LocalizationCategoryUpdatedEvent>(CapturedEvent);
+        Assert.Contains("description", updatedEvent.ChangedFields);
     }
 
     [Fact]
     public async Task UpdateCategoryAsync_NotFound_ReturnsNotFound()
     {
-        // Map: READ -> 404 if null
-        // TODO: Implement after LocalizationCategoryModel exists
-        await Task.CompletedTask;
-    }
+        var request = new UpdateCategoryRequest
+        {
+            CategoryId = Guid.NewGuid(),
+            Description = "Updated",
+        };
 
-    // =========================================================================
-    // DeleteCategory — map: LOCK, READ -> 404, reject schema-defined, cascade, PUBLISH
-    // =========================================================================
+        var (status, response) = await Service.UpdateCategoryAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
 
     [Fact]
     public async Task DeleteCategoryAsync_RuntimeCategory_DeletesAndPublishes()
     {
-        // Map: READ, IF !isSchemaDefinition, FOREACH entries DELETE, DELETE category,
-        //   DELETE code index, PUBLISH localization.category.deleted { categoryId, code, entryCount }
-        // Assert: status == OK, category deleted, entries cascaded, event published
-        // TODO: Implement after LocalizationCategoryModel exists
-        await Task.CompletedTask;
+        var category = CreateTestCategory(isSchemaDefinition: false, entryCount: 2);
+        SetupCategoryExists(category);
+
+        // Setup entry query to return entries for cascade
+        MockEntryQueryStore.Setup(q => q.QueryAsync(
+                It.IsAny<Expression<Func<LocalizationEntryModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<LocalizationEntryModel>
+            {
+                CreateTestEntry(category.CategoryId, "key1", "en"),
+                CreateTestEntry(category.CategoryId, "key2", "en"),
+            });
+
+        var request = new DeleteCategoryRequest { CategoryId = category.CategoryId };
+
+        var (status, response) = await Service.DeleteCategoryAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Verify category and entries were deleted
+        MockCategoryStore.Verify(s => s.DeleteAsync(
+            LocalizationService.BuildCategoryKey(category.CategoryId), It.IsAny<CancellationToken>()), Times.Once);
+        MockEntryStore.Verify(s => s.DeleteAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+
+        // Verify event published
+        Assert.NotNull(CapturedEvent);
+        var deletedEvent = Assert.IsType<LocalizationCategoryDeletedEvent>(CapturedEvent);
+        Assert.Equal(category.CategoryId, deletedEvent.CategoryId);
     }
 
     [Fact]
     public async Task DeleteCategoryAsync_SchemaDefinedCategory_ReturnsBadRequest()
     {
-        // Map: IF model.IsSchemaDefinition -> RETURN (400, null)
-        // Assert: status == BadRequest, no DELETE, no PUBLISH
-        // TODO: Implement after LocalizationCategoryModel exists
-        await Task.CompletedTask;
+        var category = CreateTestCategory(isSchemaDefinition: true);
+        SetupCategoryExists(category);
+
+        var request = new DeleteCategoryRequest { CategoryId = category.CategoryId };
+
+        var (status, response) = await Service.DeleteCategoryAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+
+        // Verify no delete occurred
+        MockCategoryStore.Verify(s => s.DeleteAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task DeleteCategoryAsync_NotFound_ReturnsNotFound()
     {
-        // Map: READ -> 404 if null
-        // TODO: Implement after LocalizationCategoryModel exists
-        await Task.CompletedTask;
+        var request = new DeleteCategoryRequest { CategoryId = Guid.NewGuid() };
+
+        var (status, response) = await Service.DeleteCategoryAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
     }
 }
 
 /// <summary>
 /// Entry endpoint tests derived from implementation map § Methods.
 /// </summary>
-public class LocalizationServiceEntryTests
+public class LocalizationServiceEntryTests : LocalizationServiceTestBase
 {
-    // =========================================================================
-    // SetEntry — map: READ category, LOCK, upsert entry, ETAG-WRITE count, cache invalidate
-    // =========================================================================
-
     [Fact]
     public async Task SetEntryAsync_NewEntry_CreatesAndPublishesUpdate()
     {
-        // Map: READ category -> 404, LOCK, READ entry (null = new), WRITE entry,
-        //   ETAG-WRITE category (entryCount++), DELETE cache, PUBLISH updated ["entries"]
-        // Assert: status == OK, entry saved with new Guid, category entryCount incremented,
-        //   cache invalidated for language, event published with changedFields: ["entries"]
-        // TODO: Implement after internal model types exist
-        await Task.CompletedTask;
+        var category = CreateTestCategory(entryCount: 5);
+        SetupCategoryExists(category);
+
+        var request = new SetEntryRequest
+        {
+            CategoryId = category.CategoryId,
+            Key = "greeting.hello",
+            Language = "en",
+            Text = "Hello!",
+        };
+
+        var (status, response) = await Service.SetEntryAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotEqual(Guid.Empty, response.EntryId);
+        Assert.Equal("greeting.hello", response.Key);
+        Assert.Equal("Hello!", response.Text);
+
+        // Verify entry saved
+        MockEntryStore.Verify(s => s.SaveAsync(
+            It.IsAny<string>(), It.IsAny<LocalizationEntryModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify event published with changedFields: ["entries"]
+        Assert.NotNull(CapturedEvent);
+        var updatedEvent = Assert.IsType<LocalizationCategoryUpdatedEvent>(CapturedEvent);
+        Assert.Contains("entries", updatedEvent.ChangedFields);
     }
 
     [Fact]
     public async Task SetEntryAsync_ExistingEntry_UpdatesWithoutCountIncrement()
     {
-        // Map: READ entry (non-null = update), WRITE entry (reuse entryId),
-        //   skip entryCount increment, still invalidates cache and publishes
-        // Assert: saved entry reuses existing entryId, category entryCount unchanged
-        // TODO: Implement after internal model types exist
-        await Task.CompletedTask;
+        var category = CreateTestCategory(entryCount: 5);
+        SetupCategoryExists(category);
+
+        var existingEntry = CreateTestEntry(category.CategoryId, "greeting.hello", "en", "Old text");
+        MockEntryStore.Setup(s => s.GetAsync(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingEntry);
+
+        var request = new SetEntryRequest
+        {
+            CategoryId = category.CategoryId,
+            Key = "greeting.hello",
+            Language = "en",
+            Text = "New text",
+        };
+
+        var (status, response) = await Service.SetEntryAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(existingEntry.EntryId, response.EntryId); // Reuses existing ID
+
+        // Should NOT have called GetWithETagAsync for count update (not new)
+        MockCategoryStore.Verify(s => s.GetWithETagAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task SetEntryAsync_CategoryNotFound_ReturnsNotFound()
     {
-        // Map: READ category -> 404 if null
-        // TODO: Implement after internal model types exist
-        await Task.CompletedTask;
+        var request = new SetEntryRequest
+        {
+            CategoryId = Guid.NewGuid(),
+            Key = "test",
+            Language = "en",
+            Text = "test",
+        };
+
+        var (status, response) = await Service.SetEntryAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
     }
 
     [Fact]
     public async Task SetEntryAsync_MaxEntriesExceeded_ReturnsConflict()
     {
-        // Map: IF isNew AND model.EntryCount >= config.MaxEntriesPerCategory -> 409
-        // Assert: status == Conflict, no WRITE, no PUBLISH
-        // TODO: Implement after internal model types exist
-        await Task.CompletedTask;
-    }
+        var category = CreateTestCategory(entryCount: 10000);
+        SetupCategoryExists(category);
+        Configuration.MaxEntriesPerCategory = 10000;
 
-    // =========================================================================
-    // GetEntry — map: READ category, READ entry, 404 if null
-    // =========================================================================
+        var request = new SetEntryRequest
+        {
+            CategoryId = category.CategoryId,
+            Key = "new.key",
+            Language = "en",
+            Text = "text",
+        };
+
+        var (status, response) = await Service.SetEntryAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
 
     [Fact]
     public async Task GetEntryAsync_ExistingEntry_ReturnsEntry()
     {
-        // Map: READ category -> 404, READ entry -> 404, RETURN
-        // Assert: status == OK, response includes text, pronunciation, ruby
-        // TODO: Implement after internal model types exist
-        await Task.CompletedTask;
+        var category = CreateTestCategory();
+        SetupCategoryExists(category);
+
+        var entry = CreateTestEntry(category.CategoryId, "test.key", "en", "Hello");
+        entry.Pronunciation = "həˈloʊ";
+        MockEntryStore.Setup(s => s.GetAsync(
+                LocalizationService.BuildEntryKey(category.CategoryId, "en", "test.key"),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entry);
+
+        var request = new GetEntryRequest
+        {
+            CategoryId = category.CategoryId,
+            Key = "test.key",
+            Language = "en",
+        };
+
+        var (status, response) = await Service.GetEntryAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("Hello", response.Text);
+        Assert.Equal("həˈloʊ", response.Pronunciation);
     }
 
     [Fact]
     public async Task GetEntryAsync_EntryNotFound_ReturnsNotFound()
     {
-        // Map: READ entry -> 404 if null
-        // TODO: Implement after internal model types exist
-        await Task.CompletedTask;
-    }
+        var category = CreateTestCategory();
+        SetupCategoryExists(category);
 
-    // =========================================================================
-    // DeleteEntry — map: READ, LOCK, DELETE, ETAG-WRITE count, cache invalidate, PUBLISH
-    // =========================================================================
+        var request = new GetEntryRequest
+        {
+            CategoryId = category.CategoryId,
+            Key = "nonexistent",
+            Language = "en",
+        };
+
+        var (status, response) = await Service.GetEntryAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
 
     [Fact]
     public async Task DeleteEntryAsync_ExistingEntry_DeletesAndPublishes()
     {
-        // Map: READ category, READ entry, LOCK, DELETE entry, ETAG-WRITE category (count--),
-        //   DELETE cache, PUBLISH updated ["entries"]
-        // Assert: entry deleted, category count decremented, cache invalidated, event published
-        // TODO: Implement after internal model types exist
-        await Task.CompletedTask;
+        var category = CreateTestCategory(entryCount: 3);
+        SetupCategoryExists(category);
+
+        var entry = CreateTestEntry(category.CategoryId, "to-delete", "en");
+        MockEntryStore.Setup(s => s.GetAsync(
+                LocalizationService.BuildEntryKey(category.CategoryId, "en", "to-delete"),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entry);
+
+        var request = new DeleteEntryRequest
+        {
+            CategoryId = category.CategoryId,
+            Key = "to-delete",
+            Language = "en",
+        };
+
+        var (status, response) = await Service.DeleteEntryAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Verify entry deleted
+        MockEntryStore.Verify(s => s.DeleteAsync(
+            LocalizationService.BuildEntryKey(category.CategoryId, "en", "to-delete"),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify event published
+        Assert.NotNull(CapturedEvent);
+        var updatedEvent = Assert.IsType<LocalizationCategoryUpdatedEvent>(CapturedEvent);
+        Assert.Contains("entries", updatedEvent.ChangedFields);
     }
 
     [Fact]
     public async Task DeleteEntryAsync_EntryNotFound_ReturnsNotFound()
     {
-        // Map: READ entry -> 404 if null
-        // TODO: Implement after internal model types exist
-        await Task.CompletedTask;
-    }
+        var category = CreateTestCategory();
+        SetupCategoryExists(category);
 
-    // =========================================================================
-    // BulkSetEntries — map: LOCK, FOREACH per-item upsert, one PUBLISH for batch
-    // =========================================================================
+        var request = new DeleteEntryRequest
+        {
+            CategoryId = category.CategoryId,
+            Key = "nonexistent",
+            Language = "en",
+        };
+
+        var (status, response) = await Service.DeleteEntryAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
 
     [Fact]
     public async Task BulkSetEntriesAsync_ValidBatch_ReturnsSuccessCount()
     {
-        // Map: READ category, LOCK, FOREACH per-item try-catch, ETAG-WRITE count,
-        //   single PUBLISH localization.category.updated ["entries"]
-        // Assert: succeededCount matches, single event published (not per-entry)
-        // TODO: Implement after internal model types exist
-        await Task.CompletedTask;
+        var category = CreateTestCategory(entryCount: 0);
+        SetupCategoryExists(category);
+
+        var request = new BulkSetEntriesRequest
+        {
+            CategoryId = category.CategoryId,
+            Language = "en",
+            Entries = new List<BulkEntryItem>
+            {
+                new BulkEntryItem { Key = "key1", Text = "Text 1" },
+                new BulkEntryItem { Key = "key2", Text = "Text 2" },
+            },
+        };
+
+        var (status, response) = await Service.BulkSetEntriesAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.SucceededCount);
+        Assert.Equal(0, response.FailedCount);
+
+        // Verify single event published (not per-entry)
+        MockMessageBus.Verify(m => m.TryPublishAsync(
+            It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task BulkSetEntriesAsync_CategoryNotFound_ReturnsNotFound()
     {
-        // Map: READ category -> 404 if null
-        // TODO: Implement after internal model types exist
-        await Task.CompletedTask;
+        var request = new BulkSetEntriesRequest
+        {
+            CategoryId = Guid.NewGuid(),
+            Language = "en",
+            Entries = new List<BulkEntryItem>
+            {
+                new BulkEntryItem { Key = "key1", Text = "Text 1" },
+            },
+        };
+
+        var (status, response) = await Service.BulkSetEntriesAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
     }
 }
 
 /// <summary>
 /// Export endpoint tests derived from implementation map § Methods.
 /// </summary>
-public class LocalizationServiceExportTests
+public class LocalizationServiceExportTests : LocalizationServiceTestBase
 {
-    // =========================================================================
-    // Export — map: cache hit short-circuit, cache miss -> compile + cache
-    // =========================================================================
-
     [Fact]
     public async Task ExportLocalizationAsync_CacheHit_ReturnsCachedBundle()
     {
-        // Map: READ compiledCache:{cacheKey} -> if non-null, return cached
-        // Assert: status == OK, no MySQL query performed, response from cache
-        // TODO: Implement after internal model types exist
-        await Task.CompletedTask;
+        var cachedJson = BeyondImmersion.Bannou.Core.BannouJson.Serialize(new ExportResponse
+        {
+            Language = "en",
+            EntryCount = 1,
+            Entries = new List<ExportedEntry>
+            {
+                new ExportedEntry { CategoryCode = "items", Key = "sword.name", Text = "Sword" },
+            },
+        });
+
+        MockCompiledCache.Setup(s => s.GetAsync(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cachedJson);
+
+        var request = new ExportRequest { Language = "en" };
+
+        var (status, response) = await Service.ExportLocalizationAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.EntryCount);
+
+        // Verify no MySQL query was performed
+        MockCategoryQueryStore.Verify(q => q.QueryAsync(
+            It.IsAny<Expression<Func<LocalizationCategoryModel, bool>>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task ExportLocalizationAsync_CacheMiss_CompilesAndCaches()
     {
-        // Map: cache miss, QUERY entries, compile bundle, WRITE cache with TTL
-        // Assert: status == OK, cache written with TTL, response has correct entryCount
-        // TODO: Implement after internal model types exist
-        await Task.CompletedTask;
+        var category = CreateTestCategory(code: "items");
+        var entry = CreateTestEntry(category.CategoryId, "sword.name", "en", "Sword");
+
+        MockCategoryQueryStore.Setup(q => q.QueryAsync(
+                It.IsAny<Expression<Func<LocalizationCategoryModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<LocalizationCategoryModel> { category });
+
+        MockEntryQueryStore.Setup(q => q.QueryPagedAsync(
+                It.IsAny<Expression<Func<LocalizationEntryModel, bool>>>(),
+                It.IsAny<int>(), It.IsAny<int>(),
+                It.IsAny<Expression<Func<LocalizationEntryModel, object>>?>(),
+                It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PagedResult<LocalizationEntryModel>(
+                new List<LocalizationEntryModel> { entry }, 1, 0, 5000));
+
+        var request = new ExportRequest { Language = "en" };
+
+        var (status, response) = await Service.ExportLocalizationAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("en", response.Language);
+        Assert.Equal(1, response.EntryCount);
+
+        // Verify cache was written
+        MockCompiledCache.Verify(s => s.SaveAsync(
+            It.IsAny<string>(), It.IsAny<string>(),
+            It.Is<StateOptions?>(o => o != null && o.Ttl > 0),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task ExportLocalizationAsync_SpecificCategoryNotFound_ReturnsNotFound()
     {
-        // Map: READ category -> 404 if null (when categoryId filter specified)
-        // TODO: Implement after internal model types exist
-        await Task.CompletedTask;
-    }
+        var request = new ExportRequest { Language = "en", CategoryId = Guid.NewGuid() };
 
-    // =========================================================================
-    // ExportPls — map: QUERY entries WHERE pronunciation != null, build PLS XML
-    // =========================================================================
+        var (status, response) = await Service.ExportLocalizationAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
 
     [Fact]
     public async Task ExportPlsAsync_EntriesWithPronunciation_ReturnsPls()
     {
-        // Map: QUERY entries with non-null pronunciation, build W3C PLS XML
-        // Assert: status == OK, plsXml contains <lexicon> root, <phoneme> entries
-        // TODO: Implement after internal model types exist
-        await Task.CompletedTask;
+        var category = CreateTestCategory(code: "items");
+        SetupCategoryExists(category);
+
+        var entry = CreateTestEntry(category.CategoryId, "dragon", "en", "Dragon");
+        entry.Pronunciation = "ˈdɹæɡ.ən";
+
+        MockEntryQueryStore.Setup(q => q.QueryAsync(
+                It.IsAny<Expression<Func<LocalizationEntryModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<LocalizationEntryModel> { entry });
+
+        var request = new ExportPlsRequest { Language = "en", CategoryId = category.CategoryId };
+
+        var (status, response) = await Service.ExportPlsAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.EntryCount);
+        Assert.Contains("<lexicon", response.PlsXml);
+        Assert.Contains("<grapheme>dragon</grapheme>", response.PlsXml);
+        Assert.Contains("<phoneme>", response.PlsXml);
     }
 
     [Fact]
     public async Task ExportPlsAsync_NoPronunciationEntries_ReturnsEmptyLexicon()
     {
-        // Map: valid category but no entries with pronunciation
-        // Assert: status == OK, entryCount == 0, plsXml has empty <lexicon>
-        // TODO: Implement after internal model types exist
-        await Task.CompletedTask;
+        var category = CreateTestCategory();
+        SetupCategoryExists(category);
+
+        MockEntryQueryStore.Setup(q => q.QueryAsync(
+                It.IsAny<Expression<Func<LocalizationEntryModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<LocalizationEntryModel>());
+
+        var request = new ExportPlsRequest { Language = "en", CategoryId = category.CategoryId };
+
+        var (status, response) = await Service.ExportPlsAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.EntryCount);
+        Assert.Contains("<lexicon", response.PlsXml);
     }
 }

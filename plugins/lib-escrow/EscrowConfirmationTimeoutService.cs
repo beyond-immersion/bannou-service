@@ -45,7 +45,6 @@ public class EscrowConfirmationTimeoutService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowConfirmationTimeoutService.ExecuteAsync");
         _logger.LogInformation("Escrow confirmation timeout service starting, check interval: {Interval}s",
             _configuration.ConfirmationTimeoutCheckIntervalSeconds);
 

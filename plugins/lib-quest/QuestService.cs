@@ -838,21 +838,9 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
                 return (StatusCodes.BadRequest, null);
             }
 
-            var now = DateTimeOffset.UtcNow;
-            instance.Status = QuestStatus.Abandoned;
-            instance.CompletedAt = now;
-
-            // GetWithETagAsync returns non-null etag for existing records;
-            // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await _instanceStore.TrySaveAsync(instanceKey, instance, etag ?? string.Empty, cancellationToken: cancellationToken);
-            if (saveResult == null)
-            {
-                _logger.LogDebug("Concurrent modification abandoning quest {QuestInstanceId}, retrying (attempt {Attempt})",
-                    body.QuestInstanceId, attempt + 1);
-                continue;
-            }
-
-            // Terminate underlying contract
+            // Terminate underlying contract FIRST — fallible inter-service call before
+            // irreversible local state mutation. Per IMPLEMENTATION TENETS (T7 Strategy 3):
+            // if termination fails, quest status is unchanged and caller can retry.
             var terminateRequest = new TerminateContractInstanceRequest
             {
                 ContractId = instance.ContractInstanceId,
@@ -866,9 +854,23 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
             }
             catch (ApiException ex)
             {
-                // Log but don't fail - contract termination is best effort
-                _logger.LogWarning(ex, "Failed to terminate contract for abandoned quest {QuestInstanceId}",
-                    body.QuestInstanceId);
+                _logger.LogWarning(ex, "Failed to terminate contract {ContractId} for quest {QuestInstanceId}, abandonment aborted",
+                    instance.ContractInstanceId, body.QuestInstanceId);
+                return ((StatusCodes)ex.StatusCode, null);
+            }
+
+            var now = DateTimeOffset.UtcNow;
+            instance.Status = QuestStatus.Abandoned;
+            instance.CompletedAt = now;
+
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
+            var saveResult = await _instanceStore.TrySaveAsync(instanceKey, instance, etag ?? string.Empty, cancellationToken: cancellationToken);
+            if (saveResult == null)
+            {
+                _logger.LogDebug("Concurrent modification abandoning quest {QuestInstanceId}, retrying (attempt {Attempt})",
+                    body.QuestInstanceId, attempt + 1);
+                continue;
             }
 
             // Update character index with ETag concurrency per IMPLEMENTATION TENETS
@@ -2556,15 +2558,10 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
                     {
                         if (isSoleQuestor)
                         {
-                            // Sole questor: abandon the entire quest
-                            current.Status = QuestStatus.Abandoned;
-                            current.CompletedAt = DateTimeOffset.UtcNow;
-
-                            // GetWithETagAsync returns non-null etag for existing records;
-                            // coalesce satisfies compiler's nullable analysis (will never execute)
-                            await _instanceStore.TrySaveAsync(instanceKey, current, etag ?? string.Empty, cancellationToken: cancellationToken);
-
-                            // Terminate underlying contract (best effort)
+                            // Terminate contract FIRST — fallible call before irreversible mutation.
+                            // Per IMPLEMENTATION TENETS (T7 Strategy 3): if termination fails,
+                            // quest status is unchanged. Cleanup is per-item isolated so this
+                            // failure is logged and processing continues to next quest.
                             try
                             {
                                 await _contractClient.TerminateContractInstanceAsync(
@@ -2580,9 +2577,18 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
                             catch (ApiException ex)
                             {
                                 _logger.LogWarning(ex,
-                                    "Failed to terminate contract for quest {QuestInstanceId} during character cleanup",
-                                    instance.QuestInstanceId);
+                                    "Failed to terminate contract {ContractId} for quest {QuestInstanceId} during character cleanup, skipping quest abandonment",
+                                    current.ContractInstanceId, instance.QuestInstanceId);
+                                continue;
                             }
+
+                            // Contract terminated — now safe to write abandoned status
+                            current.Status = QuestStatus.Abandoned;
+                            current.CompletedAt = DateTimeOffset.UtcNow;
+
+                            // GetWithETagAsync returns non-null etag for existing records;
+                            // coalesce satisfies compiler's nullable analysis (will never execute)
+                            await _instanceStore.TrySaveAsync(instanceKey, current, etag ?? string.Empty, cancellationToken: cancellationToken);
 
                             // Publish abandoned event
                             var now = DateTimeOffset.UtcNow;

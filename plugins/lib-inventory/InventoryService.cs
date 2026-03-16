@@ -1083,8 +1083,31 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
 
         if (addStatus != StatusCodes.OK)
         {
-            _logger.LogError("Item {InstanceId} removed from source but failed to add to target {TargetContainerId}: {Status}. Item may be orphaned.",
-                body.InstanceId, body.TargetContainerId, addStatus);
+            // Compensate: re-add to source container to prevent orphaned item
+            // Per IMPLEMENTATION TENETS (T7): catch-block compensation for multi-step mutations
+            _logger.LogWarning("Failed to add item {InstanceId} to target {TargetContainerId}: {Status}, compensating by re-adding to source {SourceContainerId}",
+                body.InstanceId, body.TargetContainerId, addStatus, sourceContainerId);
+
+            var (compensateStatus, _) = await AddItemToContainerAsync(new AddItemRequest
+            {
+                InstanceId = body.InstanceId,
+                ContainerId = sourceContainerId,
+                SlotIndex = item.SlotIndex,
+                SlotX = item.SlotX,
+                SlotY = item.SlotY,
+                Rotated = item.Rotated
+            }, cancellationToken);
+
+            if (compensateStatus != StatusCodes.OK)
+            {
+                _logger.LogError("CRITICAL: Compensation failed for item {InstanceId} — item removed from {SourceContainerId} but could not be re-added. Compensation status: {CompensateStatus}",
+                    body.InstanceId, sourceContainerId, compensateStatus);
+                await _messageBus.TryPublishErrorAsync(
+                    "inventory", "MoveItem", "CompensationFailure",
+                    $"Item {body.InstanceId} orphaned: removed from {sourceContainerId}, failed to add to {body.TargetContainerId}, failed to compensate",
+                    cancellationToken: cancellationToken);
+            }
+
             return (addStatus, null);
         }
 

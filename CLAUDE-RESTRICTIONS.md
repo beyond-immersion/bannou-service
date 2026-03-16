@@ -28,7 +28,9 @@ These rules share one principle: **signals that indicate problems must never be 
 
 **The forbidden audit pattern**: Finding code that contradicts a tenet, then searching for other code that also contradicts it, and concluding "established pattern, not a violation." Finding more violations proves the problem is widespread — it does NOT prove the tenet is wrong. A missed violation stamped "false positive" is catastrophic — it immunizes the violation against all future audits permanently.
 
-**Incidents**: (1) Claude whitelisted violations in every structural test it ever wrote. (2) Claude added `xUnit1051` to `<NoWarn>` in `Directory.Build.props` to silence 7,000 analyzer errors. (3) Claude grepped 3 services for the same topic naming violation, found it everywhere, dismissed as "established pattern."
+- [ ] **No dismissing audit findings with comments.** When a code review agent (or any audit) identifies a tenet violation, the fix is to **change the code**. The fix is NEVER to add a comment explaining why the violation is acceptable, benign, self-healing, by design, or an edge case. A comment is not a fix. If the code violates a tenet, change the code. If you genuinely believe the finding is a false positive, present it to the user with the specific tenet text and explain why the code complies — do not unilaterally dismiss it by writing a comment and moving on.
+
+**Incidents**: (1) Claude whitelisted violations in every structural test it ever wrote. (2) Claude added `xUnit1051` to `<NoWarn>` in `Directory.Build.props` to silence 7,000 analyzer errors. (3) Claude grepped 3 services for the same topic naming violation, found it everywhere, dismissed as "established pattern." (4) Claude received a T7 audit finding on DeleteBloodline (cleanup called AFTER irreversible deletes), dismissed the finding by fabricating a "self-healing" narrative ("orphaned records are benign, cleanup retries on next invocation"), and wrote a multi-line comment documenting this fiction instead of fixing the code. The correct fix was three lines: move `ExecuteCleanupAsync` before the deletes.
 
 ---
 

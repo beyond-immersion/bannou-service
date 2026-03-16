@@ -139,4 +139,9 @@ public partial interface IEscrowService : IBannouService
         /// </summary>
         Task<(StatusCodes, DeregisterHandlerResponse?)> DeregisterHandlerAsync(DeregisterHandlerRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// CleanupByCharacter operation
+        /// </summary>
+        Task<(StatusCodes, CleanupByCharacterResponse?)> CleanupByCharacterAsync(CleanupByCharacterRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }
