@@ -11,7 +11,7 @@ public sealed class VoxelGrid
     private readonly Dictionary<ChunkCoord, VoxelChunk> _chunks = new();
 
     /// <summary>Grid dimensions (may exceed populated area).</summary>
-    public VoxelBounds Bounds { get; private set; }
+    public VoxelBounds Bounds { get; internal set; }
 
     /// <summary>Shared 256-entry color/material palette.</summary>
     public Palette Palette { get; }

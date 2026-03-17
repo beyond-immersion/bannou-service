@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- SDK Naming: PackageId, RootNamespace, AssemblyName must match -->
+    <PackageId>BeyondImmersion.Bannou.VoxelBuilder</PackageId>
+    <RootNamespace>BeyondImmersion.Bannou.VoxelBuilder</RootNamespace>
+    <AssemblyName>BeyondImmersion.Bannou.VoxelBuilder</AssemblyName>
+
+    <!-- SDK Version: CI overrides with -p:Version=x.y.z or -p:VersionSuffix=preview.123 -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+
+    <!-- NuGet Package Metadata -->
+    <Authors>BeyondImmersion</Authors>
+    <Description>Interactive voxel authoring with serializable operations, multi-source undo, assisted/shared building, artist tool import/export (BlockBench, MagicaVoxel, glTF), and engine bridge abstraction. Built on voxel-core.</Description>
+    <PackageTags>bannou;voxel;editor;undo;blockbench;magicavoxel;gamedev</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/beyond-immersion/bannou-service</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/beyond-immersion/bannou-service</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <!-- Documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BeyondImmersion.Bannou.VoxelBuilder.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../voxel-core/BeyondImmersion.Bannou.VoxelCore.csproj" />
+    <PackageReference Include="SharpGLTF.Toolkit" Version="1.0.2" />
+  </ItemGroup>
+
+</Project>

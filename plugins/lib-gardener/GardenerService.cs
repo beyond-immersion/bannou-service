@@ -9,7 +9,9 @@ using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Puppetmaster;
 using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.Bannou.Gardener.ClientEvents;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -43,6 +45,7 @@ public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
     private readonly IGameSessionClient _gameSessionClient;
     private readonly IServiceProvider _serviceProvider;
     private readonly IEntitySessionRegistry _entitySessionRegistry;
+    private readonly IClientEventPublisher _clientEventPublisher;
     private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
@@ -106,6 +109,7 @@ public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
         IGameSessionClient gameSessionClient,
         IServiceProvider serviceProvider,
         IEntitySessionRegistry entitySessionRegistry,
+        IClientEventPublisher clientEventPublisher,
         ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
@@ -116,6 +120,7 @@ public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
         _gameSessionClient = gameSessionClient;
         _serviceProvider = serviceProvider;
         _entitySessionRegistry = entitySessionRegistry;
+        _clientEventPublisher = clientEventPublisher;
         _telemetryProvider = telemetryProvider;
 
         _gardenStore = stateStoreFactory.GetStore<GardenInstanceModel>(
@@ -268,6 +273,15 @@ public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
                 GardenInstanceId = gardenInstanceId
             }, cancellationToken);
 
+        await _clientEventPublisher.PublishToSessionAsync(body.SessionId,
+            new GardenerGardenEnteredClientEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                GardenInstanceId = gardenInstanceId,
+                SeedId = activeSeed.SeedId
+            });
+
         _logger.LogInformation(
             "Created garden instance {GardenInstanceId} for account {AccountId} with seed {SeedId}",
             gardenInstanceId, accountId.Value, activeSeed.SeedId);
@@ -418,6 +432,15 @@ public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
                 GardenInstanceId = garden.GardenInstanceId,
                 SessionDurationSeconds = sessionDuration
             }, cancellationToken);
+
+        await _clientEventPublisher.PublishToSessionAsync(body.SessionId,
+            new GardenerGardenLeftClientEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                GardenInstanceId = garden.GardenInstanceId,
+                SessionDurationSeconds = sessionDuration
+            });
 
         _logger.LogInformation(
             "Garden instance {GardenInstanceId} ended for account {AccountId}, duration {Duration}s",

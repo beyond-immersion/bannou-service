@@ -50,6 +50,8 @@ It follows the same pattern as scene-composer: engine-agnostic core with a comma
 | `IVoxelBuilderBridge` | Interface | Engine rendering contract. Implemented per-engine (Stride, Godot, Unity). |
 | `IVoxelStorageClient` | Interface | Optional persistence integration (Save-Load, Asset service). |
 | `VoxelBuilderOptions` | Record | Configuration: max undo depth, auto-mesh on edit, palette behavior, frozen enforcement. |
+| `Axis` | Enum | X=0, Y=1, Z=2. Used by Mirror and Rotate90 operations. |
+| `BrushType` | Enum | Sphere, Cube, Cylinder. Used by BrushShape. |
 
 ### Operations
 
@@ -81,7 +83,7 @@ It follows the same pattern as scene-composer: engine-agnostic core with a comma
 | `MagicaVoxelImporter` | Class | .vox (RIFF binary) → VoxelGrid. Parses XYZI, RGBA, MATL chunks. |
 | `MagicaVoxelExporter` | Class | VoxelGrid → .vox. Grid → XYZI + RGBA + MATL chunks. |
 | `GltfImporter` | Class | .glb/.gltf → MeshData via SharpGLTF (MIT). For terrain overlay voxelization input. |
-| `MeshExporter` | Class | VoxelGrid → .glb/.gltf via mesher. For asset pipeline export and terrain bake. |
+| `MeshExporter` | Class | VoxelGrid → .glb/.gltf via mesher + SharpGLTF writer. For asset pipeline export and terrain bake. |
 | `RawVoxelImporter` | Class | Raw byte array → VoxelGrid. For procedural output consumption. |
 | `RawVoxelExporter` | Class | VoxelGrid → raw bytes. For Save-Load and Asset service integration. |
 
@@ -101,7 +103,7 @@ VoxelBuilder
 ├── Options: VoxelBuilderOptions
 ├── ActivePaletteIndex: byte          // Currently selected palette entry for painting
 ├── ActiveBrush: BrushShape           // Current brush shape and size
-├── Selection: VoxelRegion?           // Current region selection (for copy/paste)
+├── Selection: VoxelBounds?           // Current region selection (for copy/paste)
 ├── Clipboard: VoxelClipboard?        // Copied region data
 └── OnOperationApplied: event<OperationAppliedEventArgs>  // Fires for ALL operations (local + external)
 ```
@@ -134,17 +136,13 @@ Each source gets its own stack. Local undo reverts local operations. Generator u
 IVoxelOperation
 ├── Execute(grid: VoxelGrid): void           // Apply the operation, capturing before-state
 ├── Undo(grid: VoxelGrid): void              // Restore before-state
-├── Serialize(): byte[]                      // Convert to bytes for network/storage
 ├── AffectedRegion: VoxelBounds              // Bounding box of changed voxels
 ├── SourceId: string                         // Who created this operation
 ├── Description: string                      // Human-readable operation name
 └── OperationType: VoxelOperationType        // Type discriminator for deserialization
 ```
 
-**Serialization format**: Each operation type has a known binary layout. `OperationSerializer.Deserialize(byte[])` reads the `VoxelOperationType` discriminator byte, then dispatches to the correct type-specific deserializer. The serialized form includes:
-- 1 byte: operation type discriminator
-- N bytes: type-specific payload (coordinates, palette indices, region bounds, etc.)
-- The before-state snapshot is NOT serialized — it's recomputed on the receiver by reading the grid state before applying
+**Serialization is centralized in `OperationSerializer`**, not on the interface. Each operation exposes its parameters as public properties; the serializer reads them and writes a type-discriminated binary payload. Deserialization reads the discriminator byte and dispatches to the correct type-specific reader. The before-state snapshot is NOT serialized — it's recomputed on the receiver by reading the grid state before applying.
 
 This means: the receiver applies the operation to its copy of the grid, and the operation captures the receiver's local before-state for undo. The sender's before-state and receiver's before-state are identical as long as the grids are synchronized — which they are if all prior operations were applied in the same order.
 
@@ -175,9 +173,9 @@ GridPatchOperation : IVoxelOperation
 
 ```
 VoxelClipboard
-├── Voxels: Dictionary<VoxelCoord, Voxel>   // Relative-coordinate voxel data
-├── Bounds: VoxelBounds                      // Bounding box of copied region
-└── PaletteSnapshot: PaletteEntry[]          // Palette entries used by copied voxels
+├── Voxels: Dictionary<VoxelCoord, Voxel>            // Relative-coordinate voxel data
+├── Bounds: VoxelBounds                               // Bounding box of copied region
+└── PaletteSnapshot: Dictionary<byte, PaletteEntry>   // Palette entries used by copied voxels (keyed by source index)
 ```
 
 ### BrushShape

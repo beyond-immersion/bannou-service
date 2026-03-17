@@ -213,6 +213,22 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService
                 return (StatusCodes.BadRequest, null);
         }
 
+        // Resolve marriage contract template by code
+        Guid templateId;
+        try
+        {
+            var templateResponse = await _contractClient.GetContractTemplateAsync(
+                new GetContractTemplateRequest { Code = _configuration.MarriageContractTemplateCode },
+                cancellationToken);
+            templateId = templateResponse.TemplateId;
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Marriage contract template lookup failed for code {Code}",
+                _configuration.MarriageContractTemplateCode);
+            return ((StatusCodes)ex.StatusCode, null);
+        }
+
         // Create marriage contract (self-healing: orphaned contract expires via ContractExpirationService)
         Guid contractId;
         try
@@ -220,7 +236,7 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService
             var contractResponse = await _contractClient.CreateContractInstanceAsync(
                 new CreateContractInstanceRequest
                 {
-                    TemplateId = Guid.Empty, // Template resolved by code
+                    TemplateId = templateId,
                     Parties = new[]
                     {
                         new ContractPartyInput { EntityId = body.CharacterAId, EntityType = EntityType.Character, Role = "spouse" },
@@ -236,6 +252,21 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService
             return ((StatusCodes)ex.StatusCode, null);
         }
 
+        // Resolve SPOUSE relationship type by code
+        Guid spouseRelTypeId;
+        try
+        {
+            var relTypeResponse = await _relationshipClient.GetRelationshipTypeByCodeAsync(
+                new GetRelationshipTypeByCodeRequest { Code = "SPOUSE" }, cancellationToken);
+            spouseRelTypeId = relTypeResponse.RelationshipTypeId;
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "SPOUSE relationship type lookup failed, contract {ContractId} will self-heal via TTL",
+                contractId);
+            return ((StatusCodes)ex.StatusCode, null);
+        }
+
         // Create spouse relationship (if fails after contract: contract self-heals via TTL expiration)
         try
         {
@@ -246,7 +277,7 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService
                     Entity1Type = EntityType.Character,
                     Entity2Id = body.CharacterBId,
                     Entity2Type = EntityType.Character,
-                    RelationshipTypeId = Guid.Empty // Resolved by type taxonomy
+                    RelationshipTypeId = spouseRelTypeId
                 }, cancellationToken);
         }
         catch (ApiException ex)
@@ -258,11 +289,12 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService
 
         // Soft: household resolution (L4 — degrade if unavailable)
         Guid? householdOrgId = null;
-        var organizationClient = _serviceProvider.GetService(typeof(IServiceProvider)) as dynamic;
-        // Household integration deferred to L4 Organization service availability
-
-        // Soft: disposition feeling seeds (L4 — degrade if unavailable)
-        // Disposition integration deferred to L4 Disposition service availability
+        // Organization and Disposition are L4 soft dependencies — not yet implemented as services.
+        // When lib-organization and lib-disposition are available, resolve via:
+        //   var orgClient = _serviceProvider.GetService<IOrganizationClient>();
+        //   if (orgClient != null) { ... }
+        //   var dispClient = _serviceProvider.GetService<IDispositionClient>();
+        //   if (dispClient != null) { ... }
 
         // Update profiles with marriage data
         var now = DateTimeOffset.UtcNow;
@@ -419,7 +451,9 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService
             return (StatusCodes.OK, new RecordDeathResponse
             {
                 FulfillmentScore = profile.FulfillmentScore ?? _configuration.FulfillmentNeutralDefault,
-                AfterlifePath = profile.AfterlifePath ?? "unknown"
+                // Compiler satisfaction: AfterlifePath is always set when status transitions to Dead (step 6 below),
+                // so this coalesce can never execute on a properly-stored Dead profile
+                AfterlifePath = profile.AfterlifePath ?? "peace"
             });
         }
 
@@ -428,20 +462,41 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService
         // Disposition service integration deferred — uses neutral default when unavailable
 
         // Step 3: Guardian spirit contribution
+        // Resolution chain: characterId → household Org → account owner → guardian seed
         var guardianContribution = fulfillment * _configuration.GuardianSpiritBaseMultiplier;
-        try
+        if (profile.HouseholdOrgId != null)
         {
-            await _seedClient.RecordGrowthAsync(
-                new RecordGrowthRequest
+            // Full chain requires IOrganizationClient (L4, not yet available) to resolve org → account owner.
+            // When available: orgClient.GetOrganization(householdOrgId) → ownerAccountId
+            //   → seedClient.GetSeedsByOwner(accountId, Account, "guardian") → seedId
+            //   → seedClient.RecordGrowth(seedId, "logos", guardianContribution)
+            // Degrades: no guardian spirit contribution when Organization service unavailable
+            try
+            {
+                var seedsResponse = await _seedClient.GetSeedsByOwnerAsync(
+                    new GetSeedsByOwnerRequest
+                    {
+                        OwnerId = body.CharacterId,
+                        OwnerType = EntityType.Character,
+                        SeedTypeCode = "guardian"
+                    }, cancellationToken);
+
+                var guardianSeed = seedsResponse.Seeds.FirstOrDefault();
+                if (guardianSeed != null)
                 {
-                    SeedId = Guid.Empty, // Resolved via characterId → household → account → guardian seed chain
-                    Domain = "logos",
-                    Amount = guardianContribution
-                }, cancellationToken);
-        }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "Guardian spirit growth recording failed for character {CharacterId}", body.CharacterId);
+                    await _seedClient.RecordGrowthAsync(
+                        new RecordGrowthRequest
+                        {
+                            SeedId = guardianSeed.SeedId,
+                            Domain = "logos",
+                            Amount = guardianContribution
+                        }, cancellationToken);
+                }
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Guardian spirit growth recording failed for character {CharacterId}", body.CharacterId);
+            }
         }
 
         // Step 4: Archive compression (idempotent per map)
@@ -504,8 +559,11 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService
         profile.AfterlifePath = afterlifePath;
         profile.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _profileStore.TrySaveAsync(BuildProfileKey(body.CharacterId), profile, etag,
+        var savedEtag = await _profileStore.TrySaveAsync(BuildProfileKey(body.CharacterId), profile, etag,
             cancellationToken: cancellationToken);
+        if (savedEtag == null)
+            return (StatusCodes.Conflict, null);
+
         await _cacheStore.DeleteAsync(BuildManifestKey(body.CharacterId), cancellationToken);
 
         // Step 8: Publish events

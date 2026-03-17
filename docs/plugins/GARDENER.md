@@ -551,6 +551,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 <!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/690 -->
 
 7. **Client event schema (gardener-client-events.yaml)**: No client event schema exists for real-time POI push to WebSocket clients. POI spawns, expirations, and trigger events happen server-side only. Clients must poll `GetGardenStateAsync` to discover changes, which defeats the purpose of the garden as a responsive discovery space. This is a significant gap for the intended player experience.
+<!-- AUDIT:IN_PROGRESS:2026-03-17 -->
 
 8. **ConnectivityMode.Persistent has no special handling**: The enum value exists (Alpha, Beta, Release map to Isolated, WorldSlice, Persistent) but the code treats all connectivity modes identically during scenario creation and lifecycle. The vision describes Persistent as "a scenario that doesn't end" -- the release surprise. No code path distinguishes Persistent scenarios from Isolated ones.
 

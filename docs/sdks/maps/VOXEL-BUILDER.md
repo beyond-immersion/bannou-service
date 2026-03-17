@@ -38,7 +38,7 @@
 | `Options` | `VoxelBuilderOptions` | Configuration |
 | `ActivePaletteIndex` | `byte` | Selected palette entry for painting |
 | `ActiveBrush` | `BrushShape` | Current brush shape and size |
-| `Selection` | `VoxelRegion?` | Current region selection |
+| `Selection` | `VoxelBounds?` | Current region selection |
 | `Clipboard` | `VoxelClipboard?` | Copied region data |
 | `OnOperationApplied` | `event<OperationAppliedEventArgs>` | Fires for ALL operations (local + external) |
 
@@ -73,9 +73,8 @@
 
 | Field | Type | Purpose |
 |-------|------|---------|
-| `Execute(grid)` | `void` | Apply the operation, capturing before-state |
-| `Undo(grid)` | `void` | Restore before-state |
-| `Serialize()` | `byte[]` | Convert to bytes (excludes before-state snapshot) |
+| `Execute(grid, options)` | `void` | Apply the operation, capturing before-state. Options provide frozen enforcement. |
+| `Undo(grid)` | `void` | Restore before-state unconditionally (no frozen check on undo). |
 | `AffectedRegion` | `VoxelBounds` | Bounding box of changed voxels |
 | `SourceId` | `string` | Who created this operation |
 | `OperationType` | `VoxelOperationType` | Type discriminator for deserialization |
@@ -128,7 +127,7 @@
 |-------|------|---------|
 | `Voxels` | `Dictionary<VoxelCoord, Voxel>` | Relative-coordinate voxel data |
 | `Bounds` | `VoxelBounds` | Bounding box of copied region |
-| `PaletteSnapshot` | `PaletteEntry[]` | Palette entries used by copied voxels |
+| `PaletteSnapshot` | `Dictionary<byte, PaletteEntry>` | Palette entries used by copied voxels (keyed by source index) |
 
 ### BrushShape
 
@@ -138,6 +137,38 @@
 |-------|------|---------|
 | `Type` | `BrushType` | Sphere, Cube, Cylinder |
 | `Radius` | `int` | Brush radius in voxels |
+
+### Axis
+
+**Kind**: Enum
+
+| Value | Meaning |
+|-------|---------|
+| X = 0 | Horizontal axis (left/right) |
+| Y = 1 | Vertical axis (up/down) |
+| Z = 2 | Depth axis (front/back) |
+
+### BrushType
+
+**Kind**: Enum
+
+| Value | Shape |
+|-------|-------|
+| Sphere | Voxels within Euclidean distance ≤ Radius from center |
+| Cube | Voxels within axis-aligned box of half-extent = Radius |
+| Cylinder | Voxels within XZ distance ≤ Radius, any Y within bounds |
+
+### BoundedDeque\<T\> (Internal)
+
+**Kind**: Internal class (not public API — implementation detail of OperationStack)
+**Backing store**: `LinkedList<T>`. Push = AddFirst, Pop = RemoveFirst (top), Evict = RemoveLast (bottom).
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `list` | `LinkedList<T>` | Doubly-linked list for O(1) push/pop/evict |
+| `Count` | `int` | Current item count |
+
+`LinkedList<T>` is chosen over circular buffer for simplicity — OperationStack is not a hot path (operations execute once, undo/redo are user-initiated). The linked list's O(1) push/pop/evict-from-bottom is sufficient. A circular buffer would save allocation but adds implementation complexity for no measurable benefit at typical undo depths (50-200 operations).
 
 ---
 
@@ -662,6 +693,60 @@ FOREACH (coord, voxel) in beforeSnapshot
 
 ---
 
+### BoxOperation.Execute
+`(grid: VoxelGrid) → void`
+
+CREATE snapshot ← new Dictionary<VoxelCoord, Voxel>()
+FOREACH coord in Bounds (iterate Min to Max inclusive)
+  IF NOT grid.Contains(coord)
+    CONTINUE
+  COMPUTE existing ← grid.GetVoxel(coord)
+  IF existing.Flags has VoxelFlags.Frozen AND options.EnforceFrozen
+    CONTINUE
+  SET snapshot[coord] ← existing
+  IF Erase
+    grid.SetVoxel(coord, Voxel.Empty)
+  ELSE
+    grid.SetVoxel(coord, CREATE Voxel(PaletteIndex, VoxelFlags.None))
+SET beforeSnapshot ← snapshot
+
+---
+
+### BoxOperation.Undo
+`(grid: VoxelGrid) → void`
+
+FOREACH (coord, voxel) in beforeSnapshot
+  grid.SetVoxel(coord, voxel)
+
+---
+
+### ReplaceOperation.Execute
+`(grid: VoxelGrid) → void`
+
+// Scan all non-empty chunks for voxels with FromIndex, replace with ToIndex
+CREATE snapshot ← new Dictionary<VoxelCoord, Voxel>()
+FOREACH (chunkCoord, chunk) in grid.EnumerateChunks()
+  FOREACH local (x, y, z) in 0..15
+    IF chunk.PaletteIndices[VoxelChunk.GetFlatIndex(x, y, z)] != FromIndex
+      CONTINUE
+    COMPUTE worldCoord ← CREATE VoxelCoord(chunkCoord.X * 16 + x, chunkCoord.Y * 16 + y, chunkCoord.Z * 16 + z)
+    COMPUTE voxel ← chunk.GetVoxel(x, y, z)
+    IF voxel.Flags has VoxelFlags.Frozen AND options.EnforceFrozen
+      CONTINUE
+    SET snapshot[worldCoord] ← voxel
+    grid.SetVoxel(worldCoord, CREATE Voxel(ToIndex, voxel.Flags))
+SET beforeSnapshot ← snapshot
+
+---
+
+### ReplaceOperation.Undo
+`(grid: VoxelGrid) → void`
+
+FOREACH (coord, voxel) in beforeSnapshot
+  grid.SetVoxel(coord, voxel)
+
+---
+
 ### MirrorOperation.Execute
 `(grid: VoxelGrid) → void`
 
@@ -669,22 +754,126 @@ FOREACH (coord, voxel) in beforeSnapshot
 CREATE snapshot ← new Dictionary<VoxelCoord, Voxel>()
 FOREACH (chunkCoord, chunk) in grid.EnumerateChunks()
   FOREACH local (x, y, z) in 0..15
-    COMPUTE worldCoord ← chunkCoord * 16 + (x, y, z)
+    COMPUTE worldCoord ← CREATE VoxelCoord(chunkCoord.X * 16 + x, chunkCoord.Y * 16 + y, chunkCoord.Z * 16 + z)
     COMPUTE voxel ← chunk.GetVoxel(x, y, z)
     IF voxel is not Empty
       SET snapshot[worldCoord] ← voxel
 // Clear grid
 FOREACH coord in snapshot.Keys
   grid.SetVoxel(coord, Voxel.Empty)
-// Write mirrored
-COMPUTE center ← (grid.Bounds.Min + grid.Bounds.Max) / 2
+// Write mirrored — reflect across the center plane of the axis
+COMPUTE center ← (grid.Bounds.Min + grid.Bounds.Max)
 FOREACH (coord, voxel) in snapshot
   COMPUTE mirrored ← coord
-  IF Axis == X: mirrored.X ← center.X * 2 - coord.X
-  IF Axis == Y: mirrored.Y ← center.Y * 2 - coord.Y
-  IF Axis == Z: mirrored.Z ← center.Z * 2 - coord.Z
+  IF MirrorAxis == X: mirrored ← CREATE VoxelCoord(center.X - coord.X, coord.Y, coord.Z)
+  IF MirrorAxis == Y: mirrored ← CREATE VoxelCoord(coord.X, center.Y - coord.Y, coord.Z)
+  IF MirrorAxis == Z: mirrored ← CREATE VoxelCoord(coord.X, coord.Y, center.Z - coord.Z)
   grid.SetVoxel(mirrored, voxel)
 SET beforeSnapshot ← snapshot
+
+---
+
+### MirrorOperation.Undo
+`(grid: VoxelGrid) → void`
+
+// Restore from snapshot — clear current, write back original positions
+FOREACH (chunkCoord, chunk) in grid.EnumerateChunks()
+  FOREACH local (x, y, z) in 0..15
+    COMPUTE worldCoord ← CREATE VoxelCoord(chunkCoord.X * 16 + x, chunkCoord.Y * 16 + y, chunkCoord.Z * 16 + z)
+    IF chunk.GetVoxel(x, y, z) is not Empty
+      grid.SetVoxel(worldCoord, Voxel.Empty)
+FOREACH (coord, voxel) in beforeSnapshot
+  grid.SetVoxel(coord, voxel)
+
+---
+
+### RotateOperation.Execute
+`(grid: VoxelGrid) → void`
+
+// 90° rotation around the specified axis. Coordinate remapping:
+//   Y-axis (most common): (x, y, z) → (maxZ - z, y, x)        — width↔depth swap
+//   X-axis:               (x, y, z) → (x, maxZ - z, y)        — height↔depth swap
+//   Z-axis:               (x, y, z) → (maxY - y, x, z)        — width↔height swap
+// where maxZ/maxY = Bounds.Max component for the swapped axis
+CREATE snapshot ← new Dictionary<VoxelCoord, Voxel>()
+FOREACH (chunkCoord, chunk) in grid.EnumerateChunks()
+  FOREACH local (x, y, z) in 0..15
+    COMPUTE worldCoord ← CREATE VoxelCoord(chunkCoord.X * 16 + x, chunkCoord.Y * 16 + y, chunkCoord.Z * 16 + z)
+    COMPUTE voxel ← chunk.GetVoxel(x, y, z)
+    IF voxel is not Empty
+      SET snapshot[worldCoord] ← voxel
+// Clear grid
+FOREACH coord in snapshot.Keys
+  grid.SetVoxel(coord, Voxel.Empty)
+// Compute rotated bounds (swap extents)
+COMPUTE oldBounds ← grid.Bounds
+IF RotateAxis == Y
+  grid.Bounds ← VoxelBounds(
+    VoxelCoord(oldBounds.Min.Z, oldBounds.Min.Y, oldBounds.Min.X),
+    VoxelCoord(oldBounds.Max.Z, oldBounds.Max.Y, oldBounds.Max.X))
+// (similar for X and Z axes — swap the appropriate pair)
+// Write rotated
+FOREACH (coord, voxel) in snapshot
+  COMPUTE rotated ← coord
+  IF RotateAxis == Y
+    rotated ← CREATE VoxelCoord(oldBounds.Max.Z - (coord.Z - oldBounds.Min.Z),
+                                 coord.Y,
+                                 coord.X - oldBounds.Min.X + oldBounds.Min.Z)
+  IF RotateAxis == X
+    rotated ← CREATE VoxelCoord(coord.X,
+                                 oldBounds.Max.Z - (coord.Z - oldBounds.Min.Z),
+                                 coord.Y - oldBounds.Min.Y + oldBounds.Min.Z)
+  IF RotateAxis == Z
+    rotated ← CREATE VoxelCoord(oldBounds.Max.Y - (coord.Y - oldBounds.Min.Y),
+                                 coord.X - oldBounds.Min.X + oldBounds.Min.Y,
+                                 coord.Z)
+  grid.SetVoxel(rotated, voxel)
+SET beforeSnapshot ← snapshot
+SET beforeBounds ← oldBounds
+
+---
+
+### RotateOperation.Undo
+`(grid: VoxelGrid) → void`
+
+// Restore bounds and voxel positions from snapshot
+FOREACH (chunkCoord, chunk) in grid.EnumerateChunks()
+  FOREACH local (x, y, z) in 0..15
+    COMPUTE worldCoord ← CREATE VoxelCoord(chunkCoord.X * 16 + x, chunkCoord.Y * 16 + y, chunkCoord.Z * 16 + z)
+    IF chunk.GetVoxel(x, y, z) is not Empty
+      grid.SetVoxel(worldCoord, Voxel.Empty)
+grid.Bounds ← beforeBounds
+FOREACH (coord, voxel) in beforeSnapshot
+  grid.SetVoxel(coord, voxel)
+
+---
+
+### CopyPasteOperation.Execute
+`(grid: VoxelGrid) → void`
+
+// Paste clipboard at offset with palette merging
+CREATE snapshot ← new Dictionary<VoxelCoord, Voxel>()
+FOREACH (relativeCoord, clipVoxel) in Clipboard.Voxels
+  COMPUTE worldCoord ← relativeCoord + PasteOffset
+  IF NOT grid.Contains(worldCoord)
+    CONTINUE
+  COMPUTE existing ← grid.GetVoxel(worldCoord)
+  IF existing.Flags has VoxelFlags.Frozen AND options.EnforceFrozen
+    CONTINUE
+  SET snapshot[worldCoord] ← existing
+  // Palette merge: source palette index may differ from destination palette
+  COMPUTE sourceEntry ← Clipboard.PaletteSnapshot[clipVoxel.PaletteIndex]
+  COMPUTE destIndex ← grid.Palette.GetOrAddIndex(sourceEntry.Color, sourceEntry.Material, sourceEntry.Roughness)
+  grid.SetVoxel(worldCoord, CREATE Voxel(destIndex, clipVoxel.Flags))
+SET beforeSnapshot ← snapshot
+
+---
+
+### CopyPasteOperation.Undo
+`(grid: VoxelGrid) → void`
+
+FOREACH (coord, voxel) in beforeSnapshot
+  grid.SetVoxel(coord, voxel)
 
 ---
 
@@ -842,27 +1031,134 @@ RETURN CREATE MeshData(vertices, normalArr, UVs: null, indices, colors,
 ---
 
 ### MeshExporter.ExportGlb
-`(grid: VoxelGrid, mesher: IMesher?) → byte[]`
+`(grid: VoxelGrid, mesher: IMesher?, meshingOptions: MeshingOptions?) → byte[]`
 
 COMPUTE activeMesher ← mesher ?? new GreedyMesher()
+COMPUTE options ← meshingOptions ?? MeshingOptions.Default
 // Mesh all non-empty chunks
-CREATE allMeshData ← new List<(MeshData, ChunkCoord)>()
+CREATE allMeshData ← new List<(MeshData, VoxelCoord)>()
 FOREACH (coord, chunk) in grid.EnumerateChunks()
-  // Get 6 neighbor chunks for boundary face culling
-  COMPUTE neighbors ← grid.GetNeighborChunks(coord)
-  COMPUTE meshData ← activeMesher.Mesh(chunk, neighbors, grid.Palette, grid.Metadata.VoxelScale)
+  COMPUTE neighbors ← get 6 neighbor chunks from grid
+  COMPUTE meshData ← activeMesher.Mesh(chunk, neighbors, grid.Palette, options)
   IF meshData.VertexCount > 0
-    ACCUMULATE (meshData, coord) to allMeshData
-// Merge all chunk meshes into one, offsetting vertices by chunk world position
-CREATE merged ← MergeMeshData(allMeshData)
-// Write glTF binary (.glb)
-CREATE glb ← new GlbWriter()
-glb.AddMesh(merged.Vertices, merged.Normals, merged.UVs, merged.Indices, merged.Colors)
-// Generate palette texture atlas (16x16 PNG)
-COMPUTE atlasBytes ← GeneratePaletteAtlasPng(grid.Palette)
-glb.AddTexture(atlasBytes)
-glb.SetMaterial(albedoTexture: atlas, vertexColors: true)
-RETURN glb.ToBytes()
+    ACCUMULATE (meshData, coord.ToVoxelCoord()) to allMeshData
+// Merge all chunk meshes into one
+CREATE merged ← MeshUtility.MergeMeshData(allMeshData, options.VoxelScale)
+
+// Write glTF binary via SharpGLTF (same library used by GltfImporter)
+CREATE model ← SharpGLTF.Schema2.ModelRoot.CreateModel()
+CREATE scene ← model.UseScene("default")
+CREATE node ← scene.CreateNode("voxel")
+CREATE gltfMesh ← model.CreateMesh("voxelMesh")
+CREATE primitive ← gltfMesh.CreatePrimitive()
+// Set vertex attributes from merged MeshData
+primitive.SetVertexAccessor("POSITION", float3 array from merged.Vertices)
+primitive.SetVertexAccessor("NORMAL", float3 array from merged.Normals)
+IF merged.Colors is not null
+  primitive.SetVertexAccessor("COLOR_0", float4 array from merged.Colors converted to 0-1 range)
+primitive.SetIndexAccessor(merged.Indices)
+// Material with vertex colors enabled
+CREATE material ← model.CreateMaterial("voxelMaterial")
+material.WithPBRMetallicRoughness()
+node.WithMesh(gltfMesh)
+RETURN model.WriteGLB().ToArray()
+
+---
+
+### BlockBenchExporter.Export
+`(grid: VoxelGrid) → byte[]`
+
+// Convert voxel grid to BlockBench .bbmodel JSON
+// Use GreedyMesher regions as the element cuboids for compact output
+CREATE mesher ← new GreedyMesher()
+CREATE elements ← new List<JsonObject>()
+COMPUTE elementId ← 0
+
+FOREACH (chunkCoord, chunk) in grid.EnumerateChunks()
+  // For each face direction, scan slices and find merged rectangles
+  // (Reuse GreedyMesher's scan logic but emit cuboid elements instead of triangles)
+  FOREACH merged region (u, v, width, height, slice, palIdx) from greedy scan:
+    COMPUTE worldFrom ← region minimum corner in voxel coords
+    COMPUTE worldTo ← region maximum corner in voxel coords
+    COMPUTE color ← grid.Palette.Get(palIdx).Color
+    CREATE element as JsonObject:
+      "name": "voxel_{elementId}"
+      "from": [worldFrom.X, worldFrom.Y, worldFrom.Z]
+      "to": [worldTo.X, worldTo.Y, worldTo.Z]
+      "faces": { all 6 faces reference the palette texture at this color's UV }
+    ACCUMULATE element to elements
+    elementId += 1
+
+// Build texture atlas (16x16 PNG from palette)
+COMPUTE atlasBase64 ← palette → 16x16 PNG → base64 encode
+
+// Assemble .bbmodel JSON
+CREATE bbmodel as JsonObject:
+  "meta": { "format_version": "4.10", "model_format": "free" }
+  "resolution": { "width": 16, "height": 16 }
+  "elements": elements
+  "outliner": [ list of element IDs ]
+  "textures": [{ "name": "palette", "source": "data:image/png;base64,{atlasBase64}" }]
+
+RETURN UTF-8 encode JsonSerializer.Serialize(bbmodel)
+
+---
+
+### MagicaVoxelExporter.Export
+`(grid: VoxelGrid) → byte[]`
+
+// Convert voxel grid to MagicaVoxel .vox RIFF binary
+CREATE buffer as MemoryStream
+CREATE writer as BinaryWriter(buffer)
+
+// File header
+EMIT "VOX " (4 bytes magic)
+EMIT 150 as int32 (version)
+
+// MAIN chunk (container for all other chunks)
+// Compute child content first, then write MAIN header
+CREATE childBuffer as MemoryStream
+
+// SIZE chunk — grid dimensions (swap Y/Z for MagicaVoxel's Z-up convention)
+COMPUTE sizeX ← grid.Bounds.Width
+COMPUTE sizeY ← grid.Bounds.Depth   // Our Z → MagicaVoxel Y
+COMPUTE sizeZ ← grid.Bounds.Height  // Our Y → MagicaVoxel Z
+EMIT SIZE chunk: id "SIZE", contentSize 12, childrenSize 0
+  EMIT sizeX as int32, sizeY as int32, sizeZ as int32
+
+// XYZI chunk — voxel positions + palette indices (swap Y/Z)
+CREATE voxelList ← new List<(byte x, byte y, byte z, byte index)>()
+FOREACH (chunkCoord, chunk) in grid.EnumerateChunks()
+  FOREACH local (x, y, z) in 0..15
+    COMPUTE palIdx ← chunk.PaletteIndices[VoxelChunk.GetFlatIndex(x, y, z)]
+    IF palIdx == 0: CONTINUE
+    COMPUTE wx ← chunkCoord.X * 16 + x - grid.Bounds.Min.X
+    COMPUTE wy ← chunkCoord.Z * 16 + z - grid.Bounds.Min.Z  // Our Z → MV Y
+    COMPUTE wz ← chunkCoord.Y * 16 + y - grid.Bounds.Min.Y  // Our Y → MV Z
+    VALIDATE wx, wy, wz all fit in byte (0-255)
+    ACCUMULATE ((byte)wx, (byte)wy, (byte)wz, palIdx) to voxelList
+EMIT XYZI chunk: id "XYZI", contentSize 4 + voxelList.Count * 4
+  EMIT voxelList.Count as int32
+  FOREACH (x, y, z, i) in voxelList
+    EMIT x, y, z, i as 4 bytes
+
+// RGBA chunk — palette (256 entries, RGBA order)
+EMIT RGBA chunk: id "RGBA", contentSize 1024
+  ITERATE index FROM 0 TO 255
+    COMPUTE entry ← grid.Palette.Get((byte)index)
+    EMIT entry.Color.R, entry.Color.G, entry.Color.B, entry.Color.A
+
+// MATL chunks — per-entry material properties
+ITERATE index FROM 1 TO grid.Palette.UsedCount
+  COMPUTE entry ← grid.Palette.Get((byte)index)
+  IF entry.Material != MaterialType.Diffuse OR entry.Roughness != 0.5f
+    EMIT MATL chunk for this index with material type + roughness properties
+
+// Write MAIN container
+EMIT "MAIN" chunk header: contentSize 0, childrenSize = childBuffer.Length
+EMIT childBuffer contents
+
+RETURN buffer.ToArray()
 
 ---
 

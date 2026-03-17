@@ -346,6 +346,43 @@ x-state-stores:
     purpose: Controller possession history for queryable audit trails (MySQL for server-side filtering)
 
   # ============================================================================
+  # Arbitration Stores
+  # ============================================================================
+
+  arbitration-cases:
+    backend: mysql
+    service: Arbitration
+    purpose: Arbitration case records (durable, queryable by status/type/party/jurisdiction)
+
+  arbitration-rulings:
+    backend: mysql
+    service: Arbitration
+    purpose: Ruling records with consequence manifests and execution results
+
+  arbitration-evidence:
+    backend: mysql
+    service: Arbitration
+    purpose: Evidence item records (durable, queryable by case/party)
+
+  arbitration-arbiters:
+    backend: redis
+    prefix: "arb:arbiter"
+    service: Arbitration
+    purpose: Qualified arbiter cache and active caseload tracking (TTL-based)
+
+  arbitration-cache:
+    backend: redis
+    prefix: "arb:cache"
+    service: Arbitration
+    purpose: Jurisdiction resolution cache (TTL-based, invalidated on territory/governance changes)
+
+  arbitration-lock:
+    backend: redis
+    prefix: "arb:lock"
+    service: Arbitration
+    purpose: Distributed locks for case mutation, ruling issuance, jurisdiction resolution, and arbiter assignment
+
+  # ============================================================================
   # Leaderboard Stores
   # ============================================================================
 
@@ -795,6 +832,42 @@ x-state-stores:
     prefix: "currency:lock"
     service: Currency
     purpose: Distributed locks for wallet, balance, hold, and index operations
+
+  # ============================================================================
+  # Craft Stores (L4 GameFeatures Service)
+  # ============================================================================
+
+  craft-recipe-store:
+    backend: mysql
+    service: Craft
+    purpose: Recipe definitions (durable, queryable by gameServiceId, domain, category, tags)
+
+  craft-recipe-cache:
+    backend: redis
+    prefix: "craft:recipe"
+    service: Craft
+    purpose: Recipe definition hot cache (read-through from MySQL, TTL-based)
+
+  craft-session-store:
+    backend: mysql
+    service: Craft
+    purpose: Active crafting session state and per-entity session indexes
+
+  craft-station-registry:
+    backend: mysql
+    service: Craft
+    purpose: Station definitions with location and type indexes
+
+  craft-discovery-store:
+    backend: mysql
+    service: Craft
+    purpose: Known recipes per entity and discovery attempt history
+
+  craft-lock:
+    backend: redis
+    prefix: "craft:lock"
+    service: Craft
+    purpose: Distributed locks for session advancement, recipe mutation, and station occupancy
 
   # ============================================================================
   # Item Stores

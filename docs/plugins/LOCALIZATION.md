@@ -285,6 +285,7 @@ This model is defined in the localization API schema as `RubyAnnotation`. Ruby a
 ## Potential Extensions
 
 1. **Asset bundle integration**: Instead of direct API export, compile localization tables into `.bannou` asset bundles via lib-asset. Clients download localization as a versioned asset bundle, cached via CDN. Category lifecycle events trigger bundle recompilation.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-17:https://github.com/beyond-immersion/bannou-service/issues/696 -->
 
 2. **Fallback chain configuration**: Per-category fallback chains (e.g., `ja-JP` → `ja` → `en`) instead of a single `defaultLanguage`. Follows BCP 47 language tag hierarchy.
 

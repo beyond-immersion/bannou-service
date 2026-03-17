@@ -1,0 +1,100 @@
+openapi: 3.0.4
+info:
+  title: Arbitration Service Configuration
+  description: |
+    Configuration schema for Arbitration service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # Jurisdiction Resolution
+    JurisdictionCacheTtlMinutes:
+      type: integer
+      description: TTL in minutes for cached jurisdiction resolutions
+      env: ARBITRATION_JURISDICTION_CACHE_TTL_MINUTES
+      default: 30
+      minimum: 1
+      maximum: 1440
+
+    # Evidence Limits
+    MaxEvidenceItemsPerParty:
+      type: integer
+      description: Maximum number of evidence items each party can submit per case
+      env: ARBITRATION_MAX_EVIDENCE_ITEMS_PER_PARTY
+      default: 20
+      minimum: 1
+      maximum: 100
+
+    # Arbiter Limits
+    MaxActiveCasesPerArbiter:
+      type: integer
+      description: Maximum number of active cases an arbiter can be assigned simultaneously
+      env: ARBITRATION_MAX_ACTIVE_CASES_PER_ARBITER
+      default: 10
+      minimum: 1
+      maximum: 100
+
+    ExternalArbiterTimeoutDays:
+      type: integer
+      description: Days to wait for an external arbiter response before falling back to mortal arbiter
+      env: ARBITRATION_EXTERNAL_ARBITER_TIMEOUT_DAYS
+      default: 7
+      minimum: 1
+      maximum: 90
+
+    # Case Code Generation
+    CaseCodePrefix:
+      type: string
+      description: Prefix for human-readable case codes (e.g., ARB produces ARB-DISS-00142)
+      env: ARBITRATION_CASE_CODE_PREFIX
+      default: ARB
+      minLength: 1
+      maxLength: 10
+
+    # Query Defaults
+    QueryPageSize:
+      type: integer
+      description: Default page size for list and query endpoints
+      env: ARBITRATION_QUERY_PAGE_SIZE
+      default: 20
+      minimum: 1
+      maximum: 100
+
+    # Background Service - Deadline Worker
+    DeadlineCheckIntervalMinutes:
+      type: integer
+      description: Interval in minutes between deadline reconciliation sweeps
+      env: ARBITRATION_DEADLINE_CHECK_INTERVAL_MINUTES
+      default: 60
+      minimum: 1
+
+    DeadlineCheckDelayMinutes:
+      type: integer
+      description: Delay in minutes before the deadline worker starts after service startup
+      env: ARBITRATION_DEADLINE_CHECK_DELAY_MINUTES
+      default: 5
+      minimum: 1
+
+    DeadlineCheckBatchSize:
+      type: integer
+      description: Maximum number of expired cases to process per deadline worker cycle
+      env: ARBITRATION_DEADLINE_CHECK_BATCH_SIZE
+      default: 50
+      minimum: 1
+      maximum: 500
+
+    # Distributed Locking
+    LockTimeoutSeconds:
+      type: integer
+      description: Maximum time in seconds to wait for distributed lock acquisition
+      env: ARBITRATION_LOCK_TIMEOUT_SECONDS
+      default: 10
+      minimum: 1
+      maximum: 60

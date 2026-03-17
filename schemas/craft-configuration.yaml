@@ -1,0 +1,134 @@
+openapi: 3.0.4
+info:
+  title: Craft Service Configuration
+  description: |
+    Configuration schema for Craft service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  x-constraint-groups:
+    default-quality-weights:
+      constraint: sum-equals
+      value: 1.0
+      description: Default quality formula weights must collectively equal 1.0
+  properties:
+    # Recipe Cache
+    RecipeCacheTtlSeconds:
+      type: integer
+      description: Recipe definition cache TTL in seconds
+      env: CRAFT_RECIPE_CACHE_TTL_SECONDS
+      default: 3600
+      minimum: 60
+      maximum: 86400
+
+    # Session Limits
+    MaxActiveSessionsPerEntity:
+      type: integer
+      description: Maximum concurrent crafting sessions per entity
+      env: CRAFT_MAX_ACTIVE_SESSIONS_PER_ENTITY
+      default: 1
+      minimum: 1
+      maximum: 10
+
+    SessionTimeoutSeconds:
+      type: integer
+      description: Maximum session duration before auto-cancellation via Contract TTL
+      env: CRAFT_SESSION_TIMEOUT_SECONDS
+      default: 3600
+      minimum: 60
+      maximum: 86400
+
+    # Default Quality Weights (must sum to 1.0 via constraint group)
+    DefaultQualityMaterialWeight:
+      type: number
+      description: Default material quality weight when recipe does not specify weights
+      env: CRAFT_DEFAULT_QUALITY_MATERIAL_WEIGHT
+      default: 0.3
+      minimum: 0
+      maximum: 1
+      constraint-group: default-quality-weights
+
+    DefaultQualityProficiencyWeight:
+      type: number
+      description: Default proficiency quality weight when recipe does not specify weights
+      env: CRAFT_DEFAULT_QUALITY_PROFICIENCY_WEIGHT
+      default: 0.5
+      minimum: 0
+      maximum: 1
+      constraint-group: default-quality-weights
+
+    DefaultQualityToolWeight:
+      type: number
+      description: Default tool quality weight when recipe does not specify weights
+      env: CRAFT_DEFAULT_QUALITY_TOOL_WEIGHT
+      default: 0.2
+      minimum: 0
+      maximum: 1
+      constraint-group: default-quality-weights
+
+    # Discovery
+    DiscoveryMaterialConsumptionRate:
+      type: number
+      description: Fraction of materials consumed on failed discovery attempt (0-1)
+      env: CRAFT_DISCOVERY_MATERIAL_CONSUMPTION_RATE
+      default: 0.5
+      minimum: 0
+      maximum: 1
+
+    # Safety Limits
+    MaxRecipesPerGameService:
+      type: integer
+      description: Safety limit for maximum recipe count per game service
+      env: CRAFT_MAX_RECIPES_PER_GAME_SERVICE
+      default: 10000
+      minimum: 100
+      maximum: 100000
+
+    # Distributed Locking
+    LockTimeoutSeconds:
+      type: integer
+      description: Distributed lock acquisition timeout in seconds
+      env: CRAFT_LOCK_TIMEOUT_SECONDS
+      default: 30
+      minimum: 1
+      maximum: 120
+
+    # Station Configuration
+    StationExclusivity:
+      type: boolean
+      description: Whether stations are locked to one session at a time
+      env: CRAFT_STATION_EXCLUSIVITY
+      default: false
+
+    # Experience Scaling
+    ExperienceScalingFactor:
+      type: number
+      description: Global experience multiplier applied to all crafting XP grants
+      env: CRAFT_EXPERIENCE_SCALING_FACTOR
+      default: 1.0
+      minimum: 0
+      maximum: 10
+
+    # Multi-Entity Sessions
+    ApprenticeBonusMultiplier:
+      type: number
+      description: XP multiplier for non-primary participants in multi-entity sessions
+      env: CRAFT_APPRENTICE_BONUS_MULTIPLIER
+      default: 0.5
+      minimum: 0
+      maximum: 2
+
+    CollaborationBonusMultiplier:
+      type: number
+      description: Quality bonus per additional participant in multi-entity sessions
+      env: CRAFT_COLLABORATION_BONUS_MULTIPLIER
+      default: 0.05
+      minimum: 0
+      maximum: 0.5

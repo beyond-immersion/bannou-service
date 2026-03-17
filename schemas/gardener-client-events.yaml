@@ -1,0 +1,289 @@
+openapi: 3.0.4
+info:
+  title: Gardener Client Events API
+  description: |
+    Server-to-client push events for the Gardener service.
+    These events notify clients of POI spawns, expirations, interactions,
+    and garden lifecycle changes delivered via WebSocket.
+
+    All events inherit from BaseClientEvent (common-client-events.yaml) and use
+    Pattern C naming: "gardener.{entity}.{action}" for POI and garden entities.
+
+    **Event Delivery**: Events are published via IClientEventPublisher to
+    the session-specific RabbitMQ channel and delivered to the client via WebSocket.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  contact:
+    name: Bannou Development Team
+
+servers: []
+
+paths: {}
+
+components:
+  schemas:
+    # ============================================
+    # POI Events
+    # ============================================
+
+    GardenerPoiSpawnedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to the garden owner when a new POI spawns in their garden.
+        Contains full POI data for immediate client rendering without polling.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - gardenInstanceId
+        - poiId
+        - position
+        - poiType
+        - triggerMode
+        - triggerRadius
+        - status
+      properties:
+        eventName:
+          type: string
+          default: "gardener.poi.spawned"
+          description: Fixed event type identifier
+        gardenInstanceId:
+          type: string
+          format: uuid
+          description: Garden instance this POI belongs to
+        poiId:
+          type: string
+          format: uuid
+          description: Unique POI identifier
+        position:
+          $ref: 'gardener-api.yaml#/components/schemas/Vec3'
+          description: POI world position
+        poiType:
+          $ref: 'gardener-api.yaml#/components/schemas/PoiType'
+          description: Sensory presentation type for POI rendering
+        visualHint:
+          allOf:
+          - $ref: 'gardener-api.yaml#/components/schemas/ScenarioCategory'
+          nullable: true
+          description: Visual hint for scenario category (nullable for non-visual POIs)
+        audioHint:
+          type: string
+          nullable: true
+          description: Audio hint for ambient audio cue
+        intensityRamp:
+          type: number
+          format: float
+          description: Current intensity ramp value for rendering
+        triggerMode:
+          $ref: 'gardener-api.yaml#/components/schemas/TriggerMode'
+          description: How the POI is triggered (proximity, interaction, prompted, forced)
+        triggerRadius:
+          type: number
+          format: float
+          description: Proximity trigger radius in world units
+
+    GardenerPoiExpiredClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to the garden owner when a POI expires due to TTL.
+        Client should remove the POI from rendering.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - gardenInstanceId
+        - poiId
+      properties:
+        eventName:
+          type: string
+          default: "gardener.poi.expired"
+          description: Fixed event type identifier
+        gardenInstanceId:
+          type: string
+          format: uuid
+          description: Garden instance this POI belonged to
+        poiId:
+          type: string
+          format: uuid
+          description: POI that expired
+
+    GardenerPoiTriggeredClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to the garden owner when a POI is triggered by proximity.
+        Only sent for proximity-triggered POIs; interaction and prompted POIs
+        are triggered via explicit API calls and return results in the response.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - gardenInstanceId
+        - poiId
+        - result
+      properties:
+        eventName:
+          type: string
+          default: "gardener.poi.triggered"
+          description: Fixed event type identifier
+        gardenInstanceId:
+          type: string
+          format: uuid
+          description: Garden instance this POI belongs to
+        poiId:
+          type: string
+          format: uuid
+          description: POI that was triggered
+        result:
+          $ref: 'gardener-api.yaml#/components/schemas/PoiInteractionResult'
+          description: Interaction result type (ScenarioEnter for proximity triggers)
+        scenarioTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Scenario template ID if the trigger leads to a scenario
+
+    # ============================================
+    # Garden Lifecycle Events
+    # ============================================
+
+    GardenerGardenEnteredClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to the player when they successfully enter a garden.
+        Contains the initial garden state for client rendering.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - gardenInstanceId
+        - seedId
+      properties:
+        eventName:
+          type: string
+          default: "gardener.garden.entered"
+          description: Fixed event type identifier
+        gardenInstanceId:
+          type: string
+          format: uuid
+          description: New garden instance ID
+        seedId:
+          type: string
+          format: uuid
+          description: Guardian seed ID bound to this garden
+
+    GardenerGardenLeftClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to the player when they leave a garden.
+        Client should clean up garden rendering state.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - gardenInstanceId
+        - sessionDurationSeconds
+      properties:
+        eventName:
+          type: string
+          default: "gardener.garden.left"
+          description: Fixed event type identifier
+        gardenInstanceId:
+          type: string
+          format: uuid
+          description: Garden instance that was left
+        sessionDurationSeconds:
+          type: number
+          format: float
+          description: Total duration of the garden session in seconds
+
+    # ============================================
+    # Scenario Events
+    # ============================================
+
+    GardenerScenarioStartedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to the player when a scenario starts.
+        Contains the scenario instance details for client transition.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - scenarioInstanceId
+        - scenarioTemplateId
+        - gameSessionId
+      properties:
+        eventName:
+          type: string
+          default: "gardener.scenario.started"
+          description: Fixed event type identifier
+        scenarioInstanceId:
+          type: string
+          format: uuid
+          description: New scenario instance ID
+        scenarioTemplateId:
+          type: string
+          format: uuid
+          description: Template this scenario is based on
+        gameSessionId:
+          type: string
+          format: uuid
+          description: Backing game session ID
+
+    GardenerScenarioCompletedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to the player when a scenario completes.
+        Contains growth award information for client display.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - scenarioInstanceId
+        - growthAwarded
+      properties:
+        eventName:
+          type: string
+          default: "gardener.scenario.completed"
+          description: Fixed event type identifier
+        scenarioInstanceId:
+          type: string
+          format: uuid
+          description: Completed scenario instance ID
+        growthAwarded:
+          type: number
+          format: float
+          description: Total growth awarded for completion

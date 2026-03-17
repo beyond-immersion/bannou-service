@@ -35,6 +35,8 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="BeyondImmersion.Bannou.VoxelCore.Tests" />
+    <InternalsVisibleTo Include="BeyondImmersion.Bannou.VoxelBuilder" />
+    <InternalsVisibleTo Include="BeyondImmersion.Bannou.VoxelBuilder.Tests" />
   </ItemGroup>
 
   <ItemGroup>

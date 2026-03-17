@@ -1,0 +1,1175 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>BeyondImmersion.Bannou.VoxelBuilder</name>
+    </assembly>
+    <members>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Core.Axis">
+            <summary>
+            Axis enumeration for Mirror and Rotate90 operations.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelBuilder.Core.Axis.X">
+            <summary>Horizontal axis (left/right).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelBuilder.Core.Axis.Y">
+            <summary>Vertical axis (up/down).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelBuilder.Core.Axis.Z">
+            <summary>Depth axis (front/back).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Core.BoundedDeque`1">
+            <summary>
+            Bounded LIFO deque: push to top (newest), pop from top (undo), evict from bottom
+            (oldest) when count exceeds MaxDepth. Backed by <see cref="T:System.Collections.Generic.LinkedList`1"/>
+            for O(1) push/pop/evict. Standard Stack&lt;T&gt; cannot evict from the bottom.
+            </summary>
+            <typeparam name="T">Item type.</typeparam>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.BoundedDeque`1.MaxCapacity">
+            <summary>Maximum number of items before bottom-eviction.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.BoundedDeque`1.Count">
+            <summary>Current number of items.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.BoundedDeque`1.#ctor(System.Int32)">
+            <summary>
+            Creates a new bounded deque with the specified maximum capacity.
+            </summary>
+            <param name="maxCapacity">Maximum items before bottom-eviction.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.BoundedDeque`1.Push(`0)">
+            <summary>
+            Push an item to the top (newest). Evicts the bottom (oldest) item if at capacity.
+            </summary>
+            <param name="item">The item to push.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.BoundedDeque`1.Pop">
+            <summary>
+            Pop the top (newest) item.
+            </summary>
+            <returns>The top item.</returns>
+            <exception cref="T:System.InvalidOperationException">Thrown if empty.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.BoundedDeque`1.Peek">
+            <summary>
+            Peek at the top item without removing it.
+            </summary>
+            <returns>The top item.</returns>
+            <exception cref="T:System.InvalidOperationException">Thrown if empty.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.BoundedDeque`1.Clear">
+            <summary>Clear all items.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.BoundedDeque`1.IsEmpty">
+            <summary>Whether the deque is empty.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Core.BrushShape">
+            <summary>
+            Defines a brush shape and size for paint/erase operations.
+            </summary>
+            <param name="Type">Brush shape: Sphere, Cube, or Cylinder.</param>
+            <param name="Radius">Brush radius in voxels.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.BrushShape.#ctor(BeyondImmersion.Bannou.VoxelBuilder.Core.BrushType,System.Int32)">
+            <summary>
+            Defines a brush shape and size for paint/erase operations.
+            </summary>
+            <param name="Type">Brush shape: Sphere, Cube, or Cylinder.</param>
+            <param name="Radius">Brush radius in voxels.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.BrushShape.Type">
+            <summary>Brush shape: Sphere, Cube, or Cylinder.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.BrushShape.Radius">
+            <summary>Brush radius in voxels.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelBuilder.Core.BrushShape.Default">
+            <summary>Default brush: sphere with radius 1.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Core.BrushType">
+            <summary>
+            Brush shape type for paint/erase operations.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelBuilder.Core.BrushType.Sphere">
+            <summary>Voxels within Euclidean distance &lt;= Radius from center.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelBuilder.Core.BrushType.Cube">
+            <summary>Voxels within axis-aligned box of half-extent = Radius.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelBuilder.Core.BrushType.Cylinder">
+            <summary>Voxels within XZ distance &lt;= Radius, any Y within bounds.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelBuilderBridge">
+            <summary>
+            Engine rendering contract. Implemented per-engine (Stride, Godot, Unity).
+            Translates between SDK types (MeshData, VoxelCoord) and engine types.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelBuilderBridge.OnGridLoaded(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)">
+            <summary>Full grid replacement — re-mesh everything.</summary>
+            <param name="grid">The new grid.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelBuilderBridge.OnChunksModified(System.Collections.Generic.IReadOnlySet{BeyondImmersion.Bannou.VoxelCore.Math.ChunkCoord})">
+            <summary>Incremental mesh update for modified chunks.</summary>
+            <param name="coords">Set of chunk coordinates that need re-meshing.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelBuilderBridge.OnPaletteChanged(BeyondImmersion.Bannou.VoxelCore.Grid.Palette)">
+            <summary>Palette has changed — rebuild palette texture atlas.</summary>
+            <param name="palette">The updated palette.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelBuilderBridge.ScreenToVoxel(System.Single,System.Single)">
+            <summary>Convert screen-space position to voxel coordinate via raycasting.</summary>
+            <param name="screenX">Screen X position.</param>
+            <param name="screenY">Screen Y position.</param>
+            <returns>The voxel coordinate under the cursor, or null if no hit.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelBuilderBridge.SetMesher(BeyondImmersion.Bannou.VoxelCore.Meshing.IMesher)">
+            <summary>Swap the meshing strategy used for rendering.</summary>
+            <param name="mesher">The new mesher to use.</param>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelOperation">
+            <summary>
+            Undoable, serializable operation contract. Every modification to a VoxelGrid flows
+            through this interface, enabling undo/redo, network serialization, and per-source tracking.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelOperation.Execute(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions)">
+            <summary>
+            Apply the operation to the grid, capturing before-state for undo.
+            </summary>
+            <param name="grid">The grid to modify.</param>
+            <param name="options">Builder options (frozen enforcement, etc.).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelOperation.Undo(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)">
+            <summary>
+            Restore the before-state captured during <see cref="M:BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelOperation.Execute(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions)"/>.
+            </summary>
+            <param name="grid">The grid to restore.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelOperation.AffectedRegion">
+            <summary>Bounding box of changed voxels.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelOperation.SourceId">
+            <summary>Who created this operation ("local", "generator", "player-2").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelOperation.Description">
+            <summary>Human-readable operation name.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelOperation.OperationType">
+            <summary>Type discriminator for serialization.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelStorageClient">
+            <summary>
+            Optional persistence integration for saving/loading voxel grids.
+            Implemented by plugins that connect to Save-Load or Asset services.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelStorageClient.SaveAsync(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,System.Threading.CancellationToken)">
+            <summary>Save the current grid state.</summary>
+            <param name="grid">The grid to save.</param>
+            <param name="ct">Cancellation token.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelStorageClient.LoadAsync(System.String,System.Threading.CancellationToken)">
+            <summary>Load a grid from storage.</summary>
+            <param name="identifier">Storage identifier (asset ID, save slot, etc.).</param>
+            <param name="ct">Cancellation token.</param>
+            <returns>The loaded grid, or null if not found.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationAppliedEventArgs">
+            <summary>
+            Event arguments for <see cref="E:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.OnOperationApplied"/>. Contains everything
+            a subscriber needs for network broadcast or persistence without re-serializing.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationAppliedEventArgs.Operation">
+            <summary>The operation that was applied.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationAppliedEventArgs.SerializedBytes">
+            <summary>Pre-serialized operation bytes for network broadcast.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationAppliedEventArgs.SourceId">
+            <summary>Who created the operation.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationAppliedEventArgs.AffectedChunks">
+            <summary>Chunks modified by this operation (for bridge + persistence).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationAppliedEventArgs.IsUndo">
+            <summary>True if this was an undo, not a forward apply.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationAppliedEventArgs.#ctor(BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelOperation,System.Byte[],System.String,System.Collections.Generic.IReadOnlySet{BeyondImmersion.Bannou.VoxelCore.Math.ChunkCoord},System.Boolean)">
+            <summary>
+            Creates new event args.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationSerializer">
+            <summary>
+            Serializes and deserializes <see cref="T:BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelOperation"/> instances to/from bytes.
+            Uses a type-discriminated binary format. Before-state snapshots are NOT serialized —
+            the receiver recomputes them by reading grid state before applying.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationSerializer.Serialize(BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelOperation)">
+            <summary>
+            Serializes an operation to bytes: type discriminator + source ID + type-specific payload.
+            </summary>
+            <param name="operation">The operation to serialize.</param>
+            <returns>Binary representation.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationSerializer.Deserialize(System.Byte[])">
+            <summary>
+            Deserializes an operation from bytes.
+            </summary>
+            <param name="data">Binary data from <see cref="M:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationSerializer.Serialize(BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelOperation)"/>.</param>
+            <returns>The deserialized operation (before-state not populated — call Execute to capture).</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationStack">
+            <summary>
+            Per-source undo/redo stack with configurable depth. Each source (local user,
+            generator, remote editor) gets its own stack so undo is scoped to the source.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationStack.SourceId">
+            <summary>Who owns this stack ("local", "generator", "player-2").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationStack.MaxDepth">
+            <summary>Maximum undo history depth.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationStack.IsModified">
+            <summary>Whether any operations have been applied since the last save/reset.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationStack.CanUndo">
+            <summary>Whether there are operations to undo.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationStack.CanRedo">
+            <summary>Whether there are operations to redo.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationStack.UndoCount">
+            <summary>Number of operations in the undo history.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationStack.RedoCount">
+            <summary>Number of operations in the redo history.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationStack.#ctor(System.String,System.Int32)">
+            <summary>
+            Creates a new operation stack for the given source.
+            </summary>
+            <param name="sourceId">Source identifier.</param>
+            <param name="maxDepth">Maximum undo depth.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationStack.Execute(BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelOperation,BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions)">
+            <summary>
+            Execute an operation on the grid, push to undo stack, clear redo stack.
+            </summary>
+            <param name="operation">The operation to execute.</param>
+            <param name="grid">The grid to modify.</param>
+            <param name="options">Builder options.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationStack.PushWithoutExecute(BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelOperation)">
+            <summary>
+            Push an already-executed operation to the undo stack without re-executing.
+            Used by CompoundOperation (sub-ops already executed during Begin/End span).
+            </summary>
+            <param name="operation">The already-executed operation.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationStack.Undo(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)">
+            <summary>
+            Undo the most recent operation and push it to the redo stack.
+            </summary>
+            <param name="grid">The grid to restore.</param>
+            <returns>The undone operation, or null if nothing to undo.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationStack.Redo(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions)">
+            <summary>
+            Redo the most recently undone operation.
+            </summary>
+            <param name="grid">The grid to modify.</param>
+            <param name="options">Builder options.</param>
+            <returns>The redone operation, or null if nothing to redo.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationStack.Clear">
+            <summary>Clear both undo and redo stacks.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationStack.MarkSaved">
+            <summary>Reset the <see cref="P:BeyondImmersion.Bannou.VoxelBuilder.Core.OperationStack.IsModified"/> flag.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder">
+            <summary>
+            Main orchestrator for interactive voxel authoring. Holds the grid, per-source
+            operation stacks, bridge reference, and provides the entry point for all editing.
+            Operations are serializable and source-tagged for assisted and shared building.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.Grid">
+            <summary>The grid being edited.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.Bridge">
+            <summary>Engine rendering bridge (null for headless/server mode).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.Storage">
+            <summary>Optional persistence integration.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.Options">
+            <summary>Configuration.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.ActivePaletteIndex">
+            <summary>Currently selected palette entry for painting.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.ActiveBrush">
+            <summary>Current brush shape and size.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.Selection">
+            <summary>Current region selection (for copy/paste).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.Clipboard">
+            <summary>Copied region data.</summary>
+        </member>
+        <member name="E:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.OnOperationApplied">
+            <summary>
+            Fires for ALL operations (local + external). Subscribers use this for
+            network broadcast and persistence without re-serializing.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.CreateEmpty(BeyondImmersion.Bannou.VoxelCore.Math.VoxelBounds,BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions)">
+            <summary>Create a builder with a new empty grid.</summary>
+            <param name="bounds">Grid dimensions.</param>
+            <param name="options">Builder options (null for defaults).</param>
+            <returns>A new VoxelBuilder.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.LoadGrid(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions)">
+            <summary>Create a builder with an existing grid.</summary>
+            <param name="grid">The grid to edit.</param>
+            <param name="options">Builder options (null for defaults).</param>
+            <returns>A new VoxelBuilder.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.ExecuteOperation(BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelOperation)">
+            <summary>
+            Execute a local operation: apply to grid, push to local undo stack, fire event.
+            </summary>
+            <param name="operation">The operation to execute.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.ApplyExternalOperation(BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelOperation,System.String)">
+            <summary>
+            Apply an external operation (from generator or remote editor).
+            </summary>
+            <param name="operation">The operation to apply.</param>
+            <param name="sourceId">Who created this operation.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.Undo">
+            <summary>Undo the most recent local operation.</summary>
+            <returns>True if an operation was undone.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.Redo">
+            <summary>Redo the most recently undone local operation.</summary>
+            <returns>True if an operation was redone.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.UndoExternal(System.String)">
+            <summary>Undo the most recent operation from a specific external source.</summary>
+            <param name="sourceId">The source to undo.</param>
+            <returns>True if an operation was undone.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.RedoExternal(System.String)">
+            <summary>Redo the most recently undone operation from a specific external source.</summary>
+            <param name="sourceId">The source to redo.</param>
+            <returns>True if an operation was redone.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.Place(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord,System.Byte)">
+            <summary>Place a single voxel.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.Erase(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord)">
+            <summary>Erase a single voxel.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.BrushPaint(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord)">
+            <summary>Paint with the active brush at the given center.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.BrushErase(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord)">
+            <summary>Erase with the active brush at the given center.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.Fill(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord,System.Byte,System.Nullable{BeyondImmersion.Bannou.VoxelCore.Math.VoxelBounds})">
+            <summary>Flood fill from origin with the given palette index.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.BoxFill(BeyondImmersion.Bannou.VoxelCore.Math.VoxelBounds,System.Byte)">
+            <summary>Fill a box region.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.BoxErase(BeyondImmersion.Bannou.VoxelCore.Math.VoxelBounds)">
+            <summary>Erase a box region.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.Mirror(BeyondImmersion.Bannou.VoxelBuilder.Core.Axis)">
+            <summary>Mirror the entire grid across an axis.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.Rotate90(BeyondImmersion.Bannou.VoxelBuilder.Core.Axis)">
+            <summary>Rotate the entire grid 90 degrees around an axis.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.Replace(System.Byte,System.Byte)">
+            <summary>Replace all voxels of one palette index with another.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.Select(BeyondImmersion.Bannou.VoxelCore.Math.VoxelBounds)">
+            <summary>Set the current selection region.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.ClearSelection">
+            <summary>Clear the current selection.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.Copy">
+            <summary>Copy the current selection to the clipboard.</summary>
+            <exception cref="T:System.InvalidOperationException">Thrown if no selection is active.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.Paste(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord)">
+            <summary>Paste the clipboard at the given offset.</summary>
+            <param name="offset">World-space offset for paste position.</param>
+            <exception cref="T:System.InvalidOperationException">Thrown if clipboard is empty.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.BeginCompound(System.String)">
+            <summary>Start grouping operations into a compound (atomic undo unit).</summary>
+            <param name="description">Human-readable description.</param>
+            <exception cref="T:System.InvalidOperationException">Thrown if already in a compound.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.EndCompound">
+            <summary>Finalize the compound operation and push to undo stack.</summary>
+            <exception cref="T:System.InvalidOperationException">Thrown if no compound is active.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.DiffToOperation(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,System.String)">
+            <summary>
+            Compute a GridPatchOperation from the difference between two grids.
+            Used for generator output in the assisted building pattern.
+            </summary>
+            <param name="before">Grid state before generation.</param>
+            <param name="after">Grid state after generation.</param>
+            <param name="sourceId">Source identifier (typically "generator").</param>
+            <returns>A GridPatchOperation wrapping the delta.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.SetBridge(BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelBuilderBridge)">
+            <summary>Attach an engine bridge for rendering.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.MarkSaved">
+            <summary>Reset the IsModified flag on the local stack.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.IsModified">
+            <summary>Whether the local stack has unsaved modifications.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions">
+            <summary>
+            Configuration for the VoxelBuilder.
+            </summary>
+            <param name="MaxUndoDepth">Maximum undo history per source (default 100).</param>
+            <param name="AutoMeshOnEdit">Whether to notify the bridge after each operation (default true).</param>
+            <param name="EnforceFrozen">Whether to skip frozen voxels in operations (default true).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions.#ctor(System.Int32,System.Boolean,System.Boolean)">
+            <summary>
+            Configuration for the VoxelBuilder.
+            </summary>
+            <param name="MaxUndoDepth">Maximum undo history per source (default 100).</param>
+            <param name="AutoMeshOnEdit">Whether to notify the bridge after each operation (default true).</param>
+            <param name="EnforceFrozen">Whether to skip frozen voxels in operations (default true).</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions.MaxUndoDepth">
+            <summary>Maximum undo history per source (default 100).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions.AutoMeshOnEdit">
+            <summary>Whether to notify the bridge after each operation (default true).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions.EnforceFrozen">
+            <summary>Whether to skip frozen voxels in operations (default true).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions.Default">
+            <summary>Default options.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelClipboard">
+            <summary>
+            Stores copied voxel data for paste operations. Voxels are stored in relative
+            coordinates (from the selection min corner) with a palette snapshot for cross-grid paste.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelClipboard.Voxels">
+            <summary>Voxels stored by relative coordinate from the selection origin.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelClipboard.Bounds">
+            <summary>Bounding box of the copied region.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelClipboard.PaletteSnapshot">
+            <summary>
+            Palette entries used by copied voxels, indexed by original palette index.
+            Used for cross-grid palette merging during paste.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelOperationType">
+            <summary>
+            Type discriminator for operation serialization/deserialization.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelOperationType.Place">
+            <summary>Place a single voxel.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelOperationType.Erase">
+            <summary>Erase a single voxel.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelOperationType.Fill">
+            <summary>Flood fill connected region.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelOperationType.Brush">
+            <summary>Paint/erase with a shaped brush.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelOperationType.Box">
+            <summary>Fill or erase an axis-aligned box region.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelOperationType.Mirror">
+            <summary>Mirror grid content across an axis.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelOperationType.Rotate">
+            <summary>90-degree rotation around an axis.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelOperationType.CopyPaste">
+            <summary>Copy region and paste at offset.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelOperationType.Replace">
+            <summary>Replace all voxels of one palette index with another.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelOperationType.Compound">
+            <summary>Group of operations as one atomic undo unit.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelOperationType.GridPatch">
+            <summary>Apply a VoxelDelta as a single operation (generator output).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.BlockBenchExporter">
+            <summary>
+            Exports a <see cref="T:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid"/> to BlockBench .bbmodel format (JSON).
+            Groups voxels into maximal cuboid regions (greedy scan) to produce compact element lists.
+            Written from scratch — clean-room JSON generation, no BlockBench source code dependency.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.BlockBenchExporter.Export(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)">
+            <summary>
+            Export a VoxelGrid as .bbmodel JSON bytes.
+            </summary>
+            <param name="grid">The grid to export.</param>
+            <returns>.bbmodel file content as UTF-8 bytes.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.BlockBenchImporter">
+            <summary>
+            Imports BlockBench .bbmodel files (JSON) into <see cref="T:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid"/>.
+            Parses cuboid elements into filled voxel regions with palette entries derived
+            from per-face textures. Written from scratch — no dependency on BlockBench source code.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.BlockBenchImporter.Import(System.Byte[])">
+            <summary>
+            Import a .bbmodel file from bytes.
+            </summary>
+            <param name="data">File content bytes (UTF-8 JSON).</param>
+            <returns>A VoxelGrid populated from the BlockBench model.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.BlockBenchImporter.Import(System.IO.Stream)">
+            <summary>
+            Import a .bbmodel file from a stream.
+            </summary>
+            <param name="stream">File content stream.</param>
+            <returns>A VoxelGrid populated from the BlockBench model.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.BlockBenchImporter.DetermineDominantColor(System.Text.Json.JsonElement,System.Collections.Generic.Dictionary{System.Int32,BeyondImmersion.Bannou.VoxelCore.Grid.Color})">
+            <summary>
+            Determines the dominant color for an element from its face texture references.
+            When faces reference different textures, uses the most frequently referenced one.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.BlockBenchImporter.ExtractOutlinerTags(System.Text.Json.JsonElement,System.Collections.Generic.List{System.String})">
+            <summary>
+            Recursively extracts group names from the outliner hierarchy as metadata tags.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.GltfImporter">
+            <summary>
+            Imports .glb/.gltf files into <see cref="T:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshData"/> via SharpGLTF (MIT).
+            Used for terrain overlay voxelization input — parse glTF, extract the first mesh
+            primitive as MeshData for consumption by <see cref="T:BeyondImmersion.Bannou.VoxelCore.Voxelization.MeshVoxelizer"/>.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.GltfImporter.Import(System.Byte[])">
+            <summary>
+            Import a glTF/GLB file from bytes into MeshData.
+            Only the first mesh primitive is imported.
+            </summary>
+            <param name="data">File content bytes (.glb or .gltf with embedded buffers).</param>
+            <returns>Engine-agnostic mesh data.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.GltfImporter.Import(System.IO.Stream)">
+            <summary>
+            Import a glTF/GLB file from a stream into MeshData.
+            </summary>
+            <param name="stream">File content stream.</param>
+            <returns>Engine-agnostic mesh data.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.IVoxelExporter">
+            <summary>
+            Format export contract: VoxelGrid to bytes/stream.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.IVoxelExporter.Export(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)">
+            <summary>Export a VoxelGrid to bytes in the target format.</summary>
+            <param name="grid">The grid to export.</param>
+            <returns>File content bytes.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.IVoxelImporter">
+            <summary>
+            Format import contract: bytes/stream to VoxelGrid.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.IVoxelImporter.Import(System.Byte[])">
+            <summary>Import voxel data from bytes.</summary>
+            <param name="data">File content bytes.</param>
+            <returns>The imported VoxelGrid.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.IVoxelImporter.Import(System.IO.Stream)">
+            <summary>Import voxel data from a stream.</summary>
+            <param name="stream">File content stream.</param>
+            <returns>The imported VoxelGrid.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.MagicaVoxelExporter">
+            <summary>
+            Exports a <see cref="T:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid"/> to MagicaVoxel .vox format (RIFF binary).
+            Handles the Y-up → Z-up coordinate conversion (Bannou uses Y-up, MagicaVoxel uses Z-up).
+            Written from scratch — the RIFF structure is community-documented.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.MagicaVoxelExporter.Export(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)">
+            <summary>
+            Export a VoxelGrid as .vox binary bytes.
+            </summary>
+            <param name="grid">The grid to export.</param>
+            <returns>.vox file content bytes.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.MagicaVoxelImporter">
+            <summary>
+            Imports MagicaVoxel .vox files (RIFF binary) into <see cref="T:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid"/>.
+            Parses XYZI (voxel positions), RGBA (palette), and MATL (material properties) chunks.
+            Handles the Z-up → Y-up coordinate conversion (MagicaVoxel uses Z-up, Bannou uses Y-up).
+            Written from scratch — the RIFF structure is community-documented.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.MagicaVoxelImporter.Import(System.Byte[])">
+            <summary>
+            Import a .vox file from bytes.
+            </summary>
+            <param name="data">File content bytes.</param>
+            <returns>A VoxelGrid populated from the MagicaVoxel model.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.MagicaVoxelImporter.Import(System.IO.Stream)">
+            <summary>
+            Import a .vox file from a stream.
+            </summary>
+            <param name="stream">File content stream.</param>
+            <returns>A VoxelGrid populated from the MagicaVoxel model.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.MagicaVoxelImporter.ImportMulti(System.Byte[])">
+            <summary>
+            Import a multi-model .vox file with scene graph transforms.
+            Returns each model as a separate VoxelGrid with its relative transform.
+            </summary>
+            <param name="data">File content bytes.</param>
+            <returns>List of (VoxelGrid, relative position offset) tuples.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.MeshExporter">
+            <summary>
+            Exports a VoxelGrid to glTF/GLB format via meshing + SharpGLTF writer.
+            Used for asset pipeline export and terrain bake-back. Includes per-vertex colors
+            from the grid's palette.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.MeshExporter.#ctor(BeyondImmersion.Bannou.VoxelCore.Meshing.IMesher)">
+            <summary>
+            Creates a mesh exporter with the specified mesher.
+            </summary>
+            <param name="mesher">The mesher to use for voxel-to-mesh conversion. Defaults to GreedyMesher if null.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.MeshExporter.Export(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelCore.Meshing.MeshingOptions)">
+            <summary>
+            Export a VoxelGrid as GLB binary.
+            </summary>
+            <param name="grid">The grid to export.</param>
+            <param name="meshingOptions">Meshing options. Defaults to <see cref="F:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshingOptions.Default"/> if null.</param>
+            <returns>GLB file bytes.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.MeshExporter.BeyondImmersion#Bannou#VoxelBuilder#ImportExport#IVoxelExporter#Export(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)">
+            <summary>
+            Export a VoxelGrid as GLB binary (IVoxelExporter implementation, uses default options).
+            </summary>
+            <param name="grid">The grid to export.</param>
+            <returns>GLB file bytes.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.MeshExporter.ExportGltf(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelCore.Meshing.MeshingOptions)">
+            <summary>
+            Export a VoxelGrid as glTF JSON string.
+            </summary>
+            <param name="grid">The grid to export.</param>
+            <param name="meshingOptions">Meshing options. Defaults to <see cref="F:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshingOptions.Default"/> if null.</param>
+            <returns>glTF JSON content.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.RawVoxelExporter">
+            <summary>
+            Exports VoxelGrid to raw .bvox byte format. Thin wrapper around
+            <see cref="M:BeyondImmersion.Bannou.VoxelCore.Serialization.VoxelSerializer.Serialize(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)"/>. Used for Save-Load and Asset service integration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.RawVoxelExporter.Export(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.RawVoxelImporter">
+            <summary>
+            Imports VoxelGrid from raw .bvox byte format. Thin wrapper around
+            <see cref="M:BeyondImmersion.Bannou.VoxelCore.Serialization.VoxelSerializer.Deserialize(System.Byte[])"/>. Used for procedural output consumption.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.RawVoxelImporter.Import(System.Byte[])">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.ImportExport.RawVoxelImporter.Import(System.IO.Stream)">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Operations.BoxOperation">
+            <summary>
+            Fills or erases all voxels within an axis-aligned bounding box.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.BoxOperation.Bounds">
+            <summary>The bounding box to fill or erase.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.BoxOperation.PaletteIndex">
+            <summary>The palette index to fill with. Ignored when <see cref="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.BoxOperation.Erase"/> is true.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.BoxOperation.Erase">
+            <summary>When true, erases voxels instead of filling them.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.BoxOperation.SourceId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.BoxOperation.Description">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.BoxOperation.OperationType">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.BoxOperation.AffectedRegion">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.BoxOperation.#ctor(BeyondImmersion.Bannou.VoxelCore.Math.VoxelBounds,System.Byte,System.Boolean,System.String)">
+            <summary>
+            Creates a new box operation.
+            </summary>
+            <param name="bounds">The bounding box to fill or erase.</param>
+            <param name="paletteIndex">The palette index to fill with.</param>
+            <param name="erase">When true, erases voxels instead of filling.</param>
+            <param name="sourceId">Who created this operation.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.BoxOperation.Execute(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.BoxOperation.Undo(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Operations.BrushOperation">
+            <summary>
+            Paints or erases voxels within a shaped brush (sphere, cube, or cylinder) centered
+            on a coordinate. Shape testing uses Euclidean distance for spheres, axis-aligned bounds
+            for cubes, and XZ-plane Euclidean distance for cylinders.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.BrushOperation.Center">
+            <summary>The center coordinate of the brush stroke.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.BrushOperation.Brush">
+            <summary>The brush shape and radius.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.BrushOperation.PaletteIndex">
+            <summary>The palette index to paint with. Ignored when <see cref="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.BrushOperation.Erase"/> is true.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.BrushOperation.Erase">
+            <summary>When true, erases voxels instead of painting them.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.BrushOperation.SourceId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.BrushOperation.Description">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.BrushOperation.OperationType">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.BrushOperation.AffectedRegion">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.BrushOperation.#ctor(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord,BeyondImmersion.Bannou.VoxelBuilder.Core.BrushShape,System.Byte,System.Boolean,System.String)">
+            <summary>
+            Creates a new brush operation.
+            </summary>
+            <param name="center">The center coordinate of the brush stroke.</param>
+            <param name="brush">The brush shape and radius.</param>
+            <param name="paletteIndex">The palette index to paint with.</param>
+            <param name="erase">When true, erases voxels instead of painting.</param>
+            <param name="sourceId">Who created this operation.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.BrushOperation.Execute(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.BrushOperation.Undo(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Operations.CompoundOperation">
+            <summary>
+            Groups multiple sub-operations into a single atomic undo unit. Execute runs all
+            sub-operations in order; undo reverses them in the opposite order.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.CompoundOperation.Operations">
+            <summary>The sub-operations in execution order.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.CompoundOperation.SourceId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.CompoundOperation.Description">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.CompoundOperation.OperationType">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.CompoundOperation.AffectedRegion">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.CompoundOperation.#ctor(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.VoxelBuilder.Core.IVoxelOperation},System.String,System.String)">
+            <summary>
+            Creates a new compound operation.
+            </summary>
+            <param name="operations">The sub-operations to group.</param>
+            <param name="description">Human-readable description of the compound operation.</param>
+            <param name="sourceId">Who created this operation.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.CompoundOperation.Execute(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.CompoundOperation.Undo(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Operations.CopyPasteOperation">
+            <summary>
+            Pastes a <see cref="T:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelClipboard"/> at an offset position into the grid. Performs
+            palette merging via <see cref="M:BeyondImmersion.Bannou.VoxelCore.Grid.Palette.GetOrAddIndex(BeyondImmersion.Bannou.VoxelCore.Grid.Color,BeyondImmersion.Bannou.VoxelCore.Grid.MaterialType,System.Single)"/> when the clipboard's palette
+            entries differ from the target grid's palette.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.CopyPasteOperation.Clipboard">
+            <summary>The clipboard data to paste.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.CopyPasteOperation.PasteOffset">
+            <summary>The world-space offset to paste the clipboard at.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.CopyPasteOperation.SourceId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.CopyPasteOperation.Description">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.CopyPasteOperation.OperationType">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.CopyPasteOperation.AffectedRegion">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.CopyPasteOperation.#ctor(BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelClipboard,BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord,System.String)">
+            <summary>
+            Creates a new copy-paste operation.
+            </summary>
+            <param name="clipboard">The clipboard data to paste.</param>
+            <param name="pasteOffset">The world-space offset to paste at.</param>
+            <param name="sourceId">Who created this operation.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.CopyPasteOperation.Execute(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.CopyPasteOperation.Undo(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Operations.EraseOperation">
+            <summary>
+            Removes a single voxel at a specific coordinate by setting it to <see cref="F:BeyondImmersion.Bannou.VoxelCore.Grid.Voxel.Empty"/>.
+            Captures the previous voxel state for undo.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.EraseOperation.Coord">
+            <summary>The coordinate to erase.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.EraseOperation.SourceId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.EraseOperation.Description">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.EraseOperation.OperationType">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.EraseOperation.AffectedRegion">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.EraseOperation.#ctor(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord,System.String)">
+            <summary>
+            Creates a new erase operation.
+            </summary>
+            <param name="coord">The coordinate to erase.</param>
+            <param name="sourceId">Who created this operation.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.EraseOperation.Execute(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.EraseOperation.Undo(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Operations.FillOperation">
+            <summary>
+            BFS flood fill operation. Starting from an origin coordinate, expands to all 6-connected
+            neighbors that share the same palette index as the origin. Replaces them with the fill
+            palette index. Bounded by an optional limit region.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.FillOperation.Origin">
+            <summary>The starting coordinate for the flood fill.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.FillOperation.FillPaletteIndex">
+            <summary>The palette index to fill with.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.FillOperation.Limit">
+            <summary>Bounding box that constrains the fill region.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.FillOperation.SourceId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.FillOperation.Description">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.FillOperation.OperationType">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.FillOperation.AffectedRegion">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.FillOperation.#ctor(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord,System.Byte,BeyondImmersion.Bannou.VoxelCore.Math.VoxelBounds,System.String)">
+            <summary>
+            Creates a new flood fill operation.
+            </summary>
+            <param name="origin">The starting coordinate for the flood fill.</param>
+            <param name="fillPaletteIndex">The palette index to fill with.</param>
+            <param name="limit">Bounding box that constrains the fill region.</param>
+            <param name="sourceId">Who created this operation.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.FillOperation.Execute(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.FillOperation.Undo(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Operations.GridPatchOperation">
+            <summary>
+            Applies a <see cref="T:BeyondImmersion.Bannou.VoxelCore.Serialization.VoxelDelta"/> as a single undoable operation. Before-state is
+            captured by serializing affected chunks before the delta is applied. Undo restores
+            the chunks from the serialized snapshots and recalculates the voxel count.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.GridPatchOperation.Delta">
+            <summary>The binary delta data to apply.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.GridPatchOperation.BeforeChunks">
+            <summary>
+            Serialized before-state of affected chunks. Null values represent chunks that
+            did not exist before the delta was applied.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.GridPatchOperation.SourceId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.GridPatchOperation.Description">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.GridPatchOperation.OperationType">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.GridPatchOperation.AffectedRegion">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.GridPatchOperation.#ctor(System.Byte[],System.String)">
+            <summary>
+            Creates a new grid patch operation.
+            </summary>
+            <param name="delta">The binary delta data to apply.</param>
+            <param name="sourceId">Who created this operation.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.GridPatchOperation.#ctor(System.Byte[],System.String,System.Collections.Generic.Dictionary{BeyondImmersion.Bannou.VoxelCore.Math.ChunkCoord,System.Byte[]})">
+            <summary>
+            Creates a grid patch operation with pre-computed before-state snapshots.
+            Used by <see cref="M:BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilder.DiffToOperation(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,System.String)"/> on the sender side.
+            </summary>
+            <param name="delta">The binary delta data.</param>
+            <param name="sourceId">Who created this operation.</param>
+            <param name="beforeChunks">Pre-computed chunk snapshots for undo.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.GridPatchOperation.Execute(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.GridPatchOperation.Undo(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.GridPatchOperation.GetAffectedChunkCoords">
+            <summary>
+            Parses the delta header to extract all affected chunk coordinates (added, removed, and modified).
+            </summary>
+            <returns>Set of affected chunk coordinates.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.GridPatchOperation.ComputeAffectedRegion">
+            <summary>
+            Computes the affected region bounding box from the before-chunk coordinates.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Operations.MirrorOperation">
+            <summary>
+            Mirrors all non-empty voxels across a specified axis. The reflection uses the
+            formula <c>mirroredCoord = Min + Max - originalCoord</c> for the mirrored axis,
+            preserving the other two axes.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.MirrorOperation.MirrorAxis">
+            <summary>The axis to mirror across.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.MirrorOperation.SourceId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.MirrorOperation.Description">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.MirrorOperation.OperationType">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.MirrorOperation.AffectedRegion">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.MirrorOperation.#ctor(BeyondImmersion.Bannou.VoxelBuilder.Core.Axis,System.String)">
+            <summary>
+            Creates a new mirror operation.
+            </summary>
+            <param name="mirrorAxis">The axis to mirror across.</param>
+            <param name="sourceId">Who created this operation.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.MirrorOperation.Execute(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.MirrorOperation.Undo(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Operations.PlaceOperation">
+            <summary>
+            Places a single voxel at a specific coordinate with the given palette index.
+            Captures the previous voxel state for undo.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.PlaceOperation.Coord">
+            <summary>The coordinate to place the voxel at.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.PlaceOperation.PaletteIndex">
+            <summary>The palette index to assign to the placed voxel.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.PlaceOperation.SourceId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.PlaceOperation.Description">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.PlaceOperation.OperationType">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.PlaceOperation.AffectedRegion">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.PlaceOperation.#ctor(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord,System.Byte,System.String)">
+            <summary>
+            Creates a new place operation.
+            </summary>
+            <param name="coord">The coordinate to place the voxel at.</param>
+            <param name="paletteIndex">The palette index to assign.</param>
+            <param name="sourceId">Who created this operation.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.PlaceOperation.Execute(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.PlaceOperation.Undo(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Operations.ReplaceOperation">
+            <summary>
+            Replaces all voxels of one palette index with another across the entire grid.
+            Preserves voxel flags during replacement.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.ReplaceOperation.FromIndex">
+            <summary>The palette index to search for and replace.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.ReplaceOperation.ToIndex">
+            <summary>The palette index to replace with.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.ReplaceOperation.SourceId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.ReplaceOperation.Description">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.ReplaceOperation.OperationType">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.ReplaceOperation.AffectedRegion">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.ReplaceOperation.#ctor(System.Byte,System.Byte,System.String)">
+            <summary>
+            Creates a new replace operation.
+            </summary>
+            <param name="fromIndex">The palette index to search for.</param>
+            <param name="toIndex">The palette index to replace with.</param>
+            <param name="sourceId">Who created this operation.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.ReplaceOperation.Execute(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.ReplaceOperation.Undo(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelBuilder.Operations.RotateOperation">
+            <summary>
+            Rotates all non-empty voxels 90 degrees around a specified axis. Rotation formulas
+            (relative to grid bounds max): Y-axis <c>(maxZ-z, y, x)</c>, X-axis <c>(x, maxZ-z, y)</c>,
+            Z-axis <c>(maxY-y, x, z)</c>. The affected region is the union of before and after bounds.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.RotateOperation.RotateAxis">
+            <summary>The axis to rotate around.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.RotateOperation.SourceId">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.RotateOperation.Description">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.RotateOperation.OperationType">
+            <inheritdoc />
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelBuilder.Operations.RotateOperation.AffectedRegion">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.RotateOperation.#ctor(BeyondImmersion.Bannou.VoxelBuilder.Core.Axis,System.String)">
+            <summary>
+            Creates a new rotate operation.
+            </summary>
+            <param name="rotateAxis">The axis to rotate around.</param>
+            <param name="sourceId">Who created this operation.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.RotateOperation.Execute(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelBuilder.Core.VoxelBuilderOptions)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelBuilder.Operations.RotateOperation.Undo(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>

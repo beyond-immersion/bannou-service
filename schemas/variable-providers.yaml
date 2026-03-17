@@ -80,6 +80,10 @@ x-variable-providers:
     service: CharacterPersonality
     purpose: "Combat preference data for ABML expressions (${combat.*})"
 
+  craft:
+    service: Craft
+    purpose: "Crafting proficiency, material availability, station proximity, and recipe eligibility for NPC GOAP decisions (${craft.*})"
+
   encounters:
     service: CharacterEncounter
     purpose: "Encounter history and sentiment for ABML expressions (${encounters.*})"

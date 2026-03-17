@@ -508,6 +508,8 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 8. **Token ExpiresAt stored but not checked during validation**: `TokenHashModel.ExpiresAt` is set to the escrow's expiration when tokens are created, but token validation only checks the `Used` flag (not `ExpiresAt`). This is safe because each method validates the escrow agreement's `ExpiresAt` before reaching token validation — so an expired escrow's tokens are unreachable. The token-level `ExpiresAt` exists as metadata (useful for diagnostics/cleanup) but is not a security boundary.
 
+9. **Party pending count failures silently logged**: `IncrementPartyPendingCountAsync` and `DecrementPartyPendingCountAsync` log warnings but don't fail the operation when count updates fail after max retries. This is intentional — the pending count is a soft rate-limit (`MaxPendingPerParty`), not a data integrity mechanism. Authoritative escrow agreements live in MySQL with proper concurrency. A stale count self-corrects on the next successful operation, and worst-case failure modes (slightly permissive or restrictive limits) are bounded and non-catastrophic.
+
 ### Design Considerations
 
 1. ~~**QueryAsync for listing**~~: **FIXED** (2026-03-16) - Replaced `QueryAsync` + in-memory `.Skip().Take()` with `QueryPagedAsync` for server-side MySQL pagination. All three filter paths (by party+status, by party, by status, unfiltered) now use a single `QueryPagedAsync` call with combined predicates. Results ordered by `CreatedAt` descending.
@@ -518,7 +520,7 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 4. ~~**Contract termination refund doesn't verify contract binding**~~: **FIXED** (2026-03-16) - Added `BoundContractId` re-verification guard in both `RefundForContractTerminationAsync` and `TransitionToFinalizingForContractAsync`. After re-loading the agreement via `GetWithETagAsync`, both methods now verify the agreement is still bound to the expected contract before mutating state. Closes the TOCTOU window between the initial query and the ETag-protected mutation.
 
-5. **Party pending count failures silently logged**: `IncrementPartyPendingCountAsync` and `DecrementPartyPendingCountAsync` log warnings but don't fail the operation when count updates fail after max retries. This can lead to stale pending counts.
+5. ~~**Party pending count failures silently logged**~~: **FIXED** (2026-03-17) - Reclassified as intentional behavior. The party pending count is a soft rate-limit (enforcing `MaxPendingPerParty`), not a data integrity mechanism. Silent failure with Warning logging is correct: (1) authoritative escrow agreements are stored in MySQL with proper concurrency, (2) a stale count self-corrects when the next successful operation updates the party's count, (3) worst-case failure modes are bounded (slightly permissive or restrictive limits) and non-catastrophic. Moved to Intentional Quirks.
 
 6. **No distributed lock for concurrent agreement modifications**: Multiple parties may deposit or consent simultaneously against the same agreement. The service uses ETag-based optimistic concurrency with retries, but under high contention (many parties, rapid actions) this could lead to excessive retry loops. A distributed lock per agreement ID would provide stronger serialization guarantees at the cost of added latency.
 
@@ -568,3 +570,8 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 5. **DC #4: Contract binding TOCTOU guard** — (2026-03-16)
    - Added `BoundContractId` re-verification in `RefundForContractTerminationAsync` and `TransitionToFinalizingForContractAsync`
    - Closes TOCTOU window between query-by-contract and ETag-protected mutation
+
+6. **DC #5: Party pending count reclassification** — (2026-03-17)
+   - Reclassified from Design Consideration to Intentional Quirk
+   - Pending count is a soft rate-limit, not a data integrity mechanism; silent failure is correct
+   - Moved to Intentional Quirks #9
