@@ -48,6 +48,10 @@ public static class VariableProviderDefinitions
     /// <summary>Currency balance and wallet data for ABML expressions (${currency.*})</summary>
     public const string Currency = "currency";
 
+    // Environment Service
+    /// <summary>Weather, temperature, atmospheric conditions, and resource availability for ABML expressions (${environment.*})</summary>
+    public const string Environment = "environment";
+
     // Faction Service
     /// <summary>Faction membership and status data for ABML expressions (${faction.*})</summary>
     public const string Faction = "faction";
@@ -99,6 +103,7 @@ public static class VariableProviderDefinitions
             [Combat] = new ProviderMetadata("CharacterPersonality", "Combat preference data for ABML expressions (${combat.*})"),
             [Currency] = new ProviderMetadata("Currency", "Currency balance and wallet data for ABML expressions (${currency.*})"),
             [Encounters] = new ProviderMetadata("CharacterEncounter", "Encounter history and sentiment for ABML expressions (${encounters.*})"),
+            [Environment] = new ProviderMetadata("Environment", "Weather, temperature, atmospheric conditions, and resource availability for ABML expressions (${environment.*})"),
             [Faction] = new ProviderMetadata("Faction", "Faction membership and status data for ABML expressions (${faction.*})"),
             [Heritage] = new ProviderMetadata("CharacterLifecycle", "Genetic heritage data — phenotype traits, aptitudes, bloodline membership, species, generation depth (${heritage.*})"),
             [Inventory] = new ProviderMetadata("Inventory", "Item possession and container data for ABML expressions (${inventory.*})"),

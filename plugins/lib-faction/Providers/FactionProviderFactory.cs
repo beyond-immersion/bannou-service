@@ -36,6 +36,9 @@ public sealed class FactionProviderFactory : IVariableProviderFactory
 
     /// <summary>Durable store for individual norm definition records (MySQL).</summary>
     private readonly IStateStore<NormDefinitionModel> _normStore;
+
+    /// <summary>Durable store for territory claim records (MySQL), used for location claim lookups.</summary>
+    private readonly IStateStore<TerritoryClaimModel> _territoryStore;
     private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
@@ -49,6 +52,7 @@ public sealed class FactionProviderFactory : IVariableProviderFactory
         _factionStore = stateStoreFactory.GetStore<FactionModel>(StateStoreDefinitions.Faction);
         _normListStore = stateStoreFactory.GetStore<NormListModel>(StateStoreDefinitions.FactionNorm);
         _normStore = stateStoreFactory.GetStore<NormDefinitionModel>(StateStoreDefinitions.FactionNorm);
+        _territoryStore = stateStoreFactory.GetStore<TerritoryClaimModel>(StateStoreDefinitions.FactionTerritory);
         _telemetryProvider = telemetryProvider;
     }
 
@@ -119,7 +123,19 @@ public sealed class FactionProviderFactory : IVariableProviderFactory
             }
         }
 
-        return new FactionProvider(factions, mergedNorms);
+        // Check if the character is in a location controlled by one of their membership factions
+        var inControlledTerritory = false;
+        if (locationId.HasValue && factions.Count > 0)
+        {
+            var claim = await _territoryStore.GetAsync(
+                FactionService.BuildLocationClaimKey(locationId.Value), ct);
+            if (claim != null && claim.Status == TerritoryClaimStatus.Active)
+            {
+                inControlledTerritory = factions.Any(f => f.FactionId == claim.FactionId);
+            }
+        }
+
+        return new FactionProvider(factions, mergedNorms, inControlledTerritory);
     }
 }
 
@@ -142,6 +158,7 @@ public sealed class FactionProviderFactory : IVariableProviderFactory
 ///   <item><description><c>${faction.CODE.is_realm_baseline}</c> - bool: Whether realm baseline</description></item>
 ///   <item><description><c>${faction.CODE.member_count}</c> - int: Total member count</description></item>
 ///   <item><description><c>${faction.CODE.role}</c> - string: Character's role in this faction</description></item>
+///   <item><description><c>${faction.in_controlled_territory}</c> - bool: Whether the character's current location is controlled by one of their membership factions</description></item>
 /// </list>
 /// </remarks>
 public sealed class FactionProvider : IVariableProvider
@@ -151,11 +168,13 @@ public sealed class FactionProvider : IVariableProvider
     /// </summary>
     public static FactionProvider Empty { get; } = new(
         new List<FactionSnapshot>(),
-        new Dictionary<string, NormSnapshot>(StringComparer.OrdinalIgnoreCase));
+        new Dictionary<string, NormSnapshot>(StringComparer.OrdinalIgnoreCase),
+        inControlledTerritory: false);
 
     private readonly Dictionary<string, FactionSnapshot> _factionsByCode;
     private readonly List<FactionSnapshot> _factions;
     private readonly Dictionary<string, NormSnapshot> _mergedNorms;
+    private readonly bool _inControlledTerritory;
 
     /// <inheritdoc/>
     public string Name => VariableProviderDefinitions.Faction;
@@ -165,12 +184,15 @@ public sealed class FactionProvider : IVariableProvider
     /// </summary>
     /// <param name="factions">Faction snapshots for this character.</param>
     /// <param name="mergedNorms">Merged norms across all membership factions (highest penalty per violation type).</param>
+    /// <param name="inControlledTerritory">Whether the character's current location is controlled by one of their membership factions.</param>
     internal FactionProvider(
         IReadOnlyList<FactionSnapshot> factions,
-        Dictionary<string, NormSnapshot> mergedNorms)
+        Dictionary<string, NormSnapshot> mergedNorms,
+        bool inControlledTerritory)
     {
         _factions = factions.ToList();
         _mergedNorms = mergedNorms;
+        _inControlledTerritory = inControlledTerritory;
         _factionsByCode = new Dictionary<string, FactionSnapshot>(StringComparer.OrdinalIgnoreCase);
         foreach (var faction in factions)
         {
@@ -205,6 +227,12 @@ public sealed class FactionProvider : IVariableProvider
         {
             if (_factions.Count == 0) return null;
             return _factions.MinBy(f => f.Role)?.Code;
+        }
+
+        // ${faction.in_controlled_territory} - whether character is in a location controlled by a membership faction
+        if (firstSegment.Equals("in_controlled_territory", StringComparison.OrdinalIgnoreCase))
+        {
+            return _inControlledTerritory;
         }
 
         // ${faction.norm_count} - total unique violation types with norms
@@ -247,7 +275,8 @@ public sealed class FactionProvider : IVariableProvider
             ["names"] = _factions.Select(f => f.Name).ToList(),
             ["codes"] = _factions.Select(f => f.Code).ToList(),
             ["primary_faction"] = _factions.Count > 0 ? _factions.MinBy(f => f.Role)?.Code : null,
-            ["norm_count"] = _mergedNorms.Count
+            ["norm_count"] = _mergedNorms.Count,
+            ["in_controlled_territory"] = _inControlledTerritory
         };
     }
 
@@ -263,6 +292,7 @@ public sealed class FactionProvider : IVariableProvider
             firstSegment.Equals("codes", StringComparison.OrdinalIgnoreCase) ||
             firstSegment.Equals("primary_faction", StringComparison.OrdinalIgnoreCase) ||
             firstSegment.Equals("norm_count", StringComparison.OrdinalIgnoreCase) ||
+            firstSegment.Equals("in_controlled_territory", StringComparison.OrdinalIgnoreCase) ||
             firstSegment.Equals("has_norm", StringComparison.OrdinalIgnoreCase) ||
             firstSegment.Equals("norm_penalty", StringComparison.OrdinalIgnoreCase))
         {

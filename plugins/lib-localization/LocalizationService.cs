@@ -376,9 +376,6 @@ public partial class LocalizationService : ILocalizationService
     /// </summary>
     public async Task<(StatusCodes, EntryResponse?)> SetEntryAsync(SetEntryRequest body, CancellationToken cancellationToken)
     {
-        var category = await _categoryStore.GetAsync(BuildCategoryKey(body.CategoryId), cancellationToken);
-        if (category == null) return (StatusCodes.NotFound, null);
-
         var lockOwner = $"set-entry-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.LocalizationLock,
@@ -387,6 +384,10 @@ public partial class LocalizationService : ILocalizationService
             _configuration.LockExpirySeconds,
             cancellationToken);
         if (!lockResponse.Success) return (StatusCodes.Conflict, null);
+
+        // Category read inside lock scope — eliminates TOCTOU on EntryCount cap check
+        var category = await _categoryStore.GetAsync(BuildCategoryKey(body.CategoryId), cancellationToken);
+        if (category == null) return (StatusCodes.NotFound, null);
 
         var entryKey = BuildEntryKey(body.CategoryId, body.Language, body.Key);
         var existing = await _entryStore.GetAsync(entryKey, cancellationToken);
@@ -542,7 +543,7 @@ public partial class LocalizationService : ILocalizationService
             catModel.LastEntryUpdateLanguage = body.Language;
             catModel.UpdatedAt = now;
             // Compiler satisfaction: etag is non-null when catModel is non-null
-                await _categoryStore.TrySaveAsync(BuildCategoryKey(body.CategoryId), catModel, etag ?? string.Empty, cancellationToken: cancellationToken);
+            await _categoryStore.TrySaveAsync(BuildCategoryKey(body.CategoryId), catModel, etag ?? string.Empty, cancellationToken: cancellationToken);
         }
 
         // Invalidate compiled cache
@@ -632,7 +633,7 @@ public partial class LocalizationService : ILocalizationService
             catModel.LastEntryUpdateLanguage = body.Language;
             catModel.UpdatedAt = now;
             // Compiler satisfaction: etag is non-null when catModel is non-null
-                await _categoryStore.TrySaveAsync(BuildCategoryKey(body.CategoryId), catModel, etag ?? string.Empty, cancellationToken: cancellationToken);
+            await _categoryStore.TrySaveAsync(BuildCategoryKey(body.CategoryId), catModel, etag ?? string.Empty, cancellationToken: cancellationToken);
         }
 
         // Invalidate compiled cache for affected language

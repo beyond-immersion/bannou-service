@@ -44,20 +44,12 @@ public class CharacterLifecycleServiceOrchestrationTests
 
     // Constructor-cached store mocks matching service constructor types
     private readonly Mock<IStateStore<LifecycleProfileModel>> _mockProfileStore;
-    private readonly Mock<IStateStore<object>> _mockHeritageStore;
-    private readonly Mock<IStateStore<object>> _mockBloodlineStore;
-    private readonly Mock<IStateStore<object>> _mockCacheStore;
-
-    private const string PROFILES_STORE = "character-lifecycle-profiles";
-    private const string HERITAGE_STORE = "character-lifecycle-heritage";
-    private const string BLOODLINES_STORE = "character-lifecycle-bloodlines";
-    private const string CACHE_STORE = "character-lifecycle-cache";
 
     public CharacterLifecycleServiceOrchestrationTests()
     {
         _mockLogger = new Mock<ILogger<CharacterLifecycleService>>();
         _configuration = new CharacterLifecycleServiceConfiguration();
-        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory> { DefaultValue = DefaultValue.Mock };
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockEventConsumer = new Mock<IEventConsumer>();
@@ -74,25 +66,13 @@ public class CharacterLifecycleServiceOrchestrationTests
         _mockCurrencyClient = new Mock<ICurrencyClient>();
         _mockServiceProvider = new Mock<IServiceProvider>();
 
-        // Constructor-cached store mocks
+        // Constructor-cached store mocks (only profile store is used by orchestration tests)
         _mockProfileStore = new Mock<IStateStore<LifecycleProfileModel>>();
-        _mockHeritageStore = new Mock<IStateStore<object>>();
-        _mockBloodlineStore = new Mock<IStateStore<object>>();
-        _mockCacheStore = new Mock<IStateStore<object>>();
 
-        // Wire state store factory to return typed stores (constructor-cached)
+        // Wire typed store to factory (DefaultValue.Mock handles all other stores)
         _mockStateStoreFactory
-            .Setup(f => f.GetStore<LifecycleProfileModel>(PROFILES_STORE))
+            .Setup(f => f.GetStore<LifecycleProfileModel>(StateStoreDefinitions.CharacterLifecycleProfiles))
             .Returns(_mockProfileStore.Object);
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<object>(HERITAGE_STORE))
-            .Returns(_mockHeritageStore.Object);
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<object>(BLOODLINES_STORE))
-            .Returns(_mockBloodlineStore.Object);
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<object>(CACHE_STORE))
-            .Returns(_mockCacheStore.Object);
 
         // Default lock provider behavior - always succeed with proper disposable
         SetupLockSucceeds();

@@ -154,8 +154,8 @@ public class AuthServiceTests
         try
         {
             // Set environment variables with AUTH_ prefix and UPPER_SNAKE_CASE format
-            Environment.SetEnvironmentVariable("AUTH_JWT_EXPIRATION_MINUTES", testExpiration.ToString());
-            Environment.SetEnvironmentVariable("AUTH_MOCK_PROVIDERS", testMockProviders.ToString());
+            System.Environment.SetEnvironmentVariable("AUTH_JWT_EXPIRATION_MINUTES", testExpiration.ToString());
+            System.Environment.SetEnvironmentVariable("AUTH_MOCK_PROVIDERS", testMockProviders.ToString());
 
             // Act - Build configuration using the same method as dependency injection
             var config = BeyondImmersion.BannouService.Configuration.IServiceConfiguration.BuildConfiguration<AuthServiceConfiguration>();
@@ -168,8 +168,8 @@ public class AuthServiceTests
         finally
         {
             // Clean up environment variables
-            Environment.SetEnvironmentVariable("AUTH_JWT_EXPIRATION_MINUTES", null);
-            Environment.SetEnvironmentVariable("AUTH_MOCK_PROVIDERS", null);
+            System.Environment.SetEnvironmentVariable("AUTH_JWT_EXPIRATION_MINUTES", null);
+            System.Environment.SetEnvironmentVariable("AUTH_MOCK_PROVIDERS", null);
         }
     }
 

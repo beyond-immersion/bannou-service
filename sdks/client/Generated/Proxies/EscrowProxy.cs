@@ -421,4 +421,22 @@ public sealed class EscrowProxy
         return _client.InvokeAsync<DeregisterHandlerRequest, DeregisterHandlerResponse>(
             "/escrow/handler/deregister", request, channel, timeout, cancellationToken);
     }
+
+    /// <summary>
+    /// Clean up escrow data for a deleted character
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing CleanupByCharacterResponse on success.</returns>
+    public Task<ApiResponse<CleanupByCharacterResponse>> CleanupByCharacterAsync(
+        CleanupByCharacterRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<CleanupByCharacterRequest, CleanupByCharacterResponse>(
+            "/escrow/cleanup-by-character", request, channel, timeout, cancellationToken);
+    }
 }

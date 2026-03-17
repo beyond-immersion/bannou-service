@@ -16,6 +16,7 @@ Variable providers supply entity data to behavior expressions via the
 | `${combat.*}` | CharacterPersonality | Combat preference data for ABML expressions (${combat.*}) |
 | `${currency.*}` | Currency | Currency balance and wallet data for ABML expressions (${currency.*}) |
 | `${encounters.*}` | CharacterEncounter | Encounter history and sentiment for ABML expressions (${encounters.*}) |
+| `${environment.*}` | Environment | Weather, temperature, atmospheric conditions, and resource availability for ABML expressions (${environment.*}) |
 | `${faction.*}` | Faction | Faction membership and status data for ABML expressions (${faction.*}) |
 | `${heritage.*}` | CharacterLifecycle | Genetic heritage data — phenotype traits, aptitudes, bloodline membership, species, generation depth (${heritage.*}) |
 | `${inventory.*}` | Inventory | Item possession and container data for ABML expressions (${inventory.*}) |
@@ -29,7 +30,7 @@ Variable providers supply entity data to behavior expressions via the
 | `${transit.*}` | Transit | Transit mode availability, journey state, and route data for ABML expressions (${transit.*}) |
 | `${world.*}` | Worldstate | Game time, calendar, and season data for ABML expressions (${world.*}) |
 
-**Total**: 17 providers
+**Total**: 18 providers
 
 ## How Providers Work
 

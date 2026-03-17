@@ -647,6 +647,94 @@ namespace Bannou
         /** Delete documentation archive */
         constexpr const TCHAR* DocumentationDeleteDocumentationArchive = TEXT("POST:/documentation/repo/archive/delete");
 
+        // Environment Service
+        /** Get environmental conditions at a location */
+        constexpr const TCHAR* EnvironmentGetConditions = TEXT("POST:/environment/conditions/get");
+
+        /** Get conditions by realm and location codes */
+        constexpr const TCHAR* EnvironmentGetConditionsByCode = TEXT("POST:/environment/conditions/get-by-code");
+
+        /** Get conditions for multiple locations */
+        constexpr const TCHAR* EnvironmentBatchGetConditions = TEXT("POST:/environment/conditions/batch-get");
+
+        /** Get temperature at a location */
+        constexpr const TCHAR* EnvironmentGetTemperature = TEXT("POST:/environment/conditions/get-temperature");
+
+        /** Create a climate template for a biome */
+        constexpr const TCHAR* EnvironmentSeedClimate = TEXT("POST:/environment/climate/seed");
+
+        /** Get a climate template */
+        constexpr const TCHAR* EnvironmentGetClimate = TEXT("POST:/environment/climate/get");
+
+        /** List climate templates for a game service */
+        constexpr const TCHAR* EnvironmentListClimates = TEXT("POST:/environment/climate/list");
+
+        /** Update a climate template */
+        constexpr const TCHAR* EnvironmentUpdateClimate = TEXT("POST:/environment/climate/update");
+
+        /** Deprecate a climate template */
+        constexpr const TCHAR* EnvironmentDeprecateClimate = TEXT("POST:/environment/climate/deprecate");
+
+        /** Undeprecate a climate template */
+        constexpr const TCHAR* EnvironmentUndeprecateClimate = TEXT("POST:/environment/climate/undeprecate");
+
+        /** Delete a climate template */
+        constexpr const TCHAR* EnvironmentDeleteClimate = TEXT("POST:/environment/climate/delete");
+
+        /** Bulk seed climate templates */
+        constexpr const TCHAR* EnvironmentBulkSeedClimates = TEXT("POST:/environment/climate/bulk-seed");
+
+        /** Create a weather event */
+        constexpr const TCHAR* EnvironmentCreateWeatherEvent = TEXT("POST:/environment/weather-event/create");
+
+        /** Get a weather event */
+        constexpr const TCHAR* EnvironmentGetWeatherEvent = TEXT("POST:/environment/weather-event/get");
+
+        /** List weather events for a scope */
+        constexpr const TCHAR* EnvironmentListWeatherEvents = TEXT("POST:/environment/weather-event/list");
+
+        /** Cancel an active weather event */
+        constexpr const TCHAR* EnvironmentCancelWeatherEvent = TEXT("POST:/environment/weather-event/cancel");
+
+        /** Extend a weather event duration */
+        constexpr const TCHAR* EnvironmentExtendWeatherEvent = TEXT("POST:/environment/weather-event/extend");
+
+        /** Cancel all weather events from a source */
+        constexpr const TCHAR* EnvironmentCancelWeatherEventsBySource = TEXT("POST:/environment/weather-event/cancel-by-source");
+
+        /** Get weather summary for a realm */
+        constexpr const TCHAR* EnvironmentGetRealmWeatherSummary = TEXT("POST:/environment/weather/realm-summary");
+
+        /** Get weather grouped by region */
+        constexpr const TCHAR* EnvironmentGetWeatherByRegion = TEXT("POST:/environment/weather/by-region");
+
+        /** Get resource availability at a location */
+        constexpr const TCHAR* EnvironmentGetResourceAvailability = TEXT("POST:/environment/resource/get-availability");
+
+        /** Get resource summary for a realm */
+        constexpr const TCHAR* EnvironmentGetRealmResourceSummary = TEXT("POST:/environment/resource/realm-summary");
+
+        /** Bind a location to a climate template */
+        constexpr const TCHAR* EnvironmentCreateClimateBinding = TEXT("POST:/environment/climate-binding/create");
+
+        /** Get a climate binding for a location */
+        constexpr const TCHAR* EnvironmentGetClimateBinding = TEXT("POST:/environment/climate-binding/get");
+
+        /** Update a climate binding */
+        constexpr const TCHAR* EnvironmentUpdateClimateBinding = TEXT("POST:/environment/climate-binding/update");
+
+        /** Delete a climate binding */
+        constexpr const TCHAR* EnvironmentDeleteClimateBinding = TEXT("POST:/environment/climate-binding/delete");
+
+        /** Bulk seed climate bindings */
+        constexpr const TCHAR* EnvironmentBulkSeedBindings = TEXT("POST:/environment/climate-binding/bulk-seed");
+
+        /** Set per-realm environment configuration */
+        constexpr const TCHAR* EnvironmentSetRealmConfig = TEXT("POST:/environment/realm-config/set");
+
+        /** Get per-realm environment configuration */
+        constexpr const TCHAR* EnvironmentGetRealmConfig = TEXT("POST:/environment/realm-config/get");
+
         // Escrow Service
         /** Get escrow details */
         constexpr const TCHAR* EscrowGetEscrow = TEXT("POST:/escrow/get");
@@ -3376,6 +3464,238 @@ namespace Bannou
                 TEXT("FDeleteArchiveRequest"),
                 TEXT("FDeleteArchiveResponse"),
                 TEXT("Delete documentation archive")
+            });
+            Registry.Add(TEXT("EnvironmentGetConditions"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/conditions/get"),
+                TEXT("environment"),
+                TEXT("FGetConditionsRequest"),
+                TEXT("FConditionSnapshotResponse"),
+                TEXT("Get environmental conditions at a location")
+            });
+            Registry.Add(TEXT("EnvironmentGetConditionsByCode"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/conditions/get-by-code"),
+                TEXT("environment"),
+                TEXT("FGetConditionsByCodeRequest"),
+                TEXT("FConditionSnapshotResponse"),
+                TEXT("Get conditions by realm and location codes")
+            });
+            Registry.Add(TEXT("EnvironmentBatchGetConditions"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/conditions/batch-get"),
+                TEXT("environment"),
+                TEXT("FBatchGetConditionsRequest"),
+                TEXT("FBatchConditionSnapshotResponse"),
+                TEXT("Get conditions for multiple locations")
+            });
+            Registry.Add(TEXT("EnvironmentGetTemperature"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/conditions/get-temperature"),
+                TEXT("environment"),
+                TEXT("FGetTemperatureRequest"),
+                TEXT("FTemperatureResponse"),
+                TEXT("Get temperature at a location")
+            });
+            Registry.Add(TEXT("EnvironmentSeedClimate"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/climate/seed"),
+                TEXT("environment"),
+                TEXT("FSeedClimateRequest"),
+                TEXT("FClimateTemplateResponse"),
+                TEXT("Create a climate template for a biome")
+            });
+            Registry.Add(TEXT("EnvironmentGetClimate"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/climate/get"),
+                TEXT("environment"),
+                TEXT("FGetClimateRequest"),
+                TEXT("FClimateTemplateResponse"),
+                TEXT("Get a climate template")
+            });
+            Registry.Add(TEXT("EnvironmentListClimates"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/climate/list"),
+                TEXT("environment"),
+                TEXT("FListClimatesRequest"),
+                TEXT("FPagedClimateTemplateResponse"),
+                TEXT("List climate templates for a game service")
+            });
+            Registry.Add(TEXT("EnvironmentUpdateClimate"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/climate/update"),
+                TEXT("environment"),
+                TEXT("FUpdateClimateRequest"),
+                TEXT("FClimateTemplateResponse"),
+                TEXT("Update a climate template")
+            });
+            Registry.Add(TEXT("EnvironmentDeprecateClimate"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/climate/deprecate"),
+                TEXT("environment"),
+                TEXT("FDeprecateClimateRequest"),
+                TEXT("FClimateTemplateResponse"),
+                TEXT("Deprecate a climate template")
+            });
+            Registry.Add(TEXT("EnvironmentUndeprecateClimate"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/climate/undeprecate"),
+                TEXT("environment"),
+                TEXT("FUndeprecateClimateRequest"),
+                TEXT("FClimateTemplateResponse"),
+                TEXT("Undeprecate a climate template")
+            });
+            Registry.Add(TEXT("EnvironmentDeleteClimate"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/climate/delete"),
+                TEXT("environment"),
+                TEXT("FDeleteClimateRequest"),
+                TEXT(""),
+                TEXT("Delete a climate template")
+            });
+            Registry.Add(TEXT("EnvironmentBulkSeedClimates"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/climate/bulk-seed"),
+                TEXT("environment"),
+                TEXT("FBulkSeedClimatesRequest"),
+                TEXT("FBulkSeedClimatesResponse"),
+                TEXT("Bulk seed climate templates")
+            });
+            Registry.Add(TEXT("EnvironmentCreateWeatherEvent"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/weather-event/create"),
+                TEXT("environment"),
+                TEXT("FCreateWeatherEventRequest"),
+                TEXT("FCreateWeatherEventResponse"),
+                TEXT("Create a weather event")
+            });
+            Registry.Add(TEXT("EnvironmentGetWeatherEvent"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/weather-event/get"),
+                TEXT("environment"),
+                TEXT("FGetWeatherEventRequest"),
+                TEXT("FWeatherEventResponse"),
+                TEXT("Get a weather event")
+            });
+            Registry.Add(TEXT("EnvironmentListWeatherEvents"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/weather-event/list"),
+                TEXT("environment"),
+                TEXT("FListWeatherEventsRequest"),
+                TEXT("FPagedWeatherEventResponse"),
+                TEXT("List weather events for a scope")
+            });
+            Registry.Add(TEXT("EnvironmentCancelWeatherEvent"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/weather-event/cancel"),
+                TEXT("environment"),
+                TEXT("FCancelWeatherEventRequest"),
+                TEXT(""),
+                TEXT("Cancel an active weather event")
+            });
+            Registry.Add(TEXT("EnvironmentExtendWeatherEvent"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/weather-event/extend"),
+                TEXT("environment"),
+                TEXT("FExtendWeatherEventRequest"),
+                TEXT("FWeatherEventResponse"),
+                TEXT("Extend a weather event duration")
+            });
+            Registry.Add(TEXT("EnvironmentCancelWeatherEventsBySource"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/weather-event/cancel-by-source"),
+                TEXT("environment"),
+                TEXT("FCancelWeatherEventsBySourceRequest"),
+                TEXT("FCancelWeatherEventsBySourceResponse"),
+                TEXT("Cancel all weather events from a source")
+            });
+            Registry.Add(TEXT("EnvironmentGetRealmWeatherSummary"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/weather/realm-summary"),
+                TEXT("environment"),
+                TEXT("FGetRealmWeatherSummaryRequest"),
+                TEXT("FRealmWeatherSummaryResponse"),
+                TEXT("Get weather summary for a realm")
+            });
+            Registry.Add(TEXT("EnvironmentGetWeatherByRegion"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/weather/by-region"),
+                TEXT("environment"),
+                TEXT("FGetWeatherByRegionRequest"),
+                TEXT("FWeatherByRegionResponse"),
+                TEXT("Get weather grouped by region")
+            });
+            Registry.Add(TEXT("EnvironmentGetResourceAvailability"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/resource/get-availability"),
+                TEXT("environment"),
+                TEXT("FGetResourceAvailabilityRequest"),
+                TEXT("FResourceAvailabilityResponse"),
+                TEXT("Get resource availability at a location")
+            });
+            Registry.Add(TEXT("EnvironmentGetRealmResourceSummary"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/resource/realm-summary"),
+                TEXT("environment"),
+                TEXT("FGetRealmResourceSummaryRequest"),
+                TEXT("FRealmResourceSummaryResponse"),
+                TEXT("Get resource summary for a realm")
+            });
+            Registry.Add(TEXT("EnvironmentCreateClimateBinding"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/climate-binding/create"),
+                TEXT("environment"),
+                TEXT("FCreateClimateBindingRequest"),
+                TEXT("FClimateBindingResponse"),
+                TEXT("Bind a location to a climate template")
+            });
+            Registry.Add(TEXT("EnvironmentGetClimateBinding"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/climate-binding/get"),
+                TEXT("environment"),
+                TEXT("FGetClimateBindingRequest"),
+                TEXT("FClimateBindingResponse"),
+                TEXT("Get a climate binding for a location")
+            });
+            Registry.Add(TEXT("EnvironmentUpdateClimateBinding"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/climate-binding/update"),
+                TEXT("environment"),
+                TEXT("FUpdateClimateBindingRequest"),
+                TEXT("FClimateBindingResponse"),
+                TEXT("Update a climate binding")
+            });
+            Registry.Add(TEXT("EnvironmentDeleteClimateBinding"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/climate-binding/delete"),
+                TEXT("environment"),
+                TEXT("FDeleteClimateBindingRequest"),
+                TEXT(""),
+                TEXT("Delete a climate binding")
+            });
+            Registry.Add(TEXT("EnvironmentBulkSeedBindings"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/climate-binding/bulk-seed"),
+                TEXT("environment"),
+                TEXT("FBulkSeedBindingsRequest"),
+                TEXT("FBulkSeedBindingsResponse"),
+                TEXT("Bulk seed climate bindings")
+            });
+            Registry.Add(TEXT("EnvironmentSetRealmConfig"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/realm-config/set"),
+                TEXT("environment"),
+                TEXT("FSetRealmConfigRequest"),
+                TEXT("FRealmEnvironmentConfigResponse"),
+                TEXT("Set per-realm environment configuration")
+            });
+            Registry.Add(TEXT("EnvironmentGetRealmConfig"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/environment/realm-config/get"),
+                TEXT("environment"),
+                TEXT("FGetRealmConfigRequest"),
+                TEXT("FRealmEnvironmentConfigResponse"),
+                TEXT("Get per-realm environment configuration")
             });
             Registry.Add(TEXT("EscrowGetEscrow"), FEndpointInfo{
                 TEXT("POST"),

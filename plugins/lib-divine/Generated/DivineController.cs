@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Divine;
 
@@ -143,14 +158,65 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
 
 
     /// <summary>
+    /// Deprecate a deity (Category A)
+    /// </summary>
+
+    /// <remarks>
+    /// Marks a deity as deprecated with a reason. Idempotent — returns 200 OK if
+    /// <br/>already deprecated. Publishes deity.updated event with changedFields containing
+    /// <br/>deprecation fields.
+    /// </remarks>
+
+
+
+    /// <returns>Deity deprecated (or already deprecated — idempotent)</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> DeprecateDeity(DeprecateDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Undeprecate a deprecated deity (Category A)
+    /// </summary>
+
+    /// <remarks>
+    /// Clears deprecation on a deity. Idempotent — returns 200 OK if not deprecated.
+    /// <br/>Publishes deity.updated event with changedFields containing deprecation fields.
+    /// </remarks>
+
+
+
+    /// <returns>Deity undeprecated (or was not deprecated — idempotent)</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> UndeprecateDeity(UndeprecateDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Merge a deprecated deity into another deity (Category A)
+    /// </summary>
+
+    /// <remarks>
+    /// Transfers all followers and blessings from the source deity (must be deprecated)
+    /// <br/>to the target deity (must not be deprecated). Dissolves old seed bonds and creates
+    /// <br/>new bonds per target deity's bond template. Deletes the source deity after
+    /// <br/>successful transfer.
+    /// </remarks>
+
+
+
+    /// <returns>Merge completed</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MergeDeprecatedResponse>> MergeDeity(MergeDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
     /// Delete a deity
     /// </summary>
 
     /// <remarks>
-    /// Permanently deletes a deity and all dependent data. Deactivates the deity
-    /// <br/>if active, revokes all blessings, removes all follower relationships, deletes
-    /// <br/>attention slots, and coordinates cleanup via lib-resource. Publishes a
-    /// <br/>lifecycle deleted event.
+    /// Permanently deletes a deity and all dependent data. Requires the deity to be
+    /// <br/>deprecated first (Category A T31). Deactivates the deity if active, revokes
+    /// <br/>all blessings, removes all follower relationships, deletes attention slots,
+    /// <br/>and coordinates cleanup via lib-resource. Publishes a lifecycle deleted event.
     /// </remarks>
 
 
@@ -781,13 +847,163 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase,
     }
 
     /// <summary>
+    /// Deprecate a deity (Category A)
+    /// </summary>
+    /// <remarks>
+    /// Marks a deity as deprecated with a reason. Idempotent — returns 200 OK if
+    /// <br/>already deprecated. Publishes deity.updated event with changedFields containing
+    /// <br/>deprecation fields.
+    /// </remarks>
+    /// <returns>Deity deprecated (or already deprecated — idempotent)</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("divine/deity/deprecate")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> DeprecateDeity([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.DeprecateDeity",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/deity/deprecate");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.DeprecateDeityAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/deity/deprecate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:divine/deity/deprecate");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "divine",
+                "DeprecateDeity",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:divine/deity/deprecate",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Undeprecate a deprecated deity (Category A)
+    /// </summary>
+    /// <remarks>
+    /// Clears deprecation on a deity. Idempotent — returns 200 OK if not deprecated.
+    /// <br/>Publishes deity.updated event with changedFields containing deprecation fields.
+    /// </remarks>
+    /// <returns>Deity undeprecated (or was not deprecated — idempotent)</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("divine/deity/undeprecate")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> UndeprecateDeity([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UndeprecateDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.UndeprecateDeity",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/deity/undeprecate");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.UndeprecateDeityAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/deity/undeprecate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:divine/deity/undeprecate");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "divine",
+                "UndeprecateDeity",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:divine/deity/undeprecate",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Merge a deprecated deity into another deity (Category A)
+    /// </summary>
+    /// <remarks>
+    /// Transfers all followers and blessings from the source deity (must be deprecated)
+    /// <br/>to the target deity (must not be deprecated). Dissolves old seed bonds and creates
+    /// <br/>new bonds per target deity's bond template. Deletes the source deity after
+    /// <br/>successful transfer.
+    /// </remarks>
+    /// <returns>Merge completed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("divine/deity/merge")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MergeDeprecatedResponse>> MergeDeity([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MergeDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.MergeDeity",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/deity/merge");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.MergeDeityAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/deity/merge");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:divine/deity/merge");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "divine",
+                "MergeDeity",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:divine/deity/merge",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
     /// Delete a deity
     /// </summary>
     /// <remarks>
-    /// Permanently deletes a deity and all dependent data. Deactivates the deity
-    /// <br/>if active, revokes all blessings, removes all follower relationships, deletes
-    /// <br/>attention slots, and coordinates cleanup via lib-resource. Publishes a
-    /// <br/>lifecycle deleted event.
+    /// Permanently deletes a deity and all dependent data. Requires the deity to be
+    /// <br/>deprecated first (Category A T31). Deactivates the deity if active, revokes
+    /// <br/>all blessings, removes all follower relationships, deletes attention slots,
+    /// <br/>and coordinates cleanup via lib-resource. Publishes a lifecycle deleted event.
     /// </remarks>
     /// <returns>Deity deleted</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("divine/deity/delete")]

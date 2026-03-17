@@ -1180,6 +1180,38 @@ x-state-stores:
     purpose: Distributed locks for collection mutations and grant operations
 
   # ============================================================================
+  # Environment Stores (L4 GameFeatures Service)
+  # ============================================================================
+
+  environment-climate:
+    backend: mysql
+    service: Environment
+    purpose: Climate templates, location-climate bindings, and per-realm default biome configuration (durable, queryable)
+
+  environment-overrides:
+    backend: mysql
+    service: Environment
+    purpose: Weather event override records with scope and source indexing (durable, queryable)
+
+  environment-weather:
+    backend: redis
+    prefix: "environment:weather"
+    service: Environment
+    purpose: Cached resolved weather per location per game-day (TTL-based)
+
+  environment-conditions:
+    backend: redis
+    prefix: "environment:conditions"
+    service: Environment
+    purpose: Condition snapshots and active location tracking sorted set (TTL-based)
+
+  environment-lock:
+    backend: redis
+    prefix: "environment:lock"
+    service: Environment
+    purpose: Distributed locks for climate mutations, weather events, and realm refresh cycles
+
+  # ============================================================================
   # Gardener Stores (L4 GameFeatures Service)
   # ============================================================================
 
@@ -1241,12 +1273,6 @@ x-state-stores:
     prefix: "divine:attention"
     service: Divine
     purpose: Active attention slot tracking per deity (ephemeral, high-frequency reads)
-
-  divine-divinity-events:
-    backend: redis
-    prefix: "divine:divevt"
-    service: Divine
-    purpose: Pending divinity generation events awaiting batch processing (ephemeral queue)
 
   divine-lock:
     backend: redis

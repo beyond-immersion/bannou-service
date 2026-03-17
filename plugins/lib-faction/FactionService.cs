@@ -718,11 +718,26 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         // Category A deprecation lifecycle: must be deprecated before deletion (per IMPLEMENTATION TENETS)
         if (!model.IsDeprecated) return StatusCodes.BadRequest;
 
+        await DeleteFactionCascadeInternalAsync(model, cancellationToken);
+
+        _logger.LogInformation("Deleted faction {FactionId}", body.FactionId);
+        return StatusCodes.OK;
+    }
+
+    /// <summary>
+    /// Cascades deletion of all faction sub-entities and deletes the faction itself.
+    /// Does NOT check deprecation status — caller is responsible for lifecycle guards.
+    /// Used by DeleteFactionAsync (after deprecation check) and CleanupByRealmAsync (bypass).
+    /// </summary>
+    private async Task DeleteFactionCascadeInternalAsync(FactionModel model, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionService.DeleteFactionCascadeInternal");
+
         // Cascade: remove all members (paginated to handle large factions)
         var memberConditions = new List<QueryCondition>
         {
             new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Exists },
-            new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Equals, Value = body.FactionId.ToString() },
+            new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Equals, Value = model.FactionId.ToString() },
         };
         var memberOffset = 0;
         bool memberHasMore;
@@ -739,7 +754,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Failed to remove member {CharacterId} from faction {FactionId} during cascade delete, continuing",
-                        member.Value.CharacterId, body.FactionId);
+                        member.Value.CharacterId, model.FactionId);
                 }
             }
             memberOffset += _configuration.SeedBulkPageSize;
@@ -747,7 +762,7 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         } while (memberHasMore);
 
         // Cascade: release all territory claims
-        var claimList = await _territoryListStore.GetAsync(BuildFactionClaimsKey(body.FactionId), cancellationToken);
+        var claimList = await _territoryListStore.GetAsync(BuildFactionClaimsKey(model.FactionId), cancellationToken);
         if (claimList != null)
         {
             foreach (var claimId in claimList.ClaimIds.ToList())
@@ -763,33 +778,45 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Failed to release territory claim {ClaimId} during cascade delete for faction {FactionId}, continuing",
-                        claimId, body.FactionId);
+                        claimId, model.FactionId);
                 }
             }
-            await _territoryListStore.DeleteAsync(BuildFactionClaimsKey(body.FactionId), cancellationToken: cancellationToken);
+            await _territoryListStore.DeleteAsync(BuildFactionClaimsKey(model.FactionId), cancellationToken: cancellationToken);
         }
 
-        // Cascade: delete all norms
-        var normList = await _normListStore.GetAsync(BuildFactionNormsKey(body.FactionId), cancellationToken);
+        // Cascade: delete all norms (publish events per FOUNDATION TENETS — Event-Driven Architecture)
+        var normList = await _normListStore.GetAsync(BuildFactionNormsKey(model.FactionId), cancellationToken);
         if (normList != null)
         {
             foreach (var normId in normList.NormIds.ToList())
             {
                 try
                 {
+                    var norm = await _normStore.GetAsync(BuildNormKey(normId), cancellationToken);
                     await _normStore.DeleteAsync(BuildNormKey(normId), cancellationToken: cancellationToken);
+                    if (norm != null)
+                    {
+                        await _messageBus.PublishFactionNormDeletedAsync(new FactionNormDeletedEvent
+                        {
+                            EventId = Guid.NewGuid(),
+                            Timestamp = DateTimeOffset.UtcNow,
+                            FactionId = model.FactionId,
+                            NormId = normId,
+                            ViolationType = norm.ViolationType,
+                        }, cancellationToken);
+                    }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Failed to delete norm {NormId} during cascade delete for faction {FactionId}, continuing",
-                        normId, body.FactionId);
+                        normId, model.FactionId);
                 }
             }
-            await _normListStore.DeleteAsync(BuildFactionNormsKey(body.FactionId), cancellationToken: cancellationToken);
+            await _normListStore.DeleteAsync(BuildFactionNormsKey(model.FactionId), cancellationToken: cancellationToken);
         }
 
-        // Cascade governance entries
-        var govList = await _governanceListStore.GetAsync(BuildFactionGovernanceKey(body.FactionId), cancellationToken);
+        // Cascade governance entries (publish events per FOUNDATION TENETS — Event-Driven Architecture)
+        var govList = await _governanceListStore.GetAsync(BuildFactionGovernanceKey(model.FactionId), cancellationToken);
         if (govList != null)
         {
             foreach (var govId in govList.GovernanceIds.ToList())
@@ -798,16 +825,27 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
                 {
                     var entry = await _governanceStore.GetAsync(BuildGovernanceKey(govId), cancellationToken);
                     if (entry != null)
-                        await _governanceStore.DeleteAsync(BuildFactionGovernanceDomainKey(body.FactionId, entry.Domain), cancellationToken);
+                        await _governanceStore.DeleteAsync(BuildFactionGovernanceDomainKey(model.FactionId, entry.Domain), cancellationToken);
                     await _governanceStore.DeleteAsync(BuildGovernanceKey(govId), cancellationToken);
+                    if (entry != null)
+                    {
+                        await _messageBus.PublishFactionGovernanceDeletedAsync(new FactionGovernanceDeletedEvent
+                        {
+                            EventId = Guid.NewGuid(),
+                            Timestamp = DateTimeOffset.UtcNow,
+                            FactionId = model.FactionId,
+                            GovernanceId = govId,
+                            Domain = entry.Domain,
+                        }, cancellationToken);
+                    }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Failed to delete governance entry {GovernanceId} during cascade delete for faction {FactionId}, continuing",
-                        govId, body.FactionId);
+                        govId, model.FactionId);
                 }
             }
-            await _governanceListStore.DeleteAsync(BuildFactionGovernanceKey(body.FactionId), cancellationToken);
+            await _governanceListStore.DeleteAsync(BuildFactionGovernanceKey(model.FactionId), cancellationToken);
         }
 
         // Delete faction records
@@ -835,9 +873,6 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             UpdatedAt = model.UpdatedAt,
         };
         await _messageBus.PublishFactionDeletedAsync(deletedEvt, cancellationToken);
-
-        _logger.LogInformation("Deleted faction {FactionId}", body.FactionId);
-        return StatusCodes.OK;
     }
 
     // ========================================================================
@@ -2147,17 +2182,27 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             {
                 var faction = result.Value;
 
-                // Count cascaded data before deletion
-                var normList = await _normListStore.GetAsync(BuildFactionNormsKey(faction.FactionId), cancellationToken);
-                normsRemoved += normList?.NormIds.Count ?? 0;
+                try
+                {
+                    // Count cascaded data before deletion
+                    var normList = await _normListStore.GetAsync(BuildFactionNormsKey(faction.FactionId), cancellationToken);
+                    normsRemoved += normList?.NormIds.Count ?? 0;
 
-                var claimList = await _territoryListStore.GetAsync(BuildFactionClaimsKey(faction.FactionId), cancellationToken);
-                claimsRemoved += claimList?.ClaimIds.Count ?? 0;
+                    var claimList = await _territoryListStore.GetAsync(BuildFactionClaimsKey(faction.FactionId), cancellationToken);
+                    claimsRemoved += claimList?.ClaimIds.Count ?? 0;
 
-                membershipsRemoved += faction.MemberCount;
+                    membershipsRemoved += faction.MemberCount;
 
-                await DeleteFactionAsync(new DeleteFactionRequest { FactionId = faction.FactionId }, cancellationToken);
-                factionsRemoved++;
+                    // Bypass deprecation guard — cleanup callbacks must reliably remove dependent data
+                    // (per FOUNDATION TENETS — Resource-Managed Cleanup)
+                    await DeleteFactionCascadeInternalAsync(faction, cancellationToken);
+                    factionsRemoved++;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to delete faction {FactionId} during realm cleanup for realm {RealmId}, continuing",
+                        faction.FactionId, body.RealmId);
+                }
             }
 
             cleanupOffset += _configuration.SeedBulkPageSize;

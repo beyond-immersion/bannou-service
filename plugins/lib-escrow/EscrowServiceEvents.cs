@@ -241,6 +241,14 @@ public partial class EscrowService
                 return;
             }
 
+            // Re-verify contract binding after re-load to close TOCTOU window between query and mutation
+            if (agreementModel.BoundContractId != contractId)
+            {
+                _logger.LogDebug("Escrow {EscrowId} no longer bound to contract {ContractId}, ignoring contract.fulfilled",
+                    escrowId, contractId);
+                return;
+            }
+
             if (agreementModel.Status != EscrowStatus.PendingCondition)
             {
                 _logger.LogDebug("Escrow {EscrowId} in state {Status}, not Pending_condition; ignoring contract.fulfilled",
@@ -336,6 +344,14 @@ public partial class EscrowService
             {
                 _logger.LogDebug("Escrow {EscrowId} already in terminal state {Status}, ignoring contract.terminated",
                     escrowId, agreementModel.Status);
+                return;
+            }
+
+            // Re-verify contract binding after re-load to close TOCTOU window between query and mutation
+            if (agreementModel.BoundContractId != contractId)
+            {
+                _logger.LogDebug("Escrow {EscrowId} no longer bound to contract {ContractId}, ignoring contract.terminated",
+                    escrowId, contractId);
                 return;
             }
 

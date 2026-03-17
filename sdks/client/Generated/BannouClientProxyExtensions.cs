@@ -35,6 +35,7 @@ public partial class BannouClient
     private CurrencyProxy? _currency;
     private DivineProxy? _divine;
     private DocumentationProxy? _documentation;
+    private EnvironmentProxy? _environment;
     private EscrowProxy? _escrow;
     private FactionProxy? _faction;
     private GameServiceProxy? _gameService;
@@ -199,6 +200,12 @@ public partial class BannouClient
     /// </summary>
     public DocumentationProxy Documentation =>
         _documentation ??= new DocumentationProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Bannou Environment Service API operations.
+    /// </summary>
+    public EnvironmentProxy Environment =>
+        _environment ??= new EnvironmentProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Escrow Service API operations.

@@ -108,10 +108,10 @@ Distributed locks for faction, membership, territory, norm, and governance mutat
 | `faction.territory.released` | `FactionTerritoryReleasedEvent` | ReleaseTerritory, DeleteFaction (cascade) |
 | `faction.norm.defined` | `FactionNormDefinedEvent` | DefineNorm |
 | `faction.norm.updated` | `FactionNormUpdatedEvent` | UpdateNorm |
-| `faction.norm.deleted` | `FactionNormDeletedEvent` | DeleteNorm |
+| `faction.norm.deleted` | `FactionNormDeletedEvent` | DeleteNorm, DeleteFaction (cascade) |
 | `faction.realm-baseline.designated` | `FactionRealmBaselineDesignatedEvent` | DesignateRealmBaseline |
 | `faction.governance.defined` | `FactionGovernanceDefinedEvent` | SetGovernanceEntry |
-| `faction.governance.deleted` | `FactionGovernanceDeletedEvent` | RemoveGovernanceEntry, RevokeAuthority (cascade) |
+| `faction.governance.deleted` | `FactionGovernanceDeletedEvent` | RemoveGovernanceEntry, RevokeAuthority (cascade), DeleteFaction (cascade) |
 | `faction.authority.delegated` | `FactionAuthorityDelegatedEvent` | DelegateAuthority |
 | `faction.authority.revoked` | `FactionAuthorityRevokedEvent` | RevokeAuthority |
 
@@ -168,7 +168,7 @@ This plugin does not consume external events. Cross-service integration uses DI 
 | UpdateFaction | POST /faction/update | generated | developer | faction, faction-code | faction.updated |
 | DeprecateFaction | POST /faction/deprecate | generated | developer | faction, faction-code | faction.updated |
 | UndeprecateFaction | POST /faction/undeprecate | generated | developer | faction, faction-code | faction.updated |
-| DeleteFaction | POST /faction/delete | generated | admin | faction, faction-code, members, territory, norms, governance | faction.deleted, faction.member.removed, faction.territory.released |
+| DeleteFaction | POST /faction/delete | generated | admin | faction, faction-code, members, territory, norms, governance | faction.deleted, faction.member.removed, faction.territory.released, faction.norm.deleted, faction.governance.deleted |
 | SeedFactions | POST /faction/seed | generated | admin | faction, faction-code | faction.created |
 | DesignateRealmBaseline | POST /faction/designate-realm-baseline | generated | developer | faction, faction-code, norm-cache | faction.realm-baseline.designated, faction.updated |
 | GetRealmBaseline | POST /faction/get-realm-baseline | generated | user | - | - |
@@ -321,17 +321,20 @@ LOCK faction-lock:"faction:{factionId}"                           -> 409 if fail
     READ territory-store:BuildClaimKey(claimId)
     IF active: CALL ReleaseTerritoryInternalAsync(claim)          // per-item try-catch
   DELETE territory-list-store:BuildFactionClaimsKey(factionId)
-  // Cascade: norms
+  // Cascade: norms (publish events per FOUNDATION TENETS)
   READ norm-list-store:BuildFactionNormsKey(factionId)
   FOREACH normId in list
-    DELETE norm-store:BuildNormKey(normId)                         // per-item try-catch
+    READ norm-store:BuildNormKey(normId)
+    DELETE norm-store:BuildNormKey(normId)
+    PUBLISH faction.norm.deleted { factionId, normId, violationType }  // per-item try-catch
   DELETE norm-list-store:BuildFactionNormsKey(factionId)
-  // Cascade: governance entries
+  // Cascade: governance entries (publish events per FOUNDATION TENETS)
   READ governance-list-store:BuildFactionGovernanceKey(factionId)
   FOREACH govId in list
     READ governance-store:BuildGovernanceKey(govId)
     DELETE governance-store:BuildFactionGovernanceDomainKey(factionId, domain)
-    DELETE governance-store:BuildGovernanceKey(govId)              // per-item try-catch
+    DELETE governance-store:BuildGovernanceKey(govId)
+    PUBLISH faction.governance.deleted { factionId, govId, domain }    // per-item try-catch
   DELETE governance-list-store:BuildFactionGovernanceKey(factionId)
   // Delete faction itself
   DELETE faction-store:BuildFactionKey(factionId)
@@ -810,11 +813,47 @@ POST /faction/cleanup-by-realm | Roles: []
 
 // Paginated loop over all factions in realm
 FOREACH page (QUERY faction-query-store WHERE $.RealmId = realmId PAGED(offset, SeedBulkPageSize))
-  FOREACH faction
+  FOREACH faction (per-item try-catch, T7 batch isolation)
     // Count members, norms, claims for reporting
-    CALL DeleteFactionAsync({ FactionId })
-    // Note: DeleteFactionAsync requires IsDeprecated == true
+    CALL DeleteFactionCascadeInternalAsync(faction)   // Bypasses deprecation guard
+    factionsRemoved++
 RETURN (200, CleanupByRealmResponse { FactionsRemoved, MembershipsRemoved, TerritoryClaimsRemoved, NormsRemoved })
+
+### DeleteFactionCascadeInternalAsync (private helper)
+Extracted cascade deletion logic shared by DeleteFactionAsync and CleanupByRealmAsync.
+Accepts a FactionModel directly (no deprecation guard, no lock — caller handles both).
+
+// Cascade: remove all members (paginated)
+FOREACH page (QUERY member-query-store WHERE $.FactionId = factionId)
+  FOREACH member (per-item try-catch)
+    CALL RemoveMemberInternalAsync(factionId, characterId)
+// Cascade: release all territory claims
+READ territory-list-store:BuildFactionClaimsKey(factionId)
+FOREACH claimId (per-item try-catch)
+  READ territory-store:BuildClaimKey(claimId)
+  IF Active → CALL ReleaseTerritoryInternalAsync(claim)
+DELETE territory-list-store:BuildFactionClaimsKey(factionId)
+// Cascade: delete all norms (publish events)
+READ norm-list-store:BuildFactionNormsKey(factionId)
+FOREACH normId (per-item try-catch)
+  READ norm-store:BuildNormKey(normId)
+  DELETE norm-store:BuildNormKey(normId)
+  PUBLISH faction.norm.deleted
+DELETE norm-list-store:BuildFactionNormsKey(factionId)
+// Cascade: delete all governance entries (publish events)
+READ governance-list-store:BuildFactionGovernanceKey(factionId)
+FOREACH govId (per-item try-catch)
+  READ governance-store:BuildGovernanceKey(govId)
+  DELETE governance-store:BuildFactionGovernanceDomainKey(factionId, domain)
+  DELETE governance-store:BuildGovernanceKey(govId)
+  PUBLISH faction.governance.deleted
+DELETE governance-list-store:BuildFactionGovernanceKey(factionId)
+// Delete faction entity + code index
+DELETE faction-store:BuildFactionKey(factionId)
+DELETE faction-store:BuildFactionCodeKey(gameServiceId, code)
+// Invalidate norm cache entries
+PUBLISH faction.deleted
+CALL _resourceClient.ExecuteCleanupAsync({ faction, factionId })   // Cascade sub-references
 
 ---
 
@@ -916,9 +955,10 @@ Implements `ICollectionUnlockListener`. Registered as Singleton.
 
 Implements `IVariableProviderFactory`. Registered as Singleton. Provides `${faction.*}` namespace.
 
-**CreateAsync(entityId)**: Returns `FactionProvider.Empty` for null entityId.
-- READ member-list-store:BuildCharacterMembershipsKey(entityId)
+**CreateAsync(characterId, realmId, locationId)**: Returns `FactionProvider.Empty` for null characterId.
+- READ member-list-store:BuildCharacterMembershipsKey(characterId)
 - FOREACH membership: READ faction-store:BuildFactionKey(factionId)
 - FOREACH membership faction: READ norm-list-store:BuildFactionNormsKey(factionId)
 - FOREACH norm: READ norm-store:BuildNormKey(normId)
-- Builds provider with aggregate variables, per-faction variables, and norm variables.
+- IF locationId provided: READ territory-store:BuildLocationClaimKey(locationId) → check if controlling faction is in membership set
+- Builds provider with aggregate variables, per-faction variables, norm variables, and territory context (`in_controlled_territory`).

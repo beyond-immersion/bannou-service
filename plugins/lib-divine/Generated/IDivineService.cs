@@ -65,6 +65,21 @@ public partial interface IDivineService : IBannouService
         Task<(StatusCodes, DeityResponse?)> DeactivateDeityAsync(DeactivateDeityRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// DeprecateDeity operation
+        /// </summary>
+        Task<(StatusCodes, DeityResponse?)> DeprecateDeityAsync(DeprecateDeityRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// UndeprecateDeity operation
+        /// </summary>
+        Task<(StatusCodes, DeityResponse?)> UndeprecateDeityAsync(UndeprecateDeityRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// MergeDeity operation
+        /// </summary>
+        Task<(StatusCodes, MergeDeprecatedResponse?)> MergeDeityAsync(MergeDeprecatedRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// DeleteDeity operation
         /// </summary>
         Task<StatusCodes> DeleteDeityAsync(DeleteDeityRequest body, CancellationToken cancellationToken = default(CancellationToken));

@@ -229,7 +229,7 @@ internal class IdempotencyRecord
     public required string Operation { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset ExpiresAt { get; set; }
-    public object? Result { get; set; }
+    public DepositResponse? Result { get; set; }
 }
 
 /// <summary>

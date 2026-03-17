@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Escrow;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
@@ -27,6 +28,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<EscrowService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<IResourceClient> _mockResourceClient;
 
     public EscrowServiceTests()
     {
@@ -41,6 +43,7 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<EscrowService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockResourceClient = new Mock<IResourceClient>();
 
         // Setup factory to return typed stores
         _mockStateStoreFactory
@@ -111,7 +114,8 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             _mockLogger.Object,
             Configuration,
             _mockEventConsumer.Object,
-            Mock.Of<ITelemetryProvider>());
+            Mock.Of<ITelemetryProvider>(),
+            _mockResourceClient.Object);
     }
 
     #region Constructor Tests

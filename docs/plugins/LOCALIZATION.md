@@ -1,12 +1,12 @@
 # Localization Plugin Deep Dive
 
-> **Plugin**: lib-localization (not yet created)
-> **Schema**: `schemas/localization-api.yaml` (not yet created)
-> **Version**: N/A (Pre-Implementation)
-> **State Store**: localization-category-store (MySQL), localization-entry-store (MySQL), localization-compiled-cache (Redis), localization-lock (Redis) — all planned
+> **Plugin**: lib-localization
+> **Schema**: `schemas/localization-api.yaml`
+> **Version**: 1.0
+> **State Store**: localization-category-store (MySQL), localization-entry-store (MySQL), localization-compiled-cache (Redis), localization-lock (Redis)
 > **Layer**: AppFoundation
 > **Implementation Map**: [docs/maps/LOCALIZATION.md](../maps/LOCALIZATION.md)
-> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
+> **Status**: Implemented — schema, generated code, service implementation, tests, and DI validator all exist.
 > **Short**: Multi-language translation tables with category lifecycle, pronunciation annotations, bulk export, and DI-based key validation for cross-service localization
 
 ---
@@ -278,7 +278,7 @@ This model is defined in the localization API schema as `RubyAnnotation`. Ruby a
 
 ## Stubs & Unimplemented Features
 
-*(Aspirational — no schema or code exists yet)*
+*(None — all 12 endpoints fully implemented)*
 
 ---
 
@@ -306,7 +306,7 @@ This model is defined in the localization API schema as `RubyAnnotation`. Ruby a
 
 ### Bugs (Fix Immediately)
 
-*(Aspirational — no implementation exists)*
+1. ~~**SetEntry capacity check TOCTOU race**~~: **FIXED** (2026-03-16) - Moved the category read inside the lock scope in both the implementation map pseudocode and the service code (`SetEntryAsync`) so that the `MaxEntriesPerCategory` capacity check uses a fresh `EntryCount` value obtained under the distributed lock, eliminating the TOCTOU race.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -322,20 +322,27 @@ This model is defined in the localization API schema as `RubyAnnotation`. Ruby a
 
 6. **No real-time push of localization changes**: Localization follows Pattern C (client-initiated pull), not Pattern A (server push). Clients download localization tables and cache locally. To pick up changes, clients re-fetch. Category lifecycle events are for server-side consumers (e.g., cache invalidation, asset bundle recompilation), not client notification.
 
+7. **UpdateCategory publishes even when nothing changed**: The UpdateCategory implementation map specifies that `localization.category.updated` is always published, even if the request contained no changes (empty `changedFields`). This simplifies the implementation (no change-detection branch) at the cost of occasional no-op events. Consumers must already handle `changedFields` filtering, so empty-changeset events are harmless.
+
 ### Design Considerations (Requires Planning)
 
 1. **`localizationKeyPrefix` field addition to L2 schemas**: Adding `localizationKeyPrefix` (string, nullable) to Item, Quest, Species, Location, Seed, Collection, Realm, and Relationship template schemas requires coordinated schema changes across 8+ services. This should be batched as a single cross-cutting change after lib-localization is implemented. The field is nullable — localization is optional even when the service is loaded. At template creation, the service calls `ValidateLocalizationKeyAsync(LocalizationCategoryDefinitions.Items, prefix, null)` to verify the prefix has at least one entry in the default language.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/508 -->
 
-2. **Compiled export size at scale**: A game with 50 categories × 10,000 entries × 30 languages = 15M entries. The compiled export endpoint must handle this efficiently — likely via category-filtered exports rather than full-database dumps. Consider whether the export should be per-category rather than per-language.
+2. ~~**Compiled export size at scale**~~: **FIXED** (2026-03-16) - The Export endpoint already supports per-category filtering via optional `categoryId` parameter. Per-category exports are cached independently (`compiled:{categoryId}:{language}`). The all-categories path (`compiled:all:{language}`) compiles with paged MySQL reads (`ExportPageSize`) and caches with TTL. Clients use per-category exports in practice; the all-categories path is an admin convenience that may need a size cap at extreme scale.
 
 3. **Localization for procedurally-generated content**: God-actor-composed quest titles and NPC dialogue use template-based localization (`"Rescue {0} from {1}"`). The parameter substitution happens at the client from localized template strings, not at the server. This means localization keys for scenario-composed content must reference templates, not fully-resolved strings. The Storyline/Quest composition pipeline needs to emit localization keys, not display text.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/688 -->
 
 4. **Relationship to existing ABML `ILocalizationProvider`**: The behavior compiler has its own `ILocalizationProvider` with `FileLocalizationProvider`. lib-localization should implement this interface so ABML expressions like `${localization("KEY", locale)}` resolve against centralized localization tables instead of file-based lookups. This bridges the existing ABML pattern with the new service without breaking backward compatibility (file-based provider remains available for embedded/sidecar deployments without localization service).
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/689 -->
 
 5. **Machine-readable identifier format standardization**: Localization keys use `^[a-z][a-z0-9._-]*$` (lowercase, dot-separated hierarchy, kebab-case segments). This same class of constraint — "machine-readable string identifier" — appears across 6+ services with ad-hoc variations: save-load (`^[a-z][a-z0-9-]*$`), item (`^[a-z][a-z0-9_]{1,63}$`), currency (`^[a-z][a-z0-9_]{1,31}$`), contract (`^[a-z0-9_]+$`), leaderboard/achievement (`^[a-z0-9_-]+$`), website (`^[a-z0-9-]+$`). SCHEMA-RULES.md should define standardized identifier format classes (e.g., `x-string-format: slug`, `x-string-format: code`, `x-string-format: hierarchical-key`) so the constraint is mechanical based on the field's semantic role, not ad-hoc per service. This is a cross-cutting concern beyond localization — flagging for SCHEMA-RULES.md consideration.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/686 -->
 
 6. **Generation script for localization-categories.yaml**: Needs a new generation script (`scripts/generate-localization-categories.sh`) that reads `schemas/localization-categories.yaml` and produces `bannou-service/Generated/LocalizationCategoryDefinitions.cs` and `docs/generated/GENERATED-LOCALIZATION-CATEGORIES.md`. Follow the same pattern as `generate-state-stores.sh` / `StateStoreDefinitions.cs`. Also needs two structural tests in `structural-tests/StructuralTests.cs`: one validating all constants are referenced by declared consumer assemblies, and one validating all `ILocalizationKeyValidator` calls use generated constants.
+
+7. ~~**BulkSetEntries bypasses MaxEntriesPerCategory**~~: **FIXED** (2026-03-16) - Added worst-case pre-flight cap check to BulkSetEntries in the implementation map. If `EntryCount + batch size > MaxEntriesPerCategory`, the entire batch is rejected with 409 before any writes. Same safety cap as SetEntry, consistent enforcement regardless of endpoint.
 
 ---
 

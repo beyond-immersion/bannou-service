@@ -75,8 +75,8 @@ public class LocalizationKeyValidator : ILocalizationKeyValidator
         {
             var entries = await _entryQueryStore.QueryPagedAsync(
                 e => e.CategoryId == categoryId
-                     && e.Language == category.DefaultLanguage
-                     && e.Key.StartsWith(keyPrefix),
+                    && e.Language == category.DefaultLanguage
+                    && e.Key.StartsWith(keyPrefix),
                 page: 0,
                 pageSize: 1,
                 cancellationToken: ct);

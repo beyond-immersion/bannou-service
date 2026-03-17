@@ -9,9 +9,9 @@ need deprecation marker interfaces, and the current state of Category B complian
 
 ## Summary
 
-- **Total deprecatable entities**: 24
+- **Total deprecatable entities**: 25
 - **With `instanceEntity` declared**: 16
-- **Missing `instanceEntity`**: 8
+- **Missing `instanceEntity`**: 9
 
 ## All Deprecatable Entities
 
@@ -27,6 +27,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 | Collection | `CollectionEntryTemplate` | `Collection` | OK |
 | Contract | `ContractTemplate` | `ContractInstance` | OK |
 | Currency | `CurrencyDefinition` | `CurrencyBalance` | OK |
+| Environment | `ClimateTemplate` | — | Missing |
 | Faction | `Faction` | — | Missing |
 | Gardener | `ScenarioTemplate` | `ScenarioInstance` | OK |
 | Item | `ItemTemplate` | `ItemInstance` | OK |
@@ -123,6 +124,14 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Topic prefix**: `currency`
 - **Instance entity**: `CurrencyBalance`
 - **Model fields**: `definitionId`, `code`, `name`, `scope`, `precision`, `isActive`, `modifiedAt`
+
+### Environment: ClimateTemplate
+
+- **Service**: `environment`
+- **Schema**: `schemas/environment-service-events.yaml`
+- **Topic prefix**: `environment`
+- **Instance entity**: `*(not declared)*`
+- **Model fields**: `templateId`, `gameServiceId`, `biomeCode`, `displayName`, `description`, `temperatureCurves`, `weatherDistributions`, `atmosphericBaselines`, `resourceAvailability`, `altitudeTemperatureRate`, `depthTemperatureRate`, `heatThreshold`
 
 ### Faction: Faction
 

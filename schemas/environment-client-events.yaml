@@ -1,0 +1,79 @@
+openapi: 3.0.4
+info:
+  title: Environment Client Events
+  description: |
+    Server-to-client WebSocket push events for Environment service.
+    Published via IClientEventPublisher, delivered to connected clients through Connect service.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    WeatherTransitionClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: Pushed to clients when weather changes at a player's location
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - locationId
+        - realmId
+        - previousWeatherCode
+        - currentWeatherCode
+        - temperature
+        - precipitationType
+        - precipitationIntensity
+        - windSpeed
+        - visibility
+        - cloudCover
+      properties:
+        eventName:
+          type: string
+          default: "environment.weather.transitioned"
+          description: Fixed event type identifier
+        locationId:
+          type: string
+          format: uuid
+          description: Location where weather changed
+        realmId:
+          type: string
+          format: uuid
+          description: Realm containing the location
+        previousWeatherCode:
+          type: string
+          description: Previous weather pattern code
+        currentWeatherCode:
+          type: string
+          description: New weather pattern code
+        temperature:
+          type: number
+          format: double
+          description: Current temperature after transition
+        precipitationType:
+          $ref: 'environment-api.yaml#/components/schemas/PrecipitationType'
+          description: Current precipitation form
+        precipitationIntensity:
+          type: number
+          format: double
+          description: Current precipitation intensity (0.0-1.0)
+        windSpeed:
+          type: number
+          format: double
+          description: Current wind speed (0.0-1.0)
+        visibility:
+          type: number
+          format: double
+          description: Current visibility (0.0-1.0)
+        cloudCover:
+          type: number
+          format: double
+          description: Current cloud coverage (0.0-1.0)

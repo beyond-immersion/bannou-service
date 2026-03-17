@@ -25,13 +25,28 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Divine;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Divine;
 
 using System = global::System;
 
 /// <summary>
-/// Lifecycle status of a deity entity
+/// Lifecycle status of a deity entity (Archived removed — deprecation triple-field replaces it per Category A T31)
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -43,9 +58,6 @@ public enum DeityStatus
 
     [System.Runtime.Serialization.EnumMember(Value = @"Dormant")]
     Dormant = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Archived")]
-    Archived = 2,
 
 }
 #pragma warning restore CS1591
@@ -124,8 +136,9 @@ public partial class DomainInfluence
     /// Opaque domain code (e.g., war, knowledge, nature). Game-defined, not an enum.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("domain")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string Domain { get; set; } = default!;
 
     /// <summary>
@@ -138,10 +151,10 @@ public partial class DomainInfluence
 }
 
 /// <summary>
-/// Machine-readable personality traits influencing deity behavior decisions
+/// Divine-specific behavioral configuration for god-actor ABML decisions (separate from Character Personality which provides emergent personality via system realm character brain)
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class DeityPersonalityTraits
+public partial class DivineAffectations
 {
 
     /// <summary>
@@ -290,10 +303,11 @@ public partial class DivinityTransaction
     public string TransactionType { get; set; } = default!;
 
     /// <summary>
-    /// Type of entity involved in this transaction (e.g., character, deity)
+    /// Type of entity involved in this transaction
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetType")]
-    public string? TargetType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType? TargetType { get; set; } = default!;
 
     /// <summary>
     /// Entity ID involved in this transaction (e.g., the blessed character, the rival deity)
@@ -330,24 +344,27 @@ public partial class CreateDeityRequest
     /// Unique code for this deity within the game service (e.g., mnemosyne, nexius)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string Code { get; set; } = default!;
 
     /// <summary>
     /// Human-readable display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 1)]
     public string DisplayName { get; set; } = default!;
 
     /// <summary>
     /// Description of the deity's nature and role
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(2000, MinimumLength = 1)]
     public string Description { get; set; } = default!;
 
     /// <summary>
@@ -360,12 +377,12 @@ public partial class CreateDeityRequest
     public System.Collections.Generic.ICollection<DomainInfluence> Domains { get; set; } = new System.Collections.ObjectModel.Collection<DomainInfluence>();
 
     /// <summary>
-    /// Personality traits influencing behavior decisions
+    /// Divine-specific behavioral configuration for god-actor ABML decisions
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("personalityTraits")]
+    [System.Text.Json.Serialization.JsonPropertyName("divineAffectations")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public DeityPersonalityTraits PersonalityTraits { get; set; } = new DeityPersonalityTraits();
+    public DivineAffectations DivineAffectations { get; set; } = new DivineAffectations();
 
     /// <summary>
     /// Maximum characters this deity can actively monitor simultaneously
@@ -453,6 +470,12 @@ public partial class ListDeitiesRequest
     public DeityStatus? Status { get; set; } = default!;
 
     /// <summary>
+    /// Whether to include deprecated deities in results (default excludes them per T31)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeDeprecated")]
+    public bool IncludeDeprecated { get; set; } = false;
+
+    /// <summary>
     /// Page number for pagination
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
@@ -504,8 +527,8 @@ public partial class UpdateDeityRequest
     /// <summary>
     /// Updated personality traits
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("personalityTraits")]
-    public DeityPersonalityTraits? PersonalityTraits { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("divineAffectations")]
+    public DivineAffectations? DivineAffectations { get; set; } = default!;
 
     /// <summary>
     /// Updated maximum attention slots
@@ -551,7 +574,48 @@ public partial class DeactivateDeityRequest
 }
 
 /// <summary>
-/// Request to permanently delete a deity and all dependent data
+/// Request to deprecate a deity (Category A — gods can return via undeprecate)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeprecateDeityRequest
+{
+
+    /// <summary>
+    /// Deity to deprecate
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid DeityId { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deprecation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? Reason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to undeprecate a previously deprecated deity (Category A)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class UndeprecateDeityRequest
+{
+
+    /// <summary>
+    /// Deity to undeprecate
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid DeityId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to permanently delete a deity and all dependent data (must be deprecated first)
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteDeityRequest
@@ -1053,12 +1117,12 @@ public partial class DeityResponse
     public System.Collections.Generic.ICollection<DomainInfluence> Domains { get; set; } = new System.Collections.ObjectModel.Collection<DomainInfluence>();
 
     /// <summary>
-    /// Personality traits
+    /// Divine-specific behavioral configuration for god-actor ABML decisions
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("personalityTraits")]
+    [System.Text.Json.Serialization.JsonPropertyName("divineAffectations")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public DeityPersonalityTraits PersonalityTraits { get; set; } = new DeityPersonalityTraits();
+    public DivineAffectations DivineAffectations { get; set; } = new DivineAffectations();
 
     /// <summary>
     /// Maximum characters the deity can actively monitor
@@ -1077,6 +1141,12 @@ public partial class DeityResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedId")]
     public System.Guid? SeedId { get; set; } = default!;
+
+    /// <summary>
+    /// Genesis entity ID for lifecycle queries (null if genesis entity not yet created)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("genesisEntityId")]
+    public System.Guid? GenesisEntityId { get; set; } = default!;
 
     /// <summary>
     /// Divinity currency wallet ID (null if wallet creation failed or pending)
@@ -1104,6 +1174,24 @@ public partial class DeityResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("followerCount")]
     public int FollowerCount { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the deity is deprecated (Category A — can be undeprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the deity was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// When the deity was created
@@ -1186,14 +1274,6 @@ public partial class DivinityBalanceResponse
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string CurrencyCode { get; set; } = default!;
-
-    /// <summary>
-    /// Currency wallet ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("walletId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid WalletId { get; set; } = default!;
 
 }
 

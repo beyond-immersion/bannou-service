@@ -79,8 +79,8 @@ public class AnalyticsArchitectureTests
         }
 
         Assert.True(violations.Count == 0,
-            $"Analytics injects non-foundation clients:{Environment.NewLine}" +
-            string.Join(Environment.NewLine, violations));
+            $"Analytics injects non-foundation clients:{System.Environment.NewLine}" +
+            string.Join(System.Environment.NewLine, violations));
     }
 
     /// <summary>
@@ -132,8 +132,8 @@ public class AnalyticsArchitectureTests
         }
 
         Assert.True(violations.Count == 0,
-            $"Analytics calls non-read methods on service clients (should be read-only):{Environment.NewLine}" +
-            string.Join(Environment.NewLine, violations.Select(v => $"  - {v}")));
+            $"Analytics calls non-read methods on service clients (should be read-only):{System.Environment.NewLine}" +
+            string.Join(System.Environment.NewLine, violations.Select(v => $"  - {v}")));
     }
 
     /// <summary>

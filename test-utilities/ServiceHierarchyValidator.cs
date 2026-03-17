@@ -82,14 +82,14 @@ public static partial class ServiceHierarchyValidator
         if (violations.Count > 0)
         {
             var firstViolation = violations[0];
-            var violationMessages = string.Join(Environment.NewLine, violations.Select(v =>
+            var violationMessages = string.Join(System.Environment.NewLine, violations.Select(v =>
                 $"  - {v.ParameterName}: {v.ClientType.Name} (L{(int)v.ClientLayer / 100} {v.ClientLayer}) " +
                 $"is higher than service layer (L{(int)v.ServiceLayer / 100} {v.ServiceLayer})"));
 
             Assert.Fail(
-                $"SERVICE HIERARCHY VIOLATION in {serviceType.Name}:{Environment.NewLine}" +
-                $"Service is {firstViolation.ServiceLayer} (L{(int)firstViolation.ServiceLayer / 100}), but depends on higher-layer clients:{Environment.NewLine}" +
-                violationMessages + Environment.NewLine +
+                $"SERVICE HIERARCHY VIOLATION in {serviceType.Name}:{System.Environment.NewLine}" +
+                $"Service is {firstViolation.ServiceLayer} (L{(int)firstViolation.ServiceLayer / 100}), but depends on higher-layer clients:{System.Environment.NewLine}" +
+                violationMessages + System.Environment.NewLine +
                 "See SERVICE-HIERARCHY.md for dependency rules.");
         }
     }

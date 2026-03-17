@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>BeyondImmersion.BannouService.Environment.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Build tools (xunit comes from test-utilities; Moq needed directly) -->
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <!-- Logging.Abstractions, Mvc.Core come from lib-environment → bannou-service -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- bannou-service comes transitively via lib-environment -->
+    <ProjectReference Include="../lib-environment/lib-environment.csproj" />
+    <!-- Shared test utilities (ServiceConstructorValidator, etc.) -->
+    <ProjectReference Include="../../test-utilities/test-utilities.csproj" />
+  </ItemGroup>
+
+</Project>

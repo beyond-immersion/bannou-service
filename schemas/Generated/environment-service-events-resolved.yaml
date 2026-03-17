@@ -1,0 +1,464 @@
+openapi: 3.0.4
+info:
+  title: Environment Service Events
+  description: |
+    AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.
+    DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py
+    Source: environment-service-events.yaml
+
+    Event models for Environment service RabbitMQ pub/sub via lib-messaging.
+    Publishes condition changes, weather event lifecycle, resource availability changes,
+    and climate template lifecycle events. Consumed by Ethology, Workshop, Loot, Market,
+    and other L4 services that react to environmental state.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions:
+    # Worldstate temporal events (hard L2 dependency)
+  - topic: worldstate.period-changed
+    event: WorldstatePeriodChangedEvent
+    handler: HandlePeriodChanged
+  - topic: worldstate.season-changed
+    event: WorldstateSeasonChangedEvent
+    handler: HandleSeasonChanged
+  - topic: worldstate.day-changed
+    event: WorldstateDayChangedEvent
+    handler: HandleDayChanged
+    # Location lifecycle events
+  - topic: location.created
+    event: LocationCreatedEvent
+    handler: HandleLocationCreated
+  - topic: location.updated
+    event: LocationUpdatedEvent
+    handler: HandleLocationUpdated
+    # Self-subscriptions for cross-node cache invalidation (multi-instance safety)
+  - topic: environment.climate-template.updated
+    event: ClimateTemplateUpdatedEvent
+    handler: HandleClimateTemplateUpdatedCacheInvalidation
+  - topic: environment.climate-template.deleted
+    event: ClimateTemplateDeletedEvent
+    handler: HandleClimateTemplateDeletedCacheInvalidation
+  - topic: environment.conditions.changed
+    event: EnvironmentConditionsChangedEvent
+    handler: HandleConditionsChangedCacheInvalidation
+  x-event-publications:
+    # Custom events
+  - topic: environment.conditions.changed
+    event: EnvironmentConditionsChangedEvent
+    description: Published when environmental conditions change at a location (background worker or weather event 
+      mutation)
+  - topic: environment.weather-event.started
+    event: EnvironmentWeatherEventStartedEvent
+    description: Published when a weather event is created
+  - topic: environment.weather-event.ended
+    event: EnvironmentWeatherEventEndedEvent
+    description: Published when a weather event is cancelled, source-removed, or expires
+  - topic: environment.resource-availability.changed
+    event: EnvironmentResourceAvailabilityChangedEvent
+    description: Published when resource availability crosses the significance threshold
+    # Lifecycle events (generated from x-lifecycle)
+  - topic: environment.climate-template.created
+    event: ClimateTemplateCreatedEvent
+    description: Published when a climate template is created
+  - topic: environment.climate-template.updated
+    event: ClimateTemplateUpdatedEvent
+    description: Published when a climate template is updated (including deprecation changes)
+  - topic: environment.climate-template.deleted
+    event: ClimateTemplateDeletedEvent
+    description: Published when a climate template is deleted
+
+x-lifecycle:
+  topic_prefix: environment
+  ClimateTemplate:
+    deprecation: true
+    model:
+      templateId: {type: string, format: uuid, primary: true, required: true, description: Unique climate template 
+          identifier}
+      gameServiceId: {type: string, format: uuid, required: true, description: Game service this template belongs to}
+      biomeCode: {type: string, required: true, description: Biome type code (e.g. temperate_forest alpine desert)}
+      displayName: {type: string, required: true, description: Human-readable name for the climate template}
+      description: {type: string, description: Optional detailed description of this climate template}
+      temperatureCurves:
+        type: array
+        items:
+          $ref: '#/components/schemas/TemperatureCurve'
+        required: true
+        description: Temperature curves per season
+      weatherDistributions:
+        type: array
+        items:
+          $ref: '#/components/schemas/WeatherDistributionSeason'
+        required: true
+        description: Weather pattern distributions per season
+      atmosphericBaselines:
+        type: array
+        items:
+          $ref: '../environment-api.yaml#/components/schemas/AtmosphericBaselineSeason'
+        required: true
+        description: Atmospheric baselines per season
+      resourceAvailability:
+        type: array
+        items:
+          $ref: '../environment-api.yaml#/components/schemas/ResourceAvailabilitySeason'
+        required: true
+        description: Resource availability values per season
+      altitudeTemperatureRate: {type: number, format: double, required: true, description: Temperature change per 
+          altitude unit (negative for lapse rate)}
+      depthTemperatureRate: {type: number, format: double, required: true, description: Temperature change per depth 
+          unit (positive for geothermal)}
+      heatThreshold: {type: number, format: double, required: true, description: Temperature above which is_hot is true 
+          for this biome}
+    sensitive: []
+
+paths: {}
+
+components:
+  schemas:
+    # =========================================================================
+    # Custom Events (non-lifecycle)
+    # =========================================================================
+
+    EnvironmentConditionsChangedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when environmental conditions change at a location during background refresh or weather 
+        event mutation
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - realmId
+      - locationId
+      - biomeCode
+      - weatherCode
+      - temperature
+      - precipitationType
+      - precipitationIntensity
+      - windSpeed
+      - visibility
+      - resourceAvailability
+      properties:
+        eventName:
+          type: string
+          default: environment.conditions.changed
+          description: 'Event type identifier: environment.conditions.changed'
+        realmId:
+          type: string
+          format: uuid
+          description: Realm containing the location
+        locationId:
+          type: string
+          format: uuid
+          description: Location whose conditions changed
+        biomeCode:
+          type: string
+          description: Biome code at this location
+        weatherCode:
+          type: string
+          description: Current weather pattern code
+        previousWeatherCode:
+          type: string
+          nullable: true
+          description: Previous weather code (null on first computation)
+        temperature:
+          type: number
+          format: double
+          description: Current temperature
+        previousTemperature:
+          type: number
+          format: double
+          nullable: true
+          description: Previous temperature (null on first computation)
+        precipitationType:
+          $ref: '#/components/schemas/PrecipitationType'
+          description: Current precipitation form
+        precipitationIntensity:
+          type: number
+          format: double
+          description: Current precipitation intensity (0.0-1.0)
+        windSpeed:
+          type: number
+          format: double
+          description: Current wind speed (0.0-1.0)
+        visibility:
+          type: number
+          format: double
+          description: Current visibility (0.0-1.0)
+        resourceAvailability:
+          type: number
+          format: double
+          description: Current resource availability (0.0-1.0)
+
+    EnvironmentWeatherEventStartedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a weather event override is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - weatherEventId
+      - realmId
+      - scopeType
+      - scopeId
+      - eventCode
+      - severity
+      - sourceType
+      properties:
+        eventName:
+          type: string
+          default: environment.weather-event.started
+          description: 'Event type identifier: environment.weather-event.started'
+        weatherEventId:
+          type: string
+          format: uuid
+          description: ID of the weather event
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the event belongs to
+        scopeType:
+          $ref: '../environment-api.yaml#/components/schemas/WeatherEventScopeType'
+          description: Geographic scope of the event
+        scopeId:
+          type: string
+          format: uuid
+          description: Scope target ID
+        eventCode:
+          type: string
+          description: Weather event code
+        severity:
+          type: number
+          format: double
+          description: Event intensity (0.0-1.0)
+        sourceType:
+          $ref: '../environment-api.yaml#/components/schemas/WeatherEventSourceType'
+          description: Origin type of this event
+        sourceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Source entity ID
+
+    EnvironmentWeatherEventEndedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a weather event is cancelled, source-removed, or expires
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - weatherEventId
+      - realmId
+      - scopeType
+      - scopeId
+      - eventCode
+      - reason
+      properties:
+        eventName:
+          type: string
+          default: environment.weather-event.ended
+          description: 'Event type identifier: environment.weather-event.ended'
+        weatherEventId:
+          type: string
+          format: uuid
+          description: ID of the weather event
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the event belongs to
+        scopeType:
+          $ref: '../environment-api.yaml#/components/schemas/WeatherEventScopeType'
+          description: Geographic scope of the event
+        scopeId:
+          type: string
+          format: uuid
+          description: Scope target ID
+        eventCode:
+          type: string
+          description: Weather event code
+        reason:
+          $ref: '../environment-api.yaml#/components/schemas/WeatherEventEndReason'
+          description: Why the weather event ended
+
+    EnvironmentResourceAvailabilityChangedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when resource availability crosses the significance threshold at a location
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - realmId
+      - locationId
+      - previousAvailability
+      - currentAvailability
+      - season
+      properties:
+        eventName:
+          type: string
+          default: environment.resource-availability.changed
+          description: 'Event type identifier: environment.resource-availability.changed'
+        realmId:
+          type: string
+          format: uuid
+          description: Realm containing the location
+        locationId:
+          type: string
+          format: uuid
+          description: Location whose availability changed
+        previousAvailability:
+          type: number
+          format: double
+          description: Previous resource availability value
+        currentAvailability:
+          type: number
+          format: double
+          description: Current resource availability value
+        season:
+          type: string
+          description: Current season code from Worldstate
+    PrecipitationType:
+      type: string
+      description: Form of precipitation. Temperature crossover rules apply (Rain below 0C becomes Snow, Snow above 5C 
+        becomes Rain, between 0-5C becomes Sleet)
+      enum: [None, Rain, Snow, Sleet, Hail]
+    TemperatureCurve:
+      type: object
+      additionalProperties: false
+      description: Seasonal temperature curve definition controlling base min/max temperature and intra-day variation
+      required:
+      - seasonCode
+      - baseMinTemp
+      - baseMaxTemp
+      properties:
+        seasonCode:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: References a Worldstate calendar season code (game-configurable)
+        baseMinTemp:
+          type: number
+          format: double
+          description: Minimum daily temperature in abstract units (typically Celsius-like)
+        baseMaxTemp:
+          type: number
+          format: double
+          description: Maximum daily temperature in abstract units
+        hourlyShape:
+          $ref: '#/components/schemas/TemperatureCurveShape'
+          nullable: true
+          description: Curve shape for intra-day variation (null defaults to Sinusoidal)
+        peakHour:
+          type: integer
+          default: 14
+          minimum: 0
+          maximum: 23
+          description: Game-hour of maximum temperature
+        troughHour:
+          type: integer
+          default: 4
+          minimum: 0
+          maximum: 23
+          description: Game-hour of minimum temperature
+
+    TemperatureCurveShape:
+      type: string
+      description: Shape of the intra-day temperature curve for hourly interpolation
+      enum: [Sinusoidal, Plateau, Spike]
+    WeatherDistributionSeason:
+      type: object
+      additionalProperties: false
+      description: Seasonal weather distribution containing weighted patterns for a season
+      required:
+      - seasonCode
+      - patterns
+      properties:
+        seasonCode:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: References a Worldstate calendar season code
+        patterns:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeatherPattern'
+          description: Weighted weather patterns for this season
+
+    WeatherPattern:
+      type: object
+      additionalProperties: false
+      description: Individual weather pattern definition within a seasonal distribution
+      required:
+      - weatherCode
+      - weight
+      - durationGameHours
+      - temperatureModifier
+      - visibilityMultiplier
+      - precipitationIntensity
+      - precipitationType
+      - cloudCover
+      - resourceImpactModifier
+      properties:
+        weatherCode:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Weather pattern code (e.g., clear, cloudy, storm, fog)
+        weight:
+          type: number
+          format: double
+          minimum: 0
+          description: Relative probability weight for this season
+        durationGameHours:
+          type: integer
+          minimum: 1
+          description: Typical duration in game-hours before re-rolling
+        temperatureModifier:
+          type: number
+          format: double
+          description: Additive temperature modifier while this weather is active
+        visibilityMultiplier:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Visibility multiplier (1.0 = normal, 0.1 = blizzard)
+        precipitationIntensity:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Precipitation intensity (0.0 = none, 1.0 = maximum)
+        precipitationType:
+          $ref: '#/components/schemas/PrecipitationType'
+          description: Form of precipitation for this weather pattern
+        cloudCover:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Cloud coverage (0.0 = clear sky, 1.0 = fully overcast)
+        resourceImpactModifier:
+          type: number
+          format: double
+          description: Additive impact on resource availability (rain=+0.05, storm=-0.15, drought=-0.3)
+
+x-inlined-types:
+- PrecipitationType
+- TemperatureCurve
+- TemperatureCurveShape
+- WeatherDistributionSeason
+- WeatherPattern

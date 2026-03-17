@@ -249,6 +249,15 @@ This document lists all events defined in Bannou's event schemas.
 | `DocumentationSyncCompletedEvent` | Custom | `documentation-sync-completed` | Published when a repository sync completes |
 | `DocumentationSyncStartedEvent` | Custom | `documentation-sync-started` | Published when a repository sync starts |
 
+### Environment
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `EnvironmentConditionsChangedEvent` | Custom | `environment-conditions-changed` | Published when environmental conditions change at ... |
+| `EnvironmentResourceAvailabilityChangedEvent` | Custom | `environment-resource-availability-changed` | Published when resource availability crosses the s... |
+| `EnvironmentWeatherEventEndedEvent` | Custom | `environment-weather-event-ended` | Published when a weather event is cancelled, sourc... |
+| `EnvironmentWeatherEventStartedEvent` | Custom | `environment-weather-event-started` | Published when a weather event override is created |
+
 ### Escrow
 
 | Event | Type | Likely Topic | Description |

@@ -12,12 +12,12 @@
 |-------|-------|
 | Plugin | lib-divine |
 | Layer | L4 GameFeatures |
-| Endpoints | 22 (22 generated) |
-| State Stores | divine-deities (MySQL), divine-blessings (MySQL), divine-attention (Redis), divine-divinity-events (Redis), divine-lock (Redis) |
+| Endpoints | 25 (25 generated) |
+| State Stores | divine-deities (MySQL), divine-blessings (MySQL), divine-attention (Redis), divine-lock (Redis) |
 | Events Published | 11 (divine.deity.created, divine.deity.updated, divine.deity.deleted, divine.blessing.granted, divine.blessing.revoked, divine.divinity.credited, divine.divinity.debited, divine.follower.registered, divine.follower.removed, divine.deity.activated, divine.deity.dormant) |
-| Events Consumed | 1 (analytics.score.updated) |
+| Events Consumed | 2 (character.created, character.updated — for patron deity auto-bonding) |
 | Client Events | 0 |
-| Background Services | 2 |
+| Background Services | 1 |
 
 ## State
 
@@ -42,12 +42,6 @@ Paginated queries by entityId+entityType or deityId+tier use `IJsonQueryableStat
 |-------------|-----------|---------|
 | `attention:{deityId}:{characterId}` | `AttentionSlotModel` | Active attention slot per deity-character pair |
 
-**Store**: `divine-divinity-events` (Backend: Redis)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `divevt:{eventId}` | `DivinityEventModel` | Pending divinity generation event awaiting batch processing |
-
 **Store**: `divine-lock` (Backend: Redis, via `IDistributedLockProvider`)
 
 | Key Pattern | Purpose |
@@ -55,32 +49,32 @@ Paginated queries by entityId+entityType or deityId+tier use `IJsonQueryableStat
 | `divine:lock:deity:{deityId}` | Deity mutation lock |
 | `divine:lock:blessing:{blessingId}` | Blessing mutation lock |
 | `divine:lock:attention-worker` | Attention decay worker singleton lock |
-| `divine:lock:divinity-generation-worker` | Divinity generation worker singleton lock |
 
 ## Dependencies
 
 | Dependency | Layer | Type | Usage |
 |------------|-------|------|-------|
-| lib-state (`IStateStoreFactory`) | L0 | Hard | 4 constructor-cached stores (deity, blessing, attention, divinity-events) |
-| lib-state (`IDistributedLockProvider`) | L0 | Hard | Deity/blessing mutation locks, worker singleton locks |
+| lib-state (`IStateStoreFactory`) | L0 | Hard | 3 constructor-cached stores (deity, blessing, attention) |
+| lib-state (`IDistributedLockProvider`) | L0 | Hard | Deity/blessing mutation locks, worker singleton lock |
 | lib-messaging (`IMessageBus`) | L0 | Hard | Publishing all 11 divine event topics |
-| lib-messaging (`IEventConsumer`) | L0 | Hard | Registering analytics.score.updated handler |
+| lib-messaging (`IEventConsumer`) | L0 | Hard | Registering character.created and character.updated handlers (patron deity auto-bonding) |
 | lib-telemetry (`ITelemetryProvider`) | L0 | Hard | Span instrumentation |
 | lib-resource (`IResourceClient`) | L1 | Hard | Cleanup callback registration (character CASCADE, game-service CASCADE) |
 | lib-currency (`ICurrencyClient`) | L2 | Hard | Divinity credit, debit, balance queries, transaction history |
 | lib-relationship (`IRelationshipClient`) | L2 | Hard | Follower bonds (deity_follower type), rivalry bonds (deity_rivalry type) |
 | lib-character (`ICharacterClient`) | L2 | Hard | Character existence validation for follower registration |
 | lib-game-service (`IGameServiceClient`) | L2 | Hard | Game service existence validation during deity creation |
-| lib-seed (`ISeedClient`) | L2 | Hard | Domain power seed registration and operations |
+| lib-seed (`ISeedClient`) | L2 | Hard | Domain power seed creation, bond operations for patron deity auto-bonding |
+| lib-genesis (`IGenesisClient`) | L2 | Hard | Deity entity creation via "deity_domain" genesis template with external seedId |
 | lib-collection (`ICollectionClient`) | L2 | Hard | Permanent blessing grants (Greater/Supreme tier) |
 | lib-status (`IStatusClient`) | L4 | Soft | Temporary blessings (Minor/Standard tier); graceful degradation if absent |
 | lib-puppetmaster (`IPuppetmasterClient`) | L4 | Soft | Start/stop deity watcher actors; graceful degradation if absent |
-| lib-analytics (`IAnalyticsClient`) | L4 | Soft | Domain-relevant score queries; graceful degradation if absent |
 
 **Notes:**
-- The deep dive specifies `IGenesisClient` (L2) for deity creation via "deity_domain" genesis template. The current code injects `ISeedClient` instead, since lib-genesis is not yet implemented. When genesis is available, `ISeedClient` will be supplemented or replaced by `IGenesisClient`.
-- The deep dive describes subscribing to `genesis.entity.phase-changed` for deity lifecycle transitions. This subscription is not present in the current code and will be added when genesis is implemented.
+- Divine creates the deity's seed externally via `ISeedClient`, then passes the seedId to Genesis via `IGenesisClient.CreateEntityAsync(seedId: ...)`. This allows Divine to retain the seedId for seed bond operations while Genesis manages the lifecycle. See [DIVINITY-GENERATION-ARCHITECTURE.md](../planning/DIVINITY-GENERATION-ARCHITECTURE.md) § Genesis Interaction.
+- The deep dive describes subscribing to `genesis.entity.phase-changed` for deity lifecycle transitions. This subscription will be added when genesis is implemented.
 - `IServiceProvider` is stored as `_serviceProvider` for runtime resolution of L4 soft dependencies.
+- `IAnalyticsClient` has been **removed** — divinity generation flows through Seed bond propagation at L2, not Analytics events.
 
 ## Events Published
 
@@ -102,7 +96,8 @@ Paginated queries by entityId+entityType or deityId+tier use `IJsonQueryableStat
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| `analytics.score.updated` | `HandleAnalyticsScoreUpdatedAsync` | Maps analytics categories to domain codes, queues divinity generation events for domain-relevant deities (soft dependency — no-op if Analytics disabled) |
+| `character.created` | `HandleCharacterCreatedAsync` | If character has `patronDeityCode`, look up deity in bond template registry, auto-initiate seed bonds between character's domain seeds and patron god's matching seeds |
+| `character.updated` | `HandleCharacterUpdatedAsync` | If `changedFields` includes `patronDeityCode`, dissolve old patron seed bonds (if any), look up new deity in bond template registry, auto-initiate new seed bonds |
 
 **Future**: `genesis.entity.phase-changed` will be consumed when lib-genesis is implemented — handler will initialize attention slots at Stirring and activate divinity economy at Awakened.
 
@@ -113,17 +108,18 @@ Paginated queries by entityId+entityType or deityId+tier use `IJsonQueryableStat
 | Service | Role |
 |---------|------|
 | `ILogger<DivineService>` | Structured logging |
-| `DivineServiceConfiguration` | Typed configuration access (18 properties) |
-| `IStateStoreFactory` | State store access (creates 4 stores) |
+| `DivineServiceConfiguration` | Typed configuration access |
+| `IStateStoreFactory` | State store access (creates 3 stores: deity, blessing, attention) |
 | `IMessageBus` | Event publishing |
-| `IEventConsumer` | Event subscription registration |
+| `IEventConsumer` | Event subscription registration (character.created, character.updated) |
 | `IDistributedLockProvider` | Distributed lock acquisition |
 | `IResourceClient` | Resource cleanup callback registration |
 | `ICurrencyClient` | Divinity wallet operations |
 | `IRelationshipClient` | Follower/rivalry bond management |
-| `ICharacterClient` | Character existence validation |
+| `ICharacterClient` | Character existence validation for follower registration |
 | `IGameServiceClient` | Game service existence validation |
-| `ISeedClient` | Domain power seed operations |
+| `ISeedClient` | Domain power seed creation, seed bond operations for patron deity auto-bonding |
+| `IGenesisClient` | Deity entity creation via genesis template with external seedId |
 | `ICollectionClient` | Permanent blessing grants |
 | `IServiceProvider` | Runtime resolution of L4 soft dependencies |
 
@@ -135,9 +131,12 @@ Paginated queries by entityId+entityType or deityId+tier use `IJsonQueryableStat
 | GetDeity | POST /divine/deity/get | generated | [] | - | - |
 | GetDeityByCode | POST /divine/deity/get-by-code | generated | [] | - | - |
 | ListDeities | POST /divine/deity/list | generated | [] | - | - |
-| UpdateDeity | POST /divine/deity/update | generated | [] | deity, deity-code | divine.deity.updated |
+| UpdateDeity | POST /divine/deity/update | generated | [] | deity | divine.deity.updated |
 | ActivateDeity | POST /divine/deity/activate | generated | [] | deity | divine.deity.activated |
 | DeactivateDeity | POST /divine/deity/deactivate | generated | [] | deity, attention | divine.deity.dormant |
+| DeprecateDeity | POST /divine/deity/deprecate | generated | [] | deity | divine.deity.updated (changedFields: deprecation) |
+| UndeprecateDeity | POST /divine/deity/undeprecate | generated | [] | deity | divine.deity.updated (changedFields: deprecation) |
+| MergeDeity | POST /divine/deity/merge | generated | [role: admin] | deity, blessing, attention | divine.deity.updated (merged), divine.deity.deleted |
 | DeleteDeity | POST /divine/deity/delete | generated | [] | deity, deity-code, blessing, attention | divine.deity.deleted |
 | GetDivinityBalance | POST /divine/divinity/get-balance | generated | [] | - | - |
 | CreditDivinity | POST /divine/divinity/credit | generated | [] | - | divine.divinity.credited |
@@ -161,11 +160,17 @@ POST /divine/deity/create | Roles: []
 
 CALL _gameServiceClient.GetGameServiceAsync(body.GameServiceId)       -> 404 if not found
 READ _deityStore:deity-code:{body.GameServiceId}:{body.Code}          -> 409 if exists
-// Create genesis entity from "deity_domain" template (provisions seed, divinity wallet)
-CALL _seedClient.RegisterSeedTypeAsync(body.DeitySeedTypeCode)        // idempotent
+// Create seed externally so Divine retains seedId for bond operations
+CALL _seedClient.CreateSeedAsync(seedTypeCode: config.DeitySeedTypeCode, ...) -> seedId
+// Create genesis entity with external seed — Genesis adopts it for lifecycle management
+CALL _genesisClient.CreateEntityAsync(templateCode: "deity_domain", seedId: seedId, ...)
+  // Genesis provisions divinity wallet, inventories from template; manages seed lifecycle
 WRITE _deityStore:deity:{newDeityId} <- DeityModel from request
   // Status = Dormant, FollowerCount = 0, MaxAttentionSlots from config
+  // SeedId = seedId (retained for bond operations)
+  // GenesisEntityId = genesis entity ID (for lifecycle queries)
 WRITE _deityStore:deity-code:{body.GameServiceId}:{body.Code} <- DeityModel
+// Register in bond template registry (in-memory, for patron deity auto-bonding)
 PUBLISH divine.deity.created { deityId, gameServiceId, code, displayName, domains, status }
 RETURN (200, DeityResponse)
 
@@ -188,6 +193,7 @@ POST /divine/deity/list | Roles: []
 QUERY _deityStore WHERE $.gameServiceId = body.GameServiceId
   [AND $.domainCode = body.DomainCode if provided]
   [AND $.status = body.Status if provided]
+  [AND $.isDeprecated = false UNLESS body.IncludeDeprecated == true]   // T31: default excludes deprecated
   PAGED(body.Page, body.PageSize)
 RETURN (200, ListDeitiesResponse)
 
@@ -197,10 +203,8 @@ POST /divine/deity/update | Roles: []
 LOCK divine:lock:deity:{body.DeityId}                                 -> 409 if lock fails
   READ _deityStore:deity:{body.DeityId} [with ETag]                   -> 404 if null
   // Apply non-null fields from request (partial update)
-  IF code changed
-    READ _deityStore:deity-code:{gameServiceId}:{newCode}             -> 409 if taken
-    DELETE _deityStore:deity-code:{gameServiceId}:{oldCode}
-    WRITE _deityStore:deity-code:{gameServiceId}:{newCode} <- updated model
+  // Note: code is IMMUTABLE after creation — not in UpdateDeityRequest
+  // Updatable fields: displayName, description, domains, divineAffectations, maxAttentionSlots
   ETAG-WRITE _deityStore:deity:{body.DeityId} <- updated model
   PUBLISH divine.deity.updated { deityId, changedFields }
 RETURN (200, DeityResponse)
@@ -234,11 +238,61 @@ LOCK divine:lock:deity:{body.DeityId}                                 -> 409 if 
   PUBLISH divine.deity.dormant { deityId, gameServiceId }
 RETURN (200, DeityResponse)
 
+### DeprecateDeity
+POST /divine/deity/deprecate | Roles: []
+
+LOCK divine:lock:deity:{body.DeityId}                                 -> 409 if lock fails
+  READ _deityStore:deity:{body.DeityId} [with ETag]                   -> 404 if null
+  IF deity.IsDeprecated == true                                        -> 200 OK (idempotent)
+  // Set IsDeprecated = true, DeprecatedAt = now, DeprecationReason = body.Reason
+  ETAG-WRITE _deityStore:deity:{body.DeityId} <- updated model
+  PUBLISH divine.deity.updated { deityId, changedFields: [isDeprecated, deprecatedAt, deprecationReason] }
+RETURN (200, DeityResponse)
+
+### UndeprecateDeity
+POST /divine/deity/undeprecate | Roles: []
+
+LOCK divine:lock:deity:{body.DeityId}                                 -> 409 if lock fails
+  READ _deityStore:deity:{body.DeityId} [with ETag]                   -> 404 if null
+  IF deity.IsDeprecated == false                                       -> 200 OK (idempotent)
+  // Clear IsDeprecated = false, DeprecatedAt = null, DeprecationReason = null
+  ETAG-WRITE _deityStore:deity:{body.DeityId} <- updated model
+  PUBLISH divine.deity.updated { deityId, changedFields: [isDeprecated, deprecatedAt, deprecationReason] }
+RETURN (200, DeityResponse)
+
+### MergeDeity
+POST /divine/deity/merge | Roles: [role: admin]
+
+READ _deityStore:deity:{body.SourceDeityId}                           -> 404 if null
+IF source.IsDeprecated == false                                       -> 400 (must be deprecated first)
+READ _deityStore:deity:{body.TargetDeityId}                           -> 404 if null
+IF target.IsDeprecated == true                                        -> 400 (cannot merge into deprecated)
+// Transfer followers: query relationships, re-create pointing to target deity
+CALL _relationshipClient.ListByEntityAsync(sourceDeityId, config.FollowerRelationshipTypeCode)
+FOREACH follower in results (per-item error isolation)
+  // Dissolve old seed bonds (source deity → follower character domain seeds)
+  FOREACH seedId in source deity's domain seeds
+    CALL _seedClient.DissolveBondAsync(seedId) // if bonded to this follower's seed
+  // Create new follower relationship to target
+  CALL _relationshipClient.CreateRelationshipAsync(targetDeityId, follower.characterId, ...)
+  // Auto-bond to target deity per target's bond template
+  // (same logic as patron deity auto-bonding)
+// Transfer blessings: update deityId on blessing records
+QUERY _blessingStore WHERE $.deityId = body.SourceDeityId
+FOREACH blessing in results (per-item error isolation)
+  blessing.DeityId = body.TargetDeityId
+  WRITE _blessingStore:blessing:{blessingId} <- updated
+// Delete source deity (calls own DeleteDeity logic)
+PUBLISH divine.deity.deleted { sourceDeityId, deletedReason: "merged into {targetDeityId}" }
+DELETE source deity records
+RETURN (200, MergeDeprecatedResponse { mergedCount, targetId })
+
 ### DeleteDeity
 POST /divine/deity/delete | Roles: []
 
 LOCK divine:lock:deity:{body.DeityId}                                 -> 409 if lock fails
   READ _deityStore:deity:{body.DeityId}                               -> 404 if null
+  IF deity.IsDeprecated == false                                       -> 400 (must deprecate first per T31)
   IF status == Active
     // Deactivate: stop watcher actor if Puppetmaster available
   // Revoke all blessings for this deity (per-item error isolation)
@@ -292,7 +346,8 @@ POST /divine/blessing/grant | Roles: []
 
 READ _deityStore:deity:{body.DeityId}                                 -> 404 if null
 IF deity.Status != Active                                             -> 400
-// Entity existence validation — see Design Consideration #3 (issue #675)
+// No entity existence validation — polymorphic references are caller-responsibility
+// (matches Collection, Relationship, Seed, Currency, Status, Escrow pattern; #675 resolved)
 COUNT _blessingStore WHERE $.entityId = body.EntityId
   AND $.entityType = body.EntityType AND $.status = Active
 IF count >= config.MaxBlessingsPerEntity                              -> 409
@@ -417,19 +472,38 @@ LOCK divine:lock:attention-worker                                     // singlet
     ELSE
       WRITE _attentionStore:attention:{slot.DeityId}:{slot.CharacterId} <- updated impression
 
-### DivineDivinityGenerationWorker
-**Interval**: `config.DivinityGenerationWorkerIntervalSeconds` (default: 30s)
-**Purpose**: Drains pending divinity events from Redis; aggregates by deity; credits currency wallets in batches
+**Note**: DivineDivinityGenerationWorker has been **removed**. Divinity generation flows through Seed bond propagation at L2 — no Divine batch processing needed. See [DIVINITY-GENERATION-ARCHITECTURE.md](../planning/DIVINITY-GENERATION-ARCHITECTURE.md).
 
-LOCK divine:lock:divinity-generation-worker                           // singleton lock
-  // Collect all pending DivinityEventModel entries
-  QUERY _divinityEventStore — drain all entries
-  GROUP events by DeityId — aggregate total amount per deity
-  FOREACH (deityId, totalAmount) in aggregated (per-item error isolation)
-    READ _deityStore:deity:{deityId} — get CurrencyWalletId
-    CALL _currencyClient.CreditAsync(walletId, totalAmount * config.DivinityGenerationMultiplier)
-    PUBLISH divine.divinity.credited { deityId, amount: totalAmount, source: "analytics_batch" }
-    DELETE processed entries from _divinityEventStore
+## Event Handlers
+
+### HandleCharacterCreatedAsync
+**Trigger**: `character.created` event via IEventConsumer
+
+IF event.PatronDeityCode is null → return (no patron deity)
+LOOKUP bond template registry for event.PatronDeityCode
+IF not found → log warning, return (deity not registered or not loaded)
+READ deity by code from _deityStore
+FOREACH bondTemplate in deity's bond templates (per-item error isolation)
+  // Find character's seed matching bondTemplate.SeedTypeCode
+  CALL _seedClient.GetSeedByOwnerAsync(event.CharacterId, bondTemplate.SeedTypeCode)
+  IF character seed not found → skip (character doesn't have this domain seed yet)
+  // Initiate and auto-confirm bond between character seed and deity seed
+  CALL _seedClient.InitiateBondAsync(characterSeedId, deitySeedId,
+    propagationDirection: bondTemplate.Direction, propagationRatio: bondTemplate.Ratio)
+  CALL _seedClient.ConfirmBondAsync(bondId) // auto-confirm for service-initiated bonds
+
+### HandleCharacterUpdatedAsync
+**Trigger**: `character.updated` event via IEventConsumer
+
+IF "patronDeityCode" NOT IN event.ChangedFields → return
+// Dissolve old patron bonds if character had a previous patron
+IF previousPatronDeityCode is available (from event's previous state or deity lookup)
+  // Dissolve all seed bonds between character's seeds and old deity's seeds
+  FOREACH old bond (per-item error isolation)
+    CALL _seedClient.DissolveBondAsync(bondId)
+// Create new patron bonds (same logic as HandleCharacterCreatedAsync)
+IF event.PatronDeityCode is not null
+  LOOKUP bond template registry, create bonds per template
 
 ## Non-Standard Implementation Patterns
 
@@ -439,6 +513,12 @@ LOCK divine:lock:divinity-generation-worker                           // singlet
 CALL DivineService.RegisterResourceCleanupCallbacksAsync(_resourceClient)
   // Registers cleanup-by-character (CASCADE) and cleanup-by-game-service (CASCADE)
   // with lib-resource for character and game-service deletion coordination
+
+// Build bond template registry from deity records
+QUERY _deityStore for all active deities
+FOREACH deity → register in _bondTemplateRegistry (ConcurrentDictionary<string, BondTemplate[]>)
+  // Maps deityCode → array of { seedTypeCode, propagationDirection, propagationRatio }
+  // Registry invalidated via self-event-subscription on divine.deity.created/updated/deleted
 ```
 
-Planned (not yet implemented — Stubs item #8): seed type registration, currency definition, relationship type registration, collection/status template registration. Pattern established by Gardener/Faction: inline definitions in `OnRunningAsync`, catch 409 for idempotent restart.
+Planned (not yet implemented — Stubs item #10): seed type registration, currency definition, relationship type registration, collection/status template registration. Pattern established by Gardener/Faction: inline definitions in `OnRunningAsync`, catch 409 for idempotent restart.

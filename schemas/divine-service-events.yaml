@@ -8,9 +8,10 @@ info:
     follower management, and deity activation status changes.
 
     **Cross-Service Integration**:
-    - Subscribes to analytics.score.updated for domain-relevant divinity generation.
-      Analytics is L4 (soft dependency) -- if disabled, divinity generation from
-      analytics events is disabled but manual credit still works.
+    - Subscribes to character.created and character.updated for patron deity auto-bonding.
+      When a character's patronDeityCode is set or changed, Divine auto-initiates seed bonds
+      between the character's domain seeds and the patron god's matching seeds.
+    - Divinity generation flows through Seed bond propagation at L2 (no Divine involvement).
     - Character deletion cleanup is handled via x-references + cleanup endpoints
       (FOUNDATION TENETS: Resource-Managed Cleanup), NOT via character.deleted event
       subscription.
@@ -24,10 +25,13 @@ info:
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
   x-event-subscriptions:
-    # Analytics score updates for divinity generation (soft dependency on L4)
-    - topic: analytics.score.updated
-      event: AnalyticsScoreUpdatedEvent
-      handler: HandleAnalyticsScoreUpdated
+    # Character lifecycle events for patron deity auto-bonding
+    - topic: character.created
+      event: CharacterCreatedEvent
+      handler: HandleCharacterCreated
+    - topic: character.updated
+      event: CharacterUpdatedEvent
+      handler: HandleCharacterUpdated
   x-event-publications:
     # Deity lifecycle events (auto-generated from x-lifecycle, topic_prefix: divine)
     - topic: divine.deity.created
@@ -73,6 +77,7 @@ info:
 x-lifecycle:
   topic_prefix: divine
   Deity:
+    deprecation: true
     model:
       deityId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the deity" }
       gameServiceId: { type: string, format: uuid, required: true, description: "Game service this deity belongs to" }
@@ -90,9 +95,11 @@ x-lifecycle:
       maxAttentionSlots: { type: integer, required: true, description: "Maximum characters the deity can actively monitor" }
       actorId: { type: string, format: uuid, nullable: true, description: "Associated actor ID for the deity watcher brain" }
       seedId: { type: string, format: uuid, nullable: true, description: "Domain power seed ID" }
+      genesisEntityId: { type: string, format: uuid, nullable: true, description: "Genesis entity ID for lifecycle queries" }
       currencyWalletId: { type: string, format: uuid, nullable: true, description: "Divinity currency wallet ID" }
       realmId: { type: string, format: uuid, nullable: true, description: "Home realm for this deity" }
-    sensitive: [personalityTraits]
+      divineAffectations: { $ref: 'divine-api.yaml#/components/schemas/DivineAffectations', required: true, description: "Divine-specific behavioral configuration for god-actor ABML decisions" }
+    sensitive: [divineAffectations]
 
 paths: {}  # Events don't have HTTP paths
 

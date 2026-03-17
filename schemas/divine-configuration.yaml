@@ -21,6 +21,7 @@ x-service-configuration:
 
     DivinityCurrencyCode:
       type: string
+      minLength: 1
       env: DIVINE_DIVINITY_CURRENCY_CODE
       default: divinity
       description: Currency code used for divinity economy within each game service
@@ -57,26 +58,20 @@ x-service-configuration:
       default: 1000.0
       description: Divinity cost for granting a Supreme tier blessing
 
-    DivinityGenerationMultiplier:
-      type: number
-      format: double
-      env: DIVINE_DIVINITY_GENERATION_MULTIPLIER
-      minimum: 0.0
-      default: 1.0
-      description: Global multiplier applied to all divinity generation from mortal actions
-
     # =========================================================================
     # Blessing Integration
     # =========================================================================
 
     BlessingCollectionType:
       type: string
+      minLength: 1
       env: DIVINE_BLESSING_COLLECTION_TYPE
       default: divine_blessings
       description: Collection type code for permanent blessings via lib-collection
 
     BlessingStatusCategory:
       type: string
+      minLength: 1
       env: DIVINE_BLESSING_STATUS_CATEGORY
       default: divine_blessing
       description: Status category code for temporary blessings via Status Inventory
@@ -95,12 +90,14 @@ x-service-configuration:
 
     FollowerRelationshipTypeCode:
       type: string
+      minLength: 1
       env: DIVINE_FOLLOWER_RELATIONSHIP_TYPE_CODE
       default: deity_follower
       description: Relationship type code for deity-to-character follower bonds
 
     RivalryRelationshipTypeCode:
       type: string
+      minLength: 1
       env: DIVINE_RIVALRY_RELATIONSHIP_TYPE_CODE
       default: deity_rivalry
       description: Relationship type code for deity-to-deity rivalry bonds
@@ -139,6 +136,7 @@ x-service-configuration:
 
     DeitySeedTypeCode:
       type: string
+      minLength: 1
       env: DIVINE_DEITY_SEED_TYPE_CODE
       default: deity_domain
       description: Seed type code for deity domain power growth
@@ -149,6 +147,7 @@ x-service-configuration:
 
     DeityActorTypeCode:
       type: string
+      minLength: 1
       env: DIVINE_DEITY_ACTOR_TYPE_CODE
       default: deity_watcher
       description: Actor type code used when starting deity watcher actors via Puppetmaster
@@ -165,10 +164,3 @@ x-service-configuration:
       default: 60
       description: Seconds between attention decay worker evaluation cycles
 
-    DivinityGenerationWorkerIntervalSeconds:
-      type: integer
-      env: DIVINE_DIVINITY_GENERATION_WORKER_INTERVAL_SECONDS
-      minimum: 10
-      maximum: 600
-      default: 30
-      description: Seconds between divinity generation worker processing cycles

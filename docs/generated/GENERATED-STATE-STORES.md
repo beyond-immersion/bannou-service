@@ -84,6 +84,11 @@ This document lists all state store components used in Bannou.
 | `divine-lock` | Redis | Divine | Distributed locks for deity and blessing mutations |
 | `documentation-statestore` | Redis | Documentation | Documentation content and metadata |
 | `edge-revocation-statestore` | Redis | Auth | Edge revocation tracking for CDN/firewall layer blocking |
+| `environment-climate` | MySQL | Environment | Climate templates, location-climate bindings, and per-realm default biome configuration (durable, queryable) |
+| `environment-conditions` | Redis | Environment | Condition snapshots and active location tracking sorted set (TTL-based) |
+| `environment-lock` | Redis | Environment | Distributed locks for climate mutations, weather events, and realm refresh cycles |
+| `environment-overrides` | MySQL | Environment | Weather event override records with scope and source indexing (durable, queryable) |
+| `environment-weather` | Redis | Environment | Cached resolved weather per location per game-day (TTL-based) |
 | `escrow-active-validation` | Redis | Escrow | Track active escrows requiring periodic validation |
 | `escrow-agreements` | MySQL | Escrow | Main escrow agreement records |
 | `escrow-handler-registry` | MySQL | Escrow | Custom asset type handler registrations |
@@ -224,7 +229,7 @@ This document lists all state store components used in Bannou.
 | `worldstate-ratio-history` | MySQL | Worldstate | Time ratio change history per realm for elapsed game-time computation (append-only, compacted) |
 | `worldstate-realm-clock` | Redis | Worldstate | Current game time per realm (hot reads, updated every ClockTickIntervalSeconds) |
 
-**Total**: 214 stores (133 Redis, 81 MySQL)
+**Total**: 219 stores (136 Redis, 83 MySQL)
 
 ## Naming Conventions
 

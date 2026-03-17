@@ -45,6 +45,21 @@ public static class DivinePermissionRegistration
     {
         var endpoints = new List<ServiceEndpoint>();
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/divine/deity/merge",
+            Method = ServiceEndpointMethod.Post,
+            Description = "mergeDeity",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
         return endpoints;
     }
 

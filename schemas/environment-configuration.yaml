@@ -1,0 +1,179 @@
+openapi: 3.0.4
+info:
+  title: Environment Service Configuration
+  description: |
+    Configuration schema for Environment service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # Cache Configuration
+    ConditionCacheTtlSeconds:
+      type: integer
+      description: TTL in seconds for cached condition snapshots in Redis
+      env: ENVIRONMENT_CONDITION_CACHE_TTL_SECONDS
+      default: 60
+      minimum: 10
+      maximum: 300
+    ConditionSnapshotCacheTtlSeconds:
+      type: integer
+      description: TTL in seconds for in-memory condition snapshot cache (variable provider reads from this first)
+      env: ENVIRONMENT_CONDITION_SNAPSHOT_CACHE_TTL_SECONDS
+      default: 5
+      minimum: 1
+      maximum: 30
+    WeatherCacheTtlSeconds:
+      type: integer
+      description: TTL in seconds for cached resolved weather per location per game-day in Redis
+      env: ENVIRONMENT_WEATHER_CACHE_TTL_SECONDS
+      default: 600
+      minimum: 60
+      maximum: 3600
+    ClimateCacheTtlMinutes:
+      type: integer
+      description: TTL in minutes for in-memory climate template cache (templates change rarely)
+      env: ENVIRONMENT_CLIMATE_CACHE_TTL_MINUTES
+      default: 60
+      minimum: 5
+      maximum: 1440
+
+    # Background Worker Configuration
+    ConditionRefreshMode:
+      $ref: 'environment-api.yaml#/components/schemas/ConditionRefreshMode'
+      description: Strategy for the background worker's per-realm condition refresh cycle (AllLocations or ActiveOnly)
+      env: ENVIRONMENT_CONDITION_REFRESH_MODE
+      default: AllLocations
+    ActiveLocationWindowMinutes:
+      type: integer
+      description: When ConditionRefreshMode is ActiveOnly, locations queried within this window are considered active
+      env: ENVIRONMENT_ACTIVE_LOCATION_WINDOW_MINUTES
+      default: 30
+      minimum: 5
+      maximum: 1440
+    ConditionUpdateIntervalSeconds:
+      type: integer
+      description: Real-time seconds between background condition refresh cycles per realm
+      env: ENVIRONMENT_CONDITION_UPDATE_INTERVAL_SECONDS
+      default: 30
+      minimum: 5
+      maximum: 300
+    ConditionUpdateStartupDelaySeconds:
+      type: integer
+      description: Seconds to wait after startup before first condition refresh, allowing Worldstate to initialize
+      env: ENVIRONMENT_CONDITION_UPDATE_STARTUP_DELAY_SECONDS
+      default: 15
+      minimum: 0
+      maximum: 120
+    EventExpirationCheckIntervalSeconds:
+      type: integer
+      description: Real-time seconds between weather event expiration checks
+      env: ENVIRONMENT_EVENT_EXPIRATION_CHECK_INTERVAL_SECONDS
+      default: 60
+      minimum: 10
+      maximum: 600
+
+    # Capacity Limits
+    MaxClimateTemplatesPerGameService:
+      type: integer
+      description: Maximum number of climate templates per game service
+      env: ENVIRONMENT_MAX_CLIMATE_TEMPLATES_PER_GAME_SERVICE
+      default: 50
+      minimum: 5
+      maximum: 200
+    MaxActiveEventsPerScope:
+      type: integer
+      description: Maximum concurrent weather events per scope (realm, location, or subtree)
+      env: ENVIRONMENT_MAX_ACTIVE_EVENTS_PER_SCOPE
+      default: 10
+      minimum: 1
+      maximum: 50
+
+    # Defaults and Thresholds
+    DefaultBiomeCode:
+      type: string
+      description: Fallback biome code when no binding or realm default exists
+      env: ENVIRONMENT_DEFAULT_BIOME_CODE
+      default: temperate
+      minLength: 1
+      maxLength: 128
+    ResourceAvailabilityChangeThreshold:
+      type: number
+      description: Minimum resource availability change to trigger a resource-availability.changed event
+      env: ENVIRONMENT_RESOURCE_AVAILABILITY_CHANGE_THRESHOLD
+      default: 0.1
+      minimum: 0.01
+      maximum: 0.5
+    TemperatureNoiseAmplitude:
+      type: number
+      description: Maximum per-location deterministic temperature noise in degrees
+      env: ENVIRONMENT_TEMPERATURE_NOISE_AMPLITUDE
+      default: 1.5
+      minimum: 0.0
+      maximum: 5.0
+    WeatherTransitionDampening:
+      type: number
+      description: Deterministic dampening factor for weather persistence (0.0 = no dampening, 1.0 = never changes)
+      env: ENVIRONMENT_WEATHER_TRANSITION_DAMPENING
+      default: 0.3
+      minimum: 0.0
+      maximum: 0.9
+    DroughtThreshold:
+      type: number
+      description: Resource availability below this value sets is_drought to true
+      env: ENVIRONMENT_DROUGHT_THRESHOLD
+      default: 0.2
+      minimum: 0.0
+      maximum: 0.5
+    AbundanceThreshold:
+      type: number
+      description: Resource availability above this value sets is_abundant to true
+      env: ENVIRONMENT_ABUNDANCE_THRESHOLD
+      default: 0.8
+      minimum: 0.5
+      maximum: 1.0
+    WindChillFactor:
+      type: number
+      description: Multiplier for wind-chill computation (feels_like = temperature - wind_speed * factor)
+      env: ENVIRONMENT_WIND_CHILL_FACTOR
+      default: 5.0
+      minimum: 0.0
+      maximum: 20.0
+
+    # Mapping Integration
+    MappingPublishEnabled:
+      type: boolean
+      description: Whether to publish weather data to Mapping's weather_effects spatial layer
+      env: ENVIRONMENT_MAPPING_PUBLISH_ENABLED
+      default: true
+    MappingPublishBatchSize:
+      type: integer
+      description: Maximum location condition updates published to Mapping per refresh cycle
+      env: ENVIRONMENT_MAPPING_PUBLISH_BATCH_SIZE
+      default: 100
+      minimum: 10
+      maximum: 1000
+
+    # Distributed Locking
+    DistributedLockTimeoutSeconds:
+      type: integer
+      description: Timeout in seconds for distributed lock acquisition
+      env: ENVIRONMENT_DISTRIBUTED_LOCK_TIMEOUT_SECONDS
+      default: 10
+      minimum: 5
+      maximum: 60
+
+    # Query Configuration
+    QueryPageSize:
+      type: integer
+      description: Default page size for paged queries
+      env: ENVIRONMENT_QUERY_PAGE_SIZE
+      default: 20
+      minimum: 1
+      maximum: 100

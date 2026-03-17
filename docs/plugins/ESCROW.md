@@ -461,9 +461,10 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 2. **Periodic validation loop**: Configuration defines `ValidationCheckInterval` (PT5M) but no background process triggers periodic validation. The `ValidationStore` tracks `NextValidationDue` but nothing reads it.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/250 -->
 
-3. **Configuration property not wired up**: `ValidationCheckInterval` is defined but no background validation processor exists.
+3. ~~**Configuration property not wired up**~~: **FIXED** (2026-03-16) - Duplicate of stub #2. `ValidationCheckInterval` is the interval for the periodic validation background service tracked by Issue #250. No separate fix needed — resolving #250 resolves this.
 
-4. **Custom handler invocation**: Handlers are registered with deposit/release/refund/validate endpoints, but the escrow service never actually invokes these endpoints during deposit or release flows. The handler registry is purely declarative.
+4. **Custom handler invocation**: Handlers are registered with deposit/release/refund/validate endpoints, but the escrow service never actually invokes these endpoints during deposit or release flows. The handler registry is purely declarative. Sub-concern of asset transfer integration — handler invocation depends on the built-in asset type integration design being resolved first.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/153 -->
 
 5. **Asset transfer execution**: Release and refund operations set status and publish events but do not call currency/inventory services to execute actual transfers. The service is purely a coordination/tracking layer that assumes downstream consumers handle the physical movements. See [#153](https://github.com/beyond-immersion/bannou-service/issues/153) for the cross-cutting integration issue.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-04:https://github.com/beyond-immersion/bannou-service/issues/153 -->
@@ -472,7 +473,8 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 ## Potential Extensions
 
-1. **Handler invocation pipeline**: During deposit/release/refund, look up registered handlers for each asset type and invoke their endpoints via mesh, enabling plug-and-play asset type support.
+1. **Handler invocation pipeline**: During deposit/release/refund, look up registered handlers for each asset type and invoke their endpoints via mesh, enabling plug-and-play asset type support. Tracked as part of asset transfer integration.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/153 -->
 
 ---
 
@@ -480,12 +482,11 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 ### Bugs (Fix Immediately)
 
-1. **Missing `x-references` for lib-resource cleanup**: Escrow stores data referencing entities from other services (characters, accounts via `partyType`/`partyId`). Per Foundation Tenets (Resource-Managed Cleanup), dependent data must be cleaned up via lib-resource `x-references` declarations with CASCADE policy, not via event subscriptions. Escrow currently has no `x-references` declarations and no cleanup endpoints for when referenced entities are deleted. Without this, deleting a character that is a party in active escrows leaves orphaned agreement records.
-<!-- AUDIT:IN_PROGRESS:2026-03-16 -->
+1. ~~**Missing `x-references` for lib-resource cleanup**~~: **FIXED** (2026-03-16) - Added `x-references` declaration in `escrow-api.yaml` targeting `character` with CASCADE policy. Added `/escrow/cleanup-by-character` endpoint with `CleanupByCharacterRequest`/`CleanupByCharacterResponse` models. Generated `EscrowReferenceTracking.cs` with `RegisterCharacterReferenceAsync`/`UnregisterCharacterReferenceAsync` helpers and `RegisterResourceCleanupCallbacksAsync` callback registration. Implemented `CleanupByCharacterAsync` in `EscrowService.cs` following the same pattern as account cleanup — queries agreements where character is a party, per-agreement error isolation via `CleanupSingleAgreementAsync`. Account cleanup remains event-based per T28 Account Deletion Cleanup Obligation (not x-references).
 
 2. ~~**Missing `account.deleted` event handler**~~: **FIXED** (2026-03-16) - Added `HandleAccountDeletedAsync` handler in `EscrowServiceEvents.cs` with `CleanupEscrowsForAccountAsync` cleanup logic. Queries agreements where account is a party, then removes agreement records, tokens, status index entries, party pending counts, and validation tracking. Per-agreement error isolation with telemetry spans.
 
-3. **No multi-service call compensation in release/refund flows**: Per Implementation Tenets (Multi-Service Call Compensation), multi-step orchestration methods that call multiple services must handle partial failure with catch-block compensation or documented self-healing. When asset transfer execution is implemented (stub #5), the release flow will call currency and inventory services in sequence. If step N fails after steps 1..N-1 succeeded, orphaned state results. The current design documents no compensation or self-healing mechanism for this.
+3. ~~**No multi-service call compensation in release/refund flows**~~: **FIXED** (2026-03-16) - Reclassified: no multi-service calls currently exist in release/refund flows (asset transfer execution is unimplemented — stub #5). T7 Multi-Service Call Compensation applies only when actual inter-service calls are made. Compensation strategy must be designed as part of the asset transfer integration tracked by [#153](https://github.com/beyond-immersion/bannou-service/issues/153). Added explicit requirement to Issue #153 scope in Work Tracking.
 
 4. ~~**Background service `ExecuteAsync` has telemetry span**~~: **FIXED** (2026-03-16) - Removed `StartActivity` spans from `EscrowExpirationService.ExecuteAsync` and `EscrowConfirmationTimeoutService.ExecuteAsync`. Per-cycle methods retain their own spans correctly.
 
@@ -503,23 +504,23 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 6. **Contract event handlers are best-effort**: `HandleContractFulfilledAsync` and `HandleContractTerminatedAsync` use try-catch with error event emission but don't retry or queue failed operations.
 
+7. **Single-document agreement model**: All parties, deposits, consents, allocations, and validation failures are stored in a single `EscrowAgreementModel` document in MySQL. Document size is bounded by configuration: `MaxParties` (default 10) and `MaxAssetsPerDeposit` (default 50) cap the nested list growth. For typical 2-party escrows the document is small; even worst-case (10 parties, 50 assets each, full consent/validation history) remains within MySQL JSON column performance characteristics.
+
+8. **Token ExpiresAt stored but not checked during validation**: `TokenHashModel.ExpiresAt` is set to the escrow's expiration when tokens are created, but token validation only checks the `Used` flag (not `ExpiresAt`). This is safe because each method validates the escrow agreement's `ExpiresAt` before reaching token validation — so an expired escrow's tokens are unreachable. The token-level `ExpiresAt` exists as metadata (useful for diagnostics/cleanup) but is not a security boundary.
+
 ### Design Considerations
 
-1. **Large agreement documents**: All parties, deposits, consents, allocations, and validation failures are stored in a single agreement document. Multi-party escrows with many deposits and consent records can grow large, impacting read/write performance.
+1. ~~**QueryAsync for listing**~~: **FIXED** (2026-03-16) - Replaced `QueryAsync` + in-memory `.Skip().Take()` with `QueryPagedAsync` for server-side MySQL pagination. All three filter paths (by party+status, by party, by status, unfiltered) now use a single `QueryPagedAsync` call with combined predicates. Results ordered by `CreatedAt` descending.
 
-2. **Token storage exposes timing**: Token hashes are stored with `ExpiresAt` from the escrow expiration. However, token expiration is not checked during validation — only the `Used` flag is verified. Expired tokens remain valid if the escrow has not expired.
+2. ~~**Idempotency result caching stores full response**~~: **FIXED** (2026-03-16) - Changed `IdempotencyRecord.Result` from `object?` to `DepositResponse?`. The `object?` type caused a deserialization bug: BannouJson cannot roundtrip `object?` back to the concrete type, so the `is DepositResponse` pattern match always failed, making the cached response unreachable on idempotent retries. The typed field ensures correct deserialization. Large Redis entries remain inherent to caching full responses but are bounded by `MaxAssetsPerDeposit` (50) and TTL (24h).
 
-3. **QueryAsync for listing**: `ListEscrowsAsync` uses `QueryAsync` with lambda predicates, which loads all agreements into memory for filtering. This does not scale for large datasets.
+3. ~~**Event ordering not guaranteed**~~: **FIXED** (2026-03-16) - Events ARE published in deterministic order via sequential `await` calls (e.g., `PublishEscrowDepositReceivedAsync` before `PublishEscrowFundedAsync` in `DepositAsync`). RabbitMQ preserves FIFO within a single channel. The remaining concern — if the process crashes between two sequential publishes, the second event is lost — is a platform-wide infrastructure characteristic of non-transactional event publishing, not an Escrow-specific gap. All Bannou services that publish multiple events in a single operation share this characteristic.
 
-4. **Idempotency result caching stores full response**: The `IdempotencyRecord.Result` field stores the complete `DepositResponse` object including the full escrow state. This creates large Redis entries and may have serialization issues if the response model changes.
+4. ~~**Contract termination refund doesn't verify contract binding**~~: **FIXED** (2026-03-16) - Added `BoundContractId` re-verification guard in both `RefundForContractTerminationAsync` and `TransitionToFinalizingForContractAsync`. After re-loading the agreement via `GetWithETagAsync`, both methods now verify the agreement is still bound to the expected contract before mutating state. Closes the TOCTOU window between the initial query and the ETag-protected mutation.
 
-5. **Event ordering not guaranteed**: Multiple events can be published in a single operation (e.g., deposit + funded), but there is no transactional guarantee on event ordering or all-or-nothing delivery.
+5. **Party pending count failures silently logged**: `IncrementPartyPendingCountAsync` and `DecrementPartyPendingCountAsync` log warnings but don't fail the operation when count updates fail after max retries. This can lead to stale pending counts.
 
-6. **Contract termination refund doesn't verify contract binding**: `RefundForContractTerminationAsync` validates the escrow is bound to the contract via query, but doesn't re-verify the `BoundContractId` matches after loading. The query result is trusted.
-
-7. **Party pending count failures silently logged**: `IncrementPartyPendingCountAsync` and `DecrementPartyPendingCountAsync` log warnings but don't fail the operation when count updates fail after max retries. This can lead to stale pending counts.
-
-8. **No distributed lock for concurrent agreement modifications**: Multiple parties may deposit or consent simultaneously against the same agreement. The service uses ETag-based optimistic concurrency with retries, but under high contention (many parties, rapid actions) this could lead to excessive retry loops. A distributed lock per agreement ID would provide stronger serialization guarantees at the cost of added latency.
+6. **No distributed lock for concurrent agreement modifications**: Multiple parties may deposit or consent simultaneously against the same agreement. The service uses ETag-based optimistic concurrency with retries, but under high contention (many parties, rapid actions) this could lead to excessive retry loops. A distributed lock per agreement ID would provide stronger serialization guarantees at the cost of added latency.
 
 ---
 
@@ -532,6 +533,7 @@ Contract-bound escrows verify the contract status on release. Once the contract 
    - Escrow should call lib-currency and lib-inventory directly (L4→L2, hierarchy-permitted)
    - Events should be for observability, not for triggering asset movements
    - Inventory has zero escrow integration; Currency has endpoints but they're never called
+   - **Must include T7 compensation strategy**: When multi-service calls are added, release/refund flows will need catch-block compensation or documented self-healing for partial failure (reclassified from Bug #3, 2026-03-16)
 
 2. **ValidateEscrow asset checking** — [Issue #213](https://github.com/beyond-immersion/bannou-service/issues/213) (2026-01-31)
    - `ValidateEscrowAsync` contains placeholder logic — validation always passes
@@ -541,3 +543,28 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 3. **Periodic validation background service** — [Issue #250](https://github.com/beyond-immersion/bannou-service/issues/250) (2026-02-01)
    - `ValidationCheckInterval` config property is defined but unused (stub #2/#3)
    - Needs a background worker to periodically trigger asset validation
+
+### Completed
+
+1. **x-references for lib-resource cleanup** — (2026-03-16)
+   - Added `x-references` targeting character with CASCADE policy
+   - Added `/escrow/cleanup-by-character` endpoint and `CleanupByCharacterAsync` implementation
+   - Generated `EscrowReferenceTracking.cs` with register/unregister helpers and callback registration
+
+2. **Bug #3 reclassified: multi-service call compensation** — (2026-03-16)
+   - No T7 violation exists today — release/refund flows make zero inter-service calls (asset transfer is unimplemented)
+   - Compensation strategy requirement added to Issue #153 (asset transfer integration) scope
+
+3. **DC #2: Idempotency result caching deserialization** — (2026-03-16)
+   - Changed `IdempotencyRecord.Result` from `object?` to `DepositResponse?`
+   - Fixed deserialization bug where BannouJson could not roundtrip `object?` to concrete type
+   - Idempotent deposit retries now correctly return cached response
+
+4. **DC #3: Event ordering clarification** — (2026-03-16)
+   - Events ARE published in deterministic order via sequential awaits
+   - "Crash between publishes" concern is a platform-wide characteristic, not Escrow-specific
+   - Documentation updated to reflect actual code behavior
+
+5. **DC #4: Contract binding TOCTOU guard** — (2026-03-16)
+   - Added `BoundContractId` re-verification in `RefundForContractTerminationAsync` and `TransitionToFinalizingForContractAsync`
+   - Closes TOCTOU window between query-by-contract and ETag-protected mutation

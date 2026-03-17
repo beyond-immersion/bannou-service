@@ -25,6 +25,14 @@ info:
     2. State which section applies to your change
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
+  x-references:
+  - target: character
+    sourceType: escrow
+    field: partyId
+    onDelete: cascade
+    cleanup:
+      endpoint: /escrow/cleanup-by-character
+      payloadTemplate: '{"characterId": "{{resourceId}}"}'
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
@@ -5479,6 +5487,50 @@ paths:
       x-endpoint-info-json: "{\n    \"summary\": \"Remove a custom asset handler registration\",\n    \"description\": \"\
         Remove a custom asset handler registration.\",\n    \"tags\": [\n        \"Handlers\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"deregisterHandler\"\n}"
+  /escrow/cleanup-by-character:
+    post:
+      operationId: cleanupByCharacter
+      tags:
+      - Admin
+      summary: Clean up escrow data for a deleted character
+      description: |
+        Removes all escrow agreement records and associated data (tokens, status indexes,
+        party pending counts, validation tracking) where the specified character is a party.
+        Called by lib-resource during character deletion CASCADE cleanup.
+        Service-to-service only — not exposed to WebSocket clients.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByCharacterResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByCharacterRequest\"\
+        ,\n    \"$defs\": {\n        \"CleanupByCharacterRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to clean up escrow data for a deleted character\",\n            \"\
+        required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n                \"\
+        characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n         \
+        \           \"description\": \"Character ID whose escrow data should be cleaned up\"\n                }\n        \
+        \    }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByCharacterResponse\"\
+        ,\n    \"$defs\": {\n        \"CleanupByCharacterResponse\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Response from character cleanup operation\",\n    \
+        \        \"required\": [\n                \"agreementsDeleted\"\n            ],\n            \"properties\": {\n \
+        \               \"agreementsDeleted\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
+        : 0,\n                    \"description\": \"Number of escrow agreements cleaned up\"\n                }\n       \
+        \     }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Clean up escrow data for a deleted character\",\n    \"description\": \"\
+        Removes all escrow agreement records and associated data (tokens, status indexes,\\nparty pending counts, validation
+        tracking) where the specified character is a party.\\nCalled by lib-resource during character deletion CASCADE cleanup.\\
+        nService-to-service only \\u2014 not exposed to WebSocket clients.\\n\",\n    \"tags\": [\n        \"Admin\"\n   \
+        \ ],\n    \"deprecated\": false,\n    \"operationId\": \"cleanupByCharacter\"\n}"
 components:
   schemas:
     EscrowType:
@@ -7551,3 +7603,25 @@ components:
       additionalProperties: false
       description: Response from deregistering an asset handler
       properties: {}
+    CleanupByCharacterRequest:
+      type: object
+      additionalProperties: false
+      description: Request to clean up escrow data for a deleted character
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character ID whose escrow data should be cleaned up
+    CleanupByCharacterResponse:
+      type: object
+      additionalProperties: false
+      description: Response from character cleanup operation
+      required:
+      - agreementsDeleted
+      properties:
+        agreementsDeleted:
+          type: integer
+          minimum: 0
+          description: Number of escrow agreements cleaned up

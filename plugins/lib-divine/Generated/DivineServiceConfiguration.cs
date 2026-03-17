@@ -55,6 +55,7 @@ public class DivineServiceConfiguration : BaseServiceConfiguration
     /// Currency code used for divinity economy within each game service
     /// Environment variable: DIVINE_DIVINITY_CURRENCY_CODE
     /// </summary>
+    [ConfigStringLength(MinLength = 1)]
     public string DivinityCurrencyCode { get; set; } = "divinity";
 
     /// <summary>
@@ -86,22 +87,17 @@ public class DivineServiceConfiguration : BaseServiceConfiguration
     public double DivinityCostSupreme { get; set; } = 1000.0;
 
     /// <summary>
-    /// Global multiplier applied to all divinity generation from mortal actions
-    /// Environment variable: DIVINE_DIVINITY_GENERATION_MULTIPLIER
-    /// </summary>
-    [ConfigRange(Minimum = 0.0)]
-    public double DivinityGenerationMultiplier { get; set; } = 1.0;
-
-    /// <summary>
     /// Collection type code for permanent blessings via lib-collection
     /// Environment variable: DIVINE_BLESSING_COLLECTION_TYPE
     /// </summary>
+    [ConfigStringLength(MinLength = 1)]
     public string BlessingCollectionType { get; set; } = "divine_blessings";
 
     /// <summary>
     /// Status category code for temporary blessings via Status Inventory
     /// Environment variable: DIVINE_BLESSING_STATUS_CATEGORY
     /// </summary>
+    [ConfigStringLength(MinLength = 1)]
     public string BlessingStatusCategory { get; set; } = "divine_blessing";
 
     /// <summary>
@@ -115,12 +111,14 @@ public class DivineServiceConfiguration : BaseServiceConfiguration
     /// Relationship type code for deity-to-character follower bonds
     /// Environment variable: DIVINE_FOLLOWER_RELATIONSHIP_TYPE_CODE
     /// </summary>
+    [ConfigStringLength(MinLength = 1)]
     public string FollowerRelationshipTypeCode { get; set; } = "deity_follower";
 
     /// <summary>
     /// Relationship type code for deity-to-deity rivalry bonds
     /// Environment variable: DIVINE_RIVALRY_RELATIONSHIP_TYPE_CODE
     /// </summary>
+    [ConfigStringLength(MinLength = 1)]
     public string RivalryRelationshipTypeCode { get; set; } = "deity_rivalry";
 
     /// <summary>
@@ -148,12 +146,14 @@ public class DivineServiceConfiguration : BaseServiceConfiguration
     /// Seed type code for deity domain power growth
     /// Environment variable: DIVINE_DEITY_SEED_TYPE_CODE
     /// </summary>
+    [ConfigStringLength(MinLength = 1)]
     public string DeitySeedTypeCode { get; set; } = "deity_domain";
 
     /// <summary>
     /// Actor type code used when starting deity watcher actors via Puppetmaster
     /// Environment variable: DIVINE_DEITY_ACTOR_TYPE_CODE
     /// </summary>
+    [ConfigStringLength(MinLength = 1)]
     public string DeityActorTypeCode { get; set; } = "deity_watcher";
 
     /// <summary>
@@ -162,12 +162,5 @@ public class DivineServiceConfiguration : BaseServiceConfiguration
     /// </summary>
     [ConfigRange(Minimum = 10, Maximum = 600)]
     public int AttentionWorkerIntervalSeconds { get; set; } = 60;
-
-    /// <summary>
-    /// Seconds between divinity generation worker processing cycles
-    /// Environment variable: DIVINE_DIVINITY_GENERATION_WORKER_INTERVAL_SECONDS
-    /// </summary>
-    [ConfigRange(Minimum = 10, Maximum = 600)]
-    public int DivinityGenerationWorkerIntervalSeconds { get; set; } = 30;
 
 }

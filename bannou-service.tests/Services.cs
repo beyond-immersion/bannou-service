@@ -139,14 +139,14 @@ public class Services : IClassFixture<CollectionFixture>
         {
             // Services without BannouServiceAttribute have no service name,
             // so no env var can disable them — they always use the default
-            Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "false");
-            Environment.SetEnvironmentVariable("SERVICE_ENABLED", "false");
+            System.Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", "false");
+            System.Environment.SetEnvironmentVariable("SERVICE_ENABLED", "false");
             Assert.False(testService.IsDisabled());
         }
         finally
         {
-            Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", null);
-            Environment.SetEnvironmentVariable("SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("TEST_SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("SERVICE_ENABLED", null);
         }
     }
 
@@ -159,12 +159,12 @@ public class Services : IClassFixture<CollectionFixture>
         try
         {
             // Uses the new unified pattern: {SERVICE}_SERVICE_ENABLED=false to disable
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "false");
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "false");
             Assert.True(testService.IsDisabled());
         }
         finally
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
         }
     }
 
@@ -185,22 +185,22 @@ public class Services : IClassFixture<CollectionFixture>
     {
         try
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "true");
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "true");
             Assert.False(IBannouService.IsDisabled(typeof(Service_Attribute)));
         }
         finally
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
         }
 
         try
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "false");
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "false");
             Assert.True(IBannouService.IsDisabled(typeof(Service_Attribute)));
         }
         finally
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
         }
     }
 
@@ -209,22 +209,22 @@ public class Services : IClassFixture<CollectionFixture>
     {
         try
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "true");
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "true");
             Assert.False(IBannouService.IsDisabled<Service_Attribute>());
         }
         finally
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
         }
 
         try
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "false");
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "false");
             Assert.True(IBannouService.IsDisabled<Service_Attribute>());
         }
         finally
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
         }
     }
 
@@ -233,22 +233,22 @@ public class Services : IClassFixture<CollectionFixture>
     {
         try
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "true");
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "true");
             Assert.False(IBannouService.IsDisabled("ServiceTests.Test"));
         }
         finally
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
         }
 
         try
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "false");
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "false");
             Assert.True(IBannouService.IsDisabled("ServiceTests.Test"));
         }
         finally
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
         }
     }
 
@@ -261,9 +261,9 @@ public class Services : IClassFixture<CollectionFixture>
         var originalServicesEnabled = Program.Configuration.ServicesEnabled;
         try
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", null);
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_MULTIPLEREQUIRED_SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_MULTIPLEREQUIRED_SERVICE_ENABLED", null);
 
             Assert.DoesNotContain(IBannouService.Services, t => t.Item1 == typeof(Service));
             Assert.Contains(IBannouService.Services, t => t.Item1 == typeof(Service_Attribute));
@@ -290,22 +290,22 @@ public class Services : IClassFixture<CollectionFixture>
         try
         {
             // Use unified _SERVICE_ENABLED pattern
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "false");
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "false");
             Assert.DoesNotContain(IBannouService.EnabledServices, t => t.Item1 == typeof(Service));
             Assert.DoesNotContain(IBannouService.EnabledServices, t => t.Item1 == typeof(Service_Attribute));
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "true");
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", "true");
             Assert.DoesNotContain(IBannouService.EnabledServices, t => t.Item1 == typeof(Service));
             Assert.Contains(IBannouService.EnabledServices, t => t.Item1 == typeof(Service_Attribute));
 
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", "false");
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", "false");
             Assert.DoesNotContain(IBannouService.EnabledServices, t => t.Item1 == typeof(Service_Required));
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", "true");
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", "true");
             Assert.Contains(IBannouService.EnabledServices, t => t.Item1 == typeof(Service_Required));
         }
         finally
         {
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
-            Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("SERVICETESTS.TEST_REQUIRED_SERVICE_ENABLED", null);
         }
     }
 
@@ -352,13 +352,13 @@ public class Services : IClassFixture<CollectionFixture>
             Assert.False(((IServiceConfiguration)config).HasRequired());
 
             // With required environment variable, configuration should have required properties
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_required".ToUpper()}_PROPERTY", "Test");
+            System.Environment.SetEnvironmentVariable($"{"ServiceTests.test_required".ToUpper()}_PROPERTY", "Test");
             var configWithRequired = IServiceConfiguration.BuildConfiguration<Configuration_Required>();
             Assert.True(((IServiceConfiguration)configWithRequired).HasRequired());
         }
         finally
         {
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_required".ToUpper()}_PROPERTY", null);
+            System.Environment.SetEnvironmentVariable($"{"ServiceTests.test_required".ToUpper()}_PROPERTY", null);
         }
     }
 
@@ -375,14 +375,14 @@ public class Services : IClassFixture<CollectionFixture>
             Assert.False(((IServiceConfiguration)configB).HasRequired());
 
             // Set property A - only config A should be satisfied
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_A", "Test");
+            System.Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_A", "Test");
             var configAWithRequired = IServiceConfiguration.BuildConfiguration<Configuration_MultipleRequired_A>();
             var configBStillMissing = IServiceConfiguration.BuildConfiguration<Configuration_MultipleRequired_B>();
             Assert.True(((IServiceConfiguration)configAWithRequired).HasRequired());
             Assert.False(((IServiceConfiguration)configBStillMissing).HasRequired());
 
             // Set property B - both configurations should now be satisfied
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_B", "Test");
+            System.Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_B", "Test");
             var configAStillSatisfied = IServiceConfiguration.BuildConfiguration<Configuration_MultipleRequired_A>();
             var configBNowSatisfied = IServiceConfiguration.BuildConfiguration<Configuration_MultipleRequired_B>();
             Assert.True(((IServiceConfiguration)configAStillSatisfied).HasRequired());
@@ -390,8 +390,8 @@ public class Services : IClassFixture<CollectionFixture>
         }
         finally
         {
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_A", null);
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_B", null);
+            System.Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_A", null);
+            System.Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_B", null);
         }
     }
 
@@ -403,12 +403,12 @@ public class Services : IClassFixture<CollectionFixture>
 
         try
         {
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_required".ToUpper()}_PROPERTY", "Test");
+            System.Environment.SetEnvironmentVariable($"{"ServiceTests.test_required".ToUpper()}_PROPERTY", "Test");
             Assert.True(IServiceConfiguration.HasRequiredForType<Configuration_Required>());
         }
         finally
         {
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_required".ToUpper()}_PROPERTY", null);
+            System.Environment.SetEnvironmentVariable($"{"ServiceTests.test_required".ToUpper()}_PROPERTY", null);
         }
     }
 
@@ -422,19 +422,19 @@ public class Services : IClassFixture<CollectionFixture>
         try
         {
             // Set property A - only config A should be satisfied
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_A", "Test");
+            System.Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_A", "Test");
             Assert.True(IServiceConfiguration.HasRequiredForType<Configuration_MultipleRequired_A>());
             Assert.False(IServiceConfiguration.HasRequiredForType<Configuration_MultipleRequired_B>());
 
             // Set property B - both configurations should be satisfied
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_B", "Test");
+            System.Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_B", "Test");
             Assert.True(IServiceConfiguration.HasRequiredForType<Configuration_MultipleRequired_A>());
             Assert.True(IServiceConfiguration.HasRequiredForType<Configuration_MultipleRequired_B>());
         }
         finally
         {
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_A", null);
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_B", null);
+            System.Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_A", null);
+            System.Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_B", null);
         }
     }
 
@@ -446,12 +446,12 @@ public class Services : IClassFixture<CollectionFixture>
 
         try
         {
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_required".ToUpper()}_PROPERTY", "Test");
+            System.Environment.SetEnvironmentVariable($"{"ServiceTests.test_required".ToUpper()}_PROPERTY", "Test");
             Assert.True(IServiceConfiguration.HasRequiredForType<Configuration_Required>());
         }
         finally
         {
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_required".ToUpper()}_PROPERTY", null);
+            System.Environment.SetEnvironmentVariable($"{"ServiceTests.test_required".ToUpper()}_PROPERTY", null);
         }
     }
 
@@ -465,19 +465,19 @@ public class Services : IClassFixture<CollectionFixture>
         try
         {
             // Set property A - only config A should be satisfied
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_A", "Test");
+            System.Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_A", "Test");
             Assert.True(IServiceConfiguration.HasRequiredForType<Configuration_MultipleRequired_A>());
             Assert.False(IServiceConfiguration.HasRequiredForType<Configuration_MultipleRequired_B>());
 
             // Set property B - both configurations should be satisfied
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_B", "Test");
+            System.Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_B", "Test");
             Assert.True(IServiceConfiguration.HasRequiredForType<Configuration_MultipleRequired_A>());
             Assert.True(IServiceConfiguration.HasRequiredForType<Configuration_MultipleRequired_B>());
         }
         finally
         {
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_A", null);
-            Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_B", null);
+            System.Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_A", null);
+            System.Environment.SetEnvironmentVariable($"{"ServiceTests.test_multiple_required".ToUpper()}_PROPERTY_B", null);
         }
     }
 }

@@ -4,7 +4,6 @@
 > **Schema**: schemas/localization-api.yaml
 > **Layer**: AppFoundation
 > **Deep Dive**: [docs/plugins/LOCALIZATION.md](../plugins/LOCALIZATION.md)
-> **Status**: Aspirational -- pseudo-code represents intended behavior, not verified implementation
 
 ---
 
@@ -88,11 +87,19 @@ This plugin does not consume external events. No `account.deleted` handler neede
 |---------|------|
 | `ILogger<LocalizationService>` | Structured logging |
 | `LocalizationServiceConfiguration` | Typed configuration access |
-| `IStateStoreFactory` | State store access (resolved in constructor, not stored as field) |
-| `IDistributedLockProvider` | Distributed locking for write operations |
-| `IMessageBus` | Event publishing |
+| `IStateStoreFactory` | State store access — resolves 6 typed stores in constructor, not stored as field |
+| `IDistributedLockProvider` | Distributed locking for category/entry write operations |
+| `IMessageBus` | Publishing `localization.category.*` lifecycle events |
 | `ITelemetryProvider` | Span instrumentation |
-| `IEventConsumer` | Event consumer registration (none currently, pattern compliance) |
+| `IEventConsumer` | Event consumer registration (empty body — no events consumed) |
+
+**Store references acquired in constructor** (from `IStateStoreFactory`):
+- `_categoryStore` — `GetStore<LocalizationCategoryModel>(StateStoreDefinitions.LocalizationCategoryStore)`
+- `_categoryQueryStore` — `GetQueryableStore<LocalizationCategoryModel>(StateStoreDefinitions.LocalizationCategoryStore)`
+- `_categoryCodeStore` — `GetStore<string>(StateStoreDefinitions.LocalizationCategoryStore)`
+- `_entryStore` — `GetStore<LocalizationEntryModel>(StateStoreDefinitions.LocalizationEntryStore)`
+- `_entryQueryStore` — `GetQueryableStore<LocalizationEntryModel>(StateStoreDefinitions.LocalizationEntryStore)`
+- `_compiledCache` — `GetStore<string>(StateStoreDefinitions.LocalizationCompiledCache)`
 
 #### DI Interfaces Implemented by This Plugin
 
@@ -158,8 +165,11 @@ RETURN (200, CategoryResponse)
 POST /localization/category/list | Roles: []
 
 ```
-QUERY categoryStore WHERE (body.IncludeSchemaDefinitions OR !IsSchemaDefinition)
-  PAGED(body.Page, body.PageSize)
+IF body.IncludeSchemaDefinitions
+  predicate = null  // all categories
+ELSE
+  predicate = c => !c.IsSchemaDefinition
+QUERY categoryQueryStore WHERE predicate PAGED(body.Page - 1, body.PageSize)
 RETURN (200, ListCategoriesResponse { categories, totalCount, page, pageSize })
 ```
 
@@ -167,12 +177,14 @@ RETURN (200, ListCategoriesResponse { categories, totalCount, page, pageSize })
 POST /localization/category/update | Roles: [admin]
 
 ```
-LOCK lockProvider:"category:{body.CategoryId}"
-  READ categoryStore:category:{body.CategoryId}           -> 404 if null
-  // Apply partial update (description, validationMode, defaultLanguage)
+LOCK lockProvider:"category:{body.CategoryId}"              -> 409 if fails
+  READ categoryStore:category:{body.CategoryId}             -> 404 if null
+  // Apply partial update: description, validationMode, defaultLanguage only
   // code and isSchemaDefinition are immutable
-  changedFields = [detect changed properties]
-  WRITE categoryStore:category:{body.CategoryId}          <- updated model
+  changedFields = [detect changed properties from non-null request fields]
+  model.UpdatedAt = UtcNow
+  WRITE categoryStore:category:{body.CategoryId}            <- updated model
+  // Always publishes even if changedFields is empty
   PUBLISH localization.category.updated { categoryId, code, changedFields }
 RETURN (200, CategoryResponse)
 ```
@@ -203,11 +215,11 @@ RETURN (200, DeleteCategoryResponse)
 POST /localization/entry/set | Roles: [admin]
 
 ```
-READ categoryStore:category:{body.CategoryId}             -> 404 if null
-LOCK lockProvider:"category:{body.CategoryId}:entries"
+LOCK lockProvider:"category:{body.CategoryId}:entries"       -> 409 if fails
+  READ categoryStore:category:{body.CategoryId}              -> 404 if null
   READ entryStore:entry:{body.CategoryId}:{body.Language}:{body.Key}
   isNew = (existing == null)
-  IF isNew AND model.EntryCount >= config.MaxEntriesPerCategory
+  IF isNew AND category.EntryCount >= config.MaxEntriesPerCategory
     RETURN (409, null)
   WRITE entryStore:entry:{body.CategoryId}:{body.Language}:{body.Key}
     <- LocalizationEntryModel { EntryId = existing?.EntryId ?? NewGuid, ... }
@@ -215,7 +227,6 @@ LOCK lockProvider:"category:{body.CategoryId}:entries"
     READ categoryStore:category:{body.CategoryId} [with ETag]
     model.EntryCount += 1
     ETAG-WRITE categoryStore:category:{body.CategoryId}
-  // Invalidate compiled cache for this language only
   DELETE compiledCache:compiled:{body.CategoryId}:{body.Language}
   DELETE compiledCache:compiled:all:{body.Language}
   PUBLISH localization.category.updated
@@ -236,21 +247,28 @@ RETURN (200, EntryResponse)
 POST /localization/entry/list | Roles: []
 
 ```
-READ categoryStore:category:{body.CategoryId}             -> 404 if null
-QUERY entryStore WHERE $.CategoryId == body.CategoryId
-                   AND (body.Language == null OR $.Language == body.Language)
-                   AND (body.KeyPrefix == null OR $.Key STARTSWITH body.KeyPrefix)
-  PAGED(body.Page, body.PageSize)
-RETURN (200, ListEntriesResponse { entries, totalCount })
+READ categoryStore:category:{body.CategoryId}               -> 404 if null
+// Predicate built incrementally from provided filters
+IF body.Language != null AND body.KeyPrefix != null
+  predicate = e.CategoryId == categoryId AND e.Language == language AND e.Key.StartsWith(keyPrefix)
+ELSE IF body.Language != null
+  predicate = e.CategoryId == categoryId AND e.Language == language
+ELSE IF body.KeyPrefix != null
+  predicate = e.CategoryId == categoryId AND e.Key.StartsWith(keyPrefix)
+ELSE
+  predicate = e.CategoryId == categoryId
+QUERY entryQueryStore WHERE predicate PAGED(body.Page - 1, body.PageSize)
+RETURN (200, ListEntriesResponse { entries, totalCount, page, pageSize })
 ```
 
 ### DeleteEntry
 POST /localization/entry/delete | Roles: [admin]
 
 ```
-READ categoryStore:category:{body.CategoryId}             -> 404 if null
+READ categoryStore:category:{body.CategoryId}               -> 404 if null
 READ entryStore:entry:{body.CategoryId}:{body.Language}:{body.Key}  -> 404 if null
-LOCK lockProvider:"category:{body.CategoryId}:entries"
+// Entry existence check is BEFORE lock — benign TOCTOU (delete is idempotent)
+LOCK lockProvider:"category:{body.CategoryId}:entries"       -> 409 if fails
   DELETE entryStore:entry:{body.CategoryId}:{body.Language}:{body.Key}
   READ categoryStore:category:{body.CategoryId} [with ETag]
   model.EntryCount = Math.Max(0, model.EntryCount - 1)
@@ -266,8 +284,12 @@ RETURN (200, DeleteEntryResponse)
 POST /localization/entry/bulk-set | Roles: [admin]
 
 ```
-READ categoryStore:category:{body.CategoryId}             -> 404 if null
-LOCK lockProvider:"category:{body.CategoryId}:entries"
+READ categoryStore:category:{body.CategoryId}               -> 404 if null
+LOCK lockProvider:"category:{body.CategoryId}:entries"       -> 409 if fails
+  READ categoryStore:category:{body.CategoryId}              // fresh read under lock for cap check
+  // Worst-case cap check: if all entries are new, would we exceed?
+  IF category.EntryCount + body.Entries.Count > config.MaxEntriesPerCategory
+    RETURN (409, null)
   successCount = 0
   failureCount = 0
   newCount = 0
@@ -280,16 +302,15 @@ LOCK lockProvider:"category:{body.CategoryId}:entries"
     IF isNew: newCount++
     successCount++
     // catch: LogWarning, failureCount++
-  // Update entryCount
-  READ categoryStore:category:{body.CategoryId} [with ETag]
-  model.EntryCount += newCount
-  ETAG-WRITE categoryStore:category:{body.CategoryId}
-  // Invalidate compiled cache for affected language
+  IF newCount > 0
+    READ categoryStore:category:{body.CategoryId} [with ETag]
+    model.EntryCount += newCount
+    ETAG-WRITE categoryStore:category:{body.CategoryId}
   DELETE compiledCache:compiled:{body.CategoryId}:{body.Language}
   DELETE compiledCache:compiled:all:{body.Language}
   // Single event for entire batch
   PUBLISH localization.category.updated
-    { categoryId, entryCount, lastEntryUpdateLanguage: body.Language, changedFields: ["entries"] }
+    { categoryId, entryCount: category.EntryCount + newCount, lastEntryUpdateLanguage: body.Language, changedFields: ["entries"] }
 RETURN (200, BulkSetEntriesResponse { succeededCount, failedCount })
 ```
 
@@ -297,29 +318,32 @@ RETURN (200, BulkSetEntriesResponse { succeededCount, failedCount })
 POST /localization/export | Roles: []
 
 ```
-// Cache lookup first
 cacheKey = body.CategoryId != null
   ? "compiled:{body.CategoryId}:{body.Language}"
   : "compiled:all:{body.Language}"
 READ compiledCache:{cacheKey}
 IF cached != null
+  // BannouJson.Deserialize — falls through gracefully if null/corrupted
   RETURN (200, ExportResponse { deserialized cached bundle })
 // Cache miss — compile from MySQL
 IF body.CategoryId != null
-  READ categoryStore:category:{body.CategoryId}           -> 404 if null
+  READ categoryStore:category:{body.CategoryId}             -> 404 if null
   categories = [model]
 ELSE
-  QUERY categoryStore  // all categories
+  QUERY categoryQueryStore WHERE true  // all categories
 entries = []
 FOREACH category in categories
-  // Paginated query per ExportPageSize
-  QUERY entryStore WHERE $.CategoryId == category.CategoryId
-                     AND $.Language == body.Language
-    PAGED(1, config.ExportPageSize)  // iterate all pages
-  entries.AddRange(results)
+  page = 0
+  hasMore = true
+  WHILE hasMore
+    QUERY entryQueryStore WHERE $.CategoryId == catId AND $.Language == body.Language
+      PAGED(page, config.ExportPageSize)
+    entries.AddRange(results)
+    hasMore = (results.Count == config.ExportPageSize)
+    page++
 bundle = CompileBundle(entries, categories)
 WRITE compiledCache:{cacheKey} <- BannouJson.Serialize(bundle)
-  WITH TTL = config.CacheExpirationMinutes
+  WITH TTL = config.CacheExpirationMinutes * 60 seconds
 RETURN (200, ExportResponse { language, entries, entryCount })
 ```
 
@@ -327,18 +351,19 @@ RETURN (200, ExportResponse { language, entries, entryCount })
 POST /localization/export-pls | Roles: []
 
 ```
+// No caching — compiles directly from MySQL on every call
 IF body.CategoryId != null
-  READ categoryStore:category:{body.CategoryId}           -> 404 if null
+  READ categoryStore:category:{body.CategoryId}             -> 404 if null
   categories = [model]
 ELSE
-  QUERY categoryStore  // all categories
+  QUERY categoryQueryStore WHERE true  // all categories
 pronunciationEntries = []
 FOREACH category in categories
-  QUERY entryStore WHERE $.CategoryId == category.CategoryId
-                     AND $.Language == body.Language
-                     AND $.Pronunciation != null
+  QUERY entryQueryStore WHERE $.CategoryId == catId
+                          AND $.Language == body.Language
+                          AND $.Pronunciation != null
   pronunciationEntries.AddRange(results)
-// Build W3C PLS XML
+// Build W3C PLS XML using SecurityElement.Escape for XML entity escaping
 // <lexicon version="1.0" alphabet="ipa" xml:lang="{language}">
 //   <lexeme><grapheme>{key}</grapheme><phoneme>{pronunciation}</phoneme></lexeme>
 plsXml = BuildPlsXml(pronunciationEntries, body.Language)
@@ -357,10 +382,11 @@ No background services.
 
 #### OnStartAsync — Schema-Defined Category Seeding
 
+Implemented directly on `LocalizationService` (not on the plugin wrapper). Uses `LocalizationCategoryDefinitions.Metadata` dictionary.
+
 ```
-// Seeds categories from schemas/localization-categories.yaml
-// Same pattern as Chat built-in room types — idempotent
-definitions = LocalizationCategoryDefinitions.GetAllDefinitions()
+// Seeds categories from LocalizationCategoryDefinitions.Metadata — idempotent on every deploy
+definitions = LocalizationCategoryDefinitions.Metadata
 FOREACH definition in definitions
   // per-item try-catch per T7
   READ categoryStore:category-code:{definition.Code}
@@ -377,11 +403,15 @@ FOREACH definition in definitions
 
 #### ILocalizationKeyValidator Implementation
 
+Separate class: `Services/LocalizationKeyValidator.cs`, registered as `Singleton`.
+Holds its own store references to `LocalizationCategoryStore` and `LocalizationEntryStore`.
+
 ```
-// Registered as Singleton, discovered by L2+ via IEnumerable<ILocalizationKeyValidator>
+// Discovered by L2+ via IEnumerable<ILocalizationKeyValidator>
 ValidateLocalizationKeyAsync(categoryCode, keyPrefix, keyId?, ct):
-  READ categoryStore:category-code:{categoryCode}
-  IF null: return true  // category unknown, lenient
+  READ categoryCodeStore:category-code:{categoryCode}
+  IF null: return true  // category unknown, lenient fallback
+  GUID parse result                                         -> return true if fails
   READ categoryStore:category:{categoryId}
   IF null: return true
   IF category.ValidationMode == None: return true
@@ -389,9 +419,10 @@ ValidateLocalizationKeyAsync(categoryCode, keyPrefix, keyId?, ct):
     READ entryStore:entry:{categoryId}:{category.DefaultLanguage}:{keyPrefix}.{keyId}
     exists = (result != null)
   ELSE
-    QUERY entryStore WHERE $.CategoryId == categoryId
-                       AND $.Language == category.DefaultLanguage
-                       AND $.Key STARTSWITH keyPrefix LIMIT 1
+    QUERY entryQueryStore WHERE $.CategoryId == categoryId
+                            AND $.Language == category.DefaultLanguage
+                            AND $.Key.StartsWith(keyPrefix)
+      PAGED(0, 1)  // existence check only
     exists = (any result)
   IF !exists AND category.ValidationMode == WarnOnMissing
     // LogWarning, return true

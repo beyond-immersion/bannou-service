@@ -30,6 +30,7 @@ using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Divine;
 using BeyondImmersion.BannouService.Documentation;
+using BeyondImmersion.BannouService.Environment;
 using BeyondImmersion.BannouService.Escrow;
 using BeyondImmersion.BannouService.Faction;
 using BeyondImmersion.BannouService.GameService;
@@ -114,6 +115,7 @@ public partial class ServiceNavigator : IServiceNavigator
     private readonly ICurrencyClient _currency;
     private readonly IDivineClient _divine;
     private readonly IDocumentationClient _documentation;
+    private readonly IEnvironmentClient _environment;
     private readonly IEscrowClient _escrow;
     private readonly IFactionClient _faction;
     private readonly IGameServiceClient _gameService;
@@ -183,6 +185,7 @@ public partial class ServiceNavigator : IServiceNavigator
         ICurrencyClient currency,
         IDivineClient divine,
         IDocumentationClient documentation,
+        IEnvironmentClient environment,
         IEscrowClient escrow,
         IFactionClient faction,
         IGameServiceClient gameService,
@@ -248,6 +251,7 @@ public partial class ServiceNavigator : IServiceNavigator
         _currency = currency;
         _divine = divine;
         _documentation = documentation;
+        _environment = environment;
         _escrow = escrow;
         _faction = faction;
         _gameService = gameService;
@@ -401,6 +405,9 @@ public partial class ServiceNavigator : IServiceNavigator
 
     /// <inheritdoc />
     public IDocumentationClient Documentation => _documentation;
+
+    /// <inheritdoc />
+    public IEnvironmentClient Environment => _environment;
 
     /// <inheritdoc />
     public IEscrowClient Escrow => _escrow;

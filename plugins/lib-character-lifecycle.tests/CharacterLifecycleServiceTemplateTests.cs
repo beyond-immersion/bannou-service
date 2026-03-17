@@ -33,22 +33,26 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
     // ========================================================================
 
     /// <summary>
-    /// Creates a CharacterLifecycleService with all 19 constructor parameters mocked,
-    /// returning the service and all mocks needed for capture-based assertions.
+    /// Creates a CharacterLifecycleService with all constructor parameters mocked,
+    /// returning the service and properly typed store mocks for capture-based assertions.
     /// </summary>
     private (
         CharacterLifecycleService Service,
-        Mock<IStateStore<LifecycleProfileModel>> MockProfileStore,
-        Mock<IStateStore<object>> MockHeritageStore,
-        Mock<IStateStore<object>> MockBloodlineStore,
-        Mock<IStateStore<object>> MockCacheStore,
+        Mock<IStateStore<LifecycleTemplateModel>> MockLifecycleTemplateStore,
+        Mock<IStateStore<HeritableTraitTemplateModel>> MockTraitTemplateStore,
+        Mock<IStateStore<HybridTraitTemplateModel>> MockHybridTemplateStore,
+        Mock<IStateStore<BloodlineModel>> MockBloodlineStore,
+        Mock<IStateStore<string>> MockCodeStore,
+        Mock<IStateStore<BloodlineMembershipModel>> MockMembershipStore,
+        Mock<IStateStore<BloodlineMemberListModel>> MockMemberListStore,
+        Mock<IStateStore<LifecycleManifestModel>> MockCacheStore,
         Mock<IMessageBus> MockMessageBus,
         Mock<IResourceClient> MockResourceClient,
         Mock<IGameServiceClient> MockGameServiceClient
     ) CreateService()
     {
         var mockLogger = new Mock<ILogger<CharacterLifecycleService>>();
-        var mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        var mockStateStoreFactory = new Mock<IStateStoreFactory> { DefaultValue = DefaultValue.Mock };
         var mockLockProvider = new Mock<IDistributedLockProvider>();
         var mockMessageBus = new Mock<IMessageBus>();
         var mockEventConsumer = new Mock<IEventConsumer>();
@@ -65,24 +69,25 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
         var mockCurrencyClient = new Mock<ICurrencyClient>();
         var mockServiceProvider = new Mock<IServiceProvider>();
 
-        // Constructor-cached state stores
-        var mockProfileStore = new Mock<IStateStore<LifecycleProfileModel>>();
-        var mockHeritageStore = new Mock<IStateStore<object>>();
-        var mockBloodlineStore = new Mock<IStateStore<object>>();
-        var mockCacheStore = new Mock<IStateStore<object>>();
+        // Properly typed store mocks matching service constructor types
+        var mockLifecycleTemplateStore = new Mock<IStateStore<LifecycleTemplateModel>>();
+        var mockTraitTemplateStore = new Mock<IStateStore<HeritableTraitTemplateModel>>();
+        var mockHybridTemplateStore = new Mock<IStateStore<HybridTraitTemplateModel>>();
+        var mockBloodlineStore = new Mock<IStateStore<BloodlineModel>>();
+        var mockCodeStore = new Mock<IStateStore<string>>();
+        var mockMembershipStore = new Mock<IStateStore<BloodlineMembershipModel>>();
+        var mockMemberListStore = new Mock<IStateStore<BloodlineMemberListModel>>();
+        var mockCacheStore = new Mock<IStateStore<LifecycleManifestModel>>();
 
-        mockStateStoreFactory
-            .Setup(f => f.GetStore<LifecycleProfileModel>(StateStoreDefinitions.CharacterLifecycleProfiles))
-            .Returns(mockProfileStore.Object);
-        mockStateStoreFactory
-            .Setup(f => f.GetStore<object>(StateStoreDefinitions.CharacterLifecycleHeritage))
-            .Returns(mockHeritageStore.Object);
-        mockStateStoreFactory
-            .Setup(f => f.GetStore<object>(StateStoreDefinitions.CharacterLifecycleBloodlines))
-            .Returns(mockBloodlineStore.Object);
-        mockStateStoreFactory
-            .Setup(f => f.GetStore<object>(StateStoreDefinitions.CharacterLifecycleCache))
-            .Returns(mockCacheStore.Object);
+        // Wire typed stores to factory (heritage store has multiple types)
+        mockStateStoreFactory.Setup(f => f.GetStore<LifecycleTemplateModel>(StateStoreDefinitions.CharacterLifecycleHeritage)).Returns(mockLifecycleTemplateStore.Object);
+        mockStateStoreFactory.Setup(f => f.GetStore<HeritableTraitTemplateModel>(StateStoreDefinitions.CharacterLifecycleHeritage)).Returns(mockTraitTemplateStore.Object);
+        mockStateStoreFactory.Setup(f => f.GetStore<HybridTraitTemplateModel>(StateStoreDefinitions.CharacterLifecycleHeritage)).Returns(mockHybridTemplateStore.Object);
+        mockStateStoreFactory.Setup(f => f.GetStore<BloodlineModel>(StateStoreDefinitions.CharacterLifecycleBloodlines)).Returns(mockBloodlineStore.Object);
+        mockStateStoreFactory.Setup(f => f.GetStore<string>(StateStoreDefinitions.CharacterLifecycleBloodlines)).Returns(mockCodeStore.Object);
+        mockStateStoreFactory.Setup(f => f.GetStore<BloodlineMembershipModel>(StateStoreDefinitions.CharacterLifecycleBloodlines)).Returns(mockMembershipStore.Object);
+        mockStateStoreFactory.Setup(f => f.GetStore<BloodlineMemberListModel>(StateStoreDefinitions.CharacterLifecycleBloodlines)).Returns(mockMemberListStore.Object);
+        mockStateStoreFactory.Setup(f => f.GetStore<LifecycleManifestModel>(StateStoreDefinitions.CharacterLifecycleCache)).Returns(mockCacheStore.Object);
 
         var service = new CharacterLifecycleService(
             mockLogger.Object,
@@ -104,16 +109,9 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
             mockCurrencyClient.Object,
             mockServiceProvider.Object);
 
-        return (
-            service,
-            mockProfileStore,
-            mockHeritageStore,
-            mockBloodlineStore,
-            mockCacheStore,
-            mockMessageBus,
-            mockResourceClient,
-            mockGameServiceClient
-        );
+        return (service, mockLifecycleTemplateStore, mockTraitTemplateStore, mockHybridTemplateStore,
+            mockBloodlineStore, mockCodeStore, mockMembershipStore, mockMemberListStore,
+            mockCacheStore, mockMessageBus, mockResourceClient, mockGameServiceClient);
     }
 
     // ========================================================================
@@ -124,7 +122,7 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
     public async Task SeedLifecycleTemplateAsync_ValidRequest_Returns200AndSavesTemplateAndPublishesEvent()
     {
         // Arrange
-        var (service, _, mockHeritageStore, _, _, mockMessageBus, _, _) = CreateService();
+        var (service, mockLifecycleTemplateStore, mockTraitTemplateStore, mockHybridTemplateStore, _, _, _, _, _, mockMessageBus, _, _) = CreateService();
         var gameServiceId = Guid.NewGuid();
         var request = new SeedLifecycleTemplateRequest
         {
@@ -136,6 +134,13 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
                 {
                     Code = "infant", MinAge = 0, MaxAge = 3,
                     HealthModifier = 0.5f, FertilityBase = 0f,
+                    CanMarry = false, CanProcreate = false,
+                    CanOwnOrg = false, CanBePossessed = true
+                },
+                new LifecycleStageDefinition
+                {
+                    Code = "child", MinAge = 4, MaxAge = 17,
+                    HealthModifier = 0.8f, FertilityBase = 0f,
                     CanMarry = false, CanProcreate = false,
                     CanOwnOrg = false, CanBePossessed = true
                 },
@@ -161,19 +166,19 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
             }
         };
 
-        // Heritage store returns null (template does not already exist)
-        mockHeritageStore
+        // Lifecycle template store returns null (template does not already exist)
+        mockLifecycleTemplateStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((object?)null);
+            .ReturnsAsync((LifecycleTemplateModel?)null);
 
         // Capture saved key and model
         string? savedKey = null;
-        object? savedModel = null;
-        mockHeritageStore
+        LifecycleTemplateModel? savedModel = null;
+        mockLifecycleTemplateStore
             .Setup(s => s.SaveAsync(
-                It.IsAny<string>(), It.IsAny<object>(),
+                It.IsAny<string>(), It.IsAny<LifecycleTemplateModel>(),
                 It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, object, StateOptions?, CancellationToken>((k, m, _, _) =>
+            .Callback<string, LifecycleTemplateModel, StateOptions?, CancellationToken>((k, m, _, _) =>
             {
                 savedKey = k;
                 savedModel = m;
@@ -209,7 +214,7 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
         var typedModel = Assert.IsType<LifecycleTemplateModel>(savedModel);
         Assert.Equal("human", typedModel.SpeciesCode);
         Assert.Equal(gameServiceId, typedModel.GameServiceId);
-        Assert.Equal(2, typedModel.Stages.Count);
+        Assert.Equal(3, typedModel.Stages.Count);
 
         // Assert event topic and content
         Assert.Equal("character-lifecycle.lifecycle-template.created", capturedTopic);
@@ -220,7 +225,7 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
     public async Task SeedLifecycleTemplateAsync_TemplateAlreadyExists_Returns409()
     {
         // Arrange
-        var (service, _, mockHeritageStore, _, _, _, _, _) = CreateService();
+        var (service, mockLifecycleTemplateStore, mockTraitTemplateStore, mockHybridTemplateStore, _, _, _, _, _, _, _, _) = CreateService();
         var request = new SeedLifecycleTemplateRequest
         {
             GameServiceId = Guid.NewGuid(),
@@ -240,8 +245,8 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
             }
         };
 
-        // Heritage store returns existing template
-        mockHeritageStore
+        // Lifecycle template store returns existing template
+        mockLifecycleTemplateStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new LifecycleTemplateModel { SpeciesCode = "human" });
 
@@ -257,7 +262,7 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
     public async Task SeedLifecycleTemplateAsync_InvalidGameServiceId_Returns400()
     {
         // Arrange
-        var (service, _, _, _, _, _, _, mockGameServiceClient) = CreateService();
+        var (service, _, _, _, _, _, _, _, _, _, _, mockGameServiceClient) = CreateService();
         var request = new SeedLifecycleTemplateRequest
         {
             GameServiceId = Guid.NewGuid(),
@@ -299,7 +304,7 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
     public async Task SeedHeritableTraitTemplateAsync_ValidRequest_Returns200AndSavesAndPublishes()
     {
         // Arrange
-        var (service, _, mockHeritageStore, _, _, mockMessageBus, _, _) = CreateService();
+        var (service, mockLifecycleTemplateStore, mockTraitTemplateStore, mockHybridTemplateStore, _, _, _, _, _, mockMessageBus, _, _) = CreateService();
         var gameServiceId = Guid.NewGuid();
         var request = new SeedHeritableTraitTemplateRequest
         {
@@ -319,18 +324,18 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
             }
         };
 
-        mockHeritageStore
+        mockTraitTemplateStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((object?)null);
+            .ReturnsAsync((HeritableTraitTemplateModel?)null);
 
         // Capture saved key and model
         string? savedKey = null;
-        object? savedModel = null;
-        mockHeritageStore
+        HeritableTraitTemplateModel? savedModel = null;
+        mockTraitTemplateStore
             .Setup(s => s.SaveAsync(
-                It.IsAny<string>(), It.IsAny<object>(),
+                It.IsAny<string>(), It.IsAny<HeritableTraitTemplateModel>(),
                 It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, object, StateOptions?, CancellationToken>((k, m, _, _) =>
+            .Callback<string, HeritableTraitTemplateModel, StateOptions?, CancellationToken>((k, m, _, _) =>
             {
                 savedKey = k;
                 savedModel = m;
@@ -378,7 +383,7 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
     public async Task SeedHeritableTraitTemplateAsync_AlreadyExists_Returns409()
     {
         // Arrange
-        var (service, _, mockHeritageStore, _, _, _, _, _) = CreateService();
+        var (service, mockLifecycleTemplateStore, mockTraitTemplateStore, mockHybridTemplateStore, _, _, _, _, _, _, _, _) = CreateService();
         var request = new SeedHeritableTraitTemplateRequest
         {
             GameServiceId = Guid.NewGuid(),
@@ -397,7 +402,7 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
             }
         };
 
-        mockHeritageStore
+        mockTraitTemplateStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HeritableTraitTemplateModel { SpeciesCode = "elf" });
 
@@ -413,7 +418,7 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
     public async Task SeedHeritableTraitTemplateAsync_InvalidGameServiceId_Returns400()
     {
         // Arrange
-        var (service, _, _, _, _, _, _, mockGameServiceClient) = CreateService();
+        var (service, _, _, _, _, _, _, _, _, _, _, mockGameServiceClient) = CreateService();
         var request = new SeedHeritableTraitTemplateRequest
         {
             GameServiceId = Guid.NewGuid(),
@@ -454,7 +459,7 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
     public async Task SeedHybridTemplateAsync_ValidRequest_Returns200AndSavesAndPublishes()
     {
         // Arrange
-        var (service, _, mockHeritageStore, _, _, mockMessageBus, _, _) = CreateService();
+        var (service, mockLifecycleTemplateStore, mockTraitTemplateStore, mockHybridTemplateStore, _, _, _, _, _, mockMessageBus, _, _) = CreateService();
         var gameServiceId = Guid.NewGuid();
         var request = new SeedHybridTemplateRequest
         {
@@ -472,18 +477,18 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
             HybridFertilityModifier = 0.5f
         };
 
-        mockHeritageStore
+        mockHybridTemplateStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((object?)null);
+            .ReturnsAsync((HybridTraitTemplateModel?)null);
 
         // Capture saved key and model
         string? savedKey = null;
-        object? savedModel = null;
-        mockHeritageStore
+        HybridTraitTemplateModel? savedModel = null;
+        mockHybridTemplateStore
             .Setup(s => s.SaveAsync(
-                It.IsAny<string>(), It.IsAny<object>(),
+                It.IsAny<string>(), It.IsAny<HybridTraitTemplateModel>(),
                 It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, object, StateOptions?, CancellationToken>((k, m, _, _) =>
+            .Callback<string, HybridTraitTemplateModel, StateOptions?, CancellationToken>((k, m, _, _) =>
             {
                 savedKey = k;
                 savedModel = m;
@@ -516,7 +521,7 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
 
         // Assert saved model is the correct type with correct fields
         Assert.NotNull(savedModel);
-        var typedModel = Assert.IsType<HybridTraitTemplateModel>(savedModel);
+        var typedModel = savedModel;
         Assert.Equal("human", typedModel.SpeciesA);
         Assert.Equal("elf", typedModel.SpeciesB);
         Assert.Equal(gameServiceId, typedModel.GameServiceId);
@@ -532,7 +537,7 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
     public async Task SeedHybridTemplateAsync_AlreadyExists_Returns409()
     {
         // Arrange
-        var (service, _, mockHeritageStore, _, _, _, _, _) = CreateService();
+        var (service, mockLifecycleTemplateStore, mockTraitTemplateStore, mockHybridTemplateStore, _, _, _, _, _, _, _, _) = CreateService();
         var request = new SeedHybridTemplateRequest
         {
             GameServiceId = Guid.NewGuid(),
@@ -549,7 +554,7 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
             HybridFertilityModifier = 0.7f
         };
 
-        mockHeritageStore
+        mockHybridTemplateStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HybridTraitTemplateModel { SpeciesA = "human", SpeciesB = "elf" });
 
@@ -565,7 +570,7 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
     public async Task SeedHybridTemplateAsync_InvalidGameServiceId_Returns400()
     {
         // Arrange
-        var (service, _, _, _, _, _, _, mockGameServiceClient) = CreateService();
+        var (service, _, _, _, _, _, _, _, _, _, _, mockGameServiceClient) = CreateService();
         var request = new SeedHybridTemplateRequest
         {
             GameServiceId = Guid.NewGuid(),
@@ -604,7 +609,7 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
     public async Task EstablishBloodlineAsync_ValidRequest_Returns200AndSavesAllRecordsAndPublishesEvents()
     {
         // Arrange
-        var (service, _, _, mockBloodlineStore, mockCacheStore, mockMessageBus, _, _) = CreateService();
+        var (service, _, _, _, mockBloodlineStore, mockCodeStore, mockMembershipStore, mockMemberListStore, mockCacheStore, mockMessageBus, _, _) = CreateService();
         var gameServiceId = Guid.NewGuid();
         var originCharacterId = Guid.NewGuid();
         var ancestorId = Guid.NewGuid();
@@ -618,32 +623,56 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
         };
 
         // No existing bloodline with this code
-        mockBloodlineStore
+        mockCodeStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((object?)null);
+            .ReturnsAsync((string?)null);
 
-        // Capture all saves to bloodline store
-        var savedKeys = new List<string>();
-        var savedModels = new List<object>();
+        // Capture saves to each properly typed store
+        var bloodlineSavedKeys = new List<string>();
+        var bloodlineSavedModels = new List<BloodlineModel>();
         mockBloodlineStore
             .Setup(s => s.SaveAsync(
-                It.IsAny<string>(), It.IsAny<object>(),
+                It.IsAny<string>(), It.IsAny<BloodlineModel>(),
                 It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, object, StateOptions?, CancellationToken>((k, m, _, _) =>
+            .Callback<string, BloodlineModel, StateOptions?, CancellationToken>((k, m, _, _) =>
             {
-                savedKeys.Add(k);
-                savedModels.Add(m);
+                bloodlineSavedKeys.Add(k);
+                bloodlineSavedModels.Add(m);
             })
+            .ReturnsAsync("etag");
+
+        var codeSavedKeys = new List<string>();
+        mockCodeStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, string, StateOptions?, CancellationToken>((k, _, _, _) => codeSavedKeys.Add(k))
+            .ReturnsAsync("etag");
+
+        var membershipSavedKeys = new List<string>();
+        mockMembershipStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BloodlineMembershipModel?)null);
+        mockMembershipStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<BloodlineMembershipModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, BloodlineMembershipModel, StateOptions?, CancellationToken>((k, _, _, _) => membershipSavedKeys.Add(k))
+            .ReturnsAsync("etag");
+
+        var memberListSavedKeys = new List<string>();
+        mockMemberListStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<BloodlineMemberListModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, BloodlineMemberListModel, StateOptions?, CancellationToken>((k, _, _, _) => memberListSavedKeys.Add(k))
             .ReturnsAsync("etag");
 
         // Capture cache deletes for manifest invalidation
         var deletedCacheKeys = new List<string>();
         mockCacheStore
             .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Callback<string, CancellationToken>((k, _) =>
-            {
-                deletedCacheKeys.Add(k);
-            })
+            .Callback<string, CancellationToken>((k, _) => deletedCacheKeys.Add(k))
             .ReturnsAsync(true);
 
         // Capture all published events
@@ -667,31 +696,28 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
         Assert.NotNull(response);
         Assert.NotEqual(Guid.Empty, response.BloodlineId);
 
-        // Assert exact save keys: bloodline record, code lookup, member entries for origin + ancestor, members list
-        // Per implementation map: bloodline:{id}, bloodline:code:{gameServiceId}:{code}, bloodline:member:{charId} x2, bloodline:members:{id}
-        Assert.Equal(5, savedKeys.Count);
-
-        // Bloodline record key
+        // Assert saves across all typed stores
+        // Bloodline store: initial save + update with member count = 2 saves
+        Assert.True(bloodlineSavedKeys.Count >= 1);
         var expectedBloodlineKey = CharacterLifecycleService.BuildBloodlineKey(response.BloodlineId);
-        Assert.Contains(expectedBloodlineKey, savedKeys);
+        Assert.Contains(expectedBloodlineKey, bloodlineSavedKeys);
 
-        // Code lookup key
+        // Code lookup store: 1 save
         var expectedCodeKey = CharacterLifecycleService.BuildBloodlineCodeKey(gameServiceId, "IRONBLOOD");
-        Assert.Contains(expectedCodeKey, savedKeys);
+        Assert.Single(codeSavedKeys);
+        Assert.Contains(expectedCodeKey, codeSavedKeys);
 
-        // Member keys for origin character and ancestor
-        var expectedOriginMemberKey = CharacterLifecycleService.BuildBloodlineMemberKey(originCharacterId);
-        Assert.Contains(expectedOriginMemberKey, savedKeys);
-        var expectedAncestorMemberKey = CharacterLifecycleService.BuildBloodlineMemberKey(ancestorId);
-        Assert.Contains(expectedAncestorMemberKey, savedKeys);
+        // Membership store: 2 saves (origin + ancestor)
+        Assert.Equal(2, membershipSavedKeys.Count);
+        Assert.Contains(CharacterLifecycleService.BuildBloodlineMemberKey(originCharacterId), membershipSavedKeys);
+        Assert.Contains(CharacterLifecycleService.BuildBloodlineMemberKey(ancestorId), membershipSavedKeys);
 
-        // Members list key
-        var expectedMembersKey = CharacterLifecycleService.BuildBloodlineMembersKey(response.BloodlineId);
-        Assert.Contains(expectedMembersKey, savedKeys);
+        // Member list store: 1 save
+        Assert.Single(memberListSavedKeys);
+        Assert.Contains(CharacterLifecycleService.BuildBloodlineMembersKey(response.BloodlineId), memberListSavedKeys);
 
         // Assert bloodline model was saved with correct fields
-        var bloodlineModel = savedModels[savedKeys.IndexOf(expectedBloodlineKey)];
-        var typedBloodline = Assert.IsType<BloodlineModel>(bloodlineModel);
+        var typedBloodline = bloodlineSavedModels.First(m => m.BloodlineCode == "IRONBLOOD");
         Assert.Equal("IRONBLOOD", typedBloodline.BloodlineCode);
         Assert.Equal(gameServiceId, typedBloodline.GameServiceId);
         Assert.Equal(originCharacterId, typedBloodline.OriginCharacterId);
@@ -717,7 +743,7 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
     public async Task EstablishBloodlineAsync_BloodlineCodeExists_Returns409()
     {
         // Arrange
-        var (service, _, _, mockBloodlineStore, _, _, _, _) = CreateService();
+        var (service, _, _, _, mockBloodlineStore, mockCodeStore, _, _, _, _, _, _) = CreateService();
         var gameServiceId = Guid.NewGuid();
         var request = new EstablishBloodlineRequest
         {
@@ -729,11 +755,11 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
 
         // Existing bloodline with this code — match the code-lookup key specifically
         var expectedCodeKey = CharacterLifecycleService.BuildBloodlineCodeKey(gameServiceId, "IRONBLOOD");
-        mockBloodlineStore
+        mockCodeStore
             .Setup(s => s.GetAsync(
                 It.Is<string>(k => k == expectedCodeKey),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new object());
+            .ReturnsAsync(Guid.NewGuid().ToString());
 
         // Act
         var (status, response) = await service.EstablishBloodlineAsync(request, CancellationToken.None);
@@ -751,7 +777,7 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
     public async Task DeleteBloodlineAsync_BloodlineExists_Returns200AndDeletesAllKeysAndCleansUpAndPublishes()
     {
         // Arrange
-        var (service, _, _, mockBloodlineStore, _, mockMessageBus, mockResourceClient, _) = CreateService();
+        var (service, _, _, _, mockBloodlineStore, mockCodeStore, _, _, _, mockMessageBus, mockResourceClient, _) = CreateService();
         var bloodlineId = Guid.NewGuid();
         var gameServiceId = Guid.NewGuid();
         var request = new DeleteBloodlineRequest { BloodlineId = bloodlineId };
@@ -773,14 +799,16 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingBloodline);
 
-        // Capture all deleted keys from bloodline store
-        var deletedKeys = new List<string>();
+        // Capture deleted keys from bloodline store and code store
+        var deletedBloodlineKeys = new List<string>();
         mockBloodlineStore
             .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Callback<string, CancellationToken>((k, _) =>
-            {
-                deletedKeys.Add(k);
-            })
+            .Callback<string, CancellationToken>((k, _) => deletedBloodlineKeys.Add(k))
+            .ReturnsAsync(true);
+        var deletedCodeKeys = new List<string>();
+        mockCodeStore
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CancellationToken>((k, _) => deletedCodeKeys.Add(k))
             .ReturnsAsync(true);
 
         // Capture resource cleanup call
@@ -821,11 +849,11 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
 
-        // Assert both bloodline record and code-lookup key deleted
+        // Assert both bloodline record and code-lookup key deleted (separate typed stores)
         var expectedBloodlineKey = CharacterLifecycleService.BuildBloodlineKey(bloodlineId);
-        Assert.Contains(expectedBloodlineKey, deletedKeys);
+        Assert.Contains(expectedBloodlineKey, deletedBloodlineKeys);
         var expectedCodeKey = CharacterLifecycleService.BuildBloodlineCodeKey(gameServiceId, "STORMBORN");
-        Assert.Contains(expectedCodeKey, deletedKeys);
+        Assert.Contains(expectedCodeKey, deletedCodeKeys);
 
         // Assert resource cleanup was called with correct parameters
         Assert.NotNull(capturedCleanupRequest);
@@ -841,12 +869,12 @@ public class CharacterLifecycleServiceTemplateTests : ServiceTestBase<CharacterL
     public async Task DeleteBloodlineAsync_NotFound_Returns404()
     {
         // Arrange
-        var (service, _, _, mockBloodlineStore, _, _, _, _) = CreateService();
+        var (service, _, _, _, mockBloodlineStore, mockCodeStore, _, _, _, _, _, _) = CreateService();
         var request = new DeleteBloodlineRequest { BloodlineId = Guid.NewGuid() };
 
         mockBloodlineStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((object?)null);
+            .ReturnsAsync((BloodlineModel?)null);
 
         // Act
         var (status, response) = await service.DeleteBloodlineAsync(request, CancellationToken.None);

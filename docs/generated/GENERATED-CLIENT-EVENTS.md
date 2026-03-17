@@ -57,6 +57,7 @@ This document lists all typed events available for subscription in the Bannou Cl
 | `CurrencyBalanceChangedClientEvent` | `currency.balance.changed` | Sent to the wallet owner when any balance mutation occurs: c... |
 | `CurrencyWalletFrozenClientEvent` | `currency.wallet.frozen` | Sent to the wallet owner when their wallet is frozen (escrow... |
 | `CurrencyWalletUnfrozenClientEvent` | `currency.wallet.unfrozen` | Sent to the wallet owner when their wallet is unfrozen and u... |
+| `WeatherTransitionClientEvent` | `environment.weather.transitioned` | Pushed to clients when weather changes at a player's locatio... |
 | `GameActionResultClientEvent` | `game-session.action-result` | Sent to relevant players when a game action produces results... |
 | `SessionChatReceivedClientEvent` | `game-session.chat-received` | Sent to recipients when a chat message is posted in the sess... |
 | `PlayerJoinedClientEvent` | `game-session.player-joined` | Sent to all session participants when a new player joins. |
@@ -926,6 +927,33 @@ Sent to the wallet owner when their wallet is unfrozen and usable again.
 
 ---
 
+## Environment Client Events
+
+Server-to-client WebSocket push events for Environment service. Published via IClientEventPublisher, delivered to connected clients through Connect service.
+
+### `WeatherTransitionClientEvent`
+
+**Event Name**: `environment.weather.transitioned`
+
+Pushed to clients when weather changes at a player's location
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `cloudCover` | Current cloud coverage (0.0-1.0) |
+| `currentWeatherCode` | New weather pattern code |
+| `locationId` | Location where weather changed |
+| `precipitationIntensity` | Current precipitation intensity (0.0-1.0) |
+| `precipitationType` | Current precipitation form |
+| `previousWeatherCode` | Previous weather pattern code |
+| `realmId` | Realm containing the location |
+| `temperature` | Current temperature after transition |
+| `visibility` | Current visibility (0.0-1.0) |
+| `windSpeed` | Current wind speed (0.0-1.0) |
+
+---
+
 ## Game Session Client Events API
 
 Server-to-client push events for the Game Session service. These events notify clients of game session state changes, player actions, chat messages, and game state updates delivered via WebSocket.
@@ -1550,8 +1578,8 @@ Published on period-changed boundaries, ratio changes, admin clock advancement, 
 
 ## Summary
 
-- **Total event types**: 84
-- **Services with events**: 18
+- **Total event types**: 85
+- **Services with events**: 19
 
 ---
 

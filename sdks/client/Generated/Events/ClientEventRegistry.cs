@@ -14,6 +14,7 @@ using BeyondImmersion.Bannou.Character.ClientEvents;
 using BeyondImmersion.Bannou.Chat.ClientEvents;
 using BeyondImmersion.Bannou.Collection.ClientEvents;
 using BeyondImmersion.Bannou.Currency.ClientEvents;
+using BeyondImmersion.Bannou.Environment.ClientEvents;
 using BeyondImmersion.Bannou.GameSession.ClientEvents;
 using BeyondImmersion.Bannou.Inventory.ClientEvents;
 using BeyondImmersion.Bannou.Location.ClientEvents;
@@ -118,6 +119,7 @@ public static class ClientEventRegistry
         { typeof(VoiceRoomClosedClientEvent), "voice.room.closed" },
         { typeof(VoiceRoomStateClientEvent), "voice.room.state" },
         { typeof(VoiceTierUpgradeClientEvent), "voice.tier-upgrade" },
+        { typeof(WeatherTransitionClientEvent), "environment.weather.transitioned" },
         { typeof(WorldstateTimeSyncClientEvent), "worldstate.time-sync" },
     };
 
@@ -171,6 +173,7 @@ public static class ClientEventRegistry
         { "currency.balance.changed", typeof(CurrencyBalanceChangedClientEvent) },
         { "currency.wallet.frozen", typeof(CurrencyWalletFrozenClientEvent) },
         { "currency.wallet.unfrozen", typeof(CurrencyWalletUnfrozenClientEvent) },
+        { "environment.weather.transitioned", typeof(WeatherTransitionClientEvent) },
         { "game-session.action-result", typeof(GameActionResultClientEvent) },
         { "game-session.chat-received", typeof(SessionChatReceivedClientEvent) },
         { "game-session.player-joined", typeof(PlayerJoinedClientEvent) },

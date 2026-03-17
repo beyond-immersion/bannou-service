@@ -4259,6 +4259,586 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/environment/conditions/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get environmental conditions at a location
+     * @description Returns the full condition snapshot for a location, computing on cache miss.
+     */
+    post: operations['environment_getConditions'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/conditions/get-by-code': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get conditions by realm and location codes
+     * @description Resolves location by code pair, then returns the condition snapshot.
+     */
+    post: operations['environment_getConditionsByCode'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/conditions/batch-get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get conditions for multiple locations
+     * @description Returns condition snapshots for a batch of locations, grouped by realm for efficiency.
+     */
+    post: operations['environment_batchGetConditions'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/conditions/get-temperature': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get temperature at a location
+     * @description Returns temperature data only, lighter than full condition snapshot.
+     */
+    post: operations['environment_getTemperature'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/climate/seed': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a climate template for a biome
+     * @description Seeds a new climate template defining weather, temperature, and ecology for a biome type within a game service.
+     */
+    post: operations['environment_seedClimate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/climate/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get a climate template
+     * @description Retrieves a climate template by ID or by game service and biome code.
+     */
+    post: operations['environment_getClimate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/climate/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List climate templates for a game service
+     * @description Returns a paged list of climate templates, optionally including deprecated.
+     */
+    post: operations['environment_listClimates'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/climate/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update a climate template
+     * @description Partially updates a climate template. Invalidates affected condition caches.
+     */
+    post: operations['environment_updateClimate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/climate/deprecate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Deprecate a climate template
+     * @description Marks a climate template as deprecated. Idempotent — returns OK if already deprecated.
+     */
+    post: operations['environment_deprecateClimate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/climate/undeprecate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Undeprecate a climate template
+     * @description Removes deprecation from a climate template. Idempotent — returns OK if not deprecated.
+     */
+    post: operations['environment_undeprecateClimate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/climate/delete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Delete a climate template
+     * @description Deletes a deprecated climate template and cascades to all referencing bindings.
+     */
+    post: operations['environment_deleteClimate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/climate/bulk-seed': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Bulk seed climate templates
+     * @description Creates or updates multiple climate templates for a game service in a single operation.
+     */
+    post: operations['environment_bulkSeedClimates'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/weather-event/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a weather event
+     * @description Registers a bounded weather override affecting a realm, location, or location subtree.
+     */
+    post: operations['environment_createWeatherEvent'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/weather-event/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get a weather event
+     * @description Retrieves a weather event by ID.
+     */
+    post: operations['environment_getWeatherEvent'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/weather-event/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List weather events for a scope
+     * @description Returns a paged list of weather events for a given scope, with optional filters.
+     */
+    post: operations['environment_listWeatherEvents'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/weather-event/cancel': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Cancel an active weather event
+     * @description Deactivates a weather event and invalidates affected condition caches.
+     */
+    post: operations['environment_cancelWeatherEvent'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/weather-event/extend': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Extend a weather event duration
+     * @description Extends the end time of an active weather event. Cannot shorten.
+     */
+    post: operations['environment_extendWeatherEvent'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/weather-event/cancel-by-source': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Cancel all weather events from a source
+     * @description Cancels all active weather events created by a specific source (e.g., divine actor cleanup).
+     */
+    post: operations['environment_cancelWeatherEventsBySource'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/weather/realm-summary': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get weather summary for a realm
+     * @description Aggregates weather conditions across all locations in a realm.
+     */
+    post: operations['environment_getRealmWeatherSummary'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/weather/by-region': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get weather grouped by region
+     * @description Returns weather conditions for a location and its descendants, grouped by weather code.
+     */
+    post: operations['environment_getWeatherByRegion'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/resource/get-availability': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get resource availability at a location
+     * @description Returns the composite resource abundance level with breakdown of contributing factors.
+     */
+    post: operations['environment_getResourceAvailability'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/resource/realm-summary': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get resource summary for a realm
+     * @description Aggregates resource availability across all locations in a realm, grouped by biome.
+     */
+    post: operations['environment_getRealmResourceSummary'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/climate-binding/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Bind a location to a climate template
+     * @description Creates a location-climate binding. Validates location exists and biome has an active template.
+     */
+    post: operations['environment_createClimateBinding'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/climate-binding/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get a climate binding for a location
+     * @description Returns the explicit climate binding for a location.
+     */
+    post: operations['environment_getClimateBinding'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/climate-binding/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update a climate binding
+     * @description Updates binding properties. Invalidates affected condition caches.
+     */
+    post: operations['environment_updateClimateBinding'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/climate-binding/delete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Delete a climate binding
+     * @description Removes the explicit binding. Inheriting children fall back to next ancestor or realm default.
+     */
+    post: operations['environment_deleteClimateBinding'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/climate-binding/bulk-seed': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Bulk seed climate bindings
+     * @description Creates or updates multiple location-climate bindings in a single operation.
+     */
+    post: operations['environment_bulkSeedBindings'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/realm-config/set': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Set per-realm environment configuration
+     * @description Sets the default biome code for a realm. Idempotent — creates or updates.
+     */
+    post: operations['environment_setRealmConfig'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/environment/realm-config/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get per-realm environment configuration
+     * @description Returns the explicitly set realm environment config. Does not return global fallback.
+     */
+    post: operations['environment_getRealmConfig'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/escrow/get': {
     parameters: {
       query?: never;
@@ -12513,6 +13093,31 @@ export interface components {
        */
       streamSessionId: string;
     };
+    /** @description Seasonal atmospheric baseline values for humidity, wind, and wind direction */
+    AtmosphericBaselineSeason: {
+      /** @description References a Worldstate calendar season code */
+      seasonCode: string;
+      /**
+       * Format: double
+       * @description Baseline humidity (0.0-1.0)
+       */
+      baseHumidity: number;
+      /**
+       * Format: double
+       * @description Normalized baseline wind speed (0.0-1.0)
+       */
+      baseWindSpeed: number;
+      /**
+       * Format: double
+       * @description Prevailing wind direction in degrees
+       */
+      windDirectionBias: number;
+      /**
+       * Format: double
+       * @description Degrees of random deviation from prevailing wind direction
+       */
+      windVariance: number;
+    };
     /**
      * @description A predefined location where child objects can be attached.
      *     Used for decorating furniture, walls, and other objects with accessories.
@@ -12801,6 +13406,11 @@ export interface components {
        */
       effectiveAmount: number;
     };
+    /** @description Batch condition snapshots for multiple locations */
+    BatchConditionSnapshotResponse: {
+      /** @description Condition snapshots per location */
+      snapshots: components['schemas']['ConditionSnapshotResponse'][];
+    };
     /** @description Request to get multiple balances */
     BatchGetBalancesRequest: {
       /** @description Balance queries to execute */
@@ -12810,6 +13420,24 @@ export interface components {
     BatchGetBalancesResponse: {
       /** @description Balance results (same order as queries) */
       balances: components['schemas']['BatchBalanceResult'][];
+    };
+    /** @description A single location entry in a batch conditions request */
+    BatchGetConditionsEntry: {
+      /**
+       * Format: uuid
+       * @description Realm containing the location
+       */
+      realmId: string;
+      /**
+       * Format: uuid
+       * @description Location to get conditions for
+       */
+      locationId: string;
+    };
+    /** @description Request to get conditions for multiple locations */
+    BatchGetConditionsRequest: {
+      /** @description Locations to query conditions for */
+      locations: components['schemas']['BatchGetConditionsEntry'][];
     };
     /** @description Request to get multiple item instances */
     BatchGetItemInstancesRequest: {
@@ -12935,6 +13563,28 @@ export interface components {
      * @enum {string}
      */
     BindingStatus: 'Pending' | 'Syncing' | 'Synced' | 'Error' | 'Disabled';
+    /** @description Resource availability summary for a biome within a realm */
+    BiomeResourceSummary: {
+      /** @description Biome type code */
+      biomeCode: string;
+      /**
+       * Format: double
+       * @description Average resource availability across locations
+       */
+      averageAvailability: number;
+      /**
+       * Format: double
+       * @description Minimum resource availability
+       */
+      minAvailability: number;
+      /**
+       * Format: double
+       * @description Maximum resource availability
+       */
+      maxAvailability: number;
+      /** @description Number of locations with this biome */
+      locationCount: number;
+    };
     /** @description Bloodline membership record for a character */
     BloodlineEntry: {
       /**
@@ -13461,6 +14111,112 @@ export interface components {
       /** @description Human-readable error reason */
       error: string;
     };
+    /** @description A single binding entry in a bulk seed request */
+    BulkSeedBindingEntry: {
+      /**
+       * Format: uuid
+       * @description Location to bind
+       */
+      locationId: string;
+      /**
+       * Format: uuid
+       * @description Game service for template resolution
+       */
+      gameServiceId: string;
+      /** @description Biome code */
+      biomeCode: string;
+      /**
+       * Format: double
+       * @description Location altitude
+       */
+      altitude?: number | null;
+      /**
+       * Format: double
+       * @description Underground depth
+       */
+      depth?: number | null;
+      /** @description Whether this is an enclosed location */
+      isIndoor?: boolean | null;
+    };
+    /** @description Request to bulk seed location-climate bindings */
+    BulkSeedBindingsRequest: {
+      /** @description Bindings to seed */
+      bindings: components['schemas']['BulkSeedBindingEntry'][];
+      /**
+       * @description Whether to update bindings that already exist
+       * @default false
+       */
+      updateExisting: boolean;
+    };
+    /** @description Result of a bulk binding seed operation */
+    BulkSeedBindingsResponse: {
+      /** @description Number of bindings created */
+      created: number;
+      /** @description Number of bindings updated */
+      updated: number;
+      /** @description Number of bindings skipped */
+      skipped: number;
+      /** @description Number of bindings that failed */
+      failed: number;
+    };
+    /** @description A single climate template entry in a bulk seed request */
+    BulkSeedClimateEntry: {
+      /** @description Biome type code */
+      biomeCode: string;
+      /** @description Human-readable name */
+      displayName: string;
+      /** @description Detailed description */
+      description?: string | null;
+      /** @description Temperature curves per season */
+      temperatureCurves: components['schemas']['TemperatureCurve'][];
+      /** @description Weather distributions per season */
+      weatherDistributions: components['schemas']['WeatherDistributionSeason'][];
+      /** @description Atmospheric baselines per season */
+      atmosphericBaselines: components['schemas']['AtmosphericBaselineSeason'][];
+      /** @description Resource availability per season */
+      resourceAvailability: components['schemas']['ResourceAvailabilitySeason'][];
+      /**
+       * Format: double
+       * @description Temperature change per altitude unit
+       */
+      altitudeTemperatureRate?: number | null;
+      /**
+       * Format: double
+       * @description Temperature change per depth unit
+       */
+      depthTemperatureRate?: number | null;
+      /**
+       * Format: double
+       * @description Heat threshold temperature
+       */
+      heatThreshold?: number | null;
+    };
+    /** @description Request to bulk seed climate templates for a game service */
+    BulkSeedClimatesRequest: {
+      /**
+       * Format: uuid
+       * @description Game service to seed templates for
+       */
+      gameServiceId: string;
+      /** @description Climate templates to seed */
+      templates: components['schemas']['BulkSeedClimateEntry'][];
+      /**
+       * @description Whether to update templates that already exist for a biome code
+       * @default false
+       */
+      updateExisting: boolean;
+    };
+    /** @description Result of a bulk climate template seed operation */
+    BulkSeedClimatesResponse: {
+      /** @description Number of templates created */
+      created: number;
+      /** @description Number of templates updated */
+      updated: number;
+      /** @description Number of templates skipped (already exist, updateExisting=false) */
+      skipped: number;
+      /** @description Number of templates that failed to process */
+      failed: number;
+    };
     /** @description A single connection entry in a bulk seed request */
     BulkSeedConnectionEntry: {
       /** @description Location code for the starting point (resolved via Location service) */
@@ -13867,6 +14623,29 @@ export interface components {
       accountId: string;
       /** @description Optional reason for cancellation */
       reason?: string | null;
+    };
+    /** @description Request to cancel an active weather event */
+    CancelWeatherEventRequest: {
+      /**
+       * Format: uuid
+       * @description Weather event to cancel
+       */
+      eventId: string;
+    };
+    /** @description Request to cancel all active weather events from a specific source */
+    CancelWeatherEventsBySourceRequest: {
+      /** @description Source type to cancel events for */
+      sourceType: components['schemas']['WeatherEventSourceType'];
+      /**
+       * Format: uuid
+       * @description Source entity ID
+       */
+      sourceId: string;
+    };
+    /** @description Result of cancelling weather events by source */
+    CancelWeatherEventsBySourceResponse: {
+      /** @description Number of events cancelled */
+      cancelledCount: number;
     };
     /**
      * @description What happens when a credit would exceed the wallet cap
@@ -14557,6 +15336,121 @@ export interface components {
        */
       expiresAt?: string | null;
     };
+    /** @description Location-climate binding data */
+    ClimateBindingResponse: {
+      /**
+       * Format: uuid
+       * @description Unique binding identifier
+       */
+      bindingId: string;
+      /**
+       * Format: uuid
+       * @description Bound location
+       */
+      locationId: string;
+      /**
+       * Format: uuid
+       * @description Realm containing the location
+       */
+      realmId: string;
+      /**
+       * Format: uuid
+       * @description Game service for template resolution
+       */
+      gameServiceId: string;
+      /** @description Biome type code */
+      biomeCode: string;
+      /**
+       * Format: uuid
+       * @description Resolved climate template ID
+       */
+      climateTemplateId: string;
+      /**
+       * Format: double
+       * @description Location altitude for temperature modifier
+       */
+      altitude: number;
+      /**
+       * Format: double
+       * @description Underground depth for temperature modifier
+       */
+      depth: number;
+      /** @description Whether this is an enclosed location (skips weather) */
+      isIndoor: boolean;
+      /** @description Whether this binding was inherited from a parent location */
+      isInherited: boolean;
+      /**
+       * Format: date-time
+       * @description When the binding was created
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description When the binding was last updated
+       */
+      updatedAt?: string | null;
+    };
+    /** @description Full climate template data */
+    ClimateTemplateResponse: {
+      /**
+       * Format: uuid
+       * @description Unique climate template identifier
+       */
+      templateId: string;
+      /**
+       * Format: uuid
+       * @description Game service this template belongs to
+       */
+      gameServiceId: string;
+      /** @description Biome type code */
+      biomeCode: string;
+      /** @description Human-readable name */
+      displayName: string;
+      /** @description Detailed description */
+      description?: string | null;
+      /** @description Temperature curves per season */
+      temperatureCurves: components['schemas']['TemperatureCurve'][];
+      /** @description Weather distributions per season */
+      weatherDistributions: components['schemas']['WeatherDistributionSeason'][];
+      /** @description Atmospheric baselines per season */
+      atmosphericBaselines: components['schemas']['AtmosphericBaselineSeason'][];
+      /** @description Resource availability per season */
+      resourceAvailability: components['schemas']['ResourceAvailabilitySeason'][];
+      /**
+       * Format: double
+       * @description Temperature change per altitude unit
+       */
+      altitudeTemperatureRate: number;
+      /**
+       * Format: double
+       * @description Temperature change per depth unit
+       */
+      depthTemperatureRate: number;
+      /**
+       * Format: double
+       * @description Temperature above which is_hot is true
+       */
+      heatThreshold: number;
+      /** @description Whether this template is deprecated */
+      isDeprecated: boolean;
+      /**
+       * Format: date-time
+       * @description When the template was deprecated
+       */
+      deprecatedAt?: string | null;
+      /** @description Reason for deprecation */
+      deprecationReason?: string | null;
+      /**
+       * Format: date-time
+       * @description When the template was created
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description When the template was last updated
+       */
+      updatedAt?: string | null;
+    };
     /** @description Request to clone a board's unlock state to a new owner (developer tooling) */
     CloneBoardRequest: {
       /**
@@ -15047,6 +15941,92 @@ export interface components {
       expectedValue?: string | null;
       /** @description Additional details */
       details?: string | null;
+    };
+    /** @description Full environmental condition snapshot for a location at a point in time */
+    ConditionSnapshotResponse: {
+      /**
+       * Format: uuid
+       * @description Location this snapshot is for
+       */
+      locationId: string;
+      /**
+       * Format: uuid
+       * @description Realm containing the location
+       */
+      realmId: string;
+      /** @description Resolved biome code for this location */
+      biomeCode: string;
+      /** @description Current weather pattern code */
+      weatherCode: string;
+      /**
+       * Format: double
+       * @description Computed temperature in abstract units
+       */
+      temperature: number;
+      /**
+       * Format: double
+       * @description Wind-chill adjusted temperature
+       */
+      feelsLike: number;
+      /** @description True when temperature is below zero */
+      isFreezing: boolean;
+      /** @description True when temperature exceeds the biome heat threshold */
+      isHot: boolean;
+      /** @description Current precipitation form */
+      precipitationType: components['schemas']['PrecipitationType'];
+      /**
+       * Format: double
+       * @description Current precipitation intensity (0.0-1.0)
+       */
+      precipitationIntensity: number;
+      /**
+       * Format: double
+       * @description Normalized wind speed (0.0-1.0)
+       */
+      windSpeed: number;
+      /**
+       * Format: double
+       * @description Wind direction in degrees (0.0-360.0)
+       */
+      windDirection: number;
+      /**
+       * Format: double
+       * @description Humidity level (0.0-1.0)
+       */
+      humidity: number;
+      /**
+       * Format: double
+       * @description Visibility level (0.0 = zero, 1.0 = perfect)
+       */
+      visibility: number;
+      /**
+       * Format: double
+       * @description Cloud coverage (0.0-1.0)
+       */
+      cloudCover: number;
+      /**
+       * Format: double
+       * @description Composite ecological resource abundance (0.0-1.0)
+       */
+      resourceAvailability: number;
+      /** @description True when resource availability is below the drought threshold */
+      isDrought: boolean;
+      /** @description True when resource availability is above the abundance threshold */
+      isAbundant: boolean;
+      /** @description Whether any weather event affects this location */
+      hasActiveEvent: boolean;
+      /** @description Event code of the highest-severity active event (null if none) */
+      activeEventCode?: string | null;
+      /**
+       * Format: double
+       * @description Severity of the active event (null if none)
+       */
+      activeEventSeverity?: number | null;
+      /**
+       * Format: date-time
+       * @description When this snapshot was computed
+       */
+      computedAt: string;
     };
     /** @description Request to confirm a pending bond. */
     ConfirmBondRequest: {
@@ -16088,6 +17068,36 @@ export interface components {
        */
       estimatedSize: number;
     };
+    /** @description Request to bind a location to a climate template via biome code */
+    CreateClimateBindingRequest: {
+      /**
+       * Format: uuid
+       * @description Location to bind
+       */
+      locationId: string;
+      /**
+       * Format: uuid
+       * @description Game service for template resolution
+       */
+      gameServiceId: string;
+      /** @description Biome code matching an existing climate template */
+      biomeCode: string;
+      /**
+       * Format: double
+       * @description Location altitude for temperature modifier (default 0)
+       */
+      altitude?: number | null;
+      /**
+       * Format: double
+       * @description Underground depth for temperature modifier (default 0)
+       */
+      depth?: number | null;
+      /**
+       * @description Whether this is an enclosed location that skips weather computation
+       * @default false
+       */
+      isIndoor: boolean;
+    };
     /** @description Request to create a collection for an owner */
     CreateCollectionRequest: {
       /**
@@ -17094,6 +18104,87 @@ export interface components {
       /** @description Game content references */
       content?: components['schemas']['ScenarioContent'];
     };
+    /** @description Request to create a bounded weather event override */
+    CreateWeatherEventRequest: {
+      /**
+       * Format: uuid
+       * @description Realm this event belongs to
+       */
+      realmId: string;
+      /** @description Geographic scope of the event */
+      scopeType: components['schemas']['WeatherEventScopeType'];
+      /**
+       * Format: uuid
+       * @description ID of the scope target (realm ID, location ID)
+       */
+      scopeId: string;
+      /** @description Weather event code (e.g., thunderstorm, drought, blizzard) */
+      eventCode: string;
+      /** @description Human-readable event name */
+      displayName: string;
+      /**
+       * Format: double
+       * @description Event intensity (0.0-1.0)
+       */
+      severity: number;
+      /** @description Override weather pattern (null = keep existing) */
+      weatherCode?: string | null;
+      /**
+       * Format: double
+       * @description Additive temperature change
+       */
+      temperatureModifier?: number | null;
+      /**
+       * Format: double
+       * @description Hard temperature override (takes precedence over modifier)
+       */
+      temperatureOverride?: number | null;
+      /**
+       * Format: double
+       * @description Override visibility multiplier
+       */
+      visibilityMultiplier?: number | null;
+      /**
+       * Format: double
+       * @description Override precipitation intensity
+       */
+      precipitationIntensity?: number | null;
+      /**
+       * Format: double
+       * @description Multiply base wind speed
+       */
+      windSpeedMultiplier?: number | null;
+      /**
+       * Format: double
+       * @description Multiply seasonal resource availability
+       */
+      resourceAvailabilityMultiplier?: number | null;
+      /**
+       * Format: int64
+       * @description Game-seconds-since-epoch when event begins (null = starts immediately)
+       */
+      startGameTime?: number | null;
+      /**
+       * Format: int64
+       * @description Game-seconds-since-epoch when event ends (null = indefinite)
+       */
+      endGameTime?: number | null;
+      /** @description Origin type of this event */
+      sourceType: components['schemas']['WeatherEventSourceType'];
+      /**
+       * Format: uuid
+       * @description Source entity ID (actor ID, schedule ID, etc.)
+       */
+      sourceId?: string | null;
+    };
+    /** @description Response from creating a weather event */
+    CreateWeatherEventResponse: {
+      /**
+       * Format: uuid
+       * @description ID of the created weather event
+       */
+      eventId: string;
+    };
     /** @description Request to cure a breach */
     CureBreachRequest: {
       /**
@@ -17516,6 +18607,22 @@ export interface components {
     };
     /** @description Empty response. HTTP 200 confirms the deletion succeeded. */
     DeleteCalendarResponse: Record<string, never>;
+    /** @description Request to delete a location-climate binding */
+    DeleteClimateBindingRequest: {
+      /**
+       * Format: uuid
+       * @description Location whose binding to delete
+       */
+      locationId: string;
+    };
+    /** @description Request to delete a deprecated climate template */
+    DeleteClimateRequest: {
+      /**
+       * Format: uuid
+       * @description Climate template to delete (must be deprecated)
+       */
+      templateId: string;
+    };
     /** @description Request to delete a collection */
     DeleteCollectionRequest: {
       /**
@@ -17781,6 +18888,16 @@ export interface components {
        */
       boardTemplateId: string;
       /** @description Reason for deprecation (audit context for Category B entities) */
+      reason?: string | null;
+    };
+    /** @description Request to deprecate a climate template */
+    DeprecateClimateRequest: {
+      /**
+       * Format: uuid
+       * @description Climate template to deprecate
+       */
+      templateId: string;
+      /** @description Optional reason for deprecation */
       reason?: string | null;
     };
     /** @description Request to deprecate a currency definition (Category B — one-way, no delete) */
@@ -19112,6 +20229,19 @@ export interface components {
        */
       sizeBytes: number;
     };
+    /** @description Request to extend the duration of an active weather event */
+    ExtendWeatherEventRequest: {
+      /**
+       * Format: uuid
+       * @description Weather event to extend
+       */
+      eventId: string;
+      /**
+       * Format: int64
+       * @description New end time in game-seconds-since-epoch (must be later than current)
+       */
+      newEndGameTime: number;
+    };
     /** @description Faction membership record linking a character to a faction with a role */
     FactionMemberResponse: {
       /**
@@ -19919,6 +21049,29 @@ export interface components {
        */
       includeMetadata: boolean;
     };
+    /** @description Request to get the climate binding for a location */
+    GetClimateBindingRequest: {
+      /**
+       * Format: uuid
+       * @description Location to get binding for
+       */
+      locationId: string;
+    };
+    /** @description Request to get a climate template by ID or by game service and biome code */
+    GetClimateRequest: {
+      /**
+       * Format: uuid
+       * @description Climate template ID (provide this OR gameServiceId+biomeCode)
+       */
+      templateId?: string | null;
+      /**
+       * Format: uuid
+       * @description Game service ID (used with biomeCode)
+       */
+      gameServiceId?: string | null;
+      /** @description Biome code (used with gameServiceId) */
+      biomeCode?: string | null;
+    };
     /** @description Request to get a collection by ID */
     GetCollectionRequest: {
       /**
@@ -19943,6 +21096,26 @@ export interface components {
       gameServiceId: string;
       /** @description Type of collection to get stats for */
       collectionType: components['schemas']['CollectionType'];
+    };
+    /** @description Request to get conditions by realm and location code names */
+    GetConditionsByCodeRequest: {
+      /** @description Realm code for location resolution */
+      realmCode: string;
+      /** @description Location code for location resolution */
+      locationCode: string;
+    };
+    /** @description Request to get environmental conditions at a specific location */
+    GetConditionsRequest: {
+      /**
+       * Format: uuid
+       * @description Realm containing the location
+       */
+      realmId: string;
+      /**
+       * Format: uuid
+       * @description Location to get conditions for
+       */
+      locationId: string;
     };
     /** @description Request to get a connection by ID or code. One of connectionId or code must be provided. */
     GetConnectionRequest: {
@@ -20707,6 +21880,14 @@ export interface components {
        */
       realmId: string;
     };
+    /** @description Request to get per-realm environment configuration */
+    GetRealmConfigRequest: {
+      /**
+       * Format: uuid
+       * @description Realm to get config for
+       */
+      realmId: string;
+    };
     /** @description Request payload for getting participants of an event */
     GetRealmEventParticipantsRequest: {
       /**
@@ -20767,6 +21948,22 @@ export interface components {
        */
       pageSize: number;
     };
+    /** @description Request to get an aggregated resource summary for a realm */
+    GetRealmResourceSummaryRequest: {
+      /**
+       * Format: uuid
+       * @description Realm to summarize resources for
+       */
+      realmId: string;
+    };
+    /** @description Request to get an aggregated weather summary for a realm */
+    GetRealmWeatherSummaryRequest: {
+      /**
+       * Format: uuid
+       * @description Realm to summarize weather for
+       */
+      realmId: string;
+    };
     /** @description Request to retrieve a specific relationship by its ID */
     GetRelationshipRequest: {
       /**
@@ -20824,6 +22021,19 @@ export interface components {
        * @default 20
        */
       pageSize: number;
+    };
+    /** @description Request to get resource availability at a location */
+    GetResourceAvailabilityRequest: {
+      /**
+       * Format: uuid
+       * @description Realm containing the location
+       */
+      realmId: string;
+      /**
+       * Format: uuid
+       * @description Location to get resource availability for
+       */
+      locationId: string;
     };
     /** @description Request to retrieve a room by ID */
     GetRoomRequest: {
@@ -21041,6 +22251,19 @@ export interface components {
       /** @description Style name to retrieve (alternative to ID) */
       styleName?: string | null;
     };
+    /** @description Request to get temperature data at a specific location */
+    GetTemperatureRequest: {
+      /**
+       * Format: uuid
+       * @description Realm containing the location
+       */
+      realmId: string;
+      /**
+       * Format: uuid
+       * @description Location to get temperature for
+       */
+      locationId: string;
+    };
     /** @description Request to get a template by code */
     GetTemplateByCodeRequest: {
       /** @description Template code to look up */
@@ -21127,6 +22350,27 @@ export interface components {
     GetValidationRulesResponse: {
       /** @description Registered rules (null if none registered for the combination) */
       rules?: components['schemas']['ValidationRule'][] | null;
+    };
+    /** @description Request to get weather conditions for a location subtree */
+    GetWeatherByRegionRequest: {
+      /**
+       * Format: uuid
+       * @description Root location of the region
+       */
+      locationId: string;
+      /**
+       * Format: uuid
+       * @description Realm containing the location
+       */
+      realmId: string;
+    };
+    /** @description Request to get a weather event by ID */
+    GetWeatherEventRequest: {
+      /**
+       * Format: uuid
+       * @description Weather event to retrieve
+       */
+      eventId: string;
     };
     /** @description Goal definition for GOAP planning with conditions and priority */
     GoapGoal: {
@@ -22779,6 +24023,29 @@ export interface components {
       /** @description List of registered clause types */
       clauseTypes: components['schemas']['ClauseTypeSummary'][];
     };
+    /** @description Request to list climate templates for a game service */
+    ListClimatesRequest: {
+      /**
+       * Format: uuid
+       * @description Game service to list templates for
+       */
+      gameServiceId: string;
+      /**
+       * @description Whether to include deprecated templates
+       * @default false
+       */
+      includeDeprecated: boolean;
+      /**
+       * @description Page number for pagination
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Number of items per page
+       * @default 20
+       */
+      pageSize: number;
+    };
     /** @description Request to list collections for an owner */
     ListCollectionsRequest: {
       /**
@@ -24026,6 +25293,35 @@ export interface components {
       versions: components['schemas']['VersionResponse'][];
       /** @description Total version count in slot */
       totalCount: number;
+    };
+    /** @description Request to list weather events for a scope */
+    ListWeatherEventsRequest: {
+      /** @description Scope type to filter by */
+      scopeType: components['schemas']['WeatherEventScopeType'];
+      /**
+       * Format: uuid
+       * @description Scope target ID
+       */
+      scopeId: string;
+      /**
+       * @description Whether to return only active events
+       * @default true
+       */
+      activeOnly: boolean;
+      /** @description Optional filter by event code */
+      eventCode?: string | null;
+      /** @description Optional filter by source type */
+      sourceType?: components['schemas']['WeatherEventSourceType'];
+      /**
+       * @description Page number
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Items per page
+       * @default 20
+       */
+      pageSize: number;
     };
     /** @description Request to load save data from a specific slot and version */
     LoadRequest: {
@@ -25395,6 +26691,28 @@ export interface components {
       /** @description Name or identifier of the page author */
       author?: string | null;
     };
+    /** @description Paged list of climate templates */
+    PagedClimateTemplateResponse: {
+      /** @description Climate templates on this page */
+      items: components['schemas']['ClimateTemplateResponse'][];
+      /** @description Total number of matching templates */
+      totalCount: number;
+      /** @description Current page number */
+      page: number;
+      /** @description Items per page */
+      pageSize: number;
+    };
+    /** @description Paged list of weather events */
+    PagedWeatherEventResponse: {
+      /** @description Weather events on this page */
+      items: components['schemas']['WeatherEventResponse'][];
+      /** @description Total number of matching events */
+      totalCount: number;
+      /** @description Current page number */
+      page: number;
+      /** @description Items per page */
+      pageSize: number;
+    };
     /** @description Upload information for a single part in a multipart upload */
     PartUploadInfo: {
       /** @description Part number (1-based) */
@@ -26008,6 +27326,11 @@ export interface components {
      * @enum {string}
      */
     PreboundApiExecutionMode: 'Sync' | 'Async' | 'FireAndForget';
+    /**
+     * @description Form of precipitation. Temperature crossover rules apply (Rain below 0C becomes Snow, Snow above 5C becomes Rain, between 0-5C becomes Sleet)
+     * @enum {string}
+     */
+    PrecipitationType: 'None' | 'Rain' | 'Snow' | 'Sleet' | 'Hail';
     /** @description Mutation that would be applied */
     PredictedMutation: {
       /** @description Type of mutation */
@@ -27019,6 +28342,31 @@ export interface components {
       /** @description Whether the realm clock is initialized and active */
       isActive: boolean;
     };
+    /** @description Per-realm environment configuration */
+    RealmEnvironmentConfigResponse: {
+      /**
+       * Format: uuid
+       * @description Realm this config is for
+       */
+      realmId: string;
+      /**
+       * Format: uuid
+       * @description Game service for biome resolution
+       */
+      gameServiceId: string;
+      /** @description Default biome code for unbound locations */
+      defaultBiomeCode: string;
+      /**
+       * Format: date-time
+       * @description When the config was created
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description When the config was last updated
+       */
+      updatedAt?: string | null;
+    };
     /**
      * @description Categories of historical events that realms can participate in
      * @enum {string}
@@ -27163,6 +28511,45 @@ export interface components {
       hasNextPage: boolean;
       /** @description Whether there are results before this page */
       hasPreviousPage: boolean;
+    };
+    /** @description Aggregated resource summary for a realm grouped by biome */
+    RealmResourceSummaryResponse: {
+      /**
+       * Format: uuid
+       * @description Realm this summary is for
+       */
+      realmId: string;
+      /** @description Resource summaries per biome */
+      biomeSummaries: components['schemas']['BiomeResourceSummary'][];
+    };
+    /** @description Aggregated weather summary for a realm */
+    RealmWeatherSummaryResponse: {
+      /**
+       * Format: uuid
+       * @description Realm this summary is for
+       */
+      realmId: string;
+      /** @description Total locations in the realm */
+      locationCount: number;
+      /** @description Location count per weather code */
+      weatherSummaries: components['schemas']['WeatherCodeSummary'][];
+      /**
+       * Format: double
+       * @description Average temperature across all locations
+       */
+      averageTemperature: number;
+      /**
+       * Format: double
+       * @description Lowest temperature in the realm
+       */
+      minTemperature: number;
+      /**
+       * Format: double
+       * @description Highest temperature in the realm
+       */
+      maxTemperature: number;
+      /** @description Number of active weather events in the realm */
+      activeWeatherEventCount: number;
     };
     /** @description Request to recover a deleted document from the trashcan */
     RecoverDocumentRequest: {
@@ -27909,6 +29296,59 @@ export interface components {
       scene: components['schemas']['Scene'];
       /** @description Depth level of this reference */
       depth: number;
+    };
+    /** @description Resource availability breakdown for a location */
+    ResourceAvailabilityResponse: {
+      /**
+       * Format: uuid
+       * @description Location this availability is for
+       */
+      locationId: string;
+      /**
+       * Format: uuid
+       * @description Realm containing the location
+       */
+      realmId: string;
+      /**
+       * Format: double
+       * @description Raw computed abundance before clamping
+       */
+      abundanceLevel: number;
+      /**
+       * Format: double
+       * @description Seasonal baseline abundance from climate template
+       */
+      baseSeasonalLevel: number;
+      /**
+       * Format: double
+       * @description Net modifier from active weather events
+       */
+      weatherEventModifier: number;
+      /**
+       * Format: double
+       * @description Final clamped resource availability (0.0-1.0)
+       */
+      netResult: number;
+    };
+    /** @description Seasonal resource availability values for ecological abundance */
+    ResourceAvailabilitySeason: {
+      /** @description References a Worldstate calendar season code */
+      seasonCode: string;
+      /**
+       * Format: double
+       * @description Base ecological abundance (0.0 = barren, 1.0 = abundant)
+       */
+      abundanceLevel: number;
+      /**
+       * Format: double
+       * @description Multiplier for forageable resource generation
+       */
+      forageModifier: number;
+      /**
+       * Format: double
+       * @description Multiplier for wildlife activity
+       */
+      huntModifier: number;
     };
     /** @description Validation rules for API responses with three-outcome model (success, permanent failure, transient failure) */
     ResponseValidation: {
@@ -29053,6 +30493,43 @@ export interface components {
       /** @description Optional explicit phenotype values for seeded first-generation characters */
       heritageData?: components['schemas']['PhenotypeEntry'][] | null;
     };
+    /** @description Request to create a climate template for a biome within a game service */
+    SeedClimateRequest: {
+      /**
+       * Format: uuid
+       * @description Game service this template belongs to
+       */
+      gameServiceId: string;
+      /** @description Biome type code (e.g., temperate_forest, alpine, desert) */
+      biomeCode: string;
+      /** @description Human-readable name for the climate template */
+      displayName: string;
+      /** @description Detailed description of this climate template */
+      description?: string | null;
+      /** @description Temperature curves per season */
+      temperatureCurves: components['schemas']['TemperatureCurve'][];
+      /** @description Weather pattern distributions per season */
+      weatherDistributions: components['schemas']['WeatherDistributionSeason'][];
+      /** @description Atmospheric baselines per season */
+      atmosphericBaselines: components['schemas']['AtmosphericBaselineSeason'][];
+      /** @description Resource availability values per season */
+      resourceAvailability: components['schemas']['ResourceAvailabilitySeason'][];
+      /**
+       * Format: double
+       * @description Temperature change per altitude unit (default -0.006, lapse rate)
+       */
+      altitudeTemperatureRate?: number | null;
+      /**
+       * Format: double
+       * @description Temperature change per depth unit (default +0.003, geothermal)
+       */
+      depthTemperatureRate?: number | null;
+      /**
+       * Format: double
+       * @description Temperature above which is_hot is true (default 30.0, varies by biome)
+       */
+      heatThreshold?: number | null;
+    };
     /** @description A single definition entry for bulk seeding */
     SeedDefinitionEntry: {
       /** @description Unique definition code within game service */
@@ -29750,6 +31227,21 @@ export interface components {
       traits: components['schemas']['TraitValue'][];
       /** @description Optional archetype code for behavior optimization */
       archetypeHint?: string | null;
+    };
+    /** @description Request to set per-realm default biome configuration */
+    SetRealmConfigRequest: {
+      /**
+       * Format: uuid
+       * @description Realm to configure
+       */
+      realmId: string;
+      /**
+       * Format: uuid
+       * @description Game service for biome code validation
+       */
+      gameServiceId: string;
+      /** @description Default biome code for locations without explicit bindings */
+      defaultBiomeCode: string;
     };
     /** @description Request to set template values on a contract */
     SetTemplateValuesRequest: {
@@ -30614,6 +32106,65 @@ export interface components {
      * @enum {string}
      */
     SyncTrigger: 'Manual' | 'Scheduled';
+    /** @description Seasonal temperature curve definition controlling base min/max temperature and intra-day variation */
+    TemperatureCurve: {
+      /** @description References a Worldstate calendar season code (game-configurable) */
+      seasonCode: string;
+      /**
+       * Format: double
+       * @description Minimum daily temperature in abstract units (typically Celsius-like)
+       */
+      baseMinTemp: number;
+      /**
+       * Format: double
+       * @description Maximum daily temperature in abstract units
+       */
+      baseMaxTemp: number;
+      /** @description Curve shape for intra-day variation (null defaults to Sinusoidal) */
+      hourlyShape?: components['schemas']['TemperatureCurveShape'];
+      /**
+       * @description Game-hour of maximum temperature
+       * @default 14
+       */
+      peakHour: number;
+      /**
+       * @description Game-hour of minimum temperature
+       * @default 4
+       */
+      troughHour: number;
+    };
+    /**
+     * @description Shape of the intra-day temperature curve for hourly interpolation
+     * @enum {string}
+     */
+    TemperatureCurveShape: 'Sinusoidal' | 'Plateau' | 'Spike';
+    /** @description Temperature data for a location */
+    TemperatureResponse: {
+      /**
+       * Format: uuid
+       * @description Location this temperature is for
+       */
+      locationId: string;
+      /**
+       * Format: uuid
+       * @description Realm containing the location
+       */
+      realmId: string;
+      /**
+       * Format: double
+       * @description Computed temperature in abstract units
+       */
+      temperature: number;
+      /**
+       * Format: double
+       * @description Wind-chill adjusted temperature
+       */
+      feelsLike: number;
+      /** @description True when temperature is below zero */
+      isFreezing: boolean;
+      /** @description True when temperature exceeds the biome heat threshold */
+      isHot: boolean;
+    };
     /**
      * @description Current lifecycle status of a scenario template
      * @enum {string}
@@ -31453,6 +33004,14 @@ export interface components {
       /** @description Number of documents deleted (0 if deleteDocuments was false) */
       documentsDeleted: number;
     };
+    /** @description Request to remove deprecation from a climate template */
+    UndeprecateClimateRequest: {
+      /**
+       * Format: uuid
+       * @description Climate template to undeprecate
+       */
+      templateId: string;
+    };
     /** @description Request to reactivate a deprecated faction */
     UndeprecateFactionRequest: {
       /**
@@ -31819,6 +33378,63 @@ export interface components {
       seasons?: components['schemas']['SeasonDefinition'][] | null;
       /** @description New era label definitions (null = no change, empty array = clear all) */
       eraLabels?: components['schemas']['EraLabel'][] | null;
+    };
+    /** @description Request to update a location-climate binding */
+    UpdateClimateBindingRequest: {
+      /**
+       * Format: uuid
+       * @description Location whose binding to update
+       */
+      locationId: string;
+      /** @description Updated biome code */
+      biomeCode?: string | null;
+      /**
+       * Format: double
+       * @description Updated altitude
+       */
+      altitude?: number | null;
+      /**
+       * Format: double
+       * @description Updated depth
+       */
+      depth?: number | null;
+      /** @description Updated indoor flag */
+      isIndoor?: boolean | null;
+    };
+    /** @description Request to partially update a climate template */
+    UpdateClimateRequest: {
+      /**
+       * Format: uuid
+       * @description Climate template to update
+       */
+      templateId: string;
+      /** @description Updated display name */
+      displayName?: string | null;
+      /** @description Updated description */
+      description?: string | null;
+      /** @description Updated temperature curves (replaces all curves) */
+      temperatureCurves?: components['schemas']['TemperatureCurve'][] | null;
+      /** @description Updated weather distributions (replaces all distributions) */
+      weatherDistributions?: components['schemas']['WeatherDistributionSeason'][] | null;
+      /** @description Updated atmospheric baselines (replaces all baselines) */
+      atmosphericBaselines?: components['schemas']['AtmosphericBaselineSeason'][] | null;
+      /** @description Updated resource availability (replaces all entries) */
+      resourceAvailability?: components['schemas']['ResourceAvailabilitySeason'][] | null;
+      /**
+       * Format: double
+       * @description Updated altitude temperature rate
+       */
+      altitudeTemperatureRate?: number | null;
+      /**
+       * Format: double
+       * @description Updated depth temperature rate
+       */
+      depthTemperatureRate?: number | null;
+      /**
+       * Format: double
+       * @description Updated heat threshold
+       */
+      heatThreshold?: number | null;
     };
     /** @description Request to update a connection's properties. Does not update status. Only provided fields are updated. */
     UpdateConnectionRequest: {
@@ -33410,6 +35026,171 @@ export interface components {
        * @description Actor instance ID running this watcher's behavior
        */
       actorId?: string | null;
+    };
+    /** @description Weather conditions for a location subtree grouped by weather code */
+    WeatherByRegionResponse: {
+      /**
+       * Format: uuid
+       * @description Root location of the region
+       */
+      locationId: string;
+      /** @description Locations grouped by weather code */
+      weatherGroups: components['schemas']['WeatherRegionGroup'][];
+    };
+    /** @description Weather code occurrence count in a summary */
+    WeatherCodeSummary: {
+      /** @description Weather pattern code */
+      weatherCode: string;
+      /** @description Number of locations with this weather */
+      locationCount: number;
+    };
+    /** @description Seasonal weather distribution containing weighted patterns for a season */
+    WeatherDistributionSeason: {
+      /** @description References a Worldstate calendar season code */
+      seasonCode: string;
+      /** @description Weighted weather patterns for this season */
+      patterns: components['schemas']['WeatherPattern'][];
+    };
+    /** @description Full weather event data */
+    WeatherEventResponse: {
+      /**
+       * Format: uuid
+       * @description Unique weather event identifier
+       */
+      eventId: string;
+      /**
+       * Format: uuid
+       * @description Realm this event belongs to
+       */
+      realmId: string;
+      /** @description Geographic scope of the event */
+      scopeType: components['schemas']['WeatherEventScopeType'];
+      /**
+       * Format: uuid
+       * @description Scope target ID
+       */
+      scopeId: string;
+      /** @description Weather event code */
+      eventCode: string;
+      /** @description Human-readable event name */
+      displayName: string;
+      /**
+       * Format: double
+       * @description Event intensity (0.0-1.0)
+       */
+      severity: number;
+      /** @description Override weather pattern (null = no override) */
+      weatherCode?: string | null;
+      /**
+       * Format: double
+       * @description Additive temperature change
+       */
+      temperatureModifier?: number | null;
+      /**
+       * Format: double
+       * @description Hard temperature override
+       */
+      temperatureOverride?: number | null;
+      /**
+       * Format: double
+       * @description Override visibility multiplier
+       */
+      visibilityMultiplier?: number | null;
+      /**
+       * Format: double
+       * @description Override precipitation intensity
+       */
+      precipitationIntensity?: number | null;
+      /**
+       * Format: double
+       * @description Wind speed multiplier
+       */
+      windSpeedMultiplier?: number | null;
+      /**
+       * Format: double
+       * @description Resource availability multiplier
+       */
+      resourceAvailabilityMultiplier?: number | null;
+      /**
+       * Format: int64
+       * @description Game-seconds-since-epoch when event begins
+       */
+      startGameTime?: number | null;
+      /**
+       * Format: int64
+       * @description Game-seconds-since-epoch when event ends
+       */
+      endGameTime?: number | null;
+      /** @description Origin type of this event */
+      sourceType: components['schemas']['WeatherEventSourceType'];
+      /**
+       * Format: uuid
+       * @description Source entity ID
+       */
+      sourceId?: string | null;
+      /** @description Whether the event is currently active */
+      isActive: boolean;
+      /**
+       * Format: date-time
+       * @description When the event was created
+       */
+      createdAt: string;
+    };
+    /**
+     * @description Scope level of a weather event override, determining geographic reach and precedence
+     * @enum {string}
+     */
+    WeatherEventScopeType: 'Realm' | 'Location' | 'LocationSubtree';
+    /**
+     * @description Origin type of a weather event, tracking who or what created it
+     * @enum {string}
+     */
+    WeatherEventSourceType: 'Divine' | 'Scheduled' | 'GameEvent' | 'Admin';
+    /** @description Individual weather pattern definition within a seasonal distribution */
+    WeatherPattern: {
+      /** @description Weather pattern code (e.g., clear, cloudy, storm, fog) */
+      weatherCode: string;
+      /**
+       * Format: double
+       * @description Relative probability weight for this season
+       */
+      weight: number;
+      /** @description Typical duration in game-hours before re-rolling */
+      durationGameHours: number;
+      /**
+       * Format: double
+       * @description Additive temperature modifier while this weather is active
+       */
+      temperatureModifier: number;
+      /**
+       * Format: double
+       * @description Visibility multiplier (1.0 = normal, 0.1 = blizzard)
+       */
+      visibilityMultiplier: number;
+      /**
+       * Format: double
+       * @description Precipitation intensity (0.0 = none, 1.0 = maximum)
+       */
+      precipitationIntensity: number;
+      /** @description Form of precipitation for this weather pattern */
+      precipitationType: components['schemas']['PrecipitationType'];
+      /**
+       * Format: double
+       * @description Cloud coverage (0.0 = clear sky, 1.0 = fully overcast)
+       */
+      cloudCover: number;
+      /**
+       * Format: double
+       * @description Additive impact on resource availability (rain=+0.05, storm=-0.15, drought=-0.3)
+       */
+      resourceImpactModifier: number;
+    };
+    /** @description A group of locations sharing the same weather code */
+    WeatherRegionGroup: {
+      /** @description Shared weather pattern code */
+      weatherCode: string;
+      /** @description Location IDs with this weather */
+      locationIds: string[];
     };
     /**
      * @description How container weight propagates to parent
@@ -39813,6 +41594,962 @@ export interface operations {
         };
       };
       /** @description Archive not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_getConditions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetConditionsRequest'];
+      };
+    };
+    responses: {
+      /** @description Condition snapshot retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ConditionSnapshotResponse'];
+        };
+      };
+      /** @description No resolvable climate template for this location */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_getConditionsByCode: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetConditionsByCodeRequest'];
+      };
+    };
+    responses: {
+      /** @description Condition snapshot retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ConditionSnapshotResponse'];
+        };
+      };
+      /** @description Location not found or no resolvable climate template */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_batchGetConditions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BatchGetConditionsRequest'];
+      };
+    };
+    responses: {
+      /** @description Batch condition snapshots retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BatchConditionSnapshotResponse'];
+        };
+      };
+    };
+  };
+  environment_getTemperature: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetTemperatureRequest'];
+      };
+    };
+    responses: {
+      /** @description Temperature data retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TemperatureResponse'];
+        };
+      };
+      /** @description No resolvable climate template for this location */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_seedClimate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SeedClimateRequest'];
+      };
+    };
+    responses: {
+      /** @description Climate template created */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ClimateTemplateResponse'];
+        };
+      };
+      /** @description Validation failed or at capacity */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Game service not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Template already exists for this biome or lock contention */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_getClimate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetClimateRequest'];
+      };
+    };
+    responses: {
+      /** @description Climate template retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ClimateTemplateResponse'];
+        };
+      };
+      /** @description Climate template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_listClimates: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListClimatesRequest'];
+      };
+    };
+    responses: {
+      /** @description Climate templates listed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PagedClimateTemplateResponse'];
+        };
+      };
+    };
+  };
+  environment_updateClimate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateClimateRequest'];
+      };
+    };
+    responses: {
+      /** @description Climate template updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ClimateTemplateResponse'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Climate template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description ETag conflict or lock contention */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_deprecateClimate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeprecateClimateRequest'];
+      };
+    };
+    responses: {
+      /** @description Climate template deprecated (or already deprecated) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ClimateTemplateResponse'];
+        };
+      };
+      /** @description Climate template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_undeprecateClimate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UndeprecateClimateRequest'];
+      };
+    };
+    responses: {
+      /** @description Climate template undeprecated (or already not deprecated) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ClimateTemplateResponse'];
+        };
+      };
+      /** @description Climate template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_deleteClimate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeleteClimateRequest'];
+      };
+    };
+    responses: {
+      /** @description Climate template deleted */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Template is not deprecated (must deprecate first) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Climate template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_bulkSeedClimates: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BulkSeedClimatesRequest'];
+      };
+    };
+    responses: {
+      /** @description Bulk seed completed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BulkSeedClimatesResponse'];
+        };
+      };
+      /** @description Game service not found */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_createWeatherEvent: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateWeatherEventRequest'];
+      };
+    };
+    responses: {
+      /** @description Weather event created */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CreateWeatherEventResponse'];
+        };
+      };
+      /** @description At capacity or validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Scope target not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Lock contention */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_getWeatherEvent: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetWeatherEventRequest'];
+      };
+    };
+    responses: {
+      /** @description Weather event retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WeatherEventResponse'];
+        };
+      };
+      /** @description Weather event not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_listWeatherEvents: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListWeatherEventsRequest'];
+      };
+    };
+    responses: {
+      /** @description Weather events listed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PagedWeatherEventResponse'];
+        };
+      };
+    };
+  };
+  environment_cancelWeatherEvent: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CancelWeatherEventRequest'];
+      };
+    };
+    responses: {
+      /** @description Weather event cancelled */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Weather event is already inactive */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Weather event not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Lock contention */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_extendWeatherEvent: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ExtendWeatherEventRequest'];
+      };
+    };
+    responses: {
+      /** @description Weather event extended */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WeatherEventResponse'];
+        };
+      };
+      /** @description Event is inactive or new end time is not later than current */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Weather event not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_cancelWeatherEventsBySource: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CancelWeatherEventsBySourceRequest'];
+      };
+    };
+    responses: {
+      /** @description Events cancelled */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CancelWeatherEventsBySourceResponse'];
+        };
+      };
+    };
+  };
+  environment_getRealmWeatherSummary: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetRealmWeatherSummaryRequest'];
+      };
+    };
+    responses: {
+      /** @description Realm weather summary retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RealmWeatherSummaryResponse'];
+        };
+      };
+      /** @description Realm not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_getWeatherByRegion: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetWeatherByRegionRequest'];
+      };
+    };
+    responses: {
+      /** @description Regional weather retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WeatherByRegionResponse'];
+        };
+      };
+      /** @description Location not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_getResourceAvailability: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetResourceAvailabilityRequest'];
+      };
+    };
+    responses: {
+      /** @description Resource availability retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ResourceAvailabilityResponse'];
+        };
+      };
+      /** @description No resolvable climate template for this location */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_getRealmResourceSummary: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetRealmResourceSummaryRequest'];
+      };
+    };
+    responses: {
+      /** @description Realm resource summary retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RealmResourceSummaryResponse'];
+        };
+      };
+      /** @description Realm not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_createClimateBinding: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateClimateBindingRequest'];
+      };
+    };
+    responses: {
+      /** @description Climate binding created */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ClimateBindingResponse'];
+        };
+      };
+      /** @description Referenced climate template is deprecated */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Location or climate template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Binding already exists for this location */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_getClimateBinding: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetClimateBindingRequest'];
+      };
+    };
+    responses: {
+      /** @description Climate binding retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ClimateBindingResponse'];
+        };
+      };
+      /** @description No explicit binding for this location */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_updateClimateBinding: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateClimateBindingRequest'];
+      };
+    };
+    responses: {
+      /** @description Climate binding updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ClimateBindingResponse'];
+        };
+      };
+      /** @description Referenced climate template is deprecated */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Binding or new climate template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_deleteClimateBinding: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeleteClimateBindingRequest'];
+      };
+    };
+    responses: {
+      /** @description Climate binding deleted */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description No binding for this location */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_bulkSeedBindings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BulkSeedBindingsRequest'];
+      };
+    };
+    responses: {
+      /** @description Bulk seed completed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BulkSeedBindingsResponse'];
+        };
+      };
+    };
+  };
+  environment_setRealmConfig: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetRealmConfigRequest'];
+      };
+    };
+    responses: {
+      /** @description Realm config set */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RealmEnvironmentConfigResponse'];
+        };
+      };
+      /** @description Biome code not found or deprecated */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Realm not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  environment_getRealmConfig: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetRealmConfigRequest'];
+      };
+    };
+    responses: {
+      /** @description Realm config retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RealmEnvironmentConfigResponse'];
+        };
+      };
+      /** @description No explicit config set for this realm */
       404: {
         headers: {
           [name: string]: unknown;

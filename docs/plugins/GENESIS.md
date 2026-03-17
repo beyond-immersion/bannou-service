@@ -694,6 +694,8 @@ All endpoints are internal-only (`x-permissions: []`) except:
 
 - **Batch entity creation**: For scenarios where many entities are created at once (dungeon populating rooms with treasure), a batch creation endpoint could provision multiple entities in a single call, reducing round-trips.
 
+- **External seed adoption (nullable `seedId` on create)**: The `/genesis/entity/create` endpoint accepts an optional `seedId` parameter. If provided, Genesis adopts the externally-created seed instead of provisioning one internally. The caller retains the seedId and can interact with it directly via Seed APIs (including creating Seed bonds for growth propagation), while Genesis manages the lifecycle (growth mappings, phase transitions, cognitive progression) identically to internally-created seeds. Validation: seed type must match template's `seedTypeCode`, seed must not already be genesis-managed, initial phase computed from existing growth. This follows the same external-creation-then-adoption pattern as `bind-physical-form` for items/locations. Primary use case: Divine creates deity seeds externally so it can form Seed bonds between deity seeds and follower character seeds for divine growth propagation — see [DIVINITY-GENERATION-ARCHITECTURE.md](../planning/DIVINITY-GENERATION-ARCHITECTURE.md). Also useful for any domain plugin that needs direct Seed API access (bonds, transfers) on genesis-managed entities without breaking encapsulation from Genesis's API perspective.
+
 ---
 
 ## Known Quirks & Caveats
@@ -704,7 +706,7 @@ All endpoints are internal-only (`x-permissions: []`) except:
 
 ### Intentional Quirks (Documented Behavior)
 
-- **Seed is fully encapsulated**: The seedId never appears in any API response. Callers cannot call Seed APIs directly for genesis-managed seeds. All growth flows through currency wallet credits. This is a deliberate architectural choice: the seed is an implementation detail of the awakening lifecycle, not a public contract.
+- **Seed is fully encapsulated**: The seedId never appears in any Genesis API response. Callers cannot discover genesis-managed seedIds through Genesis. All growth flows through currency wallet credits. This is a deliberate architectural choice: the seed is an implementation detail of the awakening lifecycle, not a public contract. **Exception**: When the caller provides an external seedId via the nullable `seedId` on create (see Potential Extensions), the caller already holds the seedId because they created it — Genesis doesn't leak it, the caller brought it. This enables domain plugins (e.g., Divine) to create Seed bonds on genesis-managed seeds without Genesis exposing internal state.
 
 - **ICurrencyTransactionListener is local-only**: Genesis relies on DI listeners, not event subscriptions. This is safe because Currency and Genesis are both L2 and guaranteed co-located. If a future deployment mode separates L2 services across nodes, this would need to be revisited with event subscription as a fallback.
 

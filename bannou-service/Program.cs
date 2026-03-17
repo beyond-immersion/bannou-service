@@ -35,7 +35,7 @@ public static class Program
     /// </summary>
     public static IConfigurationRoot ConfigurationRoot
     {
-        get => _configurationRoot ??= IServiceConfiguration.BuildConfigurationRoot(Environment.GetCommandLineArgs());
+        get => _configurationRoot ??= IServiceConfiguration.BuildConfigurationRoot(System.Environment.GetCommandLineArgs());
         internal set => _configurationRoot = value;
     }
 
@@ -47,7 +47,7 @@ public static class Program
     /// </summary>
     public static AppConfiguration Configuration
     {
-        get => _configuration ??= IServiceConfiguration.BuildConfiguration<AppConfiguration>(Environment.GetCommandLineArgs());
+        get => _configuration ??= IServiceConfiguration.BuildConfiguration<AppConfiguration>(System.Environment.GetCommandLineArgs());
         internal set => _configuration = value;
     }
 
@@ -123,7 +123,7 @@ public static class Program
         }
 
         // prepare to build the application
-        WebApplicationBuilder? webAppBuilder = WebApplication.CreateBuilder(Environment.GetCommandLineArgs());
+        WebApplicationBuilder? webAppBuilder = WebApplication.CreateBuilder(System.Environment.GetCommandLineArgs());
         if (webAppBuilder == null)
         {
             Logger.Log(LogLevel.Error, null, "Failed to create WebApplicationBuilder- exiting application.");

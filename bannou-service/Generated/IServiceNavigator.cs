@@ -26,6 +26,7 @@ using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Divine;
 using BeyondImmersion.BannouService.Documentation;
+using BeyondImmersion.BannouService.Environment;
 using BeyondImmersion.BannouService.Escrow;
 using BeyondImmersion.BannouService.Faction;
 using BeyondImmersion.BannouService.GameService;
@@ -176,6 +177,11 @@ public partial interface IServiceNavigator
     /// Gets the Documentation service client.
     /// </summary>
     IDocumentationClient Documentation { get; }
+
+    /// <summary>
+    /// Gets the Environment service client.
+    /// </summary>
+    IEnvironmentClient Environment { get; }
 
     /// <summary>
     /// Gets the Escrow service client.

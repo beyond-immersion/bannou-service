@@ -30,7 +30,8 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Currency Service API](#currency) | `client.Currency` | 34 | Multi-currency management service for game economies. |
 | [Bannou Divine Service API](#divine) | `client.Divine` | 22 | Pantheon management service (L4 GameFeatures) for deity enti... |
 | [Bannou Documentation API](#documentation) | `client.Documentation` | 25 | Knowledge base API for AI agents to query documentation. Des... |
-| [Escrow Service API](#escrow) | `client.Escrow` | 22 | Full-custody orchestration layer for multi-party asset excha... |
+| [Bannou Environment Service API](#environment) | `client.Environment` | 32 | Weather simulation, temperature modeling, atmospheric condit... |
+| [Escrow Service API](#escrow) | `client.Escrow` | 23 | Full-custody orchestration layer for multi-party asset excha... |
 | [Bannou Faction Service API](#faction) | `client.Faction` | 37 | Faction management as seed-based living entities (L4 GameFea... |
 | [Bannou Game Service API](#game-service) | `client.GameService` | 5 | Registry service for game services that users can subscribe ... |
 | [Bannou Game Session Service API](#game-session) | `client.GameSession` | 11 | Minimal game session management for games. |
@@ -1168,11 +1169,97 @@ Knowledge base API for AI agents to query documentation. Designed for SignalWire
 
 ---
 
+## Bannou Environment Service API {#environment}
+
+**Proxy**: `client.Environment` | **Version**: 1.0.0
+
+Weather simulation, temperature modeling, atmospheric conditions, and ecological resource availability for game worlds. Consumes temporal data from...
+
+### Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbyrealmEventAsync` | `CleanupByRealmRequest` | *(fire-and-forget)* | Cleanup all environment data for a deleted realm |
+| `CleanupbygameserviceEventAsync` | `CleanupByGameServiceRequest` | *(fire-and-forget)* | Cleanup all environment data for a deleted game service |
+| `CleanupbylocationEventAsync` | `CleanupByLocationRequest` | *(fire-and-forget)* | Cleanup all environment data for a deleted location |
+
+### ClimateBinding
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateClimatebindingAsync` | `CreateClimateBindingRequest` | `ClimateBindingResponse` | Bind a location to a climate template |
+| `GetClimatebindingAsync` | `GetClimateBindingRequest` | `ClimateBindingResponse` | Get a climate binding for a location |
+| `UpdateClimatebindingAsync` | `UpdateClimateBindingRequest` | `ClimateBindingResponse` | Update a climate binding |
+| `DeleteClimatebindingEventAsync` | `DeleteClimateBindingRequest` | *(fire-and-forget)* | Delete a climate binding |
+| `BulkseedbindingsAsync` | `BulkSeedBindingsRequest` | `BulkSeedBindingsResponse` | Bulk seed climate bindings |
+
+### ClimateTemplate
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `SeedclimateAsync` | `SeedClimateRequest` | `ClimateTemplateResponse` | Create a climate template for a biome |
+| `GetClimateAsync` | `GetClimateRequest` | `ClimateTemplateResponse` | Get a climate template |
+| `ListClimatesAsync` | `ListClimatesRequest` | `PagedClimateTemplateResponse` | List climate templates for a game service |
+| `UpdateClimateAsync` | `UpdateClimateRequest` | `ClimateTemplateResponse` | Update a climate template |
+| `DeprecateclimateAsync` | `DeprecateClimateRequest` | `ClimateTemplateResponse` | Deprecate a climate template |
+| `UndeprecateclimateAsync` | `UndeprecateClimateRequest` | `ClimateTemplateResponse` | Undeprecate a climate template |
+| `DeleteClimateEventAsync` | `DeleteClimateRequest` | *(fire-and-forget)* | Delete a climate template |
+| `BulkseedclimatesAsync` | `BulkSeedClimatesRequest` | `BulkSeedClimatesResponse` | Bulk seed climate templates |
+
+### Conditions
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetConditionsAsync` | `GetConditionsRequest` | `ConditionSnapshotResponse` | Get environmental conditions at a location |
+| `GetConditionsbycodeAsync` | `GetConditionsByCodeRequest` | `ConditionSnapshotResponse` | Get conditions by realm and location codes |
+| `BatchgetconditionsAsync` | `BatchGetConditionsRequest` | `BatchConditionSnapshotResponse` | Get conditions for multiple locations |
+| `GetTemperatureAsync` | `GetTemperatureRequest` | `TemperatureResponse` | Get temperature at a location |
+
+### RealmConfig
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `SetrealmconfigAsync` | `SetRealmConfigRequest` | `RealmEnvironmentConfigResponse` | Set per-realm environment configuration |
+| `GetRealmconfigAsync` | `GetRealmConfigRequest` | `RealmEnvironmentConfigResponse` | Get per-realm environment configuration |
+
+### Resources
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetResourceavailabilityAsync` | `GetResourceAvailabilityRequest` | `ResourceAvailabilityResponse` | Get resource availability at a location |
+| `GetRealmresourcesummaryAsync` | `GetRealmResourceSummaryRequest` | `RealmResourceSummaryResponse` | Get resource summary for a realm |
+
+### WeatherEvent
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateWeathereventAsync` | `CreateWeatherEventRequest` | `CreateWeatherEventResponse` | Create a weather event |
+| `GetWeathereventAsync` | `GetWeatherEventRequest` | `WeatherEventResponse` | Get a weather event |
+| `ListWeathereventsAsync` | `ListWeatherEventsRequest` | `PagedWeatherEventResponse` | List weather events for a scope |
+| `CancelweathereventEventAsync` | `CancelWeatherEventRequest` | *(fire-and-forget)* | Cancel an active weather event |
+| `ExtendweathereventAsync` | `ExtendWeatherEventRequest` | `WeatherEventResponse` | Extend a weather event duration |
+| `CancelweathereventsbysourceAsync` | `CancelWeatherEventsBySourceRequest` | `CancelWeatherEventsBySourceResponse` | Cancel all weather events from a source |
+
+### WeatherSummary
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetRealmweathersummaryAsync` | `GetRealmWeatherSummaryRequest` | `RealmWeatherSummaryResponse` | Get weather summary for a realm |
+| `GetWeatherbyregionAsync` | `GetWeatherByRegionRequest` | `WeatherByRegionResponse` | Get weather grouped by region |
+
+---
+
 ## Escrow Service API {#escrow}
 
 **Proxy**: `client.Escrow` | **Version**: 1.0.0
 
 Full-custody orchestration layer for multi-party asset exchanges.
+
+### Admin
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbycharacterAsync` | `CleanupByCharacterRequest` | `CleanupByCharacterResponse` | Clean up escrow data for a deleted character |
 
 ### Arbiter
 
@@ -2816,8 +2903,8 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 
 ## Summary
 
-- **Total services**: 59
-- **Total methods**: 1003
+- **Total services**: 60
+- **Total methods**: 1036
 
 ---
 

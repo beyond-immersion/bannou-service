@@ -651,6 +651,33 @@ This document lists all configuration options defined in Bannou's configuration 
 | `DOCUMENTATION_TRASHCAN_TTL_DAYS` | int | `7` | Days before trashcan items are auto-purged |
 | `DOCUMENTATION_VOICE_SUMMARY_MAX_LENGTH` | int | `200` | Maximum characters for voice summaries |
 
+### Environment
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `ENVIRONMENT_ABUNDANCE_THRESHOLD` | double | `0.8` | Resource availability above this value sets is_abundant to t... |
+| `ENVIRONMENT_ACTIVE_LOCATION_WINDOW_MINUTES` | int | `30` | When ConditionRefreshMode is ActiveOnly, locations queried w... |
+| `ENVIRONMENT_CLIMATE_CACHE_TTL_MINUTES` | int | `60` | TTL in minutes for in-memory climate template cache (templat... |
+| `ENVIRONMENT_CONDITION_CACHE_TTL_SECONDS` | int | `60` | TTL in seconds for cached condition snapshots in Redis |
+| `ENVIRONMENT_CONDITION_REFRESH_MODE` | string | `AllLocations` | Strategy for the background worker's per-realm condition ref... |
+| `ENVIRONMENT_CONDITION_SNAPSHOT_CACHE_TTL_SECONDS` | int | `5` | TTL in seconds for in-memory condition snapshot cache (varia... |
+| `ENVIRONMENT_CONDITION_UPDATE_INTERVAL_SECONDS` | int | `30` | Real-time seconds between background condition refresh cycle... |
+| `ENVIRONMENT_CONDITION_UPDATE_STARTUP_DELAY_SECONDS` | int | `15` | Seconds to wait after startup before first condition refresh... |
+| `ENVIRONMENT_DEFAULT_BIOME_CODE` | string | `temperate` | Fallback biome code when no binding or realm default exists |
+| `ENVIRONMENT_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | int | `10` | Timeout in seconds for distributed lock acquisition |
+| `ENVIRONMENT_DROUGHT_THRESHOLD` | double | `0.2` | Resource availability below this value sets is_drought to tr... |
+| `ENVIRONMENT_EVENT_EXPIRATION_CHECK_INTERVAL_SECONDS` | int | `60` | Real-time seconds between weather event expiration checks |
+| `ENVIRONMENT_MAPPING_PUBLISH_BATCH_SIZE` | int | `100` | Maximum location condition updates published to Mapping per ... |
+| `ENVIRONMENT_MAPPING_PUBLISH_ENABLED` | bool | `true` | Whether to publish weather data to Mapping's weather_effects... |
+| `ENVIRONMENT_MAX_ACTIVE_EVENTS_PER_SCOPE` | int | `10` | Maximum concurrent weather events per scope (realm, location... |
+| `ENVIRONMENT_MAX_CLIMATE_TEMPLATES_PER_GAME_SERVICE` | int | `50` | Maximum number of climate templates per game service |
+| `ENVIRONMENT_QUERY_PAGE_SIZE` | int | `20` | Default page size for paged queries |
+| `ENVIRONMENT_RESOURCE_AVAILABILITY_CHANGE_THRESHOLD` | double | `0.1` | Minimum resource availability change to trigger a resource-a... |
+| `ENVIRONMENT_TEMPERATURE_NOISE_AMPLITUDE` | double | `1.5` | Maximum per-location deterministic temperature noise in degr... |
+| `ENVIRONMENT_WEATHER_CACHE_TTL_SECONDS` | int | `600` | TTL in seconds for cached resolved weather per location per ... |
+| `ENVIRONMENT_WEATHER_TRANSITION_DAMPENING` | double | `0.3` | Deterministic dampening factor for weather persistence (0.0 ... |
+| `ENVIRONMENT_WIND_CHILL_FACTOR` | double | `5.0` | Multiplier for wind-chill computation (feels_like = temperat... |
+
 ### Escrow
 
 | Environment Variable | Type | Default | Description |
@@ -1419,9 +1446,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 1120
+- **Total properties**: 1142
 - **Required (no default)**: 67
-- **Optional (has default)**: 1053
+- **Optional (has default)**: 1075
 
 ## Environment Variable Naming Convention
 

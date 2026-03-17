@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -52,6 +53,7 @@ public partial class EscrowService : IEscrowService
     private readonly EscrowServiceConfiguration _configuration;
     private readonly IEventConsumer _eventConsumer;
     private readonly ITelemetryProvider _telemetryProvider;
+    private readonly IResourceClient _resourceClient;
 
     /// <summary>Queryable state store for escrow agreement persistence.</summary>
     private readonly IQueryableStateStore<EscrowAgreementModel> _agreementStore;
@@ -236,19 +238,22 @@ public partial class EscrowService : IEscrowService
     /// <param name="configuration">Service configuration.</param>
     /// <param name="eventConsumer">Event consumer for subscription registration.</param>
     /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
+    /// <param name="resourceClient">Resource client for reference tracking (x-references).</param>
     public EscrowService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
         ILogger<EscrowService> logger,
         EscrowServiceConfiguration configuration,
         IEventConsumer eventConsumer,
-        ITelemetryProvider telemetryProvider)
+        ITelemetryProvider telemetryProvider,
+        IResourceClient resourceClient)
     {
         _messageBus = messageBus;
         _logger = logger;
         _configuration = configuration;
         _eventConsumer = eventConsumer;
         _telemetryProvider = telemetryProvider;
+        _resourceClient = resourceClient;
 
         _agreementStore = stateStoreFactory.GetQueryableStore<EscrowAgreementModel>(StateStoreDefinitions.EscrowAgreements);
         _tokenStore = stateStoreFactory.GetStore<TokenHashModel>(StateStoreDefinitions.EscrowTokens);
@@ -598,6 +603,55 @@ public partial class EscrowService : IEscrowService
             AffectedPartyType = model.AffectedPartyType,
             Details = model.Details
         };
+    }
+
+    /// <summary>
+    /// Cleans up all escrow data for a deleted character via lib-resource CASCADE callback.
+    /// Queries for agreements where the character is a party, then removes agreement records
+    /// and all associated data. Per FOUNDATION TENETS (Resource-Managed Cleanup).
+    /// </summary>
+    /// <param name="body">Request containing the character ID to clean up.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status code and response with count of agreements cleaned up.</returns>
+    public async Task<(StatusCodes, CleanupByCharacterResponse?)> CleanupByCharacterAsync(
+        CleanupByCharacterRequest body, CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.escrow", "EscrowService.CleanupByCharacterAsync");
+
+        var agreements = await _agreementStore.QueryAsync(
+            a => a.Parties != null && a.Parties.Any(p => p.PartyId == body.CharacterId && p.PartyType == EntityType.Character),
+            cancellationToken: cancellationToken);
+
+        if (agreements.Count == 0)
+        {
+            _logger.LogDebug("No escrow agreements found for character {CharacterId}, skipping cleanup", body.CharacterId);
+            return (StatusCodes.OK, new CleanupByCharacterResponse { AgreementsDeleted = 0 });
+        }
+
+        var successCount = 0;
+        var failureCount = 0;
+
+        foreach (var agreement in agreements)
+        {
+            try
+            {
+                await CleanupSingleAgreementAsync(agreement, cancellationToken);
+                successCount++;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to clean up escrow {EscrowId} for character {CharacterId}, continuing",
+                    agreement.EscrowId, body.CharacterId);
+                failureCount++;
+            }
+        }
+
+        _logger.LogInformation(
+            "Escrow character cleanup complete for {CharacterId}: {Success} succeeded, {Failed} failed",
+            body.CharacterId, successCount, failureCount);
+
+        return (StatusCodes.OK, new CleanupByCharacterResponse { AgreementsDeleted = successCount });
     }
 
     /// <summary>

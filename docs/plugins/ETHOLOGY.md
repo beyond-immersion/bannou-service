@@ -517,7 +517,7 @@ Lifecycle events are auto-generated via `x-lifecycle` in `ethology-service-event
 |-------|-----------|-------|
 | `ethology.archetype.created` | `ArchetypeCreatedEvent` | Full archetype data including axes. |
 | `ethology.archetype.updated` | `ArchetypeUpdatedEvent` | Full archetype data + `changedFields`. Deprecation uses this event with changedFields containing `isDeprecated`, `deprecatedAt`, `deprecationReason`. Triggers cache invalidation. |
-| `ethology.archetype.deleted` | `ArchetypeDeletedEvent` | Archetype permanently removed (Category A: requires deprecation first). |
+| `ethology.archetype.deleted` | `ArchetypeDeletedEvent` | Archetype permanently removed via clean-deprecated sweep when zero overrides remain (Category B: no per-entity delete endpoint). |
 
 **Override lifecycle events** (generated from `x-lifecycle` with `topic_prefix: ethology`):
 
@@ -537,6 +537,7 @@ Lifecycle events are auto-generated via `x-lifecycle` in `ethology-service-event
 - `species.deleted` — handled by x-references cleanup endpoint `/ethology/cleanup-by-species`
 - `location.deleted` — handled by x-references cleanup endpoint `/ethology/cleanup-by-location`
 - `location.updated` (deprecation) — no action needed; overrides for deprecated locations remain active until location is deleted via lib-resource cleanup
+- `game-service.deleted` — handled by x-references cleanup endpoint `/ethology/cleanup-by-game-service`
 
 ### Resource Cleanup (FOUNDATION TENETS)
 
@@ -549,11 +550,13 @@ Dependent data cleanup uses lib-resource exclusively (per FOUNDATION TENETS). Ev
 | realm | ethology-override | CASCADE | `/ethology/cleanup-by-realm` |
 | species | ethology-archetype | CASCADE | `/ethology/cleanup-by-species` |
 | location | ethology-override | CASCADE | `/ethology/cleanup-by-location` |
+| game-service | ethology-archetype | CASCADE | `/ethology/cleanup-by-game-service` |
 
 **Cleanup behavior**:
 - **Realm deleted**: All realm-scoped overrides for that realm are removed. Location-scoped overrides within the realm are also removed. Archetypes are NOT deleted (they are game-scoped, not realm-scoped).
-- **Species deleted**: All archetypes referencing the deleted species are deprecated (with reason "Species deleted via lib-resource cleanup"). Existing cached nature profiles remain valid until TTL expiry.
+- **Species deleted**: All archetypes referencing the deleted species are deprecated (with reason "Species deleted via lib-resource cleanup"). Existing cached nature profiles remain valid until TTL expiry. Deprecated archetypes become eligible for the `clean-deprecated` sweep once their overrides are removed. See Bug #2 for the CASCADE vs deprecation semantic question.
 - **Location deleted**: All location-scoped overrides for that location are removed.
+- **Game service deleted**: All archetypes scoped to the deleted game service are removed, cascading to remove all overrides referencing those archetypes.
 
 ---
 
@@ -609,7 +612,7 @@ Dependent data cleanup uses lib-resource exclusively (per FOUNDATION TENETS). Ev
 
 ## API Endpoints (Implementation Notes)
 
-### Archetype Management (10 endpoints)
+### Archetype Management (9 endpoints)
 
 All endpoints `x-permissions: [{role: developer}]`.
 
@@ -625,11 +628,9 @@ All endpoints `x-permissions: [{role: developer}]`.
 
 - **ListArchetypes** (`/ethology/archetype/list`): Paged list of archetypes within a game service. Filterable by category. Accepts `includeDeprecated: boolean` (default: `false`) per IMPLEMENTATION TENETS -- deprecated archetypes excluded from results by default but accessible when explicitly requested.
 
-- **DeprecateArchetype** (`/ethology/archetype/deprecate`): Marks archetype deprecated with reason (triple-field model: `isDeprecated`, `deprecatedAt`, `deprecationReason`). Idempotent -- returns OK if already deprecated. **Category A entity** (overrides reference archetypeCode). Existing entities continue using cached data. Creating new overrides for a deprecated archetype is rejected with BadRequest. Publishes `ethology.archetype.updated` with changedFields containing deprecation fields.
+- **DeprecateArchetype** (`/ethology/archetype/deprecate`): Marks archetype deprecated with reason (triple-field model: `isDeprecated`, `deprecatedAt`, `deprecationReason`). Idempotent -- returns OK if already deprecated. **Category B entity** (overrides are instances referencing archetypeCode within the same service; no external service stores archetype IDs). One-way deprecation -- no undeprecate endpoint (per Category B: the "no new instances" guarantee is part of the system's contract). Existing entities continue using cached data. Creating new overrides for a deprecated archetype is rejected with BadRequest. Publishes `ethology.archetype.updated` with changedFields containing deprecation fields.
 
-- **UndeprecateArchetype** (`/ethology/archetype/undeprecate`): Reverses deprecation (Category A -- decisions can be reversed). Idempotent -- returns OK if not deprecated. Clears `isDeprecated`, `deprecatedAt`, `deprecationReason`. Publishes `ethology.archetype.updated` with changedFields containing deprecation fields.
-
-- **DeleteArchetype** (`/ethology/archetype/delete`): Permanent removal (Category A). MUST reject with BadRequest if not deprecated first. Checks lib-resource for references (environmental overrides). If references exist, executes cleanup via lib-resource with ALL_REQUIRED policy (cascades to remove all overrides for this archetype). If cleanup fails, returns Conflict. Publishes `ethology.archetype.deleted`.
+- **CleanDeprecatedArchetypes** (`/ethology/archetype/clean-deprecated`): Category B cleanup sweep (per IMPLEMENTATION TENETS). Removes deprecated archetypes with zero remaining overrides. Uses shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` from `common-api.yaml`. Uses `DeprecationCleanupHelper.ExecuteCleanupSweepAsync` for standardized per-item error isolation, grace period evaluation, dry-run support, and logging. `x-permissions: [{role: admin}]`. The `hasActiveInstancesAsync` delegate checks the override store for any active overrides referencing the archetype's code. When an archetype is removed, publishes `ethology.archetype.deleted`.
 
 - **SeedArchetypes** (`/ethology/archetype/seed`): Bulk creation/update of archetypes from configuration. Idempotent with `updateExisting` flag. Used during world initialization to define all species behavioral baselines at once. Acquires per-archetype distributed locks (lock key: `archetype:{archetypeCode}`) to ensure multi-instance safety per IMPLEMENTATION TENETS.
 
@@ -661,15 +662,17 @@ All nature query endpoints `x-permissions: []` (service-to-service only via lib-
 
 - **CompareNatures** (`/ethology/nature/compare`): Given two entity IDs with the same species, returns a diff of their nature profiles. Shows where individual noise creates differentiation. Useful for debugging and for behaviors that need to evaluate "who in the pack is most aggressive?"
 
-### Cleanup Endpoints (3 endpoints)
+### Cleanup Endpoints (4 endpoints)
 
 Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). All cleanup endpoints `x-permissions: []` (service-to-service only -- called by lib-resource during coordinated deletion).
 
 - **CleanupByRealm** (`/ethology/cleanup-by-realm`): Removes all realm-scoped overrides for the deleted realm. Location-scoped overrides within the realm are also removed (cleanup ensures no orphans).
 
-- **CleanupBySpecies** (`/ethology/cleanup-by-species`): Deprecates all archetypes referencing the deleted species (with reason "Species deleted via lib-resource cleanup"). Does NOT hard-delete archetypes -- existing cached nature profiles remain valid until TTL expiry, and override references to the archetype remain consistent.
+- **CleanupBySpecies** (`/ethology/cleanup-by-species`): Deprecates all archetypes referencing the deleted species (with reason "Species deleted via lib-resource cleanup"). Does NOT hard-delete archetypes -- existing cached nature profiles remain valid until TTL expiry, and override references to the archetype remain consistent. Deprecated archetypes become eligible for the `clean-deprecated` sweep once their overrides are removed. See Bug #2 for the CASCADE vs deprecation semantic question.
 
 - **CleanupByLocation** (`/ethology/cleanup-by-location`): Removes all location-scoped overrides for the deleted location.
+
+- **CleanupByGameService** (`/ethology/cleanup-by-game-service`): Removes all archetypes scoped to the deleted game service. Cascades to remove all overrides referencing those archetypes (overrides are instance-level data with no deprecation). Invalidates all cached nature profiles for affected archetypes.
 
 ---
 
@@ -819,16 +822,16 @@ When a dungeon spawns a creature, the creature needs behavioral defaults. lib-et
 
 ### Phase 1: Archetype Definitions
 
-- Create `ethology-api.yaml` schema with all endpoints, `additionalProperties: false` on all object schemas, PascalCase enums (`ActivityPattern`, `DietType`, `SocialStructure`, `OverrideScopeType`), `x-permissions` on all endpoints, `x-references` for realm/species/location dependencies
-- Create `ethology-service-events.yaml` schema with `x-lifecycle` using `topic_prefix: ethology` for Archetype and Override entities, `x-event-subscriptions` for `species.updated` (checking changedFields for deprecation — informational only)
+- Create `ethology-api.yaml` schema with all endpoints, `additionalProperties: false` on all object schemas, PascalCase enums (`ActivityPattern`, `DietType`, `SocialStructure`, `OverrideScopeType`), `x-permissions` on all endpoints, `x-references` for realm/species/location/game-service dependencies
+- Create `ethology-service-events.yaml` schema with `x-lifecycle` using `topic_prefix: ethology` for Archetype (`deprecation: true`, `instanceEntity: Override`) and Override entities, `x-event-subscriptions` for `species.updated` (checking changedFields for deprecation — informational only)
 - Create `ethology-configuration.yaml` schema
 - Add `nature` entry to `schemas/variable-providers.yaml` (service: Ethology, purpose: "Species-level behavioral nature data for ABML expressions (${nature.*})")
 - Add state store entries to `schemas/state-stores.yaml` (ethology-archetypes, ethology-overrides, ethology-cache, ethology-lock)
 - Generate service code
-- Implement archetype CRUD (register, get, get-by-species, get-by-code, update, list, deprecate, undeprecate, delete) with Category A deprecation lifecycle
+- Implement archetype CRUD (register, get, get-by-species, get-by-code, update, list, deprecate, clean-deprecated, seed) with Category B deprecation lifecycle (implements `ICleanDeprecatedEntity`)
 - Implement bulk seed endpoint for world initialization (per-archetype distributed locking)
 - Implement species.updated event handler (checking changedFields for deprecation — informational logging only)
-- Implement lib-resource cleanup endpoints (cleanup-by-realm, cleanup-by-species, cleanup-by-location)
+- Implement lib-resource cleanup endpoints (cleanup-by-realm, cleanup-by-species, cleanup-by-location, cleanup-by-game-service)
 - Register cleanup callbacks via IStartupTask from generated x-references code
 
 ### Phase 2: Nature Resolution
@@ -940,7 +943,7 @@ Ethology provides the universal NATURE layer. Heritage refines it for characters
 
 1. ~~**Missing delete endpoint for environmental overrides**~~: **FIXED** (2026-03-16) - Added `DeleteOverride` (`/ethology/override/delete`) to Override Management section. Overrides are instance-level data with immediate hard delete (no deprecation), publishing `ethology.override.deleted` and invalidating affected caches. Endpoint count updated from 6 to 7.
 
-2. **CASCADE cleanup for species deletion deprecates archetypes instead of deleting them**: The `x-references` entry declares `onDelete: cascade` for species → ethology-archetype, but the described cleanup behavior is deprecation ("Deprecates all archetypes referencing the deleted species with reason..."), not deletion. CASCADE means "delete dependent data when resource is deleted." The described behavior contradicts the declared policy. Either (a) change the cleanup to actually delete archetypes and their dependent overrides (true CASCADE), or (b) change the `onDelete` policy to `detach` if the intent is to preserve archetypes as orphaned read-only data. The current design leaves permanently deprecated, species-orphaned archetypes that can never be cleaned up because the archetype delete endpoint requires the species to exist for deprecation status checks.
+2. **CASCADE cleanup for species deletion deprecates archetypes instead of deleting them**: The `x-references` entry declares `onDelete: cascade` for species → ethology-archetype, but the described cleanup behavior is deprecation ("Deprecates all archetypes referencing the deleted species with reason..."), not deletion. CASCADE means "delete dependent data when resource is deleted." The described behavior contradicts the declared policy. With archetypes reclassified as **Category B** entities (no per-entity delete endpoint), the options are: (a) true CASCADE — the cleanup endpoint hard-deletes archetypes and their dependent overrides directly (system-level cleanup can bypass Category B's "no user-facing delete" restriction); (b) change `onDelete` to `detach` — deprecate archetypes and let the `clean-deprecated` sweep remove them later when overrides are gone (eventual consistency, two-step); or (c) a hybrid — deprecate immediately, then invoke the clean-deprecated sweep inline for archetypes with zero overrides. The Category B reclassification eliminates the original concern about "archetype delete endpoint requires species to exist" since there is no per-entity delete endpoint.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/677 -->
 
 3. ~~**Consumed event topic `species.deprecated` does not exist**~~: **FIXED** (2026-03-16) - All references to the consumed event throughout the document (Consumed Events table, Dependencies table, Phase 1 stubs) already correctly specify `species.updated` with changedFields checking for deprecation fields. No dedicated `species.deprecated` topic is referenced anywhere in the specification.
@@ -961,7 +964,7 @@ Ethology provides the universal NATURE layer. Heritage refines it for characters
 
 7. **Cache invalidation is eventually consistent**: When an archetype or override is modified, the cache is invalidated. But entities currently mid-behavior-tick will use their cached nature manifest until the next tick. At the default 60-second entity manifest TTL, behavioral changes propagate within ~1 minute. This is acceptable for ecological changes (which are gradual by nature) but means instant behavioral shifts require direct perception injection via the Actor API.
 
-8. **Deprecated archetypes still resolve but block new referencing entities**: Archetypes are **Category A** entities (environmental overrides reference them by archetypeCode). Deprecating an archetype prevents creation of new environmental overrides for it (rejected with BadRequest). Existing entities continue resolving nature values normally from the deprecated archetype -- nature resolution does not check deprecation status (creatures already in the world still need behavioral data). New archetype registrations for the same species are rejected while the deprecated archetype exists (one archetype per species per game). Deletion requires deprecation first, and lib-resource coordinates CASCADE cleanup of all referencing overrides.
+8. **Deprecated archetypes still resolve but block new referencing entities**: Archetypes are **Category B** entities (environmental overrides are instances referencing them by archetypeCode within the same service; no external service stores archetype IDs). Deprecating an archetype prevents creation of new environmental overrides for it (rejected with BadRequest). Existing entities continue resolving nature values normally from the deprecated archetype -- nature resolution does not check deprecation status (creatures already in the world still need behavioral data). New archetype registrations for the same species are rejected while the deprecated archetype exists (one archetype per species per game). Deprecated archetypes are removed via the `clean-deprecated` sweep when zero overrides remain. There is no per-entity delete endpoint and no undeprecate endpoint (Category B: one-way deprecation).
 
 9. **Noise amplitude is per-archetype, not per-axis**: All axes in an archetype share the same noise amplitude. A wolf can't have high variation in aggression but low variation in sociality. If per-axis noise control is needed, it should be a future extension. The current design keeps the noise model simple and the archetype definition compact.
 
@@ -974,7 +977,8 @@ Ethology provides the universal NATURE layer. Heritage refines it for characters
 2. **Species code source for non-character entities**: Characters have a `speciesId` field. Actors have template metadata. But how does the nature provider know which species code to use for a given entity ID? The actor template's metadata must include a `speciesCode` field. This is an Actor/Puppetmaster configuration concern, not an Ethology concern, but it must be documented as a requirement. **concern**: If `speciesCode` is stored in actor template `additionalProperties` metadata and Ethology reads it by convention, this is a metadata bag contract violation (see GH issue #308 for the systemic `additionalProperties: true` problem). The correct pattern is for Actor templates to have a typed `speciesCode` field in their schema, or for the caller (NatureProviderFactory) to receive the species code as a parameter from the Actor runtime rather than reading it from metadata.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/679 -->
 
-3. **Heritage phenotype axis mapping**: The mapping between Heritage trait codes (e.g., `physical_strength`) and Ethology axis codes (e.g., `aggression`) needs to be data-driven. This mapping lives in the Heritage trait template's `personalityMapping` or `aptitudeMapping` fields, or in a new `natureMapping` field added to the `HeritableTraitTemplate`. Character-Lifecycle owns this mapping; Ethology consumes it.
+3. **Heritage phenotype axis mapping**: The mapping between Heritage trait codes (e.g., `physical_strength`) and Ethology axis codes (e.g., `aggression`) needs to be data-driven, but the data location is unresolved: reuse existing Heritage fields (`personalityMapping`, `aptitudeMapping`) to derive nature axis mappings, or add a dedicated `natureMapping` field to `HeritableTraitTemplate` in Character-Lifecycle's schema. Option B requires a cross-service schema modification. Character-Lifecycle owns this mapping; Ethology consumes it. Must be resolved before Phase 4 (Character Delegation).
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/680 -->
 
 4. **Override cleanup when locations are restructured**: If a location is deleted, reparented, or merged, its overrides need cleanup. The event handlers cover deletion, but reparenting and merging are more complex. Should overrides move with the location? Current design: location-scoped overrides are tied to a specific location ID. If the location is reparented, overrides remain (they describe the local environment, which doesn't change with administrative restructuring). If the location is merged into another, the source location's overrides are removed (deletion event).
 

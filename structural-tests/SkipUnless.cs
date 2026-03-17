@@ -35,7 +35,7 @@ internal static class SkipUnless
     /// <param name="reason">Description of what the test produces when run.</param>
     internal static void InformationalTest(string reason)
     {
-        var value = Environment.GetEnvironmentVariable(InformationalTestsEnvVar);
+        var value = System.Environment.GetEnvironmentVariable(InformationalTestsEnvVar);
         if (string.Equals(value, "true", StringComparison.OrdinalIgnoreCase) || value == "1")
             return;
 

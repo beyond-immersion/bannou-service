@@ -44,6 +44,6 @@ public sealed class DefaultProcessTerminator : IProcessTerminator
     /// <inheritdoc />
     public void TerminateProcess(string message)
     {
-        Environment.FailFast(message);
+        System.Environment.FailFast(message);
     }
 }

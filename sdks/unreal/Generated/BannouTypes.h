@@ -77,6 +77,7 @@ struct FAssetVersion;
 struct FAssetVersionList;
 struct FAssetWithDownloadUrl;
 struct FAssociateSessionRequest;
+struct FAtmosphericBaselineSeason;
 struct FAttachmentPoint;
 struct FAuthMethodInfo;
 struct FAuthProvider;
@@ -97,8 +98,11 @@ struct FBanParticipantRequest;
 struct FBatchAdvanceEntry;
 struct FBatchAdvanceResult;
 struct FBatchBalanceResult;
+struct FBatchConditionSnapshotResponse;
 struct FBatchGetBalancesRequest;
 struct FBatchGetBalancesResponse;
+struct FBatchGetConditionsEntry;
+struct FBatchGetConditionsRequest;
 struct FBatchGetItemInstancesRequest;
 struct FBatchGetItemInstancesResponse;
 struct FBehaviorCategory;
@@ -107,6 +111,7 @@ struct FBindItemInstanceRequest;
 struct FBindRepositoryRequest;
 struct FBindRepositoryResponse;
 struct FBindingStatus;
+struct FBiomeResourceSummary;
 struct FBloodlineEntry;
 struct FBloodlineMemberSummary;
 struct FBloodlineSummary;
@@ -140,6 +145,12 @@ struct FBulkDeleteResponse;
 struct FBulkGetAssetsRequest;
 struct FBulkGetAssetsResponse;
 struct FBulkOperationFailure;
+struct FBulkSeedBindingEntry;
+struct FBulkSeedBindingsRequest;
+struct FBulkSeedBindingsResponse;
+struct FBulkSeedClimateEntry;
+struct FBulkSeedClimatesRequest;
+struct FBulkSeedClimatesResponse;
 struct FBulkSeedConnectionEntry;
 struct FBulkSeedConnectionsRequest;
 struct FBulkSeedConnectionsResponse;
@@ -169,6 +180,9 @@ struct FCanUseBehavior;
 struct FCancelJobRequest;
 struct FCancelJobResponse;
 struct FCancelSubscriptionRequest;
+struct FCancelWeatherEventRequest;
+struct FCancelWeatherEventsBySourceRequest;
+struct FCancelWeatherEventsBySourceResponse;
 struct FCapOverflowBehavior;
 struct FCapability;
 struct FCapabilityManifestResponse;
@@ -214,6 +228,8 @@ struct FClauseTypeSummary;
 struct FClientCapabilitiesResponse;
 struct FClientCapability;
 struct FClientShortcut;
+struct FClimateBindingResponse;
+struct FClimateTemplateResponse;
 struct FCloneBoardRequest;
 struct FCloneBoardResponse;
 struct FCollapseDeltasRequest;
@@ -242,6 +258,7 @@ struct FComposeResponse;
 struct FCompositionMetadata;
 struct FCompressionType;
 struct FConditionResult;
+struct FConditionSnapshotResponse;
 struct FConfirmBondRequest;
 struct FConfirmRefundRequest;
 struct FConfirmRefundResponse;
@@ -295,6 +312,7 @@ struct FCreateBoardRequest;
 struct FCreateBoardTemplateRequest;
 struct FCreateBundleRequest;
 struct FCreateBundleResponse;
+struct FCreateClimateBindingRequest;
 struct FCreateCollectionRequest;
 struct FCreateConnectionRequest;
 struct FCreateContainerRequest;
@@ -322,6 +340,8 @@ struct FCreateSeedRequest;
 struct FCreateSlotRequest;
 struct FCreateStatusTemplateRequest;
 struct FCreateTemplateRequest;
+struct FCreateWeatherEventRequest;
+struct FCreateWeatherEventResponse;
 struct FCureBreachRequest;
 struct FCurrencyDefinitionResponse;
 struct FCurrencyPrecision;
@@ -348,6 +368,8 @@ struct FDeleteBoardRequest;
 struct FDeleteBundleRequest;
 struct FDeleteCalendarRequest;
 struct FDeleteCalendarResponse;
+struct FDeleteClimateBindingRequest;
+struct FDeleteClimateRequest;
 struct FDeleteCollectionRequest;
 struct FDeleteConnectionRequest;
 struct FDeleteConnectionResponse;
@@ -377,6 +399,7 @@ struct FDepositRequest;
 struct FDepositResponse;
 struct FDeprecateAchievementDefinitionRequest;
 struct FDeprecateBoardTemplateRequest;
+struct FDeprecateClimateRequest;
 struct FDeprecateCurrencyDefinitionRequest;
 struct FDeprecateDefinitionRequest;
 struct FDeprecateEncounterTypeRequest;
@@ -454,6 +477,7 @@ struct FExpectedDeposit;
 struct FExpirationPolicy;
 struct FExportSavesRequest;
 struct FExportSavesResponse;
+struct FExtendWeatherEventRequest;
 struct FFactionMemberResponse;
 struct FFactionMemberRole;
 struct FFactionResponse;
@@ -510,8 +534,12 @@ struct FGetCharacterRequest;
 struct FGetCharactersByRealmRequest;
 struct FGetChildRelationshipTypesRequest;
 struct FGetClientCapabilitiesRequest;
+struct FGetClimateBindingRequest;
+struct FGetClimateRequest;
 struct FGetCollectionRequest;
 struct FGetCompletionStatsRequest;
+struct FGetConditionsByCodeRequest;
+struct FGetConditionsRequest;
 struct FGetConnectionRequest;
 struct FGetConsentStatusRequest;
 struct FGetConsentStatusResponse;
@@ -574,13 +602,17 @@ struct FGetQuestRequest;
 struct FGetQueueRequest;
 struct FGetRanksAroundRequest;
 struct FGetRealmBaselineRequest;
+struct FGetRealmConfigRequest;
 struct FGetRealmEventParticipantsRequest;
 struct FGetRealmLoreRequest;
 struct FGetRealmParticipationRequest;
+struct FGetRealmResourceSummaryRequest;
+struct FGetRealmWeatherSummaryRequest;
 struct FGetRelationshipRequest;
 struct FGetRelationshipTypeByCodeRequest;
 struct FGetRelationshipTypeRequest;
 struct FGetRelationshipsBetweenRequest;
+struct FGetResourceAvailabilityRequest;
 struct FGetRoomRequest;
 struct FGetRoomTypeRequest;
 struct FGetScenarioDefinitionRequest;
@@ -602,6 +634,7 @@ struct FGetStatusRequest;
 struct FGetStatusTemplateByCodeRequest;
 struct FGetStatusTemplateRequest;
 struct FGetStyleRequest;
+struct FGetTemperatureRequest;
 struct FGetTemplateByCodeRequest;
 struct FGetTemplateRequest;
 struct FGetTopRanksRequest;
@@ -609,6 +642,8 @@ struct FGetTransactionHistoryRequest;
 struct FGetTransactionHistoryResponse;
 struct FGetValidationRulesRequest;
 struct FGetValidationRulesResponse;
+struct FGetWeatherByRegionRequest;
+struct FGetWeatherEventRequest;
 struct FGoapGoal;
 struct FGovernanceEntryResponse;
 struct FGrantEntryRequest;
@@ -712,6 +747,7 @@ struct FListBundleVersionsResponse;
 struct FListCharactersRequest;
 struct FListClauseTypesRequest;
 struct FListClauseTypesResponse;
+struct FListClimatesRequest;
 struct FListCollectionsRequest;
 struct FListCollectionsResponse;
 struct FListContainersRequest;
@@ -799,6 +835,7 @@ struct FListUnlockedAchievementsRequest;
 struct FListUnlockedAchievementsResponse;
 struct FListVersionsRequest;
 struct FListVersionsResponse;
+struct FListWeatherEventsRequest;
 struct FLoadRequest;
 struct FLoadResponse;
 struct FLocationResponse;
@@ -884,6 +921,8 @@ struct FOutputListResponse;
 struct FOutputStatusResponse;
 struct FPageContent;
 struct FPageMetadata;
+struct FPagedClimateTemplateResponse;
+struct FPagedWeatherEventResponse;
 struct FPartUploadInfo;
 struct FParticipantInfo;
 struct FParticipantsResponse;
@@ -932,6 +971,7 @@ struct FPosition3D;
 struct FPositionUpdateResponse;
 struct FPreboundApi;
 struct FPreboundApiExecutionMode;
+struct FPrecipitationType;
 struct FPredictedMutation;
 struct FPreferredRange;
 struct FPrerequisiteDefinition;
@@ -988,6 +1028,7 @@ struct FQueueSummary;
 struct FReaffirmRequest;
 struct FReaffirmResponse;
 struct FRealmConfigResponse;
+struct FRealmEnvironmentConfigResponse;
 struct FRealmEventCategory;
 struct FRealmEventRole;
 struct FRealmHistoricalParticipation;
@@ -995,6 +1036,8 @@ struct FRealmLoreElement;
 struct FRealmLoreElementType;
 struct FRealmLoreResponse;
 struct FRealmParticipationListResponse;
+struct FRealmResourceSummaryResponse;
+struct FRealmWeatherSummaryResponse;
 struct FRecoverDocumentRequest;
 struct FRecoverDocumentResponse;
 struct FReferenceInfo;
@@ -1036,6 +1079,8 @@ struct FResolveBundlesResponse;
 struct FResolvedAsset;
 struct FResolvedBundle;
 struct FResolvedReference;
+struct FResourceAvailabilityResponse;
+struct FResourceAvailabilitySeason;
 struct FResponseValidation;
 struct FRestoreArchiveRequest;
 struct FRestoreArchiveResponse;
@@ -1096,6 +1141,7 @@ struct FSeedBoardTemplateRequest;
 struct FSeedBoardTemplateResponse;
 struct FSeedCalendarRequest;
 struct FSeedCharacterEntry;
+struct FSeedClimateRequest;
 struct FSeedDefinitionEntry;
 struct FSeedDefinitionsRequest;
 struct FSeedDefinitionsResponse;
@@ -1148,6 +1194,7 @@ struct FSetLocationParentRequest;
 struct FSetNaturalDeathYearRequest;
 struct FSetNaturalDeathYearResponse;
 struct FSetPersonalityRequest;
+struct FSetRealmConfigRequest;
 struct FSetTemplateValuesRequest;
 struct FSetTemplateValuesResponse;
 struct FSetTimeRatioRequest;
@@ -1204,6 +1251,9 @@ struct FSyncRepositoryRequest;
 struct FSyncRepositoryResponse;
 struct FSyncStatus;
 struct FSyncTrigger;
+struct FTemperatureCurve;
+struct FTemperatureCurveShape;
+struct FTemperatureResponse;
 struct FTemplateStatus;
 struct FTempoEvent;
 struct FTempoRange;
@@ -1247,6 +1297,7 @@ struct FTuneType;
 struct FUnbanParticipantRequest;
 struct FUnbindRepositoryRequest;
 struct FUnbindRepositoryResponse;
+struct FUndeprecateClimateRequest;
 struct FUndeprecateFactionRequest;
 struct FUndeprecateLocationRequest;
 struct FUndeprecateModeRequest;
@@ -1271,6 +1322,8 @@ struct FUpdateBoardTemplateRequest;
 struct FUpdateBundleRequest;
 struct FUpdateBundleResponse;
 struct FUpdateCalendarRequest;
+struct FUpdateClimateBindingRequest;
+struct FUpdateClimateRequest;
 struct FUpdateConnectionRequest;
 struct FUpdateConnectionStatusRequest;
 struct FUpdateContainerRequest;
@@ -1354,6 +1407,14 @@ struct FVoiceTier;
 struct FVoicedChord;
 struct FVolumeShape;
 struct FWatcherInfo;
+struct FWeatherByRegionResponse;
+struct FWeatherCodeSummary;
+struct FWeatherDistributionSeason;
+struct FWeatherEventResponse;
+struct FWeatherEventScopeType;
+struct FWeatherEventSourceType;
+struct FWeatherPattern;
+struct FWeatherRegionGroup;
 struct FWeightContribution;
 struct FWeightPrecision;
 
@@ -3034,6 +3095,36 @@ struct FAssociateSessionRequest
 };
 
 /**
+ * Seasonal atmospheric baseline values for humidity, wind, and wind direction
+ */
+USTRUCT(BlueprintType)
+struct FAtmosphericBaselineSeason
+{
+    GENERATED_BODY()
+
+    /** References a Worldstate calendar season code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SeasonCode;
+
+    /** Baseline humidity (0.0-1.0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double BaseHumidity = 0.0;
+
+    /** Normalized baseline wind speed (0.0-1.0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double BaseWindSpeed = 0.0;
+
+    /** Prevailing wind direction in degrees */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double WindDirectionBias = 0.0;
+
+    /** Degrees of random deviation from prevailing wind direction */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double WindVariance = 0.0;
+
+};
+
+/**
  * A predefined location where child objects can be attached.
  */
 USTRUCT(BlueprintType)
@@ -3470,6 +3561,20 @@ struct FBatchBalanceResult
 };
 
 /**
+ * Batch condition snapshots for multiple locations
+ */
+USTRUCT(BlueprintType)
+struct FBatchConditionSnapshotResponse
+{
+    GENERATED_BODY()
+
+    /** Condition snapshots per location */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FConditionSnapshotResponse> Snapshots;
+
+};
+
+/**
  * Request to get multiple balances
  */
 USTRUCT(BlueprintType)
@@ -3494,6 +3599,38 @@ struct FBatchGetBalancesResponse
     /** Balance results (same order as queries) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FBatchBalanceResult> Balances;
+
+};
+
+/**
+ * A single location entry in a batch conditions request
+ */
+USTRUCT(BlueprintType)
+struct FBatchGetConditionsEntry
+{
+    GENERATED_BODY()
+
+    /** Realm containing the location */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RealmId;
+
+    /** Location to get conditions for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LocationId;
+
+};
+
+/**
+ * Request to get conditions for multiple locations
+ */
+USTRUCT(BlueprintType)
+struct FBatchGetConditionsRequest
+{
+    GENERATED_BODY()
+
+    /** Locations to query conditions for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FBatchGetConditionsEntry> Locations;
 
 };
 
@@ -3682,6 +3819,36 @@ USTRUCT(BlueprintType)
 struct FBindingStatus
 {
     GENERATED_BODY()
+
+};
+
+/**
+ * Resource availability summary for a biome within a realm
+ */
+USTRUCT(BlueprintType)
+struct FBiomeResourceSummary
+{
+    GENERATED_BODY()
+
+    /** Biome type code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString BiomeCode;
+
+    /** Average resource availability across locations */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double AverageAvailability = 0.0;
+
+    /** Minimum resource availability */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double MinAvailability = 0.0;
+
+    /** Maximum resource availability */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double MaxAvailability = 0.0;
+
+    /** Number of locations with this biome */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 LocationCount = 0;
 
 };
 
@@ -4476,6 +4643,182 @@ struct FBulkOperationFailure
 };
 
 /**
+ * A single binding entry in a bulk seed request
+ */
+USTRUCT(BlueprintType)
+struct FBulkSeedBindingEntry
+{
+    GENERATED_BODY()
+
+    /** Location to bind */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LocationId;
+
+    /** Game service for template resolution */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Biome code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString BiomeCode;
+
+    /** Location altitude */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> Altitude;
+
+    /** Underground depth */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> Depth;
+
+    /** Whether this is an enclosed location */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsIndoor = false;
+
+};
+
+/**
+ * Request to bulk seed location-climate bindings
+ */
+USTRUCT(BlueprintType)
+struct FBulkSeedBindingsRequest
+{
+    GENERATED_BODY()
+
+    /** Bindings to seed */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FBulkSeedBindingEntry> Bindings;
+
+    /** Whether to update bindings that already exist */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool UpdateExisting = false;
+
+};
+
+/**
+ * Result of a bulk binding seed operation
+ */
+USTRUCT(BlueprintType)
+struct FBulkSeedBindingsResponse
+{
+    GENERATED_BODY()
+
+    /** Number of bindings created */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 Created = 0;
+
+    /** Number of bindings updated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 Updated = 0;
+
+    /** Number of bindings skipped */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 Skipped = 0;
+
+    /** Number of bindings that failed */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 Failed = 0;
+
+};
+
+/**
+ * A single climate template entry in a bulk seed request
+ */
+USTRUCT(BlueprintType)
+struct FBulkSeedClimateEntry
+{
+    GENERATED_BODY()
+
+    /** Biome type code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString BiomeCode;
+
+    /** Human-readable name */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DisplayName;
+
+    /** Detailed description */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Description;
+
+    /** Temperature curves per season */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FTemperatureCurve> TemperatureCurves;
+
+    /** Weather distributions per season */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FWeatherDistributionSeason> WeatherDistributions;
+
+    /** Atmospheric baselines per season */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FAtmosphericBaselineSeason> AtmosphericBaselines;
+
+    /** Resource availability per season */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FResourceAvailabilitySeason> ResourceAvailability;
+
+    /** Temperature change per altitude unit */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> AltitudeTemperatureRate;
+
+    /** Temperature change per depth unit */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> DepthTemperatureRate;
+
+    /** Heat threshold temperature */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> HeatThreshold;
+
+};
+
+/**
+ * Request to bulk seed climate templates for a game service
+ */
+USTRUCT(BlueprintType)
+struct FBulkSeedClimatesRequest
+{
+    GENERATED_BODY()
+
+    /** Game service to seed templates for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Climate templates to seed */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FBulkSeedClimateEntry> Templates;
+
+    /** Whether to update templates that already exist for a biome code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool UpdateExisting = false;
+
+};
+
+/**
+ * Result of a bulk climate template seed operation
+ */
+USTRUCT(BlueprintType)
+struct FBulkSeedClimatesResponse
+{
+    GENERATED_BODY()
+
+    /** Number of templates created */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 Created = 0;
+
+    /** Number of templates updated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 Updated = 0;
+
+    /** Number of templates skipped (already exist, updateExisting=false) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 Skipped = 0;
+
+    /** Number of templates that failed to process */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 Failed = 0;
+
+};
+
+/**
  * A single connection entry in a bulk seed request
  */
 USTRUCT(BlueprintType)
@@ -5170,6 +5513,52 @@ struct FCancelSubscriptionRequest
     /** Optional reason for cancellation */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Reason;
+
+};
+
+/**
+ * Request to cancel an active weather event
+ */
+USTRUCT(BlueprintType)
+struct FCancelWeatherEventRequest
+{
+    GENERATED_BODY()
+
+    /** Weather event to cancel */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid EventId;
+
+};
+
+/**
+ * Request to cancel all active weather events from a specific source
+ */
+USTRUCT(BlueprintType)
+struct FCancelWeatherEventsBySourceRequest
+{
+    GENERATED_BODY()
+
+    /** Source type to cancel events for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FWeatherEventSourceType SourceType;
+
+    /** Source entity ID */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid SourceId;
+
+};
+
+/**
+ * Result of cancelling weather events by source
+ */
+USTRUCT(BlueprintType)
+struct FCancelWeatherEventsBySourceResponse
+{
+    GENERATED_BODY()
+
+    /** Number of events cancelled */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 CancelledCount = 0;
 
 };
 
@@ -6292,6 +6681,142 @@ struct FClientShortcut
 };
 
 /**
+ * Location-climate binding data
+ */
+USTRUCT(BlueprintType)
+struct FClimateBindingResponse
+{
+    GENERATED_BODY()
+
+    /** Unique binding identifier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid BindingId;
+
+    /** Bound location */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LocationId;
+
+    /** Realm containing the location */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RealmId;
+
+    /** Game service for template resolution */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Biome type code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString BiomeCode;
+
+    /** Resolved climate template ID */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid ClimateTemplateId;
+
+    /** Location altitude for temperature modifier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double Altitude = 0.0;
+
+    /** Underground depth for temperature modifier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double Depth = 0.0;
+
+    /** Whether this is an enclosed location (skips weather) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsIndoor = false;
+
+    /** Whether this binding was inherited from a parent location */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsInherited = false;
+
+    /** When the binding was created */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FDateTime CreatedAt;
+
+    /** When the binding was last updated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> UpdatedAt;
+
+};
+
+/**
+ * Full climate template data
+ */
+USTRUCT(BlueprintType)
+struct FClimateTemplateResponse
+{
+    GENERATED_BODY()
+
+    /** Unique climate template identifier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid TemplateId;
+
+    /** Game service this template belongs to */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Biome type code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString BiomeCode;
+
+    /** Human-readable name */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DisplayName;
+
+    /** Detailed description */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Description;
+
+    /** Temperature curves per season */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FTemperatureCurve> TemperatureCurves;
+
+    /** Weather distributions per season */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FWeatherDistributionSeason> WeatherDistributions;
+
+    /** Atmospheric baselines per season */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FAtmosphericBaselineSeason> AtmosphericBaselines;
+
+    /** Resource availability per season */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FResourceAvailabilitySeason> ResourceAvailability;
+
+    /** Temperature change per altitude unit */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double AltitudeTemperatureRate = 0.0;
+
+    /** Temperature change per depth unit */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double DepthTemperatureRate = 0.0;
+
+    /** Temperature above which is_hot is true */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double HeatThreshold = 0.0;
+
+    /** Whether this template is deprecated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsDeprecated = false;
+
+    /** When the template was deprecated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> DeprecatedAt;
+
+    /** Reason for deprecation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DeprecationReason;
+
+    /** When the template was created */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FDateTime CreatedAt;
+
+    /** When the template was last updated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> UpdatedAt;
+
+};
+
+/**
  * Request to clone a board's unlock state to a new owner (developer tooling)
  */
 USTRUCT(BlueprintType)
@@ -7032,6 +7557,104 @@ struct FConditionResult
     /** Additional details */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Details;
+
+};
+
+/**
+ * Full environmental condition snapshot for a location at a point in time
+ */
+USTRUCT(BlueprintType)
+struct FConditionSnapshotResponse
+{
+    GENERATED_BODY()
+
+    /** Location this snapshot is for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LocationId;
+
+    /** Realm containing the location */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RealmId;
+
+    /** Resolved biome code for this location */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString BiomeCode;
+
+    /** Current weather pattern code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString WeatherCode;
+
+    /** Computed temperature in abstract units */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double Temperature = 0.0;
+
+    /** Wind-chill adjusted temperature */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double FeelsLike = 0.0;
+
+    /** True when temperature is below zero */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsFreezing = false;
+
+    /** True when temperature exceeds the biome heat threshold */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsHot = false;
+
+    /** Current precipitation form */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FPrecipitationType PrecipitationType;
+
+    /** Current precipitation intensity (0.0-1.0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double PrecipitationIntensity = 0.0;
+
+    /** Normalized wind speed (0.0-1.0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double WindSpeed = 0.0;
+
+    /** Wind direction in degrees (0.0-360.0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double WindDirection = 0.0;
+
+    /** Humidity level (0.0-1.0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double Humidity = 0.0;
+
+    /** Visibility level (0.0 = zero, 1.0 = perfect) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double Visibility = 0.0;
+
+    /** Cloud coverage (0.0-1.0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double CloudCover = 0.0;
+
+    /** Composite ecological resource abundance (0.0-1.0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double ResourceAvailability = 0.0;
+
+    /** True when resource availability is below the drought threshold */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsDrought = false;
+
+    /** True when resource availability is above the abundance threshold */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsAbundant = false;
+
+    /** Whether any weather event affects this location */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool HasActiveEvent = false;
+
+    /** Event code of the highest-severity active event (null if none) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ActiveEventCode;
+
+    /** Severity of the active event (null if none) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> ActiveEventSeverity;
+
+    /** When this snapshot was computed */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FDateTime ComputedAt;
 
 };
 
@@ -8646,6 +9269,40 @@ struct FCreateBundleResponse
 };
 
 /**
+ * Request to bind a location to a climate template via biome code
+ */
+USTRUCT(BlueprintType)
+struct FCreateClimateBindingRequest
+{
+    GENERATED_BODY()
+
+    /** Location to bind */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LocationId;
+
+    /** Game service for template resolution */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Biome code matching an existing climate template */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString BiomeCode;
+
+    /** Location altitude for temperature modifier (default 0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> Altitude;
+
+    /** Underground depth for temperature modifier (default 0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> Depth;
+
+    /** Whether this is an enclosed location that skips weather computation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsIndoor = false;
+
+};
+
+/**
  * Request to create a collection for an owner
  */
 USTRUCT(BlueprintType)
@@ -10124,6 +10781,98 @@ struct FCreateTemplateRequest
 };
 
 /**
+ * Request to create a bounded weather event override
+ */
+USTRUCT(BlueprintType)
+struct FCreateWeatherEventRequest
+{
+    GENERATED_BODY()
+
+    /** Realm this event belongs to */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RealmId;
+
+    /** Geographic scope of the event */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FWeatherEventScopeType ScopeType;
+
+    /** ID of the scope target (realm ID, location ID) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid ScopeId;
+
+    /** Weather event code (e.g., thunderstorm, drought, blizzard) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString EventCode;
+
+    /** Human-readable event name */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DisplayName;
+
+    /** Event intensity (0.0-1.0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double Severity = 0.0;
+
+    /** Override weather pattern (null = keep existing) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString WeatherCode;
+
+    /** Additive temperature change */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> TemperatureModifier;
+
+    /** Hard temperature override (takes precedence over modifier) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> TemperatureOverride;
+
+    /** Override visibility multiplier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> VisibilityMultiplier;
+
+    /** Override precipitation intensity */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> PrecipitationIntensity;
+
+    /** Multiply base wind speed */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> WindSpeedMultiplier;
+
+    /** Multiply seasonal resource availability */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> ResourceAvailabilityMultiplier;
+
+    /** Game-seconds-since-epoch when event begins (null = starts immediately) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int64> StartGameTime;
+
+    /** Game-seconds-since-epoch when event ends (null = indefinite) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int64> EndGameTime;
+
+    /** Origin type of this event */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FWeatherEventSourceType SourceType;
+
+    /** Source entity ID (actor ID, schedule ID, etc.) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FGuid> SourceId;
+
+};
+
+/**
+ * Response from creating a weather event
+ */
+USTRUCT(BlueprintType)
+struct FCreateWeatherEventResponse
+{
+    GENERATED_BODY()
+
+    /** ID of the created weather event */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid EventId;
+
+};
+
+/**
  * Request to cure a breach
  */
 USTRUCT(BlueprintType)
@@ -10764,6 +11513,34 @@ struct FDeleteCalendarResponse
 };
 
 /**
+ * Request to delete a location-climate binding
+ */
+USTRUCT(BlueprintType)
+struct FDeleteClimateBindingRequest
+{
+    GENERATED_BODY()
+
+    /** Location whose binding to delete */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LocationId;
+
+};
+
+/**
+ * Request to delete a deprecated climate template
+ */
+USTRUCT(BlueprintType)
+struct FDeleteClimateRequest
+{
+    GENERATED_BODY()
+
+    /** Climate template to delete (must be deprecated) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid TemplateId;
+
+};
+
+/**
  * Request to delete a collection
  */
 USTRUCT(BlueprintType)
@@ -11248,6 +12025,24 @@ struct FDeprecateBoardTemplateRequest
     FGuid BoardTemplateId;
 
     /** Reason for deprecation (audit context for Category B entities) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Reason;
+
+};
+
+/**
+ * Request to deprecate a climate template
+ */
+USTRUCT(BlueprintType)
+struct FDeprecateClimateRequest
+{
+    GENERATED_BODY()
+
+    /** Climate template to deprecate */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid TemplateId;
+
+    /** Optional reason for deprecation */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Reason;
 
@@ -13224,6 +14019,24 @@ struct FExportSavesResponse
 };
 
 /**
+ * Request to extend the duration of an active weather event
+ */
+USTRUCT(BlueprintType)
+struct FExtendWeatherEventRequest
+{
+    GENERATED_BODY()
+
+    /** Weather event to extend */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid EventId;
+
+    /** New end time in game-seconds-since-epoch (must be later than current) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int64 NewEndGameTime = 0;
+
+};
+
+/**
  * Faction membership record linking a character to a faction with a role
  */
 USTRUCT(BlueprintType)
@@ -14540,6 +15353,42 @@ struct FGetClientCapabilitiesRequest
 };
 
 /**
+ * Request to get the climate binding for a location
+ */
+USTRUCT(BlueprintType)
+struct FGetClimateBindingRequest
+{
+    GENERATED_BODY()
+
+    /** Location to get binding for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LocationId;
+
+};
+
+/**
+ * Request to get a climate template by ID or by game service and biome code
+ */
+USTRUCT(BlueprintType)
+struct FGetClimateRequest
+{
+    GENERATED_BODY()
+
+    /** Climate template ID (provide this OR gameServiceId+biomeCode) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FGuid> TemplateId;
+
+    /** Game service ID (used with biomeCode) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FGuid> GameServiceId;
+
+    /** Biome code (used with gameServiceId) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString BiomeCode;
+
+};
+
+/**
  * Request to get a collection by ID
  */
 USTRUCT(BlueprintType)
@@ -14576,6 +15425,42 @@ struct FGetCompletionStatsRequest
     /** Type of collection to get stats for */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FCollectionType CollectionType;
+
+};
+
+/**
+ * Request to get conditions by realm and location code names
+ */
+USTRUCT(BlueprintType)
+struct FGetConditionsByCodeRequest
+{
+    GENERATED_BODY()
+
+    /** Realm code for location resolution */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString RealmCode;
+
+    /** Location code for location resolution */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString LocationCode;
+
+};
+
+/**
+ * Request to get environmental conditions at a specific location
+ */
+USTRUCT(BlueprintType)
+struct FGetConditionsRequest
+{
+    GENERATED_BODY()
+
+    /** Realm containing the location */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RealmId;
+
+    /** Location to get conditions for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LocationId;
 
 };
 
@@ -15840,6 +16725,20 @@ struct FGetRealmBaselineRequest
 };
 
 /**
+ * Request to get per-realm environment configuration
+ */
+USTRUCT(BlueprintType)
+struct FGetRealmConfigRequest
+{
+    GENERATED_BODY()
+
+    /** Realm to get config for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RealmId;
+
+};
+
+/**
  * Request payload for getting participants of an event
  */
 USTRUCT(BlueprintType)
@@ -15914,6 +16813,34 @@ struct FGetRealmParticipationRequest
     /** Number of results per page */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<int32> PageSize;
+
+};
+
+/**
+ * Request to get an aggregated resource summary for a realm
+ */
+USTRUCT(BlueprintType)
+struct FGetRealmResourceSummaryRequest
+{
+    GENERATED_BODY()
+
+    /** Realm to summarize resources for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RealmId;
+
+};
+
+/**
+ * Request to get an aggregated weather summary for a realm
+ */
+USTRUCT(BlueprintType)
+struct FGetRealmWeatherSummaryRequest
+{
+    GENERATED_BODY()
+
+    /** Realm to summarize weather for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RealmId;
 
 };
 
@@ -15998,6 +16925,24 @@ struct FGetRelationshipsBetweenRequest
     /** Number of results per page (max 100) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<int32> PageSize;
+
+};
+
+/**
+ * Request to get resource availability at a location
+ */
+USTRUCT(BlueprintType)
+struct FGetResourceAvailabilityRequest
+{
+    GENERATED_BODY()
+
+    /** Realm containing the location */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RealmId;
+
+    /** Location to get resource availability for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LocationId;
 
 };
 
@@ -16388,6 +17333,24 @@ struct FGetStyleRequest
 };
 
 /**
+ * Request to get temperature data at a specific location
+ */
+USTRUCT(BlueprintType)
+struct FGetTemperatureRequest
+{
+    GENERATED_BODY()
+
+    /** Realm containing the location */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RealmId;
+
+    /** Location to get temperature for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LocationId;
+
+};
+
+/**
  * Request to get a template by code
  */
 USTRUCT(BlueprintType)
@@ -16526,6 +17489,38 @@ struct FGetValidationRulesResponse
     /** Registered rules (null if none registered for the combination) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FValidationRule> Rules;
+
+};
+
+/**
+ * Request to get weather conditions for a location subtree
+ */
+USTRUCT(BlueprintType)
+struct FGetWeatherByRegionRequest
+{
+    GENERATED_BODY()
+
+    /** Root location of the region */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LocationId;
+
+    /** Realm containing the location */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RealmId;
+
+};
+
+/**
+ * Request to get a weather event by ID
+ */
+USTRUCT(BlueprintType)
+struct FGetWeatherEventRequest
+{
+    GENERATED_BODY()
+
+    /** Weather event to retrieve */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid EventId;
 
 };
 
@@ -19104,6 +20099,32 @@ struct FListClauseTypesResponse
 };
 
 /**
+ * Request to list climate templates for a game service
+ */
+USTRUCT(BlueprintType)
+struct FListClimatesRequest
+{
+    GENERATED_BODY()
+
+    /** Game service to list templates for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Whether to include deprecated templates */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IncludeDeprecated = false;
+
+    /** Page number for pagination */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> Page;
+
+    /** Number of items per page */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> PageSize;
+
+};
+
+/**
  * Request to list collections for an owner
  */
 USTRUCT(BlueprintType)
@@ -21170,6 +22191,44 @@ struct FListVersionsResponse
     /** Total version count in slot */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     int32 TotalCount = 0;
+
+};
+
+/**
+ * Request to list weather events for a scope
+ */
+USTRUCT(BlueprintType)
+struct FListWeatherEventsRequest
+{
+    GENERATED_BODY()
+
+    /** Scope type to filter by */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FWeatherEventScopeType ScopeType;
+
+    /** Scope target ID */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid ScopeId;
+
+    /** Whether to return only active events */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool ActiveOnly = true;
+
+    /** Optional filter by event code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString EventCode;
+
+    /** Optional filter by source type */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FWeatherEventSourceType> SourceType;
+
+    /** Page number */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> Page;
+
+    /** Items per page */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> PageSize;
 
 };
 
@@ -23364,6 +24423,58 @@ struct FPageMetadata
 };
 
 /**
+ * Paged list of climate templates
+ */
+USTRUCT(BlueprintType)
+struct FPagedClimateTemplateResponse
+{
+    GENERATED_BODY()
+
+    /** Climate templates on this page */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FClimateTemplateResponse> Items;
+
+    /** Total number of matching templates */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 TotalCount = 0;
+
+    /** Current page number */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 Page = 0;
+
+    /** Items per page */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 PageSize = 0;
+
+};
+
+/**
+ * Paged list of weather events
+ */
+USTRUCT(BlueprintType)
+struct FPagedWeatherEventResponse
+{
+    GENERATED_BODY()
+
+    /** Weather events on this page */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FWeatherEventResponse> Items;
+
+    /** Total number of matching events */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 TotalCount = 0;
+
+    /** Current page number */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 Page = 0;
+
+    /** Items per page */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 PageSize = 0;
+
+};
+
+/**
  * Upload information for a single part in a multipart upload
  */
 USTRUCT(BlueprintType)
@@ -24378,6 +25489,16 @@ struct FPreboundApi
  */
 USTRUCT(BlueprintType)
 struct FPreboundApiExecutionMode
+{
+    GENERATED_BODY()
+
+};
+
+/**
+ * Form of precipitation. Temperature crossover rules apply (Rain below 0C becomes Snow, Snow above 5C becomes Rain, between 0-5C becomes Sleet)
+ */
+USTRUCT(BlueprintType)
+struct FPrecipitationType
 {
     GENERATED_BODY()
 
@@ -26016,6 +27137,36 @@ struct FRealmConfigResponse
 };
 
 /**
+ * Per-realm environment configuration
+ */
+USTRUCT(BlueprintType)
+struct FRealmEnvironmentConfigResponse
+{
+    GENERATED_BODY()
+
+    /** Realm this config is for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RealmId;
+
+    /** Game service for biome resolution */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Default biome code for unbound locations */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DefaultBiomeCode;
+
+    /** When the config was created */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FDateTime CreatedAt;
+
+    /** When the config was last updated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> UpdatedAt;
+
+};
+
+/**
  * Categories of historical events that realms can participate in
  */
 USTRUCT(BlueprintType)
@@ -26182,6 +27333,62 @@ struct FRealmParticipationListResponse
     /** Whether there are results before this page */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     bool HasPreviousPage = false;
+
+};
+
+/**
+ * Aggregated resource summary for a realm grouped by biome
+ */
+USTRUCT(BlueprintType)
+struct FRealmResourceSummaryResponse
+{
+    GENERATED_BODY()
+
+    /** Realm this summary is for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RealmId;
+
+    /** Resource summaries per biome */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FBiomeResourceSummary> BiomeSummaries;
+
+};
+
+/**
+ * Aggregated weather summary for a realm
+ */
+USTRUCT(BlueprintType)
+struct FRealmWeatherSummaryResponse
+{
+    GENERATED_BODY()
+
+    /** Realm this summary is for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RealmId;
+
+    /** Total locations in the realm */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 LocationCount = 0;
+
+    /** Location count per weather code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FWeatherCodeSummary> WeatherSummaries;
+
+    /** Average temperature across all locations */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double AverageTemperature = 0.0;
+
+    /** Lowest temperature in the realm */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double MinTemperature = 0.0;
+
+    /** Highest temperature in the realm */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double MaxTemperature = 0.0;
+
+    /** Number of active weather events in the realm */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 ActiveWeatherEventCount = 0;
 
 };
 
@@ -27356,6 +28563,66 @@ struct FResolvedReference
     /** Depth level of this reference */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     int32 Depth = 0;
+
+};
+
+/**
+ * Resource availability breakdown for a location
+ */
+USTRUCT(BlueprintType)
+struct FResourceAvailabilityResponse
+{
+    GENERATED_BODY()
+
+    /** Location this availability is for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LocationId;
+
+    /** Realm containing the location */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RealmId;
+
+    /** Raw computed abundance before clamping */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double AbundanceLevel = 0.0;
+
+    /** Seasonal baseline abundance from climate template */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double BaseSeasonalLevel = 0.0;
+
+    /** Net modifier from active weather events */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double WeatherEventModifier = 0.0;
+
+    /** Final clamped resource availability (0.0-1.0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double NetResult = 0.0;
+
+};
+
+/**
+ * Seasonal resource availability values for ecological abundance
+ */
+USTRUCT(BlueprintType)
+struct FResourceAvailabilitySeason
+{
+    GENERATED_BODY()
+
+    /** References a Worldstate calendar season code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SeasonCode;
+
+    /** Base ecological abundance (0.0 = barren, 1.0 = abundant) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double AbundanceLevel = 0.0;
+
+    /** Multiplier for forageable resource generation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double ForageModifier = 0.0;
+
+    /** Multiplier for wildlife activity */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double HuntModifier = 0.0;
 
 };
 
@@ -29164,6 +30431,60 @@ struct FSeedCharacterEntry
 };
 
 /**
+ * Request to create a climate template for a biome within a game service
+ */
+USTRUCT(BlueprintType)
+struct FSeedClimateRequest
+{
+    GENERATED_BODY()
+
+    /** Game service this template belongs to */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Biome type code (e.g., temperate_forest, alpine, desert) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString BiomeCode;
+
+    /** Human-readable name for the climate template */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DisplayName;
+
+    /** Detailed description of this climate template */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Description;
+
+    /** Temperature curves per season */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FTemperatureCurve> TemperatureCurves;
+
+    /** Weather pattern distributions per season */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FWeatherDistributionSeason> WeatherDistributions;
+
+    /** Atmospheric baselines per season */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FAtmosphericBaselineSeason> AtmosphericBaselines;
+
+    /** Resource availability values per season */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FResourceAvailabilitySeason> ResourceAvailability;
+
+    /** Temperature change per altitude unit (default -0.006, lapse rate) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> AltitudeTemperatureRate;
+
+    /** Temperature change per depth unit (default +0.003, geothermal) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> DepthTemperatureRate;
+
+    /** Temperature above which is_hot is true (default 30.0, varies by biome) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> HeatThreshold;
+
+};
+
+/**
  * A single definition entry for bulk seeding
  */
 USTRUCT(BlueprintType)
@@ -30376,6 +31697,28 @@ struct FSetPersonalityRequest
     /** Optional archetype code for behavior optimization */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString ArchetypeHint;
+
+};
+
+/**
+ * Request to set per-realm default biome configuration
+ */
+USTRUCT(BlueprintType)
+struct FSetRealmConfigRequest
+{
+    GENERATED_BODY()
+
+    /** Realm to configure */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RealmId;
+
+    /** Game service for biome code validation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Default biome code for locations without explicit bindings */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DefaultBiomeCode;
 
 };
 
@@ -31720,6 +33063,84 @@ struct FSyncTrigger
 };
 
 /**
+ * Seasonal temperature curve definition controlling base min/max temperature and intra-day variation
+ */
+USTRUCT(BlueprintType)
+struct FTemperatureCurve
+{
+    GENERATED_BODY()
+
+    /** References a Worldstate calendar season code (game-configurable) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SeasonCode;
+
+    /** Minimum daily temperature in abstract units (typically Celsius-like) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double BaseMinTemp = 0.0;
+
+    /** Maximum daily temperature in abstract units */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double BaseMaxTemp = 0.0;
+
+    /** Curve shape for intra-day variation (null defaults to Sinusoidal) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FTemperatureCurveShape> HourlyShape;
+
+    /** Game-hour of maximum temperature */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> PeakHour;
+
+    /** Game-hour of minimum temperature */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> TroughHour;
+
+};
+
+/**
+ * Shape of the intra-day temperature curve for hourly interpolation
+ */
+USTRUCT(BlueprintType)
+struct FTemperatureCurveShape
+{
+    GENERATED_BODY()
+
+};
+
+/**
+ * Temperature data for a location
+ */
+USTRUCT(BlueprintType)
+struct FTemperatureResponse
+{
+    GENERATED_BODY()
+
+    /** Location this temperature is for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LocationId;
+
+    /** Realm containing the location */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RealmId;
+
+    /** Computed temperature in abstract units */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double Temperature = 0.0;
+
+    /** Wind-chill adjusted temperature */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double FeelsLike = 0.0;
+
+    /** True when temperature is below zero */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsFreezing = false;
+
+    /** True when temperature exceeds the biome heat threshold */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsHot = false;
+
+};
+
+/**
  * Current lifecycle status of a scenario template
  */
 USTRUCT(BlueprintType)
@@ -32914,6 +34335,20 @@ struct FUnbindRepositoryResponse
 };
 
 /**
+ * Request to remove deprecation from a climate template
+ */
+USTRUCT(BlueprintType)
+struct FUndeprecateClimateRequest
+{
+    GENERATED_BODY()
+
+    /** Climate template to undeprecate */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid TemplateId;
+
+};
+
+/**
  * Request to reactivate a deprecated faction
  */
 USTRUCT(BlueprintType)
@@ -33522,6 +34957,86 @@ struct FUpdateCalendarRequest
     /** New era label definitions (null = no change, empty array = clear all) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FEraLabel> EraLabels;
+
+};
+
+/**
+ * Request to update a location-climate binding
+ */
+USTRUCT(BlueprintType)
+struct FUpdateClimateBindingRequest
+{
+    GENERATED_BODY()
+
+    /** Location whose binding to update */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LocationId;
+
+    /** Updated biome code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString BiomeCode;
+
+    /** Updated altitude */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> Altitude;
+
+    /** Updated depth */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> Depth;
+
+    /** Updated indoor flag */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsIndoor = false;
+
+};
+
+/**
+ * Request to partially update a climate template
+ */
+USTRUCT(BlueprintType)
+struct FUpdateClimateRequest
+{
+    GENERATED_BODY()
+
+    /** Climate template to update */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid TemplateId;
+
+    /** Updated display name */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DisplayName;
+
+    /** Updated description */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Description;
+
+    /** Updated temperature curves (replaces all curves) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FTemperatureCurve> TemperatureCurves;
+
+    /** Updated weather distributions (replaces all distributions) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FWeatherDistributionSeason> WeatherDistributions;
+
+    /** Updated atmospheric baselines (replaces all baselines) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FAtmosphericBaselineSeason> AtmosphericBaselines;
+
+    /** Updated resource availability (replaces all entries) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FResourceAvailabilitySeason> ResourceAvailability;
+
+    /** Updated altitude temperature rate */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> AltitudeTemperatureRate;
+
+    /** Updated depth temperature rate */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> DepthTemperatureRate;
+
+    /** Updated heat threshold */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> HeatThreshold;
 
 };
 
@@ -36160,6 +37675,234 @@ struct FWatcherInfo
     /** Actor instance ID running this watcher's behavior */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FGuid> ActorId;
+
+};
+
+/**
+ * Weather conditions for a location subtree grouped by weather code
+ */
+USTRUCT(BlueprintType)
+struct FWeatherByRegionResponse
+{
+    GENERATED_BODY()
+
+    /** Root location of the region */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid LocationId;
+
+    /** Locations grouped by weather code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FWeatherRegionGroup> WeatherGroups;
+
+};
+
+/**
+ * Weather code occurrence count in a summary
+ */
+USTRUCT(BlueprintType)
+struct FWeatherCodeSummary
+{
+    GENERATED_BODY()
+
+    /** Weather pattern code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString WeatherCode;
+
+    /** Number of locations with this weather */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 LocationCount = 0;
+
+};
+
+/**
+ * Seasonal weather distribution containing weighted patterns for a season
+ */
+USTRUCT(BlueprintType)
+struct FWeatherDistributionSeason
+{
+    GENERATED_BODY()
+
+    /** References a Worldstate calendar season code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SeasonCode;
+
+    /** Weighted weather patterns for this season */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FWeatherPattern> Patterns;
+
+};
+
+/**
+ * Full weather event data
+ */
+USTRUCT(BlueprintType)
+struct FWeatherEventResponse
+{
+    GENERATED_BODY()
+
+    /** Unique weather event identifier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid EventId;
+
+    /** Realm this event belongs to */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RealmId;
+
+    /** Geographic scope of the event */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FWeatherEventScopeType ScopeType;
+
+    /** Scope target ID */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid ScopeId;
+
+    /** Weather event code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString EventCode;
+
+    /** Human-readable event name */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DisplayName;
+
+    /** Event intensity (0.0-1.0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double Severity = 0.0;
+
+    /** Override weather pattern (null = no override) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString WeatherCode;
+
+    /** Additive temperature change */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> TemperatureModifier;
+
+    /** Hard temperature override */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> TemperatureOverride;
+
+    /** Override visibility multiplier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> VisibilityMultiplier;
+
+    /** Override precipitation intensity */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> PrecipitationIntensity;
+
+    /** Wind speed multiplier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> WindSpeedMultiplier;
+
+    /** Resource availability multiplier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> ResourceAvailabilityMultiplier;
+
+    /** Game-seconds-since-epoch when event begins */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int64> StartGameTime;
+
+    /** Game-seconds-since-epoch when event ends */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int64> EndGameTime;
+
+    /** Origin type of this event */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FWeatherEventSourceType SourceType;
+
+    /** Source entity ID */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FGuid> SourceId;
+
+    /** Whether the event is currently active */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsActive = false;
+
+    /** When the event was created */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FDateTime CreatedAt;
+
+};
+
+/**
+ * Scope level of a weather event override, determining geographic reach and precedence
+ */
+USTRUCT(BlueprintType)
+struct FWeatherEventScopeType
+{
+    GENERATED_BODY()
+
+};
+
+/**
+ * Origin type of a weather event, tracking who or what created it
+ */
+USTRUCT(BlueprintType)
+struct FWeatherEventSourceType
+{
+    GENERATED_BODY()
+
+};
+
+/**
+ * Individual weather pattern definition within a seasonal distribution
+ */
+USTRUCT(BlueprintType)
+struct FWeatherPattern
+{
+    GENERATED_BODY()
+
+    /** Weather pattern code (e.g., clear, cloudy, storm, fog) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString WeatherCode;
+
+    /** Relative probability weight for this season */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double Weight = 0.0;
+
+    /** Typical duration in game-hours before re-rolling */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 DurationGameHours = 0;
+
+    /** Additive temperature modifier while this weather is active */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double TemperatureModifier = 0.0;
+
+    /** Visibility multiplier (1.0 = normal, 0.1 = blizzard) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double VisibilityMultiplier = 0.0;
+
+    /** Precipitation intensity (0.0 = none, 1.0 = maximum) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double PrecipitationIntensity = 0.0;
+
+    /** Form of precipitation for this weather pattern */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FPrecipitationType PrecipitationType;
+
+    /** Cloud coverage (0.0 = clear sky, 1.0 = fully overcast) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double CloudCover = 0.0;
+
+    /** Additive impact on resource availability (rain=+0.05, storm=-0.15, drought=-0.3) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double ResourceImpactModifier = 0.0;
+
+};
+
+/**
+ * A group of locations sharing the same weather code
+ */
+USTRUCT(BlueprintType)
+struct FWeatherRegionGroup
+{
+    GENERATED_BODY()
+
+    /** Shared weather pattern code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString WeatherCode;
+
+    /** Location IDs with this weather */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FGuid> LocationIds;
 
 };
 

@@ -238,7 +238,7 @@ public class PluginLoader
 
         // 2. Individual override via {SERVICE}_SERVICE_ENABLED (always checked, no dual-mode)
         var serviceNameUpper = serviceName.ToUpper().Replace("-", "_");
-        var enabledEnv = Environment.GetEnvironmentVariable($"{serviceNameUpper}_SERVICE_ENABLED");
+        var enabledEnv = System.Environment.GetEnvironmentVariable($"{serviceNameUpper}_SERVICE_ENABLED");
         if (!string.IsNullOrWhiteSpace(enabledEnv))
         {
             var isEnabled = string.Equals(enabledEnv, "true", StringComparison.OrdinalIgnoreCase);

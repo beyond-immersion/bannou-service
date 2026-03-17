@@ -1,0 +1,2719 @@
+openapi: 3.0.4
+info:
+  title: Bannou Environment Service API
+  description: |
+    Weather simulation, temperature modeling, atmospheric conditions, and ecological resource
+    availability for game worlds. Consumes temporal data from Worldstate (L2) and translates
+    it into environmental conditions that affect NPC behavior, production, trade, and player
+    experience. Internal-only, never internet-facing.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-references:
+    - target: realm
+      sourceType: environment
+      field: realmId
+      onDelete: cascade
+      cleanup:
+        endpoint: /environment/cleanup-by-realm
+        payloadTemplate: '{"realmId": "{{resourceId}}"}'
+    - target: game-service
+      sourceType: environment
+      field: gameServiceId
+      onDelete: cascade
+      cleanup:
+        endpoint: /environment/cleanup-by-game-service
+        payloadTemplate: '{"gameServiceId": "{{resourceId}}"}'
+    - target: location
+      sourceType: environment
+      field: locationId
+      onDelete: cascade
+      cleanup:
+        endpoint: /environment/cleanup-by-location
+        payloadTemplate: '{"locationId": "{{resourceId}}"}'
+x-service-layer: GameFeatures
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+paths:
+  # ===========================================================================
+  # Conditions (4 endpoints) — user-facing condition queries
+  # ===========================================================================
+
+  /environment/conditions/get:
+    post:
+      operationId: getConditions
+      tags:
+      - Conditions
+      summary: Get environmental conditions at a location
+      description: Returns the full condition snapshot for a location, computing on cache miss.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetConditionsRequest'
+      responses:
+        '200':
+          description: Condition snapshot retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConditionSnapshotResponse'
+        '404':
+          description: No resolvable climate template for this location
+
+  /environment/conditions/get-by-code:
+    post:
+      operationId: getConditionsByCode
+      tags:
+      - Conditions
+      summary: Get conditions by realm and location codes
+      description: Resolves location by code pair, then returns the condition snapshot.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetConditionsByCodeRequest'
+      responses:
+        '200':
+          description: Condition snapshot retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConditionSnapshotResponse'
+        '404':
+          description: Location not found or no resolvable climate template
+
+  /environment/conditions/batch-get:
+    post:
+      operationId: batchGetConditions
+      tags:
+      - Conditions
+      summary: Get conditions for multiple locations
+      description: Returns condition snapshots for a batch of locations, grouped by realm for efficiency.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchGetConditionsRequest'
+      responses:
+        '200':
+          description: Batch condition snapshots retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchConditionSnapshotResponse'
+
+  /environment/conditions/get-temperature:
+    post:
+      operationId: getTemperature
+      tags:
+      - Conditions
+      summary: Get temperature at a location
+      description: Returns temperature data only, lighter than full condition snapshot.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetTemperatureRequest'
+      responses:
+        '200':
+          description: Temperature data retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemperatureResponse'
+        '404':
+          description: No resolvable climate template for this location
+
+  # ===========================================================================
+  # Climate Templates (8 endpoints) — developer content authoring
+  # ===========================================================================
+
+  /environment/climate/seed:
+    post:
+      operationId: seedClimate
+      tags:
+      - ClimateTemplate
+      summary: Create a climate template for a biome
+      description: Seeds a new climate template defining weather, temperature, and ecology for a biome type within a game service.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeedClimateRequest'
+      responses:
+        '200':
+          description: Climate template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClimateTemplateResponse'
+        '400':
+          description: Validation failed or at capacity
+        '404':
+          description: Game service not found
+        '409':
+          description: Template already exists for this biome or lock contention
+
+  /environment/climate/get:
+    post:
+      operationId: getClimate
+      tags:
+      - ClimateTemplate
+      summary: Get a climate template
+      description: Retrieves a climate template by ID or by game service and biome code.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetClimateRequest'
+      responses:
+        '200':
+          description: Climate template retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClimateTemplateResponse'
+        '404':
+          description: Climate template not found
+
+  /environment/climate/list:
+    post:
+      operationId: listClimates
+      tags:
+      - ClimateTemplate
+      summary: List climate templates for a game service
+      description: Returns a paged list of climate templates, optionally including deprecated.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListClimatesRequest'
+      responses:
+        '200':
+          description: Climate templates listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedClimateTemplateResponse'
+
+  /environment/climate/update:
+    post:
+      operationId: updateClimate
+      tags:
+      - ClimateTemplate
+      summary: Update a climate template
+      description: Partially updates a climate template. Invalidates affected condition caches.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateClimateRequest'
+      responses:
+        '200':
+          description: Climate template updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClimateTemplateResponse'
+        '400':
+          description: Validation failed
+        '404':
+          description: Climate template not found
+        '409':
+          description: ETag conflict or lock contention
+
+  /environment/climate/deprecate:
+    post:
+      operationId: deprecateClimate
+      tags:
+      - ClimateTemplate
+      summary: Deprecate a climate template
+      description: Marks a climate template as deprecated. Idempotent — returns OK if already deprecated.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateClimateRequest'
+      responses:
+        '200':
+          description: Climate template deprecated (or already deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClimateTemplateResponse'
+        '404':
+          description: Climate template not found
+
+  /environment/climate/undeprecate:
+    post:
+      operationId: undeprecateClimate
+      tags:
+      - ClimateTemplate
+      summary: Undeprecate a climate template
+      description: Removes deprecation from a climate template. Idempotent — returns OK if not deprecated.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UndeprecateClimateRequest'
+      responses:
+        '200':
+          description: Climate template undeprecated (or already not deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClimateTemplateResponse'
+        '404':
+          description: Climate template not found
+
+  /environment/climate/delete:
+    post:
+      operationId: deleteClimate
+      tags:
+      - ClimateTemplate
+      summary: Delete a climate template
+      description: Deletes a deprecated climate template and cascades to all referencing bindings.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteClimateRequest'
+      responses:
+        '200':
+          description: Climate template deleted
+        '400':
+          description: Template is not deprecated (must deprecate first)
+        '404':
+          description: Climate template not found
+
+  /environment/climate/bulk-seed:
+    post:
+      operationId: bulkSeedClimates
+      tags:
+      - ClimateTemplate
+      summary: Bulk seed climate templates
+      description: Creates or updates multiple climate templates for a game service in a single operation.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkSeedClimatesRequest'
+      responses:
+        '200':
+          description: Bulk seed completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkSeedClimatesResponse'
+        '400':
+          description: Game service not found
+
+  # ===========================================================================
+  # Weather Events (6 endpoints) — divine/admin weather manipulation
+  # ===========================================================================
+
+  /environment/weather-event/create:
+    post:
+      operationId: createWeatherEvent
+      tags:
+      - WeatherEvent
+      summary: Create a weather event
+      description: Registers a bounded weather override affecting a realm, location, or location subtree.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWeatherEventRequest'
+      responses:
+        '200':
+          description: Weather event created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateWeatherEventResponse'
+        '400':
+          description: At capacity or validation failed
+        '404':
+          description: Scope target not found
+        '409':
+          description: Lock contention
+
+  /environment/weather-event/get:
+    post:
+      operationId: getWeatherEvent
+      tags:
+      - WeatherEvent
+      summary: Get a weather event
+      description: Retrieves a weather event by ID.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetWeatherEventRequest'
+      responses:
+        '200':
+          description: Weather event retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeatherEventResponse'
+        '404':
+          description: Weather event not found
+
+  /environment/weather-event/list:
+    post:
+      operationId: listWeatherEvents
+      tags:
+      - WeatherEvent
+      summary: List weather events for a scope
+      description: Returns a paged list of weather events for a given scope, with optional filters.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListWeatherEventsRequest'
+      responses:
+        '200':
+          description: Weather events listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedWeatherEventResponse'
+
+  /environment/weather-event/cancel:
+    post:
+      operationId: cancelWeatherEvent
+      tags:
+      - WeatherEvent
+      summary: Cancel an active weather event
+      description: Deactivates a weather event and invalidates affected condition caches.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelWeatherEventRequest'
+      responses:
+        '200':
+          description: Weather event cancelled
+        '400':
+          description: Weather event is already inactive
+        '404':
+          description: Weather event not found
+        '409':
+          description: Lock contention
+
+  /environment/weather-event/extend:
+    post:
+      operationId: extendWeatherEvent
+      tags:
+      - WeatherEvent
+      summary: Extend a weather event duration
+      description: Extends the end time of an active weather event. Cannot shorten.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtendWeatherEventRequest'
+      responses:
+        '200':
+          description: Weather event extended
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeatherEventResponse'
+        '400':
+          description: Event is inactive or new end time is not later than current
+        '404':
+          description: Weather event not found
+
+  /environment/weather-event/cancel-by-source:
+    post:
+      operationId: cancelWeatherEventsBySource
+      tags:
+      - WeatherEvent
+      summary: Cancel all weather events from a source
+      description: Cancels all active weather events created by a specific source (e.g., divine actor cleanup).
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelWeatherEventsBySourceRequest'
+      responses:
+        '200':
+          description: Events cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelWeatherEventsBySourceResponse'
+
+  # ===========================================================================
+  # Weather Summary (2 endpoints) — developer operational views
+  # ===========================================================================
+
+  /environment/weather/realm-summary:
+    post:
+      operationId: getRealmWeatherSummary
+      tags:
+      - WeatherSummary
+      summary: Get weather summary for a realm
+      description: Aggregates weather conditions across all locations in a realm.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRealmWeatherSummaryRequest'
+      responses:
+        '200':
+          description: Realm weather summary retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmWeatherSummaryResponse'
+        '404':
+          description: Realm not found
+
+  /environment/weather/by-region:
+    post:
+      operationId: getWeatherByRegion
+      tags:
+      - WeatherSummary
+      summary: Get weather grouped by region
+      description: Returns weather conditions for a location and its descendants, grouped by weather code.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetWeatherByRegionRequest'
+      responses:
+        '200':
+          description: Regional weather retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeatherByRegionResponse'
+        '404':
+          description: Location not found
+
+  # ===========================================================================
+  # Resources (2 endpoints) — user-facing resource availability
+  # ===========================================================================
+
+  /environment/resource/get-availability:
+    post:
+      operationId: getResourceAvailability
+      tags:
+      - Resources
+      summary: Get resource availability at a location
+      description: Returns the composite resource abundance level with breakdown of contributing factors.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetResourceAvailabilityRequest'
+      responses:
+        '200':
+          description: Resource availability retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceAvailabilityResponse'
+        '404':
+          description: No resolvable climate template for this location
+
+  /environment/resource/realm-summary:
+    post:
+      operationId: getRealmResourceSummary
+      tags:
+      - Resources
+      summary: Get resource summary for a realm
+      description: Aggregates resource availability across all locations in a realm, grouped by biome.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRealmResourceSummaryRequest'
+      responses:
+        '200':
+          description: Realm resource summary retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmResourceSummaryResponse'
+        '404':
+          description: Realm not found
+
+  # ===========================================================================
+  # Climate Bindings (5 endpoints) — developer location-to-biome mapping
+  # ===========================================================================
+
+  /environment/climate-binding/create:
+    post:
+      operationId: createClimateBinding
+      tags:
+      - ClimateBinding
+      summary: Bind a location to a climate template
+      description: Creates a location-climate binding. Validates location exists and biome has an active template.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClimateBindingRequest'
+      responses:
+        '200':
+          description: Climate binding created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClimateBindingResponse'
+        '400':
+          description: Referenced climate template is deprecated
+        '404':
+          description: Location or climate template not found
+        '409':
+          description: Binding already exists for this location
+
+  /environment/climate-binding/get:
+    post:
+      operationId: getClimateBinding
+      tags:
+      - ClimateBinding
+      summary: Get a climate binding for a location
+      description: Returns the explicit climate binding for a location.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetClimateBindingRequest'
+      responses:
+        '200':
+          description: Climate binding retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClimateBindingResponse'
+        '404':
+          description: No explicit binding for this location
+
+  /environment/climate-binding/update:
+    post:
+      operationId: updateClimateBinding
+      tags:
+      - ClimateBinding
+      summary: Update a climate binding
+      description: Updates binding properties. Invalidates affected condition caches.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateClimateBindingRequest'
+      responses:
+        '200':
+          description: Climate binding updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClimateBindingResponse'
+        '400':
+          description: Referenced climate template is deprecated
+        '404':
+          description: Binding or new climate template not found
+
+  /environment/climate-binding/delete:
+    post:
+      operationId: deleteClimateBinding
+      tags:
+      - ClimateBinding
+      summary: Delete a climate binding
+      description: Removes the explicit binding. Inheriting children fall back to next ancestor or realm default.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteClimateBindingRequest'
+      responses:
+        '200':
+          description: Climate binding deleted
+        '404':
+          description: No binding for this location
+
+  /environment/climate-binding/bulk-seed:
+    post:
+      operationId: bulkSeedBindings
+      tags:
+      - ClimateBinding
+      summary: Bulk seed climate bindings
+      description: Creates or updates multiple location-climate bindings in a single operation.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkSeedBindingsRequest'
+      responses:
+        '200':
+          description: Bulk seed completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkSeedBindingsResponse'
+
+  # ===========================================================================
+  # Realm Config (2 endpoints) — developer per-realm defaults
+  # ===========================================================================
+
+  /environment/realm-config/set:
+    post:
+      operationId: setRealmConfig
+      tags:
+      - RealmConfig
+      summary: Set per-realm environment configuration
+      description: Sets the default biome code for a realm. Idempotent — creates or updates.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetRealmConfigRequest'
+      responses:
+        '200':
+          description: Realm config set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmEnvironmentConfigResponse'
+        '400':
+          description: Biome code not found or deprecated
+        '404':
+          description: Realm not found
+
+  /environment/realm-config/get:
+    post:
+      operationId: getRealmConfig
+      tags:
+      - RealmConfig
+      summary: Get per-realm environment configuration
+      description: Returns the explicitly set realm environment config. Does not return global fallback.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRealmConfigRequest'
+      responses:
+        '200':
+          description: Realm config retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmEnvironmentConfigResponse'
+        '404':
+          description: No explicit config set for this realm
+
+  # ===========================================================================
+  # Cleanup (3 endpoints) — service-to-service resource cleanup
+  # ===========================================================================
+
+  /environment/cleanup-by-realm:
+    post:
+      operationId: cleanupByRealm
+      tags:
+      - Cleanup
+      summary: Cleanup all environment data for a deleted realm
+      description: Called by lib-resource CASCADE callback. Removes events, conditions, bindings, and realm config.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByRealmRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+
+  /environment/cleanup-by-game-service:
+    post:
+      operationId: cleanupByGameService
+      tags:
+      - Cleanup
+      summary: Cleanup all environment data for a deleted game service
+      description: Called by lib-resource CASCADE callback. Removes climate templates and derived bindings.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByGameServiceRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+
+  /environment/cleanup-by-location:
+    post:
+      operationId: cleanupByLocation
+      tags:
+      - Cleanup
+      summary: Cleanup all environment data for a deleted location
+      description: Called by lib-resource CASCADE callback. Removes binding, weather events, and cached conditions.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByLocationRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+
+components:
+  schemas:
+    # =========================================================================
+    # Enums
+    # =========================================================================
+
+    TemperatureCurveShape:
+      type: string
+      description: Shape of the intra-day temperature curve for hourly interpolation
+      enum: [Sinusoidal, Plateau, Spike]
+
+    PrecipitationType:
+      type: string
+      description: Form of precipitation. Temperature crossover rules apply (Rain below 0C becomes Snow, Snow above 5C becomes Rain, between 0-5C becomes Sleet)
+      enum: [None, Rain, Snow, Sleet, Hail]
+
+    WeatherEventScopeType:
+      type: string
+      description: Scope level of a weather event override, determining geographic reach and precedence
+      enum: [Realm, Location, LocationSubtree]
+
+    WeatherEventSourceType:
+      type: string
+      description: Origin type of a weather event, tracking who or what created it
+      enum: [Divine, Scheduled, GameEvent, Admin]
+
+    ConditionRefreshMode:
+      type: string
+      description: Strategy for the background worker's per-realm condition refresh cycle
+      enum: [AllLocations, ActiveOnly]
+
+    WeatherEventEndReason:
+      type: string
+      description: Reason a weather event ended
+      enum: [Cancelled, SourceRemoved, Expired]
+
+    # =========================================================================
+    # Climate Template Sub-Types
+    # =========================================================================
+
+    TemperatureCurve:
+      type: object
+      additionalProperties: false
+      description: Seasonal temperature curve definition controlling base min/max temperature and intra-day variation
+      required:
+      - seasonCode
+      - baseMinTemp
+      - baseMaxTemp
+      properties:
+        seasonCode:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: References a Worldstate calendar season code (game-configurable)
+        baseMinTemp:
+          type: number
+          format: double
+          description: Minimum daily temperature in abstract units (typically Celsius-like)
+        baseMaxTemp:
+          type: number
+          format: double
+          description: Maximum daily temperature in abstract units
+        hourlyShape:
+          $ref: '#/components/schemas/TemperatureCurveShape'
+          nullable: true
+          description: Curve shape for intra-day variation (null defaults to Sinusoidal)
+        peakHour:
+          type: integer
+          default: 14
+          minimum: 0
+          maximum: 23
+          description: Game-hour of maximum temperature
+        troughHour:
+          type: integer
+          default: 4
+          minimum: 0
+          maximum: 23
+          description: Game-hour of minimum temperature
+
+    WeatherPattern:
+      type: object
+      additionalProperties: false
+      description: Individual weather pattern definition within a seasonal distribution
+      required:
+      - weatherCode
+      - weight
+      - durationGameHours
+      - temperatureModifier
+      - visibilityMultiplier
+      - precipitationIntensity
+      - precipitationType
+      - cloudCover
+      - resourceImpactModifier
+      properties:
+        weatherCode:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Weather pattern code (e.g., clear, cloudy, storm, fog)
+        weight:
+          type: number
+          format: double
+          minimum: 0
+          description: Relative probability weight for this season
+        durationGameHours:
+          type: integer
+          minimum: 1
+          description: Typical duration in game-hours before re-rolling
+        temperatureModifier:
+          type: number
+          format: double
+          description: Additive temperature modifier while this weather is active
+        visibilityMultiplier:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Visibility multiplier (1.0 = normal, 0.1 = blizzard)
+        precipitationIntensity:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Precipitation intensity (0.0 = none, 1.0 = maximum)
+        precipitationType:
+          $ref: '#/components/schemas/PrecipitationType'
+          description: Form of precipitation for this weather pattern
+        cloudCover:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Cloud coverage (0.0 = clear sky, 1.0 = fully overcast)
+        resourceImpactModifier:
+          type: number
+          format: double
+          description: Additive impact on resource availability (rain=+0.05, storm=-0.15, drought=-0.3)
+
+    WeatherDistributionSeason:
+      type: object
+      additionalProperties: false
+      description: Seasonal weather distribution containing weighted patterns for a season
+      required:
+      - seasonCode
+      - patterns
+      properties:
+        seasonCode:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: References a Worldstate calendar season code
+        patterns:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeatherPattern'
+          description: Weighted weather patterns for this season
+
+    AtmosphericBaselineSeason:
+      type: object
+      additionalProperties: false
+      description: Seasonal atmospheric baseline values for humidity, wind, and wind direction
+      required:
+      - seasonCode
+      - baseHumidity
+      - baseWindSpeed
+      - windDirectionBias
+      - windVariance
+      properties:
+        seasonCode:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: References a Worldstate calendar season code
+        baseHumidity:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Baseline humidity (0.0-1.0)
+        baseWindSpeed:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Normalized baseline wind speed (0.0-1.0)
+        windDirectionBias:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 360
+          description: Prevailing wind direction in degrees
+        windVariance:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 360
+          description: Degrees of random deviation from prevailing wind direction
+
+    ResourceAvailabilitySeason:
+      type: object
+      additionalProperties: false
+      description: Seasonal resource availability values for ecological abundance
+      required:
+      - seasonCode
+      - abundanceLevel
+      - forageModifier
+      - huntModifier
+      properties:
+        seasonCode:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: References a Worldstate calendar season code
+        abundanceLevel:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Base ecological abundance (0.0 = barren, 1.0 = abundant)
+        forageModifier:
+          type: number
+          format: double
+          minimum: 0
+          description: Multiplier for forageable resource generation
+        huntModifier:
+          type: number
+          format: double
+          minimum: 0
+          description: Multiplier for wildlife activity
+
+    # =========================================================================
+    # Request Models — Conditions
+    # =========================================================================
+
+    GetConditionsRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get environmental conditions at a specific location
+      required:
+      - realmId
+      - locationId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm containing the location
+        locationId:
+          type: string
+          format: uuid
+          description: Location to get conditions for
+
+    GetConditionsByCodeRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get conditions by realm and location code names
+      required:
+      - realmCode
+      - locationCode
+      properties:
+        realmCode:
+          type: string
+          minLength: 1
+          description: Realm code for location resolution
+        locationCode:
+          type: string
+          minLength: 1
+          description: Location code for location resolution
+
+    BatchGetConditionsRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get conditions for multiple locations
+      required:
+      - locations
+      properties:
+        locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchGetConditionsEntry'
+          description: Locations to query conditions for
+
+    BatchGetConditionsEntry:
+      type: object
+      additionalProperties: false
+      description: A single location entry in a batch conditions request
+      required:
+      - realmId
+      - locationId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm containing the location
+        locationId:
+          type: string
+          format: uuid
+          description: Location to get conditions for
+
+    GetTemperatureRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get temperature data at a specific location
+      required:
+      - realmId
+      - locationId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm containing the location
+        locationId:
+          type: string
+          format: uuid
+          description: Location to get temperature for
+
+    # =========================================================================
+    # Request Models — Climate Templates
+    # =========================================================================
+
+    SeedClimateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to create a climate template for a biome within a game service
+      required:
+      - gameServiceId
+      - biomeCode
+      - displayName
+      - temperatureCurves
+      - weatherDistributions
+      - atmosphericBaselines
+      - resourceAvailability
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this template belongs to
+        biomeCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Biome type code (e.g., temperate_forest, alpine, desert)
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Human-readable name for the climate template
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+          description: Detailed description of this climate template
+        temperatureCurves:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemperatureCurve'
+          description: Temperature curves per season
+        weatherDistributions:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeatherDistributionSeason'
+          description: Weather pattern distributions per season
+        atmosphericBaselines:
+          type: array
+          items:
+            $ref: '#/components/schemas/AtmosphericBaselineSeason'
+          description: Atmospheric baselines per season
+        resourceAvailability:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceAvailabilitySeason'
+          description: Resource availability values per season
+        altitudeTemperatureRate:
+          type: number
+          format: double
+          nullable: true
+          description: Temperature change per altitude unit (default -0.006, lapse rate)
+        depthTemperatureRate:
+          type: number
+          format: double
+          nullable: true
+          description: Temperature change per depth unit (default +0.003, geothermal)
+        heatThreshold:
+          type: number
+          format: double
+          nullable: true
+          description: Temperature above which is_hot is true (default 30.0, varies by biome)
+
+    GetClimateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get a climate template by ID or by game service and biome code
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Climate template ID (provide this OR gameServiceId+biomeCode)
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Game service ID (used with biomeCode)
+        biomeCode:
+          type: string
+          nullable: true
+          maxLength: 128
+          description: Biome code (used with gameServiceId)
+
+    ListClimatesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list climate templates for a game service
+      required:
+      - gameServiceId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service to list templates for
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated templates
+        page:
+          type: integer
+          default: 1
+          minimum: 1
+          description: Page number for pagination
+        pageSize:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+          description: Number of items per page
+
+    UpdateClimateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to partially update a climate template
+      required:
+      - templateId
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Climate template to update
+        displayName:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 256
+          description: Updated display name
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+          description: Updated description
+        temperatureCurves:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/TemperatureCurve'
+          description: Updated temperature curves (replaces all curves)
+        weatherDistributions:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/WeatherDistributionSeason'
+          description: Updated weather distributions (replaces all distributions)
+        atmosphericBaselines:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/AtmosphericBaselineSeason'
+          description: Updated atmospheric baselines (replaces all baselines)
+        resourceAvailability:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ResourceAvailabilitySeason'
+          description: Updated resource availability (replaces all entries)
+        altitudeTemperatureRate:
+          type: number
+          format: double
+          nullable: true
+          description: Updated altitude temperature rate
+        depthTemperatureRate:
+          type: number
+          format: double
+          nullable: true
+          description: Updated depth temperature rate
+        heatThreshold:
+          type: number
+          format: double
+          nullable: true
+          description: Updated heat threshold
+
+    DeprecateClimateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to deprecate a climate template
+      required:
+      - templateId
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Climate template to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Optional reason for deprecation
+
+    UndeprecateClimateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to remove deprecation from a climate template
+      required:
+      - templateId
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Climate template to undeprecate
+
+    DeleteClimateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to delete a deprecated climate template
+      required:
+      - templateId
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Climate template to delete (must be deprecated)
+
+    BulkSeedClimatesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to bulk seed climate templates for a game service
+      required:
+      - gameServiceId
+      - templates
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service to seed templates for
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkSeedClimateEntry'
+          description: Climate templates to seed
+        updateExisting:
+          type: boolean
+          default: false
+          description: Whether to update templates that already exist for a biome code
+
+    BulkSeedClimateEntry:
+      type: object
+      additionalProperties: false
+      description: A single climate template entry in a bulk seed request
+      required:
+      - biomeCode
+      - displayName
+      - temperatureCurves
+      - weatherDistributions
+      - atmosphericBaselines
+      - resourceAvailability
+      properties:
+        biomeCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Biome type code
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Human-readable name
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+          description: Detailed description
+        temperatureCurves:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemperatureCurve'
+          description: Temperature curves per season
+        weatherDistributions:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeatherDistributionSeason'
+          description: Weather distributions per season
+        atmosphericBaselines:
+          type: array
+          items:
+            $ref: '#/components/schemas/AtmosphericBaselineSeason'
+          description: Atmospheric baselines per season
+        resourceAvailability:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceAvailabilitySeason'
+          description: Resource availability per season
+        altitudeTemperatureRate:
+          type: number
+          format: double
+          nullable: true
+          description: Temperature change per altitude unit
+        depthTemperatureRate:
+          type: number
+          format: double
+          nullable: true
+          description: Temperature change per depth unit
+        heatThreshold:
+          type: number
+          format: double
+          nullable: true
+          description: Heat threshold temperature
+
+    # =========================================================================
+    # Request Models — Weather Events
+    # =========================================================================
+
+    CreateWeatherEventRequest:
+      type: object
+      additionalProperties: false
+      description: Request to create a bounded weather event override
+      required:
+      - realmId
+      - scopeType
+      - scopeId
+      - eventCode
+      - displayName
+      - severity
+      - sourceType
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this event belongs to
+        scopeType:
+          $ref: '#/components/schemas/WeatherEventScopeType'
+          description: Geographic scope of the event
+        scopeId:
+          type: string
+          format: uuid
+          description: ID of the scope target (realm ID, location ID)
+        eventCode:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Weather event code (e.g., thunderstorm, drought, blizzard)
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Human-readable event name
+        severity:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Event intensity (0.0-1.0)
+        weatherCode:
+          type: string
+          nullable: true
+          maxLength: 64
+          description: Override weather pattern (null = keep existing)
+        temperatureModifier:
+          type: number
+          format: double
+          nullable: true
+          description: Additive temperature change
+        temperatureOverride:
+          type: number
+          format: double
+          nullable: true
+          description: Hard temperature override (takes precedence over modifier)
+        visibilityMultiplier:
+          type: number
+          format: double
+          nullable: true
+          description: Override visibility multiplier
+        precipitationIntensity:
+          type: number
+          format: double
+          nullable: true
+          description: Override precipitation intensity
+        windSpeedMultiplier:
+          type: number
+          format: double
+          nullable: true
+          description: Multiply base wind speed
+        resourceAvailabilityMultiplier:
+          type: number
+          format: double
+          nullable: true
+          description: Multiply seasonal resource availability
+        startGameTime:
+          type: integer
+          format: int64
+          nullable: true
+          description: Game-seconds-since-epoch when event begins (null = starts immediately)
+        endGameTime:
+          type: integer
+          format: int64
+          nullable: true
+          description: Game-seconds-since-epoch when event ends (null = indefinite)
+        sourceType:
+          $ref: '#/components/schemas/WeatherEventSourceType'
+          description: Origin type of this event
+        sourceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Source entity ID (actor ID, schedule ID, etc.)
+
+    GetWeatherEventRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get a weather event by ID
+      required:
+      - eventId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Weather event to retrieve
+
+    ListWeatherEventsRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list weather events for a scope
+      required:
+      - scopeType
+      - scopeId
+      properties:
+        scopeType:
+          $ref: '#/components/schemas/WeatherEventScopeType'
+          description: Scope type to filter by
+        scopeId:
+          type: string
+          format: uuid
+          description: Scope target ID
+        activeOnly:
+          type: boolean
+          default: true
+          description: Whether to return only active events
+        eventCode:
+          type: string
+          nullable: true
+          maxLength: 64
+          description: Optional filter by event code
+        sourceType:
+          $ref: '#/components/schemas/WeatherEventSourceType'
+          nullable: true
+          description: Optional filter by source type
+        page:
+          type: integer
+          default: 1
+          minimum: 1
+          description: Page number
+        pageSize:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+          description: Items per page
+
+    CancelWeatherEventRequest:
+      type: object
+      additionalProperties: false
+      description: Request to cancel an active weather event
+      required:
+      - eventId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Weather event to cancel
+
+    ExtendWeatherEventRequest:
+      type: object
+      additionalProperties: false
+      description: Request to extend the duration of an active weather event
+      required:
+      - eventId
+      - newEndGameTime
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Weather event to extend
+        newEndGameTime:
+          type: integer
+          format: int64
+          description: New end time in game-seconds-since-epoch (must be later than current)
+
+    CancelWeatherEventsBySourceRequest:
+      type: object
+      additionalProperties: false
+      description: Request to cancel all active weather events from a specific source
+      required:
+      - sourceType
+      - sourceId
+      properties:
+        sourceType:
+          $ref: '#/components/schemas/WeatherEventSourceType'
+          description: Source type to cancel events for
+        sourceId:
+          type: string
+          format: uuid
+          description: Source entity ID
+
+    # =========================================================================
+    # Request Models — Weather Summary
+    # =========================================================================
+
+    GetRealmWeatherSummaryRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get an aggregated weather summary for a realm
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm to summarize weather for
+
+    GetWeatherByRegionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get weather conditions for a location subtree
+      required:
+      - locationId
+      - realmId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Root location of the region
+        realmId:
+          type: string
+          format: uuid
+          description: Realm containing the location
+
+    # =========================================================================
+    # Request Models — Resources
+    # =========================================================================
+
+    GetResourceAvailabilityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get resource availability at a location
+      required:
+      - realmId
+      - locationId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm containing the location
+        locationId:
+          type: string
+          format: uuid
+          description: Location to get resource availability for
+
+    GetRealmResourceSummaryRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get an aggregated resource summary for a realm
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm to summarize resources for
+
+    # =========================================================================
+    # Request Models — Climate Bindings
+    # =========================================================================
+
+    CreateClimateBindingRequest:
+      type: object
+      additionalProperties: false
+      description: Request to bind a location to a climate template via biome code
+      required:
+      - locationId
+      - gameServiceId
+      - biomeCode
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Location to bind
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service for template resolution
+        biomeCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Biome code matching an existing climate template
+        altitude:
+          type: number
+          format: double
+          nullable: true
+          description: Location altitude for temperature modifier (default 0)
+        depth:
+          type: number
+          format: double
+          nullable: true
+          description: Underground depth for temperature modifier (default 0)
+        isIndoor:
+          type: boolean
+          default: false
+          description: Whether this is an enclosed location that skips weather computation
+
+    GetClimateBindingRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get the climate binding for a location
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Location to get binding for
+
+    UpdateClimateBindingRequest:
+      type: object
+      additionalProperties: false
+      description: Request to update a location-climate binding
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Location whose binding to update
+        biomeCode:
+          type: string
+          nullable: true
+          maxLength: 128
+          description: Updated biome code
+        altitude:
+          type: number
+          format: double
+          nullable: true
+          description: Updated altitude
+        depth:
+          type: number
+          format: double
+          nullable: true
+          description: Updated depth
+        isIndoor:
+          type: boolean
+          nullable: true
+          description: Updated indoor flag
+
+    DeleteClimateBindingRequest:
+      type: object
+      additionalProperties: false
+      description: Request to delete a location-climate binding
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Location whose binding to delete
+
+    BulkSeedBindingsRequest:
+      type: object
+      additionalProperties: false
+      description: Request to bulk seed location-climate bindings
+      required:
+      - bindings
+      properties:
+        bindings:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkSeedBindingEntry'
+          description: Bindings to seed
+        updateExisting:
+          type: boolean
+          default: false
+          description: Whether to update bindings that already exist
+
+    BulkSeedBindingEntry:
+      type: object
+      additionalProperties: false
+      description: A single binding entry in a bulk seed request
+      required:
+      - locationId
+      - gameServiceId
+      - biomeCode
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Location to bind
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service for template resolution
+        biomeCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Biome code
+        altitude:
+          type: number
+          format: double
+          nullable: true
+          description: Location altitude
+        depth:
+          type: number
+          format: double
+          nullable: true
+          description: Underground depth
+        isIndoor:
+          type: boolean
+          nullable: true
+          description: Whether this is an enclosed location
+
+    # =========================================================================
+    # Request Models — Realm Config
+    # =========================================================================
+
+    SetRealmConfigRequest:
+      type: object
+      additionalProperties: false
+      description: Request to set per-realm default biome configuration
+      required:
+      - realmId
+      - gameServiceId
+      - defaultBiomeCode
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm to configure
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service for biome code validation
+        defaultBiomeCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Default biome code for locations without explicit bindings
+
+    GetRealmConfigRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get per-realm environment configuration
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm to get config for
+
+    # =========================================================================
+    # Request Models — Cleanup
+    # =========================================================================
+
+    CleanupByRealmRequest:
+      type: object
+      additionalProperties: false
+      description: Request to cleanup environment data for a deleted realm (lib-resource callback)
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Deleted realm ID
+
+    CleanupByGameServiceRequest:
+      type: object
+      additionalProperties: false
+      description: Request to cleanup environment data for a deleted game service (lib-resource callback)
+      required:
+      - gameServiceId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Deleted game service ID
+
+    CleanupByLocationRequest:
+      type: object
+      additionalProperties: false
+      description: Request to cleanup environment data for a deleted location (lib-resource callback)
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Deleted location ID
+
+    # =========================================================================
+    # Response Models
+    # =========================================================================
+
+    ConditionSnapshotResponse:
+      type: object
+      additionalProperties: false
+      description: Full environmental condition snapshot for a location at a point in time
+      required:
+      - locationId
+      - realmId
+      - biomeCode
+      - weatherCode
+      - temperature
+      - feelsLike
+      - isFreezing
+      - isHot
+      - precipitationType
+      - precipitationIntensity
+      - windSpeed
+      - windDirection
+      - humidity
+      - visibility
+      - cloudCover
+      - resourceAvailability
+      - isDrought
+      - isAbundant
+      - hasActiveEvent
+      - computedAt
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Location this snapshot is for
+        realmId:
+          type: string
+          format: uuid
+          description: Realm containing the location
+        biomeCode:
+          type: string
+          description: Resolved biome code for this location
+        weatherCode:
+          type: string
+          description: Current weather pattern code
+        temperature:
+          type: number
+          format: double
+          description: Computed temperature in abstract units
+        feelsLike:
+          type: number
+          format: double
+          description: Wind-chill adjusted temperature
+        isFreezing:
+          type: boolean
+          description: True when temperature is below zero
+        isHot:
+          type: boolean
+          description: True when temperature exceeds the biome heat threshold
+        precipitationType:
+          $ref: '#/components/schemas/PrecipitationType'
+          description: Current precipitation form
+        precipitationIntensity:
+          type: number
+          format: double
+          description: Current precipitation intensity (0.0-1.0)
+        windSpeed:
+          type: number
+          format: double
+          description: Normalized wind speed (0.0-1.0)
+        windDirection:
+          type: number
+          format: double
+          description: Wind direction in degrees (0.0-360.0)
+        humidity:
+          type: number
+          format: double
+          description: Humidity level (0.0-1.0)
+        visibility:
+          type: number
+          format: double
+          description: Visibility level (0.0 = zero, 1.0 = perfect)
+        cloudCover:
+          type: number
+          format: double
+          description: Cloud coverage (0.0-1.0)
+        resourceAvailability:
+          type: number
+          format: double
+          description: Composite ecological resource abundance (0.0-1.0)
+        isDrought:
+          type: boolean
+          description: True when resource availability is below the drought threshold
+        isAbundant:
+          type: boolean
+          description: True when resource availability is above the abundance threshold
+        hasActiveEvent:
+          type: boolean
+          description: Whether any weather event affects this location
+        activeEventCode:
+          type: string
+          nullable: true
+          description: Event code of the highest-severity active event (null if none)
+        activeEventSeverity:
+          type: number
+          format: double
+          nullable: true
+          description: Severity of the active event (null if none)
+        computedAt:
+          type: string
+          format: date-time
+          description: When this snapshot was computed
+
+    BatchConditionSnapshotResponse:
+      type: object
+      additionalProperties: false
+      description: Batch condition snapshots for multiple locations
+      required:
+      - snapshots
+      properties:
+        snapshots:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConditionSnapshotResponse'
+          description: Condition snapshots per location
+
+    TemperatureResponse:
+      type: object
+      additionalProperties: false
+      description: Temperature data for a location
+      required:
+      - locationId
+      - realmId
+      - temperature
+      - feelsLike
+      - isFreezing
+      - isHot
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Location this temperature is for
+        realmId:
+          type: string
+          format: uuid
+          description: Realm containing the location
+        temperature:
+          type: number
+          format: double
+          description: Computed temperature in abstract units
+        feelsLike:
+          type: number
+          format: double
+          description: Wind-chill adjusted temperature
+        isFreezing:
+          type: boolean
+          description: True when temperature is below zero
+        isHot:
+          type: boolean
+          description: True when temperature exceeds the biome heat threshold
+
+    ClimateTemplateResponse:
+      type: object
+      additionalProperties: false
+      description: Full climate template data
+      required:
+      - templateId
+      - gameServiceId
+      - biomeCode
+      - displayName
+      - temperatureCurves
+      - weatherDistributions
+      - atmosphericBaselines
+      - resourceAvailability
+      - altitudeTemperatureRate
+      - depthTemperatureRate
+      - heatThreshold
+      - isDeprecated
+      - createdAt
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Unique climate template identifier
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this template belongs to
+        biomeCode:
+          type: string
+          description: Biome type code
+        displayName:
+          type: string
+          description: Human-readable name
+        description:
+          type: string
+          nullable: true
+          description: Detailed description
+        temperatureCurves:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemperatureCurve'
+          description: Temperature curves per season
+        weatherDistributions:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeatherDistributionSeason'
+          description: Weather distributions per season
+        atmosphericBaselines:
+          type: array
+          items:
+            $ref: '#/components/schemas/AtmosphericBaselineSeason'
+          description: Atmospheric baselines per season
+        resourceAvailability:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceAvailabilitySeason'
+          description: Resource availability per season
+        altitudeTemperatureRate:
+          type: number
+          format: double
+          description: Temperature change per altitude unit
+        depthTemperatureRate:
+          type: number
+          format: double
+          description: Temperature change per depth unit
+        heatThreshold:
+          type: number
+          format: double
+          description: Temperature above which is_hot is true
+        isDeprecated:
+          type: boolean
+          description: Whether this template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the template was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Reason for deprecation
+        createdAt:
+          type: string
+          format: date-time
+          description: When the template was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the template was last updated
+
+    PagedClimateTemplateResponse:
+      type: object
+      additionalProperties: false
+      description: Paged list of climate templates
+      required:
+      - items
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClimateTemplateResponse'
+          description: Climate templates on this page
+        totalCount:
+          type: integer
+          description: Total number of matching templates
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Items per page
+
+    BulkSeedClimatesResponse:
+      type: object
+      additionalProperties: false
+      description: Result of a bulk climate template seed operation
+      required:
+      - created
+      - updated
+      - skipped
+      - failed
+      properties:
+        created:
+          type: integer
+          description: Number of templates created
+        updated:
+          type: integer
+          description: Number of templates updated
+        skipped:
+          type: integer
+          description: Number of templates skipped (already exist, updateExisting=false)
+        failed:
+          type: integer
+          description: Number of templates that failed to process
+
+    CreateWeatherEventResponse:
+      type: object
+      additionalProperties: false
+      description: Response from creating a weather event
+      required:
+      - eventId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: ID of the created weather event
+
+    WeatherEventResponse:
+      type: object
+      additionalProperties: false
+      description: Full weather event data
+      required:
+      - eventId
+      - realmId
+      - scopeType
+      - scopeId
+      - eventCode
+      - displayName
+      - severity
+      - sourceType
+      - isActive
+      - createdAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique weather event identifier
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this event belongs to
+        scopeType:
+          $ref: '#/components/schemas/WeatherEventScopeType'
+          description: Geographic scope of the event
+        scopeId:
+          type: string
+          format: uuid
+          description: Scope target ID
+        eventCode:
+          type: string
+          description: Weather event code
+        displayName:
+          type: string
+          description: Human-readable event name
+        severity:
+          type: number
+          format: double
+          description: Event intensity (0.0-1.0)
+        weatherCode:
+          type: string
+          nullable: true
+          description: Override weather pattern (null = no override)
+        temperatureModifier:
+          type: number
+          format: double
+          nullable: true
+          description: Additive temperature change
+        temperatureOverride:
+          type: number
+          format: double
+          nullable: true
+          description: Hard temperature override
+        visibilityMultiplier:
+          type: number
+          format: double
+          nullable: true
+          description: Override visibility multiplier
+        precipitationIntensity:
+          type: number
+          format: double
+          nullable: true
+          description: Override precipitation intensity
+        windSpeedMultiplier:
+          type: number
+          format: double
+          nullable: true
+          description: Wind speed multiplier
+        resourceAvailabilityMultiplier:
+          type: number
+          format: double
+          nullable: true
+          description: Resource availability multiplier
+        startGameTime:
+          type: integer
+          format: int64
+          nullable: true
+          description: Game-seconds-since-epoch when event begins
+        endGameTime:
+          type: integer
+          format: int64
+          nullable: true
+          description: Game-seconds-since-epoch when event ends
+        sourceType:
+          $ref: '#/components/schemas/WeatherEventSourceType'
+          description: Origin type of this event
+        sourceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Source entity ID
+        isActive:
+          type: boolean
+          description: Whether the event is currently active
+        createdAt:
+          type: string
+          format: date-time
+          description: When the event was created
+
+    PagedWeatherEventResponse:
+      type: object
+      additionalProperties: false
+      description: Paged list of weather events
+      required:
+      - items
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeatherEventResponse'
+          description: Weather events on this page
+        totalCount:
+          type: integer
+          description: Total number of matching events
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Items per page
+
+    CancelWeatherEventsBySourceResponse:
+      type: object
+      additionalProperties: false
+      description: Result of cancelling weather events by source
+      required:
+      - cancelledCount
+      properties:
+        cancelledCount:
+          type: integer
+          description: Number of events cancelled
+
+    WeatherCodeSummary:
+      type: object
+      additionalProperties: false
+      description: Weather code occurrence count in a summary
+      required:
+      - weatherCode
+      - locationCount
+      properties:
+        weatherCode:
+          type: string
+          description: Weather pattern code
+        locationCount:
+          type: integer
+          description: Number of locations with this weather
+
+    RealmWeatherSummaryResponse:
+      type: object
+      additionalProperties: false
+      description: Aggregated weather summary for a realm
+      required:
+      - realmId
+      - locationCount
+      - weatherSummaries
+      - averageTemperature
+      - minTemperature
+      - maxTemperature
+      - activeWeatherEventCount
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this summary is for
+        locationCount:
+          type: integer
+          description: Total locations in the realm
+        weatherSummaries:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeatherCodeSummary'
+          description: Location count per weather code
+        averageTemperature:
+          type: number
+          format: double
+          description: Average temperature across all locations
+        minTemperature:
+          type: number
+          format: double
+          description: Lowest temperature in the realm
+        maxTemperature:
+          type: number
+          format: double
+          description: Highest temperature in the realm
+        activeWeatherEventCount:
+          type: integer
+          description: Number of active weather events in the realm
+
+    WeatherRegionGroup:
+      type: object
+      additionalProperties: false
+      description: A group of locations sharing the same weather code
+      required:
+      - weatherCode
+      - locationIds
+      properties:
+        weatherCode:
+          type: string
+          description: Shared weather pattern code
+        locationIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Location IDs with this weather
+
+    WeatherByRegionResponse:
+      type: object
+      additionalProperties: false
+      description: Weather conditions for a location subtree grouped by weather code
+      required:
+      - locationId
+      - weatherGroups
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Root location of the region
+        weatherGroups:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeatherRegionGroup'
+          description: Locations grouped by weather code
+
+    ResourceAvailabilityResponse:
+      type: object
+      additionalProperties: false
+      description: Resource availability breakdown for a location
+      required:
+      - locationId
+      - realmId
+      - abundanceLevel
+      - baseSeasonalLevel
+      - weatherEventModifier
+      - netResult
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Location this availability is for
+        realmId:
+          type: string
+          format: uuid
+          description: Realm containing the location
+        abundanceLevel:
+          type: number
+          format: double
+          description: Raw computed abundance before clamping
+        baseSeasonalLevel:
+          type: number
+          format: double
+          description: Seasonal baseline abundance from climate template
+        weatherEventModifier:
+          type: number
+          format: double
+          description: Net modifier from active weather events
+        netResult:
+          type: number
+          format: double
+          description: Final clamped resource availability (0.0-1.0)
+
+    BiomeResourceSummary:
+      type: object
+      additionalProperties: false
+      description: Resource availability summary for a biome within a realm
+      required:
+      - biomeCode
+      - averageAvailability
+      - minAvailability
+      - maxAvailability
+      - locationCount
+      properties:
+        biomeCode:
+          type: string
+          description: Biome type code
+        averageAvailability:
+          type: number
+          format: double
+          description: Average resource availability across locations
+        minAvailability:
+          type: number
+          format: double
+          description: Minimum resource availability
+        maxAvailability:
+          type: number
+          format: double
+          description: Maximum resource availability
+        locationCount:
+          type: integer
+          description: Number of locations with this biome
+
+    RealmResourceSummaryResponse:
+      type: object
+      additionalProperties: false
+      description: Aggregated resource summary for a realm grouped by biome
+      required:
+      - realmId
+      - biomeSummaries
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this summary is for
+        biomeSummaries:
+          type: array
+          items:
+            $ref: '#/components/schemas/BiomeResourceSummary'
+          description: Resource summaries per biome
+
+    ClimateBindingResponse:
+      type: object
+      additionalProperties: false
+      description: Location-climate binding data
+      required:
+      - bindingId
+      - locationId
+      - realmId
+      - gameServiceId
+      - biomeCode
+      - climateTemplateId
+      - altitude
+      - depth
+      - isIndoor
+      - isInherited
+      - createdAt
+      properties:
+        bindingId:
+          type: string
+          format: uuid
+          description: Unique binding identifier
+        locationId:
+          type: string
+          format: uuid
+          description: Bound location
+        realmId:
+          type: string
+          format: uuid
+          description: Realm containing the location
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service for template resolution
+        biomeCode:
+          type: string
+          description: Biome type code
+        climateTemplateId:
+          type: string
+          format: uuid
+          description: Resolved climate template ID
+        altitude:
+          type: number
+          format: double
+          description: Location altitude for temperature modifier
+        depth:
+          type: number
+          format: double
+          description: Underground depth for temperature modifier
+        isIndoor:
+          type: boolean
+          description: Whether this is an enclosed location (skips weather)
+        isInherited:
+          type: boolean
+          description: Whether this binding was inherited from a parent location
+        createdAt:
+          type: string
+          format: date-time
+          description: When the binding was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the binding was last updated
+
+    BulkSeedBindingsResponse:
+      type: object
+      additionalProperties: false
+      description: Result of a bulk binding seed operation
+      required:
+      - created
+      - updated
+      - skipped
+      - failed
+      properties:
+        created:
+          type: integer
+          description: Number of bindings created
+        updated:
+          type: integer
+          description: Number of bindings updated
+        skipped:
+          type: integer
+          description: Number of bindings skipped
+        failed:
+          type: integer
+          description: Number of bindings that failed
+
+    RealmEnvironmentConfigResponse:
+      type: object
+      additionalProperties: false
+      description: Per-realm environment configuration
+      required:
+      - realmId
+      - gameServiceId
+      - defaultBiomeCode
+      - createdAt
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this config is for
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service for biome resolution
+        defaultBiomeCode:
+          type: string
+          description: Default biome code for unbound locations
+        createdAt:
+          type: string
+          format: date-time
+          description: When the config was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the config was last updated

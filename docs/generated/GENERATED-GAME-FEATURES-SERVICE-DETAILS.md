@@ -91,7 +91,7 @@ Emotional synthesis and aspirational drive service (L4 GameFeatures) for NPC inn
 
 ## Divine {#divine}
 
-**Version**: 1.0.0 | **Schema**: `schemas/divine-api.yaml` | **Endpoints**: 22 | **Deep Dive**: [docs/plugins/DIVINE.md](../plugins/DIVINE.md)
+**Version**: 1.0.0 | **Schema**: `schemas/divine-api.yaml` | **Endpoints**: 22 | **Deep Dive**: [docs/plugins/DIVINE.md](../plugins/DIVINE.md) | **Map**: [docs/maps/DIVINE.md](../maps/DIVINE.md)
 
 Pantheon management service (L4 GameFeatures) for deity entities, divinity economy, and blessing orchestration. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item) that composes existing Bannou primitives to deliver divine game mechanics: god identity is owned here, behavior runs via Actor/Puppetmaster, domain power via Seed, divinity resource via Currency, blessings via Collection/Status, and follower bonds via Relationship. Gods influence characters indirectly through the character's own Actor -- a god's Actor monitors event streams and makes decisions, but the character's Actor receives the consequences. Blessings are entity-agnostic (characters, accounts, deities, or any entity type can receive them). All endpoints are currently stubbed (return `NotImplemented`); see the implementation plan at `docs/plans/DIVINE.md` for the full specification.
 
@@ -103,15 +103,15 @@ Dungeon lifecycle orchestration service (L4 GameFeatures) for living dungeon ent
 
 ## Environment {#environment}
 
-**Deep Dive**: [docs/plugins/ENVIRONMENT.md](../plugins/ENVIRONMENT.md) | **Map**: [docs/maps/ENVIRONMENT.md](../maps/ENVIRONMENT.md)
+**Version**: 1.0.0 | **Schema**: `schemas/environment-api.yaml` | **Endpoints**: 32 | **Deep Dive**: [docs/plugins/ENVIRONMENT.md](../plugins/ENVIRONMENT.md) | **Map**: [docs/maps/ENVIRONMENT.md](../maps/ENVIRONMENT.md)
 
 Environmental state service (L4 GameFeatures) providing weather simulation, temperature modeling, atmospheric conditions, and ecological resource availability for game worlds. Consumes temporal data from Worldstate (L2) -- season, time of day, calendar boundaries -- and translates it into environmental conditions that affect NPC behavior, production, trade, loot generation, and player experience. The missing ecological layer between Worldstate's clock and the behavioral systems that already reference environmental data that doesn't exist. Game-agnostic: biome types, weather distributions, temperature curves, and resource availability are configured through climate template seeding at deployment time -- a space game could model atmospheric composition, a survival game could model wind chill, the service stores float values against string-coded condition axes. Internal-only, never internet-facing.
 
 ## Escrow {#escrow}
 
-**Version**: 1.0.0 | **Schema**: `schemas/escrow-api.yaml` | **Endpoints**: 22 | **Deep Dive**: [docs/plugins/ESCROW.md](../plugins/ESCROW.md)
+**Version**: 1.0.0 | **Schema**: `schemas/escrow-api.yaml` | **Endpoints**: 23 | **Deep Dive**: [docs/plugins/ESCROW.md](../plugins/ESCROW.md)
 
-Full-custody orchestration layer (L4 GameFeatures) for multi-party asset exchanges. Manages the complete escrow lifecycle from creation through deposit collection, consent gathering, condition verification, and final release or refund. Supports four escrow types (two-party, multi-party, conditional, auction) with three trust modes and a 13-state finite state machine. Handles currency, items, contracts, and extensible custom asset types -- calling lib-currency and lib-inventory directly for asset movements. Integrates with lib-contract for conditional releases where contract fulfillment triggers escrow completion. See Release Modes section below for configurable confirmation flows.
+Full-custody orchestration layer (L4 GameFeatures) for multi-party asset exchanges. Manages the complete escrow lifecycle from creation through deposit collection, consent gathering, condition verification, and final release or refund. Supports four escrow types (two-party, multi-party, conditional, auction) with three trust modes and a 13-state finite state machine. Handles currency, items, contracts, and extensible custom asset types — designed to call lib-currency and lib-inventory directly for asset movements (not yet implemented; see stub #5). Integrates with lib-contract for conditional releases where contract fulfillment triggers escrow completion. See Release Modes section below for configurable confirmation flows.
 
 ## Ethology {#ethology}
 
@@ -121,7 +121,7 @@ Species-level behavioral archetype registry and nature resolution service (L4 Ga
 
 ## Faction {#faction}
 
-**Version**: 1.0.0 | **Schema**: `schemas/faction-api.yaml` | **Endpoints**: 37 | **Deep Dive**: [docs/plugins/FACTION.md](../plugins/FACTION.md)
+**Version**: 1.0.0 | **Schema**: `schemas/faction-api.yaml` | **Endpoints**: 37 | **Deep Dive**: [docs/plugins/FACTION.md](../plugins/FACTION.md) | **Map**: [docs/maps/FACTION.md](../maps/FACTION.md)
 
 The Faction service (L4 GameFeatures) models factions as seed-based living entities whose capabilities emerge from growth, not static assignment. As a faction's seed grows through phases (nascent, established, influential, dominant), capabilities unlock: norm definition, enforcement tiers, territory claiming, and trade regulation. Its primary consumer is lib-obligation, which queries faction norms to produce GOAP action cost modifiers for NPC cognition -- resolving a hierarchy of guild, location, and realm baseline norms into a merged norm set. Supports guild memberships with role hierarchy, parent/child organizational structure, territory claims, and inter-faction political connections modeled as seed bonds via lib-seed. Internal-only, never internet-facing.
 
@@ -266,7 +266,7 @@ Time-based automated production service (L4 GameFeatures) for continuous backgro
 ## Summary
 
 - **Services in layer**: 42
-- **Endpoints in layer**: 418
+- **Endpoints in layer**: 451
 
 ---
 

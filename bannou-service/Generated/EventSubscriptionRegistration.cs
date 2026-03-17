@@ -95,7 +95,18 @@ public static class EventSubscriptionRegistration
         // From divine-service-events.yaml
         EventSubscriptionRegistry.Register<AnalyticsScoreUpdatedEvent>("analytics.score.updated");
 
+        // From environment-service-events.yaml
+        EventSubscriptionRegistry.Register<WorldstatePeriodChangedEvent>("worldstate.period-changed");
+        EventSubscriptionRegistry.Register<WorldstateSeasonChangedEvent>("worldstate.season-changed");
+        EventSubscriptionRegistry.Register<WorldstateDayChangedEvent>("worldstate.day-changed");
+        EventSubscriptionRegistry.Register<LocationCreatedEvent>("location.created");
+        EventSubscriptionRegistry.Register<LocationUpdatedEvent>("location.updated");
+        EventSubscriptionRegistry.Register<ClimateTemplateUpdatedEvent>("environment.climate-template.updated");
+        EventSubscriptionRegistry.Register<ClimateTemplateDeletedEvent>("environment.climate-template.deleted");
+        EventSubscriptionRegistry.Register<EnvironmentConditionsChangedEvent>("environment.conditions.changed");
+
         // From escrow-service-events.yaml
+        EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");
         EventSubscriptionRegistry.Register<ContractFulfilledEvent>("contract.fulfilled");
         EventSubscriptionRegistry.Register<ContractTerminatedEvent>("contract.terminated");
 
@@ -111,6 +122,7 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<SeedBondFormedEvent>("seed.bond.formed");
         EventSubscriptionRegistry.Register<SeedActivatedEvent>("seed.activated");
         EventSubscriptionRegistry.Register<GameSessionDeletedEvent>("game-session.deleted");
+        EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");
         EventSubscriptionRegistry.Register<LocationEntityArrivedEvent>("location.entity-arrived");
         EventSubscriptionRegistry.Register<LocationEntityDepartedEvent>("location.entity-departed");
 

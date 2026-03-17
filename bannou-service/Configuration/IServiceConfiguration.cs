@@ -562,7 +562,7 @@ public interface IServiceConfiguration
         IConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
             .AddJsonFile("Config.json", true)
             .AddInMemoryCollection(normalizedEnvVars)
-            .AddCommandLine(args ?? Environment.GetCommandLineArgs(), CreateAllSwitchMappings());
+            .AddCommandLine(args ?? System.Environment.GetCommandLineArgs(), CreateAllSwitchMappings());
 
         return configurationBuilder.Build();
     }
@@ -627,7 +627,7 @@ public interface IServiceConfiguration
         IConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
             .AddJsonFile("Config.json", true)
             .AddInMemoryCollection(normalizedEnvVars)
-            .AddCommandLine(args ?? Environment.GetCommandLineArgs(), CreateSwitchMappings(configurationType));
+            .AddCommandLine(args ?? System.Environment.GetCommandLineArgs(), CreateSwitchMappings(configurationType));
 
         return configurationBuilder.Build()
             .Get(configurationType, (options) => options.BindNonPublicProperties = true) as IServiceConfiguration;
@@ -741,7 +741,7 @@ public interface IServiceConfiguration
     {
         var result = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
+        foreach (System.Collections.DictionaryEntry entry in System.Environment.GetEnvironmentVariables())
         {
             var key = entry.Key?.ToString();
             if (key == null)

@@ -1,0 +1,374 @@
+openapi: 3.0.4
+info:
+  title: Environment Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for environment service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: environment-service-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    ClimateTemplateCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to environment.climate-template.created when a climatetemplate is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateId
+      - gameServiceId
+      - biomeCode
+      - displayName
+      - temperatureCurves
+      - weatherDistributions
+      - atmosphericBaselines
+      - resourceAvailability
+      - altitudeTemperatureRate
+      - depthTemperatureRate
+      - heatThreshold
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: environment.climate-template.created
+          description: 'Event type identifier: environment.climate-template.created'
+        templateId: &id001
+          type: string
+          format: uuid
+          description: Unique climate template identifier
+        gameServiceId: &id002
+          type: string
+          format: uuid
+          description: Game service this template belongs to
+        biomeCode: &id003
+          type: string
+          description: Biome type code (e.g. temperate_forest alpine desert)
+        displayName: &id004
+          type: string
+          description: Human-readable name for the climate template
+        description: &id005
+          type: string
+          description: Optional detailed description of this climate template
+        temperatureCurves: &id006
+          type: array
+          items:
+            $ref: '#/components/schemas/TemperatureCurve'
+          description: Temperature curves per season
+        weatherDistributions: &id007
+          type: array
+          items:
+            $ref: '#/components/schemas/WeatherDistributionSeason'
+          description: Weather pattern distributions per season
+        atmosphericBaselines: &id008
+          type: array
+          items:
+            $ref: '../environment-api.yaml#/components/schemas/AtmosphericBaselineSeason'
+          description: Atmospheric baselines per season
+        resourceAvailability: &id009
+          type: array
+          items:
+            $ref: '../environment-api.yaml#/components/schemas/ResourceAvailabilitySeason'
+          description: Resource availability values per season
+        altitudeTemperatureRate: &id010
+          type: number
+          format: double
+          description: Temperature change per altitude unit (negative for lapse rate)
+        depthTemperatureRate: &id011
+          type: number
+          format: double
+          description: Temperature change per depth unit (positive for geothermal)
+        heatThreshold: &id012
+          type: number
+          format: double
+          description: Temperature above which is_hot is true for this biome
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the climate template was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the climate template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this climate template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the climate template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+    ClimateTemplateUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to environment.climate-template.updated when a climatetemplate is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateId
+      - gameServiceId
+      - biomeCode
+      - displayName
+      - temperatureCurves
+      - weatherDistributions
+      - atmosphericBaselines
+      - resourceAvailability
+      - altitudeTemperatureRate
+      - depthTemperatureRate
+      - heatThreshold
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: environment.climate-template.updated
+          description: 'Event type identifier: environment.climate-template.updated'
+        templateId: *id001
+        gameServiceId: *id002
+        biomeCode: *id003
+        displayName: *id004
+        description: *id005
+        temperatureCurves: *id006
+        weatherDistributions: *id007
+        atmosphericBaselines: *id008
+        resourceAvailability: *id009
+        altitudeTemperatureRate: *id010
+        depthTemperatureRate: *id011
+        heatThreshold: *id012
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the climate template was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the climate template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this climate template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the climate template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    ClimateTemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to environment.climate-template.deleted when a climatetemplate is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateId
+      - gameServiceId
+      - biomeCode
+      - displayName
+      - temperatureCurves
+      - weatherDistributions
+      - atmosphericBaselines
+      - resourceAvailability
+      - altitudeTemperatureRate
+      - depthTemperatureRate
+      - heatThreshold
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: environment.climate-template.deleted
+          description: 'Event type identifier: environment.climate-template.deleted'
+        templateId: *id001
+        gameServiceId: *id002
+        biomeCode: *id003
+        displayName: *id004
+        description: *id005
+        temperatureCurves: *id006
+        weatherDistributions: *id007
+        atmosphericBaselines: *id008
+        resourceAvailability: *id009
+        altitudeTemperatureRate: *id010
+        depthTemperatureRate: *id011
+        heatThreshold: *id012
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the climate template was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the climate template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this climate template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the climate template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    PrecipitationType:
+      type: string
+      description: Form of precipitation. Temperature crossover rules apply (Rain below 0C becomes Snow, Snow above 5C 
+        becomes Rain, between 0-5C becomes Sleet)
+      enum: [None, Rain, Snow, Sleet, Hail]
+    TemperatureCurve:
+      type: object
+      additionalProperties: false
+      description: Seasonal temperature curve definition controlling base min/max temperature and intra-day variation
+      required:
+      - seasonCode
+      - baseMinTemp
+      - baseMaxTemp
+      properties:
+        seasonCode:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: References a Worldstate calendar season code (game-configurable)
+        baseMinTemp:
+          type: number
+          format: double
+          description: Minimum daily temperature in abstract units (typically Celsius-like)
+        baseMaxTemp:
+          type: number
+          format: double
+          description: Maximum daily temperature in abstract units
+        hourlyShape:
+          $ref: '#/components/schemas/TemperatureCurveShape'
+          nullable: true
+          description: Curve shape for intra-day variation (null defaults to Sinusoidal)
+        peakHour:
+          type: integer
+          default: 14
+          minimum: 0
+          maximum: 23
+          description: Game-hour of maximum temperature
+        troughHour:
+          type: integer
+          default: 4
+          minimum: 0
+          maximum: 23
+          description: Game-hour of minimum temperature
+
+    TemperatureCurveShape:
+      type: string
+      description: Shape of the intra-day temperature curve for hourly interpolation
+      enum: [Sinusoidal, Plateau, Spike]
+    WeatherDistributionSeason:
+      type: object
+      additionalProperties: false
+      description: Seasonal weather distribution containing weighted patterns for a season
+      required:
+      - seasonCode
+      - patterns
+      properties:
+        seasonCode:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: References a Worldstate calendar season code
+        patterns:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeatherPattern'
+          description: Weighted weather patterns for this season
+
+    WeatherPattern:
+      type: object
+      additionalProperties: false
+      description: Individual weather pattern definition within a seasonal distribution
+      required:
+      - weatherCode
+      - weight
+      - durationGameHours
+      - temperatureModifier
+      - visibilityMultiplier
+      - precipitationIntensity
+      - precipitationType
+      - cloudCover
+      - resourceImpactModifier
+      properties:
+        weatherCode:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Weather pattern code (e.g., clear, cloudy, storm, fog)
+        weight:
+          type: number
+          format: double
+          minimum: 0
+          description: Relative probability weight for this season
+        durationGameHours:
+          type: integer
+          minimum: 1
+          description: Typical duration in game-hours before re-rolling
+        temperatureModifier:
+          type: number
+          format: double
+          description: Additive temperature modifier while this weather is active
+        visibilityMultiplier:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Visibility multiplier (1.0 = normal, 0.1 = blizzard)
+        precipitationIntensity:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Precipitation intensity (0.0 = none, 1.0 = maximum)
+        precipitationType:
+          $ref: '#/components/schemas/PrecipitationType'
+          description: Form of precipitation for this weather pattern
+        cloudCover:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Cloud coverage (0.0 = clear sky, 1.0 = fully overcast)
+        resourceImpactModifier:
+          type: number
+          format: double
+          description: Additive impact on resource availability (rain=+0.05, storm=-0.15, drought=-0.3)
+
+x-inlined-types:
+- PrecipitationType
+- TemperatureCurve
+- TemperatureCurveShape
+- WeatherDistributionSeason
+- WeatherPattern

@@ -31,6 +31,7 @@ import { CompileProxy } from './proxies/CompileProxy.js';
 import { ContractProxy } from './proxies/ContractProxy.js';
 import { CurrencyProxy } from './proxies/CurrencyProxy.js';
 import { DocumentationProxy } from './proxies/DocumentationProxy.js';
+import { EnvironmentProxy } from './proxies/EnvironmentProxy.js';
 import { EscrowProxy } from './proxies/EscrowProxy.js';
 import { FactionProxy } from './proxies/FactionProxy.js';
 import { GardenerProxy } from './proxies/GardenerProxy.js';
@@ -85,6 +86,7 @@ interface ProxyCache {
   contract?: ContractProxy;
   currency?: CurrencyProxy;
   documentation?: DocumentationProxy;
+  environment?: EnvironmentProxy;
   escrow?: EscrowProxy;
   faction?: FactionProxy;
   gardener?: GardenerProxy;
@@ -342,6 +344,18 @@ Object.defineProperty(BannouClient.prototype, 'documentation', {
   get(this: BannouClientWithCache): DocumentationProxy {
     const cache = (this[PROXY_CACHE] ??= {});
     return (cache.documentation ??= new DocumentationProxy(this));
+  },
+  configurable: true,
+  enumerable: true,
+});
+
+/**
+ * Add lazy-initialized environment proxy property to BannouClient.
+ */
+Object.defineProperty(BannouClient.prototype, 'environment', {
+  get(this: BannouClientWithCache): EnvironmentProxy {
+    const cache = (this[PROXY_CACHE] ??= {});
+    return (cache.environment ??= new EnvironmentProxy(this));
   },
   configurable: true,
   enumerable: true,
@@ -774,6 +788,10 @@ declare module '../BannouClient.js' {
      * Typed proxy for Documentation API endpoints.
      */
     readonly documentation: DocumentationProxy;
+    /**
+     * Typed proxy for Environment API endpoints.
+     */
+    readonly environment: EnvironmentProxy;
     /**
      * Typed proxy for Escrow API endpoints.
      */

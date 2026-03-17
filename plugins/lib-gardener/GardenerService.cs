@@ -142,7 +142,7 @@ public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
     private static string PoiKey(Guid gardenInstanceId, Guid poiId) => $"poi:{gardenInstanceId}:{poiId}";
     private static string ScenarioKey(Guid accountId) => $"scenario:{accountId}";
     private static string TemplateKey(Guid templateId) => $"template:{templateId}";
-    private static string HistoryKey(Guid scenarioInstanceId) => $"history:{scenarioInstanceId}";
+    private static string HistoryKey(Guid scenarioInstanceId, Guid accountId) => $"history:{scenarioInstanceId}:{accountId}";
     private const string PhaseConfigKey = "phase:config";
 
     /// <summary>
@@ -1781,27 +1781,42 @@ public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
         CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerService.WriteScenarioHistoryAsync");
-        var primaryParticipant = scenario.Participants.FirstOrDefault();
-        if (primaryParticipant == null) return;
+        if (scenario.Participants.Count == 0) return;
 
         var durationSeconds = scenario.CompletedAt.HasValue
             ? (float)(scenario.CompletedAt.Value - scenario.CreatedAt).TotalSeconds
             : (float)(DateTimeOffset.UtcNow - scenario.CreatedAt).TotalSeconds;
 
-        var history = new ScenarioHistoryModel
-        {
-            ScenarioInstanceId = scenario.ScenarioInstanceId,
-            ScenarioTemplateId = scenario.ScenarioTemplateId,
-            AccountId = primaryParticipant.AccountId,
-            SeedId = primaryParticipant.SeedId,
-            CompletedAt = scenario.CompletedAt ?? DateTimeOffset.UtcNow,
-            Status = scenario.Status,
-            GrowthAwarded = scenario.GrowthAwarded,
-            DurationSeconds = durationSeconds,
-            TemplateCode = template?.Code
-        };
+        var completedAt = scenario.CompletedAt ?? DateTimeOffset.UtcNow;
 
-        await _historyStore.SaveAsync(HistoryKey(scenario.ScenarioInstanceId), history, cancellationToken: ct);
+        foreach (var participant in scenario.Participants)
+        {
+            try
+            {
+                var history = new ScenarioHistoryModel
+                {
+                    ScenarioInstanceId = scenario.ScenarioInstanceId,
+                    ScenarioTemplateId = scenario.ScenarioTemplateId,
+                    AccountId = participant.AccountId,
+                    SeedId = participant.SeedId,
+                    CompletedAt = completedAt,
+                    Status = scenario.Status,
+                    GrowthAwarded = scenario.GrowthAwarded,
+                    DurationSeconds = durationSeconds,
+                    TemplateCode = template?.Code
+                };
+
+                await _historyStore.SaveAsync(
+                    HistoryKey(scenario.ScenarioInstanceId, participant.AccountId),
+                    history, cancellationToken: ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Failed to write scenario history for participant {AccountId} in scenario {ScenarioId}",
+                    participant.AccountId, scenario.ScenarioInstanceId);
+            }
+        }
     }
 
     /// <summary>

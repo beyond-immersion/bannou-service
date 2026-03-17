@@ -1446,6 +1446,17 @@ enum class EPreboundApiExecutionMode : uint8
     FireAndForget UMETA(DisplayName = "FireAndForget"),
 };
 
+/** Form of precipitation. Temperature crossover rules apply (Rain below 0C becomes Snow, Snow above 5C becomes Rain, between 0-5C becomes Sleet) */
+UENUM(BlueprintType)
+enum class EPrecipitationType : uint8
+{
+    None UMETA(DisplayName = "None"),
+    Rain UMETA(DisplayName = "Rain"),
+    Snow UMETA(DisplayName = "Snow"),
+    Sleet UMETA(DisplayName = "Sleet"),
+    Hail UMETA(DisplayName = "Hail"),
+};
+
 /** Preferred engagement distance. Influences positioning and
 ability selection in combat.
  */
@@ -1924,6 +1935,15 @@ enum class ESyncTrigger : uint8
     Scheduled UMETA(DisplayName = "Scheduled"),
 };
 
+/** Shape of the intra-day temperature curve for hourly interpolation */
+UENUM(BlueprintType)
+enum class ETemperatureCurveShape : uint8
+{
+    Sinusoidal UMETA(DisplayName = "Sinusoidal"),
+    Plateau UMETA(DisplayName = "Plateau"),
+    Spike UMETA(DisplayName = "Spike"),
+};
+
 /** Current lifecycle status of a scenario template */
 UENUM(BlueprintType)
 enum class ETemplateStatus : uint8
@@ -2201,6 +2221,25 @@ enum class EVolumeShape : uint8
     Sphere UMETA(DisplayName = "Sphere"),
     Capsule UMETA(DisplayName = "Capsule"),
     Cylinder UMETA(DisplayName = "Cylinder"),
+};
+
+/** Scope level of a weather event override, determining geographic reach and precedence */
+UENUM(BlueprintType)
+enum class EWeatherEventScopeType : uint8
+{
+    Realm UMETA(DisplayName = "Realm"),
+    Location UMETA(DisplayName = "Location"),
+    LocationSubtree UMETA(DisplayName = "LocationSubtree"),
+};
+
+/** Origin type of a weather event, tracking who or what created it */
+UENUM(BlueprintType)
+enum class EWeatherEventSourceType : uint8
+{
+    Divine UMETA(DisplayName = "Divine"),
+    Scheduled UMETA(DisplayName = "Scheduled"),
+    GameEvent UMETA(DisplayName = "GameEvent"),
+    Admin UMETA(DisplayName = "Admin"),
 };
 
 /** How container weight propagates to parent */

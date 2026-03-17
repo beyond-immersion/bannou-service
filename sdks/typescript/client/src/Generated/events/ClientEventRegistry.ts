@@ -371,6 +371,14 @@ export const eventRegistry = new Map<string, EventMetadata>([
     },
   ],
   [
+    'environment.weather.transitioned',
+    {
+      eventName: 'environment.weather.transitioned',
+      typeName: 'WeatherTransitionClientEvent',
+      service: 'environment',
+    },
+  ],
+  [
     'game-session.action-result',
     {
       eventName: 'game-session.action-result',

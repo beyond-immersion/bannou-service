@@ -31,9 +31,9 @@ public partial class EscrowService
             }
 
             _logger.LogInformation("Idempotent deposit request {IdempotencyKey} already processed", body.IdempotencyKey);
-            if (existingRecord.Result is DepositResponse cachedResponse)
+            if (existingRecord.Result != null)
             {
-                return (StatusCodes.OK, cachedResponse);
+                return (StatusCodes.OK, existingRecord.Result);
             }
         }
 

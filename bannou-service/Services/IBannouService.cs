@@ -417,7 +417,7 @@ public interface IBannouService
 
         // 1. Individual override via {SERVICE}_SERVICE_ENABLED
         var serviceNameUpper = serviceName.ToUpper().Replace("-", "_");
-        var enabledEnv = Environment.GetEnvironmentVariable($"{serviceNameUpper}_SERVICE_ENABLED");
+        var enabledEnv = System.Environment.GetEnvironmentVariable($"{serviceNameUpper}_SERVICE_ENABLED");
         if (!string.IsNullOrWhiteSpace(enabledEnv))
             return !string.Equals(enabledEnv, "true", StringComparison.OrdinalIgnoreCase);
 

@@ -213,6 +213,18 @@ public static class StateStoreDefinitions
     /// <summary>Documentation content and metadata</summary>
     public const string Documentation = "documentation-statestore";
 
+    // Environment Service
+    /// <summary>Climate templates, location-climate bindings, and per-realm default biome configuration (durable, queryable)</summary>
+    public const string EnvironmentClimate = "environment-climate";
+    /// <summary>Condition snapshots and active location tracking sorted set (TTL-based)</summary>
+    public const string EnvironmentConditions = "environment-conditions";
+    /// <summary>Distributed locks for climate mutations, weather events, and realm refresh cycles</summary>
+    public const string EnvironmentLock = "environment-lock";
+    /// <summary>Weather event override records with scope and source indexing (durable, queryable)</summary>
+    public const string EnvironmentOverrides = "environment-overrides";
+    /// <summary>Cached resolved weather per location per game-day (TTL-based)</summary>
+    public const string EnvironmentWeather = "environment-weather";
+
     // Escrow Service
     /// <summary>Track active escrows requiring periodic validation</summary>
     public const string EscrowActiveValidation = "escrow-active-validation";
@@ -647,6 +659,11 @@ public static class StateStoreDefinitions
             [DivineLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "divine:lock" },
             [Documentation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "doc", EnableSearch = true },
             [EdgeRevocation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "auth:edge" },
+            [EnvironmentClimate] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "environment_climate" },
+            [EnvironmentConditions] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "environment:conditions" },
+            [EnvironmentLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "environment:lock" },
+            [EnvironmentOverrides] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "environment_overrides" },
+            [EnvironmentWeather] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "environment:weather" },
             [EscrowActiveValidation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "escrow:validate" },
             [EscrowAgreements] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "escrow_agreements" },
             [EscrowHandlerRegistry] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "escrow_handler_registry" },
@@ -873,6 +890,11 @@ public static class StateStoreDefinitions
             [DivineLock] = new StoreMetadata("Divine", "Distributed locks for deity and blessing mutations", "redis", false),
             [Documentation] = new StoreMetadata("Documentation", "Documentation content and metadata", "redis", false),
             [EdgeRevocation] = new StoreMetadata("Auth", "Edge revocation tracking for CDN/firewall layer blocking", "redis", false),
+            [EnvironmentClimate] = new StoreMetadata("Environment", "Climate templates, location-climate bindings, and per-realm default biome configuration (durable, queryable)", "mysql", false),
+            [EnvironmentConditions] = new StoreMetadata("Environment", "Condition snapshots and active location tracking sorted set (TTL-based)", "redis", false),
+            [EnvironmentLock] = new StoreMetadata("Environment", "Distributed locks for climate mutations, weather events, and realm refresh cycles", "redis", false),
+            [EnvironmentOverrides] = new StoreMetadata("Environment", "Weather event override records with scope and source indexing (durable, queryable)", "mysql", false),
+            [EnvironmentWeather] = new StoreMetadata("Environment", "Cached resolved weather per location per game-day (TTL-based)", "redis", false),
             [EscrowActiveValidation] = new StoreMetadata("Escrow", "Track active escrows requiring periodic validation", "redis", false),
             [EscrowAgreements] = new StoreMetadata("Escrow", "Main escrow agreement records", "mysql", false),
             [EscrowHandlerRegistry] = new StoreMetadata("Escrow", "Custom asset type handler registrations", "mysql", false),

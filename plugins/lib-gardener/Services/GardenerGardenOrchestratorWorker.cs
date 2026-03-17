@@ -138,6 +138,25 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
         var cacheStore = stateStoreFactory.GetCacheableStore<GardenInstanceModel>(
             StateStoreDefinitions.GardenerGardenInstances);
 
+        // Build growth phase ordinal map once per tick for MinGrowthPhase filtering.
+        // Phases are sorted by MinTotalGrowth threshold to establish ordinal ordering.
+        Dictionary<string, int>? phaseOrdinals = null;
+        try
+        {
+            var seedType = await seedClient.GetSeedTypeAsync(
+                new GetSeedTypeRequest { SeedTypeCode = _configuration.SeedTypeCode }, ct);
+            phaseOrdinals = seedType.GrowthPhases
+                .OrderBy(p => p.MinTotalGrowth)
+                .Select((p, i) => (p.PhaseCode, Index: i))
+                .ToDictionary(x => x.PhaseCode, x => x.Index);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex,
+                "Failed to fetch seed type {SeedTypeCode} for phase ordering, MinGrowthPhase filtering disabled this tick",
+                _configuration.SeedTypeCode);
+        }
+
         // Get all active garden account IDs from tracking set
         var activeAccountIds = await cacheStore.GetSetAsync<Guid>(
             GardenerService.ActiveGardensTrackingKey, ct);
@@ -158,7 +177,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
             {
                 var (expired, spawned) = await ProcessGardenTickAsync(
                     accountId, gardenStore, poiStore, templateStore, historyStore,
-                    cacheStore, seedClient, messageBus, ct);
+                    cacheStore, seedClient, messageBus, phaseOrdinals, ct);
                 totalPoisExpired += expired;
                 totalPoisSpawned += spawned;
             }
@@ -190,6 +209,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
         ICacheableStateStore<GardenInstanceModel> cacheStore,
         ISeedClient seedClient,
         IMessageBus messageBus,
+        IReadOnlyDictionary<string, int>? phaseOrdinals,
         CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerGardenOrchestratorWorker.ProcessGardenTickAsync");
@@ -219,7 +239,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
             // Phase 3: Run scoring algorithm and spawn POIs
             spawned = await ScoreAndSpawnPoisAsync(
                 garden, gardenStore, poiStore, templateStore, historyStore,
-                seedClient, messageBus, accountId, now, ct);
+                seedClient, messageBus, accountId, now, phaseOrdinals, ct);
 
             garden.NeedsReEvaluation = false;
         }
@@ -302,6 +322,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
         IMessageBus messageBus,
         Guid accountId,
         DateTimeOffset now,
+        IReadOnlyDictionary<string, int>? phaseOrdinals,
         CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerGardenOrchestratorWorker.ScoreAndSpawnPoisAsync");
@@ -327,7 +348,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
 
         // Load eligible templates
         var eligibleTemplates = await GetEligibleTemplatesAsync(
-            garden, historyStore, templateStore, accountId, ct);
+            garden, historyStore, templateStore, accountId, phaseOrdinals, ct);
 
         if (eligibleTemplates.Count == 0)
         {
@@ -414,6 +435,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
         IJsonQueryableStateStore<ScenarioHistoryModel> historyStore,
         IJsonQueryableStateStore<ScenarioTemplateModel> templateStore,
         Guid accountId,
+        IReadOnlyDictionary<string, int>? phaseOrdinals,
         CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerGardenOrchestratorWorker.GetEligibleTemplatesAsync");
@@ -455,20 +477,42 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
             if (recentTemplateIds.Contains(template.ScenarioTemplateId))
                 continue;
 
-            // Growth phase check (simple string comparison; lower phases are earlier)
-            if (template.MinGrowthPhase != null && garden.CachedGrowthPhase != null)
-            {
-                // If the template requires a minimum growth phase and the seed hasn't reached it,
-                // skip this template. Exact comparison since phase labels are opaque strings.
-                // Templates with MinGrowthPhase set but player at a different phase are included
-                // only if the phases match or MinGrowthPhase is null.
-                // For now, include all templates where the player has any growth phase.
-            }
+            // MinGrowthPhase filtering: skip templates the player hasn't reached.
+            // Phase ordinals are derived from seed type GrowthPhaseDefinition sorted by MinTotalGrowth.
+            if (!MeetsMinGrowthPhase(garden.CachedGrowthPhase, template.MinGrowthPhase, phaseOrdinals))
+                continue;
 
             eligible.Add(template);
         }
 
         return eligible;
+    }
+
+    /// <summary>
+    /// Determines whether a player's growth phase meets or exceeds a required minimum phase.
+    /// Returns true if the player has reached the required phase, or if comparison is not possible
+    /// (graceful degradation: missing ordinals or unknown phase codes result in inclusion).
+    /// </summary>
+    /// <param name="playerPhase">The player's current cached growth phase (nullable).</param>
+    /// <param name="requiredPhase">The template's minimum required growth phase (nullable).</param>
+    /// <param name="phaseOrdinals">Map of phase code to ordinal index (sorted by MinTotalGrowth).</param>
+    /// <returns>True if the player meets the requirement or comparison is not possible.</returns>
+    internal static bool MeetsMinGrowthPhase(
+        string? playerPhase,
+        string? requiredPhase,
+        IReadOnlyDictionary<string, int>? phaseOrdinals)
+    {
+        if (requiredPhase == null || phaseOrdinals == null)
+            return true;
+
+        if (!phaseOrdinals.TryGetValue(requiredPhase, out var requiredOrdinal))
+            return true;
+
+        if (playerPhase == null ||
+            !phaseOrdinals.TryGetValue(playerPhase, out var playerOrdinal))
+            return false;
+
+        return playerOrdinal >= requiredOrdinal;
     }
 
     /// <summary>

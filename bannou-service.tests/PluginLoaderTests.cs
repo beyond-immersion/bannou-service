@@ -293,13 +293,13 @@ public class PluginLoaderTests
             Assert.True(result1, "Service should be enabled by default");
 
             // Individual override: explicitly disabled
-            Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "false");
+            System.Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "false");
             var result2 = (bool)(isServiceEnabledMethod?.Invoke(pluginLoader,
                 new object[] { "testing", ServiceLayer.GameFeatures }) ?? false);
             Assert.False(result2, "Service should be disabled when TESTING_SERVICE_ENABLED=false");
 
             // Individual override: explicitly enabled
-            Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "true");
+            System.Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "true");
             var result3 = (bool)(isServiceEnabledMethod?.Invoke(pluginLoader,
                 new object[] { "testing", ServiceLayer.GameFeatures }) ?? false);
             Assert.True(result3, "Service should be enabled when TESTING_SERVICE_ENABLED=true");
@@ -307,7 +307,7 @@ public class PluginLoaderTests
         finally
         {
             Program.Configuration.ServicesEnabled = originalServicesEnabled;
-            Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", null);
         }
     }
 
@@ -1348,20 +1348,20 @@ public class PluginLoaderTests
 
             // Layer disabled, but individual override enables the service
             Program.Configuration.EnableGameFeatures = false;
-            Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "true");
+            System.Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "true");
             var result1 = (bool)(isServiceEnabledMethod?.Invoke(pluginLoader,
                 new object[] { "testing", ServiceLayer.GameFeatures }) ?? false);
             Assert.True(result1, "Individual SERVICE_ENABLED=true should override disabled layer");
 
             // Layer enabled, but individual override disables the service
             Program.Configuration.EnableGameFeatures = true;
-            Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "false");
+            System.Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "false");
             var result2 = (bool)(isServiceEnabledMethod?.Invoke(pluginLoader,
                 new object[] { "testing", ServiceLayer.GameFeatures }) ?? false);
             Assert.False(result2, "Individual SERVICE_ENABLED=false should override enabled layer");
 
             // Clear individual override, layer control takes effect
-            Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", null);
             var result3 = (bool)(isServiceEnabledMethod?.Invoke(pluginLoader,
                 new object[] { "testing", ServiceLayer.GameFeatures }) ?? false);
             Assert.True(result3, "Without individual override, layer control should take effect");
@@ -1369,7 +1369,7 @@ public class PluginLoaderTests
         finally
         {
             Program.Configuration.ServicesEnabled = originalServicesEnabled;
-            Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", null);
             Program.Configuration.EnableGameFeatures = originalEnableGameFeatures;
         }
     }
@@ -1400,7 +1400,7 @@ public class PluginLoaderTests
             Assert.False(result1, "Service should be disabled when master kill switch is off");
 
             // Individual override takes precedence even over master kill switch
-            Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "true");
+            System.Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "true");
             var result2 = (bool)(isServiceEnabledMethod?.Invoke(pluginLoader,
                 new object[] { "testing", ServiceLayer.GameFeatures }) ?? false);
             Assert.True(result2, "Individual override should take precedence over master kill switch");
@@ -1413,7 +1413,7 @@ public class PluginLoaderTests
         finally
         {
             Program.Configuration.ServicesEnabled = originalServicesEnabled;
-            Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", null);
         }
     }
 
@@ -1484,19 +1484,19 @@ public class PluginLoaderTests
             Program.Configuration.ServicesEnabled = true;
 
             // Uppercase TRUE → enabled
-            Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "TRUE");
+            System.Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "TRUE");
             var result1 = (bool)(isServiceEnabledMethod?.Invoke(pluginLoader,
                 new object[] { "testing", ServiceLayer.GameFeatures }) ?? false);
             Assert.True(result1, "Should handle uppercase TRUE for enable flag");
 
             // Mixed case False → disabled
-            Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "False");
+            System.Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "False");
             var result2 = (bool)(isServiceEnabledMethod?.Invoke(pluginLoader,
                 new object[] { "testing", ServiceLayer.GameFeatures }) ?? false);
             Assert.False(result2, "Should handle mixed case False for enable flag");
 
             // Lowercase service names are converted to uppercase for env var lookup
-            Environment.SetEnvironmentVariable("BEHAVIOR_SERVICE_ENABLED", "false");
+            System.Environment.SetEnvironmentVariable("BEHAVIOR_SERVICE_ENABLED", "false");
             var result3 = (bool)(isServiceEnabledMethod?.Invoke(pluginLoader,
                 new object[] { "behavior", ServiceLayer.GameFeatures }) ?? false);
             Assert.False(result3, "Should convert lowercase service name to uppercase for env var lookup");
@@ -1504,8 +1504,8 @@ public class PluginLoaderTests
         finally
         {
             Program.Configuration.ServicesEnabled = originalServicesEnabled;
-            Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", null);
-            Environment.SetEnvironmentVariable("BEHAVIOR_SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("BEHAVIOR_SERVICE_ENABLED", null);
         }
     }
 
@@ -1531,7 +1531,7 @@ public class PluginLoaderTests
         {
             // Master kill switch + individual override pattern
             Program.Configuration.ServicesEnabled = false;
-            Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "true");
+            System.Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "true");
 
             // Testing should be enabled via individual override
             var testingEnabled = (bool)(isServiceEnabledMethod?.Invoke(pluginLoader,
@@ -1559,7 +1559,7 @@ public class PluginLoaderTests
         finally
         {
             Program.Configuration.ServicesEnabled = originalServicesEnabled;
-            Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", null);
         }
     }
 
@@ -1585,13 +1585,13 @@ public class PluginLoaderTests
             Program.Configuration.ServicesEnabled = true;
 
             // Empty string SERVICE_ENABLED should be treated as not set (fall through to layer)
-            Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "");
+            System.Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "");
             var result1 = (bool)(isServiceEnabledMethod?.Invoke(pluginLoader,
                 new object[] { "testing", ServiceLayer.GameFeatures }) ?? false);
             Assert.True(result1, "Empty string SERVICE_ENABLED should be treated as not set (fall through to layer)");
 
             // Invalid boolean value should be treated as not "true" → disabled
-            Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "invalid");
+            System.Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "invalid");
             var result2 = (bool)(isServiceEnabledMethod?.Invoke(pluginLoader,
                 new object[] { "testing", ServiceLayer.GameFeatures }) ?? false);
             Assert.False(result2, "Invalid boolean value for SERVICE_ENABLED should be treated as not 'true' (disabled)");
@@ -1604,7 +1604,7 @@ public class PluginLoaderTests
         finally
         {
             Program.Configuration.ServicesEnabled = originalServicesEnabled;
-            Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", null);
+            System.Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", null);
         }
     }
 
@@ -1637,7 +1637,7 @@ public class PluginLoaderTests
             // Phase 1: All layers enabled, no overrides → all services enabled
             Program.Configuration.ServicesEnabled = true;
             foreach (var service in testServices)
-                Environment.SetEnvironmentVariable($"{service.ToUpper()}_SERVICE_ENABLED", null);
+                System.Environment.SetEnvironmentVariable($"{service.ToUpper()}_SERVICE_ENABLED", null);
 
             foreach (var service in testServices)
             {
@@ -1647,8 +1647,8 @@ public class PluginLoaderTests
             }
 
             // Phase 2: Disable individual services via SERVICE_ENABLED=false
-            Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_ENABLED", "false");
-            Environment.SetEnvironmentVariable("AUTH_SERVICE_ENABLED", "false");
+            System.Environment.SetEnvironmentVariable("ACCOUNT_SERVICE_ENABLED", "false");
+            System.Environment.SetEnvironmentVariable("AUTH_SERVICE_ENABLED", "false");
 
             var accountResult = (bool)(isServiceEnabledMethod?.Invoke(pluginLoader,
                 new object[] { "account", ServiceLayer.AppFoundation }) ?? false);
@@ -1664,10 +1664,10 @@ public class PluginLoaderTests
             // Phase 3: Master kill switch with individual enables
             Program.Configuration.ServicesEnabled = false;
             foreach (var service in testServices)
-                Environment.SetEnvironmentVariable($"{service.ToUpper()}_SERVICE_ENABLED", null);
+                System.Environment.SetEnvironmentVariable($"{service.ToUpper()}_SERVICE_ENABLED", null);
 
-            Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "true");
-            Environment.SetEnvironmentVariable("CONNECT_SERVICE_ENABLED", "true");
+            System.Environment.SetEnvironmentVariable("TESTING_SERVICE_ENABLED", "true");
+            System.Environment.SetEnvironmentVariable("CONNECT_SERVICE_ENABLED", "true");
 
             var testingResult2 = (bool)(isServiceEnabledMethod?.Invoke(pluginLoader,
                 new object[] { "testing", ServiceLayer.GameFeatures }) ?? false);
@@ -1683,7 +1683,7 @@ public class PluginLoaderTests
             // Phase 4: Layer disabled → services in that layer disabled
             Program.Configuration.ServicesEnabled = true;
             foreach (var service in testServices)
-                Environment.SetEnvironmentVariable($"{service.ToUpper()}_SERVICE_ENABLED", null);
+                System.Environment.SetEnvironmentVariable($"{service.ToUpper()}_SERVICE_ENABLED", null);
 
             Program.Configuration.EnableGameFeatures = false;
             var behaviorResult = (bool)(isServiceEnabledMethod?.Invoke(pluginLoader,
@@ -1704,7 +1704,7 @@ public class PluginLoaderTests
         {
             Program.Configuration.ServicesEnabled = originalServicesEnabled;
             foreach (var service in testServices)
-                Environment.SetEnvironmentVariable($"{service.ToUpper()}_SERVICE_ENABLED", null);
+                System.Environment.SetEnvironmentVariable($"{service.ToUpper()}_SERVICE_ENABLED", null);
             Program.Configuration.EnableGameFeatures = originalEnableGameFeatures;
             Program.Configuration.EnableAppFoundation = originalEnableAppFoundation;
         }

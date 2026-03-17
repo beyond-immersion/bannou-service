@@ -68,6 +68,10 @@ x-variable-providers:
     service: Affix
     purpose: "Item affix data for NPC GOAP evaluation of equipment quality (${affix.*})"
 
+  environment:
+    service: Environment
+    purpose: "Weather, temperature, atmospheric conditions, and resource availability for ABML expressions (${environment.*})"
+
   backstory:
     service: CharacterHistory
     purpose: "Character backstory elements for ABML expressions (${backstory.*})"

@@ -534,17 +534,21 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 ### Implementation Gaps (Current Void/Discovery Garden)
 
-1. **MinGrowthPhase filtering**: The `GetEligibleTemplatesAsync` method in `GardenerGardenOrchestratorWorker` has a MinGrowthPhase check block (lines 457-465) with an empty body -- the comment says "For now, include all templates where the player has any growth phase." Growth phases are opaque strings without ordinal comparison, so phase ordering would need a lookup table.
+1. ~~**MinGrowthPhase filtering**~~: **FIXED** (2026-03-16) - `GardenerGardenOrchestratorWorker` now fetches seed type definition once per tick via `ISeedClient.GetSeedTypeAsync`, builds phase-to-ordinal map from `GrowthPhaseDefinition.MinTotalGrowth`, and filters templates where the player hasn't reached the required phase. Extracted `MeetsMinGrowthPhase` as `internal static` for testability. Graceful degradation: if seed type fetch fails or phase codes are unknown, all templates pass (same as previous behavior).
 
-2. **scenario-template.deleted event**: Declared in the events schema via `x-lifecycle` but no delete endpoint exists (Category B -- templates persist forever). The lifecycle event is generated but never published.
+2. ~~**scenario-template.deleted event never published**~~: **FIXED** (2026-03-16) - The `scenario-template.deleted` lifecycle event is now published by `CleanDeprecatedTemplatesAsync` (Category B clean-deprecated sweep). No per-entity delete endpoint exists (correct for Category B); deletion occurs only through the admin-only sweep when deprecated templates have zero active scenario instances.
 
 3. **Puppetmaster notification**: `EnterScenarioAsync` resolves `IPuppetmasterClient` and logs intent to notify about behavior documents, but does not actually call any Puppetmaster API. The notification is a log-only stub.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/681 -->
 
 4. **PersistentEntryEnabled / GardenMinigamesEnabled**: These phase config flags are stored and returned but never read by any service logic. They appear to be forward-looking feature flags.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/684 -->
 
 5. **Matchmaking integration**: The implementation plan specified `IMatchmakingClient` (L4 soft dependency) for submitting matchmaking tickets when templates have `MinPlayers > 1`. This was never implemented -- group scenarios beyond bond pairs have no queueing mechanism.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/685 -->
 
 6. **Analytics integration**: The implementation plan specified `IAnalyticsClient` (L4 soft dependency) for querying milestone data to enrich scenario scoring. This was never implemented -- the `NarrativeWeight` scoring component partially compensates but milestone-based scoring is absent.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/690 -->
 
 7. **Client event schema (gardener-client-events.yaml)**: No client event schema exists for real-time POI push to WebSocket clients. POI spawns, expirations, and trigger events happen server-side only. Clients must poll `GetGardenStateAsync` to discover changes, which defeats the purpose of the garden as a responsive discovery space. This is a significant gap for the intended player experience.
 
@@ -558,7 +562,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 1. **Scenario history cleanup**: History records in MySQL accumulate indefinitely. No retention policy or cleanup mechanism exists. A background worker or configurable retention window (similar to transaction history in lib-currency) would prevent unbounded growth.
 
-2. **Multi-participant history**: `WriteScenarioHistoryAsync` only writes a history record for the primary participant. Secondary participants in bond scenarios do not get individual history records. This means cooldown checking and scenario diversity scoring are inaccurate for non-primary bond participants.
+2. ~~**Multi-participant history**~~: **FIXED** (2026-03-16) - `WriteScenarioHistoryAsync` now writes a history record for every participant in a scenario, not just the primary. History keys use composite `history:{scenarioInstanceId}:{accountId}` to allow per-participant records. Per-item error isolation ensures one participant's write failure doesn't block others.
 
 3. **Content flywheel connection**: Scenarios complete and award growth, but there's no mechanism to feed scenario outcomes back into future content generation. No events are consumed by Storyline, no archive data is generated from scenario history. Per VISION.md, this is a load-bearing connection: "more play produces more content, which produces more play." Gardener generates play but doesn't yet contribute to the content side of the flywheel.
 
@@ -580,7 +584,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 <!-- C1: Hardcoded prompt choices ["Enter","Decline"] are presentation hints, not tenet violations -->
 <!-- C2: No per-template MaxConcurrentInstances enforcement -- feature gap, not tenet violation -->
 <!-- C3: Prerequisites not validated during scenario entry -- feature gap, not tenet violation -->
-<!-- M7: MinGrowthPhase ordinal comparison unimplemented -- feature gap, not tenet violation -->
+<!-- M7: MinGrowthPhase ordinal comparison -- FIXED 2026-03-16 -->
 <!-- L1: location.entity-arrived/departed subscriptions declared but handlers are stubs -- awaiting Entity Session Registry (#426 CLOSED, #502 OPEN) -->
 
 ## Known Quirks & Caveats
@@ -621,7 +625,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 #### Implementation (Current Void/Discovery Garden)
 
-1. **Growth phase ordering is unresolved**: Templates can specify `MinGrowthPhase` but there is no mechanism to compare phase labels ordinally. The growth phases ("nascent", "awakening", "attuned", "resonant", "transcendent") are registered with `MinTotalGrowth` thresholds in the Seed service, but Gardener only caches the phase label string. Implementing this requires either querying Seed for phase ordering or maintaining a local phase-to-ordinal mapping.
+1. ~~**Growth phase ordering is unresolved**~~: **RESOLVED** (2026-03-16) - Implemented via `ISeedClient.GetSeedTypeAsync` queried once per orchestrator tick. Phase ordinals derived from `GrowthPhaseDefinition.MinTotalGrowth` sort order. See Stub #1 fix above.
 
 2. **Persistent connectivity mode and the release transition**: PLAYER-VISION.md describes the release as "a scenario that doesn't end, a door that leads to permanent inhabitation." `ConnectivityMode.Persistent` exists as an enum value but has no differentiated code path. Designing this requires answering: What makes a Persistent scenario different from Isolated? Does the player stay in-world indefinitely? Does the garden become a between-sessions lobby? How does the "surprise" transition work without disrupting players mid-scenario? In the full garden concept, this is subsumed by garden-to-garden transitions -- the "Persistent" mode is simply a garden that doesn't transition back to discovery.
 
@@ -641,9 +645,9 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 - [ ] **Stub #9**: Implement prerequisite validation in `EnterScenarioAsync` and `GetEligibleTemplatesAsync`
 - [ ] **Stub #10**: Implement per-template `MaxConcurrentInstances` enforcement during scenario entry
-- [ ] **Stub #1/Design #1**: Implement `MinGrowthPhase` ordinal comparison (requires Seed phase ordering query or local mapping)
+- [x] **Stub #1/Design #1**: ~~Implement `MinGrowthPhase` ordinal comparison~~ — **FIXED** (2026-03-16). Fetches seed type definition once per orchestrator tick, builds ordinal map from `MinTotalGrowth`, filters templates where player hasn't reached required phase.
 - [ ] **Stub #7**: Create `gardener-client-events.yaml` schema for real-time POI spawn/expire/trigger push to WebSocket clients
-- [ ] **Extension #2**: Write history records for all bond scenario participants, not just primary
+- [x] **Extension #2**: ~~Write history records for all bond scenario participants, not just primary~~ — **FIXED** (2026-03-16)
 - [ ] **Stub #3**: Implement actual Puppetmaster API call in `EnterScenarioAsync` (not just log)
 - [ ] **Design #1/Stub #15**: Design and implement Entity Session Registry in Connect (L1) -- `IEntitySessionRegistry` interface in `bannou-service/`, Redis-backed implementation in Connect (generalizing existing `account-sessions` pattern), cleanup on disconnect via reverse index. Cross-cutting: affects all entity-based services that want client event routing. [Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426) (CLOSED -- design accepted). [Issue #502](https://github.com/beyond-immersion/bannou-service/issues/502) (OPEN -- rollout tracking).
 

@@ -95,7 +95,7 @@ public partial class MusicService : IMusicService
         }
 
         // Set up random generator
-        var seed = body.Seed ?? Environment.TickCount;
+        var seed = body.Seed ?? System.Environment.TickCount;
         var random = new Random(seed);
 
         // Convert generated types to SDK types at boundary for Scale construction
@@ -423,7 +423,7 @@ public partial class MusicService : IMusicService
     {
         _logger.LogDebug("Generating progression in {Tonic} {Mode}", body.Key.Tonic, body.Key.Mode);
 
-        var seed = body.Seed ?? Environment.TickCount;
+        var seed = body.Seed ?? System.Environment.TickCount;
         var scale = new Scale(MusicServiceMapper.ToSdkPitchClass(body.Key.Tonic), MusicServiceMapper.TestableToModeType(body.Key.Mode));
         var generator = new ProgressionGenerator(seed);
 
@@ -480,7 +480,7 @@ public partial class MusicService : IMusicService
     {
         _logger.LogDebug("Generating melody over {ChordCount} chords", body.Harmony?.Count ?? 0);
 
-        var seed = body.Seed ?? Environment.TickCount;
+        var seed = body.Seed ?? System.Environment.TickCount;
 
         // Infer key from first chord (or default to C major)
         var firstChord = body.Harmony?.FirstOrDefault();

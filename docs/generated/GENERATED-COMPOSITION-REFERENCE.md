@@ -426,8 +426,8 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Disposition | L4 | Emotional synthesis — per-character feelings about entities and long-term aspirational drives | — |
 | Divine | L4 | Pantheon management, divinity economy, blessing orchestration (composes Currency/Seed/Collection/Status) | 22 |
 | Dungeon | L4 | Living dungeon-as-actor lifecycle with personality, memory, and spatial manifestation | — |
-| Environment | L4 | Weather simulation, temperature modeling, and ecological resources consuming Worldstate temporal data | — |
-| Escrow | L4 | Full-custody multi-party asset exchange with 13-state FSM (currency/items/contracts) | 22 |
+| Environment | L4 | Weather simulation, temperature modeling, and ecological resources consuming Worldstate temporal data | 32 |
+| Escrow | L4 | Full-custody multi-party asset exchange with 13-state FSM (currency/items/contracts) | 23 |
 | Ethology | L4 | Species-level behavioral archetype registry with hierarchical overrides and individual noise | — |
 | Faction | L4 | Seed-based faction growth with norms, enforcement tiers, territory, guild hierarchy, and political bonds | 37 |
 | Gardener | L4 | Player experience orchestration (garden lifecycle, void/discovery, divine actor integration) | 24 |
@@ -454,7 +454,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Utility | L4 | Infrastructure network topology, flow calculation, and coverage cascading (aqueducts, power grids) | — |
 | Workshop | L4 | Time-based automated production with lazy evaluation and background materialization | — |
 
-**78 services, 1023 endpoints**
+**78 services, 1056 endpoints**
 
 For full per-service details: `docs/generated/GENERATED-*-SERVICE-DETAILS.md`
 

@@ -44,20 +44,15 @@ public class CharacterLifecycleServiceProfileTests
 
     // Constructor-cached store mocks matching service constructor types
     private readonly Mock<IStateStore<LifecycleProfileModel>> _mockProfileStore;
-    private readonly Mock<IStateStore<object>> _mockHeritageStore;
-    private readonly Mock<IStateStore<object>> _mockBloodlineStore;
-    private readonly Mock<IStateStore<object>> _mockCacheStore;
-
-    private const string PROFILES_STORE = "character-lifecycle-profiles";
-    private const string HERITAGE_STORE = "character-lifecycle-heritage";
-    private const string BLOODLINES_STORE = "character-lifecycle-bloodlines";
-    private const string CACHE_STORE = "character-lifecycle-cache";
+    private readonly Mock<IStateStore<GeneticProfileModel>> _mockGeneticStore;
+    private readonly Mock<IStateStore<HeritableTraitTemplateModel>> _mockTraitTemplateStore;
+    private readonly Mock<IStateStore<LifecycleManifestModel>> _mockCacheStore;
 
     public CharacterLifecycleServiceProfileTests()
     {
         _mockLogger = new Mock<ILogger<CharacterLifecycleService>>();
         _configuration = new CharacterLifecycleServiceConfiguration();
-        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory> { DefaultValue = DefaultValue.Mock };
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockEventConsumer = new Mock<IEventConsumer>();
@@ -74,24 +69,24 @@ public class CharacterLifecycleServiceProfileTests
         _mockCurrencyClient = new Mock<ICurrencyClient>();
         _mockServiceProvider = new Mock<IServiceProvider>();
 
-        // Constructor-cached store mocks
+        // Constructor-cached store mocks (properly typed)
         _mockProfileStore = new Mock<IStateStore<LifecycleProfileModel>>();
-        _mockHeritageStore = new Mock<IStateStore<object>>();
-        _mockBloodlineStore = new Mock<IStateStore<object>>();
-        _mockCacheStore = new Mock<IStateStore<object>>();
+        _mockGeneticStore = new Mock<IStateStore<GeneticProfileModel>>();
+        _mockTraitTemplateStore = new Mock<IStateStore<HeritableTraitTemplateModel>>();
+        _mockCacheStore = new Mock<IStateStore<LifecycleManifestModel>>();
 
-        // Wire state store factory to return typed stores (constructor-cached)
+        // Wire typed stores to factory
         _mockStateStoreFactory
-            .Setup(f => f.GetStore<LifecycleProfileModel>(PROFILES_STORE))
+            .Setup(f => f.GetStore<LifecycleProfileModel>(StateStoreDefinitions.CharacterLifecycleProfiles))
             .Returns(_mockProfileStore.Object);
         _mockStateStoreFactory
-            .Setup(f => f.GetStore<object>(HERITAGE_STORE))
-            .Returns(_mockHeritageStore.Object);
+            .Setup(f => f.GetStore<GeneticProfileModel>(StateStoreDefinitions.CharacterLifecycleHeritage))
+            .Returns(_mockGeneticStore.Object);
         _mockStateStoreFactory
-            .Setup(f => f.GetStore<object>(BLOODLINES_STORE))
-            .Returns(_mockBloodlineStore.Object);
+            .Setup(f => f.GetStore<HeritableTraitTemplateModel>(StateStoreDefinitions.CharacterLifecycleHeritage))
+            .Returns(_mockTraitTemplateStore.Object);
         _mockStateStoreFactory
-            .Setup(f => f.GetStore<object>(CACHE_STORE))
+            .Setup(f => f.GetStore<LifecycleManifestModel>(StateStoreDefinitions.CharacterLifecycleCache))
             .Returns(_mockCacheStore.Object);
 
         // Default lock provider behavior - always succeed
@@ -440,7 +435,7 @@ public class CharacterLifecycleServiceProfileTests
             CreatedAt = DateTimeOffset.UtcNow
         };
 
-        _mockHeritageStore.Setup(s => s.GetAsync(
+        _mockGeneticStore.Setup(s => s.GetAsync(
                 $"genetic:{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(geneticProfile);
 
@@ -463,9 +458,9 @@ public class CharacterLifecycleServiceProfileTests
     {
         // Arrange
         var characterId = Guid.NewGuid();
-        _mockHeritageStore.Setup(s => s.GetAsync(
+        _mockGeneticStore.Setup(s => s.GetAsync(
                 $"genetic:{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((object?)null);
+            .ReturnsAsync((GeneticProfileModel?)null);
 
         var service = CreateService();
 
@@ -501,7 +496,7 @@ public class CharacterLifecycleServiceProfileTests
             CreatedAt = DateTimeOffset.UtcNow
         };
 
-        _mockHeritageStore.Setup(s => s.GetAsync(
+        _mockGeneticStore.Setup(s => s.GetAsync(
                 $"genetic:{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(geneticProfile);
 
@@ -525,9 +520,9 @@ public class CharacterLifecycleServiceProfileTests
     {
         // Arrange
         var characterId = Guid.NewGuid();
-        _mockHeritageStore.Setup(s => s.GetAsync(
+        _mockGeneticStore.Setup(s => s.GetAsync(
                 $"genetic:{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((object?)null);
+            .ReturnsAsync((GeneticProfileModel?)null);
 
         var service = CreateService();
 
@@ -553,9 +548,9 @@ public class CharacterLifecycleServiceProfileTests
         var gameServiceId = Guid.NewGuid();
 
         // No existing genetic profile
-        _mockHeritageStore.Setup(s => s.GetAsync(
+        _mockGeneticStore.Setup(s => s.GetAsync(
                 $"genetic:{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((object?)null);
+            .ReturnsAsync((GeneticProfileModel?)null);
 
         // Trait template exists
         var traitTemplate = new HeritableTraitTemplateModel
@@ -572,17 +567,17 @@ public class CharacterLifecycleServiceProfileTests
             },
             CreatedAt = DateTimeOffset.UtcNow
         };
-        _mockHeritageStore.Setup(s => s.GetAsync(
+        _mockTraitTemplateStore.Setup(s => s.GetAsync(
                 $"trait-template:human:{gameServiceId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(traitTemplate);
 
         // Capture save
-        object? savedProfile = null;
+        GeneticProfileModel? savedProfile = null;
         string? savedKey = null;
-        _mockHeritageStore.Setup(s => s.SaveAsync(
-                It.Is<string>(k => k.StartsWith("genetic:")), It.IsAny<object>(),
+        _mockGeneticStore.Setup(s => s.SaveAsync(
+                It.Is<string>(k => k.StartsWith("genetic:")), It.IsAny<GeneticProfileModel>(),
                 It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, object, StateOptions?, CancellationToken>((k, m, _, _) => { savedKey = k; savedProfile = m; })
+            .Callback<string, GeneticProfileModel, StateOptions?, CancellationToken>((k, m, _, _) => { savedKey = k; savedProfile = m; })
             .ReturnsAsync("etag-new");
 
         // Capture cache deletion
@@ -624,7 +619,7 @@ public class CharacterLifecycleServiceProfileTests
             Mutations = new List<MutationEntry>(),
             CreatedAt = DateTimeOffset.UtcNow
         };
-        _mockHeritageStore.Setup(s => s.GetAsync(
+        _mockGeneticStore.Setup(s => s.GetAsync(
                 $"genetic:{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingGenetic);
 
@@ -647,12 +642,12 @@ public class CharacterLifecycleServiceProfileTests
         var characterId = Guid.NewGuid();
         var gameServiceId = Guid.NewGuid();
 
-        _mockHeritageStore.Setup(s => s.GetAsync(
+        _mockGeneticStore.Setup(s => s.GetAsync(
                 $"genetic:{characterId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((object?)null);
-        _mockHeritageStore.Setup(s => s.GetAsync(
+            .ReturnsAsync((GeneticProfileModel?)null);
+        _mockTraitTemplateStore.Setup(s => s.GetAsync(
                 $"trait-template:human:{gameServiceId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((object?)null);
+            .ReturnsAsync((HeritableTraitTemplateModel?)null);
 
         var service = CreateService();
 
@@ -702,9 +697,9 @@ public class CharacterLifecycleServiceProfileTests
             CreatedAt = DateTimeOffset.UtcNow
         };
 
-        _mockHeritageStore.Setup(s => s.GetAsync($"genetic:{parentAId}", It.IsAny<CancellationToken>()))
+        _mockGeneticStore.Setup(s => s.GetAsync($"genetic:{parentAId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(parentAProfile);
-        _mockHeritageStore.Setup(s => s.GetAsync($"genetic:{parentBId}", It.IsAny<CancellationToken>()))
+        _mockGeneticStore.Setup(s => s.GetAsync($"genetic:{parentBId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(parentBProfile);
 
         var service = CreateService();
@@ -728,8 +723,8 @@ public class CharacterLifecycleServiceProfileTests
         var parentAId = Guid.NewGuid();
         var parentBId = Guid.NewGuid();
 
-        _mockHeritageStore.Setup(s => s.GetAsync($"genetic:{parentAId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((object?)null);
+        _mockGeneticStore.Setup(s => s.GetAsync($"genetic:{parentAId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GeneticProfileModel?)null);
 
         var service = CreateService();
 
@@ -763,10 +758,10 @@ public class CharacterLifecycleServiceProfileTests
             CreatedAt = DateTimeOffset.UtcNow
         };
 
-        _mockHeritageStore.Setup(s => s.GetAsync($"genetic:{parentAId}", It.IsAny<CancellationToken>()))
+        _mockGeneticStore.Setup(s => s.GetAsync($"genetic:{parentAId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(parentAProfile);
-        _mockHeritageStore.Setup(s => s.GetAsync($"genetic:{parentBId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((object?)null);
+        _mockGeneticStore.Setup(s => s.GetAsync($"genetic:{parentBId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GeneticProfileModel?)null);
 
         var service = CreateService();
 

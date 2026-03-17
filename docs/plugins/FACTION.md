@@ -4,7 +4,7 @@
 > **Schema**: schemas/faction-api.yaml
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
-> **State Store**: faction-statestore (MySQL), faction-membership-statestore (MySQL), faction-territory-statestore (MySQL), faction-norm-statestore (MySQL), faction-cache (Redis), faction-lock (Redis)
+> **State Store**: faction-statestore (MySQL), faction-membership-statestore (MySQL), faction-territory-statestore (MySQL), faction-norm-statestore (MySQL), faction-governance-statestore (MySQL), faction-cache (Redis), faction-lock (Redis)
 > **Guide**: [Morality System](../guides/MORALITY-SYSTEM.md) (cross-service integration with lib-obligation and lib-faction)
 > **Implementation Map**: [docs/maps/FACTION.md](../maps/FACTION.md)
 > **Short**: Seed-based faction growth with norms, enforcement tiers, territory, guild hierarchy, and political bonds
@@ -36,7 +36,7 @@ The Faction service (L4 GameFeatures) models factions as seed-based living entit
 
 ## Factions as Emergent Governance (Architectural Target)
 
-> **Status**: 31 of 37 endpoints are fully implemented (CRUD, membership, territory, norms, cleanup, compression). 6 governance endpoints are schema-defined but implementation is pending. The seed-based growth pipeline and norm resolution hierarchy work end-to-end. The broader vision described below -- emergent governance, economic regulation, and the morality pipeline role -- is the architectural target that these mechanics serve.
+> **Status**: All 37 endpoints are fully implemented (CRUD, membership, territory, norms, governance, cleanup, compression). The merge endpoint (`MergeFactionAsync`) is the sole remaining stub. The seed-based growth pipeline, norm resolution hierarchy, and sovereignty governance system work end-to-end. The broader vision described below -- emergent governance, economic regulation, and the morality pipeline role -- is the architectural target that these mechanics serve.
 
 ### Factions Are the Emergent Governance Layer of the Living World
 
@@ -100,13 +100,13 @@ Implements `IVariableProviderFactory` (via `FactionProviderFactory`) providing t
 
 Returns `FactionProvider.Empty` for non-character actors or characters with no faction memberships.
 
-**Remaining Gap: Territory Context Variable**
+**Territory context variable:**
 
-| Planned Variable | Status | Impact |
-|-----------------|--------|--------|
-| `${faction.in_controlled_territory}` | **Not yet implemented** | ABML cannot check territory control context |
+| Variable | Type | Description |
+|----------|------|-------------|
+| `${faction.in_controlled_territory}` | bool | Whether the character's current location is controlled by one of their membership factions |
 
-The territory variable requires knowing the character's current location, which is not available through the `IVariableProviderFactory.CreateAsync(Guid? entityId)` interface. Implementing this requires either: (a) subscribing to `location.entity.arrived`/`location.entity.departed` events to maintain a character-location cache in Faction's own state stores, or (b) enhancing the provider factory interface to accept additional execution context. The membership-scoped norm variables above are sufficient for lib-obligation's `evaluate_consequences` cognition stage; territory-scoped norms are resolved by the full `QueryApplicableNorms` API endpoint which accepts a `locationId` parameter.
+The territory variable uses the `locationId` parameter provided by `IVariableProviderFactory.CreateAsync` to look up the location's territory claim and check if any of the character's membership factions control it. Returns `false` when `locationId` is null (e.g., before any perception events arrive).
 
 ## Visual Aid
 
@@ -180,20 +180,10 @@ The territory variable requires knowing the character's current location, which 
 
 ## Stubs & Unimplemented Features
 
-### Governance Endpoints (6 endpoints — schema defined, implementation pending)
-
-Sovereignty and governance data management. Schema added by #601 (2026-03-16). Service code implementation is pending.
-
-- **SetGovernanceEntry** (`/faction/governance/set`): Upsert governance entry (domain + template code + parameters). Requires Sovereign/Delegated authority and `governance.arbitrate.*` seed capability.
-- **RemoveGovernanceEntry** (`/faction/governance/remove`): Remove governance entry for a domain.
-- **ListGovernanceEntries** (`/faction/governance/list`): All governance entries for a faction.
-- **QueryGovernanceData** (`/faction/governance/query`): Critical arbitration integration endpoint. Walks sovereignty hierarchy to resolve jurisdictional faction and procedural template for a location + domain. Returns 404 when no sovereign has jurisdiction.
-- **DelegateAuthority** (`/faction/governance/delegate`): Sovereign grants per-domain delegated authority to a child faction.
-- **RevokeAuthority** (`/faction/governance/revoke`): Revoke delegation (reverts to Influence when all domains revoked).
-
 ### Category A Merge Endpoint (pending)
 
 Faction is a Category A entity per Implementation Tenets (deprecation lifecycle). `FactionService` already implements the `IDeprecateAndMergeEntity` marker interface, but the merge endpoint logic (`MergeFactionAsync`) is not yet implemented. When implemented, the merge endpoint should use shared `MergeDeprecatedRequest`/`MergeDeprecatedResponse` models from `common-api.yaml` and migrate faction references (memberships, territory claims, norms, governance entries) from a deprecated source faction to a target faction, then optionally delete the source.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/683 -->
 
 ## Potential Extensions
 
@@ -212,9 +202,9 @@ Faction is a Category A entity per Implementation Tenets (deprecation lifecycle)
 
 ### Bugs (Fix Immediately)
 
-1. **Cascading delete does not publish individual sub-entity events**: `DeleteFactionAsync` cascades norm, territory, and governance deletions by directly deleting from stores without publishing individual `faction.norm.deleted`, `faction.territory.released`, or `faction.governance.deleted` events for each removed sub-entity. Per Foundation Tenets (Event-Driven Architecture), all meaningful state changes MUST publish events even without current consumers. Each norm deletion, territory release, and governance entry removal is a meaningful state change. The fix is to publish the appropriate events during cascade iteration, similar to how `RemoveMemberInternalAsync` already publishes `faction.member.removed` for each cascaded member removal.
+1. ~~**Cascading delete does not publish individual norm/governance events**~~: **FIXED** (2026-03-16) - `DeleteFactionAsync` now reads each norm/governance entry before deleting and publishes `faction.norm.deleted` / `faction.governance.deleted` events per item, matching the pattern used by member and territory cascades.
 
-2. **CleanupByRealm fails for non-deprecated factions**: The `CleanupByRealm` endpoint calls `DeleteFactionAsync` internally, which rejects deletion with `400 BadRequest` when `IsDeprecated == false` (Category A lifecycle guard). However, cleanup callbacks from lib-resource fire when the parent realm is deleted — factions in that realm are typically not deprecated first. This means realm cleanup silently fails for every non-deprecated faction, leaving orphaned faction data. The cleanup endpoint must bypass the deprecation guard, or the internal cascade path must use a force-delete that skips the deprecation check.
+2. ~~**CleanupByRealm fails for non-deprecated factions**~~: **FIXED** (2026-03-16) - Extracted cascade deletion logic into `DeleteFactionCascadeInternalAsync` helper that bypasses the Category A deprecation guard. `CleanupByRealmAsync` now calls the helper directly with per-item try-catch (T7 batch isolation), and only increments `factionsRemoved` on success. `DeleteFactionAsync` retains the deprecation guard and delegates to the same helper after checking `IsDeprecated`.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -234,9 +224,9 @@ Faction is a Category A entity per Implementation Tenets (deprecation lifecycle)
 
 8. **SeedFactions allows setting IsRealmBaseline directly**: Unlike `CreateFactionAsync` (which always sets `IsRealmBaseline = false`), the `SeedFactionsAsync` endpoint passes through `def.IsRealmBaseline` from the seed definition, allowing baseline designation during bulk seeding without a separate `DesignateRealmBaseline` call.
 
-10. **Sovereignty is emergent, not required**: `authorityLevel` defaults to `Influence` on every faction. Sovereignty is only acquired through `DesignateRealmBaseline` (which sets Sovereign automatically) or delegation endpoints. If no sovereign exists in a territory, `QueryGovernanceData` returns 404 and `QueryApplicableNorms` continues with the existing "most specific wins" behavior where all norms are social/personal. The legal channel only activates when a Sovereign faction exists.
+9. **Sovereignty is emergent, not required**: `authorityLevel` defaults to `Influence` on every faction. Sovereignty is only acquired through `DesignateRealmBaseline` (which sets Sovereign automatically) or delegation endpoints. If no sovereign exists in a territory, `QueryGovernanceData` returns 404 and `QueryApplicableNorms` continues with the existing "most specific wins" behavior where all norms are social/personal. The legal channel only activates when a Sovereign faction exists.
 
-11. **authorityLevel is not directly mutable via UpdateFaction**: Sovereignty is managed exclusively through `DesignateRealmBaseline` (→ Sovereign), `DelegateAuthority` (→ Delegated), and `RevokeAuthority` (→ Influence). This prevents accidental sovereignty assignment via the general update endpoint.
+10. **authorityLevel is not directly mutable via UpdateFaction**: Sovereignty is managed exclusively through `DesignateRealmBaseline` (→ Sovereign), `DelegateAuthority` (→ Delegated), and `RevokeAuthority` (→ Influence). This prevents accidental sovereignty assignment via the general update endpoint.
 
 ### Design Considerations (Requires Planning)
 
@@ -244,20 +234,27 @@ Faction is a Category A entity per Implementation Tenets (deprecation lifecycle)
 <!-- AUDIT:NEEDS_DESIGN:2026-02-13:https://github.com/beyond-immersion/bannou-service/issues/424 -->
 
 2. **Norm query performance at scale**: `QueryApplicableNorms` performs up to 3 aggregation passes (guild factions, location faction, realm baseline). With many memberships or large norm sets, this could become expensive. The Redis cache (TTL-based) mitigates reads but cold-start queries for characters with many memberships need profiling.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/687 -->
 
-3. **Seed bond mechanics for alliances**: The schema description references seed bonds for inter-faction alliances, but no API endpoints exist for bond management. These would be managed directly through lib-seed's bond API. May need faction-level wrapper endpoints for ergonomic alliance management.
+3. **Seed bond mechanics for alliances**: The schema description references seed bonds for inter-faction alliances, but no API endpoints exist for bond management. These would be managed directly through lib-seed's bond API. May need faction-level wrapper endpoints for ergonomic alliance management. Additionally, the planned Seed bond propagation redesign (see `docs/planning/DIVINITY-GENERATION-ARCHITECTURE.md` § Seed Bond Propagation) adds `PropagationDirection` and `PropagationRatio` to bonds, which would directly enable alliance growth mechanics. Faction seed type is registered with `BondCardinality = 0` (bonding disabled) — changing this is part of the design decision.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/413 -->
 
-4. **Variable Provider missing territory context variable**: The Variable Provider section documents `${faction.in_controlled_territory}` as not yet implemented. This requires knowing the character's current location, which is not available through the `IVariableProviderFactory.CreateAsync(Guid? entityId)` interface. Implementing this requires either: (a) subscribing to location events to maintain a character-location cache, or (b) enhancing the provider factory interface to accept additional execution context. The membership-scoped norm variables (`has_norm`, `norm_penalty`) and aggregate/per-faction variables are documented as implemented. The territory-scoped norm resolution remains available through the full `QueryApplicableNorms` API endpoint.
+4. ~~**Variable Provider missing territory context variable**~~: **FIXED** (2026-03-16) - The `IVariableProviderFactory.CreateAsync` interface already provides `locationId` as a parameter. Added territory store lookup to `FactionProviderFactory` — looks up `TerritoryClaimModel` by location, checks if the controlling faction is among the character's memberships, and passes the result to `FactionProvider` as `${faction.in_controlled_territory}`. Returns false when locationId is null or no active claim exists.
 
 5. **Missing lib-contract integration for guild charters (plan gap)**: Issue #410 decision Q3 states: "When a character joins a faction (formal guild membership), the guild contract is created explicitly through lib-contract." The plan lists `lib-contract (L1) — formal membership agreements, guild charters` as a dependency. The current implementation does not use `IContractClient` at all -- membership is managed directly without contract backing. This means guild charters are not formalized as binding agreements, and lib-obligation cannot discover faction-sourced contractual obligations through lib-contract.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/284 -->
 
 ## Work Tracking
 
 ### Active
-- **Governance implementation**: 6 governance endpoints are schema-defined (#601) but service code is pending. See Stubs § Governance Endpoints.
 - **Category A merge endpoint**: `IDeprecateAndMergeEntity` interface is implemented but `MergeFactionAsync` logic is pending. See Stubs § Category A Merge Endpoint.
 
+### Completed
+- **2026-03-16 (audit)**: DC #4 (Variable Provider territory context) — `IVariableProviderFactory.CreateAsync` already provides `locationId`; added territory store lookup to `FactionProviderFactory` and `${faction.in_controlled_territory}` variable to `FactionProvider`.
+- **2026-03-16 (audit)**: Bug #2 (CleanupByRealm deprecation guard bypass) — extracted `DeleteFactionCascadeInternalAsync` helper, CleanupByRealmAsync bypasses deprecation guard with per-item error isolation.
+
 ### History
+- **2026-03-16**: Maintenance pass — migrated operational sections to implementation map, confirmed governance endpoints fully implemented (removed from Stubs), added Bugs #1-2 (cascade event gaps, CleanupByRealm deprecation guard), renumbered quirks, verified all 6 linked issues still active.
 - **2026-03-16**: Maintenance pass — corrected DC #4 (variable provider scope), deleted confirmed-FIXED DC #6 (governance schema designed via #601), corrected Category A merge stub (interface already implemented).
 - **2026-03-16**: Issue #601 — Faction sovereignty schema designed. Design Consideration #6 resolved.
-- **Origin**: [#410 - Feature: Second Thoughts -- Prospective Consequence Evaluation for NPC Cognition](https://github.com/beyond-immersion/bannou-service/issues/410) — lib-faction extracted from original lib-moral proposal during architecture review. Part of the larger lib-obligation + lib-faction morality pipeline. All 37 endpoints (31 original + 6 governance) are now schema-defined; 31 are fully implemented.
+- **Origin**: [#410 - Feature: Second Thoughts -- Prospective Consequence Evaluation for NPC Cognition](https://github.com/beyond-immersion/bannou-service/issues/410) — lib-faction extracted from original lib-moral proposal during architecture review. Part of the larger lib-obligation + lib-faction morality pipeline. All 37 endpoints fully implemented; merge endpoint is the sole remaining stub.

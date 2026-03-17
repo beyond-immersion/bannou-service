@@ -72,6 +72,7 @@ public static class ClientEventWhitelist
         "currency.balance.changed",
         "currency.wallet.frozen",
         "currency.wallet.unfrozen",
+        "environment.weather.transitioned",
         "game-session.action-result",
         "game-session.chat-received",
         "game-session.player-joined",

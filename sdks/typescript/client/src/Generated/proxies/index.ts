@@ -22,6 +22,7 @@ export { CompileProxy } from './CompileProxy.js';
 export { ContractProxy } from './ContractProxy.js';
 export { CurrencyProxy } from './CurrencyProxy.js';
 export { DocumentationProxy } from './DocumentationProxy.js';
+export { EnvironmentProxy } from './EnvironmentProxy.js';
 export { EscrowProxy } from './EscrowProxy.js';
 export { FactionProxy } from './FactionProxy.js';
 export { GardenerProxy } from './GardenerProxy.js';

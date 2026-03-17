@@ -4,7 +4,7 @@
 > **Schema**: schemas/divine-api.yaml
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
-> **State Stores**: divine-deities (MySQL), divine-blessings (MySQL), divine-attention (Redis), divine-divinity-events (Redis), divine-lock (Redis)
+> **State Stores**: divine-deities (MySQL), divine-blessings (MySQL), divine-attention (Redis), divine-lock (Redis)
 > **Implementation Map**: [docs/maps/DIVINE.md](../maps/DIVINE.md)
 > **Planning**: [docs/plans/DIVINE.md](../plans/DIVINE.md)
 > **Short**: Pantheon management, divinity economy, blessing orchestration (composes Currency/Seed/Collection/Status)
@@ -19,7 +19,13 @@ Pantheon management service (L4 GameFeatures) for deity entities, divinity econo
 
 **Divine actors are both puppetmasters and gardeners**: A god tending a physical realm region (spawning encounters, adjusting NPC moods, orchestrating narrative opportunities) and a god tending a player's conceptual garden space (spawning POIs, managing scenario selection, guiding discovery) are the same operation from different perspectives -- two sides of the same coin. The divine actor launched via Puppetmaster as a regional watcher also serves as the gardener behavior actor for player experience orchestration via Gardener's APIs. Whether the "space" being tended is a physical location in the game world or an abstract conceptual space (a void garden, a lobby, player housing) is a behavioral distinction encoded in the god's ABML behavior document, not a structural difference in the actor type. This means: (1) the same god (e.g., Moira/Fate) that creates emergent content in the physical world also curates which experiences reach players through their gardens, directly connecting the content flywheel to the player experience; (2) any conceptual space can potentially become a physical space and vice versa, because the transition is just the god shifting focus between garden types; (3) lib-gardener provides the tools (garden instances, POIs, scenarios, entity associations), lib-puppetmaster provides the actor lifecycle, and lib-divine provides the identity and economy of the entity doing the tending.
 
-**Dynamic character binding via lib-genesis**: Deity entities are created as genesis entities using the "deity_domain" template. [lib-genesis](GENESIS.md) (L2) handles the full Actor-Bound Entity lifecycle — seed creation, divinity wallet provisioning, actor spawning at Stirring phase, character creation and binding at Awakened phase. Divine subscribes to `genesis.entity.phase-changed` for divine-specific post-transition work (attention slot initialization, follower management setup, divinity economy activation). The ABML behavior document supports both pre- and post-binding states — before binding, `${personality.*}` expressions resolve to null and the god uses default decision paths; after binding, the god reasons with its full personality, history, and encounter memory. This means deity creation doesn't need to block on character provisioning, and the god can begin its duties immediately.
+**Dynamic character binding via lib-genesis**: Deity entities are created as genesis entities using the "deity_domain" template. Divine creates the deity's seed externally (via Seed API) and passes the seedId to Genesis via the nullable `seedId` parameter on `/genesis/entity/create` — this allows Divine to retain the seedId for seed bond operations while Genesis manages the lifecycle. [lib-genesis](GENESIS.md) (L2) handles the full Actor-Bound Entity lifecycle — wallet provisioning, actor spawning at Stirring phase, character creation and binding at Awakened phase. Divine subscribes to `genesis.entity.phase-changed` for divine-specific post-transition work (attention slot initialization, follower management setup, divinity economy activation). The ABML behavior document supports both pre- and post-binding states — before binding, `${personality.*}` expressions resolve to null and the god uses default decision paths; after binding, the god reasons with its full personality, history, and encounter memory. This means deity creation doesn't need to block on character provisioning, and the god can begin its duties immediately. See [DIVINITY-GENERATION-ARCHITECTURE.md](../planning/DIVINITY-GENERATION-ARCHITECTURE.md) for the full external seed adoption pattern.
+
+**Divinity generation via seed bond propagation**: Divinity is NOT generated from Analytics events. Instead, mortal domain activity flows to gods through Seed's bond propagation mechanism. Characters have domain seeds (e.g., "war", "craft") that can be bonded to a god's matching domain seed. When a character's seed grows (from wallet credits via Genesis growth mappings), the bond propagates a configurable ratio of that growth to the god's seed. This operates entirely at L2 with no Divine involvement — Seed handles propagation, Genesis handles phase transitions. Direct divinity (prayer, offerings) credits the god's wallet directly. The god-actor perceives accumulated resources via variable providers and makes autonomous GOAP decisions. See [DIVINITY-GENERATION-ARCHITECTURE.md](../planning/DIVINITY-GENERATION-ARCHITECTURE.md) for the full architecture.
+
+**Patron deity and auto-bonding**: Characters have a `patronDeityCode` field (opaque string, nullable) on the Character record (L2). Character Lifecycle (L4) provides generational inheritance — children inherit their parents' patron deity. When Divine detects a `patronDeityCode` change (via `character.updated` event), it looks up the deity code in a runtime bond template registry (built from deity actor seed data at startup) and auto-initiates seed bonds between the character's domain seeds and the patron god's matching seeds. Bond `PropagationDirection` and `PropagationRatio` are per-bond, configured in the deity's bond template — different gods offer different bond characteristics (Ares: aggressive one-way `AToB`; Athena: balanced `Bidirectional`). Patron (god favors character) and follower (character favors god) are separate relationships that map to bond direction.
+
+**Deity deprecation lifecycle (Category A)**: Deities are world-building definitions referenced by blessings and followers. Per T31, they support Category A deprecation: deprecate (with reason), undeprecate (gods can return), and merge (transfer followers/blessings to another deity). Merge auto-dissolves follower seed bonds to the deprecated deity and creates new bonds to the target deity per its bond template. Delete requires `IsDeprecated == true`. `IDeprecateAndMergeEntity` marker interface.
 
 **Zero Arcadia-specific content**: lib-divine is a generic pantheon management service. Arcadia's 18 Old Gods are configured through behaviors and templates at deployment time, not baked into lib-divine.
 
@@ -199,7 +205,6 @@ Some services that list characters may want to exclude system realms by default.
 | `DivinityCostStandard` | `DIVINE_DIVINITY_COST_STANDARD` | `50.0` | Divinity cost for Standard tier blessing |
 | `DivinityCostGreater` | `DIVINE_DIVINITY_COST_GREATER` | `200.0` | Divinity cost for Greater tier blessing |
 | `DivinityCostSupreme` | `DIVINE_DIVINITY_COST_SUPREME` | `1000.0` | Divinity cost for Supreme tier blessing |
-| `DivinityGenerationMultiplier` | `DIVINE_DIVINITY_GENERATION_MULTIPLIER` | `1.0` | Global multiplier for all divinity generation from mortal actions |
 | `BlessingCollectionType` | `DIVINE_BLESSING_COLLECTION_TYPE` | `divine_blessings` | Collection type code for permanent blessings via lib-collection |
 | `BlessingStatusCategory` | `DIVINE_BLESSING_STATUS_CATEGORY` | `divine_blessing` | Status category code for temporary blessings via Status Inventory |
 | `MaxBlessingsPerEntity` | `DIVINE_MAX_BLESSINGS_PER_ENTITY` | `10` | Maximum active blessings an entity can hold simultaneously |
@@ -211,74 +216,86 @@ Some services that list characters may want to exclude system realms by default.
 | `DeitySeedTypeCode` | `DIVINE_DEITY_SEED_TYPE_CODE` | `deity_domain` | Seed type code for deity domain power growth |
 | `DeityActorTypeCode` | `DIVINE_DEITY_ACTOR_TYPE_CODE` | `deity_watcher` | Actor type code for deity watcher actors via Puppetmaster |
 | `AttentionWorkerIntervalSeconds` | `DIVINE_ATTENTION_WORKER_INTERVAL_SECONDS` | `60` | Seconds between attention decay worker cycles |
-| `DivinityGenerationWorkerIntervalSeconds` | `DIVINE_DIVINITY_GENERATION_WORKER_INTERVAL_SECONDS` | `30` | Seconds between divinity generation worker cycles |
 
 ## Visual Aid
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│ Divine Service Composability │
+│ Divine Service Composability                                         │
 ├──────────────────────────────────────────────────────────────────────┤
-│ │
-│ lib-divine (L4) ── "What a god IS" │
-│ ┌──────────────┐ │
-│ │ DeityModel │──── identity, domains, personality, status │
-│ │ BlessingModel │──── blessing records linking deities to entities │
-│ │ AttentionSlot │──── which characters a god is "watching" │
-│ └──────┬───────┘ │
-│ │ orchestrates │
-│ ▼ │
-│ ┌─────────────────────────────────────────────────────────────┐ │
-│ │ Existing Primitives (L0/L1/L2) │ │
-│ │ │ │
-│ │ Currency ──── divinity wallets (credit/debit/balance) │ │
-│ │ Seed ──────── domain power growth (progressive influence) │ │
-│ │ Relationship ─ follower bonds (deity↔character) │ │
-│ │ Collection ── permanent blessings (Greater/Supreme) │ │
-│ └─────────────────────────────────────────────────────────────┘ │
-│ │ soft dependencies (L4) │
-│ ▼ │
-│ ┌─────────────────────────────────────────────────────────────┐ │
-│ │ Optional Features (L4, graceful degradation) │ │
-│ │ │ │
-│ │ Puppetmaster ─ deity watcher actor lifecycle │ │
-│ │ Status ─────── temporary blessings (Minor/Standard) │ │
-│ │ Analytics ──── domain-relevant divinity generation │ │
-│ └─────────────────────────────────────────────────────────────┘ │
-│ │
-│ Background Workers │
-│ ┌─────────────────────┐ ┌───────────────────────────┐ │
-│ │ AttentionWorker │ │ DivinityGenerationWorker │ │
-│ │ Decays idle slots │ │ Batches events → credits │ │
-│ │ Frees capacity │ │ Aggregates per deity │ │
-│ └─────────────────────┘ └───────────────────────────┘ │
-│ │
-│ God Influence Paths (Two Sides of the Same Coin) │
-│ │
-│ Realm-Tending (via Puppetmaster): │
-│ God's Actor monitors realm events → decides → publishes │
-│ Character's Actor consumes consequences → adjusts behavior │
-│ (gods act through intermediaries, never directly) │
-│ │
-│ Garden-Tending (via Gardener): │
-│ God's Actor monitors player drift/events → decides → calls │
-│ Gardener APIs (spawn POI, manage transitions, shift bindings) │
-│ (same actor, same decision-making, different toolbox) │
+│                                                                      │
+│  lib-divine (L4) ── "What a god IS"                                  │
+│  ┌──────────────┐                                                    │
+│  │ DeityModel   │──── identity, domains, affectations, status        │
+│  │ BlessingModel│──── blessing records linking deities to entities   │
+│  │ AttentionSlot│──── which characters a god is "watching"           │
+│  └──────┬───────┘                                                    │
+│         │ orchestrates                                               │
+│         ▼                                                            │
+│  ┌─────────────────────────────────────────────────────────────┐     │
+│  │ Existing Primitives (L0/L1/L2)                              │     │
+│  │                                                             │     │
+│  │ Currency ──── divinity wallets (credit/debit/balance)       │     │
+│  │ Seed ──────── domain power growth + bond propagation        │     │
+│  │ Genesis ───── entity awakening lifecycle (wallet→seed)      │     │
+│  │ Relationship ─ follower bonds (deity↔character)             │     │
+│  │ Collection ── permanent blessings (Greater/Supreme)         │     │
+│  │ Character ─── patronDeityCode field (opaque, nullable)      │     │
+│  └─────────────────────────────────────────────────────────────┘     │
+│         │ soft dependencies (L4)                                     │
+│         ▼                                                            │
+│  ┌─────────────────────────────────────────────────────────────┐     │
+│  │ Optional Features (L4, graceful degradation)                │     │
+│  │                                                             │     │
+│  │ Puppetmaster ─ deity watcher actor lifecycle                │     │
+│  │ Status ─────── temporary blessings (Minor/Standard)         │     │
+│  │ Char Lifecycle  generational patron deity inheritance       │     │
+│  └─────────────────────────────────────────────────────────────┘     │
+│                                                                      │
+│  Background Workers                                                  │
+│  ┌─────────────────────┐                                             │
+│  │ AttentionWorker     │                                             │
+│  │ Decays idle slots   │                                             │
+│  │ Frees capacity      │                                             │
+│  └─────────────────────┘                                             │
+│                                                                      │
+│  Divinity Generation (L2, no Divine involvement)                     │
+│                                                                      │
+│  Character fights → wallet credit → Genesis growth mapping           │
+│    → character's "war" seed grows                                    │
+│    → Seed bond propagation → god's "war" seed grows                  │
+│    → Genesis ISeedEvolutionListener → god awakens progressively      │
+│  Prayer → credits god's wallet directly → Genesis growth mapping     │
+│    → god's seed grows → god-actor perceives → decides autonomously   │
+│                                                                      │
+│  God Influence Paths (Two Sides of the Same Coin)                    │
+│                                                                      │
+│  Realm-Tending (via Puppetmaster):                                   │
+│    God's Actor monitors realm events → decides → publishes           │
+│    Character's Actor consumes consequences → adjusts behavior        │
+│    (gods act through intermediaries, never directly)                 │
+│                                                                      │
+│  Garden-Tending (via Gardener):                                      │
+│    God's Actor monitors player drift/events → decides → calls        │
+│    Gardener APIs (spawn POI, manage transitions, shift bindings)     │
+│    (same actor, same decision-making, different toolbox)             │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Stubs & Unimplemented Features
 
-All 22 endpoints are currently stubbed (return `NotImplemented`). The following are planned but not yet implemented:
+All endpoints are currently stubbed (return `NotImplemented`). The following are planned but not yet implemented:
 
 1. **All deity CRUD operations**: Create, get, get-by-code, list, update, activate, deactivate, delete
-2. **All divinity economy operations**: Get balance, credit, debit, get history
-3. **All blessing orchestration**: Grant, revoke, list-by-entity, list-by-deity, get
-4. **All follower management**: Register, unregister, get followers
-5. **All cleanup endpoints**: Cleanup-by-character, cleanup-by-game-service
-6. **Background workers**: Attention decay worker and divinity generation worker
-7. **Event handler**: `HandleAnalyticsScoreUpdated` (analytics score -> divinity generation)
-8. **Plugin startup registration**: Seed type, currency definition, relationship types, collection/status templates. Pattern established by Gardener/Faction: call `RegisterSeedTypeAsync` etc. in `OnRunningAsync` with inline definitions, catch 409 for idempotent restart, use config code properties (`DeitySeedTypeCode`, `BlessingCollectionType`, `FollowerRelationshipTypeCode`, `RivalryRelationshipTypeCode`)
+2. **Deity deprecation lifecycle (Category A)**: Deprecate, undeprecate, merge (using shared `MergeDeprecatedRequest`/`MergeDeprecatedResponse`). Delete requires `IsDeprecated == true`.
+3. **All divinity economy operations**: Get balance, credit, debit, get history
+4. **All blessing orchestration**: Grant, revoke, list-by-entity, list-by-deity, get
+5. **All follower management**: Register, unregister, get followers
+6. **All cleanup endpoints**: Cleanup-by-character, cleanup-by-game-service
+7. **Background workers**: Attention decay worker
+8. **Event handlers**: `HandleCharacterUpdated` (patron deity auto-bonding — when `changedFields` includes `patronDeityCode`, look up deity in bond template registry, dissolve old bonds, create new bonds), `HandleCharacterCreated` (initial patron deity auto-bonding at birth)
+9. **Bond template registry**: In-memory `ConcurrentDictionary` mapping deity codes to seed bond templates (direction, ratio per domain). Built from deity actor seed data in `OnRunningAsync`. Invalidated via self-event-subscription on deity created/updated/deleted events.
+10. **Plugin startup registration**: Seed type, currency definition, relationship types, collection/status templates. Pattern established by Gardener/Faction: call `RegisterSeedTypeAsync` etc. in `OnRunningAsync` with inline definitions, catch 409 for idempotent restart, use config code properties (`DeitySeedTypeCode`, `BlessingCollectionType`, `FollowerRelationshipTypeCode`, `RivalryRelationshipTypeCode`)
 
 ## Potential Extensions
 
@@ -301,7 +318,7 @@ All 22 endpoints are currently stubbed (return `NotImplemented`). The following 
 | Field | Category | Type | Rationale |
 |-------|----------|------|-----------|
 | `entityType` | A (Entity Reference) | `EntityType` enum (from `common-api.yaml`) | Identifies which first-class Bannou entity receives a blessing; all valid values (`character`, `account`, `deity`, etc.) are first-class Bannou entities |
-| `status` (DeityResponse) | C (System State/Mode) | `DeityStatus` enum (`active`, `dormant`, `archived`) | Deity lifecycle state machine position; system-managed lifecycle, not game content |
+| `status` (DeityResponse) | C (System State/Mode) | `DeityStatus` enum (`Active`, `Dormant`) | Deity lifecycle state machine position; system-managed lifecycle, not game content. `Archived` removed — deprecation triple-field replaces it (Category A per T31). |
 | `tier` (BlessingResponse) | C (System State/Mode) | `BlessingTier` enum (`minor`, `standard`, `greater`, `supreme`) | Determines divinity cost, storage mechanism (Status vs Collection), and power level; service-specific classification |
 | `status` (BlessingResponse) | C (System State/Mode) | `BlessingStatus` enum (`active`, `revoked`) | Current blessing lifecycle state |
 | `domainCode` | B (Game Content Type) | Opaque string | Domain of divine influence (e.g., `"war"`, `"knowledge"`, `"nature"`); different games define different domains without schema changes |
@@ -329,17 +346,17 @@ All 22 endpoints are currently stubbed (return `NotImplemented`). The following 
 
 5. **Divinity is a shared currency type**: One "divinity" currency definition per game service, but wallets are per-entity. Gods AND humans can hold divinity -- it's used differently but is the same currency type. God-to-god divinity transfers work naturally as Currency transfers.
 
-6. **Personality traits excluded from lifecycle events**: `personalityTraits` is marked as sensitive in `x-lifecycle`, so it is excluded from `DeityCreatedEvent`, `DeityUpdatedEvent`, and `DeityDeletedEvent`. This prevents leaking internal simulation data through broadcast events.
+6. **Divine affectations excluded from lifecycle events**: `divineAffectations` (renamed from `personalityTraits`) is marked as sensitive in `x-lifecycle`, so it is excluded from `DeityCreatedEvent`, `DeityUpdatedEvent`, and `DeityDeletedEvent`. This prevents leaking internal simulation data through broadcast events. `DivineAffectations` (temperament, attentionBias, generosity, jealousy) is divine-specific behavioral config for god-actor ABML decisions — separate from Character Personality (`${personality.*}`) which provides emergent personality via the system realm character brain. Both exist and serve different purposes.
 
-7. **Batched divinity generation**: The `HandleAnalyticsScoreUpdated` handler does not credit divinity immediately. It queues `DivinityEventModel` entries in the Redis event store, which the `DivineDivinityGenerationWorker` processes in batches. This prevents high-frequency analytics events from overwhelming the currency service with individual credit calls.
+7. **~~Batched divinity generation~~**: **Removed (2026-03-16).** The analytics-based divinity generation pipeline (HandleAnalyticsScoreUpdated → DivinityEventModel Redis queue → DivineDivinityGenerationWorker) has been replaced by seed bond propagation. Divinity flows to gods through Seed bonds at L2 with no Divine involvement. The `divine-divinity-events` Redis store and `DivineDivinityGenerationWorker` are no longer needed. See [DIVINITY-GENERATION-ARCHITECTURE.md](../planning/DIVINITY-GENERATION-ARCHITECTURE.md).
 
 ### Design Considerations (Requires Planning)
 
-1. **Domain-to-analytics mapping**: The `HandleAnalyticsScoreUpdated` handler needs a mapping from analytics categories to domain codes. The plan suggests either a config property (`DomainAnalyticsMappings` as JSON string) or a dedicated mapping state store. **Note**: The JSON string config option would violate Implementation Tenets (Configuration-First — no structured data as parseable strings). A dedicated mapping state store with CRUD endpoints, or individual typed config properties per domain, are the tenet-compliant alternatives.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-11:https://github.com/beyond-immersion/bannou-service/issues/636 -->
+1. **~~Domain-to-analytics mapping~~**: **Dissolved (2026-03-16).** The analytics-based divinity generation pipeline has been replaced by seed bond propagation. Mortal domain activity flows to gods through Seed bonds at L2 — no Analytics dependency, no domain-to-analytics mapping needed. See [DIVINITY-GENERATION-ARCHITECTURE.md](../planning/DIVINITY-GENERATION-ARCHITECTURE.md). #636 can be closed.
+<!-- AUDIT:RESOLVED:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/636 -->
 
-2. **No owner validation for blessings**: Entity existence validation depends on the `entityType` -- the service would need to resolve the correct client dynamically. The plan validates characters via `ICharacterClient`, but entity-agnostic blessings may need a pluggable validation strategy. **Investigation (2026-03-16)**: The established codebase pattern (Relationship, Collection) is to skip entity existence validation for polymorphic references — callers are trusted services (`x-permissions: []`). However, the Grant flow spec says "validate entity exists" and follower registration validates character existence, creating an internal inconsistency. Three options: (a) skip validation entirely (match Relationship/Collection pattern), (b) validate only character type where client exists, (c) add more client dependencies. Human decision needed.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/675 -->
+2. **~~No owner validation for blessings~~**: **Resolved (2026-03-16).** Skip entity existence validation for polymorphic `entityId + entityType` on `GrantBlessing`. This matches the established codebase pattern: all 6 L2 services that accept polymorphic entity references (Collection, Relationship, Seed, Currency, Status, Escrow) skip existence validation — callers are trusted services (`x-permissions: []`). Follower registration validates character existence because it uses a typed `characterId` (non-polymorphic), which is a different pattern. See [DIVINITY-GENERATION-ARCHITECTURE.md](../planning/DIVINITY-GENERATION-ARCHITECTURE.md) Q5 and [#675](https://github.com/beyond-immersion/bannou-service/issues/675).
+<!-- AUDIT:RESOLVED:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/675 -->
 
 ## Work Tracking
 

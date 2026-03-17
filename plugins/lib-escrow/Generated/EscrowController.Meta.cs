@@ -14087,4 +14087,108 @@ public partial class EscrowController
             _DeregisterHandler_ResponseSchema));
 
     #endregion
+
+    #region Meta Endpoints for CleanupByCharacter
+
+    private static readonly string _CleanupByCharacter_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupByCharacterRequest",
+    "$defs": {
+        "CleanupByCharacterRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to clean up escrow data for a deleted character",
+            "required": [
+                "characterId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Character ID whose escrow data should be cleaned up"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CleanupByCharacter_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupByCharacterResponse",
+    "$defs": {
+        "CleanupByCharacterResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response from character cleanup operation",
+            "required": [
+                "agreementsDeleted"
+            ],
+            "properties": {
+                "agreementsDeleted": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Number of escrow agreements cleaned up"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CleanupByCharacter_Info = """
+{
+    "summary": "Clean up escrow data for a deleted character",
+    "description": "Removes all escrow agreement records and associated data (tokens, status indexes,\nparty pending counts, validation tracking) where the specified character is a party.\nCalled by lib-resource during character deletion CASCADE cleanup.\ nService-to-service only \u2014 not exposed to WebSocket clients.\n",
+    "tags": [
+        "Admin"
+    ],
+    "deprecated": false,
+    "operationId": "cleanupByCharacter"
+}
+""";
+
+    /// <summary>Returns endpoint information for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/cleanup-by-character/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Escrow",
+            "POST",
+            "/escrow/cleanup-by-character",
+            _CleanupByCharacter_Info));
+
+    /// <summary>Returns request schema for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/cleanup-by-character/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/cleanup-by-character",
+            "request-schema",
+            _CleanupByCharacter_RequestSchema));
+
+    /// <summary>Returns response schema for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/cleanup-by-character/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/cleanup-by-character",
+            "response-schema",
+            _CleanupByCharacter_ResponseSchema));
+
+    /// <summary>Returns full schema for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/cleanup-by-character/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/cleanup-by-character",
+            _CleanupByCharacter_Info,
+            _CleanupByCharacter_RequestSchema,
+            _CleanupByCharacter_ResponseSchema));
+
+    #endregion
 }

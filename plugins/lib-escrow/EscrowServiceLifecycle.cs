@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Events;
 using Microsoft.Extensions.Logging;
+using System.Linq.Expressions;
 using System.Xml;
 
 namespace BeyondImmersion.BannouService.Escrow;
@@ -286,71 +287,53 @@ public partial class EscrowService
         ListEscrowsRequest body,
         CancellationToken cancellationToken = default)
     {
-        var results = new List<EscrowAgreement>();
-        var limit = body.Limit ?? _configuration.DefaultListLimit;
+        var pageSize = body.Limit ?? _configuration.DefaultListLimit;
         var offset = body.Offset ?? 0;
+        var page = offset / pageSize;
 
-        int totalCount;
+        Expression<Func<EscrowAgreementModel, bool>>? predicate = null;
+        var hasStatusFilter = body.Status != null && body.Status.Count > 0;
 
-        if (body.PartyId != null)
+        if (body.PartyId != null && hasStatusFilter)
         {
-            var allAgreements = await _agreementStore.QueryAsync(
-                a => a.Parties != null && a.Parties.Any(p =>
-                    p.PartyId == body.PartyId.Value &&
-                    (body.PartyType == null || p.PartyType == body.PartyType)),
-                cancellationToken);
-
-            var filtered = allAgreements.AsEnumerable();
-
-            if (body.Status != null && body.Status.Count > 0)
-            {
-                var statusSet = body.Status.ToHashSet();
-                filtered = filtered.Where(a => statusSet.Contains(a.Status));
-            }
-
-            var allFiltered = filtered.ToList();
-            totalCount = allFiltered.Count;
-
-            results = allFiltered
-                .Skip(offset)
-                .Take(limit)
-                .Select(MapToApiModel)
-                .ToList();
+            var partyId = body.PartyId.Value;
+            var partyType = body.PartyType;
+            var statusSet = body.Status!.ToHashSet();
+            predicate = a => a.Parties != null && a.Parties.Any(p =>
+                    p.PartyId == partyId &&
+                    (partyType == null || p.PartyType == partyType))
+                && statusSet.Contains(a.Status);
         }
-        else if (body.Status != null && body.Status.Count > 0)
+        else if (body.PartyId != null)
         {
-            var statusSet = body.Status.ToHashSet();
-            var allAgreements = await _agreementStore.QueryAsync(
-                a => statusSet.Contains(a.Status),
-                cancellationToken);
-
-            totalCount = allAgreements.Count;
-
-            results = allAgreements
-                .Skip(offset)
-                .Take(limit)
-                .Select(MapToApiModel)
-                .ToList();
+            var partyId = body.PartyId.Value;
+            var partyType = body.PartyType;
+            predicate = a => a.Parties != null && a.Parties.Any(p =>
+                p.PartyId == partyId &&
+                (partyType == null || p.PartyType == partyType));
         }
-        else
+        else if (hasStatusFilter)
         {
-            var allAgreements = await _agreementStore.QueryAsync(
-                a => true,
-                cancellationToken);
-
-            totalCount = allAgreements.Count;
-
-            results = allAgreements
-                .Skip(offset)
-                .Take(limit)
-                .Select(MapToApiModel)
-                .ToList();
+            var statusSet = body.Status!.ToHashSet();
+            predicate = a => statusSet.Contains(a.Status);
         }
+
+        var pagedResult = await _agreementStore.QueryPagedAsync(
+            predicate,
+            page,
+            pageSize,
+            orderBy: a => a.CreatedAt,
+            descending: true,
+            cancellationToken);
+
+        var results = pagedResult.Items
+            .Select(MapToApiModel)
+            .ToList();
 
         return (StatusCodes.OK, new ListEscrowsResponse
         {
             Escrows = results,
-            TotalCount = totalCount
+            TotalCount = (int)pagedResult.TotalCount
         });
     }
 

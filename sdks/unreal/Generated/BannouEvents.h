@@ -162,6 +162,9 @@ namespace Bannou
         /** Sent to the wallet owner when their wallet is unfrozen and usable again. */
         constexpr const TCHAR* CurrencyWalletUnfrozen = TEXT("currency.wallet.unfrozen");
 
+        /** Pushed to clients when weather changes at a player's location */
+        constexpr const TCHAR* EnvironmentWeatherTransitioned = TEXT("environment.weather.transitioned");
+
         /** Sent to relevant players when a game action produces results. */
         constexpr const TCHAR* GameSessionActionResult = TEXT("game-session.action-result");
 

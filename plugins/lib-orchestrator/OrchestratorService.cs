@@ -603,11 +603,11 @@ public partial class OrchestratorService : IOrchestratorService
             // This ensures deployed containers inherit all service configuration
             // (AUTH_*, STATE_*, CONNECT_*, etc.) without needing to duplicate in presets
             //
-            // IMPLEMENTATION TENETS exception: Direct Environment.GetEnvironmentVariables() access
+            // IMPLEMENTATION TENETS exception: Direct System.Environment.GetEnvironmentVariables() access
             // is required here because we're forwarding UNKNOWN configuration to deployed containers.
             // This is the orchestrator's core responsibility - not reading config for itself.
             // Uses strict whitelist (IsAllowedEnvironmentVariable) and excludes per-container values.
-            foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
+            foreach (System.Collections.DictionaryEntry entry in System.Environment.GetEnvironmentVariables())
             {
                 var key = entry.Key?.ToString();
                 var value = entry.Value?.ToString();
@@ -683,7 +683,7 @@ public partial class OrchestratorService : IOrchestratorService
                 {
                     Name = node.Name,
                     Status = DeployedServiceStatus.Starting, // Use Starting as placeholder for dryRun
-                    Node = Environment.MachineName
+                    Node = System.Environment.MachineName
                 });
                 _logger.LogDebug(
                     "DryRun mode: Would deploy node {NodeName} with app-id {AppId}, services: {Services}",
@@ -704,7 +704,7 @@ public partial class OrchestratorService : IOrchestratorService
                 {
                     Name = node.Name,
                     Status = DeployedServiceStatus.Starting,
-                    Node = Environment.MachineName
+                    Node = System.Environment.MachineName
                 });
 
                 // Register service routing for each service on this node
@@ -1059,7 +1059,7 @@ public partial class OrchestratorService : IOrchestratorService
             {
                 Name = c.AppName ?? "unknown",
                 Status = MapContainerStatusToDeployedServiceStatus(c.Status),
-                Node = Environment.MachineName
+                Node = System.Environment.MachineName
             }).ToList()
         };
 
