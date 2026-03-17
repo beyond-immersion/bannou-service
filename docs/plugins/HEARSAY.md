@@ -101,7 +101,7 @@ Where `reinforcementFactor` depends on the new source's channel type and `source
 **Convergence**: A background worker drifts beliefs toward reality for NPCs in proximity to the belief subject. An NPC living in a faction's territory slowly converges toward the actual norms of that faction. An NPC living near a "dangerous" location gradually learns the actual danger level. Convergence speed depends on:
 - Proximity (living there vs. visiting vs. far away)
 - Social connectedness (more encounters = faster norm propagation)
-- Personality traits (openness affects receptivity to new information; conscientiousness affects how carefully they verify claims)
+- Personality traits (all eight axes modulate convergence — see [Personality-Driven Information Processing](#personality-driven-information-processing) for the full model)
 
 ---
 
@@ -395,6 +395,116 @@ The god creates narrative opportunities by manipulating social information. If m
 
 ---
 
+## Personality-Driven Information Processing
+
+Personality mediates how NPCs process information at three stages: **reception** (acquiring beliefs), **inference** (filling gaps in incomplete information), and **retransmission** (passing beliefs to others). All eight personality trait axes participate, organized into three functional tiers. The mapping should be data-driven (configurable weights per trait per stage, following the same pattern as Obligation's trait-to-violation-cost mapping), not hardcoded.
+
+### The Three-Tier Trait Model
+
+**Tier 1 — Interpretation Filters** (affect what information MEANS to the NPC):
+
+| Trait | -1 Pole | +1 Pole | Reception Effect | Inference Effect | Retransmission Effect |
+|-------|---------|---------|-----------------|-----------------|----------------------|
+| **Openness** | Conventional/closed | Creative/open | Rejects novel claims, defaults to existing beliefs | Generates mundane/conventional hypotheses | Sticks to what they heard |
+| **Agreeableness** | Antagonistic/suspicious | Trusting/charitable | Discounts source credibility, assumes deception | Cynical interpretations — "who benefits?" | Sharpens negative content |
+| **Neuroticism** | Emotionally stable | Anxious/reactive | Amplifies alarming claims, escalates urgency | Threat-biased gap-filling, worst-case scenarios | Exaggerates danger/urgency elements |
+| **Aggression** | Passive/peaceful | Confrontational/combative | Amplifies conflict-related claims | Hostile/combative interpretations | Frames with confrontational language |
+
+These four traits determine *which hypothesis gets selected* when an NPC fills in gaps via Lexicon association-based inference. Agreeableness and Neuroticism overlap on threat-related interpretation but from different angles: low Agreeableness attributes hostile intent ("someone did this deliberately"), high Neuroticism amplifies perceived risk ("this is more dangerous than it looks"). An NPC with both is *paranoid*; an NPC with neither is *naively optimistic*. These archetypes emerge from axis composition, not from discrete type definitions.
+
+**Tier 2 — Quality Filters** (affect how information is processed, not what it means):
+
+| Trait | -1 Pole | +1 Pole | Reception Effect | Inference Effect | Retransmission Effect |
+|-------|---------|---------|-----------------|-----------------|----------------------|
+| **Conscientiousness** | Impulsive/careless | Careful/diligent | Accepts claims without verification | Many hypotheses, none tested | Loses detail, sloppy retelling |
+| **Honesty** | Deceptive/manipulative | Truthful/transparent | Minimal effect on internal processing | Minimal effect on internal inference | Deliberate distortion for advantage vs. faithful retransmission |
+
+Conscientiousness is the signal fidelity axis — it controls how much information degrades in transit. Honesty is almost exclusively a retransmission property: a dishonest NPC doesn't necessarily *think* differently, they *tell* differently. Low Honesty introduces *intentional* distortion (adding false elements, omitting inconvenient ones), distinct from the stochastic distortion all NPCs produce.
+
+**Tier 3 — Distribution Properties** (affect how information moves through social networks):
+
+| Trait | -1 Pole | +1 Pole | Reception Effect | Inference Effect | Retransmission Effect |
+|-------|---------|---------|-----------------|-----------------|----------------------|
+| **Extraversion** | Reserved/insular | Social/outgoing | Fewer information sources, insular bubble | Minimal | Tells many people, broad reach, faster propagation |
+| **Loyalty** | Self-interested | Devoted/faithful | Boosts in-group source credibility, discounts out-group | Favors hypotheses that align with group consensus | Protects in-group reputation in retelling |
+
+These traits control the social dynamics of information flow — reach, speed, and tribal filtering — without affecting interpretation content.
+
+### Composite Personality Archetypes
+
+Multi-axis personality vectors produce emergent interpretive profiles without defining named types:
+
+| Emergent Archetype | Personality Composite | Information Processing Style |
+|----|----|----|
+| **Paranoid** | low Agreeableness + high Neuroticism + high Aggression | "This was an attack, it's extremely dangerous, and we need to strike back" |
+| **Scholar** | high Conscientiousness + high Openness + low Neuroticism | "Fascinating phenomenon — let me gather evidence and consider multiple explanations" |
+| **Gossip** | high Extraversion + low Conscientiousness + low Honesty | Broad reach, low fidelity, embellished for entertainment value |
+| **Faithful** | high Loyalty + high Agreeableness + low Openness | "Our elders say it was divine; I trust their wisdom" |
+| **Mystic** | high Openness + high Neuroticism + low Conscientiousness | "A sign from beyond! The spirits are restless! Something terrible and wonderful!" |
+| **Pragmatist** | low Openness + high Conscientiousness + low Neuroticism | "Probably a mundane explanation. Let's check the trap mechanisms." |
+
+These archetypes are illustrative — actual NPC behavior emerges from the continuous 8-axis vector, not from discrete categories. A village of predominantly high-Conscientiousness NPCs (scholars, craftsmen) would collectively converge on cautious, evidence-based interpretations. A settlement of high-Openness NPCs (artists, mystics) would generate wilder, more supernatural explanations. These community-level interpretation patterns emerge from personality distribution, not from design.
+
+### Personality-Modulated Inference (Gap-Filling)
+
+When an NPC encounters incomplete information (e.g., a flash of light and a disappearance at a dungeon), Hearsay can generate hypothesis beliefs by querying Lexicon associations for the known elements and applying personality-weighted selection. This is Hearsay's responsibility — Lexicon provides the association data (the candidate hypotheses), but the inference engine that selects among them lives in Hearsay.
+
+**Inference flow:**
+1. NPC encounters event with incomplete information (some Lexicon elements observed, gaps remain)
+2. Hearsay identifies gaps in the information
+3. Hearsay queries Lexicon for associations to the known elements, gated by the NPC's Collection discovery level
+4. Candidate hypotheses are scored against the NPC's personality vector (Tier 1 traits weight which associations are selected)
+5. The highest-scoring hypothesis becomes a new self-generated Hearsay belief at personality-modulated confidence
+
+**Example — flash of light at dungeon entrance:**
+```
+Observed elements: [FLASH_OF_LIGHT] + [DISAPPEARANCE] + [TREASURE_LOCATION]
+
+Lexicon associations for FLASH_OF_LIGHT:
+  → divine_manifestation (strength 0.4, category: supernatural)
+  → trap_mechanism (strength 0.5, category: mechanical)
+  → teleportation (strength 0.6, category: arcane)
+  → explosion (strength 0.3, category: threat)
+
+Personality scoring (Tier 1 traits weight candidate selection):
+  Paranoid NPC (-0.7 agree, +0.8 neuro, +0.6 aggr):
+    → trap_mechanism boosted by Neuroticism (threat) + Aggression (conflict)
+    → Infers: hostile trap, possibly enemy action
+    → Creates belief: {domain: Knowledge, claim: trap_mechanism, confidence: 0.35}
+
+  Scholar NPC (+0.8 consc, +0.6 open, -0.3 neuro):
+    → Multiple hypotheses generated (high Openness), none selected prematurely
+      (high Conscientiousness suspends judgment)
+    → Creates weaker beliefs for several candidates, awaits more evidence
+
+  Faithful NPC (+0.9 loyalty, +0.7 agree, -0.5 open):
+    → divine_manifestation boosted by Loyalty (aligns with temple teachings)
+      + Agreeableness (charitable interpretation)
+    → Infers: divine blessing from local deity
+    → Creates belief: {domain: Knowledge, claim: divine_manifestation, confidence: 0.4}
+```
+
+**Inference vs. asking questions:** These mechanisms coexist. An NPC with high Conscientiousness is more likely to ask questions (seeking verification) before acting on inferences. An NPC with low Conscientiousness and high Openness generates hypotheses freely and acts on them without verification. The choice between "ask" and "infer" is itself personality-driven.
+
+**Collection gating applies:** An NPC who hasn't discovered `divine_manifestation` (e.g., tier 5 concept) cannot generate that hypothesis regardless of personality. They fill the gap with a lower-tier association instead. Knowledge breadth (Collection) AND personality together determine interpretation.
+
+### Personality-Modulated Retransmission
+
+When an NPC retransmits a belief to another NPC (encounter-triggered propagation), personality modulates what happens to the information:
+
+- **Conscientiousness** scales the `RumorDistortionFactor`: high Conscientiousness reduces stochastic element loss; low Conscientiousness amplifies it
+- **Honesty** introduces *directional* distortion: low Honesty may add elements that serve the NPC's interests or omit elements that don't, distinct from stochastic fidelity loss
+- **Extraversion** affects propagation probability: high Extraversion increases the `EncounterPropagationChance`; low Extraversion decreases it
+- **Neuroticism** biases which elements survive: threat-related elements are preserved (and possibly amplified) while reassuring elements are lost
+- **Agreeableness** biases element survival: negative/threatening elements are softened (high) or sharpened (low)
+- **Aggression** biases element survival: conflict-related elements are amplified (high) or dampened (low)
+- **Openness** affects element breadth: high Openness retransmits more elements (including speculative associations); low Openness strips to core facts only
+- **Loyalty** biases content based on in-group/out-group: information favorable to in-group is preserved; unfavorable information is downplayed
+
+The existing six distortion rules (association loss, specificity decay, context stripping, intent preservation, confidence reduction, personality mediation) remain — personality modulation adds *directional bias* to what was previously a stochastic degradation process. The same event propagating through different personality clusters produces fundamentally different belief networks, which is how organic folklore forms.
+
+---
+
 ## Dependencies (What This Plugin Relies On)
 
 ### Hard Dependencies (constructor injection -- crash if missing)
@@ -415,7 +525,7 @@ The god creates narrative opportunities by manipulating social information. If m
 |------------|-------|-----------------------|
 | lib-faction (`IFactionClient`) | Querying actual norms for convergence worker (ground truth for norm beliefs) | Norm beliefs never converge -- they persist at whatever confidence they were acquired at, and decay normally |
 | lib-character-encounter (`ICharacterEncounterClient`) | Querying actual sentiment for convergence of character beliefs | Character beliefs never converge toward encounter-based truth |
-| lib-character-personality (`ICharacterPersonalityClient`) | Personality-mediated belief receptivity (openness affects how readily NPCs accept new claims) | All NPCs have equal receptivity to new beliefs |
+| lib-character-personality (`ICharacterPersonalityClient`) | All eight personality trait axes modulate belief reception (confidence assignment, receptivity), inference (hypothesis generation from Lexicon associations), and retransmission (distortion direction, propagation probability). See [Personality-Driven Information Processing](#personality-driven-information-processing) | All NPCs have equal receptivity, stochastic-only distortion, no inference generation |
 | lib-puppetmaster (`IPuppetmasterClient`) | Divine rumor injection coordination, regional watcher notification of belief saturation events | Divine rumor injection unavailable; saturation events not notified |
 | lib-obligation (event-only: `obligation.violation.reported`) | Subscribing to violation events for witness-based belief creation about violating characters | No witness-based beliefs from violations; only encounter-triggered and faction-triggered beliefs |
 | lib-lexicon (`ILexiconClient`) | Querying Lexicon ground truth for Knowledge domain belief convergence (actual trait values for entries) | Knowledge beliefs never converge -- they persist at whatever confidence they were acquired at, and decay normally |
@@ -507,7 +617,7 @@ The god creates narrative opportunities by manipulating social information. If m
 | `faction.norm.updated` | `HandleNormUpdatedAsync` | Update believed values for NPCs who already hold beliefs about this norm. |
 | `faction.norm.deleted` | `HandleNormDeletedAsync` | Mark beliefs about this norm as stale. |
 | `faction.realm-baseline.designated` | `HandleRealmBaselineDesignatedAsync` | Start slow propagation of realm baseline norm beliefs. |
-| `encounter.recorded` | `HandleEncounterRecordedAsync` | Propagation trigger: when two characters meet, beliefs may propagate between them based on relationship closeness, encounter context, and personality receptivity. |
+| `encounter.recorded` | `HandleEncounterRecordedAsync` | Propagation trigger: when two characters meet, beliefs may propagate between them based on relationship closeness, encounter context, and personality-driven retransmission (Extraversion modulates propagation probability; Tier 1/2 traits modulate distortion direction and fidelity). |
 | `obligation.violation.reported` | `HandleViolationReportedAsync` | If the violation was witnessed, create `DirectObservation` beliefs about the violating character for witnesses. Potential propagation trigger if witnesses share what they saw. |
 
 ### Resource Cleanup (FOUNDATION TENETS)
@@ -977,12 +1087,16 @@ Belief identity and propagation are owned here. Actual norm data comes from Fact
 - Implement propagation worker (advancing rumor waves through social networks)
 - Implement distortion mechanics (telephone-game effect during propagation)
 
-### Phase 3: Convergence and Decay
+### Phase 3: Convergence, Decay, and Personality Integration
 
 - Implement convergence worker (drift beliefs toward ground truth)
 - Implement decay worker (degrade confidence over time)
 - Implement correction mechanics (direct observation contradicts belief)
-- Implement personality-mediated receptivity (openness affects belief acquisition)
+- Implement personality-driven information processing (all eight trait axes):
+  - Reception: personality modulates confidence assignment within channel ranges
+  - Inference: personality-weighted hypothesis generation from Lexicon associations (Tier 1 traits select among candidate hypotheses)
+  - Retransmission: personality modulates distortion direction, element survival bias, and propagation probability
+  - Data-driven trait-to-effect mapping (configurable weights, not hardcoded)
 
 ### Phase 4: Storyline Integration
 
@@ -1100,7 +1214,7 @@ Behavior authors choose:
 
 5. **Variable provider performance**: The belief manifest cache must be fast enough for Actor's 100-500ms decision cycle. Pre-aggregation in Redis is the current plan. May need character-scoped sub-caching for frequently accessed beliefs (e.g., norm beliefs at current location).
 
-6. **Personality integration depth**: How much should personality affect belief mechanics? Current plan: openness affects receptivity, conscientiousness affects verification tendency. Could extend to: neuroticism amplifies negative beliefs, agreeableness biases toward positive interpretations, etc. The mapping should be data-driven (like obligation's trait-to-violation mapping), not hardcoded.
+6. ~~**Personality integration depth**~~: **RESOLVED** (2026-03-17) — All eight trait axes participate across three stages (reception, inference, retransmission), organized into three functional tiers: Tier 1 interpretation filters (Openness, Agreeableness, Neuroticism, Aggression), Tier 2 quality filters (Conscientiousness, Honesty), and Tier 3 distribution properties (Extraversion, Loyalty). The mapping is data-driven (configurable weights per trait per stage). See [Personality-Driven Information Processing](#personality-driven-information-processing).
 
 7. **x-permissions per endpoint** *(audit finding, deferred)*: Should the deep dive explicitly specify `x-permissions` for all 18 endpoints, or is the current style (noting `developer` role where applicable, everything else implicitly `[]` per "internal-only, never internet-facing") sufficient? mandates x-permissions on schema endpoints; the deep dive currently documents role requirements implicitly. Resolve during schema creation.
 

@@ -357,6 +357,19 @@ The same principle applies to success responses: **every property in a response 
 | **Changed state** | `newPhase`, `capabilities` | Side effects the caller needs to know about |
 | **Operational data** | `nextHeartbeatSeconds`, `ttlSeconds` | Caller needs this to schedule future actions |
 | **Cache/version info** | `version`, `etag` | Caller needs this for cache invalidation or optimistic concurrency |
+| **Resolved defaults** | `page`, `pageSize` on a list response | Caller may not have sent these (nullable in request); server resolves defaults |
+| **Server-adjusted values** | `pageSize` clamped to max | Server may return a different value than requested |
+
+#### Nullable Request Fields and Unknowable Response Values (NOT Echoes)
+
+A response field that shares a name with a request field is NOT automatically an echo. Apply this mechanical check:
+
+1. **Is the request field nullable?** If the caller may not have sent it, the response is providing the resolved value — that's new information.
+2. **Can the server return a different value than the caller sent?** If the server clamps, normalizes, or adjusts the value (e.g., `pageSize` clamped to a maximum, `page` adjusted when beyond the last page), the response value is unknowable to the caller.
+
+If either test is true, the field is meaningful. Only when the request field is required AND the server always returns the exact same value verbatim is it a true echo.
+
+**Pagination is the canonical example**: `page` and `pageSize` are nearly always nullable in requests (with server-side defaults), and the server may adjust values (clamping `pageSize` to a maximum, returning the last valid page when the requested page is beyond the dataset). `totalCount` alongside `page` and `pageSize` gives the caller the full pagination context: what page they got, how many items per page, and how many total items exist. All three are meaningful in list/query responses.
 
 #### The Litmus Test
 

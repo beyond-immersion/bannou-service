@@ -410,6 +410,89 @@ The flywheel doesn't just generate stories -- it generates the **geometry those 
 
 ---
 
+## Voxel SDK Integration
+
+lib-procedural is the primary server-side consumer of the voxel SDK family (voxel-core, voxel-builder, voxel-generator). Two integration paths exist, composable:
+
+### Path A: Voxel Generators as Lightweight Houdini Alternative
+
+For discrete geometry that doesn't need Houdini's power, voxel-generator's algorithms run directly in lib-procedural's process. No container, no license, sub-second generation:
+
+```
+lib-procedural receives generation request
+  |
+  +--> template_type = "houdini" → route to Houdini worker (existing path)
+  +--> template_type = "voxel"   → execute IVoxelGenerator in-process (new path)
+         |
+         +-- PrimitiveGenerator: "Generate a 20x10x20 stone building"
+         +-- WFC Generator: "Generate connected dungeon wing from tileset X"
+         +-- NoiseGenerator: "Generate terrain chunk at coordinates Y"
+         +-- TemplateStamper: "Stamp door/window/roof templates onto building shell"
+         |
+         VoxelGrid → GreedyMesher → MeshExporter.ExportGlb() → upload to Asset
+         OR VoxelGrid → VoxelSerializer → .bvox → upload to Asset
+         → return asset reference
+```
+
+The `template_type` field in the generation request discriminates between Houdini and voxel paths. Voxel generators use the same deterministic content-addressed caching as Houdini (`SHA256(generatorId + params + seed) → cached result`). The voxel path bypasses Orchestrator worker pools entirely — generation runs in the lib-procedural process.
+
+### Path B: Terrain Overlay (Voxelize → Edit → Bake)
+
+The terrain overlay workflow for work zones (roadwork, construction, landscaping):
+
+```
+1. Client/actor designates a work zone (bounding box in world coordinates)
+
+2. lib-procedural fetches terrain data for the work zone:
+   → lib-scene: get scene node(s) covering the work zone
+   → Asset service: download the terrain asset (.glb mesh or heightmap)
+
+3. lib-procedural converts terrain to voxels:
+   → IF heightmap: HeightmapVoxelizer.Voxelize(heights, materials, palette, options)
+   → IF mesh: GltfImporter.Import(glbBytes) → MeshData → MeshVoxelizer.Voxelize(meshData, ...)
+   → FrozenBorderWidth voxels around edges locked to match surrounding terrain
+   → Serialize to .bvox → upload to Asset service
+   → Register voxel overlay in lib-scene as a "voxel" node type
+
+4. Players/NPCs edit the voxel overlay via VoxelBuilder:
+   → Dig, flatten, tunnel, build within the editable (non-frozen) region
+   → Save-Load persists delta saves (modified chunks only)
+   → Frozen border prevents edits that would break the terrain seam
+
+5. Work zone completion validation:
+   → Grade matching: edited surface at borders matches surrounding terrain heights
+   → Structural stability: no floating islands, unsupported overhangs within tolerance
+   → Drainage/access: game-specific sanity checks
+
+6. Bake to permanent mesh:
+   → VoxelGrid → GreedyMesher or MarchingCubesMesher → MeshData → .glb
+   → Upload baked mesh to Asset service
+   → Replace voxel scene node with mesh scene node
+   → Delete voxel overlay data (Save-Load deltas, .bvox asset)
+   → The work zone becomes permanent terrain — efficient to store and render
+```
+
+### GltfImporter Location
+
+The terrain overlay workflow needs a glTF/GLB → MeshData parser to convert downloaded terrain meshes into the format MeshVoxelizer accepts. This parser lives in **voxel-builder** as `GltfImporter` alongside the BlockBench and MagicaVoxel importers — it's a format import operation, which is voxel-builder's domain. lib-procedural calls it via project reference.
+
+The heightmap path is simpler — `HeightmapVoxelizer` in voxel-core accepts `float[,]` height arrays directly. lib-procedural reads the heightmap asset (raw float data or image) and passes the array. No intermediate parser needed.
+
+### Consumer Table Update
+
+| Consumer | Use Case | Path | Parameters |
+|----------|----------|------|-----------|
+| **lib-dungeon** (L4) | Chamber generation, layout shifting | A (WFC, TemplateStamper) | Personality, seed, room type, connection points |
+| **lib-puppetmaster** (L4) | Terrain sculpting by regional watchers | A (Noise) or B (terrain overlay) | Biome, event type, intensity |
+| **Gardener / Housing** (L4) | Player housing construction zones | B (terrain overlay) | Zone bounds, terrain source |
+| **NPC builders** (L2, Actor) | Building construction | A (Primitives, TemplateStamper) | Style, dimensions, materials |
+| **Player/NPC sculpting** | Decorative objects in housing | Client-side (no lib-procedural) | VoxelBuilder SDK directly in engine |
+| **Realm seeding** | Initial world geometry batch generation | A (all generators) + Houdini | Region, biome, seed, resolution |
+
+Note that **player/NPC sculpting** (statues, carvings, decor) does NOT route through lib-procedural. The VoxelBuilder SDK runs client-side in the game engine. The finished .bvox data is stored directly via item metadata or Asset service — no server-side generation needed for interactive sculpting.
+
+---
+
 ## Potential Extensions
 
 1. **Texture generation**: Substance Designer integration for procedural textures alongside geometry. Same worker pool pattern, different tool.

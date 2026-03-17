@@ -35,7 +35,7 @@ internal class DeityModel
     public string Description { get; set; } = string.Empty;
     public List<DomainInfluenceData> Domains { get; set; } = new();
     public DeityStatus Status { get; set; }
-    public DeityPersonalityTraits? PersonalityTraits { get; set; }
+    public DivineAffectations? DivineAffectations { get; set; }
     public int FollowerCount { get; set; }
     public int MaxAttentionSlots { get; set; }
     public Guid? ActorId { get; set; }

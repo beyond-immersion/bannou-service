@@ -350,6 +350,42 @@ In anime, production budget is concentrated on sakuga moments (key animation) wh
 
 The component registry naturally stratifies by quality: high-quality "sakuga" components cost more in the GOAP planner (longer duration, more sync barriers, more spatial requirements), so the planner only selects them when the dramatic context justifies the cost. Routine moments get efficient cached components. This mirrors how anime directors allocate their animation budget -- the planner IS the director, making resource allocation decisions.
 
+### 4.4 Initiative-Driven Combat: The Interactive Application
+
+Combat is the highest-stakes application of the independence-default principle. Each combatant's performance is an independent "cel" -- attack animations, defensive reactions, special moves are all self-contained behavior components. They synchronize only at exchange boundaries: the moment of impact, the parry connection, the counter-attack transition. These are the sakuga moments of combat.
+
+**Initiative determines which "cel" leads.** The initiative holder's component is the protagonist/melody role for that exchange -- their animations lead, the camera follows, they have the highest action freedom. The defender's component is the counterforce/bass role -- reactive choreography, grounded camera, defensive framing. When initiative shifts (successful counter, tactical choice), roles swap. This role oscillation across exchanges creates the back-and-forth rhythm that makes combat feel like a conversation.
+
+Between exchanges, each combatant executes independently. The combat coordinator event brain uses continuation points as exchange boundaries. At each continuation point, the CinematicStoryteller has composed multiple possible extensions (tactical options). The player's choice (or auto-resolution for NPC-vs-NPC or low-fidelity spirits) determines which extension executes, which in turn determines initiative for the next exchange.
+
+This maps exactly to the anime model:
+- **Independent execution** (separate cels): Each combatant's attack/dodge/counter animation is a self-contained behavior component running independently
+- **Exchange boundaries** (composition seams): Continuation points mark where one exchange ends and the next begins
+- **Sync barriers** (sakuga moments): Physical contact -- the sword strike connecting, the grab, the throw -- triggers CutsceneSession sync barriers for frame-matched animation
+- **Camera cuts hide the seams**: Between exchanges, camera cuts between combatants' close-ups hide the transition from attacker to defender role
+
+### 4.5 Multi-Producer Composition: FCFS Extension Competition
+
+The independence principle extends to the *producers* of combat content, not just the performers. Multiple god-actors (Puppetmaster regional watchers) can register extensions at the same continuation points in a running combat cinematic. First extension registered wins (FCFS).
+
+This is the compositional analog of multiple anime directors competing for screen time at the same production studio. Each god composes its preferred extension from its DivineAffectations (temperament, attentionBias, generosity, jealousy):
+
+- High temperament gods compose simple, aggressive extensions → arrive at the CP first → win FCFS
+- High attentionBias gods compose complex, narrative-callback extensions → arrive later → lose to simpler extensions
+- The result: emergent regional combat flavor from the speed differential of compositional complexity
+
+This produces an emergent consequence the anime model can illuminate: in anime production, simple animation finishes first and fills the schedule; complex sakuga sequences take longer and risk being cut for time. The FCFS model is the real-time equivalent -- simple choreographic extensions win the "schedule" (continuation point registration) because they finish composing sooner. Narrative-rich, redemptive extensions are the sakuga of combat: rare, meaningful when they occur, and more common in regions where the aggressive "directors" aren't competing for every moment.
+
+See [#694](https://github.com/beyond-immersion/bannou-service/issues/694) for the FCFS extension registry design and [#695](https://github.com/beyond-immersion/bannou-service/issues/695) for the DivineAffectations → choreographic preference mapping.
+
+### 4.6 Tension as Compositional State
+
+The independence principle applies across exchanges within a single combat encounter via a cinematic-scoped state variable: `${cinematic.tension}`. When the spirit's tactical choice conflicts with the character's personality (forcing a defensive dodge on an aggressive character), the tension delta is recorded and fed back to the CinematicStoryteller for the next exchange's composition.
+
+High tension doesn't block the player mechanically -- it affects the choreographic output. The CinematicStoryteller reads tension and produces different component selections: the character hesitates, flinches, executes with visible reluctance. A disciplined character suppresses the tension (minimal choreographic impact); an expressive character amplifies it. This is the "limited animation" quality tier applied to internal conflict -- the character's body language tells the story of spirit-character disagreement without requiring explicit narrative exposition.
+
+Tension is ephemeral to the encounter (not persisted cross-encounter -- that is Disposition's `${spirit.resentment}` domain). Each combat encounter starts with baseline tension and accumulates based on the spirit's choices within that fight. The per-fight tension arc emerges naturally from player behavior without anyone authoring it.
+
 ---
 
 ## Part 5: Relationship to Other Planning Documents
@@ -359,7 +395,7 @@ This document does not introduce new systems. It provides a unifying lens on pla
 | Document | What It Defines | How This Document Relates |
 |---|---|---|
 | **BEHAVIOR-COMPOSITION.md** | Fingerprinted components, plan cache, composite assembly | These are the "cels" -- independently produced, content-addressed, GOAP-selected |
-| **VIDEO-DIRECTOR.md** | Music-driven cinematic generation, role-based composition | This is the "satsuei" stage -- compositing independent performances into unified output |
+| **VIDEO-DIRECTOR.md** | Music-driven cinematic generation, role-based composition, initiative-driven combat as interactive genre | This is the "satsuei" stage -- compositing independent performances into unified output. The initiative-driven combat section extends the role model with interactive exchange mechanics |
 | **CINEMATIC-SYSTEM.md** | CinematicInterpreter, continuation points, CutsceneSession | This is the runtime -- continuation points are composition seams, sync barriers are "same layer" moments |
 | **BANNOU-EMBEDDED.md** | Standalone Bannou for offline content creation | This is the "production studio" -- running the full stack for content creation |
 

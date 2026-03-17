@@ -188,6 +188,12 @@ Provides `${cinematic.*}` variables to the Actor runtime:
 | `${cinematic.role}` | string | Participant slot name (e.g., "thrower", "dodger") |
 | `${cinematic.scenario_code}` | string | Code of the active scenario |
 | `${cinematic.phase}` | string | Current phase/beat identifier |
+| `${cinematic.initiative_holder}` | Guid? | Entity ID of the current initiative holder (null if no active combat exchange) |
+| `${cinematic.tension}` | float | Accumulated spirit-character tension within this encounter (0.0 = aligned, 1.0 = maximum conflict). Reset per encounter. |
+| `${cinematic.exchange_count}` | int | Number of completed exchanges in the current combat encounter |
+| `${cinematic.last_exchange_outcome}` | string? | Outcome of the most recent exchange (e.g., `"counter_success"`, `"dodge"`, `"block"`, `"hit_landed"`) |
+
+See [VIDEO-DIRECTOR.md § Initiative-Driven Combat](../planning/VIDEO-DIRECTOR.md#initiative-driven-combat-the-interactive-genre) for the initiative model and [#693](https://github.com/beyond-immersion/bannou-service/issues/693) for the exchange type metadata format.
 
 ### Trigger Flow (Critical Path)
 

@@ -406,11 +406,13 @@ READ _deityStore:deity:{body.DeityId}                                 -> 404 if 
 CALL _characterClient.GetCharacterAsync(body.CharacterId)             -> 404 if not found
 CALL _relationshipClient.CreateRelationshipAsync(deityId, characterId, config.FollowerRelationshipTypeCode)
 // Increment FollowerCount on deity
+attentionSlotAllocated = false
 IF FollowerCount < MaxAttentionSlots
   WRITE _attentionStore:attention:{deityId}:{characterId} <- new AttentionSlotModel
+  attentionSlotAllocated = true
 WRITE _deityStore:deity:{body.DeityId} <- updated model (FollowerCount + 1)
 PUBLISH divine.follower.registered { deityId, characterId, relationshipId }
-RETURN (200, FollowerResponse)
+RETURN (200, FollowerResponse { characterId, deityId, registeredAt, relationshipId, attentionSlotAllocated })
 
 ### UnregisterFollower
 POST /divine/follower/unregister | Roles: []

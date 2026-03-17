@@ -153,6 +153,42 @@ public sealed class DivineProxy
     }
 
     /// <summary>
+    /// Deprecate a deity (Category A)
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing DeityResponse on success.</returns>
+    public Task<ApiResponse<DeityResponse>> DeprecateDeityAsync(
+        DeprecateDeityRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<DeprecateDeityRequest, DeityResponse>(
+            "/divine/deity/deprecate", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Undeprecate a deprecated deity (Category A)
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing DeityResponse on success.</returns>
+    public Task<ApiResponse<DeityResponse>> UndeprecateDeityAsync(
+        UndeprecateDeityRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<UndeprecateDeityRequest, DeityResponse>(
+            "/divine/deity/undeprecate", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Delete a deity
     /// </summary>
     /// <param name="request">The request payload.</param>

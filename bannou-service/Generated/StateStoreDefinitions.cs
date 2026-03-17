@@ -204,8 +204,6 @@ public static class StateStoreDefinitions
     public const string DivineBlessings = "divine-blessings";
     /// <summary>Deity entity records (durable, queryable by game service, domain, status)</summary>
     public const string DivineDeities = "divine-deities";
-    /// <summary>Pending divinity generation events awaiting batch processing (ephemeral queue)</summary>
-    public const string DivineDivinityEvents = "divine-divinity-events";
     /// <summary>Distributed locks for deity and blessing mutations</summary>
     public const string DivineLock = "divine-lock";
 
@@ -655,7 +653,6 @@ public static class StateStoreDefinitions
             [DivineAttention] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "divine:attention" },
             [DivineBlessings] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "divine_blessings" },
             [DivineDeities] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "divine_deities" },
-            [DivineDivinityEvents] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "divine:divevt" },
             [DivineLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "divine:lock" },
             [Documentation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "doc", EnableSearch = true },
             [EdgeRevocation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "auth:edge" },
@@ -886,7 +883,6 @@ public static class StateStoreDefinitions
             [DivineAttention] = new StoreMetadata("Divine", "Active attention slot tracking per deity (ephemeral, high-frequency reads)", "redis", false),
             [DivineBlessings] = new StoreMetadata("Divine", "Blessing grant records linking deities to characters via items (durable, queryable)", "mysql", false),
             [DivineDeities] = new StoreMetadata("Divine", "Deity entity records (durable, queryable by game service, domain, status)", "mysql", false),
-            [DivineDivinityEvents] = new StoreMetadata("Divine", "Pending divinity generation events awaiting batch processing (ephemeral queue)", "redis", false),
             [DivineLock] = new StoreMetadata("Divine", "Distributed locks for deity and blessing mutations", "redis", false),
             [Documentation] = new StoreMetadata("Documentation", "Documentation content and metadata", "redis", false),
             [EdgeRevocation] = new StoreMetadata("Auth", "Edge revocation tracking for CDN/firewall layer blocking", "redis", false),

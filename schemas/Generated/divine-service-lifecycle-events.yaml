@@ -28,6 +28,7 @@ components:
       - maxAttentionSlots
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -74,12 +75,17 @@ components:
           format: uuid
           nullable: true
           description: "Domain power seed ID"
-        currencyWalletId: &id012
+        genesisEntityId: &id012
+          type: string
+          format: uuid
+          nullable: true
+          description: "Genesis entity ID for lifecycle queries"
+        currencyWalletId: &id013
           type: string
           format: uuid
           nullable: true
           description: "Divinity currency wallet ID"
-        realmId: &id013
+        realmId: &id014
           type: string
           format: uuid
           nullable: true
@@ -92,6 +98,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the deity was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this deity is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the deity was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
     DeityUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -113,6 +132,7 @@ components:
       - maxAttentionSlots
       - createdAt
       - updatedAt
+      - isDeprecated
       - changedFields
       properties:
         eventName:
@@ -130,8 +150,9 @@ components:
         maxAttentionSlots: *id009
         actorId: *id010
         seedId: *id011
-        currencyWalletId: *id012
-        realmId: *id013
+        genesisEntityId: *id012
+        currencyWalletId: *id013
+        realmId: *id014
         createdAt:
           type: string
           format: date-time
@@ -140,6 +161,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the deity was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this deity is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the deity was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         changedFields:
           type: array
           items:
@@ -166,6 +200,7 @@ components:
       - maxAttentionSlots
       - createdAt
       - updatedAt
+      - isDeprecated
       properties:
         eventName:
           type: string
@@ -182,8 +217,9 @@ components:
         maxAttentionSlots: *id009
         actorId: *id010
         seedId: *id011
-        currencyWalletId: *id012
-        realmId: *id013
+        genesisEntityId: *id012
+        currencyWalletId: *id013
+        realmId: *id014
         createdAt:
           type: string
           format: date-time
@@ -192,6 +228,19 @@ components:
           type: string
           format: date-time
           description: Timestamp when the deity was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this deity is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the deity was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
         deletedReason:
           type: string
           nullable: true

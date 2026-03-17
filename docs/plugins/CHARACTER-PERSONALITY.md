@@ -118,6 +118,8 @@ None. The service is feature-complete for its scope.
 ## Potential Extensions
 
 1. **Trait decay**: Gradual regression toward neutral (0.0) over time without reinforcing experiences.
+
+5. **Communication and information processing roles**: All eight trait axes modulate NPC information reception, inference (gap-filling), and retransmission in the Hearsay system. Traits are organized into three functional tiers: Tier 1 interpretation filters (Openness, Agreeableness, Neuroticism, Aggression), Tier 2 quality filters (Conscientiousness, Honesty), and Tier 3 distribution properties (Extraversion, Loyalty). Multi-axis personality vectors produce emergent interpretive archetypes (e.g., low Agreeableness + high Neuroticism = "paranoid" interpreter). See [Hearsay § Personality-Driven Information Processing](../plugins/HEARSAY.md#personality-driven-information-processing) and [CHARACTER-COMMUNICATION Guide § Distortion Rules](../guides/CHARACTER-COMMUNICATION.md#distortion-rules). No changes required to Character Personality itself — trait data is consumed by Hearsay via the existing `ICharacterPersonalityClient` soft dependency.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/201 -->
 2. **Pre-defined archetype templates**: Template system that maps archetype codes (e.g., "guardian", "trickster") to pre-configured trait combinations for quick character creation. The `archetypeHint` field exists and is persisted, but no template system interprets it.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/256 -->

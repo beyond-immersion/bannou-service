@@ -614,8 +614,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `DIVINE_DIVINITY_COST_STANDARD` | double | `50.0` | Divinity cost for granting a Standard tier blessing |
 | `DIVINE_DIVINITY_COST_SUPREME` | double | `1000.0` | Divinity cost for granting a Supreme tier blessing |
 | `DIVINE_DIVINITY_CURRENCY_CODE` | string | `divinity` | Currency code used for divinity economy within each game ser... |
-| `DIVINE_DIVINITY_GENERATION_MULTIPLIER` | double | `1.0` | Global multiplier applied to all divinity generation from mo... |
-| `DIVINE_DIVINITY_GENERATION_WORKER_INTERVAL_SECONDS` | int | `30` | Seconds between divinity generation worker processing cycles |
 | `DIVINE_FOLLOWER_RELATIONSHIP_TYPE_CODE` | string | `deity_follower` | Relationship type code for deity-to-character follower bonds |
 | `DIVINE_MAX_BLESSINGS_PER_ENTITY` | int | `10` | Maximum active blessings an entity can hold simultaneously |
 | `DIVINE_RIVALRY_RELATIONSHIP_TYPE_CODE` | string | `deity_rivalry` | Relationship type code for deity-to-deity rivalry bonds |
@@ -1446,9 +1444,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 1142
+- **Total properties**: 1140
 - **Required (no default)**: 67
-- **Optional (has default)**: 1075
+- **Optional (has default)**: 1073
 
 ## Environment Variable Naming Convention
 

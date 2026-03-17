@@ -158,7 +158,7 @@
 
 | Interface | Registered As | Direction | Consumer |
 |-----------|---------------|-----------|----------|
-| `IVariableProviderFactory` (as `DirectorOverrideProviderFactory`) | Singleton | L4→L2 pull | Actor (L2) discovers via `IEnumerable<IVariableProviderFactory>` for `${director.*}` namespace |
+| `IVariableProviderFactory` (as `DirectorOverrideProviderFactory`) | Singleton | L4→L2 pull | Actor (L2) discovers via `IEnumerable<IVariableProviderFactory>` for `${director.*}` namespace. Provides `${director.priority.<actionType>}` cost modifiers AND `${director.gate.<actionType>}` prohibitive costs for gated actions. |
 
 ---
 
@@ -333,6 +333,10 @@ POST /director/actor/set-action-gates | Roles: [developer]
 READ _sessionStore:dsess:{body.DirectorSessionId}              -> 404 if null, 400 if inactive
 LOCK director:lock:override:{body.ActorId}                     -> 409 if fails
   WRITE _overrideStore:ovr:{body.ActorId}:gates <- HashSet<string> from body
+  // DirectorOverrideProviderFactory reads gates and returns prohibitive cost
+  // for gated action types via ${director.gate.<actionType>}
+  // GOAP planner naturally avoids gated actions; no approval topic needed
+  // Stale gates auto-cleared by DirectorSessionTimeoutWorker after ActionGateTimeoutSeconds
 RETURN (200, empty)
 ```
 

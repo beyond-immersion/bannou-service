@@ -7,8 +7,9 @@ info:
     Escrow over Currency/Item) that composes existing Bannou primitives to deliver
     divine game mechanics.
 
-    **Composability**: God identity is owned here. God behavior is Actor (event brain)
-    via Puppetmaster. Domain power is Seed. Divinity resource is Currency. Greater
+    **Composability**: God identity is owned here. God behavior is Actor via
+    Puppetmaster. Domain power is Seed with bond propagation for divinity generation.
+    Entity awakening lifecycle via Genesis. Divinity resource is Currency. Greater
     Blessings are Collection. Minor Blessings are Status Inventory. Follower bonds
     are Relationship. lib-divine orchestrates the ceremony connecting these primitives.
 
@@ -89,108 +90,124 @@ paths:
         ,\n    \"$defs\": {\n        \"CreateDeityRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Request to create a new deity entity\",\n            \"required\": [\n  \
         \              \"gameServiceId\",\n                \"code\",\n                \"displayName\",\n                \"\
-        description\",\n                \"domains\",\n                \"personalityTraits\"\n            ],\n            \"\
-        properties\": {\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uuid\",\n                    \"description\": \"Game service this deity belongs to\"\n       \
-        \         },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Unique code for this deity within the game service (e.g., mnemosyne, nexius)\"\n                },\n         \
-        \       \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
-        display name\"\n                },\n                \"description\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Description of the deity's nature and role\"\n                },\n       \
-        \         \"domains\": {\n                    \"type\": \"array\",\n                    \"minItems\": 1,\n       \
-        \             \"items\": {\n                        \"$ref\": \"#/$defs/DomainInfluence\"\n                    },\n\
-        \                    \"description\": \"Domain influences (at least one required)\"\n                },\n        \
-        \        \"personalityTraits\": {\n                    \"$ref\": \"#/$defs/DeityPersonalityTraits\",\n           \
-        \         \"description\": \"Personality traits influencing behavior decisions\"\n                },\n           \
-        \     \"maxAttentionSlots\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n\
-        \                    \"default\": 10,\n                    \"description\": \"Maximum characters this deity can actively
-        monitor simultaneously\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Home realm for this deity (null if not realm-bound)\"\n                }\n            }\n        },\n        \"\
-        DomainInfluence\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n          \
-        \  \"description\": \"A deity's influence in a specific domain with a weight representing strength\",\n          \
-        \  \"required\": [\n                \"domain\",\n                \"weight\"\n            ],\n            \"properties\"\
-        : {\n                \"domain\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Opaque domain code (e.g., war, knowledge, nature). Game-defined, not an enum.\"\n                },\n        \
-        \        \"weight\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n \
-        \                   \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\"\
-        : \"Strength of influence in this domain (0.0-1.0)\"\n                }\n            }\n        },\n        \"DeityPersonalityTraits\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Machine-readable personality traits influencing deity behavior decisions\",\n            \"required\": [\n   \
-        \             \"temperament\",\n                \"attentionBias\",\n                \"generosity\",\n            \
-        \    \"jealousy\"\n            ],\n            \"properties\": {\n                \"temperament\": {\n           \
-        \         \"type\": \"string\",\n                    \"description\": \"Primary temperament descriptor (e.g., wrathful,
-        benevolent, capricious)\"\n                },\n                \"attentionBias\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"What type of mortal actions draw this deity's attention (e.g.,
-        combat, devotion, craft)\"\n                },\n                \"generosity\": {\n                    \"type\": \"\
-        number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.0,\n                  \
-        \  \"maximum\": 1.0,\n                    \"description\": \"How freely the deity grants blessings (0.0 miserly, 1.0
-        lavish)\"\n                },\n                \"jealousy\": {\n                    \"type\": \"number\",\n      \
-        \              \"format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
-        \                    \"description\": \"How possessive the deity is of followers (0.0 tolerant, 1.0 vengeful)\"\n\
-        \                }\n            }\n        }\n    }\n}"
+        description\",\n                \"domains\",\n                \"divineAffectations\"\n            ],\n           \
+        \ \"properties\": {\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"uuid\",\n                    \"description\": \"Game service this deity belongs to\"\n   \
+        \             },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 100,\n                    \"description\": \"Unique code for this deity within
+        the game service (e.g., mnemosyne, nexius)\"\n                },\n                \"displayName\": {\n           \
+        \         \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 200,\n\
+        \                    \"description\": \"Human-readable display name\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 2000,\n                    \"description\": \"Description of the deity's nature and role\"\n                },\n\
+        \                \"domains\": {\n                    \"type\": \"array\",\n                    \"minItems\": 1,\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/DomainInfluence\"\n               \
+        \     },\n                    \"description\": \"Domain influences (at least one required)\"\n                },\n\
+        \                \"divineAffectations\": {\n                    \"$ref\": \"#/$defs/DivineAffectations\",\n      \
+        \              \"description\": \"Divine-specific behavioral configuration for god-actor ABML decisions\"\n      \
+        \          },\n                \"maxAttentionSlots\": {\n                    \"type\": \"integer\",\n            \
+        \        \"minimum\": 1,\n                    \"default\": 10,\n                    \"description\": \"Maximum characters
+        this deity can actively monitor simultaneously\"\n                },\n                \"realmId\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Home realm for this deity (null if not realm-bound)\"\n                }\n\
+        \            }\n        },\n        \"DomainInfluence\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"A deity's influence in a specific domain with a weight representing strength\"\
+        ,\n            \"required\": [\n                \"domain\",\n                \"weight\"\n            ],\n        \
+        \    \"properties\": {\n                \"domain\": {\n                    \"type\": \"string\",\n               \
+        \     \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\": \"Opaque domain
+        code (e.g., war, knowledge, nature). Game-defined, not an enum.\"\n                },\n                \"weight\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Strength of influence
+        in this domain (0.0-1.0)\"\n                }\n            }\n        },\n        \"DivineAffectations\": {\n    \
+        \        \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Divine-specific
+        behavioral configuration for god-actor ABML decisions (separate from Character Personality which provides emergent
+        personality via system realm character brain)\",\n            \"required\": [\n                \"temperament\",\n\
+        \                \"attentionBias\",\n                \"generosity\",\n                \"jealousy\"\n            ],\n\
+        \            \"properties\": {\n                \"temperament\": {\n                    \"type\": \"string\",\n  \
+        \                  \"description\": \"Primary temperament descriptor (e.g., wrathful, benevolent, capricious)\"\n\
+        \                },\n                \"attentionBias\": {\n                    \"type\": \"string\",\n           \
+        \         \"description\": \"What type of mortal actions draw this deity's attention (e.g., combat, devotion, craft)\"\
+        \n                },\n                \"generosity\": {\n                    \"type\": \"number\",\n             \
+        \       \"format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n  \
+        \                  \"description\": \"How freely the deity grants blessings (0.0 miserly, 1.0 lavish)\"\n        \
+        \        },\n                \"jealousy\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"\
+        description\": \"How possessive the deity is of followers (0.0 tolerant, 1.0 vengeful)\"\n                }\n    \
+        \        }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeityResponse\"\
         ,\n    \"$defs\": {\n        \"DeityResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Full deity entity response\",\n            \"required\": [\n            \
         \    \"deityId\",\n                \"gameServiceId\",\n                \"code\",\n                \"displayName\"\
-        ,\n                \"description\",\n                \"domains\",\n                \"personalityTraits\",\n      \
-        \          \"maxAttentionSlots\",\n                \"status\",\n                \"followerCount\",\n             \
-        \   \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n               \
-        \ \"deityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n         \
-        \           \"description\": \"Unique deity identifier\"\n                },\n                \"gameServiceId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Game service this deity belongs to\"\n                },\n                \"code\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Unique code within the game service\"\n              \
-        \  },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Human-readable display name\"\n                },\n                \"description\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Description of the deity\"\n                },\n     \
-        \           \"domains\": {\n                    \"type\": \"array\",\n                    \"items\": {\n         \
-        \               \"$ref\": \"#/$defs/DomainInfluence\"\n                    },\n                    \"description\"\
-        : \"Domain influences\"\n                },\n                \"personalityTraits\": {\n                    \"$ref\"\
-        : \"#/$defs/DeityPersonalityTraits\",\n                    \"description\": \"Personality traits\"\n             \
-        \   },\n                \"maxAttentionSlots\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"description\": \"Maximum characters the deity can actively monitor\"\n                },\n                \"actorId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Associated actor ID for the deity watcher brain (null if
-        no watcher started)\"\n                },\n                \"seedId\": {\n                    \"type\": \"string\"\
+        ,\n                \"description\",\n                \"domains\",\n                \"divineAffectations\",\n     \
+        \           \"maxAttentionSlots\",\n                \"status\",\n                \"followerCount\",\n            \
+        \    \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n          \
+        \  \"properties\": {\n                \"deityId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"description\": \"Unique deity identifier\"\n                },\n\
+        \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
+        \"uuid\",\n                    \"description\": \"Game service this deity belongs to\"\n                },\n     \
+        \           \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
+        code within the game service\"\n                },\n                \"displayName\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Human-readable display name\"\n                },\n        \
+        \        \"description\": {\n                    \"type\": \"string\",\n                    \"description\": \"Description
+        of the deity\"\n                },\n                \"domains\": {\n                    \"type\": \"array\",\n   \
+        \                 \"items\": {\n                        \"$ref\": \"#/$defs/DomainInfluence\"\n                  \
+        \  },\n                    \"description\": \"Domain influences\"\n                },\n                \"divineAffectations\"\
+        : {\n                    \"$ref\": \"#/$defs/DivineAffectations\",\n                    \"description\": \"Divine-specific
+        behavioral configuration for god-actor ABML decisions\"\n                },\n                \"maxAttentionSlots\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum characters the deity
+        can actively monitor\"\n                },\n                \"actorId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Domain power seed ID (null if seed creation failed or pending)\"\n                },\n                \"currencyWalletId\"\
+        : \"Associated actor ID for the deity watcher brain (null if no watcher started)\"\n                },\n         \
+        \       \"seedId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Domain power seed ID (null if seed creation
+        failed or pending)\"\n                },\n                \"genesisEntityId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Genesis entity ID for lifecycle queries (null if genesis entity not yet created)\"\n       \
+        \         },\n                \"currencyWalletId\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Divinity
+        currency wallet ID (null if wallet creation failed or pending)\"\n                },\n                \"realmId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Divinity currency wallet ID (null if wallet creation failed
-        or pending)\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Home realm for this deity (null if not realm-bound)\"\n                },\n                \"status\": {\n   \
-        \                 \"$ref\": \"#/$defs/DeityStatus\",\n                    \"description\": \"Current lifecycle status\"\
-        \n                },\n                \"followerCount\": {\n                    \"type\": \"integer\",\n         \
-        \           \"description\": \"Number of active followers\"\n                },\n                \"createdAt\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        description\": \"When the deity was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the deity was last updated\"\n                }\n            }\n        },\n        \"DomainInfluence\":
-        {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
-        A deity's influence in a specific domain with a weight representing strength\",\n            \"required\": [\n   \
-        \             \"domain\",\n                \"weight\"\n            ],\n            \"properties\": {\n           \
-        \     \"domain\": {\n                    \"type\": \"string\",\n                    \"description\": \"Opaque domain
-        code (e.g., war, knowledge, nature). Game-defined, not an enum.\"\n                },\n                \"weight\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Strength of influence
-        in this domain (0.0-1.0)\"\n                }\n            }\n        },\n        \"DeityPersonalityTraits\": {\n\
-        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
-        Machine-readable personality traits influencing deity behavior decisions\",\n            \"required\": [\n       \
-        \         \"temperament\",\n                \"attentionBias\",\n                \"generosity\",\n                \"\
-        jealousy\"\n            ],\n            \"properties\": {\n                \"temperament\": {\n                  \
-        \  \"type\": \"string\",\n                    \"description\": \"Primary temperament descriptor (e.g., wrathful, benevolent,
-        capricious)\"\n                },\n                \"attentionBias\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"What type of mortal actions draw this deity's attention (e.g., combat, devotion,
-        craft)\"\n                },\n                \"generosity\": {\n                    \"type\": \"number\",\n     \
-        \               \"format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
-        \                    \"description\": \"How freely the deity grants blessings (0.0 miserly, 1.0 lavish)\"\n      \
-        \          },\n                \"jealousy\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n            \
-        \        \"description\": \"How possessive the deity is of followers (0.0 tolerant, 1.0 vengeful)\"\n            \
-        \    }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a deity entity\",\n            \"enum\": [\n                \"Active\",\n                \"\
-        Dormant\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
+        nullable\": true,\n                    \"description\": \"Home realm for this deity (null if not realm-bound)\"\n\
+        \                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/DeityStatus\",\n     \
+        \               \"description\": \"Current lifecycle status\"\n                },\n                \"followerCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of active followers\"\
+        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether the deity is deprecated (Category A \\u2014 can be undeprecated)\"\n       \
+        \         },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When
+        the deity was deprecated (null if not deprecated)\"\n                },\n                \"deprecationReason\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the deity was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the deity
+        was last updated\"\n                }\n            }\n        },\n        \"DomainInfluence\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A deity's influence in
+        a specific domain with a weight representing strength\",\n            \"required\": [\n                \"domain\"\
+        ,\n                \"weight\"\n            ],\n            \"properties\": {\n                \"domain\": {\n    \
+        \                \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\":
+        100,\n                    \"description\": \"Opaque domain code (e.g., war, knowledge, nature). Game-defined, not
+        an enum.\"\n                },\n                \"weight\": {\n                    \"type\": \"number\",\n       \
+        \             \"format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"description\": \"Strength of influence in this domain (0.0-1.0)\"\n                }\n    \
+        \        }\n        },\n        \"DivineAffectations\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Divine-specific behavioral configuration for god-actor ABML decisions (separate
+        from Character Personality which provides emergent personality via system realm character brain)\",\n            \"\
+        required\": [\n                \"temperament\",\n                \"attentionBias\",\n                \"generosity\"\
+        ,\n                \"jealousy\"\n            ],\n            \"properties\": {\n                \"temperament\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Primary temperament descriptor
+        (e.g., wrathful, benevolent, capricious)\"\n                },\n                \"attentionBias\": {\n           \
+        \         \"type\": \"string\",\n                    \"description\": \"What type of mortal actions draw this deity's
+        attention (e.g., combat, devotion, craft)\"\n                },\n                \"generosity\": {\n             \
+        \       \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.0,\n\
+        \                    \"maximum\": 1.0,\n                    \"description\": \"How freely the deity grants blessings
+        (0.0 miserly, 1.0 lavish)\"\n                },\n                \"jealousy\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.0,\n                  \
+        \  \"maximum\": 1.0,\n                    \"description\": \"How possessive the deity is of followers (0.0 tolerant,
+        1.0 vengeful)\"\n                }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Lifecycle status of a deity entity (Archived removed \\u2014 deprecation
+        triple-field replaces it per Category A T31)\",\n            \"enum\": [\n                \"Active\",\n          \
+        \      \"Dormant\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new deity\",\n    \"description\": \"Creates a deity entity with
         domain influences and personality traits.\\nProvisions a divinity currency wallet, a domain power seed, and optionally\\
         nstarts a deity watcher actor via Puppetmaster.\\n\",\n    \"tags\": [\n        \"Deity Management\"\n    ],\n   \
@@ -228,64 +245,76 @@ paths:
         ,\n    \"$defs\": {\n        \"DeityResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Full deity entity response\",\n            \"required\": [\n            \
         \    \"deityId\",\n                \"gameServiceId\",\n                \"code\",\n                \"displayName\"\
-        ,\n                \"description\",\n                \"domains\",\n                \"personalityTraits\",\n      \
-        \          \"maxAttentionSlots\",\n                \"status\",\n                \"followerCount\",\n             \
-        \   \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n               \
-        \ \"deityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n         \
-        \           \"description\": \"Unique deity identifier\"\n                },\n                \"gameServiceId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Game service this deity belongs to\"\n                },\n                \"code\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Unique code within the game service\"\n              \
-        \  },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Human-readable display name\"\n                },\n                \"description\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Description of the deity\"\n                },\n     \
-        \           \"domains\": {\n                    \"type\": \"array\",\n                    \"items\": {\n         \
-        \               \"$ref\": \"#/$defs/DomainInfluence\"\n                    },\n                    \"description\"\
-        : \"Domain influences\"\n                },\n                \"personalityTraits\": {\n                    \"$ref\"\
-        : \"#/$defs/DeityPersonalityTraits\",\n                    \"description\": \"Personality traits\"\n             \
-        \   },\n                \"maxAttentionSlots\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"description\": \"Maximum characters the deity can actively monitor\"\n                },\n                \"actorId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Associated actor ID for the deity watcher brain (null if
-        no watcher started)\"\n                },\n                \"seedId\": {\n                    \"type\": \"string\"\
+        ,\n                \"description\",\n                \"domains\",\n                \"divineAffectations\",\n     \
+        \           \"maxAttentionSlots\",\n                \"status\",\n                \"followerCount\",\n            \
+        \    \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n          \
+        \  \"properties\": {\n                \"deityId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"description\": \"Unique deity identifier\"\n                },\n\
+        \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
+        \"uuid\",\n                    \"description\": \"Game service this deity belongs to\"\n                },\n     \
+        \           \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
+        code within the game service\"\n                },\n                \"displayName\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Human-readable display name\"\n                },\n        \
+        \        \"description\": {\n                    \"type\": \"string\",\n                    \"description\": \"Description
+        of the deity\"\n                },\n                \"domains\": {\n                    \"type\": \"array\",\n   \
+        \                 \"items\": {\n                        \"$ref\": \"#/$defs/DomainInfluence\"\n                  \
+        \  },\n                    \"description\": \"Domain influences\"\n                },\n                \"divineAffectations\"\
+        : {\n                    \"$ref\": \"#/$defs/DivineAffectations\",\n                    \"description\": \"Divine-specific
+        behavioral configuration for god-actor ABML decisions\"\n                },\n                \"maxAttentionSlots\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum characters the deity
+        can actively monitor\"\n                },\n                \"actorId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Domain power seed ID (null if seed creation failed or pending)\"\n                },\n                \"currencyWalletId\"\
+        : \"Associated actor ID for the deity watcher brain (null if no watcher started)\"\n                },\n         \
+        \       \"seedId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Domain power seed ID (null if seed creation
+        failed or pending)\"\n                },\n                \"genesisEntityId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Genesis entity ID for lifecycle queries (null if genesis entity not yet created)\"\n       \
+        \         },\n                \"currencyWalletId\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Divinity
+        currency wallet ID (null if wallet creation failed or pending)\"\n                },\n                \"realmId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Divinity currency wallet ID (null if wallet creation failed
-        or pending)\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Home realm for this deity (null if not realm-bound)\"\n                },\n                \"status\": {\n   \
-        \                 \"$ref\": \"#/$defs/DeityStatus\",\n                    \"description\": \"Current lifecycle status\"\
-        \n                },\n                \"followerCount\": {\n                    \"type\": \"integer\",\n         \
-        \           \"description\": \"Number of active followers\"\n                },\n                \"createdAt\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        description\": \"When the deity was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the deity was last updated\"\n                }\n            }\n        },\n        \"DomainInfluence\":
-        {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
-        A deity's influence in a specific domain with a weight representing strength\",\n            \"required\": [\n   \
-        \             \"domain\",\n                \"weight\"\n            ],\n            \"properties\": {\n           \
-        \     \"domain\": {\n                    \"type\": \"string\",\n                    \"description\": \"Opaque domain
-        code (e.g., war, knowledge, nature). Game-defined, not an enum.\"\n                },\n                \"weight\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Strength of influence
-        in this domain (0.0-1.0)\"\n                }\n            }\n        },\n        \"DeityPersonalityTraits\": {\n\
-        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
-        Machine-readable personality traits influencing deity behavior decisions\",\n            \"required\": [\n       \
-        \         \"temperament\",\n                \"attentionBias\",\n                \"generosity\",\n                \"\
-        jealousy\"\n            ],\n            \"properties\": {\n                \"temperament\": {\n                  \
-        \  \"type\": \"string\",\n                    \"description\": \"Primary temperament descriptor (e.g., wrathful, benevolent,
-        capricious)\"\n                },\n                \"attentionBias\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"What type of mortal actions draw this deity's attention (e.g., combat, devotion,
-        craft)\"\n                },\n                \"generosity\": {\n                    \"type\": \"number\",\n     \
-        \               \"format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
-        \                    \"description\": \"How freely the deity grants blessings (0.0 miserly, 1.0 lavish)\"\n      \
-        \          },\n                \"jealousy\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n            \
-        \        \"description\": \"How possessive the deity is of followers (0.0 tolerant, 1.0 vengeful)\"\n            \
-        \    }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a deity entity\",\n            \"enum\": [\n                \"Active\",\n                \"\
-        Dormant\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
+        nullable\": true,\n                    \"description\": \"Home realm for this deity (null if not realm-bound)\"\n\
+        \                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/DeityStatus\",\n     \
+        \               \"description\": \"Current lifecycle status\"\n                },\n                \"followerCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of active followers\"\
+        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether the deity is deprecated (Category A \\u2014 can be undeprecated)\"\n       \
+        \         },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When
+        the deity was deprecated (null if not deprecated)\"\n                },\n                \"deprecationReason\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the deity was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the deity
+        was last updated\"\n                }\n            }\n        },\n        \"DomainInfluence\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A deity's influence in
+        a specific domain with a weight representing strength\",\n            \"required\": [\n                \"domain\"\
+        ,\n                \"weight\"\n            ],\n            \"properties\": {\n                \"domain\": {\n    \
+        \                \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\":
+        100,\n                    \"description\": \"Opaque domain code (e.g., war, knowledge, nature). Game-defined, not
+        an enum.\"\n                },\n                \"weight\": {\n                    \"type\": \"number\",\n       \
+        \             \"format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"description\": \"Strength of influence in this domain (0.0-1.0)\"\n                }\n    \
+        \        }\n        },\n        \"DivineAffectations\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Divine-specific behavioral configuration for god-actor ABML decisions (separate
+        from Character Personality which provides emergent personality via system realm character brain)\",\n            \"\
+        required\": [\n                \"temperament\",\n                \"attentionBias\",\n                \"generosity\"\
+        ,\n                \"jealousy\"\n            ],\n            \"properties\": {\n                \"temperament\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Primary temperament descriptor
+        (e.g., wrathful, benevolent, capricious)\"\n                },\n                \"attentionBias\": {\n           \
+        \         \"type\": \"string\",\n                    \"description\": \"What type of mortal actions draw this deity's
+        attention (e.g., combat, devotion, craft)\"\n                },\n                \"generosity\": {\n             \
+        \       \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.0,\n\
+        \                    \"maximum\": 1.0,\n                    \"description\": \"How freely the deity grants blessings
+        (0.0 miserly, 1.0 lavish)\"\n                },\n                \"jealousy\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.0,\n                  \
+        \  \"maximum\": 1.0,\n                    \"description\": \"How possessive the deity is of followers (0.0 tolerant,
+        1.0 vengeful)\"\n                }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Lifecycle status of a deity entity (Archived removed \\u2014 deprecation
+        triple-field replaces it per Category A T31)\",\n            \"enum\": [\n                \"Active\",\n          \
+        \      \"Dormant\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a deity by ID\",\n    \"description\": \"Returns a single deity entity
         by its unique identifier.\",\n    \"tags\": [\n        \"Deity Management\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"getDeity\"\n}"
@@ -324,64 +353,76 @@ paths:
         ,\n    \"$defs\": {\n        \"DeityResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Full deity entity response\",\n            \"required\": [\n            \
         \    \"deityId\",\n                \"gameServiceId\",\n                \"code\",\n                \"displayName\"\
-        ,\n                \"description\",\n                \"domains\",\n                \"personalityTraits\",\n      \
-        \          \"maxAttentionSlots\",\n                \"status\",\n                \"followerCount\",\n             \
-        \   \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n               \
-        \ \"deityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n         \
-        \           \"description\": \"Unique deity identifier\"\n                },\n                \"gameServiceId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Game service this deity belongs to\"\n                },\n                \"code\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Unique code within the game service\"\n              \
-        \  },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Human-readable display name\"\n                },\n                \"description\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Description of the deity\"\n                },\n     \
-        \           \"domains\": {\n                    \"type\": \"array\",\n                    \"items\": {\n         \
-        \               \"$ref\": \"#/$defs/DomainInfluence\"\n                    },\n                    \"description\"\
-        : \"Domain influences\"\n                },\n                \"personalityTraits\": {\n                    \"$ref\"\
-        : \"#/$defs/DeityPersonalityTraits\",\n                    \"description\": \"Personality traits\"\n             \
-        \   },\n                \"maxAttentionSlots\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"description\": \"Maximum characters the deity can actively monitor\"\n                },\n                \"actorId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Associated actor ID for the deity watcher brain (null if
-        no watcher started)\"\n                },\n                \"seedId\": {\n                    \"type\": \"string\"\
+        ,\n                \"description\",\n                \"domains\",\n                \"divineAffectations\",\n     \
+        \           \"maxAttentionSlots\",\n                \"status\",\n                \"followerCount\",\n            \
+        \    \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n          \
+        \  \"properties\": {\n                \"deityId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"description\": \"Unique deity identifier\"\n                },\n\
+        \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
+        \"uuid\",\n                    \"description\": \"Game service this deity belongs to\"\n                },\n     \
+        \           \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
+        code within the game service\"\n                },\n                \"displayName\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Human-readable display name\"\n                },\n        \
+        \        \"description\": {\n                    \"type\": \"string\",\n                    \"description\": \"Description
+        of the deity\"\n                },\n                \"domains\": {\n                    \"type\": \"array\",\n   \
+        \                 \"items\": {\n                        \"$ref\": \"#/$defs/DomainInfluence\"\n                  \
+        \  },\n                    \"description\": \"Domain influences\"\n                },\n                \"divineAffectations\"\
+        : {\n                    \"$ref\": \"#/$defs/DivineAffectations\",\n                    \"description\": \"Divine-specific
+        behavioral configuration for god-actor ABML decisions\"\n                },\n                \"maxAttentionSlots\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum characters the deity
+        can actively monitor\"\n                },\n                \"actorId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Domain power seed ID (null if seed creation failed or pending)\"\n                },\n                \"currencyWalletId\"\
+        : \"Associated actor ID for the deity watcher brain (null if no watcher started)\"\n                },\n         \
+        \       \"seedId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Domain power seed ID (null if seed creation
+        failed or pending)\"\n                },\n                \"genesisEntityId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Genesis entity ID for lifecycle queries (null if genesis entity not yet created)\"\n       \
+        \         },\n                \"currencyWalletId\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Divinity
+        currency wallet ID (null if wallet creation failed or pending)\"\n                },\n                \"realmId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Divinity currency wallet ID (null if wallet creation failed
-        or pending)\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Home realm for this deity (null if not realm-bound)\"\n                },\n                \"status\": {\n   \
-        \                 \"$ref\": \"#/$defs/DeityStatus\",\n                    \"description\": \"Current lifecycle status\"\
-        \n                },\n                \"followerCount\": {\n                    \"type\": \"integer\",\n         \
-        \           \"description\": \"Number of active followers\"\n                },\n                \"createdAt\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        description\": \"When the deity was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the deity was last updated\"\n                }\n            }\n        },\n        \"DomainInfluence\":
-        {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
-        A deity's influence in a specific domain with a weight representing strength\",\n            \"required\": [\n   \
-        \             \"domain\",\n                \"weight\"\n            ],\n            \"properties\": {\n           \
-        \     \"domain\": {\n                    \"type\": \"string\",\n                    \"description\": \"Opaque domain
-        code (e.g., war, knowledge, nature). Game-defined, not an enum.\"\n                },\n                \"weight\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Strength of influence
-        in this domain (0.0-1.0)\"\n                }\n            }\n        },\n        \"DeityPersonalityTraits\": {\n\
-        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
-        Machine-readable personality traits influencing deity behavior decisions\",\n            \"required\": [\n       \
-        \         \"temperament\",\n                \"attentionBias\",\n                \"generosity\",\n                \"\
-        jealousy\"\n            ],\n            \"properties\": {\n                \"temperament\": {\n                  \
-        \  \"type\": \"string\",\n                    \"description\": \"Primary temperament descriptor (e.g., wrathful, benevolent,
-        capricious)\"\n                },\n                \"attentionBias\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"What type of mortal actions draw this deity's attention (e.g., combat, devotion,
-        craft)\"\n                },\n                \"generosity\": {\n                    \"type\": \"number\",\n     \
-        \               \"format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
-        \                    \"description\": \"How freely the deity grants blessings (0.0 miserly, 1.0 lavish)\"\n      \
-        \          },\n                \"jealousy\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n            \
-        \        \"description\": \"How possessive the deity is of followers (0.0 tolerant, 1.0 vengeful)\"\n            \
-        \    }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a deity entity\",\n            \"enum\": [\n                \"Active\",\n                \"\
-        Dormant\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
+        nullable\": true,\n                    \"description\": \"Home realm for this deity (null if not realm-bound)\"\n\
+        \                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/DeityStatus\",\n     \
+        \               \"description\": \"Current lifecycle status\"\n                },\n                \"followerCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of active followers\"\
+        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether the deity is deprecated (Category A \\u2014 can be undeprecated)\"\n       \
+        \         },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When
+        the deity was deprecated (null if not deprecated)\"\n                },\n                \"deprecationReason\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the deity was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the deity
+        was last updated\"\n                }\n            }\n        },\n        \"DomainInfluence\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A deity's influence in
+        a specific domain with a weight representing strength\",\n            \"required\": [\n                \"domain\"\
+        ,\n                \"weight\"\n            ],\n            \"properties\": {\n                \"domain\": {\n    \
+        \                \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\":
+        100,\n                    \"description\": \"Opaque domain code (e.g., war, knowledge, nature). Game-defined, not
+        an enum.\"\n                },\n                \"weight\": {\n                    \"type\": \"number\",\n       \
+        \             \"format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"description\": \"Strength of influence in this domain (0.0-1.0)\"\n                }\n    \
+        \        }\n        },\n        \"DivineAffectations\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Divine-specific behavioral configuration for god-actor ABML decisions (separate
+        from Character Personality which provides emergent personality via system realm character brain)\",\n            \"\
+        required\": [\n                \"temperament\",\n                \"attentionBias\",\n                \"generosity\"\
+        ,\n                \"jealousy\"\n            ],\n            \"properties\": {\n                \"temperament\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Primary temperament descriptor
+        (e.g., wrathful, benevolent, capricious)\"\n                },\n                \"attentionBias\": {\n           \
+        \         \"type\": \"string\",\n                    \"description\": \"What type of mortal actions draw this deity's
+        attention (e.g., combat, devotion, craft)\"\n                },\n                \"generosity\": {\n             \
+        \       \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.0,\n\
+        \                    \"maximum\": 1.0,\n                    \"description\": \"How freely the deity grants blessings
+        (0.0 miserly, 1.0 lavish)\"\n                },\n                \"jealousy\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.0,\n                  \
+        \  \"maximum\": 1.0,\n                    \"description\": \"How possessive the deity is of followers (0.0 tolerant,
+        1.0 vengeful)\"\n                }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Lifecycle status of a deity entity (Archived removed \\u2014 deprecation
+        triple-field replaces it per Category A T31)\",\n            \"enum\": [\n                \"Active\",\n          \
+        \      \"Dormant\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a deity by code within a game service\",\n    \"description\": \"Looks
         up a deity by its unique code within a game service scope.\",\n    \"tags\": [\n        \"Deity Management\"\n   \
         \ ],\n    \"deprecated\": false,\n    \"operationId\": \"getDeityByCode\"\n}"
@@ -417,14 +458,17 @@ paths:
         \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Filter by domain code (returns deities with this domain in their influences)\"\n                },\n         \
         \       \"status\": {\n                    \"$ref\": \"#/$defs/DeityStatus\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Filter by deity status\"\n                },\n                \"page\": {\n\
-        \                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"default\"\
-        : 1,\n                    \"description\": \"Page number for pagination\"\n                },\n                \"\
-        pageSize\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                 \
-        \   \"maximum\": 100,\n                    \"default\": 50,\n                    \"description\": \"Number of results
-        per page\"\n                }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Lifecycle status of a deity entity\",\n            \"enum\": [\n               \
-        \ \"Active\",\n                \"Dormant\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
+        \                    \"description\": \"Filter by deity status\"\n                },\n                \"includeDeprecated\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
+        : \"Whether to include deprecated deities in results (default excludes them per T31)\"\n                },\n     \
+        \           \"page\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n       \
+        \             \"default\": 1,\n                    \"description\": \"Page number for pagination\"\n             \
+        \   },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
+        : 1,\n                    \"maximum\": 100,\n                    \"default\": 50,\n                    \"description\"\
+        : \"Number of results per page\"\n                }\n            }\n        },\n        \"DeityStatus\": {\n     \
+        \       \"type\": \"string\",\n            \"description\": \"Lifecycle status of a deity entity (Archived removed
+        \\u2014 deprecation triple-field replaces it per Category A T31)\",\n            \"enum\": [\n                \"Active\"\
+        ,\n                \"Dormant\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListDeitiesResponse\"\
         ,\n    \"$defs\": {\n        \"ListDeitiesResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Paginated list of deities\",\n            \"required\": [\n             \
@@ -440,52 +484,63 @@ paths:
         \            \"additionalProperties\": false,\n            \"description\": \"Full deity entity response\",\n    \
         \        \"required\": [\n                \"deityId\",\n                \"gameServiceId\",\n                \"code\"\
         ,\n                \"displayName\",\n                \"description\",\n                \"domains\",\n            \
-        \    \"personalityTraits\",\n                \"maxAttentionSlots\",\n                \"status\",\n               \
-        \ \"followerCount\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"\
-        properties\": {\n                \"deityId\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"uuid\",\n                    \"description\": \"Unique deity identifier\"\n                },\n      \
-        \          \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Game service this deity belongs to\"\n                },\n             \
-        \   \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique code within
-        the game service\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Human-readable display name\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Description of the deity\"\n\
-        \                },\n                \"domains\": {\n                    \"type\": \"array\",\n                  \
-        \  \"items\": {\n                        \"$ref\": \"#/$defs/DomainInfluence\"\n                    },\n         \
-        \           \"description\": \"Domain influences\"\n                },\n                \"personalityTraits\": {\n\
-        \                    \"$ref\": \"#/$defs/DeityPersonalityTraits\",\n                    \"description\": \"Personality
-        traits\"\n                },\n                \"maxAttentionSlots\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Maximum characters the deity can actively monitor\"\n                },\n\
-        \                \"actorId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Associated actor ID for the deity
-        watcher brain (null if no watcher started)\"\n                },\n                \"seedId\": {\n                \
-        \    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n \
-        \                   \"description\": \"Domain power seed ID (null if seed creation failed or pending)\"\n        \
-        \        },\n                \"currencyWalletId\": {\n                    \"type\": \"string\",\n                \
-        \    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Divinity
-        currency wallet ID (null if wallet creation failed or pending)\"\n                },\n                \"realmId\"\
+        \    \"divineAffectations\",\n                \"maxAttentionSlots\",\n                \"status\",\n              \
+        \  \"followerCount\",\n                \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\
+        \n            ],\n            \"properties\": {\n                \"deityId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique deity identifier\"\
+        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"description\": \"Game service this deity belongs to\"\n  \
+        \              },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Unique code within the game service\"\n                },\n                \"displayName\": {\n \
+        \                   \"type\": \"string\",\n                    \"description\": \"Human-readable display name\"\n\
+        \                },\n                \"description\": {\n                    \"type\": \"string\",\n             \
+        \       \"description\": \"Description of the deity\"\n                },\n                \"domains\": {\n      \
+        \              \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DomainInfluence\"\
+        \n                    },\n                    \"description\": \"Domain influences\"\n                },\n       \
+        \         \"divineAffectations\": {\n                    \"$ref\": \"#/$defs/DivineAffectations\",\n             \
+        \       \"description\": \"Divine-specific behavioral configuration for god-actor ABML decisions\"\n             \
+        \   },\n                \"maxAttentionSlots\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"description\": \"Maximum characters the deity can actively monitor\"\n                },\n                \"actorId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Home realm for this deity (null if not realm-bound)\"\n\
-        \                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/DeityStatus\",\n     \
-        \               \"description\": \"Current lifecycle status\"\n                },\n                \"followerCount\"\
+        nullable\": true,\n                    \"description\": \"Associated actor ID for the deity watcher brain (null if
+        no watcher started)\"\n                },\n                \"seedId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Domain power seed ID (null if seed creation failed or pending)\"\n                },\n                \"genesisEntityId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Genesis entity ID for lifecycle queries (null if genesis
+        entity not yet created)\"\n                },\n                \"currencyWalletId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Divinity currency wallet ID (null if wallet creation failed or pending)\"\n            \
+        \    },\n                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Home realm for this deity
+        (null if not realm-bound)\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/DeityStatus\"\
+        ,\n                    \"description\": \"Current lifecycle status\"\n                },\n                \"followerCount\"\
         : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of active followers\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the deity was created\"\n         \
-        \       },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"description\": \"When the deity was last updated\"\n                }\n  \
-        \          }\n        },\n        \"DomainInfluence\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"A deity's influence in a specific domain with a weight representing strength\"\
-        ,\n            \"required\": [\n                \"domain\",\n                \"weight\"\n            ],\n        \
-        \    \"properties\": {\n                \"domain\": {\n                    \"type\": \"string\",\n               \
-        \     \"description\": \"Opaque domain code (e.g., war, knowledge, nature). Game-defined, not an enum.\"\n       \
-        \         },\n                \"weight\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"\
-        description\": \"Strength of influence in this domain (0.0-1.0)\"\n                }\n            }\n        },\n\
-        \        \"DeityPersonalityTraits\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"description\": \"Machine-readable personality traits influencing deity behavior decisions\",\n    \
-        \        \"required\": [\n                \"temperament\",\n                \"attentionBias\",\n                \"\
-        generosity\",\n                \"jealousy\"\n            ],\n            \"properties\": {\n                \"temperament\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Primary temperament descriptor
+        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether the deity is deprecated (Category A \\u2014 can be undeprecated)\"\n       \
+        \         },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When
+        the deity was deprecated (null if not deprecated)\"\n                },\n                \"deprecationReason\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the deity was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the deity
+        was last updated\"\n                }\n            }\n        },\n        \"DomainInfluence\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A deity's influence in
+        a specific domain with a weight representing strength\",\n            \"required\": [\n                \"domain\"\
+        ,\n                \"weight\"\n            ],\n            \"properties\": {\n                \"domain\": {\n    \
+        \                \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\":
+        100,\n                    \"description\": \"Opaque domain code (e.g., war, knowledge, nature). Game-defined, not
+        an enum.\"\n                },\n                \"weight\": {\n                    \"type\": \"number\",\n       \
+        \             \"format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"description\": \"Strength of influence in this domain (0.0-1.0)\"\n                }\n    \
+        \        }\n        },\n        \"DivineAffectations\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Divine-specific behavioral configuration for god-actor ABML decisions (separate
+        from Character Personality which provides emergent personality via system realm character brain)\",\n            \"\
+        required\": [\n                \"temperament\",\n                \"attentionBias\",\n                \"generosity\"\
+        ,\n                \"jealousy\"\n            ],\n            \"properties\": {\n                \"temperament\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Primary temperament descriptor
         (e.g., wrathful, benevolent, capricious)\"\n                },\n                \"attentionBias\": {\n           \
         \         \"type\": \"string\",\n                    \"description\": \"What type of mortal actions draw this deity's
         attention (e.g., combat, devotion, craft)\"\n                },\n                \"generosity\": {\n             \
@@ -495,9 +550,9 @@ paths:
         number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.0,\n                  \
         \  \"maximum\": 1.0,\n                    \"description\": \"How possessive the deity is of followers (0.0 tolerant,
         1.0 vengeful)\"\n                }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"\
-        string\",\n            \"description\": \"Lifecycle status of a deity entity\",\n            \"enum\": [\n       \
-        \         \"Active\",\n                \"Dormant\",\n                \"Archived\"\n            ]\n        }\n    }\n\
-        }"
+        string\",\n            \"description\": \"Lifecycle status of a deity entity (Archived removed \\u2014 deprecation
+        triple-field replaces it per Category A T31)\",\n            \"enum\": [\n                \"Active\",\n          \
+        \      \"Dormant\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List deities with optional filters\",\n    \"description\": \"Returns a
         paginated list of deities for a game service, optionally\\nfiltered by domain code and status.\\n\",\n    \"tags\"\
         : [\n        \"Deity Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listDeities\"\n}"
@@ -540,96 +595,109 @@ paths:
         \n                },\n                \"domains\": {\n                    \"type\": \"array\",\n                 \
         \   \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DomainInfluence\"\
         \n                    },\n                    \"description\": \"Updated domain influences (replaces entire list)\"\
-        \n                },\n                \"personalityTraits\": {\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Updated personality traits\",\n                    \"allOf\": [\n                \
-        \        {\n                            \"$ref\": \"#/$defs/DeityPersonalityTraits\"\n                        }\n\
-        \                    ]\n                },\n                \"maxAttentionSlots\": {\n                    \"type\"\
-        : \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n                   \
-        \ \"description\": \"Updated maximum attention slots\"\n                }\n            }\n        },\n        \"DomainInfluence\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"A deity's influence in a specific domain with a weight representing strength\",\n            \"required\": [\n\
-        \                \"domain\",\n                \"weight\"\n            ],\n            \"properties\": {\n        \
-        \        \"domain\": {\n                    \"type\": \"string\",\n                    \"description\": \"Opaque domain
-        code (e.g., war, knowledge, nature). Game-defined, not an enum.\"\n                },\n                \"weight\"\
+        \n                },\n                \"divineAffectations\": {\n                    \"nullable\": true,\n       \
+        \             \"description\": \"Updated personality traits\",\n                    \"allOf\": [\n               \
+        \         {\n                            \"$ref\": \"#/$defs/DivineAffectations\"\n                        }\n   \
+        \                 ]\n                },\n                \"maxAttentionSlots\": {\n                    \"type\": \"\
+        integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n                    \"description\"\
+        : \"Updated maximum attention slots\"\n                }\n            }\n        },\n        \"DomainInfluence\":
+        {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
+        A deity's influence in a specific domain with a weight representing strength\",\n            \"required\": [\n   \
+        \             \"domain\",\n                \"weight\"\n            ],\n            \"properties\": {\n           \
+        \     \"domain\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n          \
+        \          \"maxLength\": 100,\n                    \"description\": \"Opaque domain code (e.g., war, knowledge, nature).
+        Game-defined, not an enum.\"\n                },\n                \"weight\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.0,\n                  \
+        \  \"maximum\": 1.0,\n                    \"description\": \"Strength of influence in this domain (0.0-1.0)\"\n  \
+        \              }\n            }\n        },\n        \"DivineAffectations\": {\n            \"type\": \"object\",\n\
+        \            \"additionalProperties\": false,\n            \"description\": \"Divine-specific behavioral configuration
+        for god-actor ABML decisions (separate from Character Personality which provides emergent personality via system realm
+        character brain)\",\n            \"required\": [\n                \"temperament\",\n                \"attentionBias\"\
+        ,\n                \"generosity\",\n                \"jealousy\"\n            ],\n            \"properties\": {\n\
+        \                \"temperament\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Primary temperament descriptor (e.g., wrathful, benevolent, capricious)\"\n                },\n              \
+        \  \"attentionBias\": {\n                    \"type\": \"string\",\n                    \"description\": \"What type
+        of mortal actions draw this deity's attention (e.g., combat, devotion, craft)\"\n                },\n            \
+        \    \"generosity\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n \
+        \                   \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\"\
+        : \"How freely the deity grants blessings (0.0 miserly, 1.0 lavish)\"\n                },\n                \"jealousy\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Strength of influence
-        in this domain (0.0-1.0)\"\n                }\n            }\n        },\n        \"DeityPersonalityTraits\": {\n\
-        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
-        Machine-readable personality traits influencing deity behavior decisions\",\n            \"required\": [\n       \
-        \         \"temperament\",\n                \"attentionBias\",\n                \"generosity\",\n                \"\
-        jealousy\"\n            ],\n            \"properties\": {\n                \"temperament\": {\n                  \
-        \  \"type\": \"string\",\n                    \"description\": \"Primary temperament descriptor (e.g., wrathful, benevolent,
-        capricious)\"\n                },\n                \"attentionBias\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"What type of mortal actions draw this deity's attention (e.g., combat, devotion,
-        craft)\"\n                },\n                \"generosity\": {\n                    \"type\": \"number\",\n     \
-        \               \"format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
-        \                    \"description\": \"How freely the deity grants blessings (0.0 miserly, 1.0 lavish)\"\n      \
-        \          },\n                \"jealousy\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n            \
-        \        \"description\": \"How possessive the deity is of followers (0.0 tolerant, 1.0 vengeful)\"\n            \
-        \    }\n            }\n        }\n    }\n}"
+        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"How possessive the
+        deity is of followers (0.0 tolerant, 1.0 vengeful)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeityResponse\"\
         ,\n    \"$defs\": {\n        \"DeityResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Full deity entity response\",\n            \"required\": [\n            \
         \    \"deityId\",\n                \"gameServiceId\",\n                \"code\",\n                \"displayName\"\
-        ,\n                \"description\",\n                \"domains\",\n                \"personalityTraits\",\n      \
-        \          \"maxAttentionSlots\",\n                \"status\",\n                \"followerCount\",\n             \
-        \   \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n               \
-        \ \"deityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n         \
-        \           \"description\": \"Unique deity identifier\"\n                },\n                \"gameServiceId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Game service this deity belongs to\"\n                },\n                \"code\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Unique code within the game service\"\n              \
-        \  },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Human-readable display name\"\n                },\n                \"description\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Description of the deity\"\n                },\n     \
-        \           \"domains\": {\n                    \"type\": \"array\",\n                    \"items\": {\n         \
-        \               \"$ref\": \"#/$defs/DomainInfluence\"\n                    },\n                    \"description\"\
-        : \"Domain influences\"\n                },\n                \"personalityTraits\": {\n                    \"$ref\"\
-        : \"#/$defs/DeityPersonalityTraits\",\n                    \"description\": \"Personality traits\"\n             \
-        \   },\n                \"maxAttentionSlots\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"description\": \"Maximum characters the deity can actively monitor\"\n                },\n                \"actorId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Associated actor ID for the deity watcher brain (null if
-        no watcher started)\"\n                },\n                \"seedId\": {\n                    \"type\": \"string\"\
+        ,\n                \"description\",\n                \"domains\",\n                \"divineAffectations\",\n     \
+        \           \"maxAttentionSlots\",\n                \"status\",\n                \"followerCount\",\n            \
+        \    \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n          \
+        \  \"properties\": {\n                \"deityId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"description\": \"Unique deity identifier\"\n                },\n\
+        \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
+        \"uuid\",\n                    \"description\": \"Game service this deity belongs to\"\n                },\n     \
+        \           \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
+        code within the game service\"\n                },\n                \"displayName\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Human-readable display name\"\n                },\n        \
+        \        \"description\": {\n                    \"type\": \"string\",\n                    \"description\": \"Description
+        of the deity\"\n                },\n                \"domains\": {\n                    \"type\": \"array\",\n   \
+        \                 \"items\": {\n                        \"$ref\": \"#/$defs/DomainInfluence\"\n                  \
+        \  },\n                    \"description\": \"Domain influences\"\n                },\n                \"divineAffectations\"\
+        : {\n                    \"$ref\": \"#/$defs/DivineAffectations\",\n                    \"description\": \"Divine-specific
+        behavioral configuration for god-actor ABML decisions\"\n                },\n                \"maxAttentionSlots\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum characters the deity
+        can actively monitor\"\n                },\n                \"actorId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Domain power seed ID (null if seed creation failed or pending)\"\n                },\n                \"currencyWalletId\"\
+        : \"Associated actor ID for the deity watcher brain (null if no watcher started)\"\n                },\n         \
+        \       \"seedId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Domain power seed ID (null if seed creation
+        failed or pending)\"\n                },\n                \"genesisEntityId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Genesis entity ID for lifecycle queries (null if genesis entity not yet created)\"\n       \
+        \         },\n                \"currencyWalletId\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Divinity
+        currency wallet ID (null if wallet creation failed or pending)\"\n                },\n                \"realmId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Divinity currency wallet ID (null if wallet creation failed
-        or pending)\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Home realm for this deity (null if not realm-bound)\"\n                },\n                \"status\": {\n   \
-        \                 \"$ref\": \"#/$defs/DeityStatus\",\n                    \"description\": \"Current lifecycle status\"\
-        \n                },\n                \"followerCount\": {\n                    \"type\": \"integer\",\n         \
-        \           \"description\": \"Number of active followers\"\n                },\n                \"createdAt\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        description\": \"When the deity was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the deity was last updated\"\n                }\n            }\n        },\n        \"DomainInfluence\":
-        {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
-        A deity's influence in a specific domain with a weight representing strength\",\n            \"required\": [\n   \
-        \             \"domain\",\n                \"weight\"\n            ],\n            \"properties\": {\n           \
-        \     \"domain\": {\n                    \"type\": \"string\",\n                    \"description\": \"Opaque domain
-        code (e.g., war, knowledge, nature). Game-defined, not an enum.\"\n                },\n                \"weight\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Strength of influence
-        in this domain (0.0-1.0)\"\n                }\n            }\n        },\n        \"DeityPersonalityTraits\": {\n\
-        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
-        Machine-readable personality traits influencing deity behavior decisions\",\n            \"required\": [\n       \
-        \         \"temperament\",\n                \"attentionBias\",\n                \"generosity\",\n                \"\
-        jealousy\"\n            ],\n            \"properties\": {\n                \"temperament\": {\n                  \
-        \  \"type\": \"string\",\n                    \"description\": \"Primary temperament descriptor (e.g., wrathful, benevolent,
-        capricious)\"\n                },\n                \"attentionBias\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"What type of mortal actions draw this deity's attention (e.g., combat, devotion,
-        craft)\"\n                },\n                \"generosity\": {\n                    \"type\": \"number\",\n     \
-        \               \"format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
-        \                    \"description\": \"How freely the deity grants blessings (0.0 miserly, 1.0 lavish)\"\n      \
-        \          },\n                \"jealousy\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n            \
-        \        \"description\": \"How possessive the deity is of followers (0.0 tolerant, 1.0 vengeful)\"\n            \
-        \    }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a deity entity\",\n            \"enum\": [\n                \"Active\",\n                \"\
-        Dormant\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
+        nullable\": true,\n                    \"description\": \"Home realm for this deity (null if not realm-bound)\"\n\
+        \                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/DeityStatus\",\n     \
+        \               \"description\": \"Current lifecycle status\"\n                },\n                \"followerCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of active followers\"\
+        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether the deity is deprecated (Category A \\u2014 can be undeprecated)\"\n       \
+        \         },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When
+        the deity was deprecated (null if not deprecated)\"\n                },\n                \"deprecationReason\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the deity was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the deity
+        was last updated\"\n                }\n            }\n        },\n        \"DomainInfluence\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A deity's influence in
+        a specific domain with a weight representing strength\",\n            \"required\": [\n                \"domain\"\
+        ,\n                \"weight\"\n            ],\n            \"properties\": {\n                \"domain\": {\n    \
+        \                \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\":
+        100,\n                    \"description\": \"Opaque domain code (e.g., war, knowledge, nature). Game-defined, not
+        an enum.\"\n                },\n                \"weight\": {\n                    \"type\": \"number\",\n       \
+        \             \"format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"description\": \"Strength of influence in this domain (0.0-1.0)\"\n                }\n    \
+        \        }\n        },\n        \"DivineAffectations\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Divine-specific behavioral configuration for god-actor ABML decisions (separate
+        from Character Personality which provides emergent personality via system realm character brain)\",\n            \"\
+        required\": [\n                \"temperament\",\n                \"attentionBias\",\n                \"generosity\"\
+        ,\n                \"jealousy\"\n            ],\n            \"properties\": {\n                \"temperament\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Primary temperament descriptor
+        (e.g., wrathful, benevolent, capricious)\"\n                },\n                \"attentionBias\": {\n           \
+        \         \"type\": \"string\",\n                    \"description\": \"What type of mortal actions draw this deity's
+        attention (e.g., combat, devotion, craft)\"\n                },\n                \"generosity\": {\n             \
+        \       \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.0,\n\
+        \                    \"maximum\": 1.0,\n                    \"description\": \"How freely the deity grants blessings
+        (0.0 miserly, 1.0 lavish)\"\n                },\n                \"jealousy\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.0,\n                  \
+        \  \"maximum\": 1.0,\n                    \"description\": \"How possessive the deity is of followers (0.0 tolerant,
+        1.0 vengeful)\"\n                }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Lifecycle status of a deity entity (Archived removed \\u2014 deprecation
+        triple-field replaces it per Category A T31)\",\n            \"enum\": [\n                \"Active\",\n          \
+        \      \"Dormant\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update deity properties\",\n    \"description\": \"Partial update of deity
         properties. Only non-null fields are applied.\\nRequires a distributed lock on the deity.\\n\",\n    \"tags\": [\n\
         \        \"Deity Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateDeity\"\n}"
@@ -670,64 +738,76 @@ paths:
         ,\n    \"$defs\": {\n        \"DeityResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Full deity entity response\",\n            \"required\": [\n            \
         \    \"deityId\",\n                \"gameServiceId\",\n                \"code\",\n                \"displayName\"\
-        ,\n                \"description\",\n                \"domains\",\n                \"personalityTraits\",\n      \
-        \          \"maxAttentionSlots\",\n                \"status\",\n                \"followerCount\",\n             \
-        \   \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n               \
-        \ \"deityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n         \
-        \           \"description\": \"Unique deity identifier\"\n                },\n                \"gameServiceId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Game service this deity belongs to\"\n                },\n                \"code\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Unique code within the game service\"\n              \
-        \  },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Human-readable display name\"\n                },\n                \"description\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Description of the deity\"\n                },\n     \
-        \           \"domains\": {\n                    \"type\": \"array\",\n                    \"items\": {\n         \
-        \               \"$ref\": \"#/$defs/DomainInfluence\"\n                    },\n                    \"description\"\
-        : \"Domain influences\"\n                },\n                \"personalityTraits\": {\n                    \"$ref\"\
-        : \"#/$defs/DeityPersonalityTraits\",\n                    \"description\": \"Personality traits\"\n             \
-        \   },\n                \"maxAttentionSlots\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"description\": \"Maximum characters the deity can actively monitor\"\n                },\n                \"actorId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Associated actor ID for the deity watcher brain (null if
-        no watcher started)\"\n                },\n                \"seedId\": {\n                    \"type\": \"string\"\
+        ,\n                \"description\",\n                \"domains\",\n                \"divineAffectations\",\n     \
+        \           \"maxAttentionSlots\",\n                \"status\",\n                \"followerCount\",\n            \
+        \    \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n          \
+        \  \"properties\": {\n                \"deityId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"description\": \"Unique deity identifier\"\n                },\n\
+        \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
+        \"uuid\",\n                    \"description\": \"Game service this deity belongs to\"\n                },\n     \
+        \           \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
+        code within the game service\"\n                },\n                \"displayName\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Human-readable display name\"\n                },\n        \
+        \        \"description\": {\n                    \"type\": \"string\",\n                    \"description\": \"Description
+        of the deity\"\n                },\n                \"domains\": {\n                    \"type\": \"array\",\n   \
+        \                 \"items\": {\n                        \"$ref\": \"#/$defs/DomainInfluence\"\n                  \
+        \  },\n                    \"description\": \"Domain influences\"\n                },\n                \"divineAffectations\"\
+        : {\n                    \"$ref\": \"#/$defs/DivineAffectations\",\n                    \"description\": \"Divine-specific
+        behavioral configuration for god-actor ABML decisions\"\n                },\n                \"maxAttentionSlots\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum characters the deity
+        can actively monitor\"\n                },\n                \"actorId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Domain power seed ID (null if seed creation failed or pending)\"\n                },\n                \"currencyWalletId\"\
+        : \"Associated actor ID for the deity watcher brain (null if no watcher started)\"\n                },\n         \
+        \       \"seedId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Domain power seed ID (null if seed creation
+        failed or pending)\"\n                },\n                \"genesisEntityId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Genesis entity ID for lifecycle queries (null if genesis entity not yet created)\"\n       \
+        \         },\n                \"currencyWalletId\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Divinity
+        currency wallet ID (null if wallet creation failed or pending)\"\n                },\n                \"realmId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Divinity currency wallet ID (null if wallet creation failed
-        or pending)\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Home realm for this deity (null if not realm-bound)\"\n                },\n                \"status\": {\n   \
-        \                 \"$ref\": \"#/$defs/DeityStatus\",\n                    \"description\": \"Current lifecycle status\"\
-        \n                },\n                \"followerCount\": {\n                    \"type\": \"integer\",\n         \
-        \           \"description\": \"Number of active followers\"\n                },\n                \"createdAt\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        description\": \"When the deity was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the deity was last updated\"\n                }\n            }\n        },\n        \"DomainInfluence\":
-        {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
-        A deity's influence in a specific domain with a weight representing strength\",\n            \"required\": [\n   \
-        \             \"domain\",\n                \"weight\"\n            ],\n            \"properties\": {\n           \
-        \     \"domain\": {\n                    \"type\": \"string\",\n                    \"description\": \"Opaque domain
-        code (e.g., war, knowledge, nature). Game-defined, not an enum.\"\n                },\n                \"weight\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Strength of influence
-        in this domain (0.0-1.0)\"\n                }\n            }\n        },\n        \"DeityPersonalityTraits\": {\n\
-        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
-        Machine-readable personality traits influencing deity behavior decisions\",\n            \"required\": [\n       \
-        \         \"temperament\",\n                \"attentionBias\",\n                \"generosity\",\n                \"\
-        jealousy\"\n            ],\n            \"properties\": {\n                \"temperament\": {\n                  \
-        \  \"type\": \"string\",\n                    \"description\": \"Primary temperament descriptor (e.g., wrathful, benevolent,
-        capricious)\"\n                },\n                \"attentionBias\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"What type of mortal actions draw this deity's attention (e.g., combat, devotion,
-        craft)\"\n                },\n                \"generosity\": {\n                    \"type\": \"number\",\n     \
-        \               \"format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
-        \                    \"description\": \"How freely the deity grants blessings (0.0 miserly, 1.0 lavish)\"\n      \
-        \          },\n                \"jealousy\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n            \
-        \        \"description\": \"How possessive the deity is of followers (0.0 tolerant, 1.0 vengeful)\"\n            \
-        \    }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a deity entity\",\n            \"enum\": [\n                \"Active\",\n                \"\
-        Dormant\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
+        nullable\": true,\n                    \"description\": \"Home realm for this deity (null if not realm-bound)\"\n\
+        \                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/DeityStatus\",\n     \
+        \               \"description\": \"Current lifecycle status\"\n                },\n                \"followerCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of active followers\"\
+        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether the deity is deprecated (Category A \\u2014 can be undeprecated)\"\n       \
+        \         },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When
+        the deity was deprecated (null if not deprecated)\"\n                },\n                \"deprecationReason\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the deity was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the deity
+        was last updated\"\n                }\n            }\n        },\n        \"DomainInfluence\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A deity's influence in
+        a specific domain with a weight representing strength\",\n            \"required\": [\n                \"domain\"\
+        ,\n                \"weight\"\n            ],\n            \"properties\": {\n                \"domain\": {\n    \
+        \                \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\":
+        100,\n                    \"description\": \"Opaque domain code (e.g., war, knowledge, nature). Game-defined, not
+        an enum.\"\n                },\n                \"weight\": {\n                    \"type\": \"number\",\n       \
+        \             \"format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"description\": \"Strength of influence in this domain (0.0-1.0)\"\n                }\n    \
+        \        }\n        },\n        \"DivineAffectations\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Divine-specific behavioral configuration for god-actor ABML decisions (separate
+        from Character Personality which provides emergent personality via system realm character brain)\",\n            \"\
+        required\": [\n                \"temperament\",\n                \"attentionBias\",\n                \"generosity\"\
+        ,\n                \"jealousy\"\n            ],\n            \"properties\": {\n                \"temperament\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Primary temperament descriptor
+        (e.g., wrathful, benevolent, capricious)\"\n                },\n                \"attentionBias\": {\n           \
+        \         \"type\": \"string\",\n                    \"description\": \"What type of mortal actions draw this deity's
+        attention (e.g., combat, devotion, craft)\"\n                },\n                \"generosity\": {\n             \
+        \       \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.0,\n\
+        \                    \"maximum\": 1.0,\n                    \"description\": \"How freely the deity grants blessings
+        (0.0 miserly, 1.0 lavish)\"\n                },\n                \"jealousy\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.0,\n                  \
+        \  \"maximum\": 1.0,\n                    \"description\": \"How possessive the deity is of followers (0.0 tolerant,
+        1.0 vengeful)\"\n                }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Lifecycle status of a deity entity (Archived removed \\u2014 deprecation
+        triple-field replaces it per Category A T31)\",\n            \"enum\": [\n                \"Active\",\n          \
+        \      \"Dormant\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Activate a dormant deity\",\n    \"description\": \"Sets the deity status
         to Active. If Puppetmaster is available and no\\nwatcher actor exists, starts one. Publishes a deity activated event.\\\
         n\",\n    \"tags\": [\n        \"Deity Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"activateDeity\"\
@@ -756,7 +836,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/DeityResponse'
         '400':
-          description: Deity is already dormant or archived
+          description: Deity is already dormant
         '404':
           description: Deity not found
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeactivateDeityRequest\"\
@@ -769,76 +849,349 @@ paths:
         ,\n    \"$defs\": {\n        \"DeityResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Full deity entity response\",\n            \"required\": [\n            \
         \    \"deityId\",\n                \"gameServiceId\",\n                \"code\",\n                \"displayName\"\
-        ,\n                \"description\",\n                \"domains\",\n                \"personalityTraits\",\n      \
-        \          \"maxAttentionSlots\",\n                \"status\",\n                \"followerCount\",\n             \
-        \   \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n               \
-        \ \"deityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n         \
-        \           \"description\": \"Unique deity identifier\"\n                },\n                \"gameServiceId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Game service this deity belongs to\"\n                },\n                \"code\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Unique code within the game service\"\n              \
-        \  },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Human-readable display name\"\n                },\n                \"description\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Description of the deity\"\n                },\n     \
-        \           \"domains\": {\n                    \"type\": \"array\",\n                    \"items\": {\n         \
-        \               \"$ref\": \"#/$defs/DomainInfluence\"\n                    },\n                    \"description\"\
-        : \"Domain influences\"\n                },\n                \"personalityTraits\": {\n                    \"$ref\"\
-        : \"#/$defs/DeityPersonalityTraits\",\n                    \"description\": \"Personality traits\"\n             \
-        \   },\n                \"maxAttentionSlots\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"description\": \"Maximum characters the deity can actively monitor\"\n                },\n                \"actorId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Associated actor ID for the deity watcher brain (null if
-        no watcher started)\"\n                },\n                \"seedId\": {\n                    \"type\": \"string\"\
+        ,\n                \"description\",\n                \"domains\",\n                \"divineAffectations\",\n     \
+        \           \"maxAttentionSlots\",\n                \"status\",\n                \"followerCount\",\n            \
+        \    \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n          \
+        \  \"properties\": {\n                \"deityId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"description\": \"Unique deity identifier\"\n                },\n\
+        \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
+        \"uuid\",\n                    \"description\": \"Game service this deity belongs to\"\n                },\n     \
+        \           \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
+        code within the game service\"\n                },\n                \"displayName\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Human-readable display name\"\n                },\n        \
+        \        \"description\": {\n                    \"type\": \"string\",\n                    \"description\": \"Description
+        of the deity\"\n                },\n                \"domains\": {\n                    \"type\": \"array\",\n   \
+        \                 \"items\": {\n                        \"$ref\": \"#/$defs/DomainInfluence\"\n                  \
+        \  },\n                    \"description\": \"Domain influences\"\n                },\n                \"divineAffectations\"\
+        : {\n                    \"$ref\": \"#/$defs/DivineAffectations\",\n                    \"description\": \"Divine-specific
+        behavioral configuration for god-actor ABML decisions\"\n                },\n                \"maxAttentionSlots\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum characters the deity
+        can actively monitor\"\n                },\n                \"actorId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Domain power seed ID (null if seed creation failed or pending)\"\n                },\n                \"currencyWalletId\"\
+        : \"Associated actor ID for the deity watcher brain (null if no watcher started)\"\n                },\n         \
+        \       \"seedId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Domain power seed ID (null if seed creation
+        failed or pending)\"\n                },\n                \"genesisEntityId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Genesis entity ID for lifecycle queries (null if genesis entity not yet created)\"\n       \
+        \         },\n                \"currencyWalletId\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Divinity
+        currency wallet ID (null if wallet creation failed or pending)\"\n                },\n                \"realmId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Divinity currency wallet ID (null if wallet creation failed
-        or pending)\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Home realm for this deity (null if not realm-bound)\"\n                },\n                \"status\": {\n   \
-        \                 \"$ref\": \"#/$defs/DeityStatus\",\n                    \"description\": \"Current lifecycle status\"\
-        \n                },\n                \"followerCount\": {\n                    \"type\": \"integer\",\n         \
-        \           \"description\": \"Number of active followers\"\n                },\n                \"createdAt\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        description\": \"When the deity was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the deity was last updated\"\n                }\n            }\n        },\n        \"DomainInfluence\":
-        {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
-        A deity's influence in a specific domain with a weight representing strength\",\n            \"required\": [\n   \
-        \             \"domain\",\n                \"weight\"\n            ],\n            \"properties\": {\n           \
-        \     \"domain\": {\n                    \"type\": \"string\",\n                    \"description\": \"Opaque domain
-        code (e.g., war, knowledge, nature). Game-defined, not an enum.\"\n                },\n                \"weight\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Strength of influence
-        in this domain (0.0-1.0)\"\n                }\n            }\n        },\n        \"DeityPersonalityTraits\": {\n\
-        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
-        Machine-readable personality traits influencing deity behavior decisions\",\n            \"required\": [\n       \
-        \         \"temperament\",\n                \"attentionBias\",\n                \"generosity\",\n                \"\
-        jealousy\"\n            ],\n            \"properties\": {\n                \"temperament\": {\n                  \
-        \  \"type\": \"string\",\n                    \"description\": \"Primary temperament descriptor (e.g., wrathful, benevolent,
-        capricious)\"\n                },\n                \"attentionBias\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"What type of mortal actions draw this deity's attention (e.g., combat, devotion,
-        craft)\"\n                },\n                \"generosity\": {\n                    \"type\": \"number\",\n     \
-        \               \"format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
-        \                    \"description\": \"How freely the deity grants blessings (0.0 miserly, 1.0 lavish)\"\n      \
-        \          },\n                \"jealousy\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n            \
-        \        \"description\": \"How possessive the deity is of followers (0.0 tolerant, 1.0 vengeful)\"\n            \
-        \    }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Lifecycle status of a deity entity\",\n            \"enum\": [\n                \"Active\",\n                \"\
-        Dormant\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
+        nullable\": true,\n                    \"description\": \"Home realm for this deity (null if not realm-bound)\"\n\
+        \                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/DeityStatus\",\n     \
+        \               \"description\": \"Current lifecycle status\"\n                },\n                \"followerCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of active followers\"\
+        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether the deity is deprecated (Category A \\u2014 can be undeprecated)\"\n       \
+        \         },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When
+        the deity was deprecated (null if not deprecated)\"\n                },\n                \"deprecationReason\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the deity was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the deity
+        was last updated\"\n                }\n            }\n        },\n        \"DomainInfluence\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A deity's influence in
+        a specific domain with a weight representing strength\",\n            \"required\": [\n                \"domain\"\
+        ,\n                \"weight\"\n            ],\n            \"properties\": {\n                \"domain\": {\n    \
+        \                \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\":
+        100,\n                    \"description\": \"Opaque domain code (e.g., war, knowledge, nature). Game-defined, not
+        an enum.\"\n                },\n                \"weight\": {\n                    \"type\": \"number\",\n       \
+        \             \"format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"description\": \"Strength of influence in this domain (0.0-1.0)\"\n                }\n    \
+        \        }\n        },\n        \"DivineAffectations\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Divine-specific behavioral configuration for god-actor ABML decisions (separate
+        from Character Personality which provides emergent personality via system realm character brain)\",\n            \"\
+        required\": [\n                \"temperament\",\n                \"attentionBias\",\n                \"generosity\"\
+        ,\n                \"jealousy\"\n            ],\n            \"properties\": {\n                \"temperament\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Primary temperament descriptor
+        (e.g., wrathful, benevolent, capricious)\"\n                },\n                \"attentionBias\": {\n           \
+        \         \"type\": \"string\",\n                    \"description\": \"What type of mortal actions draw this deity's
+        attention (e.g., combat, devotion, craft)\"\n                },\n                \"generosity\": {\n             \
+        \       \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.0,\n\
+        \                    \"maximum\": 1.0,\n                    \"description\": \"How freely the deity grants blessings
+        (0.0 miserly, 1.0 lavish)\"\n                },\n                \"jealousy\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.0,\n                  \
+        \  \"maximum\": 1.0,\n                    \"description\": \"How possessive the deity is of followers (0.0 tolerant,
+        1.0 vengeful)\"\n                }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Lifecycle status of a deity entity (Archived removed \\u2014 deprecation
+        triple-field replaces it per Category A T31)\",\n            \"enum\": [\n                \"Active\",\n          \
+        \      \"Dormant\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deactivate an active deity\",\n    \"description\": \"Sets the deity status
         to Dormant. Stops the watcher actor if Puppetmaster\\nis available. Clears all attention slots. Publishes a deity
         dormant event.\\n\",\n    \"tags\": [\n        \"Deity Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"deactivateDeity\"\n}"
+  /divine/deity/deprecate:
+    post:
+      summary: Deprecate a deity (Category A)
+      description: |
+        Marks a deity as deprecated with a reason. Idempotent — returns 200 OK if
+        already deprecated. Publishes deity.updated event with changedFields containing
+        deprecation fields.
+      operationId: deprecateDeity
+      tags:
+      - Deity Management
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateDeityRequest'
+      responses:
+        '200':
+          description: Deity deprecated (or already deprecated — idempotent)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeityResponse'
+        '404':
+          description: Deity not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeprecateDeityRequest\"\
+        ,\n    \"$defs\": {\n        \"DeprecateDeityRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to deprecate a deity (Category A \\u2014 gods can return via undeprecate)\"\
+        ,\n            \"required\": [\n                \"deityId\"\n            ],\n            \"properties\": {\n     \
+        \           \"deityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"Deity to deprecate\"\n                },\n                \"reason\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 500,\n                    \"description\": \"Optional reason for deprecation\"\n                }\n            }\n\
+        \        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeityResponse\"\
+        ,\n    \"$defs\": {\n        \"DeityResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Full deity entity response\",\n            \"required\": [\n            \
+        \    \"deityId\",\n                \"gameServiceId\",\n                \"code\",\n                \"displayName\"\
+        ,\n                \"description\",\n                \"domains\",\n                \"divineAffectations\",\n     \
+        \           \"maxAttentionSlots\",\n                \"status\",\n                \"followerCount\",\n            \
+        \    \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n          \
+        \  \"properties\": {\n                \"deityId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"description\": \"Unique deity identifier\"\n                },\n\
+        \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
+        \"uuid\",\n                    \"description\": \"Game service this deity belongs to\"\n                },\n     \
+        \           \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
+        code within the game service\"\n                },\n                \"displayName\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Human-readable display name\"\n                },\n        \
+        \        \"description\": {\n                    \"type\": \"string\",\n                    \"description\": \"Description
+        of the deity\"\n                },\n                \"domains\": {\n                    \"type\": \"array\",\n   \
+        \                 \"items\": {\n                        \"$ref\": \"#/$defs/DomainInfluence\"\n                  \
+        \  },\n                    \"description\": \"Domain influences\"\n                },\n                \"divineAffectations\"\
+        : {\n                    \"$ref\": \"#/$defs/DivineAffectations\",\n                    \"description\": \"Divine-specific
+        behavioral configuration for god-actor ABML decisions\"\n                },\n                \"maxAttentionSlots\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum characters the deity
+        can actively monitor\"\n                },\n                \"actorId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Associated actor ID for the deity watcher brain (null if no watcher started)\"\n                },\n         \
+        \       \"seedId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Domain power seed ID (null if seed creation
+        failed or pending)\"\n                },\n                \"genesisEntityId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Genesis entity ID for lifecycle queries (null if genesis entity not yet created)\"\n       \
+        \         },\n                \"currencyWalletId\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Divinity
+        currency wallet ID (null if wallet creation failed or pending)\"\n                },\n                \"realmId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Home realm for this deity (null if not realm-bound)\"\n\
+        \                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/DeityStatus\",\n     \
+        \               \"description\": \"Current lifecycle status\"\n                },\n                \"followerCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of active followers\"\
+        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether the deity is deprecated (Category A \\u2014 can be undeprecated)\"\n       \
+        \         },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When
+        the deity was deprecated (null if not deprecated)\"\n                },\n                \"deprecationReason\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the deity was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the deity
+        was last updated\"\n                }\n            }\n        },\n        \"DomainInfluence\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A deity's influence in
+        a specific domain with a weight representing strength\",\n            \"required\": [\n                \"domain\"\
+        ,\n                \"weight\"\n            ],\n            \"properties\": {\n                \"domain\": {\n    \
+        \                \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\":
+        100,\n                    \"description\": \"Opaque domain code (e.g., war, knowledge, nature). Game-defined, not
+        an enum.\"\n                },\n                \"weight\": {\n                    \"type\": \"number\",\n       \
+        \             \"format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"description\": \"Strength of influence in this domain (0.0-1.0)\"\n                }\n    \
+        \        }\n        },\n        \"DivineAffectations\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Divine-specific behavioral configuration for god-actor ABML decisions (separate
+        from Character Personality which provides emergent personality via system realm character brain)\",\n            \"\
+        required\": [\n                \"temperament\",\n                \"attentionBias\",\n                \"generosity\"\
+        ,\n                \"jealousy\"\n            ],\n            \"properties\": {\n                \"temperament\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Primary temperament descriptor
+        (e.g., wrathful, benevolent, capricious)\"\n                },\n                \"attentionBias\": {\n           \
+        \         \"type\": \"string\",\n                    \"description\": \"What type of mortal actions draw this deity's
+        attention (e.g., combat, devotion, craft)\"\n                },\n                \"generosity\": {\n             \
+        \       \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.0,\n\
+        \                    \"maximum\": 1.0,\n                    \"description\": \"How freely the deity grants blessings
+        (0.0 miserly, 1.0 lavish)\"\n                },\n                \"jealousy\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.0,\n                  \
+        \  \"maximum\": 1.0,\n                    \"description\": \"How possessive the deity is of followers (0.0 tolerant,
+        1.0 vengeful)\"\n                }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Lifecycle status of a deity entity (Archived removed \\u2014 deprecation
+        triple-field replaces it per Category A T31)\",\n            \"enum\": [\n                \"Active\",\n          \
+        \      \"Dormant\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Deprecate a deity (Category A)\",\n    \"description\": \"Marks a deity
+        as deprecated with a reason. Idempotent \\u2014 returns 200 OK if\\nalready deprecated. Publishes deity.updated event
+        with changedFields containing\\ndeprecation fields.\\n\",\n    \"tags\": [\n        \"Deity Management\"\n    ],\n\
+        \    \"deprecated\": false,\n    \"operationId\": \"deprecateDeity\"\n}"
+  /divine/deity/undeprecate:
+    post:
+      summary: Undeprecate a deprecated deity (Category A)
+      description: |
+        Clears deprecation on a deity. Idempotent — returns 200 OK if not deprecated.
+        Publishes deity.updated event with changedFields containing deprecation fields.
+      operationId: undeprecateDeity
+      tags:
+      - Deity Management
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UndeprecateDeityRequest'
+      responses:
+        '200':
+          description: Deity undeprecated (or was not deprecated — idempotent)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeityResponse'
+        '404':
+          description: Deity not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UndeprecateDeityRequest\"\
+        ,\n    \"$defs\": {\n        \"UndeprecateDeityRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to undeprecate a previously deprecated deity (Category A)\",\n  \
+        \          \"required\": [\n                \"deityId\"\n            ],\n            \"properties\": {\n         \
+        \       \"deityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
+        \                 \"description\": \"Deity to undeprecate\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeityResponse\"\
+        ,\n    \"$defs\": {\n        \"DeityResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Full deity entity response\",\n            \"required\": [\n            \
+        \    \"deityId\",\n                \"gameServiceId\",\n                \"code\",\n                \"displayName\"\
+        ,\n                \"description\",\n                \"domains\",\n                \"divineAffectations\",\n     \
+        \           \"maxAttentionSlots\",\n                \"status\",\n                \"followerCount\",\n            \
+        \    \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n          \
+        \  \"properties\": {\n                \"deityId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"description\": \"Unique deity identifier\"\n                },\n\
+        \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
+        \"uuid\",\n                    \"description\": \"Game service this deity belongs to\"\n                },\n     \
+        \           \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique
+        code within the game service\"\n                },\n                \"displayName\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Human-readable display name\"\n                },\n        \
+        \        \"description\": {\n                    \"type\": \"string\",\n                    \"description\": \"Description
+        of the deity\"\n                },\n                \"domains\": {\n                    \"type\": \"array\",\n   \
+        \                 \"items\": {\n                        \"$ref\": \"#/$defs/DomainInfluence\"\n                  \
+        \  },\n                    \"description\": \"Domain influences\"\n                },\n                \"divineAffectations\"\
+        : {\n                    \"$ref\": \"#/$defs/DivineAffectations\",\n                    \"description\": \"Divine-specific
+        behavioral configuration for god-actor ABML decisions\"\n                },\n                \"maxAttentionSlots\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum characters the deity
+        can actively monitor\"\n                },\n                \"actorId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Associated actor ID for the deity watcher brain (null if no watcher started)\"\n                },\n         \
+        \       \"seedId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Domain power seed ID (null if seed creation
+        failed or pending)\"\n                },\n                \"genesisEntityId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Genesis entity ID for lifecycle queries (null if genesis entity not yet created)\"\n       \
+        \         },\n                \"currencyWalletId\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Divinity
+        currency wallet ID (null if wallet creation failed or pending)\"\n                },\n                \"realmId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Home realm for this deity (null if not realm-bound)\"\n\
+        \                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/DeityStatus\",\n     \
+        \               \"description\": \"Current lifecycle status\"\n                },\n                \"followerCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of active followers\"\
+        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether the deity is deprecated (Category A \\u2014 can be undeprecated)\"\n       \
+        \         },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When
+        the deity was deprecated (null if not deprecated)\"\n                },\n                \"deprecationReason\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Reason for deprecation (null if not deprecated)\"\n                },\n                \"createdAt\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the deity was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the deity
+        was last updated\"\n                }\n            }\n        },\n        \"DomainInfluence\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A deity's influence in
+        a specific domain with a weight representing strength\",\n            \"required\": [\n                \"domain\"\
+        ,\n                \"weight\"\n            ],\n            \"properties\": {\n                \"domain\": {\n    \
+        \                \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\":
+        100,\n                    \"description\": \"Opaque domain code (e.g., war, knowledge, nature). Game-defined, not
+        an enum.\"\n                },\n                \"weight\": {\n                    \"type\": \"number\",\n       \
+        \             \"format\": \"double\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n\
+        \                    \"description\": \"Strength of influence in this domain (0.0-1.0)\"\n                }\n    \
+        \        }\n        },\n        \"DivineAffectations\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Divine-specific behavioral configuration for god-actor ABML decisions (separate
+        from Character Personality which provides emergent personality via system realm character brain)\",\n            \"\
+        required\": [\n                \"temperament\",\n                \"attentionBias\",\n                \"generosity\"\
+        ,\n                \"jealousy\"\n            ],\n            \"properties\": {\n                \"temperament\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Primary temperament descriptor
+        (e.g., wrathful, benevolent, capricious)\"\n                },\n                \"attentionBias\": {\n           \
+        \         \"type\": \"string\",\n                    \"description\": \"What type of mortal actions draw this deity's
+        attention (e.g., combat, devotion, craft)\"\n                },\n                \"generosity\": {\n             \
+        \       \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.0,\n\
+        \                    \"maximum\": 1.0,\n                    \"description\": \"How freely the deity grants blessings
+        (0.0 miserly, 1.0 lavish)\"\n                },\n                \"jealousy\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.0,\n                  \
+        \  \"maximum\": 1.0,\n                    \"description\": \"How possessive the deity is of followers (0.0 tolerant,
+        1.0 vengeful)\"\n                }\n            }\n        },\n        \"DeityStatus\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Lifecycle status of a deity entity (Archived removed \\u2014 deprecation
+        triple-field replaces it per Category A T31)\",\n            \"enum\": [\n                \"Active\",\n          \
+        \      \"Dormant\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Undeprecate a deprecated deity (Category A)\",\n    \"description\": \"\
+        Clears deprecation on a deity. Idempotent \\u2014 returns 200 OK if not deprecated.\\nPublishes deity.updated event
+        with changedFields containing deprecation fields.\\n\",\n    \"tags\": [\n        \"Deity Management\"\n    ],\n \
+        \   \"deprecated\": false,\n    \"operationId\": \"undeprecateDeity\"\n}"
+  /divine/deity/merge:
+    post:
+      summary: Merge a deprecated deity into another deity (Category A)
+      description: |
+        Transfers all followers and blessings from the source deity (must be deprecated)
+        to the target deity (must not be deprecated). Dissolves old seed bonds and creates
+        new bonds per target deity's bond template. Deletes the source deity after
+        successful transfer.
+      operationId: mergeDeity
+      tags:
+      - Deity Management
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'common-api.yaml#/components/schemas/MergeDeprecatedRequest'
+      responses:
+        '200':
+          description: Merge completed
+          content:
+            application/json:
+              schema:
+                $ref: 'common-api.yaml#/components/schemas/MergeDeprecatedResponse'
+        '400':
+          description: Source deity is not deprecated, or target deity is deprecated
+        '404':
+          description: Source or target deity not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\
+        }"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\
+        }"
+      x-endpoint-info-json: "{\n    \"summary\": \"Merge a deprecated deity into another deity (Category A)\",\n    \"description\"\
+        : \"Transfers all followers and blessings from the source deity (must be deprecated)\\nto the target deity (must not
+        be deprecated). Dissolves old seed bonds and creates\\nnew bonds per target deity's bond template. Deletes the source
+        deity after\\nsuccessful transfer.\\n\",\n    \"tags\": [\n        \"Deity Management\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"mergeDeity\"\n}"
   /divine/deity/delete:
     post:
       summary: Delete a deity
       description: |
-        Permanently deletes a deity and all dependent data. Deactivates the deity
-        if active, revokes all blessings, removes all follower relationships, deletes
-        attention slots, and coordinates cleanup via lib-resource. Publishes a
-        lifecycle deleted event.
+        Permanently deletes a deity and all dependent data. Requires the deity to be
+        deprecated first (Category A T31). Deactivates the deity if active, revokes
+        all blessings, removes all follower relationships, deletes attention slots,
+        and coordinates cleanup via lib-resource. Publishes a lifecycle deleted event.
       operationId: deleteDeity
       tags:
       - Deity Management
@@ -852,20 +1205,22 @@ paths:
       responses:
         '200':
           description: Deity deleted
+        '400':
+          description: Deity is not deprecated (must deprecate first per Category A T31)
         '404':
           description: Deity not found
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteDeityRequest\"\
         ,\n    \"$defs\": {\n        \"DeleteDeityRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Request to permanently delete a deity and all dependent data\",\n       \
-        \     \"required\": [\n                \"deityId\"\n            ],\n            \"properties\": {\n              \
-        \  \"deityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n        \
-        \            \"description\": \"Deity to delete\"\n                }\n            }\n        }\n    }\n}"
+        : false,\n            \"description\": \"Request to permanently delete a deity and all dependent data (must be deprecated
+        first)\",\n            \"required\": [\n                \"deityId\"\n            ],\n            \"properties\": {\n\
+        \                \"deityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Deity to delete\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Delete a deity\",\n    \"description\": \"Permanently deletes a deity and
-        all dependent data. Deactivates the deity\\nif active, revokes all blessings, removes all follower relationships,
-        deletes\\nattention slots, and coordinates cleanup via lib-resource. Publishes a\\nlifecycle deleted event.\\n\",\n\
-        \    \"tags\": [\n        \"Deity Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteDeity\"\
-        \n}"
+        all dependent data. Requires the deity to be\\ndeprecated first (Category A T31). Deactivates the deity if active,
+        revokes\\nall blessings, removes all follower relationships, deletes attention slots,\\nand coordinates cleanup via
+        lib-resource. Publishes a lifecycle deleted event.\\n\",\n    \"tags\": [\n        \"Deity Management\"\n    ],\n\
+        \    \"deprecated\": false,\n    \"operationId\": \"deleteDeity\"\n}"
   /divine/divinity/get-balance:
     post:
       summary: Get a deity's divinity balance
@@ -898,15 +1253,11 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DivinityBalanceResponse\"\
         ,\n    \"$defs\": {\n        \"DivinityBalanceResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Current divinity balance for a deity\",\n            \"required\": [\n  \
-        \              \"deityId\",\n                \"balance\",\n                \"currencyCode\",\n                \"walletId\"\
-        \n            ],\n            \"properties\": {\n                \"deityId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Deity this balance belongs
-        to\"\n                },\n                \"balance\": {\n                    \"type\": \"number\",\n            \
-        \        \"format\": \"double\",\n                    \"description\": \"Current divinity balance\"\n            \
-        \    },\n                \"currencyCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Currency code for the divinity type\"\n                },\n                \"walletId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Currency
-        wallet ID\"\n                }\n            }\n        }\n    }\n}"
+        \              \"balance\",\n                \"currencyCode\"\n            ],\n            \"properties\": {\n   \
+        \             \"balance\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"description\": \"Current divinity balance\"\n                },\n                \"currencyCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Currency code for the divinity
+        type\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a deity's divinity balance\",\n    \"description\": \"Returns the current
         divinity balance for a deity by querying its currency wallet.\",\n    \"tags\": [\n        \"Divinity Economy\"\n\
         \    ],\n    \"deprecated\": false,\n    \"operationId\": \"getDivinityBalance\"\n}"
@@ -954,15 +1305,11 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DivinityBalanceResponse\"\
         ,\n    \"$defs\": {\n        \"DivinityBalanceResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Current divinity balance for a deity\",\n            \"required\": [\n  \
-        \              \"deityId\",\n                \"balance\",\n                \"currencyCode\",\n                \"walletId\"\
-        \n            ],\n            \"properties\": {\n                \"deityId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Deity this balance belongs
-        to\"\n                },\n                \"balance\": {\n                    \"type\": \"number\",\n            \
-        \        \"format\": \"double\",\n                    \"description\": \"Current divinity balance\"\n            \
-        \    },\n                \"currencyCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Currency code for the divinity type\"\n                },\n                \"walletId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Currency
-        wallet ID\"\n                }\n            }\n        }\n    }\n}"
+        \              \"balance\",\n                \"currencyCode\"\n            ],\n            \"properties\": {\n   \
+        \             \"balance\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"description\": \"Current divinity balance\"\n                },\n                \"currencyCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Currency code for the divinity
+        type\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Credit divinity to a deity\",\n    \"description\": \"Credits divinity
         to a deity's currency wallet. Used for mortal actions\\nin the deity's domain, direct grants, or other divinity generation
         sources.\\n\",\n    \"tags\": [\n        \"Divinity Economy\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -1014,15 +1361,11 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DivinityBalanceResponse\"\
         ,\n    \"$defs\": {\n        \"DivinityBalanceResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Current divinity balance for a deity\",\n            \"required\": [\n  \
-        \              \"deityId\",\n                \"balance\",\n                \"currencyCode\",\n                \"walletId\"\
-        \n            ],\n            \"properties\": {\n                \"deityId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Deity this balance belongs
-        to\"\n                },\n                \"balance\": {\n                    \"type\": \"number\",\n            \
-        \        \"format\": \"double\",\n                    \"description\": \"Current divinity balance\"\n            \
-        \    },\n                \"currencyCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Currency code for the divinity type\"\n                },\n                \"walletId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Currency
-        wallet ID\"\n                }\n            }\n        }\n    }\n}"
+        \              \"balance\",\n                \"currencyCode\"\n            ],\n            \"properties\": {\n   \
+        \             \"balance\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"description\": \"Current divinity balance\"\n                },\n                \"currencyCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Currency code for the divinity
+        type\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Debit divinity from a deity\",\n    \"description\": \"Debits divinity
         from a deity's currency wallet. Used for blessing grants,\\nmiracles, or other divinity expenditures. Validates sufficient
         balance\\nbefore debiting.\\n\",\n    \"tags\": [\n        \"Divinity Economy\"\n    ],\n    \"deprecated\": false,\n\
@@ -1084,14 +1427,14 @@ paths:
         \       \"format\": \"double\",\n                    \"description\": \"Transaction amount (positive for credits,
         negative for debits)\"\n                },\n                \"transactionType\": {\n                    \"type\":
         \"string\",\n                    \"description\": \"Type of transaction (e.g., mortal_action, blessing_grant, manual_credit)\"\
-        \n                },\n                \"targetType\": {\n                    \"type\": \"string\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Type of entity involved in this transaction (e.g.,
-        character, deity)\"\n                },\n                \"targetId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Entity ID involved in this transaction (e.g., the blessed character, the rival deity)\"\n                },\n\
-        \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"When the transaction was recorded\"\n                }\n            }\n\
-        \        }\n    }\n}"
+        \n                },\n                \"targetType\": {\n                    \"type\": \"object\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Type of entity involved in this transaction\"\n\
+        \                },\n                \"targetId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Entity
+        ID involved in this transaction (e.g., the blessed character, the rival deity)\"\n                },\n           \
+        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When the transaction was recorded\"\n                }\n            }\n  \
+        \      }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get divinity transaction history\",\n    \"description\": \"Returns paginated
         transaction history for a deity's divinity wallet.\",\n    \"tags\": [\n        \"Divinity Economy\"\n    ],\n   \
         \ \"deprecated\": false,\n    \"operationId\": \"getDivinityHistory\"\n}"
@@ -1209,10 +1552,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BlessingResponse'
-        '400':
-          description: Blessing is already revoked
         '404':
           description: Blessing not found
+        '409':
+          description: Blessing is already revoked
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RevokeBlessingRequest\"\
         ,\n    \"$defs\": {\n        \"RevokeBlessingRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Request to revoke an active blessing\",\n            \"required\": [\n  \
@@ -1511,15 +1854,18 @@ paths:
         ,\n    \"$defs\": {\n        \"FollowerResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Follower record linking a character to a deity\",\n            \"required\"\
         : [\n                \"characterId\",\n                \"deityId\",\n                \"registeredAt\",\n         \
-        \       \"relationshipId\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n  \
-        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Follower character ID\"\n                },\n                \"deityId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Deity being followed\"\
-        \n                },\n                \"registeredAt\": {\n                    \"type\": \"string\",\n           \
-        \         \"format\": \"date-time\",\n                    \"description\": \"When the follower relationship was created\"\
-        \n                },\n                \"relationshipId\": {\n                    \"type\": \"string\",\n         \
-        \           \"format\": \"uuid\",\n                    \"description\": \"Underlying relationship record ID from lib-relationship\"\
-        \n                }\n            }\n        }\n    }\n}"
+        \       \"relationshipId\",\n                \"attentionSlotAllocated\"\n            ],\n            \"properties\"\
+        : {\n                \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Follower character ID\"\n                },\n                \"\
+        deityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n             \
+        \       \"description\": \"Deity being followed\"\n                },\n                \"registeredAt\": {\n     \
+        \               \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the follower relationship was created\"\n                },\n                \"relationshipId\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Underlying relationship record ID from lib-relationship\"\n                },\n                \"attentionSlotAllocated\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether an attention slot
+        was allocated for this follower (false if deity at max attention capacity)\"\n                }\n            }\n \
+        \       }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Register a character as a follower of a deity\",\n    \"description\":
         \"Creates a deity-character follower relationship via lib-relationship,\\nincrements the deity's follower count, and
         adds the character to the\\ndeity's attention slots if capacity is available.\\n\",\n    \"tags\": [\n        \"Follower
@@ -1606,16 +1952,18 @@ paths:
         \n                }\n            }\n        },\n        \"FollowerResponse\": {\n            \"type\": \"object\"\
         ,\n            \"additionalProperties\": false,\n            \"description\": \"Follower record linking a character
         to a deity\",\n            \"required\": [\n                \"characterId\",\n                \"deityId\",\n     \
-        \           \"registeredAt\",\n                \"relationshipId\"\n            ],\n            \"properties\": {\n\
-        \                \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Follower character ID\"\n                },\n                \"deityId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Deity being followed\"\n                },\n                \"registeredAt\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
-        \"When the follower relationship was created\"\n                },\n                \"relationshipId\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Underlying relationship record ID from lib-relationship\"\n                }\n            }\n        }\n    }\n\
-        }"
+        \           \"registeredAt\",\n                \"relationshipId\",\n                \"attentionSlotAllocated\"\n \
+        \           ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Follower character ID\"\
+        \n                },\n                \"deityId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"description\": \"Deity being followed\"\n                },\n  \
+        \              \"registeredAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        date-time\",\n                    \"description\": \"When the follower relationship was created\"\n              \
+        \  },\n                \"relationshipId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Underlying relationship record ID from lib-relationship\"\n  \
+        \              },\n                \"attentionSlotAllocated\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"description\": \"Whether an attention slot was allocated for this follower (false if deity at
+        max attention capacity)\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get followers of a deity\",\n    \"description\": \"Returns paginated follower
         list for a deity by querying relationships.\",\n    \"tags\": [\n        \"Follower Management\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"getFollowers\"\n}"
@@ -1689,11 +2037,11 @@ components:
   schemas:
     DeityStatus:
       type: string
-      description: Lifecycle status of a deity entity
+      description: Lifecycle status of a deity entity (Archived removed — deprecation triple-field replaces it per 
+        Category A T31)
       enum:
       - Active
       - Dormant
-      - Archived
     BlessingTier:
       type: string
       description: Tier of a blessing determining its power, cost, and storage mechanism
@@ -1726,6 +2074,8 @@ components:
       properties:
         domain:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Opaque domain code (e.g., war, knowledge, nature). Game-defined, not an enum.
         weight:
           type: number
@@ -1733,10 +2083,11 @@ components:
           minimum: 0.0
           maximum: 1.0
           description: Strength of influence in this domain (0.0-1.0)
-    DeityPersonalityTraits:
+    DivineAffectations:
       type: object
       additionalProperties: false
-      description: Machine-readable personality traits influencing deity behavior decisions
+      description: Divine-specific behavioral configuration for god-actor ABML decisions (separate from Character 
+        Personality which provides emergent personality via system realm character brain)
       required:
       - temperament
       - attentionBias
@@ -1831,9 +2182,9 @@ components:
           type: string
           description: Type of transaction (e.g., mortal_action, blessing_grant, manual_credit)
         targetType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
-          description: Type of entity involved in this transaction (e.g., character, deity)
+          description: Type of entity involved in this transaction
         targetId:
           type: string
           format: uuid
@@ -1853,7 +2204,7 @@ components:
       - displayName
       - description
       - domains
-      - personalityTraits
+      - divineAffectations
       properties:
         gameServiceId:
           type: string
@@ -1861,12 +2212,18 @@ components:
           description: Game service this deity belongs to
         code:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Unique code for this deity within the game service (e.g., mnemosyne, nexius)
         displayName:
           type: string
+          minLength: 1
+          maxLength: 200
           description: Human-readable display name
         description:
           type: string
+          minLength: 1
+          maxLength: 2000
           description: Description of the deity's nature and role
         domains:
           type: array
@@ -1874,9 +2231,9 @@ components:
           items:
             $ref: '#/components/schemas/DomainInfluence'
           description: Domain influences (at least one required)
-        personalityTraits:
-          $ref: '#/components/schemas/DeityPersonalityTraits'
-          description: Personality traits influencing behavior decisions
+        divineAffectations:
+          $ref: '#/components/schemas/DivineAffectations'
+          description: Divine-specific behavioral configuration for god-actor ABML decisions
         maxAttentionSlots:
           type: integer
           minimum: 1
@@ -1932,6 +2289,10 @@ components:
           $ref: '#/components/schemas/DeityStatus'
           nullable: true
           description: Filter by deity status
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated deities in results (default excludes them per T31)
         page:
           type: integer
           minimum: 1
@@ -1968,11 +2329,11 @@ components:
           items:
             $ref: '#/components/schemas/DomainInfluence'
           description: Updated domain influences (replaces entire list)
-        personalityTraits:
+        divineAffectations:
           nullable: true
           description: Updated personality traits
           allOf:
-          - $ref: '#/components/schemas/DeityPersonalityTraits'
+          - $ref: '#/components/schemas/DivineAffectations'
         maxAttentionSlots:
           type: integer
           nullable: true
@@ -2000,10 +2361,37 @@ components:
           type: string
           format: uuid
           description: Deity to deactivate
+    DeprecateDeityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to deprecate a deity (Category A — gods can return via undeprecate)
+      required:
+      - deityId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Optional reason for deprecation
+    UndeprecateDeityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to undeprecate a previously deprecated deity (Category A)
+      required:
+      - deityId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity to undeprecate
     DeleteDeityRequest:
       type: object
       additionalProperties: false
-      description: Request to permanently delete a deity and all dependent data
+      description: Request to permanently delete a deity and all dependent data (must be deprecated first)
       required:
       - deityId
       properties:
@@ -2303,10 +2691,11 @@ components:
       - displayName
       - description
       - domains
-      - personalityTraits
+      - divineAffectations
       - maxAttentionSlots
       - status
       - followerCount
+      - isDeprecated
       - createdAt
       - updatedAt
       properties:
@@ -2332,9 +2721,9 @@ components:
           items:
             $ref: '#/components/schemas/DomainInfluence'
           description: Domain influences
-        personalityTraits:
-          $ref: '#/components/schemas/DeityPersonalityTraits'
-          description: Personality traits
+        divineAffectations:
+          $ref: '#/components/schemas/DivineAffectations'
+          description: Divine-specific behavioral configuration for god-actor ABML decisions
         maxAttentionSlots:
           type: integer
           description: Maximum characters the deity can actively monitor
@@ -2348,6 +2737,11 @@ components:
           format: uuid
           nullable: true
           description: Domain power seed ID (null if seed creation failed or pending)
+        genesisEntityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Genesis entity ID for lifecycle queries (null if genesis entity not yet created)
         currencyWalletId:
           type: string
           format: uuid
@@ -2364,6 +2758,18 @@ components:
         followerCount:
           type: integer
           description: Number of active followers
+        isDeprecated:
+          type: boolean
+          description: Whether the deity is deprecated (Category A — can be undeprecated)
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the deity was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Reason for deprecation (null if not deprecated)
         createdAt:
           type: string
           format: date-time
@@ -2401,15 +2807,9 @@ components:
       additionalProperties: false
       description: Current divinity balance for a deity
       required:
-      - deityId
       - balance
       - currencyCode
-      - walletId
       properties:
-        deityId:
-          type: string
-          format: uuid
-          description: Deity this balance belongs to
         balance:
           type: number
           format: double
@@ -2417,10 +2817,6 @@ components:
         currencyCode:
           type: string
           description: Currency code for the divinity type
-        walletId:
-          type: string
-          format: uuid
-          description: Currency wallet ID
     DivinityHistoryResponse:
       type: object
       additionalProperties: false
@@ -2534,6 +2930,7 @@ components:
       - deityId
       - registeredAt
       - relationshipId
+      - attentionSlotAllocated
       properties:
         characterId:
           type: string
@@ -2551,6 +2948,10 @@ components:
           type: string
           format: uuid
           description: Underlying relationship record ID from lib-relationship
+        attentionSlotAllocated:
+          type: boolean
+          description: Whether an attention slot was allocated for this follower (false if deity at max attention 
+            capacity)
     ListFollowersResponse:
       type: object
       additionalProperties: false

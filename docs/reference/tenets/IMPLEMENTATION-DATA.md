@@ -288,6 +288,16 @@ var rarity = Enum.Parse<ItemRarity>(someString);        // Model is wrong
 public string OwnerId { get; set; } = string.Empty;    // Use Guid
 ```
 
+### When a String Field Is NOT an Enum Violation
+
+A string field is a T25 violation only when the plugin **enumerates on the value** — i.e., the service code switches, branches, dispatches, or otherwise treats specific values differently. If the plugin stores and returns the value opaquely (pass-through), it is correctly typed as `string` regardless of how many example values the description lists.
+
+**The mechanical test**: "Does any code path in this plugin behave differently based on the specific value of this field?" If yes → define an enum. If no (the value is stored, forwarded, or returned without inspection) → `string` is correct.
+
+**Description language is not evidence of a finite set.** Descriptions using "e.g.", "such as", "like", "for example", or trailing "etc." / "..." are documenting *common values* of an open domain, not enumerating a closed set. A field described as `"Source of the divinity gain (e.g., mortal_action, domain_event, manual)"` is giving examples — it is not defining the three legal values.
+
+**Corollary**: This aligns with T14's Category B test ("Would adding a new value require a schema change?"). If new values can appear at runtime without a schema change, the field is an open domain and `string` is the correct type.
+
 ### Acceptable String Conversions (5 Cases)
 
 1. **State Store Set APIs**: Generic `TItem` parameters serialize via BannouJson automatically - `Guid`, `enum`, etc. work directly.

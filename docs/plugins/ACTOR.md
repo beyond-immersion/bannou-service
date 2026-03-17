@@ -452,6 +452,8 @@ Actor State Model
 <!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/148 -->
 14. **Event Brain choreography typed models**: Wire up existing typed choreography schema models to ABML handler, replacing generic object data with the generated `ChoreographyPosition`/`ChoreographyEvent` types for type-safe choreography execution.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-03:https://github.com/beyond-immersion/bannou-service/issues/115 -->
+15. **ABML transactional blocks**: Declare action sequences as `atomic: true` so the `ActorRunner` refuses pause requests (drive binding, behavior hot-reload) while the block executes. Timeout is mandatory (bounded by `MaxAtomicBlockTimeoutMs` config) to preserve fail-open principle. Parallels Contract's milestone model for atomic multi-step operations. Consumers: Director (`DriveActor` returns 409 if actor mid-atomic-block), Puppetmaster (behavior reload queues until block completes). See [#692](https://github.com/beyond-immersion/bannou-service/issues/692).
+<!-- AUDIT:NEEDS_DESIGN:2026-03-17:https://github.com/beyond-immersion/bannou-service/issues/692 -->
 
 ---
 

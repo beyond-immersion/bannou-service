@@ -54,8 +54,6 @@ public partial class DivineService : IDivineService
     private readonly IJsonQueryableStateStore<DeityModel> _deityStore;
     private readonly IJsonQueryableStateStore<BlessingModel> _blessingStore;
     private readonly ICacheableStateStore<AttentionSlotModel> _attentionStore;
-    private readonly ICacheableStateStore<DivinityEventModel> _divinityEventStore;
-
     // Hard dependencies (L1/L2 — crash if missing)
     private readonly IResourceClient _resourceClient;
     private readonly ICurrencyClient _currencyClient;
@@ -104,7 +102,6 @@ public partial class DivineService : IDivineService
         _deityStore = stateStoreFactory.GetJsonQueryableStore<DeityModel>(StateStoreDefinitions.DivineDeities);
         _blessingStore = stateStoreFactory.GetJsonQueryableStore<BlessingModel>(StateStoreDefinitions.DivineBlessings);
         _attentionStore = stateStoreFactory.GetCacheableStore<AttentionSlotModel>(StateStoreDefinitions.DivineAttention);
-        _divinityEventStore = stateStoreFactory.GetCacheableStore<DivinityEventModel>(StateStoreDefinitions.DivineDivinityEvents);
 
         RegisterEventConsumers(eventConsumer);
     }
@@ -163,6 +160,30 @@ public partial class DivineService : IDivineService
         _logger.LogInformation("Executing {Operation} operation", "DeactivateDeity");
         await Task.CompletedTask;
         throw new NotImplementedException("Method DeactivateDeity not yet implemented");
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, DeityResponse?)> DeprecateDeityAsync(DeprecateDeityRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Executing {Operation} operation", "DeprecateDeity");
+        await Task.CompletedTask;
+        throw new NotImplementedException("Method DeprecateDeity not yet implemented");
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, DeityResponse?)> UndeprecateDeityAsync(UndeprecateDeityRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Executing {Operation} operation", "UndeprecateDeity");
+        await Task.CompletedTask;
+        throw new NotImplementedException("Method UndeprecateDeity not yet implemented");
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, MergeDeprecatedResponse?)> MergeDeityAsync(MergeDeprecatedRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Executing {Operation} operation", "MergeDeity");
+        await Task.CompletedTask;
+        throw new NotImplementedException("Method MergeDeity not yet implemented");
     }
 
     /// <inheritdoc />

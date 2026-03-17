@@ -70,6 +70,7 @@
 | lib-character (`ICharacterClient`) | L2 | Hard | Character existence validation |
 | lib-resource (`IResourceClient`) | L1 | Hard | Cleanup callback registration (character/realm CASCADE), compression callback registration |
 | lib-relationship (`IRelationshipClient`) | L2 | Hard | Relationship type queries for base value synthesis |
+| lib-worldstate (`IWorldstateClient`) | L2 | Hard | `GetElapsedGameTimeAsync` for game-time decay/satisfaction computations in all three background workers |
 | lib-character-encounter (`ICharacterEncounterClient`) | L4 | Soft | Encounter sentiment for base synthesis (0.0 if absent) |
 | lib-character-personality (`ICharacterPersonalityClient`) | L4 | Soft | Personality traits for bias + drive formation (neutral if absent) |
 | lib-character-history (`ICharacterHistoryClient`) | L4 | Soft | Backstory elements for drive seeding (no backstory drives if absent) |
@@ -130,6 +131,7 @@
 | `ICharacterClient` | Character existence validation (L2) |
 | `IResourceClient` | Cleanup + compression callback registration (L1) |
 | `IRelationshipClient` | Relationship type queries for synthesis (L2) |
+| `IWorldstateClient` | Game-time elapsed computation for decay workers (L2) |
 | `IServiceProvider` | Runtime resolution of 6 soft L4 dependencies |
 | `ITelemetryProvider` | Span instrumentation |
 
@@ -340,12 +342,14 @@ POST /disposition/guardian/record-action | Roles: []
 
 ```
 CALL _characterClient.GetCharacterAsync(body.CharacterId)          -> 404 if null
-// Resolve guardian spirit characterId (NEXIUS system realm character)
-LOCK disposition-lock:feeling:{characterId}:Character:{guardianCharacterId}  -> 409 if timeout
+LOCK disposition-lock:feeling:{characterId}:Character:{body.GuardianCharacterId}  -> 409 if timeout
   READ _feelingsStore guardian axes (trust, resentment, familiarity, gratitude, defiance)
-  // Compute alignment from last N nudges (config.GuardianAlignmentWindowSize)
+  // Each guardian feeling entry carries recentNudges list (embedded)
+  // Append new nudge { actionCategory, outcome, alignmentWithPersonality, timestamp }
+  // Trim recentNudges to config.GuardianAlignmentWindowSize (rolling window)
+  // Compute alignment from recentNudges window
   // Update guardian feeling axes based on alignment signal and action outcome
-  WRITE _feelingsStore guardian feeling entries <- updated axes
+  WRITE _feelingsStore guardian feeling entries <- updated axes + trimmed recentNudges
   DELETE _cacheStore:manifest:{characterId}
   PUBLISH disposition.guardian.shifted { characterId, axis, oldValue, newValue }
 RETURN (200, GuardianActionResponse)
@@ -440,8 +444,9 @@ RETURN (200, RestoreResponse { feelingsRestored, drivesRestored })
 LOCK disposition-lock:decay-worker
   QUERY _feelingsStore WHERE modifier != 0 ORDER BY lastModifiedAt ASC LIMIT config.ModifierDecayBatchSize
   FOREACH feeling [per-item error isolation]
-    daysSince = (UtcNow - feeling.LastModifiedAt).TotalDays
-    newModifier = modifier * (1.0 - modifierDecayRate * daysSince)
+    // Game-time elapsed via Worldstate (not real-time)
+    gameDaysSince = CALL _worldstateClient.GetElapsedGameTimeAsync(feeling.LastModifiedAt, UtcNow, character.RealmId).TotalGameDays
+    newModifier = modifier * (1.0 - modifierDecayRate * gameDaysSince)
     IF abs(newModifier) < config.MinConfidenceForProvider AND abs(baseValue) < config.MinConfidenceForProvider
       DELETE _feelingsStore:feeling:{feelingId} and all indexes
     ELSE
@@ -474,10 +479,10 @@ LOCK disposition-lock:drive-worker
     SOFT-CALL ICharacterHistoryClient (backstory elements)
     SOFT-CALL IFactionClient (faction membership)
 
-    // Satisfaction decay
+    // Satisfaction decay (game-time via Worldstate)
     FOREACH drive
-      daysSince = (UtcNow - (lastProgressAt ?? acquiredAt)).TotalDays
-      newSatisfaction = satisfaction * (1.0 - config.DriveSatisfactionDecayRatePerDay * daysSince)
+      gameDaysSince = CALL _worldstateClient.GetElapsedGameTimeAsync((lastProgressAt ?? acquiredAt), UtcNow, character.RealmId).TotalGameDays
+      newSatisfaction = satisfaction * (1.0 - config.DriveSatisfactionDecayRatePerDay * gameDaysSince)
       WRITE _drivesStore:drive:{driveId} <- updated satisfaction
 
     // Removal: drives below threshold

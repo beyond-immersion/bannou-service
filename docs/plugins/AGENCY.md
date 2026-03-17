@@ -75,6 +75,8 @@ Example modules for the combat domain:
 | `combat/combo_direction` | 6.0 | [6.0, 7.0, 8.0, 9.0, 10.0] | Sequence choreography direction |
 | `combat/style_mastery` | 8.0 | [8.0, 8.5, 9.0, 9.5, 10.0] | Martial discipline specialization |
 
+**Combat modules manifest through initiative-driven cinematic exchanges.** Each combat module maps to tactical options visible during initiative exchanges (see [VIDEO-DIRECTOR.md § Initiative-Driven Combat](../planning/VIDEO-DIRECTOR.md#initiative-driven-combat-the-interactive-genre)). The `${spirit.domain.combat.fidelity}` float gates not just whether QTEs appear, but **how many tactical options** are visible per exchange. A single continuation point may have 6 registered extensions (dodge, block, counter, combo opener, environmental exploit, rare situational composite), but the client event filters by fidelity — lower-fidelity spirits see fewer options while the character's autonomous ABML brain has access to all options always. The exchange type metadata ([#693](https://github.com/beyond-immersion/bannou-service/issues/693)) drives client-side UX presentation (visual treatment, button mapping, display priority per exchange type).
+
 **Fidelity Level**: An integer (1-5) representing how much detail/control a UX module provides. Computed from the guardian seed's depth in the required capability path, mapped through the module's fidelity curve. At depth 5.0 in `combat.stance`, `combat/stance_selector` is at fidelity 3 (thresholds [2.0, 3.5, **5.0**, 7.0, 9.0] -- depth 5.0 crosses the third threshold). Higher fidelity = more granular control, more information displayed.
 
 **Influence Type**: A specific nudge the player can send to their possessed character. Defined by:

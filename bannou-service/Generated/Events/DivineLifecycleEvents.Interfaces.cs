@@ -13,6 +13,6 @@ using BeyondImmersion.Bannou.Core;
 
 namespace BeyondImmersion.BannouService.Events;
 
-public partial class DeityCreatedEvent : ILifecycleCreatedEvent { }
-public partial class DeityUpdatedEvent : ILifecycleUpdatedEvent { }
-public partial class DeityDeletedEvent : ILifecycleDeletedEvent { }
+public partial class DeityCreatedEvent : ILifecycleCreatedEvent, IDeprecatableEntity { }
+public partial class DeityUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
+public partial class DeityDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }

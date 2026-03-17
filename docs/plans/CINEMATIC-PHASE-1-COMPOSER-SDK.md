@@ -91,6 +91,48 @@ Channel: camera
 | Branch nodes don't support QTE-driven selection | CinematicInterpreter needs QTE input → branch mapping | Fix in behavior-compiler before Sub-Phase 1B |
 | Multi-channel ABML doesn't compile | Behavior-compiler needs multi-channel support | Fix in behavior-compiler before Sub-Phase 1B |
 
+### Additional Validation: Initiative Exchange Scenario
+
+Beyond the throw-and-dodge scenario, validate a minimal initiative-driven combat exchange. This exercises the initiative flow that the cinematic system must support (see [VIDEO-DIRECTOR.md § Initiative-Driven Combat](../planning/VIDEO-DIRECTOR.md#initiative-driven-combat-the-interactive-genre) and [COMPOSITIONAL-CINEMATICS.md § 4.4](../planning/COMPOSITIONAL-CINEMATICS.md#44-initiative-driven-combat-the-interactive-application)):
+
+```
+Channel: coordinator
+  - set_encounter_state: { initiative: "attacker", exchange: 1 }
+  - emit_sync: exchange_ready
+
+Channel: attacker (initiative holder = protagonist role)
+  - wait_for: exchange_ready
+  - animate: aggressive_advance (0.8s)
+  - animate: overhead_strike (0.6s)
+  - emit_sync: strike_contact
+
+Channel: defender (counterforce role)
+  - wait_for: exchange_ready
+  - animate: defensive_stance (0.8s)
+  - wait_for: strike_contact
+  - continuation_point: tactical_choice (timeout: 0.5s, default: block)
+    - branch block:
+        - animate: shield_block (0.4s)
+        - set: next_initiative = "attacker"  # initiative unchanged
+    - branch counter:
+        - animate: parry_riposte (0.6s)
+        - set: next_initiative = "defender"  # initiative shifts!
+    - branch dodge:
+        - animate: sidestep (0.3s)
+        - set: next_initiative = "attacker"  # neutral
+
+Channel: camera
+  - wait_for: exchange_ready
+  - camera: tracking_shot on attacker (1.4s)  # melody/protagonist focus
+  - wait_for: strike_contact
+  - [branch with defender's tactical_choice]
+    - branch block:  camera: impact_close_up (0.4s)
+    - branch counter: camera: dramatic_reversal_sweep (0.6s)
+    - branch dodge:  camera: wide_pull_back (0.3s)
+```
+
+This validates: (1) coordinator channel managing initiative state, (2) role-appropriate camera focus (attacker = protagonist), (3) tactical choice at continuation point with multiple extensions, (4) cross-channel branch correlation between defender action and camera, (5) initiative state mutation based on choice outcome. The exchange metadata format ([#693](https://github.com/beyond-immersion/bannou-service/issues/693)) will formalize how exchange type and option set are encoded.
+
 ### Deliverable
 
 A working hand-authored ABML document that exercises the full runtime stack, plus documentation of any gaps found and fixes applied. This document becomes the reference for what AbmlExporter must produce.

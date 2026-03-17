@@ -586,6 +586,91 @@ For live streaming (Broadcast + Showtime services), this creates a unique conten
 
 The Showtime service's hype train mechanics could even tie into this -- audience hype levels influence which characters get featured, what intensity level the choreography reaches, and whether the cinematic gets an extended chorus or a shorter cut.
 
+### Initiative-Driven Combat: The Interactive Genre
+
+The most game-mechanically significant application of the Director/Video Director convergence is **initiative-driven cinematic combat** -- real-time choreographic exchanges where musical structure drives the rhythm and the player's tactical choices determine initiative flow.
+
+Where the "Nobody" example above is a composed entertainment cinematic (non-interactive, authored for viewing), initiative-driven combat is the **interactive counterpart** -- the same compositional infrastructure applied to live gameplay. The role-based ensemble model, beat-level sync, and continuation point architecture all carry over, but with a critical addition: the player participates as a decision-maker within the compositional structure.
+
+#### Initiative as Choreographic State
+
+Initiative is not a separate mechanical system layered on top of choreography -- it is a **compositional input to the CinematicStoryteller's GOAP planner**. When lib-cinematic composes an exchange sequence via `/cinematic/compose`, the planner evaluates:
+
+- **Participant capabilities**: `${combat.*}` personality axes, `${personality.aggression}`, equipped weapons
+- **Prior exchange outcome**: Who landed the last hit? Who dodged successfully?
+- **Spatial context**: Cornered defender has fewer options; open-field fighter has more
+- **Tension level**: Accumulated delta between spirit influence and character personality across prior exchanges
+
+The planner produces the next beat sequence with initiative baked into the choreographic structure: the initiative holder's animations lead, the defender's react. This is Option B from the design exploration -- initiative lives in composition, not as a separate mechanical layer, because separating them would require duplicate state tracking and risk choreographic/mechanical desync.
+
+#### Musical Structure Maps to Exchange Rhythm
+
+The Video Director's three-tier music-cinematic synchronization applies directly to initiative-driven combat exchanges:
+
+| Music Sync Level | Combat Application |
+|---|---|
+| **Macro** (section ↔ scene) | Fight phases: opening staredown (intro), escalating exchanges (verse/chorus), climactic exchange (bridge/final chorus), aftermath (outro) |
+| **Meso** (phrase ↔ shot sequence) | Each 4-bar phrase = one exchange. Phrase boundaries are initiative transition points. Camera cuts on phrase boundaries match exchange handoffs. |
+| **Micro** (beat ↔ action) | Strong beats (1, 3) = initiative holder's offensive impacts. Weak beats (2, 4) = defender's recovery/preparation. Syncopation = unexpected counter-attacks or feints. |
+
+The initiative holder occupies the **melody/protagonist** role for that exchange -- most screen time, camera follows, highest action freedom. The defender occupies **bass/counterforce** -- foundational tension, grounded camera, reactive choreography. When initiative shifts, roles swap. This role oscillation across exchanges creates the back-and-forth rhythm that makes combat feel like a conversation rather than a sequence of independent attacks.
+
+#### The Exchange Taxonomy
+
+Each exchange is a continuation point in the combat cinematic where the CinematicStoryteller has composed multiple possible extensions (tactical options). The client receives exchange type metadata that drives UX presentation:
+
+| Exchange Type | UX Signal (Client-Side) | Initiative Effect |
+|---|---|---|
+| **Dodge opportunity** | Specific visual treatment per game (e.g., yellow border, specific button preference) | Neutral -- avoids damage but doesn't shift initiative |
+| **Counter window** | Distinct visual treatment (e.g., timing indicator) | Gain initiative -- successful counter puts you on offense |
+| **Hold/block** | Distinct visual treatment | Neutral to negative -- absorbs damage, doesn't advance position |
+| **Buff/heal** | Strategic emphasis visual | Lose initiative voluntarily -- investment for future exchanges |
+| **Rare situational composite** | Maximum visual emphasis, ALL CAPS, premium button mapping | Dramatic peak -- major initiative swing, only available in extraordinary circumstances |
+
+The service publishes exchange type and filtered option set via client events. The client maps types to visual presentation autonomously -- the service is generic, the UX is game-specific. See [#693](https://github.com/beyond-immersion/bannou-service/issues/693) for the exchange type metadata format design.
+
+#### Progressive Agency Gates Option Count
+
+The number of tactical options visible to the player is gated by `${spirit.domain.combat.fidelity}` from Agency, not just whether QTEs appear at all. A single continuation point may have 6 registered extensions (6 tactical options), but the client event filters by fidelity:
+
+- **Fidelity 0.0-0.2**: No options visible -- auto-resolve, player watches the exchange
+- **Fidelity 0.3-0.4**: 2 options (basic: dodge/block)
+- **Fidelity 0.5-0.6**: 3-4 options (adds counter, combo opener)
+- **Fidelity 0.7-0.8**: 5 options (adds environmental exploit)
+- **Fidelity 0.9-1.0 OR extraordinary context**: All 6 (adds rare situational composite)
+
+The character's autonomous ABML behavior has access to all options always -- it is the *spirit's perception* that is gated, not the character's capability. The Omega hacking mechanic (PLAYER-VISION.md) allows force-loading options the spirit hasn't earned -- the interface without the intuition.
+
+#### Tension as Cross-Exchange State
+
+When the spirit's tactical choice conflicts with the character's personality (e.g., forcing a defensive dodge on an aggressive character), the delta is recorded as `${cinematic.tension}`. This is NOT the same as Disposition's `${spirit.resentment}` (which tracks cross-encounter, long-term feelings). Cinematic tension is ephemeral -- it exists only within the current combat encounter.
+
+High tension affects the next exchange's composition: the CinematicStoryteller reads `${cinematic.tension}` and produces choreography showing the conflict -- the character hesitates, flinches, executes with visible reluctance, or acts with reckless overcorrection. The choreography *shows* the internal conflict rather than blocking the player mechanically. A disciplined soldier suppresses tension (minimal choreographic impact); a passionate bard amplifies it (dramatic flair even in hesitation).
+
+This creates a per-fight emotional arc without anyone authoring it -- accumulated tactical choices that conflict with the character's nature produce increasingly strained choreography, which the player can see and respond to.
+
+#### Multi-Puppetmaster Competition: FCFS Extensions
+
+Multiple god-actors (Puppetmaster regional watchers) can register extensions at the same continuation points in a running combat cinematic. First extension registered wins (FCFS -- first-come, first-served).
+
+This produces emergent regional combat flavor through DivineAffectations (temperament, attentionBias, generosity, jealousy):
+
+- **High temperament** gods compose simple, aggressive extensions fast → win FCFS more often → their regions have brutal, decisive combat
+- **High attentionBias** gods compose complex, narrative-callback extensions slowly → arrive after simpler extensions → narrative moments are rarer and more meaningful
+- **High generosity** gods compose redemptive extensions requiring character history validation → slower, lose to aggressive gods unless unopposed
+- **Happy endings are harder to come by** because they require more choreographic computation. This is not a design choice -- it is an emergent consequence of FCFS applied to extensions of varying compositional complexity.
+
+See [#694](https://github.com/beyond-immersion/bannou-service/issues/694) for the FCFS extension registry design and [#695](https://github.com/beyond-immersion/bannou-service/issues/695) for the DivineAffectations → choreographic preference mapping.
+
+#### External Interruptions
+
+Mid-exchange interruptions (third combatant arrives, building collapses, divine intervention) use two patterns via existing CinematicInterpreter mechanics:
+
+- **Pattern A (Interrupt Extension)**: An external event brain calls `InjectExtension` at whatever continuation point the interpreter is currently waiting at. The injected extension is itself an ABML sequence: the interruption plays out, then emits a new continuation point for the combat to resume or transform. The interpreter doesn't need special interrupt mechanics -- the extension IS the interrupt.
+- **Pattern B (Abort and Recompose)**: For truly disruptive interruptions (the floor gives way), the coordinator calls `/cinematic/abort` then `/cinematic/compose` with the new context. The combat becomes a new encounter. Appropriate when the interruption fundamentally changes the participant set or environment.
+
+Pattern A preserves initiative state; Pattern B resets everything.
+
 ---
 
 ## Embedded Bannou: The Content Creation Tool
@@ -727,4 +812,6 @@ lib-video-director (L4 Plugin, Thin API Wrapper)
 5. **Player agency during live videos**: If a player's character is selected for a live music video, do they lose control? The progressive agency system suggests the spirit would observe (the character is "performing"), which is consistent with the combat cinematic model where low-fidelity spirits watch autonomously.
 
 6. **Music licensing for analyzed templates**: The Counterpoint Composer SDK's legal analysis is thorough (templates contain only uncopyrightable structural parameters), but community perception of "we analyzed your song to make a game video" needs careful messaging.
+
+7. **Initiative-driven combat PvP agency asymmetry**: In PvP combat, two spirits at different combat fidelity levels see different numbers of tactical options for the same exchange. Each spirit sees what they've earned -- asymmetric perception, consistent resolution. But does this create balance issues when one player sees 6 options and the other sees 2? The autonomous character brain has access to all options regardless, so the lower-fidelity player's character is still choosing optimally autonomously -- the spirit just can't override those choices as precisely. This may be acceptable (the character compensates for the spirit's inexperience) or it may feel unfair. Playtesting required.
 

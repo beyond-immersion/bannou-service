@@ -595,7 +595,7 @@ The inference quality depends on:
 - **Association strength**: iron↔steel at 0.8 produces high-confidence hypotheses. iron↔wood at 0.1 does not.
 - **Category proximity**: entries sharing a direct category (both `workable_metal`) produce better inferences than entries sharing only a distant ancestor category.
 - **Trait scope**: if `malleable_when_heated` is scoped to the `workable_metal` category in Lexicon, the inference is actually just inheritance -- steel inherits the trait automatically. If it's entry-specific to iron, the inference is genuinely speculative.
-- **Character personality**: high openness characters generate more hypotheses (broader inference). High conscientiousness characters generate fewer but test them more rigorously before acting on them.
+- **Character personality**: all eight trait axes influence inference. The four Tier 1 interpretation traits (Openness, Agreeableness, Neuroticism, Aggression) determine which candidate hypotheses are selected; the Tier 2 quality traits (Conscientiousness, Honesty) determine signal fidelity. High Openness generates more and broader hypotheses; high Conscientiousness generates fewer but tests them more rigorously. High Neuroticism biases toward threat-related hypotheses; low Agreeableness biases toward cynical interpretations. See [Hearsay Deep Dive § Personality-Driven Information Processing](../plugins/HEARSAY.md#personality-driven-information-processing) for the full three-tier model. **Note**: Lexicon provides the association data (candidate hypotheses); the inference engine that selects among them based on personality lives in Hearsay. Lexicon is the library; Hearsay is the mind interpreting it.
 
 ### The Apprenticeship Example
 

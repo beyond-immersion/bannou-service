@@ -32,7 +32,7 @@ public partial class DivineController
                 "displayName",
                 "description",
                 "domains",
-                "personalityTraits"
+                "divineAffectations"
             ],
             "properties": {
                 "gameServiceId": {
@@ -42,14 +42,20 @@ public partial class DivineController
                 },
                 "code": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Unique code for this deity within the game service (e.g., mnemosyne, nexius)"
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Human-readable display name"
                 },
                 "description": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000,
                     "description": "Description of the deity's nature and role"
                 },
                 "domains": {
@@ -60,9 +66,9 @@ public partial class DivineController
                     },
                     "description": "Domain influences (at least one required)"
                 },
-                "personalityTraits": {
-                    "$ref": "#/$defs/DeityPersonalityTraits",
-                    "description": "Personality traits influencing behavior decisions"
+                "divineAffectations": {
+                    "$ref": "#/$defs/DivineAffectations",
+                    "description": "Divine-specific behavioral configuration for god-actor ABML decisions"
                 },
                 "maxAttentionSlots": {
                     "type": "integer",
@@ -89,6 +95,8 @@ public partial class DivineController
             "properties": {
                 "domain": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Opaque domain code (e.g., war, knowledge, nature). Game-defined, not an enum."
                 },
                 "weight": {
@@ -100,10 +108,10 @@ public partial class DivineController
                 }
             }
         },
-        "DeityPersonalityTraits": {
+        "DivineAffectations": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Machine-readable personality traits influencing deity behavior decisions",
+            "description": "Divine-specific behavioral configuration for god-actor ABML decisions (separate from Character Personality which provides emergent personality via system realm character brain)",
             "required": [
                 "temperament",
                 "attentionBias",
@@ -155,10 +163,11 @@ public partial class DivineController
                 "displayName",
                 "description",
                 "domains",
-                "personalityTraits",
+                "divineAffectations",
                 "maxAttentionSlots",
                 "status",
                 "followerCount",
+                "isDeprecated",
                 "createdAt",
                 "updatedAt"
             ],
@@ -192,9 +201,9 @@ public partial class DivineController
                     },
                     "description": "Domain influences"
                 },
-                "personalityTraits": {
-                    "$ref": "#/$defs/DeityPersonalityTraits",
-                    "description": "Personality traits"
+                "divineAffectations": {
+                    "$ref": "#/$defs/DivineAffectations",
+                    "description": "Divine-specific behavioral configuration for god-actor ABML decisions"
                 },
                 "maxAttentionSlots": {
                     "type": "integer",
@@ -211,6 +220,12 @@ public partial class DivineController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Domain power seed ID (null if seed creation failed or pending)"
+                },
+                "genesisEntityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Genesis entity ID for lifecycle queries (null if genesis entity not yet created)"
                 },
                 "currencyWalletId": {
                     "type": "string",
@@ -231,6 +246,21 @@ public partial class DivineController
                 "followerCount": {
                     "type": "integer",
                     "description": "Number of active followers"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether the deity is deprecated (Category A \u2014 can be undeprecated)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the deity was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (null if not deprecated)"
                 },
                 "createdAt": {
                     "type": "string",
@@ -255,6 +285,8 @@ public partial class DivineController
             "properties": {
                 "domain": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Opaque domain code (e.g., war, knowledge, nature). Game-defined, not an enum."
                 },
                 "weight": {
@@ -266,10 +298,10 @@ public partial class DivineController
                 }
             }
         },
-        "DeityPersonalityTraits": {
+        "DivineAffectations": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Machine-readable personality traits influencing deity behavior decisions",
+            "description": "Divine-specific behavioral configuration for god-actor ABML decisions (separate from Character Personality which provides emergent personality via system realm character brain)",
             "required": [
                 "temperament",
                 "attentionBias",
@@ -303,11 +335,10 @@ public partial class DivineController
         },
         "DeityStatus": {
             "type": "string",
-            "description": "Lifecycle status of a deity entity",
+            "description": "Lifecycle status of a deity entity (Archived removed \u2014 deprecation triple-field replaces it per Category A T31)",
             "enum": [
                 "Active",
-                "Dormant",
-                "Archived"
+                "Dormant"
             ]
         }
     }
@@ -410,10 +441,11 @@ public partial class DivineController
                 "displayName",
                 "description",
                 "domains",
-                "personalityTraits",
+                "divineAffectations",
                 "maxAttentionSlots",
                 "status",
                 "followerCount",
+                "isDeprecated",
                 "createdAt",
                 "updatedAt"
             ],
@@ -447,9 +479,9 @@ public partial class DivineController
                     },
                     "description": "Domain influences"
                 },
-                "personalityTraits": {
-                    "$ref": "#/$defs/DeityPersonalityTraits",
-                    "description": "Personality traits"
+                "divineAffectations": {
+                    "$ref": "#/$defs/DivineAffectations",
+                    "description": "Divine-specific behavioral configuration for god-actor ABML decisions"
                 },
                 "maxAttentionSlots": {
                     "type": "integer",
@@ -466,6 +498,12 @@ public partial class DivineController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Domain power seed ID (null if seed creation failed or pending)"
+                },
+                "genesisEntityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Genesis entity ID for lifecycle queries (null if genesis entity not yet created)"
                 },
                 "currencyWalletId": {
                     "type": "string",
@@ -486,6 +524,21 @@ public partial class DivineController
                 "followerCount": {
                     "type": "integer",
                     "description": "Number of active followers"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether the deity is deprecated (Category A \u2014 can be undeprecated)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the deity was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (null if not deprecated)"
                 },
                 "createdAt": {
                     "type": "string",
@@ -510,6 +563,8 @@ public partial class DivineController
             "properties": {
                 "domain": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Opaque domain code (e.g., war, knowledge, nature). Game-defined, not an enum."
                 },
                 "weight": {
@@ -521,10 +576,10 @@ public partial class DivineController
                 }
             }
         },
-        "DeityPersonalityTraits": {
+        "DivineAffectations": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Machine-readable personality traits influencing deity behavior decisions",
+            "description": "Divine-specific behavioral configuration for god-actor ABML decisions (separate from Character Personality which provides emergent personality via system realm character brain)",
             "required": [
                 "temperament",
                 "attentionBias",
@@ -558,11 +613,10 @@ public partial class DivineController
         },
         "DeityStatus": {
             "type": "string",
-            "description": "Lifecycle status of a deity entity",
+            "description": "Lifecycle status of a deity entity (Archived removed \u2014 deprecation triple-field replaces it per Category A T31)",
             "enum": [
                 "Active",
-                "Dormant",
-                "Archived"
+                "Dormant"
             ]
         }
     }
@@ -670,10 +724,11 @@ public partial class DivineController
                 "displayName",
                 "description",
                 "domains",
-                "personalityTraits",
+                "divineAffectations",
                 "maxAttentionSlots",
                 "status",
                 "followerCount",
+                "isDeprecated",
                 "createdAt",
                 "updatedAt"
             ],
@@ -707,9 +762,9 @@ public partial class DivineController
                     },
                     "description": "Domain influences"
                 },
-                "personalityTraits": {
-                    "$ref": "#/$defs/DeityPersonalityTraits",
-                    "description": "Personality traits"
+                "divineAffectations": {
+                    "$ref": "#/$defs/DivineAffectations",
+                    "description": "Divine-specific behavioral configuration for god-actor ABML decisions"
                 },
                 "maxAttentionSlots": {
                     "type": "integer",
@@ -726,6 +781,12 @@ public partial class DivineController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Domain power seed ID (null if seed creation failed or pending)"
+                },
+                "genesisEntityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Genesis entity ID for lifecycle queries (null if genesis entity not yet created)"
                 },
                 "currencyWalletId": {
                     "type": "string",
@@ -746,6 +807,21 @@ public partial class DivineController
                 "followerCount": {
                     "type": "integer",
                     "description": "Number of active followers"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether the deity is deprecated (Category A \u2014 can be undeprecated)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the deity was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (null if not deprecated)"
                 },
                 "createdAt": {
                     "type": "string",
@@ -770,6 +846,8 @@ public partial class DivineController
             "properties": {
                 "domain": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Opaque domain code (e.g., war, knowledge, nature). Game-defined, not an enum."
                 },
                 "weight": {
@@ -781,10 +859,10 @@ public partial class DivineController
                 }
             }
         },
-        "DeityPersonalityTraits": {
+        "DivineAffectations": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Machine-readable personality traits influencing deity behavior decisions",
+            "description": "Divine-specific behavioral configuration for god-actor ABML decisions (separate from Character Personality which provides emergent personality via system realm character brain)",
             "required": [
                 "temperament",
                 "attentionBias",
@@ -818,11 +896,10 @@ public partial class DivineController
         },
         "DeityStatus": {
             "type": "string",
-            "description": "Lifecycle status of a deity entity",
+            "description": "Lifecycle status of a deity entity (Archived removed \u2014 deprecation triple-field replaces it per Category A T31)",
             "enum": [
                 "Active",
-                "Dormant",
-                "Archived"
+                "Dormant"
             ]
         }
     }
@@ -913,6 +990,11 @@ public partial class DivineController
                     "nullable": true,
                     "description": "Filter by deity status"
                 },
+                "includeDeprecated": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to include deprecated deities in results (default excludes them per T31)"
+                },
                 "page": {
                     "type": "integer",
                     "minimum": 1,
@@ -930,11 +1012,10 @@ public partial class DivineController
         },
         "DeityStatus": {
             "type": "string",
-            "description": "Lifecycle status of a deity entity",
+            "description": "Lifecycle status of a deity entity (Archived removed \u2014 deprecation triple-field replaces it per Category A T31)",
             "enum": [
                 "Active",
-                "Dormant",
-                "Archived"
+                "Dormant"
             ]
         }
     }
@@ -989,10 +1070,11 @@ public partial class DivineController
                 "displayName",
                 "description",
                 "domains",
-                "personalityTraits",
+                "divineAffectations",
                 "maxAttentionSlots",
                 "status",
                 "followerCount",
+                "isDeprecated",
                 "createdAt",
                 "updatedAt"
             ],
@@ -1026,9 +1108,9 @@ public partial class DivineController
                     },
                     "description": "Domain influences"
                 },
-                "personalityTraits": {
-                    "$ref": "#/$defs/DeityPersonalityTraits",
-                    "description": "Personality traits"
+                "divineAffectations": {
+                    "$ref": "#/$defs/DivineAffectations",
+                    "description": "Divine-specific behavioral configuration for god-actor ABML decisions"
                 },
                 "maxAttentionSlots": {
                     "type": "integer",
@@ -1045,6 +1127,12 @@ public partial class DivineController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Domain power seed ID (null if seed creation failed or pending)"
+                },
+                "genesisEntityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Genesis entity ID for lifecycle queries (null if genesis entity not yet created)"
                 },
                 "currencyWalletId": {
                     "type": "string",
@@ -1065,6 +1153,21 @@ public partial class DivineController
                 "followerCount": {
                     "type": "integer",
                     "description": "Number of active followers"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether the deity is deprecated (Category A \u2014 can be undeprecated)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the deity was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (null if not deprecated)"
                 },
                 "createdAt": {
                     "type": "string",
@@ -1089,6 +1192,8 @@ public partial class DivineController
             "properties": {
                 "domain": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Opaque domain code (e.g., war, knowledge, nature). Game-defined, not an enum."
                 },
                 "weight": {
@@ -1100,10 +1205,10 @@ public partial class DivineController
                 }
             }
         },
-        "DeityPersonalityTraits": {
+        "DivineAffectations": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Machine-readable personality traits influencing deity behavior decisions",
+            "description": "Divine-specific behavioral configuration for god-actor ABML decisions (separate from Character Personality which provides emergent personality via system realm character brain)",
             "required": [
                 "temperament",
                 "attentionBias",
@@ -1137,11 +1242,10 @@ public partial class DivineController
         },
         "DeityStatus": {
             "type": "string",
-            "description": "Lifecycle status of a deity entity",
+            "description": "Lifecycle status of a deity entity (Archived removed \u2014 deprecation triple-field replaces it per Category A T31)",
             "enum": [
                 "Active",
-                "Dormant",
-                "Archived"
+                "Dormant"
             ]
         }
     }
@@ -1240,12 +1344,12 @@ public partial class DivineController
                     },
                     "description": "Updated domain influences (replaces entire list)"
                 },
-                "personalityTraits": {
+                "divineAffectations": {
                     "nullable": true,
                     "description": "Updated personality traits",
                     "allOf": [
                         {
-                            "$ref": "#/$defs/DeityPersonalityTraits"
+                            "$ref": "#/$defs/DivineAffectations"
                         }
                     ]
                 },
@@ -1268,6 +1372,8 @@ public partial class DivineController
             "properties": {
                 "domain": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Opaque domain code (e.g., war, knowledge, nature). Game-defined, not an enum."
                 },
                 "weight": {
@@ -1279,10 +1385,10 @@ public partial class DivineController
                 }
             }
         },
-        "DeityPersonalityTraits": {
+        "DivineAffectations": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Machine-readable personality traits influencing deity behavior decisions",
+            "description": "Divine-specific behavioral configuration for god-actor ABML decisions (separate from Character Personality which provides emergent personality via system realm character brain)",
             "required": [
                 "temperament",
                 "attentionBias",
@@ -1334,10 +1440,11 @@ public partial class DivineController
                 "displayName",
                 "description",
                 "domains",
-                "personalityTraits",
+                "divineAffectations",
                 "maxAttentionSlots",
                 "status",
                 "followerCount",
+                "isDeprecated",
                 "createdAt",
                 "updatedAt"
             ],
@@ -1371,9 +1478,9 @@ public partial class DivineController
                     },
                     "description": "Domain influences"
                 },
-                "personalityTraits": {
-                    "$ref": "#/$defs/DeityPersonalityTraits",
-                    "description": "Personality traits"
+                "divineAffectations": {
+                    "$ref": "#/$defs/DivineAffectations",
+                    "description": "Divine-specific behavioral configuration for god-actor ABML decisions"
                 },
                 "maxAttentionSlots": {
                     "type": "integer",
@@ -1390,6 +1497,12 @@ public partial class DivineController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Domain power seed ID (null if seed creation failed or pending)"
+                },
+                "genesisEntityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Genesis entity ID for lifecycle queries (null if genesis entity not yet created)"
                 },
                 "currencyWalletId": {
                     "type": "string",
@@ -1410,6 +1523,21 @@ public partial class DivineController
                 "followerCount": {
                     "type": "integer",
                     "description": "Number of active followers"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether the deity is deprecated (Category A \u2014 can be undeprecated)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the deity was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (null if not deprecated)"
                 },
                 "createdAt": {
                     "type": "string",
@@ -1434,6 +1562,8 @@ public partial class DivineController
             "properties": {
                 "domain": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Opaque domain code (e.g., war, knowledge, nature). Game-defined, not an enum."
                 },
                 "weight": {
@@ -1445,10 +1575,10 @@ public partial class DivineController
                 }
             }
         },
-        "DeityPersonalityTraits": {
+        "DivineAffectations": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Machine-readable personality traits influencing deity behavior decisions",
+            "description": "Divine-specific behavioral configuration for god-actor ABML decisions (separate from Character Personality which provides emergent personality via system realm character brain)",
             "required": [
                 "temperament",
                 "attentionBias",
@@ -1482,11 +1612,10 @@ public partial class DivineController
         },
         "DeityStatus": {
             "type": "string",
-            "description": "Lifecycle status of a deity entity",
+            "description": "Lifecycle status of a deity entity (Archived removed \u2014 deprecation triple-field replaces it per Category A T31)",
             "enum": [
                 "Active",
-                "Dormant",
-                "Archived"
+                "Dormant"
             ]
         }
     }
@@ -1589,10 +1718,11 @@ public partial class DivineController
                 "displayName",
                 "description",
                 "domains",
-                "personalityTraits",
+                "divineAffectations",
                 "maxAttentionSlots",
                 "status",
                 "followerCount",
+                "isDeprecated",
                 "createdAt",
                 "updatedAt"
             ],
@@ -1626,9 +1756,9 @@ public partial class DivineController
                     },
                     "description": "Domain influences"
                 },
-                "personalityTraits": {
-                    "$ref": "#/$defs/DeityPersonalityTraits",
-                    "description": "Personality traits"
+                "divineAffectations": {
+                    "$ref": "#/$defs/DivineAffectations",
+                    "description": "Divine-specific behavioral configuration for god-actor ABML decisions"
                 },
                 "maxAttentionSlots": {
                     "type": "integer",
@@ -1645,6 +1775,12 @@ public partial class DivineController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Domain power seed ID (null if seed creation failed or pending)"
+                },
+                "genesisEntityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Genesis entity ID for lifecycle queries (null if genesis entity not yet created)"
                 },
                 "currencyWalletId": {
                     "type": "string",
@@ -1665,6 +1801,21 @@ public partial class DivineController
                 "followerCount": {
                     "type": "integer",
                     "description": "Number of active followers"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether the deity is deprecated (Category A \u2014 can be undeprecated)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the deity was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (null if not deprecated)"
                 },
                 "createdAt": {
                     "type": "string",
@@ -1689,6 +1840,8 @@ public partial class DivineController
             "properties": {
                 "domain": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Opaque domain code (e.g., war, knowledge, nature). Game-defined, not an enum."
                 },
                 "weight": {
@@ -1700,10 +1853,10 @@ public partial class DivineController
                 }
             }
         },
-        "DeityPersonalityTraits": {
+        "DivineAffectations": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Machine-readable personality traits influencing deity behavior decisions",
+            "description": "Divine-specific behavioral configuration for god-actor ABML decisions (separate from Character Personality which provides emergent personality via system realm character brain)",
             "required": [
                 "temperament",
                 "attentionBias",
@@ -1737,11 +1890,10 @@ public partial class DivineController
         },
         "DeityStatus": {
             "type": "string",
-            "description": "Lifecycle status of a deity entity",
+            "description": "Lifecycle status of a deity entity (Archived removed \u2014 deprecation triple-field replaces it per Category A T31)",
             "enum": [
                 "Active",
-                "Dormant",
-                "Archived"
+                "Dormant"
             ]
         }
     }
@@ -1844,10 +1996,11 @@ public partial class DivineController
                 "displayName",
                 "description",
                 "domains",
-                "personalityTraits",
+                "divineAffectations",
                 "maxAttentionSlots",
                 "status",
                 "followerCount",
+                "isDeprecated",
                 "createdAt",
                 "updatedAt"
             ],
@@ -1881,9 +2034,9 @@ public partial class DivineController
                     },
                     "description": "Domain influences"
                 },
-                "personalityTraits": {
-                    "$ref": "#/$defs/DeityPersonalityTraits",
-                    "description": "Personality traits"
+                "divineAffectations": {
+                    "$ref": "#/$defs/DivineAffectations",
+                    "description": "Divine-specific behavioral configuration for god-actor ABML decisions"
                 },
                 "maxAttentionSlots": {
                     "type": "integer",
@@ -1900,6 +2053,12 @@ public partial class DivineController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Domain power seed ID (null if seed creation failed or pending)"
+                },
+                "genesisEntityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Genesis entity ID for lifecycle queries (null if genesis entity not yet created)"
                 },
                 "currencyWalletId": {
                     "type": "string",
@@ -1920,6 +2079,21 @@ public partial class DivineController
                 "followerCount": {
                     "type": "integer",
                     "description": "Number of active followers"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether the deity is deprecated (Category A \u2014 can be undeprecated)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the deity was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (null if not deprecated)"
                 },
                 "createdAt": {
                     "type": "string",
@@ -1944,6 +2118,8 @@ public partial class DivineController
             "properties": {
                 "domain": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Opaque domain code (e.g., war, knowledge, nature). Game-defined, not an enum."
                 },
                 "weight": {
@@ -1955,10 +2131,10 @@ public partial class DivineController
                 }
             }
         },
-        "DeityPersonalityTraits": {
+        "DivineAffectations": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Machine-readable personality traits influencing deity behavior decisions",
+            "description": "Divine-specific behavioral configuration for god-actor ABML decisions (separate from Character Personality which provides emergent personality via system realm character brain)",
             "required": [
                 "temperament",
                 "attentionBias",
@@ -1992,11 +2168,10 @@ public partial class DivineController
         },
         "DeityStatus": {
             "type": "string",
-            "description": "Lifecycle status of a deity entity",
+            "description": "Lifecycle status of a deity entity (Archived removed \u2014 deprecation triple-field replaces it per Category A T31)",
             "enum": [
                 "Active",
-                "Dormant",
-                "Archived"
+                "Dormant"
             ]
         }
     }
@@ -2057,6 +2232,638 @@ public partial class DivineController
 
     #endregion
 
+    #region Meta Endpoints for DeprecateDeity
+
+    private static readonly string _DeprecateDeity_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeprecateDeityRequest",
+    "$defs": {
+        "DeprecateDeityRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to deprecate a deity (Category A \u2014 gods can return via undeprecate)",
+            "required": [
+                "deityId"
+            ],
+            "properties": {
+                "deityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Deity to deprecate"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Optional reason for deprecation"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeprecateDeity_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeityResponse",
+    "$defs": {
+        "DeityResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Full deity entity response",
+            "required": [
+                "deityId",
+                "gameServiceId",
+                "code",
+                "displayName",
+                "description",
+                "domains",
+                "divineAffectations",
+                "maxAttentionSlots",
+                "status",
+                "followerCount",
+                "isDeprecated",
+                "createdAt",
+                "updatedAt"
+            ],
+            "properties": {
+                "deityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique deity identifier"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Game service this deity belongs to"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Unique code within the game service"
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "Human-readable display name"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of the deity"
+                },
+                "domains": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/DomainInfluence"
+                    },
+                    "description": "Domain influences"
+                },
+                "divineAffectations": {
+                    "$ref": "#/$defs/DivineAffectations",
+                    "description": "Divine-specific behavioral configuration for god-actor ABML decisions"
+                },
+                "maxAttentionSlots": {
+                    "type": "integer",
+                    "description": "Maximum characters the deity can actively monitor"
+                },
+                "actorId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Associated actor ID for the deity watcher brain (null if no watcher started)"
+                },
+                "seedId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Domain power seed ID (null if seed creation failed or pending)"
+                },
+                "genesisEntityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Genesis entity ID for lifecycle queries (null if genesis entity not yet created)"
+                },
+                "currencyWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Divinity currency wallet ID (null if wallet creation failed or pending)"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Home realm for this deity (null if not realm-bound)"
+                },
+                "status": {
+                    "$ref": "#/$defs/DeityStatus",
+                    "description": "Current lifecycle status"
+                },
+                "followerCount": {
+                    "type": "integer",
+                    "description": "Number of active followers"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether the deity is deprecated (Category A \u2014 can be undeprecated)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the deity was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (null if not deprecated)"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the deity was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the deity was last updated"
+                }
+            }
+        },
+        "DomainInfluence": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A deity's influence in a specific domain with a weight representing strength",
+            "required": [
+                "domain",
+                "weight"
+            ],
+            "properties": {
+                "domain": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Opaque domain code (e.g., war, knowledge, nature). Game-defined, not an enum."
+                },
+                "weight": {
+                    "type": "number",
+                    "format": "double",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Strength of influence in this domain (0.0-1.0)"
+                }
+            }
+        },
+        "DivineAffectations": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Divine-specific behavioral configuration for god-actor ABML decisions (separate from Character Personality which provides emergent personality via system realm character brain)",
+            "required": [
+                "temperament",
+                "attentionBias",
+                "generosity",
+                "jealousy"
+            ],
+            "properties": {
+                "temperament": {
+                    "type": "string",
+                    "description": "Primary temperament descriptor (e.g., wrathful, benevolent, capricious)"
+                },
+                "attentionBias": {
+                    "type": "string",
+                    "description": "What type of mortal actions draw this deity's attention (e.g., combat, devotion, craft)"
+                },
+                "generosity": {
+                    "type": "number",
+                    "format": "double",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "How freely the deity grants blessings (0.0 miserly, 1.0 lavish)"
+                },
+                "jealousy": {
+                    "type": "number",
+                    "format": "double",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "How possessive the deity is of followers (0.0 tolerant, 1.0 vengeful)"
+                }
+            }
+        },
+        "DeityStatus": {
+            "type": "string",
+            "description": "Lifecycle status of a deity entity (Archived removed \u2014 deprecation triple-field replaces it per Category A T31)",
+            "enum": [
+                "Active",
+                "Dormant"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _DeprecateDeity_Info = """
+{
+    "summary": "Deprecate a deity (Category A)",
+    "description": "Marks a deity as deprecated with a reason. Idempotent \u2014 returns 200 OK if\nalready deprecated. Publishes deity.updated event with changedFields containing\ndeprecation fields.\n",
+    "tags": [
+        "Deity Management"
+    ],
+    "deprecated": false,
+    "operationId": "deprecateDeity"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeprecateDeity</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/divine/deity/deprecate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateDeity_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Divine",
+            "POST",
+            "/divine/deity/deprecate",
+            _DeprecateDeity_Info));
+
+    /// <summary>Returns request schema for DeprecateDeity</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/divine/deity/deprecate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateDeity_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Divine",
+            "POST",
+            "/divine/deity/deprecate",
+            "request-schema",
+            _DeprecateDeity_RequestSchema));
+
+    /// <summary>Returns response schema for DeprecateDeity</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/divine/deity/deprecate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateDeity_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Divine",
+            "POST",
+            "/divine/deity/deprecate",
+            "response-schema",
+            _DeprecateDeity_ResponseSchema));
+
+    /// <summary>Returns full schema for DeprecateDeity</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/divine/deity/deprecate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateDeity_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Divine",
+            "POST",
+            "/divine/deity/deprecate",
+            _DeprecateDeity_Info,
+            _DeprecateDeity_RequestSchema,
+            _DeprecateDeity_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UndeprecateDeity
+
+    private static readonly string _UndeprecateDeity_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UndeprecateDeityRequest",
+    "$defs": {
+        "UndeprecateDeityRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to undeprecate a previously deprecated deity (Category A)",
+            "required": [
+                "deityId"
+            ],
+            "properties": {
+                "deityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Deity to undeprecate"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UndeprecateDeity_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeityResponse",
+    "$defs": {
+        "DeityResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Full deity entity response",
+            "required": [
+                "deityId",
+                "gameServiceId",
+                "code",
+                "displayName",
+                "description",
+                "domains",
+                "divineAffectations",
+                "maxAttentionSlots",
+                "status",
+                "followerCount",
+                "isDeprecated",
+                "createdAt",
+                "updatedAt"
+            ],
+            "properties": {
+                "deityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique deity identifier"
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Game service this deity belongs to"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Unique code within the game service"
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "Human-readable display name"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of the deity"
+                },
+                "domains": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/DomainInfluence"
+                    },
+                    "description": "Domain influences"
+                },
+                "divineAffectations": {
+                    "$ref": "#/$defs/DivineAffectations",
+                    "description": "Divine-specific behavioral configuration for god-actor ABML decisions"
+                },
+                "maxAttentionSlots": {
+                    "type": "integer",
+                    "description": "Maximum characters the deity can actively monitor"
+                },
+                "actorId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Associated actor ID for the deity watcher brain (null if no watcher started)"
+                },
+                "seedId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Domain power seed ID (null if seed creation failed or pending)"
+                },
+                "genesisEntityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Genesis entity ID for lifecycle queries (null if genesis entity not yet created)"
+                },
+                "currencyWalletId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Divinity currency wallet ID (null if wallet creation failed or pending)"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Home realm for this deity (null if not realm-bound)"
+                },
+                "status": {
+                    "$ref": "#/$defs/DeityStatus",
+                    "description": "Current lifecycle status"
+                },
+                "followerCount": {
+                    "type": "integer",
+                    "description": "Number of active followers"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether the deity is deprecated (Category A \u2014 can be undeprecated)"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the deity was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (null if not deprecated)"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the deity was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the deity was last updated"
+                }
+            }
+        },
+        "DomainInfluence": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "A deity's influence in a specific domain with a weight representing strength",
+            "required": [
+                "domain",
+                "weight"
+            ],
+            "properties": {
+                "domain": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Opaque domain code (e.g., war, knowledge, nature). Game-defined, not an enum."
+                },
+                "weight": {
+                    "type": "number",
+                    "format": "double",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Strength of influence in this domain (0.0-1.0)"
+                }
+            }
+        },
+        "DivineAffectations": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Divine-specific behavioral configuration for god-actor ABML decisions (separate from Character Personality which provides emergent personality via system realm character brain)",
+            "required": [
+                "temperament",
+                "attentionBias",
+                "generosity",
+                "jealousy"
+            ],
+            "properties": {
+                "temperament": {
+                    "type": "string",
+                    "description": "Primary temperament descriptor (e.g., wrathful, benevolent, capricious)"
+                },
+                "attentionBias": {
+                    "type": "string",
+                    "description": "What type of mortal actions draw this deity's attention (e.g., combat, devotion, craft)"
+                },
+                "generosity": {
+                    "type": "number",
+                    "format": "double",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "How freely the deity grants blessings (0.0 miserly, 1.0 lavish)"
+                },
+                "jealousy": {
+                    "type": "number",
+                    "format": "double",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "How possessive the deity is of followers (0.0 tolerant, 1.0 vengeful)"
+                }
+            }
+        },
+        "DeityStatus": {
+            "type": "string",
+            "description": "Lifecycle status of a deity entity (Archived removed \u2014 deprecation triple-field replaces it per Category A T31)",
+            "enum": [
+                "Active",
+                "Dormant"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _UndeprecateDeity_Info = """
+{
+    "summary": "Undeprecate a deprecated deity (Category A)",
+    "description": "Clears deprecation on a deity. Idempotent \u2014 returns 200 OK if not deprecated.\nPublishes deity.updated event with changedFields containing deprecation fields.\n",
+    "tags": [
+        "Deity Management"
+    ],
+    "deprecated": false,
+    "operationId": "undeprecateDeity"
+}
+""";
+
+    /// <summary>Returns endpoint information for UndeprecateDeity</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/divine/deity/undeprecate/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UndeprecateDeity_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Divine",
+            "POST",
+            "/divine/deity/undeprecate",
+            _UndeprecateDeity_Info));
+
+    /// <summary>Returns request schema for UndeprecateDeity</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/divine/deity/undeprecate/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UndeprecateDeity_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Divine",
+            "POST",
+            "/divine/deity/undeprecate",
+            "request-schema",
+            _UndeprecateDeity_RequestSchema));
+
+    /// <summary>Returns response schema for UndeprecateDeity</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/divine/deity/undeprecate/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UndeprecateDeity_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Divine",
+            "POST",
+            "/divine/deity/undeprecate",
+            "response-schema",
+            _UndeprecateDeity_ResponseSchema));
+
+    /// <summary>Returns full schema for UndeprecateDeity</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/divine/deity/undeprecate/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UndeprecateDeity_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Divine",
+            "POST",
+            "/divine/deity/undeprecate",
+            _UndeprecateDeity_Info,
+            _UndeprecateDeity_RequestSchema,
+            _UndeprecateDeity_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for MergeDeity
+
+    private static readonly string _MergeDeity_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object"
+}
+""";
+
+    private static readonly string _MergeDeity_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object"
+}
+""";
+
+    private static readonly string _MergeDeity_Info = """
+{
+    "summary": "Merge a deprecated deity into another deity (Category A)",
+    "description": "Transfers all followers and blessings from the source deity (must be deprecated)\nto the target deity (must not be deprecated). Dissolves old seed bonds and creates\nnew bonds per target deity's bond template. Deletes the source deity after\nsuccessful transfer.\n",
+    "tags": [
+        "Deity Management"
+    ],
+    "deprecated": false,
+    "operationId": "mergeDeity"
+}
+""";
+
+    /// <summary>Returns endpoint information for MergeDeity</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/divine/deity/merge/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MergeDeity_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Divine",
+            "POST",
+            "/divine/deity/merge",
+            _MergeDeity_Info));
+
+    /// <summary>Returns request schema for MergeDeity</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/divine/deity/merge/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MergeDeity_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Divine",
+            "POST",
+            "/divine/deity/merge",
+            "request-schema",
+            _MergeDeity_RequestSchema));
+
+    /// <summary>Returns response schema for MergeDeity</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/divine/deity/merge/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MergeDeity_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Divine",
+            "POST",
+            "/divine/deity/merge",
+            "response-schema",
+            _MergeDeity_ResponseSchema));
+
+    /// <summary>Returns full schema for MergeDeity</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/divine/deity/merge/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MergeDeity_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Divine",
+            "POST",
+            "/divine/deity/merge",
+            _MergeDeity_Info,
+            _MergeDeity_RequestSchema,
+            _MergeDeity_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for DeleteDeity
 
     private static readonly string _DeleteDeity_RequestSchema = """
@@ -2067,7 +2874,7 @@ public partial class DivineController
         "DeleteDeityRequest": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Request to permanently delete a deity and all dependent data",
+            "description": "Request to permanently delete a deity and all dependent data (must be deprecated first)",
             "required": [
                 "deityId"
             ],
@@ -2090,7 +2897,7 @@ public partial class DivineController
     private static readonly string _DeleteDeity_Info = """
 {
     "summary": "Delete a deity",
-    "description": "Permanently deletes a deity and all dependent data. Deactivates the deity\nif active, revokes all blessings, removes all follower relationships, deletes\nattention slots, and coordinates cleanup via lib-resource. Publishes a\nlifecycle deleted event.\n",
+    "description": "Permanently deletes a deity and all dependent data. Requires the deity to be\ndeprecated first (Category A T31). Deactivates the deity if active, revokes\nall blessings, removes all follower relationships, deletes attention slots,\nand coordinates cleanup via lib-resource. Publishes a lifecycle deleted event.\n",
     "tags": [
         "Deity Management"
     ],
@@ -2177,17 +2984,10 @@ public partial class DivineController
             "additionalProperties": false,
             "description": "Current divinity balance for a deity",
             "required": [
-                "deityId",
                 "balance",
-                "currencyCode",
-                "walletId"
+                "currencyCode"
             ],
             "properties": {
-                "deityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Deity this balance belongs to"
-                },
                 "balance": {
                     "type": "number",
                     "format": "double",
@@ -2196,11 +2996,6 @@ public partial class DivineController
                 "currencyCode": {
                     "type": "string",
                     "description": "Currency code for the divinity type"
-                },
-                "walletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Currency wallet ID"
                 }
             }
         }
@@ -2322,17 +3117,10 @@ public partial class DivineController
             "additionalProperties": false,
             "description": "Current divinity balance for a deity",
             "required": [
-                "deityId",
                 "balance",
-                "currencyCode",
-                "walletId"
+                "currencyCode"
             ],
             "properties": {
-                "deityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Deity this balance belongs to"
-                },
                 "balance": {
                     "type": "number",
                     "format": "double",
@@ -2341,11 +3129,6 @@ public partial class DivineController
                 "currencyCode": {
                     "type": "string",
                     "description": "Currency code for the divinity type"
-                },
-                "walletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Currency wallet ID"
                 }
             }
         }
@@ -2467,17 +3250,10 @@ public partial class DivineController
             "additionalProperties": false,
             "description": "Current divinity balance for a deity",
             "required": [
-                "deityId",
                 "balance",
-                "currencyCode",
-                "walletId"
+                "currencyCode"
             ],
             "properties": {
-                "deityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Deity this balance belongs to"
-                },
                 "balance": {
                     "type": "number",
                     "format": "double",
@@ -2486,11 +3262,6 @@ public partial class DivineController
                 "currencyCode": {
                     "type": "string",
                     "description": "Currency code for the divinity type"
-                },
-                "walletId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Currency wallet ID"
                 }
             }
         }
@@ -2660,9 +3431,9 @@ public partial class DivineController
                     "description": "Type of transaction (e.g., mortal_action, blessing_grant, manual_credit)"
                 },
                 "targetType": {
-                    "type": "string",
+                    "type": "object",
                     "nullable": true,
-                    "description": "Type of entity involved in this transaction (e.g., character, deity)"
+                    "description": "Type of entity involved in this transaction"
                 },
                 "targetId": {
                     "type": "string",
@@ -3784,7 +4555,8 @@ public partial class DivineController
                 "characterId",
                 "deityId",
                 "registeredAt",
-                "relationshipId"
+                "relationshipId",
+                "attentionSlotAllocated"
             ],
             "properties": {
                 "characterId": {
@@ -3806,6 +4578,10 @@ public partial class DivineController
                     "type": "string",
                     "format": "uuid",
                     "description": "Underlying relationship record ID from lib-relationship"
+                },
+                "attentionSlotAllocated": {
+                    "type": "boolean",
+                    "description": "Whether an attention slot was allocated for this follower (false if deity at max attention capacity)"
                 }
             }
         }
@@ -4041,7 +4817,8 @@ public partial class DivineController
                 "characterId",
                 "deityId",
                 "registeredAt",
-                "relationshipId"
+                "relationshipId",
+                "attentionSlotAllocated"
             ],
             "properties": {
                 "characterId": {
@@ -4063,6 +4840,10 @@ public partial class DivineController
                     "type": "string",
                     "format": "uuid",
                     "description": "Underlying relationship record ID from lib-relationship"
+                },
+                "attentionSlotAllocated": {
+                    "type": "boolean",
+                    "description": "Whether an attention slot was allocated for this follower (false if deity at max attention capacity)"
                 }
             }
         }

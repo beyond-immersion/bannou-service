@@ -1565,14 +1565,9 @@ components:
       additionalProperties: false
       description: Current divinity balance for a deity
       required:
-        - deityId
         - balance
         - currencyCode
       properties:
-        deityId:
-          type: string
-          format: uuid
-          description: Deity this balance belongs to
         balance:
           type: number
           format: double
@@ -1697,6 +1692,7 @@ components:
         - deityId
         - registeredAt
         - relationshipId
+        - attentionSlotAllocated
       properties:
         characterId:
           type: string
@@ -1714,6 +1710,9 @@ components:
           type: string
           format: uuid
           description: Underlying relationship record ID from lib-relationship
+        attentionSlotAllocated:
+          type: boolean
+          description: Whether an attention slot was allocated for this follower (false if deity at max attention capacity)
 
     ListFollowersResponse:
       type: object

@@ -93,7 +93,8 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");
 
         // From divine-service-events.yaml
-        EventSubscriptionRegistry.Register<AnalyticsScoreUpdatedEvent>("analytics.score.updated");
+        EventSubscriptionRegistry.Register<CharacterCreatedEvent>("character.created");
+        EventSubscriptionRegistry.Register<CharacterUpdatedEvent>("character.updated");
 
         // From environment-service-events.yaml
         EventSubscriptionRegistry.Register<WorldstatePeriodChangedEvent>("worldstate.period-changed");

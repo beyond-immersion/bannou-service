@@ -424,7 +424,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Craft | L4 | Recipe-based crafting orchestration composing Item, Inventory, Contract, Currency, and Affix | — |
 | Director | L4 | Human-in-the-loop event coordination (Observe/Steer/Drive tiers) for live content management | — |
 | Disposition | L4 | Emotional synthesis — per-character feelings about entities and long-term aspirational drives | — |
-| Divine | L4 | Pantheon management, divinity economy, blessing orchestration (composes Currency/Seed/Collection/Status) | 22 |
+| Divine | L4 | Pantheon management, divinity economy, blessing orchestration (composes Currency/Seed/Collection/Status) | 25 |
 | Dungeon | L4 | Living dungeon-as-actor lifecycle with personality, memory, and spatial manifestation | — |
 | Environment | L4 | Weather simulation, temperature modeling, and ecological resources consuming Worldstate temporal data | 32 |
 | Escrow | L4 | Full-custody multi-party asset exchange with 13-state FSM (currency/items/contracts) | 23 |
@@ -454,7 +454,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Utility | L4 | Infrastructure network topology, flow calculation, and coverage cascading (aqueducts, power grids) | — |
 | Workshop | L4 | Time-based automated production with lazy evaluation and background materialization | — |
 
-**78 services, 1056 endpoints**
+**78 services, 1059 endpoints**
 
 For full per-service details: `docs/generated/GENERATED-*-SERVICE-DETAILS.md`
 

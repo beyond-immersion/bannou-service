@@ -119,7 +119,23 @@ public async Task HandleCinematicTriggeredAsync(CinematicTriggeredEvent evt, Can
 }
 ```
 
-### 4. Progressive Agency (Spirit Fidelity → QTE Density)
+### 4. Initiative-Driven Combat Exchange Flow
+
+**What**: Initiative-driven combat exchanges where the combat coordinator event brain determines initiative, composes choreographic exchanges, and presents tactical options gated by progressive agency.
+
+**How**: See [VIDEO-DIRECTOR.md § Initiative-Driven Combat](../planning/VIDEO-DIRECTOR.md#initiative-driven-combat-the-interactive-genre) and [COMPOSITIONAL-CINEMATICS.md § 4.4-4.6](../planning/COMPOSITIONAL-CINEMATICS.md#44-initiative-driven-combat-the-interactive-application) for the full design. Key integration points:
+
+1. **Initiative as choreographic input**: The combat coordinator passes prior exchange outcome and current initiative state to `/cinematic/compose`. CinematicStoryteller's GOAP planner uses initiative to assign protagonist (attacker) and counterforce (defender) roles, producing choreography where the initiative holder's animations lead and the defender's react.
+
+2. **Option count gating by agency fidelity**: Agency's `${spirit.domain.combat.fidelity}` determines not just WHETHER QTEs appear, but HOW MANY tactical options are visible per exchange. A continuation point may have 6 registered extensions (dodge, block, counter, combo opener, environmental exploit, rare situational composite), but the client event filters by fidelity. Lower-fidelity spirits see 2-3 options; the character's autonomous ABML brain has access to all 6 always.
+
+3. **Tension recording**: When the spirit's tactical choice conflicts with the character's personality (e.g., forcing a dodge on an aggressive character), the delta is recorded as `${cinematic.tension}` in lib-cinematic's variable provider. CinematicStoryteller reads this tension for the next exchange's composition, producing choreography that shows internal conflict (hesitation, visible reluctance, overcorrection).
+
+4. **Multi-Puppetmaster FCFS extensions**: Multiple god-actors can register extensions at combat continuation points. First extension registered wins (FCFS). This creates emergent regional combat flavor — aggressive gods compose simple extensions quickly and win more often; narrative gods compose complex extensions slowly and win only when unopposed. See [#694](https://github.com/beyond-immersion/bannou-service/issues/694).
+
+5. **External interruptions**: Third-party event brains (building collapse, new combatant, divine intervention) can inject extensions at the currently-waiting continuation point (Pattern A: interrupt extension that emits its own continuation point for combat to resume) or call `/cinematic/abort` and recompose (Pattern B: fundamental encounter change).
+
+### 5. Progressive Agency (Spirit Fidelity → QTE Density)
 
 **What**: The guardian spirit's combat domain fidelity determines how many continuation points in a cinematic become interactive QTE windows vs. auto-resolved.
 
@@ -187,31 +203,39 @@ This scenario should be testable via the HTTP integration test suite (`http-test
 
 ## Implementation Steps
 
-### Step 1: Event Subscription Wiring
+### Step 1: Initiative-Driven Combat Wiring
+
+1. Define `${cinematic.initiative_holder}`, `${cinematic.tension}`, `${cinematic.exchange_count}`, `${cinematic.last_exchange_outcome}` in `CinematicVariableProviderFactory`
+2. Update `/cinematic/compose` to accept optional initiative context (prior exchange outcome, tension level, current initiative holder)
+3. Ensure CinematicStoryteller GOAP planner uses initiative context to assign protagonist/counterforce roles
+4. Define exchange type metadata sidecar format for continuation points (see [#693](https://github.com/beyond-immersion/bannou-service/issues/693))
+5. Implement FCFS extension registration semantics (see [#694](https://github.com/beyond-immersion/bannou-service/issues/694))
+
+### Step 2: Event Subscription Wiring
 
 1. In `CinematicServiceEvents.cs`, subscribe to any events needed for cleanup coordination
 2. In `GardenerServiceEvents.cs`, add subscription to `cinematic.triggered` and `cinematic.completed` for player experience routing
 
-### Step 2: QTE Input Routing
+### Step 3: QTE Input Routing
 
 1. Define the WebSocket message flow for QTE inputs from client to CutsceneSession
 2. Gardener or Connect service routes player inputs to the active CutsceneSession's `SubmitInputAsync`
 3. Handle timeout/disconnect gracefully (InputWindowManager already has timeout defaults)
 
-### Step 3: Progressive Agency Integration
+### Step 4: Progressive Agency Integration
 
 1. Add `priority` field to `ContinuationPoint` in cinematic-composer SDK (if not already present)
 2. In `CinematicService.TriggerCinematicAsync`, query Agency service for spirit fidelity
 3. Mark continuation points as active/inactive based on fidelity threshold
 4. Pass the activation map to CutsceneSession creation
 
-### Step 4: Author ABML Behavior Documents
+### Step 5: Author ABML Behavior Documents
 
 1. Write `encounter_watcher.abml` for event brain cinematic discovery
 2. Amend regional watcher behaviors with cinematic discovery actions
 3. Write test utility behavior for end-to-end validation
 
-### Step 5: End-to-End Validation
+### Step 6: End-to-End Validation
 
 1. Register a test scenario via `/cinematic/scenario/create`
 2. Start an actor with the `encounter_watcher.abml` behavior
@@ -220,7 +244,7 @@ This scenario should be testable via the HTTP integration test suite (`http-test
 5. Verify events are published at each stage
 6. Verify entity control is properly acquired and returned
 
-### Step 6: Event Publishing for Content Flywheel
+### Step 7: Event Publishing for Content Flywheel
 
 1. On cinematic completion, publish events that feed:
    - lib-character-encounter: memorable encounter record

@@ -552,11 +552,37 @@ The concept simplifies and loses precision, which is exactly how rumors work. Sp
 Hearsay's distortion mechanics operate on message elements:
 
 1. **Association loss**: Elements connected by weak associations drop first
-2. **Specificity decay**: Specific entries degrade to parent category codes
+2. **Specificity decay**: Specific entries degrade to parent category codes (Lexicon defines the degradation hierarchy)
 3. **Context stripping**: Location and modifier elements drop before subject elements
 4. **Intent preservation**: The communication intent (WARN, INFORM) is the most stable element
 5. **Confidence reduction**: Each hop multiplies confidence by `(1.0 - distortionFactor)`
-6. **Personality mediation**: NPCs with high conscientiousness distort less; high openness transmits more elements
+6. **Personality mediation**: All eight personality trait axes modulate distortion across three functional tiers:
+
+**Tier 1 — Interpretation Filters** (affect what information means to the NPC):
+- **Openness**: High = accepts novel claims, generates exotic hypotheses, retransmits speculative associations. Low = rejects novelty, sticks to conventional explanations.
+- **Agreeableness**: High = trusts source, charitable interpretations, softens negative content. Low = discounts credibility, cynical interpretations, sharpens threats.
+- **Neuroticism**: High = amplifies alarming claims, threat-biased gap-filling, exaggerates danger in retelling. Low = discounts threats, stays calm, matter-of-fact retelling.
+- **Aggression**: High = amplifies conflict claims, hostile interpretations, confrontational framing. Low = dampens conflict, peaceful interpretations.
+
+**Tier 2 — Quality Filters** (affect signal fidelity):
+- **Conscientiousness**: High = preserves detail, verifies before accepting, fewer but tested hypotheses. Low = loses detail, accepts without checking, many untested hypotheses.
+- **Honesty**: High = faithful retransmission. Low = introduces *intentional* distortion (adds favorable elements, omits inconvenient ones) — distinct from stochastic fidelity loss.
+
+**Tier 3 — Distribution Properties** (affect how information flows socially):
+- **Extraversion**: High = tells many people, broad reach, faster propagation. Low = tells few, narrow reach. Minimal effect on content.
+- **Loyalty**: High = boosts in-group source credibility, protects in-group reputation in retelling. Low = treats all sources equally, reports objectively.
+
+Multi-axis personality vectors produce emergent interpretive profiles: a NPC with low Agreeableness + high Neuroticism + high Aggression is "paranoid" (attributes hostile intent AND amplifies perceived risk AND wants to fight back). A NPC with high Conscientiousness + high Openness + low Neuroticism is "scholarly" (considers multiple explanations carefully without panic). These archetypes emerge from the continuous 8-axis vector, not from discrete types. See [Hearsay Deep Dive § Personality-Driven Information Processing](../plugins/HEARSAY.md#personality-driven-information-processing) for the full model including inference mechanics and composite archetype table.
+
+### Personality-Driven Inference (Gap-Filling)
+
+When an NPC encounters incomplete information, Hearsay can generate hypothesis beliefs by querying Lexicon associations for the known elements and selecting among candidates based on personality. This complements the existing "ask questions" mechanism — both coexist:
+
+- **High Conscientiousness** NPCs are more likely to **ask questions** (seeking verification before acting)
+- **Low Conscientiousness + high Openness** NPCs freely **generate hypotheses** and act on them without verification
+- **Collection discovery tiers gate** which associations are available for inference — an NPC who hasn't discovered a concept cannot generate that hypothesis regardless of personality
+
+The inference engine lives in Hearsay (it creates the beliefs); Lexicon provides the association data (the candidate hypotheses); Collection gates which associations are visible. Personality selects among the visible candidates. See [Hearsay Deep Dive § Personality-Modulated Inference](../plugins/HEARSAY.md#personality-modulated-inference-gap-filling) for the detailed flow and worked example.
 
 ### Belief Formation from Messages
 
@@ -874,7 +900,7 @@ A peaceful character nudged to send `[THREATEN]` may refuse or soften it to `[WA
 | **Collection** | L2 | Discovery-level gating of vocabulary per character |
 | **Actor** | L2 | Cognition pipeline, ABML execution, perception processing |
 | **Character-Encounter** | L4 | Relationship sentiment, recent interaction data |
-| **Character-Personality** | L4 | Communication style modulation (extraversion, openness) |
+| **Character-Personality** | L4 | All eight trait axes modulate information reception, inference, retransmission, and communication style |
 | **Relationship** | L2 | Social graph for propagation paths, friend identification |
 | **Worldstate** | L2 | Time-of-day triggers for daily routine behaviors |
 
@@ -1039,7 +1065,7 @@ The open question: Should a single `[TEACH] + [DIREWOLF] + [PACK_HUNTER]` messag
 Current recommendation: Teaching quality scales with:
 - Teacher's discovery level (mastery enables efficient transmission)
 - Relationship closeness (trusted contacts learn faster)
-- Recipient personality (high openness = more receptive)
+- Recipient personality (Openness modulates receptivity to new concepts; Conscientiousness modulates how carefully they integrate new knowledge; Loyalty modulates trust in the teacher's authority)
 - Number of teaching interactions (single message = Hearsay belief; sustained mentorship = Collection advancement)
 
 ---

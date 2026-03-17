@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- SDK Naming: PackageId, RootNamespace, AssemblyName must match -->
+    <PackageId>BeyondImmersion.Bannou.VoxelCore</PackageId>
+    <RootNamespace>BeyondImmersion.Bannou.VoxelCore</RootNamespace>
+    <AssemblyName>BeyondImmersion.Bannou.VoxelCore</AssemblyName>
+
+    <!-- SDK Version: CI overrides with -p:Version=x.y.z or -p:VersionSuffix=preview.123 -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+
+    <!-- NuGet Package Metadata -->
+    <Authors>BeyondImmersion</Authors>
+    <Description>Sparse chunk-based voxel grid primitives with meshing, voxelization, serialization (.bvox), and math. Pure computation, zero service dependencies, deterministic. The foundation for all Bannou voxel SDKs.</Description>
+    <PackageTags>bannou;voxel;meshing;greedy;marching-cubes;gamedev</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/beyond-immersion/bannou-service</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/beyond-immersion/bannou-service</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <!-- Documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="K4os.Compression.LZ4" Version="1.3.8" />
+    <PackageReference Include="System.IO.Hashing" Version="9.0.3" />
+  </ItemGroup>
+
+</Project>

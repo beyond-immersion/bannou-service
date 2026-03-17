@@ -159,7 +159,7 @@ Emotional synthesis and aspirational drive service (L4 GameFeatures) for NPC inn
 
 ## Divine {#divine}
 
-**Version**: 1.0.0 | **Schema**: `schemas/divine-api.yaml` | **Endpoints**: 22 | **Deep Dive**: [docs/plugins/DIVINE.md](../plugins/DIVINE.md) | **Map**: [docs/maps/DIVINE.md](../maps/DIVINE.md)
+**Version**: 1.0.0 | **Schema**: `schemas/divine-api.yaml` | **Endpoints**: 25 | **Deep Dive**: [docs/plugins/DIVINE.md](../plugins/DIVINE.md) | **Map**: [docs/maps/DIVINE.md](../maps/DIVINE.md)
 
 Pantheon management service (L4 GameFeatures) for deity entities, divinity economy, and blessing orchestration. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item) that composes existing Bannou primitives to deliver divine game mechanics: god identity is owned here, behavior runs via Actor/Puppetmaster, domain power via Seed, divinity resource via Currency, blessings via Collection/Status, and follower bonds via Relationship. Gods influence characters indirectly through the character's own Actor -- a god's Actor monitors event streams and makes decisions, but the character's Actor receives the consequences. Blessings are entity-agnostic (characters, accounts, deities, or any entity type can receive them). All endpoints are currently stubbed (return `NotImplemented`); see the implementation plan at `docs/plans/DIVINE.md` for the full specification.
 
@@ -510,7 +510,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Total services**: 78
-- **Total endpoints**: 1056
+- **Total endpoints**: 1059
 
 ---
 

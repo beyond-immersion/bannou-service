@@ -80,7 +80,6 @@ This document lists all state store components used in Bannou.
 | `divine-attention` | Redis | Divine | Active attention slot tracking per deity (ephemeral, high-frequency reads) |
 | `divine-blessings` | MySQL | Divine | Blessing grant records linking deities to characters via items (durable, queryable) |
 | `divine-deities` | MySQL | Divine | Deity entity records (durable, queryable by game service, domain, status) |
-| `divine-divinity-events` | Redis | Divine | Pending divinity generation events awaiting batch processing (ephemeral queue) |
 | `divine-lock` | Redis | Divine | Distributed locks for deity and blessing mutations |
 | `documentation-statestore` | Redis | Documentation | Documentation content and metadata |
 | `edge-revocation-statestore` | Redis | Auth | Edge revocation tracking for CDN/firewall layer blocking |
@@ -229,7 +228,7 @@ This document lists all state store components used in Bannou.
 | `worldstate-ratio-history` | MySQL | Worldstate | Time ratio change history per realm for elapsed game-time computation (append-only, compacted) |
 | `worldstate-realm-clock` | Redis | Worldstate | Current game time per realm (hot reads, updated every ClockTickIntervalSeconds) |
 
-**Total**: 219 stores (136 Redis, 83 MySQL)
+**Total**: 218 stores (135 Redis, 83 MySQL)
 
 ## Naming Conventions
 

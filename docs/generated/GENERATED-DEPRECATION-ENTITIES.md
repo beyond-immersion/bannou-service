@@ -9,9 +9,9 @@ need deprecation marker interfaces, and the current state of Category B complian
 
 ## Summary
 
-- **Total deprecatable entities**: 25
+- **Total deprecatable entities**: 26
 - **With `instanceEntity` declared**: 16
-- **Missing `instanceEntity`**: 9
+- **Missing `instanceEntity`**: 10
 
 ## All Deprecatable Entities
 
@@ -27,6 +27,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 | Collection | `CollectionEntryTemplate` | `Collection` | OK |
 | Contract | `ContractTemplate` | `ContractInstance` | OK |
 | Currency | `CurrencyDefinition` | `CurrencyBalance` | OK |
+| Divine | `Deity` | — | Missing |
 | Environment | `ClimateTemplate` | — | Missing |
 | Faction | `Faction` | — | Missing |
 | Gardener | `ScenarioTemplate` | `ScenarioInstance` | OK |
@@ -124,6 +125,14 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Topic prefix**: `currency`
 - **Instance entity**: `CurrencyBalance`
 - **Model fields**: `definitionId`, `code`, `name`, `scope`, `precision`, `isActive`, `modifiedAt`
+
+### Divine: Deity
+
+- **Service**: `divine`
+- **Schema**: `schemas/divine-service-events.yaml`
+- **Topic prefix**: `divine`
+- **Instance entity**: `*(not declared)*`
+- **Model fields**: `deityId`, `gameServiceId`, `code`, `displayName`, `description`, `domains`, `status`, `followerCount`, `maxAttentionSlots`, `actorId`, `seedId`, `genesisEntityId`, `currencyWalletId`, `realmId`, `divineAffectations`
 
 ### Environment: ClimateTemplate
 

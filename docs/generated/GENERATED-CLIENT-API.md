@@ -28,7 +28,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Connect API](#connect) | `client.Connect` | 5 | Real-time communication and WebSocket connection management ... |
 | [Contract Service API](#contract) | `client.Contract` | 31 | Binding agreements between entities with milestone-based pro... |
 | [Currency Service API](#currency) | `client.Currency` | 34 | Multi-currency management service for game economies. |
-| [Bannou Divine Service API](#divine) | `client.Divine` | 22 | Pantheon management service (L4 GameFeatures) for deity enti... |
+| [Bannou Divine Service API](#divine) | `client.Divine` | 24 | Pantheon management service (L4 GameFeatures) for deity enti... |
 | [Bannou Documentation API](#documentation) | `client.Documentation` | 25 | Knowledge base API for AI agents to query documentation. Des... |
 | [Bannou Environment Service API](#environment) | `client.Environment` | 32 | Weather simulation, temperature modeling, atmospheric condit... |
 | [Escrow Service API](#escrow) | `client.Escrow` | 23 | Full-custody orchestration layer for multi-party asset excha... |
@@ -1083,6 +1083,8 @@ Pantheon management service (L4 GameFeatures) for deity entities, divinity econo
 | `UpdateDeityAsync` | `UpdateDeityRequest` | `DeityResponse` | Update deity properties |
 | `ActivatedeityAsync` | `ActivateDeityRequest` | `DeityResponse` | Activate a dormant deity |
 | `DeactivatedeityAsync` | `DeactivateDeityRequest` | `DeityResponse` | Deactivate an active deity |
+| `DeprecatedeityAsync` | `DeprecateDeityRequest` | `DeityResponse` | Deprecate a deity (Category A) |
+| `UndeprecatedeityAsync` | `UndeprecateDeityRequest` | `DeityResponse` | Undeprecate a deprecated deity (Category A) |
 | `DeleteDeityEventAsync` | `DeleteDeityRequest` | *(fire-and-forget)* | Delete a deity |
 
 ### Divinity Economy
@@ -2904,7 +2906,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 ## Summary
 
 - **Total services**: 60
-- **Total methods**: 1036
+- **Total methods**: 1038
 
 ---
 
