@@ -64,13 +64,14 @@ public sealed class MeshData
         TriangleCount = triangleCount;
     }
 
-    /// <summary>An empty mesh with no geometry.</summary>
+    /// <summary>An empty mesh with no geometry. Nullable fields are null (not empty arrays)
+    /// per IMPLEMENTATION TENETS T26: nullable types represent absence, not sentinel values.</summary>
     public static readonly MeshData Empty = new(
         Array.Empty<float>(),
         Array.Empty<float>(),
-        Array.Empty<float>(),
+        null,
         Array.Empty<int>(),
-        Array.Empty<byte>(),
-        Array.Empty<float>(),
+        null,
+        null,
         0, 0);
 }

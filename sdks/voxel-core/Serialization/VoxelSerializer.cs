@@ -79,7 +79,7 @@ public static class VoxelSerializer
             .ToList();
 
         // Compress chunks and build chunk table
-        var chunkEntries = new List<(ChunkCoord coord, uint offset, ushort length)>();
+        var chunkEntries = new List<(ChunkCoord coord, uint offset, ushort length, ushort nonEmptyCount)>();
         using var chunkDataBuffer = new MemoryStream();
 
         foreach (var (coord, chunk) in sortedChunks)
@@ -105,17 +105,18 @@ public static class VoxelSerializer
             var offset = (uint)chunkDataBuffer.Position;
             chunkDataBuffer.Write(finalCompressed);
 
-            chunkEntries.Add((coord, offset, (ushort)compressedLength));
+            chunkEntries.Add((coord, offset, (ushort)compressedLength, (ushort)chunk.NonEmptyCount));
         }
 
-        // Write chunk table (12 bytes per entry: 3x int16 coord + uint32 offset + uint16 length)
-        foreach (var (coord, offset, length) in chunkEntries)
+        // Write chunk table (14 bytes per entry: 3x int16 coord + uint32 offset + uint16 length + uint16 nonEmptyCount)
+        foreach (var (coord, offset, length, nonEmptyCount) in chunkEntries)
         {
             writer.Write((short)coord.X);
             writer.Write((short)coord.Y);
             writer.Write((short)coord.Z);
             writer.Write(offset);
             writer.Write(length);
+            writer.Write(nonEmptyCount);
         }
 
         // Write chunk data
@@ -192,8 +193,8 @@ public static class VoxelSerializer
         var metadataBytes = reader.ReadBytes((int)metaLength);
         var metadata = JsonSerializer.Deserialize<GridMetadata>(metadataBytes) ?? new GridMetadata();
 
-        // Chunk table
-        var chunkEntries = new (ChunkCoord coord, uint offset, ushort length)[chunkCount];
+        // Chunk table (14 bytes per entry)
+        var chunkEntries = new (ChunkCoord coord, uint offset, ushort length, ushort nonEmptyCount)[chunkCount];
         for (var i = 0; i < chunkCount; i++)
         {
             var cx = reader.ReadInt16();
@@ -201,7 +202,8 @@ public static class VoxelSerializer
             var cz = reader.ReadInt16();
             var offset = reader.ReadUInt32();
             var length = reader.ReadUInt16();
-            chunkEntries[i] = (new ChunkCoord(cx, cy, cz), offset, length);
+            var nonEmptyCount = reader.ReadUInt16();
+            chunkEntries[i] = (new ChunkCoord(cx, cy, cz), offset, length, nonEmptyCount);
         }
 
         // Record the start of chunk data section
@@ -210,7 +212,7 @@ public static class VoxelSerializer
         var grid = new VoxelGrid(bounds, palette, metadata);
 
         // Chunk data
-        foreach (var (coord, offset, length) in chunkEntries)
+        foreach (var (coord, offset, length, _) in chunkEntries)
         {
             ms.Position = chunkDataStart + offset;
             var compressedData = reader.ReadBytes(length);

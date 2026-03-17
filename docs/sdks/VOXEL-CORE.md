@@ -316,7 +316,7 @@ Heightmap voxelization:
      sample height at (x, z) from heightmap
      sample material at (x, z) from materialMap → palette index
      fill voxels from y=0 to y=floor(height) with palette index
-  → Mark border voxels as Frozen (options.FrozenBorderWidth voxels from grid edge)
+  → Mark border column voxels as Frozen (columns within FrozenBorderWidth of XZ grid edge)
   → Return VoxelGrid
 
 Mesh voxelization:
@@ -339,21 +339,23 @@ Mesh voxelization:
 ```
 VoxelGrid → .bvox
   → Write header (magic, version, flags, counts, checksum placeholder)
+  → Write bounds section (binary grid extents — fast spatial query without JSON parse)
   → Write palette section
   → Write metadata section (JSON)
   → For each non-empty chunk (sorted by ChunkCoord):
      → RLE encode paletteIndices[4096] → compressed stream 1
      → RLE encode flags[4096] → compressed stream 2
      → Concatenate streams, LZ4 compress the combined output
-     → Write chunk table entry (coord + offset + length)
+     → Write chunk table entry (coord + offset + length + nonEmptyCount)
      → Write compressed chunk data
   → Compute xxHash32 over all post-header bytes, write to checksum field
 
 .bvox → VoxelGrid (reverse)
   → Read header, validate magic/version/checksum
+  → Read bounds (binary grid extents)
   → Read palette
   → Read metadata
-  → Read chunk table
+  → Read chunk table (coord + offset + length + nonEmptyCount per chunk)
   → For each chunk entry:
      → LZ4 decompress
      → Split into two RLE streams
@@ -428,6 +430,10 @@ Header (20 bytes):
     Offset 12: VoxelCount    uint32    Total non-empty voxels
     Offset 16: Checksum      uint32    xxHash32 of all bytes after the header
 
+Bounds Section (12 bytes):
+    Min: int16 x 3 (6 bytes)        Grid minimum corner (X, Y, Z)
+    Max: int16 x 3 (6 bytes)        Grid maximum corner (X, Y, Z)
+
 Palette Section (variable):
     EntryCount: uint16
     Entries[]:  Color (4 bytes) + MaterialType (1) + Roughness (4) = 9 bytes each
@@ -436,10 +442,11 @@ Metadata Section (variable, optional):
     Length: uint32
     Data:   UTF-8 JSON-encoded GridMetadata
 
-Chunk Table (8 bytes per chunk):
+Chunk Table (14 bytes per chunk):
     ChunkCoord: int16 x 3 (6 bytes)
     DataOffset: uint32 (relative to chunk data start)
     DataLength: uint16
+    NonEmptyCount: uint16            Per-chunk voxel count (0-4096)
 
 Chunk Data (variable per chunk):
     Two concatenated RLE streams (palette indices then flags), LZ4 compressed together
@@ -449,9 +456,13 @@ Chunk Data (variable per chunk):
     Expected compression ratio: 10:1 to 50:1 for typical structures
 ```
 
+**Bounds section**: Binary grid bounds available at fixed offset (20) without parsing JSON metadata. A streaming reader can know the spatial extent of the grid from the first 32 bytes of the file. The Metadata JSON also contains bounds (via GridMetadata), but binary is faster for programmatic access.
+
+**Per-chunk NonEmptyCount**: Stored in the chunk table (2 bytes per chunk) so a reader can assess chunk density without decompressing chunk data. Enables: LOD decisions (skip sparse chunks at distance), streaming priority (load dense chunks first), pre-allocation of mesh buffers proportional to expected face count.
+
 **Two RLE streams**: Palette indices and flags are RLE-encoded separately because they have different statistical properties — flags are mostly zeros (VoxelFlags.None), producing near-perfect RLE compression, while palette indices have more variety. Separate streams exploit these different distributions. The two RLE outputs are concatenated and LZ4-compressed together (LZ4 sees the boundary as just another pattern).
 
-**Checksum**: xxHash32 of all bytes after the header (offset 20+). Verified on deserialization. Uses `System.IO.Hashing.XxHash32` (BCL since .NET 7, no external dependency). Detects accidental corruption during storage or transfer.
+**Checksum**: xxHash32 of all bytes after the header (offset 20+, including the bounds section). Verified on deserialization. Uses `System.IO.Hashing.XxHash32` (BCL since .NET 7, no external dependency). Detects accidental corruption during storage or transfer.
 
 **Why custom format**: .bbmodel is JSON (verbose, slow). .vox is compact but non-chunked (can't stream or delta-update). .bvox is chunk-aligned, enabling streaming (load visible chunks first), delta saves (re-serialize only dirty chunks), and server efficiency (direct serialization without format conversion).
 

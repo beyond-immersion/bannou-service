@@ -613,13 +613,6 @@
         <member name="M:BeyondImmersion.Bannou.VoxelCore.Meshing.CulledMesher.Mesh(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk,BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk[],BeyondImmersion.Bannou.VoxelCore.Grid.Palette,BeyondImmersion.Bannou.VoxelCore.Meshing.MeshingOptions)">
             <inheritdoc />
         </member>
-        <member name="F:BeyondImmersion.Bannou.VoxelCore.Meshing.CulledMesher.AoCornerOffsets">
-            <summary>
-            AO corner offsets per face direction per vertex. Each vertex needs 3 neighbor samples:
-            two edge-adjacent and one diagonal. The arrays define the relative offsets from the
-            voxel's position to sample for each corner of each face.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.Bannou.VoxelCore.Meshing.GreedyMesher">
             <summary>
             Coplanar face merging mesher. Scans each 2D slice per face direction and finds
@@ -720,7 +713,8 @@
             </summary>
         </member>
         <member name="F:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshData.Empty">
-            <summary>An empty mesh with no geometry.</summary>
+            <summary>An empty mesh with no geometry. Nullable fields are null (not empty arrays)
+            per IMPLEMENTATION TENETS T26: nullable types represent absence, not sentinel values.</summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.VoxelCore.Meshing.MesherHelpers">
             <summary>

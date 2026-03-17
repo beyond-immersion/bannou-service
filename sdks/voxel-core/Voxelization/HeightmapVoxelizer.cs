@@ -58,10 +58,13 @@ public static class HeightmapVoxelizer
             {
                 var flags = VoxelFlags.None;
 
-                // Mark frozen border
-                if (x < options.FrozenBorderWidth || x >= gridWidth - options.FrozenBorderWidth ||
-                    z < options.FrozenBorderWidth || z >= gridDepth - options.FrozenBorderWidth ||
-                    y == voxelHeight) // Top surface of border columns
+                // Mark frozen border: all voxels in border columns (which
+                // inherently includes their top surfaces) are frozen. Interior
+                // columns remain fully editable, including their top surface.
+                var isBorderColumn =
+                    x < options.FrozenBorderWidth || x >= gridWidth - options.FrozenBorderWidth ||
+                    z < options.FrozenBorderWidth || z >= gridDepth - options.FrozenBorderWidth;
+                if (isBorderColumn)
                 {
                     flags |= VoxelFlags.Frozen;
                 }

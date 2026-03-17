@@ -404,6 +404,10 @@ SET checksumOffset ← buffer.Position
 EMIT 0 as uint32                                     // Placeholder for checksum
 SET payloadStart ← buffer.Position
 
+// Bounds section (12 bytes — binary for fast access without parsing JSON metadata)
+EMIT grid.Bounds.Min (3x int16)
+EMIT grid.Bounds.Max (3x int16)
+
 // Palette section
 EMIT grid.Palette.usedCount as uint16
 FOREACH entry in grid.Palette.entries[1..usedCount]
@@ -429,11 +433,11 @@ FOREACH (coord, chunk) in sortedChunks
   COMPUTE compressed ← LZ4.Compress(combined)
   SET offset ← chunkDataBuffer.Position
   EMIT compressed to chunkDataBuffer
-  ACCUMULATE (coord, offset, compressed.Length) to chunkTable
+  ACCUMULATE (coord, offset, compressed.Length, chunk.NonEmptyCount) to chunkTable
 
-// Write chunk table
+// Write chunk table (14 bytes per entry)
 FOREACH entry in chunkTable
-  EMIT entry.coord (3x int16) + entry.offset (uint32) + entry.length (uint16)
+  EMIT entry.coord (3x int16) + entry.offset (uint32) + entry.length (uint16) + entry.nonEmptyCount (uint16)
 
 // Write chunk data
 EMIT chunkDataBuffer contents
@@ -465,6 +469,11 @@ COMPUTE payload ← data bytes from offset 20 to end
 COMPUTE computedChecksum ← xxHash32(payload)
 VALIDATE storedChecksum == computedChecksum           → FormatException("Checksum mismatch")
 
+// Bounds (12 bytes)
+COMPUTE boundsMin ← read 3x int16 as VoxelCoord
+COMPUTE boundsMax ← read 3x int16 as VoxelCoord
+COMPUTE bounds ← VoxelBounds(boundsMin, boundsMax)
+
 // Palette
 COMPUTE entryCount ← read uint16
 CREATE palette as new Palette()
@@ -479,13 +488,13 @@ COMPUTE metaLength ← read uint32
 COMPUTE metadataJson ← read metaLength bytes as UTF-8
 COMPUTE metadata ← JsonDeserialize<GridMetadata>(metadataJson)
 
-// Chunk table
-CREATE chunkEntries as (ChunkCoord, uint32 offset, uint16 length)[chunkCount]
+// Chunk table (14 bytes per entry)
+CREATE chunkEntries as (ChunkCoord, uint32 offset, uint16 length, uint16 nonEmptyCount)[chunkCount]
 ITERATE i FROM 0 TO chunkCount - 1
-  chunkEntries[i] ← read (3x int16, uint32, uint16)
+  chunkEntries[i] ← read (3x int16, uint32, uint16, uint16)
 
 // Chunk data
-CREATE grid as new VoxelGrid(bounds from metadata, palette, metadata)
+CREATE grid as new VoxelGrid(bounds, palette, metadata)
 FOREACH entry in chunkEntries
   COMPUTE compressedData ← read entry.length bytes at entry.offset
   COMPUTE combined ← LZ4.Decompress(compressedData)
@@ -960,11 +969,13 @@ FOR EACH non-empty voxel within FrozenBorderWidth of any grid edge:
 | 8 | 4 | ChunkCount | uint32 | Number of non-empty chunks |
 | 12 | 4 | VoxelCount | uint32 | Total non-empty voxels |
 | 16 | 4 | Checksum | uint32 | xxHash32 of all bytes after header (offset 20+) |
-| 20 | 2 | PaletteEntryCount | uint16 | Number of used palette entries |
-| 22 | 9*N | PaletteEntries | PaletteEntry[] | Color(4) + Material(1) + Roughness(4) each |
+| 20 | 6 | BoundsMin | int16 x 3 | Grid minimum corner (X, Y, Z) |
+| 26 | 6 | BoundsMax | int16 x 3 | Grid maximum corner (X, Y, Z) |
+| 32 | 2 | PaletteEntryCount | uint16 | Number of used palette entries |
+| 34 | 9*N | PaletteEntries | PaletteEntry[] | Color(4) + Material(1) + Roughness(4) each |
 | var | 4 | MetadataLength | uint32 | JSON metadata byte length |
 | var | M | Metadata | UTF-8 JSON | GridMetadata serialized |
-| var | 8*C | ChunkTable | ChunkEntry[] | Coord(6) + Offset(4) + Length(2) each |
+| var | 14*C | ChunkTable | ChunkEntry[] | Coord(6) + Offset(4) + Length(2) + NonEmptyCount(2) each |
 | var | var | ChunkData | byte[] | RLE+LZ4 compressed chunk data |
 
 **Chunk data compression pipeline**: Two separate RLE streams (paletteIndices[4096] + flags[4096]), concatenated with uint16 length prefix on first stream, then LZ4 compressed together.

@@ -449,20 +449,20 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (`IStateStoreFactory`) | Dungeon core records (MySQL), bond records (MySQL), inhabitant state (Redis), memory records (MySQL), dungeon cache (Redis), distributed locks (Redis) |
+| lib-state (`IStateStoreFactory`) | Dungeon core records (MySQL), bond records (MySQL), inhabitant state (Redis), dungeon cache (Redis), distributed locks (Redis) |
 | lib-state (`IDistributedLockProvider`) | Distributed locks for dungeon mutations, bond formation, spawn operations |
 | lib-messaging (`IMessageBus`) | Publishing dungeon lifecycle events, memory events, bond events, inhabitant events |
 | lib-messaging (`IEventConsumer`) | Registering handlers for genesis phase-changed events, domain-scoped combat, death, intrusion events |
-| lib-genesis (`IGenesisClient`) | Entity creation from "dungeon_core" template (provisions seed, mana wallet, inventories), entity lifecycle queries, capability checks. Genesis handles actor spawning at Stirring and character creation/binding at Awakened — Dungeon subscribes to `genesis.entity.phase-changed` for domain-specific post-transition work. (L2) |
+| lib-genesis (`IGenesisClient`) | Entity creation from per-personality `"dungeon_core:{type}"` templates (provisions seed, mana wallet, memory + trap inventories), entity lifecycle queries, capability checks, entity destruction (handles seed/wallet/inventory/actor/character cleanup + Content Flywheel archival). Genesis handles actor spawning at Stirring and character creation/binding at Awakened — Dungeon subscribes to `genesis.entity.phase-changed` for domain-specific post-transition work. (L2) |
 | lib-currency (`ICurrencyClient`) | Mana credit/debit for spawn costs and trap charges. Wallet creation is handled by Genesis at entity creation time. (L2) |
 | lib-contract (`IContractClient`) | Dungeon-master bond management — creation, milestone tracking, termination (L1) |
 | lib-actor (`IActorClient`) | Injecting perceptions into the bonded master's character Actor for indirect influence (L2) |
 | lib-character (`ICharacterClient`) | Validating character existence for willing bond formation (L2). Character creation in system realm at Awakened phase is handled by Genesis. |
 | lib-game-service (`IGameServiceClient`) | Validating game service existence for dungeon scoping (L2) |
-| lib-seed (`ISeedClient`) | Seed type registration, growth recording, capability queries (L2) |
 | lib-resource (`IResourceClient`) | Reference tracking, cleanup callback registration (L1) |
-| lib-item (`IItemClient`) | Memory item creation (data crystals, memory fragments), loot generation (L2) |
-| lib-inventory (`IInventoryClient`) | Trap/treasure container management within dungeon rooms (L2) |
+| lib-item (`IItemClient`) | Memory item creation (consumable memories, data crystals, manifestation outputs), loot generation (L2) |
+| lib-inventory (`IInventoryClient`) | Memory inventory access, trap/treasure container management within dungeon rooms (L2) |
+| lib-collection (`ICollectionClient`) | Granting permanent knowledge entries (`dungeon_knowledge` type) for memory capture (L2) |
 
 ### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
 
@@ -471,7 +471,6 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 | lib-mapping (`IMappingClient`) | Domain boundary registration, room connectivity queries, spatial affordance queries | Dungeon operates without spatial awareness; room-based features disabled |
 | lib-scene (`ISceneClient`) | Memory manifestation as visual decorations (paintings, environmental effects) | Memory manifestation limited to item-based forms only |
 | lib-save-load (`ISaveLoadClient`) | Persistent dungeon construction state (room layout, trap placement, structural data) | Dungeon layout resets on actor restart; volatile-only operation |
-| lib-puppetmaster (`IPuppetmasterClient`) | Starting/stopping dungeon core actors on creation/deactivation | Dungeon actors must be managed manually via Actor APIs |
 | lib-gardener (`IGardenerClient`) | Creating dungeon garden instances for bonded masters | Master experience orchestration disabled; bond provides seed growth only |
 | lib-analytics (`IAnalyticsClient`) | Event significance scoring for memory capture thresholds | Memory capture uses local significance calculation only |
 
@@ -541,7 +540,6 @@ Dungeon memories use the **dual Collection + Inventory model** (from [DUNGEON-EX
 | `core:{dungeonId}` | Dungeon core mutation lock (create, update, deactivate, delete) |
 | `bond:{dungeonId}` | Bond formation/dissolution lock (one bond at a time) |
 | `spawn:{dungeonId}` | Spawn operation lock (prevent concurrent mana overdraft) |
-| `memory:{dungeonId}` | Memory capture/manifestation lock |
 
 ---
 
@@ -632,18 +630,19 @@ Dungeon is a multi-entity service. Lifecycle events for the primary entity (dung
 | `ILogger<DungeonService>` | Structured logging |
 | `ITelemetryProvider` | Telemetry span creation for all async methods |
 | `DungeonServiceConfiguration` | Typed configuration access |
-| `IStateStoreFactory` | State store access (creates 6 stores) |
+| `IStateStoreFactory` | State store access (creates 5 stores) |
 | `IMessageBus` | Event publishing |
 | `IDistributedLockProvider` | Distributed lock acquisition (L0) |
-| `ISeedClient` | Seed type registration, growth recording, capability queries (L2) |
-| `ICurrencyClient` | Mana wallet management (L2) |
+| `IGenesisClient` | Entity creation/destruction, lifecycle queries, capability checks (L2) |
+| `ICurrencyClient` | Mana credit/debit for spawn costs and trap charges (L2) |
 | `IContractClient` | Bond contract lifecycle (L1) |
 | `IActorClient` | Perception injection into master's character Actor (L2) |
 | `ICharacterClient` | Character validation for willing bonds (L2) |
 | `IGameServiceClient` | Game service validation (L2) |
 | `IResourceClient` | Reference tracking, cleanup callbacks (L1) |
-| `IItemClient` | Memory item creation, loot generation (L2) |
-| `IInventoryClient` | Trap/treasure container management (L2) |
+| `IItemClient` | Memory item creation, manifestation outputs, loot generation (L2) |
+| `IInventoryClient` | Memory inventory access, trap/treasure container management (L2) |
+| `ICollectionClient` | Permanent knowledge grants for memory capture (L2) |
 | `IServiceProvider` | Runtime resolution of soft L3/L4 dependencies |
 
 ### Variable Provider Factories
@@ -676,14 +675,14 @@ Dungeon is a multi-entity service. Lifecycle events for the primary entity (dung
 
 All endpoints require `developer` role.
 
-- **Create** (`/dungeon/create`): Validates game service existence. Provisions mana currency wallet via `ICurrencyClient`, `dungeon_core` seed via `ISeedClient`. Personality type stored on `DungeonCoreModel` (Dungeon's own MySQL store -- not in seed metadata, per FOUNDATION TENETS on metadata bag contracts). Optionally starts dungeon core actor via `IPuppetmasterClient` (soft). Optionally persists initial layout via `ISaveLoadClient` (soft). Saves under both ID and code lookup keys.
+- **Create** (`/dungeon/create`): Validates game service existence. Calls `Genesis.CreateEntity(template: "dungeon_core:{personalityType}", ...)` — Genesis provisions seed, mana wallet, memory inventory, and trap inventory from the per-personality template. Stores `genesisEntityId` and domain-specific fields (personality type, core location, domain radius) on `DungeonCoreModel` (Dungeon's own MySQL store -- not in seed metadata, per FOUNDATION TENETS on metadata bag contracts). Optionally persists initial layout via `ISaveLoadClient` (soft). Saves under both ID and code lookup keys.
 - **Get** (`/dungeon/get`): Load from MySQL by dungeonId. Enriches with cached capability manifest if available.
 - **GetByCode** (`/dungeon/get-by-code`): JSON query by gameServiceId + code.
 - **List** (`/dungeon/list`): Paged JSON query with required gameServiceId filter, optional status, personality type, and growth phase filters.
 - **Update** (`/dungeon/update`): Acquires distributed lock. Partial update. Publishes lifecycle updated event.
 - **Activate** (`/dungeon/activate`): Lock, set status Active. Start dungeon core actor via Puppetmaster (soft). Publishes `dungeon.updated` lifecycle event with `changedFields: ["status"]`.
 - **Deactivate** (`/dungeon/deactivate`): Lock, set status Dormant. Stop actor via Puppetmaster (soft). Dissolve active bond if any. Publishes `dungeon.updated` lifecycle event with `changedFields: ["status"]`.
-- **Delete** (`/dungeon/delete`): Lock. Deactivate if active. Dissolve bond. Remove inhabitants. Delete memories. Delete `dungeon_core` seed via `ISeedClient`. Destroy mana wallet via `ICurrencyClient`. Coordinate cleanup via lib-resource. Delete record. Publishes lifecycle deleted event.
+- **Delete** (`/dungeon/delete`): Lock. Deactivate if active. Dissolve bond. Remove inhabitants. Call `Genesis.DestroyEntity` (handles seed, wallets, inventories, actor stop, character archival for Content Flywheel). Coordinate cleanup via lib-resource. Delete DungeonCoreModel record. Publishes lifecycle deleted event.
 
 ### Bond Management (4 endpoints)
 
@@ -705,12 +704,12 @@ Automation endpoints (`Spawn`, `Kill`) use `x-permissions: []` (service-to-servi
 
 ### Memory Management (4 endpoints)
 
-Automation endpoints (`CaptureMemory`, `ManifestMemory`) use `x-permissions: []` (service-to-service only — called by dungeon cognition pipeline via ABML action handlers). Developer endpoints (`ListMemories`, `GetMemory`) require `developer` role.
+Automation endpoints (`CaptureMemory`, `ManifestMemory`) use `x-permissions: []` (service-to-service only — called by dungeon cognition pipeline via ABML action handlers). Developer endpoints (`ListMemories`, `GetMemory`) require `developer` role. Memory storage uses the dual Collection + Inventory model (see State Storage § Memory System).
 
-- **CaptureMemory** (`/dungeon/memory/capture`): Acquires `memory:{dungeonId}` distributed lock. Calculates significance score from event properties. If above `MemorySignificanceThreshold`: stores memory, records seed growth to `memory_depth.capture`. If master present: records growth to master's `perception.emotional`. If above `MemoryManifestationThreshold` and `manifest_memory` capability unlocked: queues for manifestation. Publishes `dungeon.memory.captured`.
-- **ManifestMemory** (`/dungeon/memory/manifest`): Acquires `memory:{dungeonId}` distributed lock. Validates `manifest_memory` capability. Manifests as item (via `IItemClient`), scene decoration (via `ISceneClient`), or environmental effect (via `IMappingClient`) based on manifestation type. Records seed growth to `memory_depth.manifestation`. If master guided: records growth to master's `coordination.manifestation`. Publishes `dungeon.memory.manifested`.
-- **ListMemories** (`/dungeon/memory/list`): Paged query with optional significance, event type, and manifestation status filters.
-- **GetMemory** (`/dungeon/memory/get`): Load by memoryId.
+- **CaptureMemory** (`/dungeon/memory/capture`): Calculates significance score from event properties. If above `MemorySignificanceThreshold`: (1) grants a Collection entry (`dungeon_knowledge` type) for permanent knowledge via `ICollectionClient`, (2) creates a memory Item instance in the dungeon's `memories` inventory via `IItemClient` + `IInventoryClient` with custom stats (significance, event type, participants, emotional context), (3) records seed growth to `memory_depth.capture`. If master present: records growth to master's `perception.emotional`. If above `MemoryManifestationThreshold` and `manifest_memory` capability unlocked: marks the memory item for manifestation. Publishes `dungeon.memory.captured`.
+- **ManifestMemory** (`/dungeon/memory/manifest`): Validates `manifest_memory` capability. Consumes the memory Item instance from inventory. Creates the physical manifestation: item output (via `IItemClient`), scene decoration (via `ISceneClient`, soft), or environmental effect (via `IMappingClient`, soft) based on the memory item's manifestation type custom stat. Records seed growth to `memory_depth.manifestation`. If master guided: records growth to master's `coordination.manifestation`. Publishes `dungeon.memory.manifested`.
+- **ListMemories** (`/dungeon/memory/list`): Queries memory items in the dungeon's `memories` inventory via `IInventoryClient` with optional significance, event type, and manifestation status filters on item custom stats.
+- **GetMemory** (`/dungeon/memory/get`): Loads a memory item instance by itemInstanceId.
 
 ### Domain Management (2 endpoints)
 
@@ -723,15 +722,15 @@ All endpoints require `developer` role.
 
 All endpoints use `x-permissions: []` (service-to-service only, called by lib-resource). Resource-managed cleanup per FOUNDATION TENETS:
 
-- **CleanupByCharacter** (`/dungeon/cleanup-by-character`): Dissolves any bond where the character is the master. Removes character-specific memories.
-- **CleanupByRealm** (`/dungeon/cleanup-by-realm`): Deactivates and deletes all dungeons in the realm. Cascades bond dissolution, inhabitant removal, memory deletion.
-- **CleanupByGameService** (`/dungeon/cleanup-by-game-service`): Deactivates and deletes all dungeons scoped to the game service. Cascades bond dissolution, inhabitant removal, memory deletion.
+- **CleanupByCharacter** (`/dungeon/cleanup-by-character`): Dissolves any bond where the character is the master.
+- **CleanupByRealm** (`/dungeon/cleanup-by-realm`): Deactivates and deletes all dungeons in the realm. Cascades bond dissolution and inhabitant removal. Genesis handles wallet/inventory/seed cleanup via its own resource callbacks.
+- **CleanupByGameService** (`/dungeon/cleanup-by-game-service`): Deactivates and deletes all dungeons scoped to the game service. Cascades bond dissolution and inhabitant removal. Genesis handles wallet/inventory/seed cleanup via its own resource callbacks.
 
 ---
 
 ## Dungeon Cognition Pipeline
 
-The dungeon core actor uses a simplified cognition pipeline (`creature_base` template) with fewer stages than the humanoid pipeline. The pipeline operates identically in Stage 2 (event brain) and Stage 3 (character brain) -- the difference is in the **data available**, not the pipeline structure. In Stage 2, memory queries and capability checks work against dungeon-specific stores only. In Stage 3, the same pipeline also has access to `${personality.*}`, `${encounters.*}`, and `${backstory.*}` from the bound character, enabling richer attention filtering (grudges affect priority), more nuanced intention formation (personality modulates aggression), and memory queries that include character encounter history.
+The dungeon core actor uses a simplified cognition pipeline (`creature_base` template) with fewer stages than the humanoid pipeline. The pipeline operates identically in Stage 2 (event brain) and Stage 3 (character brain) -- the difference is in the **data available**, not the pipeline structure. In Stage 2, memory queries and capability checks work against Collection entries (`${collection.*}`) and genesis state (`${genesis.*}`) only. In Stage 3, the same pipeline also has access to `${personality.*}`, `${encounters.*}`, and `${backstory.*}` from the bound character, enabling richer attention filtering (grudges affect priority), more nuanced intention formation (personality modulates aggression), and memory queries that include character encounter history.
 
 ```
 +-----------------------------------------------------------------------+
@@ -934,26 +933,27 @@ Bond dissolution is NOT deprecation — it is an operational state change (contr
 
 **Everything is unimplemented.** This is a pre-implementation architectural specification. No schema, no generated code, no service implementation exists. The total endpoint count is **25** (8 core + 4 bond + 4 inhabitant + 4 memory + 2 domain + 3 cleanup). The following phases are planned:
 
-### Phase 0: Seed Foundation (Prerequisite)
-- Register `dungeon_core` seed type with growth phases, domains, and capability rules
+### Phase 0: Seed Foundation (Prerequisite — Genesis Template Registration)
+- Register per-personality genesis templates (e.g., `"dungeon_core:martial"`, `"dungeon_core:memorial"`, `"dungeon_core:scholarly"`) with: dungeon_core seed type (growth phases, domains, capability rules), mana wallet with autogain, memory inventory, trap inventory, system realm `DUNGEON_CORES`, per-personality species and initial personality traits
 - Register `dungeon_master` seed type with growth phases, domains, and capability rules
 - Create `dungeon-master-bond` contract template with bond type variants
+- Seed the dungeon system realm (`DUNGEON_CORES` with `isSystemType: true`) and per-personality species (e.g., `"martial-core"`, `"memorial-core"`)
+- Register `dungeon_knowledge` collection type for permanent memory entries
 
-### Phase 1: Core Infrastructure (Actor + Seed Integration)
+### Phase 1: Core Infrastructure (Genesis + Domain Layer)
 - Create dungeon-api.yaml schema with all endpoints
 - Create dungeon-service-events.yaml schema
 - Create dungeon-configuration.yaml schema
 - Generate service code
-- Implement dungeon core CRUD (create provisions seed + wallet; actor NOT started at creation -- starts at Stirring phase)
+- Implement dungeon core CRUD (create calls `Genesis.CreateEntity` with per-personality template; actor NOT started at creation — starts at Stirring phase via Genesis)
 - Implement variable provider factories for ABML expression access
 - Implement ABML action handlers for dungeon capabilities
-- Seed the dungeon system realm (`DUNGEON_CORES` with `isSystemType: true`) and dungeon species
 
-### Phase 1.5: Cognitive Progression (Dynamic Character Binding)
+### Phase 1.5: Cognitive Progression (Genesis Event Handler)
 - Implement `HandleGenesisPhaseChangedAsync` handler for cognitive stage transitions:
- - **Stirring phase**: Start dungeon core actor via Puppetmaster (event brain, no character)
- - **Awakened phase**: Create Character in dungeon system realm, seed personality traits from dungeon personality type, call `/actor/bind-character` to transition actor to character brain, store characterId on DungeonCoreModel
-- Handle failure cases: retry binding if character exists but binding failed (idempotency via characterId on model)
+ - **Stirring phase**: Genesis has already spawned the actor. Dungeon registers spatial domain perception subscriptions, initializes volatile inhabitant store, registers domain boundary in Mapping.
+ - **Awakened phase**: Genesis has already created character (with species + traits from template) and bound actor. Dungeon stores characterId on DungeonCoreModel, configures environment per existing floors.
+- Handle failure cases: idempotency via characterId on DungeonCoreModel (if already set, skip)
 - Optionally seed backstory elements from dungeon creation history via ICharacterHistoryClient (soft)
 
 ### Phase 2: Dungeon Master Bond (Contract + Master Seed)
@@ -968,11 +968,12 @@ Bond dissolution is NOT deprecation — it is an operational state change (contr
 - Implement event coordinator spawning
 - Wire growth contributions for all capability executions
 
-### Phase 4: Memory System
-- Implement memory capture with significance scoring
-- Implement memory manifestation (item, scene, environmental) gated by seed capability
-- Implement personality-based manifestation style preferences
+### Phase 4: Memory System (Collection + Inventory)
+- Implement CaptureMemory: grant Collection entry (`dungeon_knowledge`) + create memory Item instance in `memories` inventory with custom stats (significance, event type, participants, emotional context)
+- Implement ManifestMemory: consume memory Item from inventory, create physical manifestation (item output via `IItemClient`, scene decoration via `ISceneClient` soft, environmental effect via `IMappingClient` soft) gated by `manifest_memory` seed capability
+- Implement personality-based manifestation style preferences (personality drives which manifestation type is chosen)
 - Wire growth contributions for memory system events
+- Content Flywheel: automatic via standard character archival pipeline — no custom compression callback needed
 
 ### Phase 5: Physical Construction
 - Integrate with Save-Load for persistent dungeon layout
@@ -1041,7 +1042,9 @@ Bond dissolution is NOT deprecation — it is an operational state change (contr
 
 8. **lib-dungeon is pattern-agnostic**: lib-dungeon itself does not implement or enforce the Pattern A vs. Pattern B distinction. It creates bonds, manages seeds, and orchestrates dungeon mechanics identically in both cases. The pattern distinction is an emergent property of which entity owns the dungeon_master seed (account vs. character) and how the broader system (Gardener, Permission, household management) responds to that ownership.
 
-9. **Personality type stored on DungeonCoreModel, not seed metadata**: Personality type is a dungeon domain concept stored in Dungeon's own MySQL store. Per FOUNDATION TENETS on metadata bag contracts, cross-service data conventions via `additionalProperties: true` fields are forbidden. Dungeon owns its own identity data.
+9. **Personality type stored on DungeonCoreModel, not seed metadata**: Personality type is a dungeon domain concept stored in Dungeon's own MySQL store. Per FOUNDATION TENETS on metadata bag contracts, cross-service data conventions via `additionalProperties: true` fields are forbidden. Dungeon owns its own identity data. The personality type also determines which genesis template is used (e.g., `"dungeon_core:martial"`), which in turn determines species and initial personality traits at the genesis template level.
+
+10. **Memory system uses Collection + Inventory, not custom store**: Dungeon memories use the dual model: Collection entries for permanent knowledge (what the dungeon knows) and Inventory items for consumable creative resources (what the dungeon can manifest). This composes L2 primitives instead of a custom MySQL store and gets the Content Flywheel for free via the standard character archival pipeline. See DUNGEON-EXTENSIONS-NOTES.md for the design rationale.
 
 ### Design Considerations (Requires Planning)
 
@@ -1050,8 +1053,7 @@ Bond dissolution is NOT deprecation — it is an operational state change (contr
 
 2. **Growth contribution debouncing**: Dungeons generate many growth events per tick (every monster kill, every trap trigger). Growth contributions to lib-seed need debouncing (`GrowthContributionDebounceMs` config property, default 5000ms) to avoid overwhelming the seed service with individual growth API calls.
 
-3. **Memory-to-archive pipeline**: Dungeon memories should feed into the Content Flywheel -- when a dungeon is destroyed or goes dormant, its accumulated memories become generative input for Storyline. This requires design decisions about the compression/archive format and the handoff to lib-resource.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/674 -->
+3. ~~**Memory-to-archive pipeline**~~: **FIXED** (2026-03-17) — Resolved via dual Collection + Inventory model. Dungeon memories use Collection (permanent knowledge) + Inventory items (consumable creative resources) instead of a custom MySQL store. The Content Flywheel works automatically: when the dungeon's character is archived (destruction or dormancy), the standard character archival pipeline compresses Collection entries, Item instances, CharacterEncounter data, and CharacterPersonality data — exactly what Storyline needs. No custom `x-compression-callback` required; Genesis already has one at priority 10.
 
 4. **Household split mechanic (cross-cutting dependency)**: Pattern A depends on a general household split mechanic that doesn't exist yet. This mechanic is needed for the game regardless of dungeons (branch families, divorces, exile) and involves Contract (split terms), Faction (cultural norms determining amicability), Obligation (post-split moral costs), Relationship (bond type changes), Seed (potential account seed creation), and Organization (the household IS an organization per Organization.md -- the split is an organization dissolution). lib-dungeon consumes the result of a household split but does not implement it. The split mechanic must be designed as a cross-cutting feature involving multiple services. Pattern B has no dependency on the household split mechanic. Additional implications from cross-service analysis:
  - **Temporal delay**: Arbitration's procedural templates impose timelines (`waitingPeriodDays` governance parameter). Pattern A is not instant -- the split proceeds through filing, service, response, evidence, ruling, appeal window, and enforcement phases. The `dungeon_master` seed promotion (Design Consideration #5) cannot occur until the ruling is enforced. Character death during proceedings, player withdrawal (`WithdrawCase`), and the intermediate state (Pattern B remains active during proceedings) all need design.
@@ -1070,10 +1072,9 @@ Bond dissolution is NOT deprecation — it is an operational state change (contr
 6. **Pattern B transient UX routing**: When the player switches characters within a garden, the dungeon UX modules need to appear/disappear based on whether the currently-controlled character has a dungeon_master seed. This requires the client's UX capability manifest to be dynamically updated on character switch -- likely via the same Permission/Connect capability manifest push mechanism, extended to include seed-derived UX capabilities.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/676 -->
 
-7. **Dungeon system realm provisioning**: The dungeon system realm (e.g., `DUNGEON_CORES` with `isSystemType: true`) must be seeded on startup, analogous to the divine system realm for gods. Design decisions: Is there one global dungeon system realm or one per game service? What dungeon species are registered (one per personality type, or a generic "dungeon core" species)? How does species assignment map to personality type? The system realm is seeded via `/realm/seed` -- configuration, not code. See [DIVINE.md: Broader System Realm Implications](DIVINE.md#broader-system-realm-implications) for the established pattern.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/667 -->
+7. ~~**Dungeon system realm provisioning**~~: **FIXED** (2026-03-17) — Resolved: one global `DUNGEON_CORES` system realm (matching PANTHEON pattern). One species per personality type, registered as seed data. Species code matches personality type (e.g., `"martial-core"`). Each genesis template specifies `characterSpeciesCode` and `initialPersonalityTraits` in its `awakening` section. Adding a new personality type = registering a new genesis template + species. Configuration, not code.
 
-8. **Character creation timing at Awakened phase**: When `HandleGenesisPhaseChangedAsync` detects the transition to Awakened, it must orchestrate: character creation (ICharacterClient), personality trait seeding (ICharacterPersonalityClient, soft), backstory initialization (ICharacterHistoryClient, soft), and actor binding (IActorClient). This is a multi-service orchestration that needs failure handling -- if character creation succeeds but binding fails, the dungeon should retry binding on the next event rather than creating duplicate characters. The characterId stored on DungeonCoreModel serves as the idempotency check.
+8. ~~**Character creation timing at Awakened phase**~~: **FIXED** (2026-03-17) — Genesis handles the entire multi-service orchestration (character creation, personality trait seeding from template, actor binding) internally with its own distributed locking and idempotency. The dungeon's `HandleGenesisPhaseChangedAsync` Awakened handler only stores the `characterId` from the genesis event payload and configures environment per floors. No multi-service orchestration in dungeon code.
 
 9. **Multi-service compensation in Delete flow**: The Delete endpoint orchestrates 7+ service calls (deactivate, dissolve bond, remove inhabitants, delete memories, delete seed, destroy wallet, lib-resource cleanup, delete record). Per Implementation Tenets on multi-service call compensation, this must either implement catch-block compensation for partial failures or document a specific self-healing mechanism. The current design lists the steps sequentially but does not specify what happens when an intermediate step fails after earlier steps have succeeded.
 
@@ -1105,14 +1106,15 @@ Bond dissolution is NOT deprecation — it is an operational state change (contr
 
 - ~~Design Consideration #1 (Mana economy model)~~: Resolved — Currency wallet in DUNGEON_CORES system realm, mirroring Divine's divinity economy pattern
 - ~~Design Consideration #3 (creature_base template)~~: Resolved by [#422](https://github.com/beyond-immersion/bannou-service/issues/422) — `creature_base` exists in `CognitionTemplateRegistry`
+- ~~Design Consideration #3 (Memory-to-archive pipeline)~~: Resolved (2026-03-17) — dual Collection + Inventory model replaces custom memory store; standard character archival pipeline handles Content Flywheel. [#674](https://github.com/beyond-immersion/bannou-service/issues/674) closed.
 - ~~Design Consideration #4 (Entity Session Registry)~~: Infrastructure exists via [#426](https://github.com/beyond-immersion/bannou-service/issues/426); dungeon-specific registration design merged into DC #1 (garden type design, [#669](https://github.com/beyond-immersion/bannou-service/issues/669))
+- ~~Design Consideration #7 (System realm provisioning)~~: Resolved (2026-03-17) — one global DUNGEON_CORES realm, per-personality species (code = personality type), genesis templates specify species + traits. [#667](https://github.com/beyond-immersion/bannou-service/issues/667) closed.
 - ~~#365 (Push seed capability updates)~~: Superseded by [#497](https://github.com/beyond-immersion/bannou-service/issues/497)
 
 ### Missing Issues (Need Creation)
 
 | Design Consideration | Description | Priority |
 |---------------------|-------------|----------|
-| #8 — Character creation timing | Multi-service orchestration failure handling at Awakened phase | High (Phase 1.5) |
 | #9 — Multi-service compensation in Delete flow | Compensation or self-healing for partial failure during delete orchestration | High (Phase 1) |
 | #2 — Growth contribution debouncing | Seed growth batching to avoid overwhelming lib-seed | Medium (Phase 3) |
 
@@ -1120,3 +1122,4 @@ Bond dissolution is NOT deprecation — it is an operational state change (contr
 
 - **2026-03-06**: L4 production readiness audit. Fixed: violation (personalityType moved from seed metadata to DungeonCoreModel), violation (IItemClient/IInventoryClient moved to hard dependencies), event topics (3 Pattern A corrections), missing DungeonStatus enum, missing game-service cleanup target, missing ITelemetryProvider in DI table, missing domain management permissions, config validation constraints, growth debounce config property, deprecation classification, inhabitant store durability note, Design Consideration #3 marked resolved.
 - **2026-03-06**: Re-audit. Fixed: (Activate/Deactivate now publish `dungeon.updated` with changedFields, not custom events), (distributed lock on HandleSeedPhaseChangedAsync, CaptureMemory, ManifestMemory), (dungeon_core seed + mana wallet deletion in Delete flow), (cleanup endpoints x-permissions: []).
+- **2026-03-17**: Maintenance pass + design resolution. Per-personality genesis templates resolve species strategy (DC #7, [#667](https://github.com/beyond-immersion/bannou-service/issues/667) closed). Dual Collection + Inventory model replaces custom dungeon-memories MySQL store, resolving Content Flywheel integration (DC #3, [#674](https://github.com/beyond-immersion/bannou-service/issues/674) closed). Character creation timing simplified by Genesis handling orchestration (DC #8 resolved). `dungeon-memories` state store removed. Dependencies updated (ISeedClient removed — encapsulated by Genesis; ICollectionClient added; IPuppetmasterClient removed — Genesis spawns actors via Actor L2 directly). Created issues: [#667](https://github.com/beyond-immersion/bannou-service/issues/667) (species), [#669](https://github.com/beyond-immersion/bannou-service/issues/669) (garden type), [#674](https://github.com/beyond-immersion/bannou-service/issues/674) (memory archive), [#676](https://github.com/beyond-immersion/bannou-service/issues/676) (Pattern B UX routing).

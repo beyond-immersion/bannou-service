@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.VoxelCore.Grid;
 using BeyondImmersion.Bannou.VoxelCore.Math;
+using K4os.Compression.LZ4;
 
 namespace BeyondImmersion.Bannou.VoxelCore.Serialization;
 
@@ -76,10 +77,13 @@ public static class VoxelDelta
                 diff[VoxelChunk.TotalVoxels + i] = (byte)(oldChunk.Flags[i] ^ newChunk.Flags[i]);
             }
 
-            // RLE + LZ4 compress the diff for compact storage
+            // RLE + LZ4 compress the diff (same pipeline as full serializer)
             var rleData = VoxelCompression.RleEncode(diff);
-            writer.Write((uint)rleData.Length);
-            writer.Write(rleData);
+            var maxCompressed = LZ4Codec.MaximumOutputSize(rleData.Length);
+            var compressed = new byte[maxCompressed];
+            var compressedLength = LZ4Codec.Encode(rleData, compressed, LZ4Level.L00_FAST);
+            writer.Write((uint)compressedLength);
+            writer.Write(compressed, 0, compressedLength);
         }
 
         return buffer.ToArray();
@@ -119,8 +123,15 @@ public static class VoxelDelta
         for (var i = 0; i < modifiedCount; i++)
         {
             var coord = new ChunkCoord(reader.ReadInt16(), reader.ReadInt16(), reader.ReadInt16());
-            var diffLength = reader.ReadUInt32();
-            var rleData = reader.ReadBytes((int)diffLength);
+            var compressedLength = reader.ReadUInt32();
+            var compressedData = reader.ReadBytes((int)compressedLength);
+            // LZ4 decompress, then RLE decode (same pipeline as full serializer)
+            var decompressedSize = VoxelChunk.TotalVoxels * 4 + 256; // Generous estimate for RLE output
+            var decompressed = new byte[decompressedSize];
+            var actualSize = LZ4Codec.Decode(compressedData, decompressed);
+            if (actualSize < 0)
+                throw new FormatException($"LZ4 decompression failed for modified chunk {coord}");
+            var rleData = decompressed.AsSpan(0, actualSize).ToArray();
             var diff = VoxelCompression.RleDecode(rleData, VoxelChunk.TotalVoxels * 2);
 
             var chunk = grid.GetChunk(coord);

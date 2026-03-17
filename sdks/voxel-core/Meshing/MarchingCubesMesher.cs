@@ -185,10 +185,21 @@ public sealed class MarchingCubesMesher : IMesher
         if (x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 16)
             return chunk.PaletteIndices[VoxelChunk.GetFlatIndex(x, y, z)];
 
-        // Outside chunk bounds — check neighbor
-        if (MesherHelpers.IsNeighborEmpty(chunk, neighbors, x, y, z))
-            return 0;
-        return 1; // Non-empty but we can't get the actual palette index from neighbor easily
+        // Outside chunk bounds — look up actual palette index from neighbor chunk
+        VoxelChunk? neighborChunk = null;
+        var nx = x;
+        var ny = y;
+        var nz = z;
+
+        if (x >= 16) { neighborChunk = neighbors[0]; nx = x - 16; }
+        else if (x < 0) { neighborChunk = neighbors[1]; nx = x + 16; }
+        else if (y >= 16) { neighborChunk = neighbors[2]; ny = y - 16; }
+        else if (y < 0) { neighborChunk = neighbors[3]; ny = y + 16; }
+        else if (z >= 16) { neighborChunk = neighbors[4]; nz = z - 16; }
+        else if (z < 0) { neighborChunk = neighbors[5]; nz = z + 16; }
+
+        if (neighborChunk == null) return 0;
+        return neighborChunk.PaletteIndices[VoxelChunk.GetFlatIndex(nx, ny, nz)];
     }
 
     private static float GetDensity(VoxelChunk chunk, VoxelChunk?[] neighbors, int x, int y, int z)

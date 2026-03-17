@@ -153,6 +153,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "voxel-core", "voxel-core", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeyondImmersion.Bannou.VoxelCore", "voxel-core\BeyondImmersion.Bannou.VoxelCore.csproj", "{E531EDEA-5EB9-4FC6-9D40-E22C1263727D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "voxel-core.tests", "voxel-core.tests", "{671585FD-BDD5-EE35-0D5D-7321BAD58742}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeyondImmersion.Bannou.VoxelCore.Tests", "voxel-core.tests\BeyondImmersion.Bannou.VoxelCore.Tests.csproj", "{A9BC671D-FE75-4633-9D85-89E731A04C6E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -667,6 +671,18 @@ Global
 		{E531EDEA-5EB9-4FC6-9D40-E22C1263727D}.Release|x64.Build.0 = Release|Any CPU
 		{E531EDEA-5EB9-4FC6-9D40-E22C1263727D}.Release|x86.ActiveCfg = Release|Any CPU
 		{E531EDEA-5EB9-4FC6-9D40-E22C1263727D}.Release|x86.Build.0 = Release|Any CPU
+		{A9BC671D-FE75-4633-9D85-89E731A04C6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9BC671D-FE75-4633-9D85-89E731A04C6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9BC671D-FE75-4633-9D85-89E731A04C6E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A9BC671D-FE75-4633-9D85-89E731A04C6E}.Debug|x64.Build.0 = Debug|Any CPU
+		{A9BC671D-FE75-4633-9D85-89E731A04C6E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A9BC671D-FE75-4633-9D85-89E731A04C6E}.Debug|x86.Build.0 = Debug|Any CPU
+		{A9BC671D-FE75-4633-9D85-89E731A04C6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9BC671D-FE75-4633-9D85-89E731A04C6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9BC671D-FE75-4633-9D85-89E731A04C6E}.Release|x64.ActiveCfg = Release|Any CPU
+		{A9BC671D-FE75-4633-9D85-89E731A04C6E}.Release|x64.Build.0 = Release|Any CPU
+		{A9BC671D-FE75-4633-9D85-89E731A04C6E}.Release|x86.ActiveCfg = Release|Any CPU
+		{A9BC671D-FE75-4633-9D85-89E731A04C6E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -738,5 +754,6 @@ Global
 		{EDD3B67B-0542-43DC-B386-1565DC71D682} = {31E3C3FE-5760-FA7D-F367-BA268CD7CC9E}
 		{1D43EB8F-58D6-4B11-9D92-5C98AFEE76BA} = {AFA15CD0-9E82-4C2E-62A9-58E3A00E9E2C}
 		{E531EDEA-5EB9-4FC6-9D40-E22C1263727D} = {4081472B-2F1A-E744-FB2E-D37847A2E31A}
+		{A9BC671D-FE75-4633-9D85-89E731A04C6E} = {671585FD-BDD5-EE35-0D5D-7321BAD58742}
 	EndGlobalSection
 EndGlobal
