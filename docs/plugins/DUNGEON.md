@@ -4,7 +4,7 @@
 > **Schema**: schemas/dungeon-api.yaml
 > **Version**: 1.0.0
 > **Layer**: GameFeatures
-> **State Stores**: dungeon-cores (MySQL), dungeon-bonds (MySQL), dungeon-inhabitants (Redis), dungeon-memories (MySQL), dungeon-cache (Redis), dungeon-lock (Redis)
+> **State Stores**: dungeon-cores (MySQL), dungeon-bonds (MySQL), dungeon-inhabitants (Redis), dungeon-cache (Redis), dungeon-lock (Redis)
 > **Status**: Pre-implementation (architectural specification)
 > **Short**: Living dungeon-as-actor lifecycle with personality, memory, and spatial manifestation
 
@@ -38,7 +38,7 @@ lib-divine's APIs (blessings, follower management, attention slots, divinity gen
 
 ## Dungeon Cognitive Progression (via lib-genesis)
 
-Dungeons progress through three cognitive stages as mana accumulates in their currency wallet. The lifecycle — seed growth, actor spawning, character creation, and actor binding — is managed by [lib-genesis](GENESIS.md) via the "dungeon_core" genesis template. Dungeon subscribes to `genesis.entity.phase-changed` events and performs domain-specific work at each transition.
+Dungeons progress through three cognitive stages as mana accumulates in their currency wallet. The lifecycle — seed growth, actor spawning, character creation, and actor binding — is managed by [lib-genesis](GENESIS.md) via per-personality genesis templates (e.g., `"dungeon_core:martial"`, `"dungeon_core:memorial"`, `"dungeon_core:scholarly"`). Each template specifies its own species code and initial personality traits in the `awakening` section, so personality differentiation is handled at the template level — no custom trait-seeding code in the dungeon service. Dungeon subscribes to `genesis.entity.phase-changed` events and performs domain-specific work at each transition.
 
 ### Stage 1: Dormant Seed (No Actor)
 
@@ -68,7 +68,7 @@ The ABML behavior document can already reference `${personality.*}`, `${encounte
 
 **Seed Phase**: Awakened (MinTotalGrowth: 50.0)
 
-When the seed reaches the Awakened threshold, **Genesis automatically creates a Character** in the DUNGEON_CORES system realm (configured in the template's `awakening` section), seeds personality traits, and calls `Actor.BindCharacter` — no actor relaunch needed. Genesis publishes `genesis.entity.phase-changed` with the `characterId`; Dungeon subscribes and performs domain-specific setup: storing the `characterId` on `DungeonCoreModel`, ensuring the dungeon species exists in the system realm, and configuring environment per existing floors.
+When the seed reaches the Awakened threshold, **Genesis automatically creates a Character** in the DUNGEON_CORES system realm (configured in the template's `awakening` section with per-personality species code and initial personality traits), and calls `Actor.BindCharacter` — no actor relaunch needed. Genesis publishes `genesis.entity.phase-changed` with the `characterId`; Dungeon subscribes and performs domain-specific setup: storing the `characterId` on `DungeonCoreModel` and configuring environment per existing floors. No custom species creation or trait-seeding code is needed in the dungeon handler — the genesis template specifies `characterSpeciesCode` (e.g., `"martial-core"`) and `initialPersonalityTraits` (e.g., `{cruelty: 0.8, patience: 0.3}`) per personality type.
 
 After binding, the dungeon has the full L2/L4 character entity stack:
 
@@ -99,8 +99,8 @@ The ABML behavior document is the same one used in Stage 2 -- no swap needed. Th
 ```
 Dungeon created
  │
- ├── Genesis.CreateEntity(template: "dungeon_core", ...)
- │   → Genesis provisions: seed, mana wallet, trap/memory inventories
+ ├── Genesis.CreateEntity(template: "dungeon_core:{personalityType}", ...)
+ │   → Genesis provisions: seed, mana wallet, trap inventory, memory inventory
  │   Dungeon stores genesisEntityId on DungeonCoreModel
  │   Dormant (growth: 0.0). Mana accumulates via Currency autogain.
  │
@@ -116,11 +116,10 @@ Dungeon created
  │
  │ [Mana credits → Genesis growth mapping → seed reaches Awakened (≥ 50.0)]
  │
- ├── Genesis creates Character, binds Actor, publishes phase-changed
+ ├── Genesis creates Character (species + traits from template), binds Actor
  │   Dungeon handler:
  │     1. Store characterId from genesis event on DungeonCoreModel
- │     2. Ensure dungeon species exists in system realm
- │     3. Configure environment per existing floors
+ │     2. Configure environment per existing floors
  │   Actor transitions to CHARACTER BRAIN
  │   ${personality.*}, ${encounters.*} etc. activate
  │
@@ -140,7 +139,7 @@ Dungeon characters live in a **dungeon system realm** (e.g., `DUNGEON_CORES` wit
 | **PANTHEON** | Divine characters (gods) | "Fate Weaver", "War God", etc. |
 | **DUNGEON_CORES** | Dungeon characters | Personality-type-based: "Martial Core", "Memorial Core", etc. |
 
-The system realm is seeded on startup via `/realm/seed` -- configuration, not code. A dungeon species is registered in that realm. Services that list characters in physical realms naturally exclude system realm characters without code changes.
+The system realm is seeded on startup via `/realm/seed` -- configuration, not code. One species per personality type is registered in that realm (e.g., `"martial-core"`, `"memorial-core"`, `"scholarly-core"`); each genesis template references its species via `characterSpeciesCode` in the `awakening` section. Species trait modifiers at L2 provide base personality differentiation, which CharacterPersonality (L4) then refines through experience. Adding a new personality type = registering a new genesis template + species as seed data. Services that list characters in physical realms naturally exclude system realm characters without code changes.
 
 ---
 
@@ -515,12 +514,15 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 | `inhab:{dungeonId}:{inhabitantId}` | `InhabitantModel` | Individual monster/creature state: species, quality level, room location, stats, soul slot usage |
 | `inhab-counts:{dungeonId}` | `InhabitantCountsModel` | Denormalized species count map for fast capability checks |
 
-### Memory Store
-**Store**: `dungeon-memories` (Backend: MySQL)
+### Memory System (Collection + Inventory, No Custom Store)
 
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `mem:{dungeonId}:{memoryId}` | `DungeonMemoryModel` | Stored memory: event type, significance score, participants, location, outcome, emotional context, manifestation status |
+Dungeon memories use the **dual Collection + Inventory model** (from [DUNGEON-EXTENSIONS-NOTES.md](../planning/DUNGEON-EXTENSIONS-NOTES.md)) instead of a custom MySQL store. This composes existing L2 primitives and gets the Content Flywheel for free via the standard character archive pipeline.
+
+**Collection** (permanent knowledge, `dungeon_knowledge` collection type): First combat victory, first boss kill, first adventurer death, first manifestation, etc. These are permanent records that cannot be consumed — they represent what the dungeon *knows*. Fed by `ICollectionClient.GrantEntryAsync` when significance thresholds are crossed. Collection entries are automatically archived when the dungeon's character is compressed (standard character archival pipeline). Accessible via `${collection.*}` variable provider in ABML behaviors.
+
+**Inventory** (consumable creative resources, `memories` inventory provisioned by Genesis template): Every notable event creates a memory Item instance in the dungeon's memory inventory. Item custom stats carry: significance score, event type, participants, location, emotional context, manifestation status. These are *consumable* — when the dungeon manifests a memory (creates a painting, data crystal, or environmental echo), it spends the memory item. Inventory capacity scales with `memory_depth` seed growth (via Genesis template config). Similar memory types stack. Item instances are automatically included in the character archive.
+
+**Why this is better than a custom MySQL store**: Memory items get the full Item system (templates, instances, rarity, custom stats, queries). Inventory constraints provide natural limits. Standard item APIs handle queries/listing. The dungeon could trade memory items with other dungeons (logos trading). Memory manifestation is "consume item, create output" — a pattern Workshop/Craft already understand. The Content Flywheel works automatically because Collection and Item both have existing `x-compression-callback` infrastructure for character archival.
 
 ### Dungeon Cache
 **Store**: `dungeon-cache` (Backend: Redis, prefix: `dungeon:cache`)
@@ -550,9 +552,7 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 | `personalityType` (on DungeonCoreModel) | B (Content Code) | Opaque string | Dungeon personality codes ("martial", "memorial", "scholarly", etc.); game-configurable, drives ABML behavior selection and character trait seeding |
 | `bondType` (on DungeonBondModel) | C (System State) | Service-specific enum | Finite set of bond relationship modes (Priest, Paladin, Corrupted); system-owned, determines contract terms and death behavior |
 | `species` (on InhabitantModel, genetic_library subdomain) | B (Content Code) | Opaque string | Creature species codes; references lib-species entity codes, game-configurable |
-| `manifestationType` (on DungeonMemoryModel) | C (System State) | Service-specific enum | Finite set of memory manifestation forms (item, scene decoration, environmental effect); system-owned, determines which service handles manifestation |
 | `entityType` (on bond master reference) | A (Entity Reference) | `EntityType` enum | Bond master can be account, character, or actor -- all first-class Bannou entities. Determines Pattern A (account) vs Pattern B (character) vs Corrupted (actor) |
-| `eventType` (on DungeonMemoryModel) | B (Content Code) | Opaque string | Memory event type codes (combat, exploration, death, ritual); game-configurable classification for significance scoring and manifestation selection |
 | `status` (on DungeonCoreModel) | C (System State) | Service-specific enum (`DungeonStatus`) | Finite set of dungeon lifecycle states (Active, Dormant); system-owned, determines whether actor is running and bonds can form |
 
 ---

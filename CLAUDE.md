@@ -73,7 +73,7 @@ These documents provide the high-level architectural north-star context for the 
 | **Specification work** (creating, reviewing, or implementing extension attribute specifications) | `docs/reference/SCHEMA-RULES.md` (for context on existing x-* attributes) and the relevant specification in `docs/reference/specifications/X-{ATTRIBUTE-NAME}.md`. For implementation work, also read `docs/reference/templates/SPECIFICATION-TEMPLATE.md` for the required document structure. |
 | **High-level vision** (evaluating how services serve gameplay, cross-cutting feature planning, content flywheel analysis) | `docs/reference/VISION.md` and `docs/reference/PLAYER-VISION.md` (same as Big Brain Mode) |
 | **Canonical pattern lookup** (searching for the correct way to implement a pattern — background workers, state store access, event publishing, deprecation, cleanup, enum mapping, etc.) | `docs/reference/HELPERS-AND-COMMON-PATTERNS.md` — read this FIRST before grepping the codebase for examples. It catalogs all shared helpers, canonical skeletons, and reference implementations with code samples and "when to use" guidance. |
-| **Documentation search** (broad search across guides, planning docs, FAQs, operations docs, or specifications) | The relevant catalog file(s): `docs/generated/GENERATED-GUIDES-CATALOG.md`, `docs/generated/GENERATED-PLANNING-CATALOG.md`, `docs/generated/GENERATED-FAQ-CATALOG.md`, `docs/generated/GENERATED-OPERATIONS-CATALOG.md`, `docs/generated/GENERATED-SPECIFICATIONS-CATALOG.md`. Read the catalog first to identify target documents from summaries, then read only the identified documents. Never glob a docs directory and read files blindly. |
+| **Documentation search** (broad search across guides, planning docs, FAQs, operations docs, specifications, or SDKs) | The relevant catalog file(s): `docs/generated/GENERATED-GUIDES-CATALOG.md`, `docs/generated/GENERATED-PLANNING-CATALOG.md`, `docs/generated/GENERATED-FAQ-CATALOG.md`, `docs/generated/GENERATED-OPERATIONS-CATALOG.md`, `docs/generated/GENERATED-SPECIFICATIONS-CATALOG.md`, `docs/generated/GENERATED-SDKS-CATALOG.md`. Read the catalog first to identify target documents from summaries, then read only the identified documents. Never glob a docs directory and read files blindly. |
 
 **Rules:**
 1. Every sub-agent prompt MUST include an explicit instruction to read the relevant documents listed above BEFORE doing any work
@@ -100,6 +100,7 @@ These documents provide the high-level architectural north-star context for the 
   - `docs/generated/GENERATED-FAQ-CATALOG.md` — All architectural rationale FAQs with summaries and related plugins
   - `docs/generated/GENERATED-OPERATIONS-CATALOG.md` — All operations docs with summaries and scope
   - `docs/generated/GENERATED-SPECIFICATIONS-CATALOG.md` — All extension attribute specifications with summaries, status, schema scope
+  - `docs/generated/GENERATED-SDKS-CATALOG.md` — All SDK deep dives with summaries, layer, domain, implementation map links
 
 ### Catalog-First Documentation Search (MANDATORY)
 
@@ -114,7 +115,8 @@ These documents provide the high-level architectural north-star context for the 
 | "Why does Bannou do X?", architectural rationale, design decision justification | `docs/generated/GENERATED-FAQ-CATALOG.md` |
 | Deployment, testing, CI/CD, linting, release procedures | `docs/generated/GENERATED-OPERATIONS-CATALOG.md` |
 | Extension attribute syntax, generation behavior, runtime validation | `docs/generated/GENERATED-SPECIFICATIONS-CATALOG.md` |
-| Unknown or cross-cutting topic | Check all five catalogs (they're small — total ~600 lines) |
+| SDK deep dives, implementation maps, creative/infrastructure libraries | `docs/generated/GENERATED-SDKS-CATALOG.md` |
+| Unknown or cross-cutting topic | Check all six catalogs (they're small — total ~700 lines) |
 
 **This applies to both direct searches and sub-agent instructions.** When launching an agent to "search documentation for X", instruct it to read the relevant catalog(s) first, identify target documents from the summaries, and only then read the full documents it identified. Do not instruct agents to glob `docs/guides/` or `docs/planning/` and read files blindly.
 

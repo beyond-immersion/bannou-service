@@ -98,4 +98,7 @@ python3 "$SCRIPT_DIR/generate-operations-catalog.py"
 echo "  → Generating specifications catalog..."
 python3 "$SCRIPT_DIR/generate-specifications-catalog.py"
 
+echo "  → Generating SDKs catalog..."
+python3 "$SCRIPT_DIR/generate-sdks-catalog.py"
+
 echo "✅ Documentation generation complete"

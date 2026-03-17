@@ -1,0 +1,1059 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>BeyondImmersion.Bannou.VoxelCore</name>
+    </assembly>
+    <members>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Grid.Color">
+            <summary>
+            RGBA color stored as 4 bytes. Used by <see cref="T:BeyondImmersion.Bannou.VoxelCore.Grid.Palette"/>.
+            Byte layout matches Stride's Color struct for zero-copy bridge conversion.
+            </summary>
+            <param name="R">Red channel (0-255).</param>
+            <param name="G">Green channel (0-255).</param>
+            <param name="B">Blue channel (0-255).</param>
+            <param name="A">Alpha channel (0-255). Defaults to 255 (fully opaque).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Grid.Color.#ctor(System.Byte,System.Byte,System.Byte,System.Byte)">
+            <summary>
+            RGBA color stored as 4 bytes. Used by <see cref="T:BeyondImmersion.Bannou.VoxelCore.Grid.Palette"/>.
+            Byte layout matches Stride's Color struct for zero-copy bridge conversion.
+            </summary>
+            <param name="R">Red channel (0-255).</param>
+            <param name="G">Green channel (0-255).</param>
+            <param name="B">Blue channel (0-255).</param>
+            <param name="A">Alpha channel (0-255). Defaults to 255 (fully opaque).</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.Color.R">
+            <summary>Red channel (0-255).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.Color.G">
+            <summary>Green channel (0-255).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.Color.B">
+            <summary>Blue channel (0-255).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.Color.A">
+            <summary>Alpha channel (0-255). Defaults to 255 (fully opaque).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Grid.Color.Black">
+            <summary>Black (0, 0, 0, 255).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Grid.Color.White">
+            <summary>White (255, 255, 255, 255).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Grid.Color.Transparent">
+            <summary>Transparent (0, 0, 0, 0).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Grid.GridMetadata">
+            <summary>
+            Grid-level properties stored alongside the voxel data: name, author, creation date, tags, and voxel scale.
+            Serialized as JSON within the .bvox format metadata section.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.GridMetadata.Name">
+            <summary>Name of this voxel grid.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.GridMetadata.Author">
+            <summary>Author of this voxel grid.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.GridMetadata.CreatedAt">
+            <summary>Creation date of this grid.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.GridMetadata.Tags">
+            <summary>Descriptive tags for categorization and search.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.GridMetadata.VoxelScale">
+            <summary>
+            World units per voxel. Arcadia default: 0.25 (one voxel = 25cm cube, ~4x Minecraft resolution).
+            Affects meshing output coordinates and Scene/Mapping integration.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Grid.MaterialType">
+            <summary>
+            Material type for a palette entry. Maps to MagicaVoxel MATL chunk types.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Grid.MaterialType.Diffuse">
+            <summary>Standard diffuse material.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Grid.MaterialType.Metal">
+            <summary>Metallic material with specular reflection.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Grid.MaterialType.Glass">
+            <summary>Transparent glass material.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Grid.MaterialType.Emit">
+            <summary>Emissive material that produces light.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Grid.MaterialType.Cloud">
+            <summary>Volumetric cloud material.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Grid.Palette">
+            <summary>
+            256-entry color/material palette shared by all voxels in a grid.
+            Index 0 is always empty (air). Compatible with MagicaVoxel's palette model.
+            The reverse lookup uses the full (Color, MaterialType, Roughness) tuple so that
+            two entries with the same RGB but different materials get separate palette indices.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.Palette.UsedCount">
+            <summary>
+            Number of palette entries in use (excluding index 0 which is always empty).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Grid.Palette.Get(System.Byte)">
+            <summary>
+            Gets the palette entry at the given index.
+            </summary>
+            <param name="index">Palette index (0-255).</param>
+            <returns>The palette entry at that index.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Grid.Palette.Set(System.Byte,BeyondImmersion.Bannou.VoxelCore.Grid.PaletteEntry)">
+            <summary>
+            Sets the palette entry at the given index. Updates the reverse lookup.
+            </summary>
+            <param name="index">Palette index (1-255). Index 0 cannot be set.</param>
+            <param name="entry">The palette entry to store.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">Thrown if index is 0.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Grid.Palette.GetOrAddIndex(BeyondImmersion.Bannou.VoxelCore.Grid.Color,BeyondImmersion.Bannou.VoxelCore.Grid.MaterialType,System.Single)">
+            <summary>
+            Returns the index for an existing entry matching the full (Color, MaterialType, Roughness) tuple,
+            or allocates the next available index if no match exists.
+            </summary>
+            <param name="color">RGBA color.</param>
+            <param name="material">Material type.</param>
+            <param name="roughness">Surface roughness (0.0-1.0).</param>
+            <returns>The palette index for this entry.</returns>
+            <exception cref="T:System.InvalidOperationException">Thrown if the palette is full (255 entries used).</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Grid.Palette.Contains(BeyondImmersion.Bannou.VoxelCore.Grid.Color,BeyondImmersion.Bannou.VoxelCore.Grid.MaterialType,System.Single)">
+            <summary>
+            Checks whether the palette contains an entry with the given color, material, and roughness.
+            </summary>
+            <param name="color">RGBA color.</param>
+            <param name="material">Material type.</param>
+            <param name="roughness">Surface roughness.</param>
+            <returns>True if a matching entry exists.</returns>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.Palette.Entries">
+            <summary>
+            Returns a read-only span over the internal entries array. Index 0 is always empty.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Grid.PaletteEntry">
+            <summary>
+            A single entry in the 256-entry palette: color, material type, and roughness.
+            </summary>
+            <param name="Color">RGBA color.</param>
+            <param name="Material">Material type (Diffuse, Metal, Glass, Emit, Cloud).</param>
+            <param name="Roughness">Surface roughness (0.0 = smooth/mirror, 1.0 = rough/matte).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Grid.PaletteEntry.#ctor(BeyondImmersion.Bannou.VoxelCore.Grid.Color,BeyondImmersion.Bannou.VoxelCore.Grid.MaterialType,System.Single)">
+            <summary>
+            A single entry in the 256-entry palette: color, material type, and roughness.
+            </summary>
+            <param name="Color">RGBA color.</param>
+            <param name="Material">Material type (Diffuse, Metal, Glass, Emit, Cloud).</param>
+            <param name="Roughness">Surface roughness (0.0 = smooth/mirror, 1.0 = rough/matte).</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.PaletteEntry.Color">
+            <summary>RGBA color.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.PaletteEntry.Material">
+            <summary>Material type (Diffuse, Metal, Glass, Emit, Cloud).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.PaletteEntry.Roughness">
+            <summary>Surface roughness (0.0 = smooth/mirror, 1.0 = rough/matte).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Grid.PaletteEntry.Empty">
+            <summary>
+            An empty palette entry (transparent, diffuse, zero roughness).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Grid.Voxel">
+            <summary>
+            Individual voxel: palette index (1 byte) + flags (1 byte). 2-byte value type
+            designed for zero-allocation pass-by-value in hot paths.
+            </summary>
+            <param name="PaletteIndex">Palette index. 0 = empty (air), 1-255 = palette entry.</param>
+            <param name="Flags">Per-voxel property flags.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Grid.Voxel.#ctor(System.Byte,BeyondImmersion.Bannou.VoxelCore.Grid.VoxelFlags)">
+            <summary>
+            Individual voxel: palette index (1 byte) + flags (1 byte). 2-byte value type
+            designed for zero-allocation pass-by-value in hot paths.
+            </summary>
+            <param name="PaletteIndex">Palette index. 0 = empty (air), 1-255 = palette entry.</param>
+            <param name="Flags">Per-voxel property flags.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.Voxel.PaletteIndex">
+            <summary>Palette index. 0 = empty (air), 1-255 = palette entry.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.Voxel.Flags">
+            <summary>Per-voxel property flags.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Grid.Voxel.Empty">
+            <summary>
+            An empty voxel (palette index 0, no flags).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.Voxel.IsEmpty">
+            <summary>
+            Whether this voxel is empty (palette index is 0).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk">
+            <summary>
+            Fixed 16x16x16 voxel volume. Stored as flat byte arrays in XZY memory order:
+            horizontal XZ slices are contiguous, optimizing the greedy mesher's most common
+            scan direction and column-wise terrain voxelization.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk.Size">
+            <summary>Side length of a chunk in voxels.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk.TotalVoxels">
+            <summary>Total number of voxels in a chunk (16^3 = 4096).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk.NonEmptyCount">
+            <summary>
+            Cached count of non-empty voxels in this chunk. Used for quick emptiness checks.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk.IsDirty">
+            <summary>
+            Whether this chunk has been modified since the last serialization or dirty flag clear.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk.IsEmpty">
+            <summary>
+            Whether this chunk contains no non-empty voxels.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk.GetFlatIndex(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Computes the flat array index from local chunk coordinates (0-15 each).
+            XZY order: x + z * 16 + y * 256.
+            </summary>
+            <param name="x">Local X coordinate (0-15).</param>
+            <param name="y">Local Y coordinate (0-15).</param>
+            <param name="z">Local Z coordinate (0-15).</param>
+            <returns>Flat array index (0-4095).</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk.GetVoxel(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Gets the voxel at local coordinates within this chunk.
+            </summary>
+            <param name="x">Local X coordinate (0-15).</param>
+            <param name="y">Local Y coordinate (0-15).</param>
+            <param name="z">Local Z coordinate (0-15).</param>
+            <returns>The voxel at the specified position.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk.SetVoxel(System.Int32,System.Int32,System.Int32,BeyondImmersion.Bannou.VoxelCore.Grid.Voxel)">
+            <summary>
+            Sets the voxel at local coordinates within this chunk. Updates
+            <see cref="P:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk.NonEmptyCount"/> and marks the chunk as dirty.
+            </summary>
+            <param name="x">Local X coordinate (0-15).</param>
+            <param name="y">Local Y coordinate (0-15).</param>
+            <param name="z">Local Z coordinate (0-15).</param>
+            <param name="voxel">The voxel to write.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk.RecalculateNonEmptyCount">
+            <summary>
+            Recalculates <see cref="P:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk.NonEmptyCount"/> from the palette index array.
+            Used after bulk writes (deserialization, delta application).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelFlags">
+            <summary>
+            Per-voxel property flags stored as a single byte. Bits 5-7 are reserved for game-specific flags.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelFlags.None">
+            <summary>No flags set.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelFlags.Hidden">
+            <summary>Voxel exists but is not rendered (structural support).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelFlags.Damaged">
+            <summary>Visual damage state (cracks, weathering).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelFlags.Emissive">
+            <summary>Emits light using the palette color as light color.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelFlags.Transparent">
+            <summary>Semi-transparent voxel (glass, water).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelFlags.Frozen">
+            <summary>
+            Boundary-locked voxel. The voxel-builder operation system rejects edits to frozen voxels.
+            VoxelGrid.SetVoxel does NOT enforce this flag — enforcement lives in voxel-builder.
+            This lets generators and the voxelizer write to frozen coordinates during initial setup
+            while preventing player/NPC edits afterward.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid">
+            <summary>
+            Sparse 3D voxel grid subdivided into 16x16x16 chunks. Primary data structure.
+            Only non-empty chunks are allocated in memory. Thread safety: concurrent read, single-writer.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid.Bounds">
+            <summary>Grid dimensions (may exceed populated area).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid.Palette">
+            <summary>Shared 256-entry color/material palette.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid.Metadata">
+            <summary>Grid-level metadata (name, author, tags, voxel scale).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid.VoxelCount">
+            <summary>Cached count of non-empty voxels across all chunks.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid.ChunkCount">
+            <summary>Number of allocated (non-empty) chunks.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid.#ctor(BeyondImmersion.Bannou.VoxelCore.Math.VoxelBounds,BeyondImmersion.Bannou.VoxelCore.Grid.Palette,BeyondImmersion.Bannou.VoxelCore.Grid.GridMetadata)">
+            <summary>
+            Creates a new empty voxel grid with the specified bounds and palette.
+            </summary>
+            <param name="bounds">Grid dimensions.</param>
+            <param name="palette">Shared palette. If null, a new empty palette is created.</param>
+            <param name="metadata">Grid metadata. If null, default metadata is created.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid.GetVoxel(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord)">
+            <summary>
+            Gets the voxel at the given coordinate. Returns <see cref="F:BeyondImmersion.Bannou.VoxelCore.Grid.Voxel.Empty"/> for
+            coordinates outside the bounds or in unpopulated chunks.
+            </summary>
+            <param name="coord">The voxel coordinate.</param>
+            <returns>The voxel at that position, or <see cref="F:BeyondImmersion.Bannou.VoxelCore.Grid.Voxel.Empty"/>.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid.SetVoxel(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord,BeyondImmersion.Bannou.VoxelCore.Grid.Voxel)">
+            <summary>
+            Sets the voxel at the given coordinate. Creates the chunk on first write.
+            Removes the chunk if it becomes empty. Does NOT enforce the <see cref="F:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelFlags.Frozen"/> flag.
+            </summary>
+            <param name="coord">The voxel coordinate. Must be within bounds.</param>
+            <param name="voxel">The voxel to write.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">Thrown if coordinate is outside bounds.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid.GetChunk(BeyondImmersion.Bannou.VoxelCore.Math.ChunkCoord)">
+            <summary>
+            Gets the chunk at the given chunk coordinate, or null if no chunk exists there.
+            </summary>
+            <param name="coord">The chunk coordinate.</param>
+            <returns>The chunk, or null if empty/unallocated.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid.EnumerateChunks">
+            <summary>
+            Enumerates all non-empty chunks in the grid.
+            </summary>
+            <returns>Sequence of (ChunkCoord, VoxelChunk) pairs.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid.GetDirtyChunks">
+            <summary>
+            Returns the set of chunk coordinates where the chunk has <see cref="P:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk.IsDirty"/> = true.
+            </summary>
+            <returns>Set of dirty chunk coordinates.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid.ClearDirtyFlags">
+            <summary>
+            Resets <see cref="P:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk.IsDirty"/> on all chunks.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid.IsEmpty(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord)">
+            <summary>
+            Whether the voxel at the given coordinate is empty (palette index 0).
+            Returns true for coordinates outside bounds.
+            </summary>
+            <param name="coord">The voxel coordinate.</param>
+            <returns>True if the voxel is empty or outside bounds.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid.Contains(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord)">
+            <summary>
+            Whether the given coordinate is within the grid bounds.
+            </summary>
+            <param name="coord">The voxel coordinate.</param>
+            <returns>True if within bounds.</returns>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid.Chunks">
+            <summary>
+            Provides direct access to the internal chunk dictionary for serialization.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Math.ChunkCoord">
+            <summary>
+            Chunk-level coordinate. Each chunk is 16x16x16 voxels. Derived from
+            <see cref="T:BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord"/> by floor-division by 16.
+            </summary>
+            <param name="X">Chunk X position (voxel X &gt;&gt; 4).</param>
+            <param name="Y">Chunk Y position (voxel Y &gt;&gt; 4).</param>
+            <param name="Z">Chunk Z position (voxel Z &gt;&gt; 4).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Math.ChunkCoord.#ctor(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Chunk-level coordinate. Each chunk is 16x16x16 voxels. Derived from
+            <see cref="T:BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord"/> by floor-division by 16.
+            </summary>
+            <param name="X">Chunk X position (voxel X &gt;&gt; 4).</param>
+            <param name="Y">Chunk Y position (voxel Y &gt;&gt; 4).</param>
+            <param name="Z">Chunk Z position (voxel Z &gt;&gt; 4).</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Math.ChunkCoord.X">
+            <summary>Chunk X position (voxel X &gt;&gt; 4).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Math.ChunkCoord.Y">
+            <summary>Chunk Y position (voxel Y &gt;&gt; 4).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Math.ChunkCoord.Z">
+            <summary>Chunk Z position (voxel Z &gt;&gt; 4).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Math.ChunkCoord.Zero">
+            <summary>The origin chunk (0, 0, 0).</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Math.ChunkCoord.ToVoxelCoord">
+            <summary>
+            Returns the voxel coordinate of this chunk's minimum corner (lowest X, Y, Z).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Math.ChunkCoord.CompareTo(BeyondImmersion.Bannou.VoxelCore.Math.ChunkCoord)">
+            <summary>
+            Comparison for deterministic ordering: Y first, then Z, then X.
+            Matches <see cref="T:BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord"/> ordering for consistent chunk iteration.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Math.ChunkCoord.ToString">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Math.VoxelBounds">
+            <summary>
+            Integer axis-aligned bounding box defined by minimum and maximum <see cref="T:BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord"/> (both inclusive).
+            </summary>
+            <param name="Min">Minimum corner (inclusive).</param>
+            <param name="Max">Maximum corner (inclusive).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Math.VoxelBounds.#ctor(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord,BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord)">
+            <summary>
+            Integer axis-aligned bounding box defined by minimum and maximum <see cref="T:BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord"/> (both inclusive).
+            </summary>
+            <param name="Min">Minimum corner (inclusive).</param>
+            <param name="Max">Maximum corner (inclusive).</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Math.VoxelBounds.Min">
+            <summary>Minimum corner (inclusive).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Math.VoxelBounds.Max">
+            <summary>Maximum corner (inclusive).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Math.VoxelBounds.Width">
+            <summary>Width along the X axis (inclusive).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Math.VoxelBounds.Height">
+            <summary>Height along the Y axis (inclusive).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Math.VoxelBounds.Depth">
+            <summary>Depth along the Z axis (inclusive).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Math.VoxelBounds.Volume">
+            <summary>
+            Total volume of the bounding box in voxels.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Math.VoxelBounds.Contains(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord)">
+            <summary>
+            Tests whether a coordinate is within these bounds (inclusive on all sides).
+            </summary>
+            <param name="coord">The coordinate to test.</param>
+            <returns>True if the coordinate is within bounds.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Math.VoxelBounds.Intersects(BeyondImmersion.Bannou.VoxelCore.Math.VoxelBounds)">
+            <summary>
+            Tests whether another bounding box overlaps with this one.
+            </summary>
+            <param name="other">The other bounds to test.</param>
+            <returns>True if the bounding boxes overlap.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Math.VoxelBounds.Expand(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord)">
+            <summary>
+            Returns expanded bounds that include the given coordinate.
+            </summary>
+            <param name="coord">The coordinate to include.</param>
+            <returns>A new bounds expanded to contain the coordinate.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Math.VoxelBounds.ToString">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord">
+            <summary>
+            Integer 3D voxel coordinate. Uses floor-division for correct negative coordinate handling.
+            </summary>
+            <param name="X">Voxel X position.</param>
+            <param name="Y">Voxel Y position.</param>
+            <param name="Z">Voxel Z position.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord.#ctor(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Integer 3D voxel coordinate. Uses floor-division for correct negative coordinate handling.
+            </summary>
+            <param name="X">Voxel X position.</param>
+            <param name="Y">Voxel Y position.</param>
+            <param name="Z">Voxel Z position.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord.X">
+            <summary>Voxel X position.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord.Y">
+            <summary>Voxel Y position.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord.Z">
+            <summary>Voxel Z position.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord.Zero">
+            <summary>The origin coordinate (0, 0, 0).</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord.ToChunkCoord">
+            <summary>
+            Converts this voxel coordinate to a chunk coordinate using floor-division by 16.
+            Arithmetic right shift (<c>&gt;&gt; 4</c>) correctly floors for negative values in C#.
+            </summary>
+            <returns>The chunk coordinate containing this voxel.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord.ToLocalCoord">
+            <summary>
+            Converts this voxel coordinate to a local coordinate (0-15) within its chunk.
+            Uses floor-modulo to always produce 0-15 even for negative coordinates.
+            </summary>
+            <returns>Local (x, y, z) each in range [0, 15].</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord.op_Addition(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord,BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord)">
+            <summary>Component-wise addition.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord.op_Subtraction(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord,BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord)">
+            <summary>Component-wise subtraction.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord.Distance(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord)">
+            <summary>
+            Euclidean distance to another coordinate.
+            </summary>
+            <param name="other">The other coordinate.</param>
+            <returns>The Euclidean distance as a float.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord.ManhattanDistance(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord)">
+            <summary>
+            Manhattan (taxi-cab) distance to another coordinate.
+            </summary>
+            <param name="other">The other coordinate.</param>
+            <returns>The Manhattan distance.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord.CompareTo(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord)">
+            <summary>
+            Comparison for deterministic ordering: Y first, then Z, then X.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord.ToString">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Math.VoxelRay">
+            <summary>
+            Integer raycast through a voxel grid using the DDA (Digital Differential Analyzer) algorithm.
+            Reference: Amanatides &amp; Woo, "A Fast Voxel Traversal Algorithm for Ray Tracing" (Eurographics 1987).
+            Steps through voxels along a ray by comparing distances to the next boundary on each axis.
+            Integer arithmetic only in the hot loop.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Math.VoxelRay.Current">
+            <summary>
+            Current voxel coordinate the ray is at.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Math.VoxelRay.LastFace">
+            <summary>
+            The face normal of the last step (indicates which face of the current voxel was entered).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Math.VoxelRay.Create(BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord,System.Single,System.Single,System.Single)">
+            <summary>
+            Creates a new DDA ray from an origin voxel coordinate and a floating-point direction.
+            </summary>
+            <param name="origin">Starting voxel coordinate.</param>
+            <param name="directionX">Ray direction X component.</param>
+            <param name="directionY">Ray direction Y component.</param>
+            <param name="directionZ">Ray direction Z component.</param>
+            <returns>An initialized ray ready for stepping.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Math.VoxelRay.Step">
+            <summary>
+            Advances the ray by one voxel along the axis with the nearest boundary.
+            </summary>
+            <returns>The new voxel coordinate after stepping.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Math.VoxelRay.Cast(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,System.Int32)">
+            <summary>
+            Casts the ray through a voxel grid, returning the first non-empty voxel hit
+            and the face normal of the entry face.
+            </summary>
+            <param name="grid">The voxel grid to cast through.</param>
+            <param name="maxSteps">Maximum number of voxel steps before giving up.</param>
+            <returns>
+            A tuple of (hit coordinate, face normal coordinate) if a non-empty voxel was hit,
+            or null if no hit within maxSteps.
+            </returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Meshing.CulledMesher">
+            <summary>
+            Per-face culling mesher. Emits faces only where neighbors are empty.
+            Fast, correct, blocky aesthetic. Every voxel engine implements this as baseline.
+            Includes per-vertex ambient occlusion with the anisotropy fix for visual quality.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Meshing.CulledMesher.Mesh(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk,BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk[],BeyondImmersion.Bannou.VoxelCore.Grid.Palette,BeyondImmersion.Bannou.VoxelCore.Meshing.MeshingOptions)">
+            <inheritdoc />
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Meshing.CulledMesher.AoCornerOffsets">
+            <summary>
+            AO corner offsets per face direction per vertex. Each vertex needs 3 neighbor samples:
+            two edge-adjacent and one diagonal. The arrays define the relative offsets from the
+            voxel's position to sample for each corner of each face.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Meshing.GreedyMesher">
+            <summary>
+            Coplanar face merging mesher. Scans each 2D slice per face direction and finds
+            maximal rectangles of the same material. Typically 5-20x face count reduction.
+            Reference: Mikola Lysenko, "Meshing in a Minecraft Game" (0fps.net, 2012).
+            When AO is enabled, the merge key includes per-vertex AO values to prevent merging
+            faces with different lighting (which would produce incorrect shading).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Meshing.GreedyMesher.Mesh(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk,BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk[],BeyondImmersion.Bannou.VoxelCore.Grid.Palette,BeyondImmersion.Bannou.VoxelCore.Meshing.MeshingOptions)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Meshing.GreedyMesher.ComputeFaceAo(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk,BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk[],System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Encodes 4 AO values (each quantized to 0-3) into a single long for fast equality comparison.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Meshing.CulledMesherAoOffsets">
+            <summary>
+            Shared AO corner offset lookup table, reused by CulledMesher and GreedyMesher.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Meshing.IMesher">
+            <summary>
+            Meshing algorithm contract. Converts a <see cref="T:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk"/> to <see cref="T:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshData"/>.
+            The 6 neighbor chunks are required for correct face culling and ambient occlusion
+            computation at chunk boundaries.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Meshing.IMesher.Mesh(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk,BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk[],BeyondImmersion.Bannou.VoxelCore.Grid.Palette,BeyondImmersion.Bannou.VoxelCore.Meshing.MeshingOptions)">
+            <summary>
+            Generates mesh data from a voxel chunk and its 6 axis-aligned neighbor chunks.
+            </summary>
+            <param name="chunk">The chunk to mesh.</param>
+            <param name="neighbors">
+            The 6 neighbor chunks in order: +X, -X, +Y, -Y, +Z, -Z. Null entries indicate empty neighbors.
+            </param>
+            <param name="palette">The palette to look up colors and materials.</param>
+            <param name="options">Meshing options (scale, AO, collision mode).</param>
+            <returns>Engine-agnostic mesh data.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Meshing.MarchingCubesMesher">
+            <summary>
+            Smooth surface extraction from voxel data using the Marching Cubes algorithm.
+            Reference: Lorensen &amp; Cline, "Marching Cubes: A High Resolution 3D Surface
+            Construction Algorithm" (SIGGRAPH 1987). Uses precomputed lookup tables (256 cube
+            configurations). Patent expired 2005. Ambient occlusion is not applicable to
+            marching cubes (smooth surfaces don't have voxel corners); AO output is always null.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Meshing.MarchingCubesMesher.Mesh(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk,BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk[],BeyondImmersion.Bannou.VoxelCore.Grid.Palette,BeyondImmersion.Bannou.VoxelCore.Meshing.MeshingOptions)">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshData">
+            <summary>
+            Engine-agnostic mesh output. Each engine bridge converts this to its native format.
+            Right-handed coordinate system, Y-up, counter-clockwise winding order.
+            Colors are stored as bytes (4 per vertex) matching Stride's Color struct.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshData.Vertices">
+            <summary>Vertex positions as XYZ triplets (right-handed, Y-up).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshData.Normals">
+            <summary>Vertex normals as XYZ triplets.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshData.UVs">
+            <summary>
+            UV coordinates as pairs (palette atlas coordinates, texel-centered).
+            Null when <see cref="P:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshingOptions.CollisionMode"/> is true.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshData.Indices">
+            <summary>Triangle indices (CCW winding = front face).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshData.Colors">
+            <summary>
+            Per-vertex RGBA colors, 4 bytes each (from palette).
+            Null when <see cref="P:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshingOptions.CollisionMode"/> is true.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshData.AmbientOcclusion">
+            <summary>
+            Per-vertex ambient occlusion values 0.0-1.0.
+            Null if AO is disabled, <see cref="P:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshingOptions.CollisionMode"/> is true,
+            or the mesher does not support AO (e.g., MarchingCubesMesher).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshData.VertexCount">
+            <summary>Number of vertices.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshData.TriangleCount">
+            <summary>Number of triangles.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshData.#ctor(System.Single[],System.Single[],System.Single[],System.Int32[],System.Byte[],System.Single[],System.Int32,System.Int32)">
+            <summary>
+            Creates a new MeshData with the given geometry arrays.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshData.Empty">
+            <summary>An empty mesh with no geometry.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Meshing.MesherHelpers">
+            <summary>
+            Shared helper methods for mesher implementations.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Meshing.MesherHelpers.FaceDirections">
+            <summary>Face direction offsets: +X, -X, +Y, -Y, +Z, -Z.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Meshing.MesherHelpers.FaceNormals">
+            <summary>Face normal vectors as float triplets, matching FaceDirections order.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Meshing.MesherHelpers.FaceVertices">
+            <summary>
+            Quad vertex offsets for each face direction (4 vertices per face).
+            Each quad is wound CCW (right-handed convention, front-facing).
+            Vertices are in the order: bottom-left, bottom-right, top-right, top-left
+            relative to the face plane.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Meshing.MesherHelpers.IsNeighborEmpty(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk,BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk[],System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Checks whether a neighbor voxel at the given local coords (which may be outside the chunk)
+            is empty. Uses the appropriate neighbor chunk for boundary lookups.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Meshing.MesherHelpers.IsSolid(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk,BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk[],System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Checks whether the voxel at the given coordinates is solid (non-empty).
+            Handles cross-chunk boundary lookups via the neighbor array.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Meshing.MesherHelpers.ComputeUV(System.Byte)">
+            <summary>
+            Computes texel-centered UV coordinates for a palette index in a 16x16 atlas.
+            The +0.5 centers the sample point within the texel, preventing color bleeding.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshingOptions">
+            <summary>
+            Configuration for meshing operations.
+            </summary>
+            <param name="VoxelScale">World units per voxel (default 0.25).</param>
+            <param name="AmbientOcclusion">Whether to compute per-vertex ambient occlusion (default true).</param>
+            <param name="CollisionMode">
+            When true, skip UVs, colors, and AO — output null for optional arrays.
+            Use for physics collision meshes where only geometry is needed.
+            </param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshingOptions.#ctor(System.Single,System.Boolean,System.Boolean)">
+            <summary>
+            Configuration for meshing operations.
+            </summary>
+            <param name="VoxelScale">World units per voxel (default 0.25).</param>
+            <param name="AmbientOcclusion">Whether to compute per-vertex ambient occlusion (default true).</param>
+            <param name="CollisionMode">
+            When true, skip UVs, colors, and AO — output null for optional arrays.
+            Use for physics collision meshes where only geometry is needed.
+            </param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshingOptions.VoxelScale">
+            <summary>World units per voxel (default 0.25).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshingOptions.AmbientOcclusion">
+            <summary>Whether to compute per-vertex ambient occlusion (default true).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshingOptions.CollisionMode">
+            <summary>
+            When true, skip UVs, colors, and AO — output null for optional arrays.
+            Use for physics collision meshes where only geometry is needed.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshingOptions.Default">
+            <summary>Default meshing options: scale 0.25, AO on, collision off.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshUtility">
+            <summary>
+            Post-processing utilities for mesh data: winding order flipping for left-handed engines
+            and multi-chunk mesh merging.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshUtility.FlipWindingOrder(BeyondImmersion.Bannou.VoxelCore.Meshing.MeshData)">
+            <summary>
+            Flips the winding order of a mesh from CCW (right-handed) to CW (left-handed).
+            Swaps each triangle's second and third indices: (A, B, C) → (A, C, B) and negates all normals.
+            Use for Unity and Unreal engine bridges.
+            </summary>
+            <param name="source">The right-handed mesh data to flip.</param>
+            <returns>A new MeshData with reversed winding order and negated normals.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Meshing.MeshUtility.MergeMeshData(System.Collections.Generic.IReadOnlyList{System.ValueTuple{BeyondImmersion.Bannou.VoxelCore.Meshing.MeshData,BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord}},System.Single)">
+            <summary>
+            Merges multiple per-chunk meshes into a single MeshData, offsetting vertex positions
+            by each chunk's world-space offset.
+            </summary>
+            <param name="chunks">List of (MeshData, VoxelCoord offset) tuples to merge.</param>
+            <param name="voxelScale">World units per voxel for offset conversion.</param>
+            <returns>A single merged MeshData.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Serialization.VoxelCompression">
+            <summary>
+            RLE (Run-Length Encoding) compression for voxel data.
+            Format: [count, value] pairs where count is 1-255.
+            Runs longer than 255 are split into multiple pairs.
+            Paired with LZ4 for the complete .bvox compression pipeline.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Serialization.VoxelCompression.RleEncode(System.Byte[])">
+            <summary>
+            RLE-encodes a byte array. Produces [count, value] pairs.
+            </summary>
+            <param name="data">Input byte array (typically 4096 bytes for one chunk dimension).</param>
+            <returns>RLE-encoded byte array.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Serialization.VoxelCompression.RleDecode(System.Byte[],System.Int32)">
+            <summary>
+            Decodes an RLE-encoded byte array back to the original data.
+            </summary>
+            <param name="encoded">RLE-encoded byte array ([count, value] pairs).</param>
+            <param name="expectedLength">Expected output length for validation (0 to skip validation).</param>
+            <returns>Decoded byte array.</returns>
+            <exception cref="T:System.FormatException">Thrown if the encoded data is malformed.</exception>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Serialization.VoxelDelta">
+            <summary>
+            Binary delta encoding between two <see cref="T:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid"/> states at the chunk level.
+            Identifies added, removed, and modified chunks. Modified chunks are diffed using XOR
+            on their flat arrays. Deterministic: same (old, new) pair always produces identical delta bytes.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Serialization.VoxelDelta.Compute(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)">
+            <summary>
+            Computes a binary delta between two grid states. Uses dirty flags on the new grid
+            to identify modified chunks efficiently.
+            </summary>
+            <param name="oldGrid">The original grid state.</param>
+            <param name="newGrid">The modified grid state.</param>
+            <returns>Binary delta data that can be applied to the old grid to produce the new grid.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Serialization.VoxelDelta.Apply(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,System.Byte[])">
+            <summary>
+            Applies a binary delta to a grid in-place, modifying it to reflect the new state.
+            </summary>
+            <param name="grid">The grid to patch. Modified in-place.</param>
+            <param name="delta">The binary delta data from <see cref="M:BeyondImmersion.Bannou.VoxelCore.Serialization.VoxelDelta.Compute(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid,BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)"/>.</param>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Serialization.VoxelSerializer">
+            <summary>
+            Serializes and deserializes <see cref="T:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid"/> to and from the .bvox binary format.
+            The format uses dual-stream RLE + LZ4 compression for compact storage.
+            Deterministic: same VoxelGrid always produces identical .bvox bytes.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Serialization.VoxelSerializer.Serialize(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid)">
+            <summary>
+            Serializes a VoxelGrid to the .bvox binary format.
+            </summary>
+            <param name="grid">The grid to serialize.</param>
+            <returns>The .bvox binary data.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Serialization.VoxelSerializer.Deserialize(System.Byte[])">
+            <summary>
+            Deserializes a VoxelGrid from .bvox binary data.
+            </summary>
+            <param name="data">The .bvox binary data.</param>
+            <returns>The reconstructed VoxelGrid.</returns>
+            <exception cref="T:System.FormatException">Thrown if the data is invalid or corrupted.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Serialization.VoxelSerializer.SerializeChunk(BeyondImmersion.Bannou.VoxelCore.Grid.VoxelChunk)">
+            <summary>
+            Serializes a single chunk for delta encoding.
+            </summary>
+            <param name="chunk">The chunk to serialize.</param>
+            <returns>Compressed chunk data.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Serialization.VoxelSerializer.DeserializeChunk(System.Byte[])">
+            <summary>
+            Deserializes a single chunk from delta encoding data.
+            </summary>
+            <param name="data">Compressed chunk data.</param>
+            <returns>The reconstructed chunk.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Tables.MarchingCubesTables">
+            <summary>
+            Canonical Marching Cubes lookup tables for isosurface extraction.
+            <para>
+            These tables encode the standard Marching Cubes algorithm originally described by
+            Lorensen and Cline (SIGGRAPH 1987). The patent (US 4,710,876) expired in 2005 and
+            the tables are in the public domain.
+            </para>
+            <para>
+            <b>Cube vertex numbering</b> (right-handed, Y-up):
+            <code>
+                   4 -------- 5
+                  /|         /|
+                 / |        / |
+                7 -------- 6  |
+                |  0 ------|- 1
+                | /        | /
+                |/         |/
+                3 -------- 2
+            </code>
+            </para>
+            <para>
+            <b>Edge numbering</b>:
+            <list type="table">
+              <listheader><term>Edge</term><description>Vertices</description></listheader>
+              <item><term>0</term><description>0 - 1</description></item>
+              <item><term>1</term><description>1 - 2</description></item>
+              <item><term>2</term><description>2 - 3</description></item>
+              <item><term>3</term><description>3 - 0</description></item>
+              <item><term>4</term><description>4 - 5</description></item>
+              <item><term>5</term><description>5 - 6</description></item>
+              <item><term>6</term><description>6 - 7</description></item>
+              <item><term>7</term><description>7 - 4</description></item>
+              <item><term>8</term><description>0 - 4</description></item>
+              <item><term>9</term><description>1 - 5</description></item>
+              <item><term>10</term><description>2 - 6</description></item>
+              <item><term>11</term><description>3 - 7</description></item>
+            </list>
+            </para>
+            <para>
+            The cube configuration index is an 8-bit value where bit <c>i</c> is set when
+            vertex <c>i</c> is inside the isosurface. <see cref="F:BeyondImmersion.Bannou.VoxelCore.Tables.MarchingCubesTables.EdgeTable"/> maps each
+            configuration to a 12-bit mask of intersected edges. <see cref="F:BeyondImmersion.Bannou.VoxelCore.Tables.MarchingCubesTables.TriTable"/> maps
+            each configuration to a list of edge-vertex triples forming triangles.
+            </para>
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Tables.MarchingCubesTables.EdgeTable">
+            <summary>
+            Edge intersection table indexed by cube configuration (0-255).
+            Each entry is a 12-bit mask where bit <c>n</c> indicates that edge <c>n</c>
+            is intersected by the isosurface. A value of <c>0x000</c> means the cube is
+            entirely inside or outside the isosurface.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Tables.MarchingCubesTables.TriTable">
+            <summary>
+            Triangle table indexed by cube configuration (0-255).
+            Each entry is a jagged array of edge indices that form triangles. Every three
+            consecutive values define one triangle (up to 5 triangles per configuration).
+            An empty array indicates no triangles for that configuration.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Voxelization.HeightmapVoxelizer">
+            <summary>
+            Converts a 2D heightmap to a <see cref="T:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid"/> by filling columns below sampled height values.
+            Used for terrain overlay creation in the voxel editing workflow.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Voxelization.HeightmapVoxelizer.Voxelize(System.Single[0:,0:],System.Byte[0:,0:],BeyondImmersion.Bannou.VoxelCore.Grid.Palette,BeyondImmersion.Bannou.VoxelCore.Voxelization.VoxelizationOptions)">
+            <summary>
+            Voxelizes a heightmap into a voxel grid. For each (x, z) column, fills voxels from
+            y=0 to the sampled height. Marks border voxels as <see cref="F:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelFlags.Frozen"/>.
+            </summary>
+            <param name="heights">
+            2D array indexed [x, z] with world-space height values.
+            </param>
+            <param name="materials">
+            Parallel 2D array [x, z] with palette indices per column.
+            0 values are replaced with <see cref="P:BeyondImmersion.Bannou.VoxelCore.Voxelization.VoxelizationOptions.DefaultPaletteIndex"/>.
+            </param>
+            <param name="palette">The palette to use for the output grid.</param>
+            <param name="options">Voxelization options (scale, frozen border width, default material).</param>
+            <returns>A new VoxelGrid populated from the heightmap data.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Voxelization.MeshVoxelizer">
+            <summary>
+            Converts a triangle mesh to a <see cref="T:BeyondImmersion.Bannou.VoxelCore.Grid.VoxelGrid"/> via 3D scan-conversion and
+            ray-parity solid fill. Reference: Nooruddin &amp; Turk, "Simplification and Repair of
+            Polygonal Models Using Volumetric Techniques" (IEEE TVCG, 2003).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Voxelization.MeshVoxelizer.Voxelize(BeyondImmersion.Bannou.VoxelCore.Meshing.MeshData,BeyondImmersion.Bannou.VoxelCore.Grid.Palette,BeyondImmersion.Bannou.VoxelCore.Voxelization.VoxelizationOptions)">
+            <summary>
+            Voxelizes a triangle mesh into a voxel grid. Phase 1: surface rasterization by
+            3D scan-converting each triangle. Phase 2 (if Solid fill mode): ray-parity interior fill.
+            Phase 3: frozen border marking.
+            </summary>
+            <param name="source">The mesh data to voxelize.</param>
+            <param name="palette">Palette for material assignment.</param>
+            <param name="options">Voxelization options.</param>
+            <returns>A new VoxelGrid containing the voxelized mesh.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Voxelization.MeshVoxelizer.PointTriangleDistance(System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single)">
+            <summary>
+            Computes the minimum distance from a point to a triangle in 3D space.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Voxelization.VoxelFillMode">
+            <summary>
+            Fill mode for mesh voxelization.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Voxelization.VoxelFillMode.Surface">
+            <summary>Only the surface shell of the mesh is voxelized.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Voxelization.VoxelFillMode.Solid">
+            <summary>The surface shell and the solid interior are both voxelized using ray-parity fill.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.VoxelCore.Voxelization.VoxelizationOptions">
+            <summary>
+            Configuration for voxelization operations.
+            </summary>
+            <param name="VoxelScale">World units per voxel (default 0.25).</param>
+            <param name="FillMode">Surface shell only, or solid-filled interior (default Solid).</param>
+            <param name="FrozenBorderWidth">Voxels from grid edge to mark as Frozen (default 1).</param>
+            <param name="DefaultPaletteIndex">Fallback material when source has no color data.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.VoxelCore.Voxelization.VoxelizationOptions.#ctor(System.Single,BeyondImmersion.Bannou.VoxelCore.Voxelization.VoxelFillMode,System.Int32,System.Byte)">
+            <summary>
+            Configuration for voxelization operations.
+            </summary>
+            <param name="VoxelScale">World units per voxel (default 0.25).</param>
+            <param name="FillMode">Surface shell only, or solid-filled interior (default Solid).</param>
+            <param name="FrozenBorderWidth">Voxels from grid edge to mark as Frozen (default 1).</param>
+            <param name="DefaultPaletteIndex">Fallback material when source has no color data.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Voxelization.VoxelizationOptions.VoxelScale">
+            <summary>World units per voxel (default 0.25).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Voxelization.VoxelizationOptions.FillMode">
+            <summary>Surface shell only, or solid-filled interior (default Solid).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Voxelization.VoxelizationOptions.FrozenBorderWidth">
+            <summary>Voxels from grid edge to mark as Frozen (default 1).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.VoxelCore.Voxelization.VoxelizationOptions.DefaultPaletteIndex">
+            <summary>Fallback material when source has no color data.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.VoxelCore.Voxelization.VoxelizationOptions.Default">
+            <summary>Default voxelization options.</summary>
+        </member>
+    </members>
+</doc>
