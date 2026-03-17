@@ -44,6 +44,10 @@ public static class VariableProviderDefinitions
     /// <summary>Personality trait values for ABML expressions (${personality.*})</summary>
     public const string Personality = "personality";
 
+    // Craft Service
+    /// <summary>Crafting proficiency, material availability, station proximity, and recipe eligibility for NPC GOAP decisions (${craft.*})</summary>
+    public const string Craft = "craft";
+
     // Currency Service
     /// <summary>Currency balance and wallet data for ABML expressions (${currency.*})</summary>
     public const string Currency = "currency";
@@ -101,6 +105,7 @@ public static class VariableProviderDefinitions
             [Affix] = new ProviderMetadata("Affix", "Item affix data for NPC GOAP evaluation of equipment quality (${affix.*})"),
             [Backstory] = new ProviderMetadata("CharacterHistory", "Character backstory elements for ABML expressions (${backstory.*})"),
             [Combat] = new ProviderMetadata("CharacterPersonality", "Combat preference data for ABML expressions (${combat.*})"),
+            [Craft] = new ProviderMetadata("Craft", "Crafting proficiency, material availability, station proximity, and recipe eligibility for NPC GOAP decisions (${craft.*})"),
             [Currency] = new ProviderMetadata("Currency", "Currency balance and wallet data for ABML expressions (${currency.*})"),
             [Encounters] = new ProviderMetadata("CharacterEncounter", "Encounter history and sentiment for ABML expressions (${encounters.*})"),
             [Environment] = new ProviderMetadata("Environment", "Weather, temperature, atmospheric conditions, and resource availability for ABML expressions (${environment.*})"),

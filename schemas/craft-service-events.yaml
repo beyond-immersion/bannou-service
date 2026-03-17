@@ -94,10 +94,7 @@ x-lifecycle:
       sessionId: { type: string, format: uuid, primary: true, required: true, description: "Session identifier (equals contractInstanceId)" }
       recipeId: { type: string, format: uuid, required: true, description: "Recipe being crafted" }
       entityId: { type: string, format: uuid, required: true, description: "Primary entity performing the craft" }
-      entityType:
-        $ref: 'common-api.yaml#/components/schemas/EntityType'
-        required: true
-        description: "Type of the primary entity"
+      entityType: { type: string, required: true, description: "Type of the primary entity (EntityType enum value)" }
       currentStepCode: { type: string, required: true, description: "Code of the next step to complete" }
       accumulatedQuality: { type: number, format: double, required: true, description: "Quality accumulated from completed steps" }
 

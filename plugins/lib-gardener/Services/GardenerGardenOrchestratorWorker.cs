@@ -1,8 +1,10 @@
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.Bannou.Gardener.ClientEvents;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -126,6 +128,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
         var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
         var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
         var seedClient = scope.ServiceProvider.GetRequiredService<ISeedClient>();
+        var clientEventPublisher = scope.ServiceProvider.GetRequiredService<IClientEventPublisher>();
 
         var gardenStore = stateStoreFactory.GetStore<GardenInstanceModel>(
             StateStoreDefinitions.GardenerGardenInstances);
@@ -177,7 +180,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
             {
                 var (expired, spawned) = await ProcessGardenTickAsync(
                     accountId, gardenStore, poiStore, templateStore, historyStore,
-                    cacheStore, seedClient, messageBus, phaseOrdinals, ct);
+                    cacheStore, seedClient, messageBus, clientEventPublisher, phaseOrdinals, ct);
                 totalPoisExpired += expired;
                 totalPoisSpawned += spawned;
             }
@@ -209,6 +212,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
         ICacheableStateStore<GardenInstanceModel> cacheStore,
         ISeedClient seedClient,
         IMessageBus messageBus,
+        IClientEventPublisher clientEventPublisher,
         IReadOnlyDictionary<string, int>? phaseOrdinals,
         CancellationToken ct)
     {
@@ -226,7 +230,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
 
         // Phase 1: Expire stale POIs
         var now = DateTimeOffset.UtcNow;
-        var expired = await ExpireStalePoiAsync(garden, poiStore, messageBus, accountId, now, ct);
+        var expired = await ExpireStalePoiAsync(garden, poiStore, messageBus, clientEventPublisher, accountId, now, ct);
 
         // Phase 2: Determine if we need new POIs
         var activePoiCount = garden.ActivePoiIds.Count;
@@ -239,7 +243,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
             // Phase 3: Run scoring algorithm and spawn POIs
             spawned = await ScoreAndSpawnPoisAsync(
                 garden, gardenStore, poiStore, templateStore, historyStore,
-                seedClient, messageBus, accountId, now, phaseOrdinals, ct);
+                seedClient, messageBus, clientEventPublisher, accountId, now, phaseOrdinals, ct);
 
             garden.NeedsReEvaluation = false;
         }
@@ -257,6 +261,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
         GardenInstanceModel garden,
         IStateStore<PoiModel> poiStore,
         IMessageBus messageBus,
+        IClientEventPublisher clientEventPublisher,
         Guid accountId,
         DateTimeOffset now,
         CancellationToken ct)
@@ -292,6 +297,15 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
                         GardenInstanceId = garden.GardenInstanceId,
                         PoiId = poiId
                     }, ct);
+
+                await clientEventPublisher.PublishToSessionAsync(garden.SessionId.ToString(),
+                    new GardenerPoiExpiredClientEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        GardenInstanceId = garden.GardenInstanceId,
+                        PoiId = poiId
+                    });
             }
             else if (poi.Status != PoiStatus.Active)
             {
@@ -320,6 +334,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
         IJsonQueryableStateStore<ScenarioHistoryModel> historyStore,
         ISeedClient seedClient,
         IMessageBus messageBus,
+        IClientEventPublisher clientEventPublisher,
         Guid accountId,
         DateTimeOffset now,
         IReadOnlyDictionary<string, int>? phaseOrdinals,
@@ -421,6 +436,22 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
                     PoiType = poi.PoiType,
                     ScenarioTemplateId = template.ScenarioTemplateId
                 }, ct);
+
+            await clientEventPublisher.PublishToSessionAsync(garden.SessionId.ToString(),
+                new GardenerPoiSpawnedClientEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    GardenInstanceId = garden.GardenInstanceId,
+                    PoiId = poiId,
+                    Position = new Vec3 { X = poi.Position.X, Y = poi.Position.Y, Z = poi.Position.Z },
+                    PoiType = poi.PoiType,
+                    VisualHint = poi.VisualHint,
+                    AudioHint = poi.AudioHint,
+                    IntensityRamp = poi.IntensityRamp,
+                    TriggerMode = poi.TriggerMode,
+                    TriggerRadius = poi.TriggerRadius
+                });
         }
 
         return spawned;

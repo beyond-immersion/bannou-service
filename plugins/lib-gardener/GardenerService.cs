@@ -273,7 +273,7 @@ public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
                 GardenInstanceId = gardenInstanceId
             }, cancellationToken);
 
-        await _clientEventPublisher.PublishToSessionAsync(body.SessionId,
+        await _clientEventPublisher.PublishToSessionAsync(body.SessionId.ToString(),
             new GardenerGardenEnteredClientEvent
             {
                 EventId = Guid.NewGuid(),
@@ -433,7 +433,7 @@ public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
                 SessionDurationSeconds = sessionDuration
             }, cancellationToken);
 
-        await _clientEventPublisher.PublishToSessionAsync(body.SessionId,
+        await _clientEventPublisher.PublishToSessionAsync(body.SessionId.ToString(),
             new GardenerGardenLeftClientEvent
             {
                 EventId = Guid.NewGuid(),
@@ -784,6 +784,16 @@ public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
                 SeedId = garden.SeedId
             }, cancellationToken);
 
+        await _clientEventPublisher.PublishToSessionAsync(body.SessionId.ToString(),
+            new GardenerScenarioStartedClientEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                ScenarioInstanceId = scenarioInstanceId,
+                ScenarioTemplateId = body.ScenarioTemplateId,
+                GameSessionId = gameSession.SessionId
+            });
+
         // Notify Puppetmaster if available (L4 soft dependency)
         var puppetmasterClient = _serviceProvider.GetService<IPuppetmasterClient>();
         if (puppetmasterClient != null && template.Content?.BehaviorDocumentId != null)
@@ -889,6 +899,15 @@ public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
                 WebSocketSessionId = body.SessionId,
                 GrowthAwarded = growthAwarded
             }, cancellationToken);
+
+        await _clientEventPublisher.PublishToSessionAsync(body.SessionId.ToString(),
+            new GardenerScenarioCompletedClientEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                ScenarioInstanceId = scenario.ScenarioInstanceId,
+                GrowthAwarded = (float)growthAwarded.Values.Sum()
+            });
 
         _logger.LogInformation(
             "Scenario {ScenarioId} completed for account {AccountId}, growth awarded in {DomainCount} domains",

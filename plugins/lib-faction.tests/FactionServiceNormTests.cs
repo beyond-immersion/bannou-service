@@ -89,6 +89,28 @@ public class FactionServiceNormTests : ServiceTestBase<FactionServiceConfigurati
         _mockStateStoreFactory.Setup(f => f.GetStore<GovernanceEntryListModel>(StateStoreDefinitions.FactionGovernance)).Returns(_mockGovernanceListStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<CachedGovernanceResolution>(StateStoreDefinitions.FactionCache)).Returns(_mockGovernanceCacheStore.Object);
 
+        // Default member query store setup (needed by InvalidateNormCacheForFactionAsync)
+        _mockMemberQueryStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<FactionMemberModel>(
+                Array.Empty<JsonQueryResult<FactionMemberModel>>(), 0, 0, 20));
+
+        // Default faction query store setup (needed by QueryApplicableNorms baseline lookup)
+        _mockFactionQueryStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<FactionModel>(
+                Array.Empty<JsonQueryResult<FactionModel>>(), 0, 0, 1));
+
         // Default message bus setup
         _mockMessageBus
             .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))

@@ -14,6 +14,7 @@ Variable providers supply entity data to behavior expressions via the
 | `${affix.*}` | Affix | Item affix data for NPC GOAP evaluation of equipment quality (${affix.*}) |
 | `${backstory.*}` | CharacterHistory | Character backstory elements for ABML expressions (${backstory.*}) |
 | `${combat.*}` | CharacterPersonality | Combat preference data for ABML expressions (${combat.*}) |
+| `${craft.*}` | Craft | Crafting proficiency, material availability, station proximity, and recipe eligibility for NPC GOAP decisions (${craft.*}) |
 | `${currency.*}` | Currency | Currency balance and wallet data for ABML expressions (${currency.*}) |
 | `${encounters.*}` | CharacterEncounter | Encounter history and sentiment for ABML expressions (${encounters.*}) |
 | `${environment.*}` | Environment | Weather, temperature, atmospheric conditions, and resource availability for ABML expressions (${environment.*}) |
@@ -30,7 +31,7 @@ Variable providers supply entity data to behavior expressions via the
 | `${transit.*}` | Transit | Transit mode availability, journey state, and route data for ABML expressions (${transit.*}) |
 | `${world.*}` | Worldstate | Game time, calendar, and season data for ABML expressions (${world.*}) |
 
-**Total**: 18 providers
+**Total**: 19 providers
 
 ## How Providers Work
 

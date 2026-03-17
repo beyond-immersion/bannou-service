@@ -90,6 +90,17 @@ public class FactionServiceCleanupTests : ServiceTestBase<FactionServiceConfigur
         _mockStateStoreFactory.Setup(f => f.GetStore<GovernanceEntryModel>(StateStoreDefinitions.FactionGovernance)).Returns(_mockGovernanceStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<GovernanceEntryListModel>(StateStoreDefinitions.FactionGovernance)).Returns(_mockGovernanceListStore.Object);
 
+        // Default member query store setup (needed by InvalidateNormCacheForFactionAsync)
+        _mockMemberQueryStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<FactionMemberModel>(
+                Array.Empty<JsonQueryResult<FactionMemberModel>>(), 0, 0, 20));
+
         // Default message bus setup
         _mockMessageBus
             .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
@@ -486,9 +497,9 @@ public class FactionServiceCleanupTests : ServiceTestBase<FactionServiceConfigur
     }
 
     [Fact]
-    public async Task RestoreFromArchiveAsync_InvalidData_ReturnsBadRequest()
+    public async Task RestoreFromArchiveAsync_InvalidData_ThrowsJsonException()
     {
-        // Arrange
+        // Arrange — invalid JSON propagates to generated controller catch-all per T7
         var service = CreateService();
         var request = new RestoreFromArchiveRequest
         {
@@ -496,12 +507,9 @@ public class FactionServiceCleanupTests : ServiceTestBase<FactionServiceConfigur
             Data = "not valid json {{{",
         };
 
-        // Act
-        var (status, response) = await service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken);
-
-        // Assert
-        Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.Null(response);
+        // Act & Assert — JsonException propagates (controller boundary returns 500)
+        await Assert.ThrowsAsync<System.Text.Json.JsonException>(
+            () => service.RestoreFromArchiveAsync(request, TestContext.Current.CancellationToken));
     }
 
     #endregion

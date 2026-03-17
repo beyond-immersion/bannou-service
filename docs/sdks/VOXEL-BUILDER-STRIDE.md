@@ -4,9 +4,10 @@
 > **Location**: `sdks/voxel-builder-stride/` (planned)
 > **Layer**: Bridge
 > **Domain**: Voxel
-> **Dependencies**: voxel-builder (-> voxel-core), Stride.Engine, Stride.Graphics
+> **Dependencies**: voxel-builder (-> voxel-core), Stride.Engine 4.3, Stride.Rendering, Stride.Physics
 > **Status**: Aspirational — no code exists.
-> **Short**: Stride engine bridge for voxel rendering — interleaved vertex structs, byte-color zero-copy, per-chunk MeshDraw with optional GPU compute meshing
+> **Implementation Map**: [docs/sdks/maps/VOXEL-BUILDER-STRIDE.md](maps/VOXEL-BUILDER-STRIDE.md)
+> **Short**: Stride engine bridge for voxel rendering — built-in VertexPositionNormalColor, byte-color zero-copy, per-chunk Entity with MeshDraw, SetData buffer updates
 
 ---
 
@@ -14,9 +15,9 @@
 
 voxel-builder-stride is the **primary engine bridge** for the voxel domain. Stride is the first-priority engine, so this bridge is optimized for zero-copy paths wherever possible. The key advantage: Stride's `Color` struct is 4 bytes RGBA (byte-based), matching our `MeshData.Colors` exactly — no conversion needed for vertex colors. Stride's coordinate system (right-handed, Y-up, CCW front-face) also matches voxel-core exactly — no winding flips or axis swaps.
 
-The bridge packs voxel-core's separate-array MeshData into Stride's interleaved vertex structs (`VertexPositionNormalTexture` or a custom `VertexPositionNormalColorTexture` with byte Color), uploads to GPU buffers via `Buffer.Vertex.New()`, and manages per-chunk `MeshInstance` entities in the scene.
+The bridge uses Stride's **built-in `VertexPositionNormalColor`** (28 bytes: Vector3 + Vector3 + Color) — no custom vertex struct needed. Per-vertex color is the correct rendering model for blocky voxels: each face gets a flat color from the palette. UVs and palette atlas textures are a future refinement for when per-face texture detail is desired, but are not needed for correct palette-colored voxel rendering.
 
-Follows the same pattern as scene-composer-stride: thin translation layer converting engine-agnostic SDK output to engine-native rendering.
+Follows the same pattern as scene-composer-stride: thin translation layer converting engine-agnostic SDK output to engine-native rendering. Constructor takes `Scene`, `CameraComponent`, `GraphicsDevice`, and an optional `CommandList` provider for buffer uploads.
 
 ---
 
@@ -34,12 +35,12 @@ Follows the same pattern as scene-composer-stride: thin translation layer conver
 
 | Type | Kind | Purpose |
 |------|------|---------|
-| `StrideVoxelBuilderBridge` | Class | IVoxelBuilderBridge implementation. Manages per-chunk mesh entities. |
-| `StrideChunkRenderer` | Class | Per-chunk Entity with ModelComponent. Packs MeshData into interleaved vertex buffers. |
-| `StrideVoxelInput` | Class | Mouse ray -> VoxelCoord picking via camera projection + DDA. |
-| `StridePaletteAtlas` | Class | Generates Stride Texture from Palette entries for material rendering. |
-| `StrideVoxelMaterial` | Class | Material setup: palette atlas texture, optional PBR from MaterialType/Roughness. |
-| `StrideTypeConverter` | Static class | SDK types <-> Stride types. Color is zero-copy. Vertices pack into interleaved structs. |
+| `StrideVoxelBuilderBridge` | Class | IVoxelBuilderBridge implementation. Manages per-chunk Entity lifecycle and mouse picking (`ScreenToVoxel` via `Viewport.Unproject` + DDA). |
+| `StrideChunkRenderer` | Internal class | Per-chunk Entity with ModelComponent. Interleaves MeshData → `VertexPositionNormalColor[]` → GPU Buffer. Handles buffer resize on Update. |
+| `StrideVoxelMaterial` | Static class | Creates a vertex-color material at runtime via `ComputeVertexStreamColor` + `MaterialDiffuseMapFeature` + `Material.New()`. |
+| `StrideTypeConverter` | Static class | SDK types ↔ Stride types. Color is zero-copy. Follows scene-composer-stride's using-alias pattern. |
+
+**Removed from original design**: `StridePaletteAtlas` — not needed when using `VertexPositionNormalColor` (vertex colors carry palette data directly, no texture atlas). The atlas approach becomes relevant when/if we add a UV-based rendering path for texture detail.
 
 ---
 
@@ -49,14 +50,19 @@ Follows the same pattern as scene-composer-stride: thin translation layer conver
 
 ```
 StrideVoxelBuilderBridge : IVoxelBuilderBridge
-├── rootEntity: Entity                 // Parent entity for all chunk meshes
+├── scene: Scene                       // Stride scene (from constructor, same as scene-composer-stride)
+├── camera: CameraComponent            // For picking (from constructor)
+├── graphicsDevice: GraphicsDevice     // For buffer creation
+├── commandListProvider: Func<CommandList>  // Provides CommandList for SetData uploads
 ├── chunkRenderers: Dictionary<ChunkCoord, StrideChunkRenderer>
 ├── mesher: IMesher                    // Current meshing strategy
-├── paletteAtlas: StridePaletteAtlas   // Current palette texture + material
+├── sharedMaterial: Material           // Vertex-color material (created once by StrideVoxelMaterial)
 ├── voxelScale: float                  // World units per voxel
 ├── grid: VoxelGrid?                   // Reference to current grid
-└── graphicsDevice: GraphicsDevice     // Stride GPU device for buffer creation
+└── rootEntity: Entity                 // Parent entity for all chunk meshes
 ```
+
+**CommandList access pattern**: Stride's `Buffer.SetData()` requires a `CommandList`, which is only available during the game update/render loop (via `Game.GraphicsContext.CommandList`). The bridge constructor takes a `Func<CommandList>` provider rather than a static CommandList reference, since the CommandList may change between frames. In a typical SyncScript, this is `() => Game.GraphicsContext.CommandList`. In tests or headless mode, a mock provider can be used.
 
 ### StrideChunkRenderer
 
@@ -64,33 +70,30 @@ StrideVoxelBuilderBridge : IVoxelBuilderBridge
 StrideChunkRenderer
 ├── entity: Entity                     // Stride scene entity
 ├── modelComponent: ModelComponent     // Model with mesh + material
-├── mesh: Mesh                         // Generated mesh
-├── vertexBuffer: Buffer               // GPU vertex buffer (interleaved)
-├── indexBuffer: Buffer?               // GPU index buffer (32-bit)
+├── vertexBuffer: Buffer<VertexPositionNormalColor>  // GPU vertex buffer
+├── indexBuffer: Buffer<uint>          // GPU index buffer (32-bit)
+├── meshDraw: MeshDraw                 // Describes the draw call
 └── chunkCoord: ChunkCoord             // Which chunk this renders
 ```
 
-### Vertex Struct
+**Buffer lifecycle**: Vertex and index buffers are GPU resources that must be disposed when a chunk is removed or updated. On update, new buffers are created and old ones disposed (full re-upload pattern per Stride conventions — `SetData()` on existing buffers is the standard approach for chunk-sized meshes).
 
-The bridge defines a custom interleaved vertex struct that includes position, normal, UV, and color:
+---
 
-```
-StrideVoxelVertex (36 bytes, StructLayout Sequential Pack=4)
-├── Position: Vector3       // 12 bytes (float3)
-├── Normal: Vector3         // 12 bytes (float3)
-├── TexCoord: Vector2       // 8 bytes (float2)
-└── Color: Color            // 4 bytes (byte RGBA) — zero-copy from MeshData.Colors
-```
+## Established Patterns (from scene-composer-stride)
 
-This is more efficient than using `VertexPositionNormalTexture` (32 bytes, no color) and a separate color buffer. The custom vertex declaration registers all four attributes for the shader.
+The existing scene-composer-stride bridge establishes patterns we follow:
 
-When `MeshingOptions.CollisionMode` produced the MeshData (no UVs, no colors, no AO), the bridge falls back to a simpler vertex layout:
+| Pattern | scene-composer-stride | voxel-builder-stride |
+|---------|----------------------|---------------------|
+| Constructor params | `Scene`, `CameraComponent`, `GraphicsDevice` | Same + `Func<CommandList>` |
+| Type disambiguation | `using SdkColor = ...; using StrideColor = ...;` aliases | Same pattern |
+| Entity management | `ConcurrentDictionary<Guid, Entity>` | `Dictionary<ChunkCoord, StrideChunkRenderer>` |
+| Asset loading | Async via `IAssetLoader` | Not needed (mesh generated in-process) |
+| Transform application | `entity.Transform.Position/Rotation/Scale` | Chunk position only (no rotation/scale per chunk) |
+| Scene hierarchy | `parentEntity.AddChild(entity)` | `rootEntity.AddChild(chunkEntity)` |
 
-```
-StrideVoxelCollisionVertex (24 bytes)
-├── Position: Vector3       // 12 bytes
-└── Normal: Vector3         // 12 bytes
-```
+**Key difference**: Scene-composer loads pre-authored models via asset pipeline. Voxel-builder generates mesh geometry from voxel data in-process. There is no async asset loading — the mesh is computed from the VoxelChunk and uploaded to GPU buffers immediately.
 
 ---
 
@@ -101,49 +104,44 @@ StrideVoxelCollisionVertex (24 bytes)
 ```
 OnGridLoaded(grid)
   → Store grid reference, extract voxel scale from metadata
-  → Generate palette atlas texture from grid.Palette
-  → Create StrideVoxelMaterial (palette atlas + PBR parameters from MaterialType)
+  → Create shared vertex-color material via StrideVoxelMaterial.Create(graphicsDevice)
   → For each non-empty chunk in grid:
      CREATE StrideChunkRenderer:
        → Mesh chunk via current mesher → MeshData
-       → Pack MeshData into StrideVoxelVertex[] (interleaved)
-       → Upload: Buffer.Vertex.New(graphicsDevice, vertices)
-       → Upload: Buffer.Index.New(graphicsDevice, indices) (32-bit)
-       → Create Mesh with MeshDraw (PrimitiveType.TriangleList)
-       → Create Entity with ModelComponent, position at chunk world offset
-       → Add as child of rootEntity
+       → Interleave MeshData into VertexPositionNormalColor[] (bake AO into color)
+       → Create vertex buffer: Buffer.New<VertexPositionNormalColor>(graphicsDevice, vertices, BufferFlags.ShaderResource)
+       → Upload: vertexBuffer.SetData(commandList, vertices)
+       → Create index buffer: Buffer.New<uint>(graphicsDevice, indices, BufferFlags.ShaderResource)
+       → Upload: indexBuffer.SetData(commandList, indices)
+       → Create MeshDraw (PrimitiveType.TriangleList, VertexPositionNormalColor.Layout)
+       → Create Mesh → Model → ModelComponent
+       → Assign sharedMaterial to Model.Materials
+       → Create Entity, set Transform.Position to chunk world offset
+       → rootEntity.AddChild(entity)
 ```
 
-### Interleaving (MeshData → StrideVoxelVertex[])
+### Interleaving (MeshData → VertexPositionNormalColor[])
 
 ```
+CREATE vertices = new VertexPositionNormalColor[meshData.VertexCount]
 For each vertex i in MeshData:
-  vertex.Position = new Vector3(Vertices[i*3], Vertices[i*3+1], Vertices[i*3+2])
-  vertex.Normal = new Vector3(Normals[i*3], Normals[i*3+1], Normals[i*3+2])
-  IF UVs is not null:
-    vertex.TexCoord = new Vector2(UVs[i*2], UVs[i*2+1])
-  IF Colors is not null:
-    // ZERO-COPY: MeshData.Colors byte[] maps directly to Stride's Color (4 bytes RGBA)
-    vertex.Color = new Color(Colors[i*4], Colors[i*4+1], Colors[i*4+2], Colors[i*4+3])
+  var position = new Vector3(Vertices[i*3], Vertices[i*3+1], Vertices[i*3+2])
+  var normal = new Vector3(Normals[i*3], Normals[i*3+1], Normals[i*3+2])
+
+  // Color: zero-copy byte → Stride Color (4-byte RGBA constructor)
+  byte r = Colors[i*4], g = Colors[i*4+1], b = Colors[i*4+2], a = Colors[i*4+3]
+
+  // Bake AO into vertex color if present
+  IF AmbientOcclusion is not null:
+    float ao = AmbientOcclusion[i]
+    r = (byte)(r * ao)
+    g = (byte)(g * ao)
+    b = (byte)(b * ao)
+
+  vertices[i] = new VertexPositionNormalColor(position, normal, new Color(r, g, b, a))
 ```
 
-The color assignment is the cheapest possible — Stride's `Color` constructor takes 4 bytes, and our MeshData stores 4 bytes per vertex color. No float conversion.
-
-### AO Application
-
-Stride does not have a built-in per-vertex AO channel like Godot's ARRAY_CUSTOM0. AO is applied by **modulating the vertex color** during interleaving:
-
-```
-IF AmbientOcclusion is not null:
-  ao = AmbientOcclusion[i]
-  vertex.Color = new Color(
-    (byte)(Colors[i*4] * ao),
-    (byte)(Colors[i*4+1] * ao),
-    (byte)(Colors[i*4+2] * ao),
-    Colors[i*4+3])  // Alpha unchanged
-```
-
-This bakes AO into the vertex color. The material shader uses `VertexColorUseAsAlbedo` to multiply vertex color into the albedo. The result is visually identical to a separate AO channel — concave corners darken, exposed faces stay bright.
+Using built-in `VertexPositionNormalColor` (28 bytes) means no custom `IVertex` implementation, no custom `VertexDeclaration`, and compatibility with all standard Stride shaders that read `COLOR0`.
 
 ### Incremental Update
 
@@ -151,22 +149,29 @@ This bakes AO into the vertex color. The material shader uses `VertexColorUseAsA
 OnChunksModified(dirtyCoords)
   → For each dirty ChunkCoord:
      IF chunk is now empty AND renderer exists:
-       Dispose renderer (remove Entity, release GPU buffers)
+       Dispose renderer (remove Entity from scene, dispose GPU buffers)
      ELSE IF chunk is non-empty AND renderer exists:
-       Re-mesh chunk → re-pack into vertex array → update GPU buffer in-place
-       (Stride supports buffer mapping for sub-resource updates)
+       Re-mesh chunk → interleave → vertexBuffer.SetData(commandList, newVertices)
+       Update meshDraw.DrawCount if vertex/index count changed
+       (If count increased beyond buffer capacity: dispose old buffers, create new ones)
      ELSE IF chunk is non-empty AND no renderer:
-       CREATE new StrideChunkRenderer
+       CREATE new StrideChunkRenderer (same as Grid Load path)
   → Also update neighbor chunk renderers (boundary faces may have changed)
 ```
+
+**Buffer update strategy**: `SetData()` for full re-upload is the standard Stride pattern. Buffer mapping for partial updates exists but is rarely used — the GPU round-trip overhead makes full re-upload often faster for typical chunk sizes (~500-5000 vertices). If vertex count changes, the buffer must be recreated (Stride buffers are fixed-size at creation).
 
 ### Mouse Picking
 
 ```
 ScreenToVoxel(screenPos)
-  → Get CameraComponent from scene
-  → Unproject screen position to world ray via camera's ViewProjection matrix
-  → Convert world ray to grid-local space (rootEntity.Transform inverse)
+  → Get Viewport from graphicsDevice.Presenter.BackBuffer dimensions
+  → Unproject near point: Viewport.Unproject(
+      new Vector3(screenX, screenY, 0),
+      camera.ProjectionMatrix, camera.ViewMatrix, Matrix.Identity)
+  → Unproject far point: same with Z=1
+  → Compute ray: origin=nearPoint, direction=Normalize(farPoint-nearPoint)
+  → Transform ray to grid-local space via rootEntity.Transform inverse
   → Divide by voxelScale to get voxel-space ray
   → DDA raycast through grid via VoxelRay.Cast
   → Return hit coordinate or null
@@ -176,7 +181,7 @@ ScreenToVoxel(screenPos)
 
 ## Determinism Contract
 
-No determinism contract — rendering varies by GPU/platform. SDK types (MeshData, VoxelCoord) are deterministic; only GPU-specific rendering output is non-deterministic.
+No determinism contract — rendering varies by GPU/platform.
 
 ---
 
@@ -184,76 +189,78 @@ No determinism contract — rendering varies by GPU/platform. SDK types (MeshDat
 
 | Operation | Target | Context | Notes |
 |-----------|--------|---------|-------|
-| Single chunk mesh update | < 2 ms | Client | Re-mesh + interleave + GPU upload |
+| Single chunk mesh update | < 2 ms | Client | Re-mesh + interleave + SetData upload |
 | Full grid load (100 chunks) | < 200 ms | Client | Initial mesh generation |
-| Vertex interleaving (1 chunk) | < 0.5 ms | Client | MeshData → StrideVoxelVertex[] |
-| Color packing | ~0 | Client | Zero-copy byte[] → Color constructor |
-| Mouse picking | < 50 us | Client | Camera unproject + DDA |
-| Palette atlas rebuild | < 1 ms | Client | 16x16 texture creation |
+| Vertex interleaving (1 chunk, ~2000 verts) | < 0.3 ms | Client | Array fill, zero-copy color |
+| Color packing | ~0 | Client | Zero-copy byte[] → Color(r,g,b,a) constructor |
+| Mouse picking | < 50 us | Client | Viewport.Unproject + DDA |
 
 ### Future: GPU Compute Meshing
 
-The stride-marching-cubes reference implementation demonstrates GPU compute meshing via `ComputeEffectShader`. This is a future optimization path where the mesher runs entirely on the GPU:
-
-```
-VoxelChunk data → StructuredBuffer → Compute Shader (meshing) → VertexBuffer (output)
-```
-
-This bypasses CPU meshing and vertex interleaving entirely. The bridge would upload raw chunk data to a `RWStructuredBuffer`, dispatch a compute shader that implements CulledMesher/GreedyMesher in SDSL, and bind the output buffer directly as the mesh's vertex buffer. No CPU→GPU vertex data transfer.
-
-This is architecturally compatible with our design (the bridge chooses between CPU mesher + upload vs. GPU compute mesher), but implementation is deferred until the CPU path proves to be a bottleneck.
+The stride-marching-cubes reference project demonstrates GPU compute meshing via `ComputeEffectShader` with `RWStructuredBuffer` output bound directly as the vertex buffer. This bypasses CPU meshing and interleaving entirely. Architecturally compatible with our design (the bridge chooses CPU vs GPU path), but deferred until the CPU path proves to be a bottleneck.
 
 ---
 
 ## Engine-Specific Patterns
 
-### Buffer Creation
+### Buffer Creation and Upload
 
 ```csharp
-// Vertex buffer from interleaved struct array
-var vertexBuffer = Buffer.Vertex.New(graphicsDevice, vertices, GraphicsResourceUsage.Default);
-var vertexBinding = new VertexBufferBinding(vertexBuffer, StrideVoxelVertex.Layout, vertices.Length);
+// Vertex buffer from interleaved struct array (built-in type, no custom vertex needed)
+var vertexBuffer = Buffer.New<VertexPositionNormalColor>(
+    graphicsDevice, vertexCount,
+    BufferFlags.ShaderResource);
+vertexBuffer.SetData(commandList, vertices);
 
-// Index buffer (32-bit)
-var indexBuffer = Buffer.Index.New(graphicsDevice, indices);
-var indexBinding = new IndexBufferBinding(indexBuffer, is32Bit: true, count: indices.Length);
+// Index buffer (32-bit uint)
+var indexBuffer = Buffer.New<uint>(
+    graphicsDevice, indexCount,
+    BufferFlags.ShaderResource);
+indexBuffer.SetData(commandList, indices);
 
 // Assemble MeshDraw
 var meshDraw = new MeshDraw
 {
     PrimitiveType = PrimitiveType.TriangleList,
-    DrawCount = indices.Length,
-    VertexBuffers = new[] { vertexBinding },
-    IndexBuffer = indexBinding
+    DrawCount = indexCount,
+    VertexBuffers = new[] {
+        new VertexBufferBinding(vertexBuffer, VertexPositionNormalColor.Layout, vertexCount)
+    },
+    IndexBuffer = new IndexBufferBinding(indexBuffer, is32Bit: true, indexCount)
 };
 ```
 
-### Vertex Declaration
+### Entity Assembly
 
 ```csharp
-public static readonly VertexDeclaration Layout = new VertexDeclaration(
-    VertexElement.Position<Vector3>(),
-    VertexElement.Normal<Vector3>(),
-    VertexElement.TextureCoordinate<Vector2>(),
-    VertexElement.Color<Color>()
-);
+// Create mesh → model → entity
+var mesh = new Mesh { Draw = meshDraw, MaterialIndex = 0 };
+var model = new Model { Meshes = { mesh } };
+model.Materials.Add(sharedMaterial);
+
+var entity = new Entity($"Chunk_{coord.X}_{coord.Y}_{coord.Z}");
+entity.GetOrCreate<ModelComponent>().Model = model;
+entity.Transform.Position = new Vector3(
+    coord.X * 16 * voxelScale,
+    coord.Y * 16 * voxelScale,
+    coord.Z * 16 * voxelScale);
+rootEntity.AddChild(entity);
 ```
 
-### Material Setup
+### Type Converter (using-alias pattern from scene-composer-stride)
 
 ```csharp
-// Palette atlas material with PBR support
-var material = Material.New(graphicsDevice, new MaterialDescriptor
-{
-    Attributes =
-    {
-        Diffuse = new MaterialDiffuseMapFeature(new ComputeTextureColor(paletteTexture)),
-        DiffuseModel = new MaterialDiffuseLambertModelFeature(),
-        MicroSurface = new MaterialGlossinessMapFeature(/* from PaletteEntry.Roughness */),
-    }
-});
-// Enable vertex color blending
-material.Passes[0].Parameters.Set(MaterialKeys.HasVertexColor, true);
+using SdkColor = BeyondImmersion.Bannou.VoxelCore.Grid.Color;
+using StrideColor = Stride.Core.Mathematics.Color;
+using StrideVec3 = Stride.Core.Mathematics.Vector3;
+using VoxelCoord = BeyondImmersion.Bannou.VoxelCore.Math.VoxelCoord;
+
+// SDK Color → Stride Color (zero-copy: both are 4 bytes RGBA)
+public static StrideColor ToStride(this SdkColor c) => new(c.R, c.G, c.B, c.A);
+
+// SDK VoxelCoord → Stride Vector3 (with scale)
+public static StrideVec3 ToStride(this VoxelCoord c, float scale) =>
+    new(c.X * scale, c.Y * scale, c.Z * scale);
 ```
 
 ---
@@ -262,19 +269,33 @@ material.Passes[0].Parameters.Set(MaterialKeys.HasVertexColor, true);
 
 #### Intentional Quirks (Documented Behavior)
 
-- **AO baked into vertex colors.** Unlike Godot (which has ARRAY_CUSTOM channels), Stride's standard material pipeline doesn't expose custom per-vertex attributes without a custom shader. AO is multiplied into the RGB vertex color during interleaving. This is visually correct but means you can't separate AO from material color after baking. If a future use case needs separate AO (e.g., dynamic time-of-day AO scaling), a custom SDSL shader with an extra vertex attribute would be needed.
+- **Uses built-in `VertexPositionNormalColor`, not a custom vertex struct.** The earlier design proposed a custom 36-byte struct with UV. Research confirmed Stride has a built-in 28-byte `VertexPositionNormalColor` in `Stride.Graphics` that is sufficient for palette-colored voxel rendering. Per-vertex color IS the correct rendering model for blocky voxels. A palette atlas texture (requiring UVs) is a future refinement for per-face texture detail — not needed for correct initial rendering.
 
-- **Custom vertex struct, not standard VertexPositionNormalTexture.** We define `StrideVoxelVertex` (36 bytes) instead of using Stride's built-in `VertexPositionNormalTexture` (32 bytes, no color). This is because voxel rendering needs per-vertex color for palette visualization. The custom struct is registered with Stride's vertex declaration system and works with standard shaders that read `COLOR0`.
+- **AO baked into vertex colors.** Stride's standard material pipeline doesn't expose custom per-vertex attributes without a custom SDSL shader. AO is multiplied into the RGB vertex color during interleaving. Visually correct — concave corners darken, exposed faces stay bright. If future use cases need separate AO (dynamic time-of-day scaling), a custom shader with an extra vertex attribute would be needed.
+
+- **Full buffer re-upload on chunk update, not partial mapping.** `SetData()` re-uploads the entire vertex array. This is the standard Stride pattern and is fast enough for chunk-sized meshes (~500-5000 vertices). Buffer mapping for partial updates exists in Stride but is rarely used and adds complexity. If a chunk's vertex count changes, the buffer must be recreated anyway (Stride buffers are fixed-size at creation).
 
 #### Design Considerations (Requires Planning)
 
-- **GPU buffer update strategy**: When a single chunk is modified, should the bridge: (a) recreate the entire GPU buffer, (b) map and update the sub-region, or (c) double-buffer (write to staging, copy to GPU)? Option (a) is simplest and fine for small chunk meshes. Option (b) is optimal for frequent edits. Start with (a), profile, switch to (b) if chunk updates cause frame drops.
+- **Runtime material creation for vertex colors — RESOLVED**: Stride's `ComputeVertexStreamColor` class (in `Stride.Rendering.Materials.ComputeColors`) reads the `COLOR0` vertex attribute via `ColorVertexStreamDefinition`. Wrapping it in `MaterialDiffuseMapFeature` and compiling via `Material.New(GraphicsDevice, MaterialDescriptor)` produces a fully functional vertex-color material at runtime — no Game Studio assets or custom shaders needed. Stride's shader compiler generates the correct `ComputeColorFromStream.sdsl` shader that reads `streams.LocalColor` and saturates to [0,1]. The `ComputeVertexStreamColor` implements `IComputeColor`, so it can be plugged into any material feature slot (diffuse, emissive, etc.). Future MaterialType support (Metal=metallic, Glass=transparent, Emit=emissive) would use additional `ComputeVertexStreamColor` instances or computed values in the corresponding material feature slots.
+
+- **Concave collision for voxel chunks**: `ConvexHullColliderShape` wraps the mesh in a convex hull — wrong for voxel terrain where the player should collide with the actual surface, not the bounding hull. Stride's Bepu Physics backend may support triangle mesh static colliders (`StaticMeshColliderShape` or similar), but this needs investigation. Alternative: DDA raycast for mouse picking (no physics collision needed for voxel selection), with physics collision deferred to a separate collider mesh if gameplay requires it.
+
+- **net10.0 target framework**: Stride 4.3 requires net10.0 (with `-windows` TFM on Windows for GPU API access, plain net10.0 on other platforms for CI). The csproj must use conditional `TargetFramework` like scene-composer-stride. This means voxel-builder-stride has a different TFM from voxel-core (net8.0/net9.0) — the project reference works because net10.0 can reference net8.0/net9.0 assemblies.
 
 ---
 
 ## Open Questions
 
-1. **MaterialType→PBR mapping**: Stride's material system is fully PBR. The PaletteEntry's MaterialType (Diffuse/Metal/Glass/Emit/Cloud) and Roughness map naturally to Stride's material attributes, but the exact mapping needs validation. Metal should set metallic=1.0 + the palette color as specular. Glass needs transparency. Emit needs emissive contribution. This is material authoring work, not SDK architecture.
+1. **Concave static collision**: Does Stride's Bepu Physics support `MeshColliderShape` or `TriangleMeshColliderShape` for static colliders from vertex/index data? If not, the alternative is no engine-level collision and purely SDK-side DDA raycasting for voxel selection. Gameplay collision (character walking on voxel terrain) would then need a heightmap-based collider or manual collision from the voxel grid data. Investigation path: `~/repos/stride/sources/engine/Stride.Physics/` for collider shape types.
+
+2. **Buffer disposal timing**: When a chunk is updated (new mesh generated), the old GPU buffers must be disposed. Can buffers be disposed immediately after creating new ones, or must disposal wait until the GPU has finished rendering the previous frame? The march-cubes example disposes and recreates buffers without explicit synchronization — suggesting Stride handles deferred resource destruction internally. Needs verification against `~/repos/stride/sources/engine/Stride.Graphics/GraphicsResource.cs`.
+
+3. **Multiple materials per chunk**: Voxel chunks with both opaque and transparent voxels (Glass MaterialType) may need separate draw calls with different materials (one opaque, one transparent with alpha blending). This is a future concern — initial implementation uses a single opaque material for all chunks.
+
+## Resolved Questions
+
+1. **Vertex-color material API — RESOLVED**: `ComputeVertexStreamColor` with `ColorVertexStreamDefinition(0)` wrapped in `MaterialDiffuseMapFeature`, compiled via `Material.New(GraphicsDevice, MaterialDescriptor)`. No custom shaders or Game Studio assets needed. See implementation map § StrideVoxelMaterial.Create for full pseudo-code.
 
 ---
 

@@ -1,0 +1,54 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Stride 4.3 requires .NET 10. Uses -windows TFM on Windows, plain net10.0 on other platforms for CI -->
+    <TargetFramework Condition="$([MSBuild]::IsOSPlatform('Windows'))">net10.0-windows</TargetFramework>
+    <TargetFramework Condition="!$([MSBuild]::IsOSPlatform('Windows'))">net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>12.0</LangVersion>
+
+    <!-- SDK Naming: PackageId, RootNamespace, AssemblyName must match -->
+    <PackageId>BeyondImmersion.Bannou.VoxelBuilder.Stride</PackageId>
+    <RootNamespace>BeyondImmersion.Bannou.VoxelBuilder.Stride</RootNamespace>
+    <AssemblyName>BeyondImmersion.Bannou.VoxelBuilder.Stride</AssemblyName>
+
+    <!-- SDK Version: CI overrides with -p:Version=x.y.z or -p:VersionSuffix=preview.123 -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+
+    <!-- NuGet Package Metadata -->
+    <Authors>BeyondImmersion</Authors>
+    <Description>Stride engine bridge for the Bannou VoxelBuilder SDK. Provides IVoxelBuilderBridge implementation with per-chunk Entity lifecycle, VertexPositionNormalColor vertex buffers, vertex-color material, and DDA mouse picking.</Description>
+    <PackageTags>bannou;stride;voxel;rendering;meshing;gamedev</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/beyond-immersion/bannou-service</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/beyond-immersion/bannou-service</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <!-- Build settings -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BeyondImmersion.Bannou.VoxelBuilder.Stride.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Stride Engine packages -->
+    <PackageReference Include="Stride.Engine" Version="4.3.0.2507" />
+    <PackageReference Include="Stride.Rendering" Version="4.3.0.2507" />
+    <PackageReference Include="Stride.Physics" Version="4.3.0.2507" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reference the engine-agnostic VoxelBuilder SDK (includes voxel-core transitively) -->
+    <ProjectReference Include="../voxel-builder/BeyondImmersion.Bannou.VoxelBuilder.csproj" />
+  </ItemGroup>
+
+</Project>

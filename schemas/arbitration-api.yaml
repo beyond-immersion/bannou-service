@@ -842,22 +842,6 @@ components:
     # Shared Data Types
     # ==========================================================================
 
-    EntityReference:
-      type: object
-      additionalProperties: false
-      description: Reference to a polymorphic Bannou entity by ID and type
-      required:
-        - entityId
-        - entityType
-      properties:
-        entityId:
-          type: string
-          format: uuid
-          description: Unique identifier of the referenced entity
-        entityType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
-          description: Type of the referenced entity
-
     ConsequenceManifestEntry:
       type: object
       additionalProperties: false
@@ -1093,8 +1077,6 @@ components:
         - contractId
         - templateCode
         - jurisdictionChallenged
-        - petitioner
-        - respondent
         - createdAt
       properties:
         caseId:
@@ -1124,14 +1106,24 @@ components:
           format: uuid
           nullable: true
           description: Jurisdictional sovereign faction. Nullable due to DETACH cleanup.
-        petitioner:
-          $ref: '#/components/schemas/EntityReference'
+        petitionerEntityId:
+          type: string
+          format: uuid
           nullable: true
-          description: Petitioner party reference. Nullable due to DETACH cleanup of character.
-        respondent:
-          $ref: '#/components/schemas/EntityReference'
+          description: Petitioner entity ID. Nullable due to DETACH cleanup of character.
+        petitionerEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
-          description: Respondent party reference. Nullable due to DETACH cleanup of character.
+          description: Type of the petitioner entity
+        respondentEntityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Respondent entity ID. Nullable due to DETACH cleanup of character.
+        respondentEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
+          description: Type of the respondent entity
         arbiterEntityId:
           type: string
           format: uuid
@@ -1184,7 +1176,8 @@ components:
         - caseId
         - evidenceType
         - content
-        - submittingParty
+        - submittingPartyEntityId
+        - submittingPartyEntityType
         - submissionTimestamp
       properties:
         evidenceId:
@@ -1201,9 +1194,13 @@ components:
         content:
           $ref: '#/components/schemas/EvidenceContent'
           description: Typed evidence content
-        submittingParty:
-          $ref: '#/components/schemas/EntityReference'
-          description: Entity that submitted this evidence
+        submittingPartyEntityId:
+          type: string
+          format: uuid
+          description: Entity ID of the party that submitted this evidence
+        submittingPartyEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Type of the submitting party entity
         submissionTimestamp:
           type: string
           format: date-time

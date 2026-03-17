@@ -1,0 +1,631 @@
+openapi: 3.0.4
+info:
+  title: Arbitration Service Events
+  description: |
+    AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.
+    DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py
+    Source: arbitration-service-events.yaml
+
+    Event models for Arbitration service RabbitMQ pub/sub via lib-messaging.
+    Lifecycle events (Created, Updated, Deleted) are auto-generated from x-lifecycle
+    for ArbitrationCase entities. Custom events cover case filing, closure, evidence,
+    hearings, rulings, arbiter management, and jurisdiction challenges.
+
+    **Topic Naming**: Uses Pattern C dot-separated format (arbitration.case.filed).
+
+    **Cross-Service Integration**:
+    - Subscribes to contract milestone/fulfillment/termination events for case lifecycle
+    - Subscribes to faction territory and governance events for jurisdiction cache invalidation
+    - Character/realm/faction/location cleanup handled via x-references + cleanup endpoints
+      (FOUNDATION TENETS: Resource-Managed Cleanup), NOT via deletion event subscriptions
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions:
+    # Contract lifecycle events for case state progression
+  - topic: contract.milestone.completed
+    event: ContractMilestoneCompletedEvent
+    handler: HandleMilestoneCompleted
+  - topic: contract.milestone.failed
+    event: ContractMilestoneFailedEvent
+    handler: HandleMilestoneFailed
+  - topic: contract.fulfilled
+    event: ContractFulfilledEvent
+    handler: HandleContractFulfilled
+  - topic: contract.terminated
+    event: ContractTerminatedEvent
+    handler: HandleContractTerminated
+    # Faction territory and governance events for jurisdiction cache invalidation
+  - topic: faction.territory.claimed
+    event: FactionTerritoryClaimedEvent
+    handler: HandleTerritoryClaimed
+  - topic: faction.territory.released
+    event: FactionTerritoryReleasedEvent
+    handler: HandleTerritoryReleased
+  - topic: faction.governance.defined
+    event: FactionGovernanceDefinedEvent
+    handler: HandleGovernanceDefined
+  - topic: faction.governance.deleted
+    event: FactionGovernanceDeletedEvent
+    handler: HandleGovernanceDeleted
+  - topic: faction.authority.delegated
+    event: FactionAuthorityDelegatedEvent
+    handler: HandleAuthorityDelegated
+  - topic: faction.authority.revoked
+    event: FactionAuthorityRevokedEvent
+    handler: HandleAuthorityRevoked
+  x-event-publications:
+    # ArbitrationCase lifecycle events (auto-generated from x-lifecycle, topic_prefix: arbitration)
+  - topic: arbitration.case.created
+    event: ArbitrationCaseCreatedEvent
+    description: Published when a new arbitration case is created via FileCase
+  - topic: arbitration.case.updated
+    event: ArbitrationCaseUpdatedEvent
+    description: Published when a case is updated (status change, arbiter assignment, jurisdiction challenge, etc.)
+  - topic: arbitration.case.deleted
+    event: ArbitrationCaseDeletedEvent
+    description: Published when a case record is permanently removed via cleanup
+    # Custom events - Case lifecycle
+  - topic: arbitration.case.filed
+    event: ArbitrationCaseFiledEvent
+    description: Published when a case is filed with accepted jurisdiction and created contract
+  - topic: arbitration.case.closed
+    event: ArbitrationCaseClosedEvent
+    description: Published when a case reaches a terminal closed state (withdrawal, dismissal, enforcement, cleanup)
+  - topic: arbitration.case.defaulted
+    event: ArbitrationCaseDefaultedEvent
+    description: Published when a respondent fails to respond within the deadline (default proceeding)
+    # Custom events - Procedural
+  - topic: arbitration.notice.confirmed
+    event: ArbitrationNoticeConfirmedEvent
+    description: Published when service of process is confirmed (respondent formally notified)
+  - topic: arbitration.evidence.submitted
+    event: ArbitrationEvidenceSubmittedEvent
+    description: Published when a party submits evidence
+  - topic: arbitration.hearing.completed
+    event: ArbitrationHearingCompletedEvent
+    description: Published when a hearing milestone is completed
+    # Custom events - Ruling
+  - topic: arbitration.ruling.issued
+    event: ArbitrationRulingIssuedEvent
+    description: Published when an arbiter issues a ruling with consequences
+  - topic: arbitration.ruling.appealed
+    event: ArbitrationRulingAppealedEvent
+    description: Published when a ruling is appealed
+  - topic: arbitration.ruling.enforced
+    event: ArbitrationRulingEnforcedEvent
+    description: Published when all ruling consequences have been successfully enforced
+    # Custom events - Arbiter
+  - topic: arbitration.arbiter.assigned
+    event: ArbitrationArbiterAssignedEvent
+    description: Published when an arbiter is assigned to a case
+  - topic: arbitration.arbiter.recused
+    event: ArbitrationArbiterRecusedEvent
+    description: Published when an arbiter recuses from a case
+  - topic: arbitration.arbiter.requested
+    event: ArbitrationArbiterRequestedEvent
+    description: Published when an external arbiter is requested (consumed by divine actors, cross-jurisdiction 
+      authorities)
+    # Custom events - Jurisdiction
+  - topic: arbitration.jurisdiction.challenged
+    event: ArbitrationJurisdictionChallengedEvent
+    description: Published when a party challenges jurisdictional authority
+
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/arbitration-service-lifecycle-events.yaml
+x-lifecycle:
+  topic_prefix: arbitration
+  ArbitrationCase:
+    model:
+      caseId: {type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the case"}
+      caseCode: {type: string, required: true, description: "Human-readable sequential case code"}
+      gameServiceId: {type: string, format: uuid, required: true, description: "Game service scope"}
+      caseType: {type: string, required: true, description: "Game-configurable dispute type code"}
+      status: {$ref: '../arbitration-api.yaml#/components/schemas/ArbitrationCaseStatus', required: true, description: "Current
+          case lifecycle status"}
+      locationId: {type: string, format: uuid, nullable: true, description: "Location where the case was filed (nullable:
+          DETACH cleanup)"}
+      sovereignFactionId: {type: string, format: uuid, nullable: true, description: "Jurisdictional sovereign faction (nullable:
+          DETACH cleanup)"}
+      petitionerEntityId: {type: string, format: uuid, nullable: true, description: "Petitioner entity ID (nullable: DETACH
+          cleanup)"}
+      petitionerEntityType:
+        $ref: '../common-api.yaml#/components/schemas/EntityType'
+        nullable: true
+        description: "Type of the petitioner entity"
+      respondentEntityId: {type: string, format: uuid, nullable: true, description: "Respondent entity ID (nullable: DETACH
+          cleanup)"}
+      respondentEntityType:
+        $ref: '../common-api.yaml#/components/schemas/EntityType'
+        nullable: true
+        description: "Type of the respondent entity"
+      arbiterEntityId: {type: string, format: uuid, nullable: true, description: "Assigned arbiter entity ID"}
+      arbiterEntityType:
+        $ref: '../common-api.yaml#/components/schemas/EntityType'
+        nullable: true
+        description: "Type of the assigned arbiter entity"
+      contractId: {type: string, format: uuid, required: true, description: "Underlying contract instance ID"}
+      templateCode: {type: string, required: true, description: "Procedural template code from governance data"}
+      rulingId: {type: string, format: uuid, nullable: true, description: "Ruling ID if issued"}
+      jurisdictionChallenged: {type: boolean, required: true, description: "Whether jurisdiction has been challenged"}
+      closedReason:
+        $ref: '../arbitration-api.yaml#/components/schemas/CaseClosedReason'
+        nullable: true
+        description: "Reason for case closure"
+    sensitive: [governanceParametersSnapshot]
+
+paths: {}  # Events don't have HTTP paths
+
+# Note: ArbitrationCaseCreatedEvent, ArbitrationCaseUpdatedEvent, ArbitrationCaseDeletedEvent
+# are auto-generated from x-lifecycle. See: schemas/Generated/arbitration-service-lifecycle-events.yaml
+
+components:
+  schemas:
+    # =========================================================================
+    # Custom Published Events (non-lifecycle)
+    # =========================================================================
+
+    ArbitrationCaseFiledEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a case is filed with accepted jurisdiction and a contract created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - caseId
+      - caseCode
+      - caseType
+      - locationId
+      - sovereignFactionId
+      - petitionerEntityId
+      - petitionerEntityType
+      - respondentEntityId
+      - respondentEntityType
+      - templateCode
+      properties:
+        eventName:
+          type: string
+          default: arbitration.case.filed
+          description: 'Event type identifier: arbitration.case.filed'
+        caseId:
+          type: string
+          format: uuid
+          description: Filed case ID
+        caseCode:
+          type: string
+          description: Human-readable case code
+        caseType:
+          type: string
+          description: Dispute type code
+        locationId:
+          type: string
+          format: uuid
+          description: Location where the case was filed
+        sovereignFactionId:
+          type: string
+          format: uuid
+          description: Jurisdictional sovereign faction
+        petitionerEntityId:
+          type: string
+          format: uuid
+          description: Entity ID of the petitioner
+        petitionerEntityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Type of the petitioner entity
+        respondentEntityId:
+          type: string
+          format: uuid
+          description: Entity ID of the respondent
+        respondentEntityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Type of the respondent entity
+        templateCode:
+          type: string
+          description: Procedural template code from governance data
+
+    ArbitrationCaseClosedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a case reaches a terminal closed state
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - caseId
+      - closedReason
+      properties:
+        eventName:
+          type: string
+          default: arbitration.case.closed
+          description: 'Event type identifier: arbitration.case.closed'
+        caseId:
+          type: string
+          format: uuid
+          description: Closed case ID
+        closedReason:
+          $ref: '../arbitration-api.yaml#/components/schemas/CaseClosedReason'
+          description: Reason the case was closed
+
+    ArbitrationCaseDefaultedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a respondent fails to respond within the deadline
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - caseId
+      - respondentEntityId
+      properties:
+        eventName:
+          type: string
+          default: arbitration.case.defaulted
+          description: 'Event type identifier: arbitration.case.defaulted'
+        caseId:
+          type: string
+          format: uuid
+          description: Case where the default occurred
+        respondentEntityId:
+          type: string
+          format: uuid
+          description: Entity ID of the defaulting respondent
+
+    ArbitrationNoticeConfirmedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when service of process is confirmed
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - caseId
+      properties:
+        eventName:
+          type: string
+          default: arbitration.notice.confirmed
+          description: 'Event type identifier: arbitration.notice.confirmed'
+        caseId:
+          type: string
+          format: uuid
+          description: Case where service was confirmed
+
+    ArbitrationEvidenceSubmittedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a party submits evidence for a case
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - evidenceId
+      - caseId
+      - submittingPartyEntityId
+      - evidenceType
+      properties:
+        eventName:
+          type: string
+          default: arbitration.evidence.submitted
+          description: 'Event type identifier: arbitration.evidence.submitted'
+        evidenceId:
+          type: string
+          format: uuid
+          description: Submitted evidence item ID
+        caseId:
+          type: string
+          format: uuid
+          description: Case the evidence was submitted for
+        submittingPartyEntityId:
+          type: string
+          format: uuid
+          description: Entity ID of the submitting party
+        evidenceType:
+          $ref: '../arbitration-api.yaml#/components/schemas/ArbitrationEvidenceType'
+          description: Category of evidence submitted
+
+    ArbitrationHearingCompletedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a hearing milestone is completed
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - caseId
+      properties:
+        eventName:
+          type: string
+          default: arbitration.hearing.completed
+          description: 'Event type identifier: arbitration.hearing.completed'
+        caseId:
+          type: string
+          format: uuid
+          description: Case where the hearing was completed
+
+    ArbitrationRulingIssuedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when an arbiter issues a ruling
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - rulingId
+      - caseId
+      - rulingType
+      - consequenceResults
+      properties:
+        eventName:
+          type: string
+          default: arbitration.ruling.issued
+          description: 'Event type identifier: arbitration.ruling.issued'
+        rulingId:
+          type: string
+          format: uuid
+          description: Issued ruling ID
+        caseId:
+          type: string
+          format: uuid
+          description: Case the ruling was issued for
+        arbiterEntityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Entity ID of the arbiter who issued the ruling
+        rulingType:
+          $ref: '../arbitration-api.yaml#/components/schemas/ArbitrationRulingType'
+          description: Outcome of the ruling
+        consequenceResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsequenceResult'
+          description: Execution status of each consequence
+
+    ArbitrationRulingAppealedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a ruling is appealed
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - rulingId
+      - caseId
+      - appealingPartyEntityId
+      properties:
+        eventName:
+          type: string
+          default: arbitration.ruling.appealed
+          description: 'Event type identifier: arbitration.ruling.appealed'
+        rulingId:
+          type: string
+          format: uuid
+          description: Ruling being appealed
+        caseId:
+          type: string
+          format: uuid
+          description: Case the ruling belongs to
+        appealingPartyEntityId:
+          type: string
+          format: uuid
+          description: Entity ID of the appealing party
+
+    ArbitrationRulingEnforcedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when all ruling consequences have been successfully enforced
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - rulingId
+      - caseId
+      properties:
+        eventName:
+          type: string
+          default: arbitration.ruling.enforced
+          description: 'Event type identifier: arbitration.ruling.enforced'
+        rulingId:
+          type: string
+          format: uuid
+          description: Enforced ruling ID
+        caseId:
+          type: string
+          format: uuid
+          description: Case the ruling belongs to
+
+    ArbitrationArbiterAssignedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when an arbiter is assigned to a case
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - caseId
+      - arbiterId
+      - selectionMode
+      properties:
+        eventName:
+          type: string
+          default: arbitration.arbiter.assigned
+          description: 'Event type identifier: arbitration.arbiter.assigned'
+        caseId:
+          type: string
+          format: uuid
+          description: Case the arbiter was assigned to
+        arbiterId:
+          type: string
+          format: uuid
+          description: Entity ID of the assigned arbiter
+        selectionMode:
+          $ref: '../arbitration-api.yaml#/components/schemas/ArbiterSelectionMode'
+          description: Selection mode used
+
+    ArbitrationArbiterRecusedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when an arbiter recuses from a case
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - caseId
+      - recusedArbiterId
+      - reason
+      properties:
+        eventName:
+          type: string
+          default: arbitration.arbiter.recused
+          description: 'Event type identifier: arbitration.arbiter.recused'
+        caseId:
+          type: string
+          format: uuid
+          description: Case the arbiter recused from
+        recusedArbiterId:
+          type: string
+          format: uuid
+          description: Entity ID of the recused arbiter
+        reason:
+          type: string
+          description: Reason for recusal
+
+    ArbitrationArbiterRequestedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when an external arbiter is requested. Consumed by divine actors, cross-jurisdiction 
+        authorities, or player-controlled arbiters based on requesterType filter.
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - caseId
+      - requesterType
+      - timeoutAt
+      properties:
+        eventName:
+          type: string
+          default: arbitration.arbiter.requested
+          description: 'Event type identifier: arbitration.arbiter.requested'
+        caseId:
+          type: string
+          format: uuid
+          description: Case requesting an external arbiter
+        requesterType:
+          type: string
+          description: Category of external arbiter being requested (e.g., divine, cross-jurisdiction, player)
+        timeoutAt:
+          type: string
+          format: date-time
+          description: Deadline after which the system falls back to mortal arbiter selection
+
+    ArbitrationJurisdictionChallengedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a party challenges jurisdictional authority over a case
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - caseId
+      - challengingPartyEntityId
+      - reasoning
+      properties:
+        eventName:
+          type: string
+          default: arbitration.jurisdiction.challenged
+          description: 'Event type identifier: arbitration.jurisdiction.challenged'
+        caseId:
+          type: string
+          format: uuid
+          description: Case whose jurisdiction is challenged
+        challengingPartyEntityId:
+          type: string
+          format: uuid
+          description: Entity ID of the challenging party
+        reasoning:
+          type: string
+          description: Reasoning for the jurisdiction challenge
+    ConsequenceResult:
+      type: object
+      additionalProperties: false
+      description: Execution result of an individual ruling consequence, tracked for enforcement retry
+      required:
+      - consequenceType
+      - status
+      - attemptCount
+      properties:
+        consequenceType:
+          $ref: '#/components/schemas/ConsequenceType'
+          description: Type of consequence this result tracks
+        status:
+          $ref: '#/components/schemas/ConsequenceResultStatus'
+          description: Current execution status
+        attemptCount:
+          type: integer
+          minimum: 0
+          description: Number of execution attempts
+        lastError:
+          type: string
+          nullable: true
+          description: Error message from the most recent failed attempt
+
+    ConsequenceResultStatus:
+      type: string
+      description: Execution status of an individual ruling consequence
+      enum:
+      - Pending
+      - Succeeded
+      - Failed
+
+    ConsequenceType:
+      type: string
+      description: Types of ruling consequences dispatched to downstream services
+      enum:
+      - RelationshipChange
+      - AssetDivision
+      - OngoingObligation
+      - CustodyAssignment
+      - Exile
+      - Fine
+      - Imprisonment
+      - SovereigntyTransfer
+      - NormViolationPublication
+      - DivineAttention
+      - OrganizationDissolution
+      - SeedGrowthTransfer
+
+x-inlined-types:
+- ConsequenceResult
+- ConsequenceResultStatus
+- ConsequenceType

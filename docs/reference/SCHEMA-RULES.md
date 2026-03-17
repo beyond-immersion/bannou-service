@@ -863,6 +863,10 @@ Violating this causes duplicate C# classes (`AuthMethods`, `AuthMethods2`, `Auth
 | Simple flat objects (no refs) | Recommended |
 | Primitives and arrays of primitives | No |
 
+### Event Ref Resolver Limitation: No Wrapper Types Over Cross-File Refs
+
+The event ref resolver (`resolve-event-refs.py`) inlines API types into event schemas only when they contain nested **local** `$ref`s (`#/components/schemas/...`). Types whose only nested refs are **cross-file** (e.g., `$ref: 'common-api.yaml#/...'`) appear "simple" to the resolver, are not inlined, and cause NSwag resolution failures when excluded from generation. **Do not create wrapper object types in API schemas that exist solely to bundle a cross-file `$ref`** (e.g., an `EntityReference` type containing only `entityId` + `$ref: 'common-api.yaml#/.../EntityType'`). Instead, place the entity ID and entity type fields directly on each model that needs them — the same pattern used by all existing services (Seed `ownerType`, Relationship `entity1Type`, Currency wallet owner, etc.).
+
 ### When NOT to Create Enums (Service Hierarchy Consideration)
 
 Do NOT define enums that enumerate services, resources, or entity types from other layers — use opaque `string` instead. **Test**: "Would adding a new service/entity type in a higher layer require modifying this enum?" If yes, use a string.

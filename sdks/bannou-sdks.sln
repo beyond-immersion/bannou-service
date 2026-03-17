@@ -165,6 +165,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "voxel-builder.tests", "voxe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeyondImmersion.Bannou.VoxelBuilder.Tests", "voxel-builder.tests\BeyondImmersion.Bannou.VoxelBuilder.Tests.csproj", "{A2723269-012B-4A17-B8DC-B48C3D1ED133}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "voxel-builder-stride", "voxel-builder-stride", "{0245FBBC-4DF5-11CE-E885-BBE983711570}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeyondImmersion.Bannou.VoxelBuilder.Stride", "voxel-builder-stride\BeyondImmersion.Bannou.VoxelBuilder.Stride.csproj", "{6832781A-9E9D-4CF6-93D5-187A96C9A365}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "voxel-builder-stride.tests", "voxel-builder-stride.tests", "{8AF71CE6-898C-3A08-3D85-6CB158775DDD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeyondImmersion.Bannou.VoxelBuilder.Stride.Tests", "voxel-builder-stride.tests\BeyondImmersion.Bannou.VoxelBuilder.Stride.Tests.csproj", "{BCD87973-134D-46E4-9BAA-2EE90F8E9F9D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -715,6 +723,30 @@ Global
 		{A2723269-012B-4A17-B8DC-B48C3D1ED133}.Release|x64.Build.0 = Release|Any CPU
 		{A2723269-012B-4A17-B8DC-B48C3D1ED133}.Release|x86.ActiveCfg = Release|Any CPU
 		{A2723269-012B-4A17-B8DC-B48C3D1ED133}.Release|x86.Build.0 = Release|Any CPU
+		{6832781A-9E9D-4CF6-93D5-187A96C9A365}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6832781A-9E9D-4CF6-93D5-187A96C9A365}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6832781A-9E9D-4CF6-93D5-187A96C9A365}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6832781A-9E9D-4CF6-93D5-187A96C9A365}.Debug|x64.Build.0 = Debug|Any CPU
+		{6832781A-9E9D-4CF6-93D5-187A96C9A365}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6832781A-9E9D-4CF6-93D5-187A96C9A365}.Debug|x86.Build.0 = Debug|Any CPU
+		{6832781A-9E9D-4CF6-93D5-187A96C9A365}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6832781A-9E9D-4CF6-93D5-187A96C9A365}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6832781A-9E9D-4CF6-93D5-187A96C9A365}.Release|x64.ActiveCfg = Release|Any CPU
+		{6832781A-9E9D-4CF6-93D5-187A96C9A365}.Release|x64.Build.0 = Release|Any CPU
+		{6832781A-9E9D-4CF6-93D5-187A96C9A365}.Release|x86.ActiveCfg = Release|Any CPU
+		{6832781A-9E9D-4CF6-93D5-187A96C9A365}.Release|x86.Build.0 = Release|Any CPU
+		{BCD87973-134D-46E4-9BAA-2EE90F8E9F9D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCD87973-134D-46E4-9BAA-2EE90F8E9F9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BCD87973-134D-46E4-9BAA-2EE90F8E9F9D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BCD87973-134D-46E4-9BAA-2EE90F8E9F9D}.Debug|x64.Build.0 = Debug|Any CPU
+		{BCD87973-134D-46E4-9BAA-2EE90F8E9F9D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{BCD87973-134D-46E4-9BAA-2EE90F8E9F9D}.Debug|x86.Build.0 = Debug|Any CPU
+		{BCD87973-134D-46E4-9BAA-2EE90F8E9F9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BCD87973-134D-46E4-9BAA-2EE90F8E9F9D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BCD87973-134D-46E4-9BAA-2EE90F8E9F9D}.Release|x64.ActiveCfg = Release|Any CPU
+		{BCD87973-134D-46E4-9BAA-2EE90F8E9F9D}.Release|x64.Build.0 = Release|Any CPU
+		{BCD87973-134D-46E4-9BAA-2EE90F8E9F9D}.Release|x86.ActiveCfg = Release|Any CPU
+		{BCD87973-134D-46E4-9BAA-2EE90F8E9F9D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -789,5 +821,7 @@ Global
 		{A9BC671D-FE75-4633-9D85-89E731A04C6E} = {671585FD-BDD5-EE35-0D5D-7321BAD58742}
 		{661CCA89-108F-4A28-A487-C1B179A84DBA} = {40B9A2D4-7BCD-D693-93C6-DB213D3CABB4}
 		{A2723269-012B-4A17-B8DC-B48C3D1ED133} = {DE73145E-392C-87BE-4332-7BD210447191}
+		{6832781A-9E9D-4CF6-93D5-187A96C9A365} = {0245FBBC-4DF5-11CE-E885-BBE983711570}
+		{BCD87973-134D-46E4-9BAA-2EE90F8E9F9D} = {8AF71CE6-898C-3A08-3D85-6CB158775DDD}
 	EndGlobalSection
 EndGlobal

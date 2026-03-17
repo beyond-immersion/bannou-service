@@ -89,10 +89,21 @@ public class FactionServiceMembershipTests : ServiceTestBase<FactionServiceConfi
         _mockStateStoreFactory.Setup(f => f.GetStore<GovernanceEntryModel>(StateStoreDefinitions.FactionGovernance)).Returns(_mockGovernanceStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<GovernanceEntryListModel>(StateStoreDefinitions.FactionGovernance)).Returns(_mockGovernanceListStore.Object);
 
-        // Default message bus setup — capture pattern configured per test
+        // Default message bus setup -- capture pattern configured per test
         _mockMessageBus
             .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
+
+        // Default save returns -- SaveAsync returns Task<string>
+        _mockMemberStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<FactionMemberModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("ok");
+        _mockMemberListStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<MembershipListModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("ok");
+        _mockFactionStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<FactionModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("ok");
 
         // Setup lock provider to always succeed
         var mockLockResponse = new Mock<ILockResponse>();
@@ -188,7 +199,7 @@ public class FactionServiceMembershipTests : ServiceTestBase<FactionServiceConfi
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<FactionMemberModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .Callback<string, FactionMemberModel, StateOptions?, CancellationToken>((key, m, _, _) =>
                 savedMembers.Add((key, m)))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync("ok");
 
         // Capture published events
         var capturedEvents = new List<(string Topic, object Event)>();
@@ -420,8 +431,9 @@ public class FactionServiceMembershipTests : ServiceTestBase<FactionServiceConfi
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Single(response.Memberships);
-        Assert.Equal(factionId, response.Memberships[0].FactionId);
-        Assert.Equal(FactionMemberRole.Officer, response.Memberships[0].Role);
+        var membership = response.Memberships.First();
+        Assert.Equal(factionId, membership.FactionId);
+        Assert.Equal(FactionMemberRole.Officer, membership.Role);
     }
 
     // ========================================================================
@@ -456,7 +468,7 @@ public class FactionServiceMembershipTests : ServiceTestBase<FactionServiceConfi
         _mockMemberStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<FactionMemberModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .Callback<string, FactionMemberModel, StateOptions?, CancellationToken>((_, m, _, _) => savedMembers.Add(m))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync("ok");
 
         // Capture published events
         var capturedEvents = new List<(string Topic, object Event)>();
@@ -539,7 +551,7 @@ public class FactionServiceMembershipTests : ServiceTestBase<FactionServiceConfi
         // Act
         var (status, response) = await service.UpdateMemberRoleAsync(request, TestContext.Current.CancellationToken);
 
-        // Assert — idempotent: same role returns OK without any writes
+        // Assert -- idempotent: same role returns OK without any writes
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal(FactionMemberRole.Officer, response.Role);

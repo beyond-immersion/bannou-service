@@ -1,0 +1,337 @@
+openapi: 3.0.4
+info:
+  title: Craft Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for craft service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: craft-service-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    CraftRecipeCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to craft.recipe.created when a craftrecipe is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - recipeId
+      - gameServiceId
+      - code
+      - recipeType
+      - domain
+      - isDiscoverable
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: craft.recipe.created
+          description: 'Event type identifier: craft.recipe.created'
+        recipeId: &id001
+          type: string
+          format: uuid
+          description: "Unique recipe identifier"
+        gameServiceId: &id002
+          type: string
+          format: uuid
+          description: "Game service this recipe belongs to"
+        code: &id003
+          type: string
+          description: "Unique recipe code within the game service"
+        recipeType: &id004
+          type: string
+          description: "Recipe paradigm (e.g., production, modification, extraction)"
+        domain: &id005
+          type: string
+          description: "Proficiency domain"
+        category: &id006
+          type: string
+          nullable: true
+          description: "Broad classification for filtering"
+        tags: &id007
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: "Tags for filtering and discovery"
+        isDiscoverable: &id008
+          type: boolean
+          description: "Whether this recipe can be discovered through experimentation"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the craft recipe was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the craft recipe was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this craft recipe is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the craft recipe was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+    CraftRecipeUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to craft.recipe.updated when a craftrecipe is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - recipeId
+      - gameServiceId
+      - code
+      - recipeType
+      - domain
+      - isDiscoverable
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: craft.recipe.updated
+          description: 'Event type identifier: craft.recipe.updated'
+        recipeId: *id001
+        gameServiceId: *id002
+        code: *id003
+        recipeType: *id004
+        domain: *id005
+        category: *id006
+        tags: *id007
+        isDiscoverable: *id008
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the craft recipe was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the craft recipe was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this craft recipe is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the craft recipe was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    CraftRecipeDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to craft.recipe.deleted when a craftrecipe is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - recipeId
+      - gameServiceId
+      - code
+      - recipeType
+      - domain
+      - isDiscoverable
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: craft.recipe.deleted
+          description: 'Event type identifier: craft.recipe.deleted'
+        recipeId: *id001
+        gameServiceId: *id002
+        code: *id003
+        recipeType: *id004
+        domain: *id005
+        category: *id006
+        tags: *id007
+        isDiscoverable: *id008
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the craft recipe was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the craft recipe was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this craft recipe is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the craft recipe was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    CraftingSessionCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to craft.crafting-session.created when a craftingsession is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - sessionId
+      - recipeId
+      - entityId
+      - entityType
+      - currentStepCode
+      - accumulatedQuality
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: craft.crafting-session.created
+          description: 'Event type identifier: craft.crafting-session.created'
+        sessionId: &id009
+          type: string
+          format: uuid
+          description: "Session identifier (equals contractInstanceId)"
+        recipeId: &id010
+          type: string
+          format: uuid
+          description: "Recipe being crafted"
+        entityId: &id011
+          type: string
+          format: uuid
+          description: "Primary entity performing the craft"
+        entityType: &id012
+          type: string
+          description: "Type of the primary entity (EntityType enum value)"
+        currentStepCode: &id013
+          type: string
+          description: "Code of the next step to complete"
+        accumulatedQuality: &id014
+          type: number
+          format: double
+          description: "Quality accumulated from completed steps"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the crafting session was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the crafting session was last updated (set to createdAt on creation)
+    CraftingSessionUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to craft.crafting-session.updated when a craftingsession is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - sessionId
+      - recipeId
+      - entityId
+      - entityType
+      - currentStepCode
+      - accumulatedQuality
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: craft.crafting-session.updated
+          description: 'Event type identifier: craft.crafting-session.updated'
+        sessionId: *id009
+        recipeId: *id010
+        entityId: *id011
+        entityType: *id012
+        currentStepCode: *id013
+        accumulatedQuality: *id014
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the crafting session was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the crafting session was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    CraftingSessionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to craft.crafting-session.deleted when a craftingsession is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - sessionId
+      - recipeId
+      - entityId
+      - entityType
+      - currentStepCode
+      - accumulatedQuality
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: craft.crafting-session.deleted
+          description: 'Event type identifier: craft.crafting-session.deleted'
+        sessionId: *id009
+        recipeId: *id010
+        entityId: *id011
+        entityType: *id012
+        currentStepCode: *id013
+        accumulatedQuality: *id014
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the crafting session was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the crafting session was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

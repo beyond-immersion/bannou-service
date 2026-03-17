@@ -1,0 +1,227 @@
+openapi: 3.0.4
+info:
+  title: Arbitration Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for arbitration service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: arbitration-service-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    ArbitrationCaseCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to arbitration.case.created when a arbitrationcase is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - caseId
+      - caseCode
+      - gameServiceId
+      - caseType
+      - status
+      - contractId
+      - templateCode
+      - jurisdictionChallenged
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: arbitration.case.created
+          description: 'Event type identifier: arbitration.case.created'
+        caseId: &id001
+          type: string
+          format: uuid
+          description: "Unique identifier for the case"
+        caseCode: &id002
+          type: string
+          description: "Human-readable sequential case code"
+        gameServiceId: &id003
+          type: string
+          format: uuid
+          description: "Game service scope"
+        caseType: &id004
+          type: string
+          description: "Game-configurable dispute type code"
+        status: &id005
+          $ref: ../arbitration-api.yaml#/components/schemas/ArbitrationCaseStatus
+          description: "Current case lifecycle status"
+        locationId: &id006
+          type: string
+          format: uuid
+          nullable: true
+          description: "Location where the case was filed (nullable: DETACH cleanup)"
+        sovereignFactionId: &id007
+          type: string
+          format: uuid
+          nullable: true
+          description: "Jurisdictional sovereign faction (nullable: DETACH cleanup)"
+        petitionerEntityId: &id008
+          type: string
+          format: uuid
+          nullable: true
+          description: "Petitioner entity ID (nullable: DETACH cleanup)"
+        petitionerEntityType: &id009
+          $ref: ../common-api.yaml#/components/schemas/EntityType
+          nullable: true
+          description: "Type of the petitioner entity"
+        respondentEntityId: &id010
+          type: string
+          format: uuid
+          nullable: true
+          description: "Respondent entity ID (nullable: DETACH cleanup)"
+        respondentEntityType: &id011
+          $ref: ../common-api.yaml#/components/schemas/EntityType
+          nullable: true
+          description: "Type of the respondent entity"
+        arbiterEntityId: &id012
+          type: string
+          format: uuid
+          nullable: true
+          description: "Assigned arbiter entity ID"
+        arbiterEntityType: &id013
+          $ref: ../common-api.yaml#/components/schemas/EntityType
+          nullable: true
+          description: "Type of the assigned arbiter entity"
+        contractId: &id014
+          type: string
+          format: uuid
+          description: "Underlying contract instance ID"
+        templateCode: &id015
+          type: string
+          description: "Procedural template code from governance data"
+        rulingId: &id016
+          type: string
+          format: uuid
+          nullable: true
+          description: "Ruling ID if issued"
+        jurisdictionChallenged: &id017
+          type: boolean
+          description: "Whether jurisdiction has been challenged"
+        closedReason: &id018
+          $ref: ../arbitration-api.yaml#/components/schemas/CaseClosedReason
+          nullable: true
+          description: "Reason for case closure"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the arbitration case was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the arbitration case was last updated (set to createdAt on creation)
+    ArbitrationCaseUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to arbitration.case.updated when a arbitrationcase is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - caseId
+      - caseCode
+      - gameServiceId
+      - caseType
+      - status
+      - contractId
+      - templateCode
+      - jurisdictionChallenged
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: arbitration.case.updated
+          description: 'Event type identifier: arbitration.case.updated'
+        caseId: *id001
+        caseCode: *id002
+        gameServiceId: *id003
+        caseType: *id004
+        status: *id005
+        locationId: *id006
+        sovereignFactionId: *id007
+        petitionerEntityId: *id008
+        petitionerEntityType: *id009
+        respondentEntityId: *id010
+        respondentEntityType: *id011
+        arbiterEntityId: *id012
+        arbiterEntityType: *id013
+        contractId: *id014
+        templateCode: *id015
+        rulingId: *id016
+        jurisdictionChallenged: *id017
+        closedReason: *id018
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the arbitration case was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the arbitration case was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    ArbitrationCaseDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to arbitration.case.deleted when a arbitrationcase is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - caseId
+      - caseCode
+      - gameServiceId
+      - caseType
+      - status
+      - contractId
+      - templateCode
+      - jurisdictionChallenged
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: arbitration.case.deleted
+          description: 'Event type identifier: arbitration.case.deleted'
+        caseId: *id001
+        caseCode: *id002
+        gameServiceId: *id003
+        caseType: *id004
+        status: *id005
+        locationId: *id006
+        sovereignFactionId: *id007
+        petitionerEntityId: *id008
+        petitionerEntityType: *id009
+        respondentEntityId: *id010
+        respondentEntityType: *id011
+        arbiterEntityId: *id012
+        arbiterEntityType: *id013
+        contractId: *id014
+        templateCode: *id015
+        rulingId: *id016
+        jurisdictionChallenged: *id017
+        closedReason: *id018
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the arbitration case was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the arbitration case was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

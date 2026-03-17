@@ -75,6 +75,20 @@ public static class StateStoreDefinitions
     /// <summary>Entity summary data for queryable analytics (MySQL for server-side filtering)</summary>
     public const string AnalyticsSummaryData = "analytics-summary-data";
 
+    // Arbitration Service
+    /// <summary>Qualified arbiter cache and active caseload tracking (TTL-based)</summary>
+    public const string ArbitrationArbiters = "arbitration-arbiters";
+    /// <summary>Jurisdiction resolution cache (TTL-based, invalidated on territory/governance changes)</summary>
+    public const string ArbitrationCache = "arbitration-cache";
+    /// <summary>Arbitration case records (durable, queryable by status/type/party/jurisdiction)</summary>
+    public const string ArbitrationCases = "arbitration-cases";
+    /// <summary>Evidence item records (durable, queryable by case/party)</summary>
+    public const string ArbitrationEvidence = "arbitration-evidence";
+    /// <summary>Distributed locks for case mutation, ruling issuance, jurisdiction resolution, and arbiter assignment</summary>
+    public const string ArbitrationLock = "arbitration-lock";
+    /// <summary>Ruling records with consequence manifests and execution results</summary>
+    public const string ArbitrationRulings = "arbitration-rulings";
+
     // Asset Service
     /// <summary>Processor pool node state and indexing</summary>
     public const string AssetProcessorPool = "asset-processor-pool";
@@ -176,6 +190,20 @@ public static class StateStoreDefinitions
     public const string ContractLock = "contract-lock";
     /// <summary>Contract templates, instances, breaches, and indexes</summary>
     public const string Contract = "contract-statestore";
+
+    // Craft Service
+    /// <summary>Known recipes per entity and discovery attempt history</summary>
+    public const string CraftDiscoveryStore = "craft-discovery-store";
+    /// <summary>Distributed locks for session advancement, recipe mutation, and station occupancy</summary>
+    public const string CraftLock = "craft-lock";
+    /// <summary>Recipe definition hot cache (read-through from MySQL, TTL-based)</summary>
+    public const string CraftRecipeCache = "craft-recipe-cache";
+    /// <summary>Recipe definitions (durable, queryable by gameServiceId, domain, category, tags)</summary>
+    public const string CraftRecipeStore = "craft-recipe-store";
+    /// <summary>Active crafting session state and per-entity session indexes</summary>
+    public const string CraftSessionStore = "craft-session-store";
+    /// <summary>Station definitions with location and type indexes</summary>
+    public const string CraftStationRegistry = "craft-station-registry";
 
     // Currency Service
     /// <summary>Real-time balance lookups (cached, refreshed on access)</summary>
@@ -605,6 +633,12 @@ public static class StateStoreDefinitions
             [AnalyticsRating] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "analytics:rating" },
             [AnalyticsSummary] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "analytics:sum" },
             [AnalyticsSummaryData] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "analytics_summary_data" },
+            [ArbitrationArbiters] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "arb:arbiter" },
+            [ArbitrationCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "arb:cache" },
+            [ArbitrationCases] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "arbitration_cases" },
+            [ArbitrationEvidence] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "arbitration_evidence" },
+            [ArbitrationLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "arb:lock" },
+            [ArbitrationRulings] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "arbitration_rulings" },
             [AssetProcessorPool] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "asset:pool" },
             [Asset] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "asset" },
             [Auth] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "auth" },
@@ -641,6 +675,12 @@ public static class StateStoreDefinitions
             [Connect] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "connect" },
             [ContractLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "contract:lock" },
             [Contract] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "contract", EnableSearch = true },
+            [CraftDiscoveryStore] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "craft_discovery_store" },
+            [CraftLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "craft:lock" },
+            [CraftRecipeCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "craft:recipe" },
+            [CraftRecipeStore] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "craft_recipe_store" },
+            [CraftSessionStore] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "craft_session_store" },
+            [CraftStationRegistry] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "craft_station_registry" },
             [CurrencyBalanceCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "currency:balance" },
             [CurrencyBalances] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_balances" },
             [CurrencyDefinitions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_definitions" },
@@ -835,6 +875,12 @@ public static class StateStoreDefinitions
             [AnalyticsRating] = new StoreMetadata("Analytics", "Glicko-2 skill ratings", "redis", false),
             [AnalyticsSummary] = new StoreMetadata("Analytics", "Event buffer, session mappings, and resolution caches for analytics ingestion", "redis", false),
             [AnalyticsSummaryData] = new StoreMetadata("Analytics", "Entity summary data for queryable analytics (MySQL for server-side filtering)", "mysql", false),
+            [ArbitrationArbiters] = new StoreMetadata("Arbitration", "Qualified arbiter cache and active caseload tracking (TTL-based)", "redis", false),
+            [ArbitrationCache] = new StoreMetadata("Arbitration", "Jurisdiction resolution cache (TTL-based, invalidated on territory/governance changes)", "redis", false),
+            [ArbitrationCases] = new StoreMetadata("Arbitration", "Arbitration case records (durable, queryable by status/type/party/jurisdiction)", "mysql", false),
+            [ArbitrationEvidence] = new StoreMetadata("Arbitration", "Evidence item records (durable, queryable by case/party)", "mysql", false),
+            [ArbitrationLock] = new StoreMetadata("Arbitration", "Distributed locks for case mutation, ruling issuance, jurisdiction resolution, and arbiter assignment", "redis", false),
+            [ArbitrationRulings] = new StoreMetadata("Arbitration", "Ruling records with consequence manifests and execution results", "mysql", false),
             [AssetProcessorPool] = new StoreMetadata("Asset", "Processor pool node state and indexing", "redis", false),
             [Asset] = new StoreMetadata("Asset", "Asset upload tracking and bundle state", "redis", false),
             [Auth] = new StoreMetadata("Auth", "Session and token state (ephemeral)", "redis", false),
@@ -871,6 +917,12 @@ public static class StateStoreDefinitions
             [Connect] = new StoreMetadata("Connect", "WebSocket session state", "redis", false),
             [ContractLock] = new StoreMetadata("Contract", "Distributed locks for contract instance and index operations", "redis", false),
             [Contract] = new StoreMetadata("Contract", "Contract templates, instances, breaches, and indexes", "redis", false),
+            [CraftDiscoveryStore] = new StoreMetadata("Craft", "Known recipes per entity and discovery attempt history", "mysql", false),
+            [CraftLock] = new StoreMetadata("Craft", "Distributed locks for session advancement, recipe mutation, and station occupancy", "redis", false),
+            [CraftRecipeCache] = new StoreMetadata("Craft", "Recipe definition hot cache (read-through from MySQL, TTL-based)", "redis", false),
+            [CraftRecipeStore] = new StoreMetadata("Craft", "Recipe definitions (durable, queryable by gameServiceId, domain, category, tags)", "mysql", false),
+            [CraftSessionStore] = new StoreMetadata("Craft", "Active crafting session state and per-entity session indexes", "mysql", false),
+            [CraftStationRegistry] = new StoreMetadata("Craft", "Station definitions with location and type indexes", "mysql", false),
             [CurrencyBalanceCache] = new StoreMetadata("Currency", "Real-time balance lookups (cached, refreshed on access)", "redis", false),
             [CurrencyBalances] = new StoreMetadata("Currency", "Currency balance records per wallet", "mysql", false),
             [CurrencyDefinitions] = new StoreMetadata("Currency", "Currency type definitions and behavior rules", "mysql", false),

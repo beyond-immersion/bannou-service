@@ -1,8 +1,10 @@
 openapi: 3.0.4
 info:
   title: Character Lifecycle Service Events Lifecycle Events
-  description: "Auto-generated lifecycle event schemas for character-lifecycle service.\nDO NOT EDIT - This file is completely
-    overwritten by generate-lifecycle-events.py.\nSource of truth: character-lifecycle-service-events.yaml x-lifecycle section."
+  description: "AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.\nDO NOT EDIT - Regenerate
+    with scripts/resolve-event-refs.py\nSource: character-lifecycle-service-lifecycle-events.yaml\n\nAuto-generated lifecycle
+    event schemas for character-lifecycle service.\nDO NOT EDIT - This file is completely overwritten by generate-lifecycle-events.py.\n\
+    Source of truth: character-lifecycle-service-events.yaml x-lifecycle section."
   version: 1.0.0
 paths: {}
 components:

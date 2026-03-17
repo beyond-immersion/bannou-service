@@ -550,8 +550,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 6. **Analytics integration**: The implementation plan specified `IAnalyticsClient` (L4 soft dependency) for querying milestone data to enrich scenario scoring. This was never implemented -- the `NarrativeWeight` scoring component partially compensates but milestone-based scoring is absent.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/690 -->
 
-7. **Client event schema (gardener-client-events.yaml)**: No client event schema exists for real-time POI push to WebSocket clients. POI spawns, expirations, and trigger events happen server-side only. Clients must poll `GetGardenStateAsync` to discover changes, which defeats the purpose of the garden as a responsive discovery space. This is a significant gap for the intended player experience.
-<!-- AUDIT:IN_PROGRESS:2026-03-17 -->
+7. ~~**Client event schema (gardener-client-events.yaml)**~~: **FIXED** (2026-03-17) - Created `gardener-client-events.yaml` with 7 client events (POI spawned/expired/triggered, garden entered/left, scenario started/completed). Added `IClientEventPublisher` to `GardenerService` constructor. Wired up client event publishing in `GardenerService` (garden entered/left, scenario started/completed) and `GardenerGardenOrchestratorWorker` (POI spawned/expired). Clients now receive real-time push notifications for garden/POI/scenario lifecycle changes via WebSocket instead of polling.
 
 8. **ConnectivityMode.Persistent has no special handling**: The enum value exists (Alpha, Beta, Release map to Isolated, WorldSlice, Persistent) but the code treats all connectivity modes identically during scenario creation and lifecycle. The vision describes Persistent as "a scenario that doesn't end" -- the release surprise. No code path distinguishes Persistent scenarios from Isolated ones.
 
@@ -647,7 +646,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 - [ ] **Stub #9**: Implement prerequisite validation in `EnterScenarioAsync` and `GetEligibleTemplatesAsync`
 - [ ] **Stub #10**: Implement per-template `MaxConcurrentInstances` enforcement during scenario entry
 - [x] **Stub #1/Design #1**: ~~Implement `MinGrowthPhase` ordinal comparison~~ — **FIXED** (2026-03-16). Fetches seed type definition once per orchestrator tick, builds ordinal map from `MinTotalGrowth`, filters templates where player hasn't reached required phase.
-- [ ] **Stub #7**: Create `gardener-client-events.yaml` schema for real-time POI spawn/expire/trigger push to WebSocket clients
+- [x] **Stub #7**: ~~Create `gardener-client-events.yaml` schema for real-time POI spawn/expire/trigger push to WebSocket clients~~ — **FIXED** (2026-03-17)
 - [x] **Extension #2**: ~~Write history records for all bond scenario participants, not just primary~~ — **FIXED** (2026-03-16)
 - [ ] **Stub #3**: Implement actual Puppetmaster API call in `EnterScenarioAsync` (not just log)
 - [ ] **Design #1/Stub #15**: Design and implement Entity Session Registry in Connect (L1) -- `IEntitySessionRegistry` interface in `bannou-service/`, Redis-backed implementation in Connect (generalizing existing `account-sessions` pattern), cleanup on disconnect via reverse index. Cross-cutting: affects all entity-based services that want client event routing. [Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426) (CLOSED -- design accepted). [Issue #502](https://github.com/beyond-immersion/bannou-service/issues/502) (OPEN -- rollout tracking).

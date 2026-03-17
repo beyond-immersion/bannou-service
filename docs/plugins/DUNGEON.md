@@ -7,6 +7,7 @@
 > **State Stores**: dungeon-cores (MySQL), dungeon-bonds (MySQL), dungeon-inhabitants (Redis), dungeon-cache (Redis), dungeon-lock (Redis)
 > **Status**: Pre-implementation (architectural specification)
 > **Short**: Living dungeon-as-actor lifecycle with personality, memory, and spatial manifestation
+> **Implementation Map**: [docs/maps/DUNGEON.md](../maps/DUNGEON.md)
 
 ## Overview
 

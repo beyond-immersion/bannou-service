@@ -89,7 +89,7 @@ public class FactionServiceFactionTests : ServiceTestBase<FactionServiceConfigur
         _mockStateStoreFactory.Setup(f => f.GetStore<GovernanceEntryModel>(StateStoreDefinitions.FactionGovernance)).Returns(_mockGovernanceStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<GovernanceEntryListModel>(StateStoreDefinitions.FactionGovernance)).Returns(_mockGovernanceListStore.Object);
 
-        // Default message bus setup — capture pattern configured per test
+        // Default message bus setup -- capture pattern configured per test
         _mockMessageBus
             .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
@@ -164,7 +164,7 @@ public class FactionServiceFactionTests : ServiceTestBase<FactionServiceConfigur
 
         _mockGameServiceClient
             .Setup(c => c.GetServiceAsync(It.IsAny<GetServiceRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ServiceResponse { ServiceId = gameServiceId });
+            .ReturnsAsync(new ServiceInfo { ServiceId = gameServiceId, StubName = "test", DisplayName = "Test", IsActive = true });
         _mockRealmClient
             .Setup(c => c.RealmExistsAsync(It.IsAny<RealmExistsRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new RealmExistsResponse { Exists = true });
@@ -173,7 +173,7 @@ public class FactionServiceFactionTests : ServiceTestBase<FactionServiceConfigur
             .ReturnsAsync((FactionModel?)null);
         _mockSeedClient
             .Setup(c => c.CreateSeedAsync(It.IsAny<CreateSeedRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CreateSeedResponse { SeedId = seedId });
+            .ReturnsAsync(new SeedResponse { SeedId = seedId, OwnerId = Guid.NewGuid(), OwnerType = EntityType.Faction, SeedTypeCode = "faction", GrowthPhase = "dormant", TotalGrowth = 0, DisplayName = "Test", CreatedAt = DateTimeOffset.UtcNow });
 
         // Capture state saves
         var savedModels = new List<(string Key, FactionModel Model)>();
@@ -181,7 +181,7 @@ public class FactionServiceFactionTests : ServiceTestBase<FactionServiceConfigur
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<FactionModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .Callback<string, FactionModel, StateOptions?, CancellationToken>((key, model, _, _) =>
                 savedModels.Add((key, model)))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync("ok");
 
         // Capture published events
         string? capturedTopic = null;
@@ -237,7 +237,7 @@ public class FactionServiceFactionTests : ServiceTestBase<FactionServiceConfigur
 
         _mockGameServiceClient
             .Setup(c => c.GetServiceAsync(It.IsAny<GetServiceRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ServiceResponse { ServiceId = gameServiceId });
+            .ReturnsAsync(new ServiceInfo { ServiceId = gameServiceId, StubName = "test", DisplayName = "Test", IsActive = true });
         _mockRealmClient
             .Setup(c => c.RealmExistsAsync(It.IsAny<RealmExistsRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new RealmExistsResponse { Exists = true });
@@ -273,7 +273,7 @@ public class FactionServiceFactionTests : ServiceTestBase<FactionServiceConfigur
 
         _mockGameServiceClient
             .Setup(c => c.GetServiceAsync(It.IsAny<GetServiceRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ServiceResponse { ServiceId = gameServiceId });
+            .ReturnsAsync(new ServiceInfo { ServiceId = gameServiceId, StubName = "test", DisplayName = "Test", IsActive = true });
         _mockRealmClient
             .Setup(c => c.RealmExistsAsync(It.IsAny<RealmExistsRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new RealmExistsResponse { Exists = true });
@@ -417,7 +417,7 @@ public class FactionServiceFactionTests : ServiceTestBase<FactionServiceConfigur
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<FactionModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .Callback<string, FactionModel, StateOptions?, CancellationToken>((key, m, _, _) =>
                 savedModels.Add((key, m)))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync("ok");
 
         // Capture published event
         object? capturedEvent = null;
@@ -516,10 +516,10 @@ public class FactionServiceFactionTests : ServiceTestBase<FactionServiceConfigur
             .Setup(s => s.GetAsync(FactionService.BuildFactionKey(factionId), It.IsAny<CancellationToken>()))
             .ReturnsAsync(model);
 
-        // Empty cascades — no members, territories, norms, governance
+        // Empty cascades -- no members, territories, norms, governance
         _mockMemberQueryStore
-            .Setup(s => s.JsonQueryPagedAsync(It.IsAny<IReadOnlyList<QueryCondition>>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PagedQueryResult<FactionMemberModel> { Items = new List<KeyValuePair<string, FactionMemberModel>>(), HasMore = false });
+            .Setup(s => s.JsonQueryPagedAsync(It.IsAny<IReadOnlyList<QueryCondition>?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<FactionMemberModel>(new List<JsonQueryResult<FactionMemberModel>>(), 0, 0, 100));
         _mockTerritoryListStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((TerritoryClaimListModel?)null);
@@ -612,24 +612,20 @@ public class FactionServiceFactionTests : ServiceTestBase<FactionServiceConfigur
 
         // No previous baseline
         _mockFactionQueryStore
-            .Setup(s => s.JsonQueryPagedAsync(It.IsAny<IReadOnlyList<QueryCondition>>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PagedQueryResult<FactionModel>
-            {
-                Items = new List<KeyValuePair<string, FactionModel>>(),
-                HasMore = false,
-            });
+            .Setup(s => s.JsonQueryPagedAsync(It.IsAny<IReadOnlyList<QueryCondition>?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<FactionModel>(new List<JsonQueryResult<FactionModel>>(), 0, 0, 10));
 
-        // For norm cache invalidation — empty member query
+        // For norm cache invalidation -- empty member query
         _mockMemberQueryStore
-            .Setup(s => s.JsonQueryPagedAsync(It.IsAny<IReadOnlyList<QueryCondition>>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PagedQueryResult<FactionMemberModel> { Items = new List<KeyValuePair<string, FactionMemberModel>>(), HasMore = false });
+            .Setup(s => s.JsonQueryPagedAsync(It.IsAny<IReadOnlyList<QueryCondition>?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<FactionMemberModel>(new List<JsonQueryResult<FactionMemberModel>>(), 0, 0, 100));
 
         // Capture state saves
         var savedModels = new List<FactionModel>();
         _mockFactionStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<FactionModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .Callback<string, FactionModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModels.Add(m))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync("ok");
 
         // Capture published events
         var capturedEvents = new List<(string Topic, object Event)>();
@@ -691,15 +687,9 @@ public class FactionServiceFactionTests : ServiceTestBase<FactionServiceConfigur
         baselineModel.RealmId = realmId;
 
         _mockFactionQueryStore
-            .Setup(s => s.JsonQueryPagedAsync(It.IsAny<IReadOnlyList<QueryCondition>>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PagedQueryResult<FactionModel>
-            {
-                Items = new List<KeyValuePair<string, FactionModel>>
-                {
-                    new("key", baselineModel),
-                },
-                HasMore = false,
-            });
+            .Setup(s => s.JsonQueryPagedAsync(It.IsAny<IReadOnlyList<QueryCondition>?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<FactionModel>(
+                new List<JsonQueryResult<FactionModel>> { new("key", baselineModel) }, 1, 0, 1));
 
         // Act
         var (status, response) = await service.GetRealmBaselineAsync(
@@ -719,12 +709,8 @@ public class FactionServiceFactionTests : ServiceTestBase<FactionServiceConfigur
         var service = CreateService();
 
         _mockFactionQueryStore
-            .Setup(s => s.JsonQueryPagedAsync(It.IsAny<IReadOnlyList<QueryCondition>>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PagedQueryResult<FactionModel>
-            {
-                Items = new List<KeyValuePair<string, FactionModel>>(),
-                HasMore = false,
-            });
+            .Setup(s => s.JsonQueryPagedAsync(It.IsAny<IReadOnlyList<QueryCondition>?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<FactionModel>(new List<JsonQueryResult<FactionModel>>(), 0, 0, 1));
 
         // Act
         var (status, response) = await service.GetRealmBaselineAsync(
@@ -756,14 +742,14 @@ public class FactionServiceFactionTests : ServiceTestBase<FactionServiceConfigur
 
         _mockSeedClient
             .Setup(c => c.CreateSeedAsync(It.IsAny<CreateSeedRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CreateSeedResponse { SeedId = seedId });
+            .ReturnsAsync(new SeedResponse { SeedId = seedId, OwnerId = Guid.NewGuid(), OwnerType = EntityType.Faction, SeedTypeCode = "faction", GrowthPhase = "dormant", TotalGrowth = 0, DisplayName = "Test", CreatedAt = DateTimeOffset.UtcNow });
 
         // Capture saved models
         var savedModels = new List<FactionModel>();
         _mockFactionStore
             .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<FactionModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .Callback<string, FactionModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModels.Add(m))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync("ok");
 
         var request = new SeedFactionsRequest
         {

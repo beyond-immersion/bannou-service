@@ -174,8 +174,10 @@ components:
         - caseType
         - locationId
         - sovereignFactionId
-        - petitioner
-        - respondent
+        - petitionerEntityId
+        - petitionerEntityType
+        - respondentEntityId
+        - respondentEntityType
         - templateCode
       properties:
         eventName:
@@ -200,12 +202,20 @@ components:
           type: string
           format: uuid
           description: Jurisdictional sovereign faction
-        petitioner:
-          $ref: 'arbitration-api.yaml#/components/schemas/EntityReference'
-          description: Petitioner party reference
-        respondent:
-          $ref: 'arbitration-api.yaml#/components/schemas/EntityReference'
-          description: Respondent party reference
+        petitionerEntityId:
+          type: string
+          format: uuid
+          description: Entity ID of the petitioner
+        petitionerEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Type of the petitioner entity
+        respondentEntityId:
+          type: string
+          format: uuid
+          description: Entity ID of the respondent
+        respondentEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Type of the respondent entity
         templateCode:
           type: string
           description: Procedural template code from governance data

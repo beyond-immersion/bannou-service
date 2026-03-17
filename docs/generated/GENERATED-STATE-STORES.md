@@ -32,6 +32,12 @@ This document lists all state store components used in Bannou.
 | `analytics-rating` | Redis | Analytics | Glicko-2 skill ratings |
 | `analytics-summary` | Redis | Analytics | Event buffer, session mappings, and resolution caches for analytics ingestion |
 | `analytics-summary-data` | MySQL | Analytics | Entity summary data for queryable analytics (MySQL for server-side filtering) |
+| `arbitration-arbiters` | Redis | Arbitration | Qualified arbiter cache and active caseload tracking (TTL-based) |
+| `arbitration-cache` | Redis | Arbitration | Jurisdiction resolution cache (TTL-based, invalidated on territory/governance changes) |
+| `arbitration-cases` | MySQL | Arbitration | Arbitration case records (durable, queryable by status/type/party/jurisdiction) |
+| `arbitration-evidence` | MySQL | Arbitration | Evidence item records (durable, queryable by case/party) |
+| `arbitration-lock` | Redis | Arbitration | Distributed locks for case mutation, ruling issuance, jurisdiction resolution, and arbiter assignment |
+| `arbitration-rulings` | MySQL | Arbitration | Ruling records with consequence manifests and execution results |
 | `asset-processor-pool` | Redis | Asset | Processor pool node state and indexing |
 | `asset-statestore` | Redis | Asset | Asset upload tracking and bundle state |
 | `auth-statestore` | Redis | Auth | Session and token state (ephemeral) |
@@ -68,6 +74,12 @@ This document lists all state store components used in Bannou.
 | `connect-statestore` | Redis | Connect | WebSocket session state |
 | `contract-lock` | Redis | Contract | Distributed locks for contract instance and index operations |
 | `contract-statestore` | Redis | Contract | Contract templates, instances, breaches, and indexes |
+| `craft-discovery-store` | MySQL | Craft | Known recipes per entity and discovery attempt history |
+| `craft-lock` | Redis | Craft | Distributed locks for session advancement, recipe mutation, and station occupancy |
+| `craft-recipe-cache` | Redis | Craft | Recipe definition hot cache (read-through from MySQL, TTL-based) |
+| `craft-recipe-store` | MySQL | Craft | Recipe definitions (durable, queryable by gameServiceId, domain, category, tags) |
+| `craft-session-store` | MySQL | Craft | Active crafting session state and per-entity session indexes |
+| `craft-station-registry` | MySQL | Craft | Station definitions with location and type indexes |
 | `currency-balance-cache` | Redis | Currency | Real-time balance lookups (cached, refreshed on access) |
 | `currency-balances` | MySQL | Currency | Currency balance records per wallet |
 | `currency-definitions` | MySQL | Currency | Currency type definitions and behavior rules |
@@ -228,7 +240,7 @@ This document lists all state store components used in Bannou.
 | `worldstate-ratio-history` | MySQL | Worldstate | Time ratio change history per realm for elapsed game-time computation (append-only, compacted) |
 | `worldstate-realm-clock` | Redis | Worldstate | Current game time per realm (hot reads, updated every ClockTickIntervalSeconds) |
 
-**Total**: 218 stores (135 Redis, 83 MySQL)
+**Total**: 230 stores (140 Redis, 90 MySQL)
 
 ## Naming Conventions
 

@@ -523,6 +523,7 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 5. ~~**Party pending count failures silently logged**~~: **FIXED** (2026-03-17) - Reclassified as intentional behavior. The party pending count is a soft rate-limit (enforcing `MaxPendingPerParty`), not a data integrity mechanism. Silent failure with Warning logging is correct: (1) authoritative escrow agreements are stored in MySQL with proper concurrency, (2) a stale count self-corrects when the next successful operation updates the party's count, (3) worst-case failure modes are bounded (slightly permissive or restrictive limits) and non-catastrophic. Moved to Intentional Quirks.
 
 6. **No distributed lock for concurrent agreement modifications**: Multiple parties may deposit or consent simultaneously against the same agreement. The service uses ETag-based optimistic concurrency with retries, but under high contention (many parties, rapid actions) this could lead to excessive retry loops. A distributed lock per agreement ID would provide stronger serialization guarantees at the cost of added latency.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-17:https://github.com/beyond-immersion/bannou-service/issues/697 -->
 
 ---
 

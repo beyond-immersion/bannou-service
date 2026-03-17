@@ -269,32 +269,6 @@ public enum AuthorityLevel
 #pragma warning restore CS1591
 
 /// <summary>
-/// Reference to a polymorphic Bannou entity by ID and type
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class EntityReference
-{
-
-    /// <summary>
-    /// Unique identifier of the referenced entity
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EntityId { get; set; } = default!;
-
-    /// <summary>
-    /// Type of the referenced entity
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entityType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EntityType EntityType { get; set; } = default!;
-
-}
-
-/// <summary>
 /// A single consequence to execute as part of a ruling. Fields are type-specific and nullable when not applicable to the consequence type.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -667,16 +641,30 @@ public partial class ArbitrationCaseInfo
     public System.Guid? SovereignFactionId { get; set; } = default!;
 
     /// <summary>
-    /// Petitioner party reference. Nullable due to DETACH cleanup of character.
+    /// Petitioner entity ID. Nullable due to DETACH cleanup of character.
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("petitioner")]
-    public EntityReference? Petitioner { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("petitionerEntityId")]
+    public System.Guid? PetitionerEntityId { get; set; } = default!;
 
     /// <summary>
-    /// Respondent party reference. Nullable due to DETACH cleanup of character.
+    /// Type of the petitioner entity
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("respondent")]
-    public EntityReference? Respondent { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("petitionerEntityType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType? PetitionerEntityType { get; set; } = default!;
+
+    /// <summary>
+    /// Respondent entity ID. Nullable due to DETACH cleanup of character.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("respondentEntityId")]
+    public System.Guid? RespondentEntityId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of the respondent entity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("respondentEntityType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType? RespondentEntityType { get; set; } = default!;
 
     /// <summary>
     /// Assigned arbiter entity ID, null if not yet assigned
@@ -789,12 +777,21 @@ public partial class ArbitrationEvidenceInfo
     public EvidenceContent Content { get; set; } = new EvidenceContent();
 
     /// <summary>
-    /// Entity that submitted this evidence
+    /// Entity ID of the party that submitted this evidence
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("submittingParty")]
-    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonPropertyName("submittingPartyEntityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public EntityReference SubmittingParty { get; set; } = new EntityReference();
+    public System.Guid SubmittingPartyEntityId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of the submitting party entity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("submittingPartyEntityType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType SubmittingPartyEntityType { get; set; } = default!;
 
     /// <summary>
     /// When the evidence was submitted
