@@ -86,29 +86,34 @@ These documents provide the high-level architectural north-star context for the 
 
 ### Sub-Agent Orientation (MANDATORY)
 
-**When launching sub-agents (Task tool), do NOT have them read the entire CLAUDE.md.** Instead, instruct each agent to read only the documents relevant to its mission. This keeps agents focused and avoids context bloat.
+**All agents run on Opus 4.6 with 1M token context by default (inherited from the parent session).** Reading 5-10 reference documents (~100-150K tokens) is a trivial fraction of capacity. Do not hesitate to have agents read comprehensive context.
 
-**Orientation by mission type:**
+**Prefer project-aware agent types** over the generic `general-purpose` type. Three custom agents are defined in `.claude/agents/`:
 
-| Agent Mission | Must Read Before Starting |
-|---------------|--------------------------|
-| **Investigation** (understanding services, tracing dependencies, exploring architecture) | The layer-specific service details files: `docs/generated/GENERATED-INFRASTRUCTURE-SERVICE-DETAILS.md`, `docs/generated/GENERATED-APP-FOUNDATION-SERVICE-DETAILS.md`, `docs/generated/GENERATED-APP-FEATURES-SERVICE-DETAILS.md`, `docs/generated/GENERATED-GAME-FOUNDATION-SERVICE-DETAILS.md`, `docs/generated/GENERATED-GAME-FEATURES-SERVICE-DETAILS.md`. For specific plugin investigation, also read `docs/maps/{SERVICE}.md` (implementation map) for endpoint details, dependencies, events, and method pseudocode. |
-| **Plugin work** (auditing, mapping, testing, implementing, or maintaining a specific plugin) | The plugin's deep dive `docs/plugins/{SERVICE}.md` AND its implementation map `docs/maps/{SERVICE}.md`. The deep dive provides context, quirks, and design rationale; the map provides method-level detail, state key patterns, dependency tables, and event inventories. **Always read both.** |
-| **Code auditing** (reviewing implementations, checking tenet compliance, finding violations) | ALL tenet files in `docs/reference/tenets/`: `FOUNDATION.md`, `IMPLEMENTATION-BEHAVIOR.md`, `IMPLEMENTATION-DATA.md`, `QUALITY.md`, `TESTING-PATTERNS.md` |
-| **Testing work** (writing, reviewing, or designing unit tests, structural tests, enum mapping tests, or any test code) | `docs/reference/tenets/TESTING-PATTERNS.md` — contains test placement rules, isolation boundaries, mocking patterns, capture patterns, structural validators, enum mapping tests, forbidden patterns, and tier scope. This is the sole testing reference for agents. |
-| **Schema auditing** (reviewing OpenAPI schemas, checking schema rules, validating schema design) | `docs/reference/SCHEMA-RULES.md` |
-| **Specification work** (creating, reviewing, or implementing extension attribute specifications) | `docs/reference/SCHEMA-RULES.md` (for context on existing x-* attributes) and the relevant specification in `docs/reference/specifications/X-{ATTRIBUTE-NAME}.md`. For implementation work, also read `docs/reference/templates/SPECIFICATION-TEMPLATE.md` for the required document structure. |
-| **High-level vision** (evaluating how services serve gameplay, cross-cutting feature planning, content flywheel analysis) | `docs/reference/VISION.md` and `docs/reference/PLAYER-VISION.md` (same as Big Brain Mode) |
-| **Canonical pattern lookup** (searching for the correct way to implement a pattern — background workers, state store access, event publishing, deprecation, cleanup, enum mapping, etc.) | `docs/reference/HELPERS-AND-COMMON-PATTERNS.md` — read this FIRST before grepping the codebase for examples. It catalogs all shared helpers, canonical skeletons, and reference implementations with code samples and "when to use" guidance. |
-| **Documentation search** (broad search across guides, planning docs, FAQs, operations docs, specifications, or SDKs) | The relevant catalog file(s): `docs/generated/GENERATED-GUIDES-CATALOG.md`, `docs/generated/GENERATED-PLANNING-CATALOG.md`, `docs/generated/GENERATED-FAQ-CATALOG.md`, `docs/generated/GENERATED-OPERATIONS-CATALOG.md`, `docs/generated/GENERATED-SPECIFICATIONS-CATALOG.md`, `docs/generated/GENERATED-SDKS-CATALOG.md`. Read the catalog first to identify target documents from summaries, then read only the identified documents. Never glob a docs directory and read files blindly. |
+| Agent Type | Pre-reads | Use For |
+|------------|-----------|---------|
+| `bannou` | CLAUDE.md, CLAUDE-RESTRICTIONS.md | General tasks needing project awareness |
+| `bannou-dev` | Above + all tenet files + HELPERS-AND-COMMON-PATTERNS.md | Implementation, code review, auditing, tenet compliance |
+| `bannou-schema` | Above + SCHEMA-RULES.md + specifications catalog + scripts catalog | Schema work, generation, extension attributes |
+
+These agents read their reference documents as Step 0 before starting work. Use them via `subagent_type: "bannou"` (or `"bannou-dev"`, `"bannou-schema"`).
+
+**Additional context by mission type** — add these to the agent's prompt alongside the base agent type:
+
+| Agent Mission | Also Read |
+|---------------|-----------|
+| **Investigation** (tracing dependencies, exploring architecture) | Layer-specific service details: `docs/generated/GENERATED-*-SERVICE-DETAILS.md`. Also `docs/reference/SERVICE-HIERARCHY.md` for dependency analysis. |
+| **Plugin work** (auditing, mapping, testing, implementing) | `docs/plugins/{SERVICE}.md` (deep dive) AND `docs/maps/{SERVICE}.md` (implementation map). **Always read both.** |
+| **Testing work** | `docs/reference/tenets/TESTING-PATTERNS.md` — the sole testing reference. |
+| **High-level vision** | `docs/reference/VISION.md` and `docs/reference/PLAYER-VISION.md` (same as Big Brain Mode). |
+| **Documentation search** | The relevant catalog(s) — see Catalog-First Documentation Search below. |
 
 **Rules:**
-1. Every sub-agent prompt MUST include an explicit instruction to read the relevant documents listed above BEFORE doing any work
+1. Every sub-agent prompt MUST include an explicit instruction to read the relevant documents BEFORE doing any work
 2. Agents may need multiple orientations (e.g., an agent auditing code for tenet compliance while investigating service dependencies would read both the tenet files AND the service details files)
-3. The agent's prompt should specify which documents to read -- do not rely on the agent discovering them on its own
-4. For investigation agents, also include `docs/reference/SERVICE-HIERARCHY.md` when the task involves dependency analysis or layer validation
-5. For ANY agent working on a specific plugin (audit, map, test, implement, maintain), ALWAYS include both `docs/plugins/{SERVICE}.md` (deep dive) and `docs/maps/{SERVICE}.md` (implementation map) in the agent's reading list
-6. For ANY agent that needs to implement a pattern (background workers, event handlers, deprecation, cleanup, state store access, enum mapping, telemetry, etc.), instruct the agent to read `docs/reference/HELPERS-AND-COMMON-PATTERNS.md` BEFORE searching the codebase for examples. The patterns file is the canonical source — grepping other services for "how they do it" risks copying violations or outdated patterns
+3. The agent's prompt should specify which documents to read — do not rely on the agent discovering them on its own
+4. For ANY agent working on a specific plugin, ALWAYS include both `docs/plugins/{SERVICE}.md` (deep dive) and `docs/maps/{SERVICE}.md` (implementation map) in the agent's reading list
+5. For ANY agent implementing a pattern, instruct it to read `docs/reference/HELPERS-AND-COMMON-PATTERNS.md` BEFORE grepping the codebase. The patterns file is the canonical source — grepping other services risks copying violations
 
 **Other Planning References**:
 

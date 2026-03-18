@@ -104,6 +104,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
 
         var agreementStore = stateStoreFactory.GetQueryableStore<EscrowAgreementModel>(StateStoreDefinitions.EscrowAgreements);
         var statusIndexStore = stateStoreFactory.GetStore<StatusIndexEntry>(StateStoreDefinitions.EscrowStatusIndex);
+        var partyPendingStore = stateStoreFactory.GetStore<PartyPendingCount>(StateStoreDefinitions.EscrowPartyPending);
 
         var now = DateTimeOffset.UtcNow;
         var processed = 0;
@@ -132,6 +133,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
                 var wasProcessed = await ProcessExpiredEscrowAsync(
                     agreementStore,
                     statusIndexStore,
+                    partyPendingStore,
                     messageBus,
                     agreement,
                     now,
@@ -157,13 +159,14 @@ public class EscrowConfirmationTimeoutService : BackgroundService
     private async Task<bool> ProcessExpiredEscrowAsync(
         IQueryableStateStore<EscrowAgreementModel> agreementStore,
         IStateStore<StatusIndexEntry> statusIndexStore,
+        IStateStore<PartyPendingCount> partyPendingStore,
         IMessageBus messageBus,
         EscrowAgreementModel agreement,
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowConfirmationTimeoutService.ProcessExpiredEscrowAsync");
-        var agreementKey = $"agreement:{agreement.EscrowId}";
+        var agreementKey = EscrowService.BuildAgreementKey(agreement.EscrowId);
         var previousStatus = agreement.Status;
 
         // Get the full agreement with ETag for optimistic concurrency
@@ -196,7 +199,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
         {
             case ConfirmationTimeoutBehavior.AutoConfirm:
                 return await HandleAutoConfirmAsync(
-                    agreementStore, statusIndexStore, messageBus,
+                    agreementStore, statusIndexStore, partyPendingStore, messageBus,
                     currentAgreement, etag, now, cancellationToken);
 
             case ConfirmationTimeoutBehavior.Dispute:
@@ -206,13 +209,13 @@ public class EscrowConfirmationTimeoutService : BackgroundService
 
             case ConfirmationTimeoutBehavior.Refund:
                 return await HandleRefundAsync(
-                    agreementStore, statusIndexStore, messageBus,
+                    agreementStore, statusIndexStore, partyPendingStore, messageBus,
                     currentAgreement, etag, now, cancellationToken);
 
             default:
                 _logger.LogWarning("Unknown timeout behavior: {Behavior}, defaulting to auto_confirm", behavior);
                 return await HandleAutoConfirmAsync(
-                    agreementStore, statusIndexStore, messageBus,
+                    agreementStore, statusIndexStore, partyPendingStore, messageBus,
                     currentAgreement, etag, now, cancellationToken);
         }
     }
@@ -224,6 +227,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
     private async Task<bool> HandleAutoConfirmAsync(
         IQueryableStateStore<EscrowAgreementModel> agreementStore,
         IStateStore<StatusIndexEntry> statusIndexStore,
+        IStateStore<PartyPendingCount> partyPendingStore,
         IMessageBus messageBus,
         EscrowAgreementModel agreement,
         string? etag,
@@ -239,7 +243,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
                 agreement.EscrowId);
 
             return await CompleteEscrowAsync(
-                agreementStore, statusIndexStore, messageBus,
+                agreementStore, statusIndexStore, partyPendingStore, messageBus,
                 agreement, etag, now, cancellationToken);
         }
         else
@@ -279,6 +283,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
     private async Task<bool> HandleRefundAsync(
         IQueryableStateStore<EscrowAgreementModel> agreementStore,
         IStateStore<StatusIndexEntry> statusIndexStore,
+        IStateStore<PartyPendingCount> partyPendingStore,
         IMessageBus messageBus,
         EscrowAgreementModel agreement,
         string? etag,
@@ -289,7 +294,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
         _logger.LogInformation("Initiating refund for escrow {EscrowId} after timeout", agreement.EscrowId);
 
         var previousStatus = agreement.Status;
-        var agreementKey = $"agreement:{agreement.EscrowId}";
+        var agreementKey = EscrowService.BuildAgreementKey(agreement.EscrowId);
 
         agreement.Status = EscrowStatus.Refunded;
         agreement.CompletedAt = now;
@@ -307,6 +312,15 @@ public class EscrowConfirmationTimeoutService : BackgroundService
 
         // Update status index
         await UpdateStatusIndexAsync(statusIndexStore, previousStatus, EscrowStatus.Refunded, agreement.EscrowId, agreement.ExpiresAt, now, cancellationToken);
+
+        // Decrement party pending counts (terminal state reached)
+        if (agreement.Parties != null)
+        {
+            foreach (var party in agreement.Parties)
+            {
+                await DecrementPartyPendingCountAsync(partyPendingStore, party.PartyId, party.PartyType, cancellationToken);
+            }
+        }
 
         // Publish refunded event
         var refundEvent = new EscrowRefundedEvent
@@ -335,6 +349,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
     private async Task<bool> CompleteEscrowAsync(
         IQueryableStateStore<EscrowAgreementModel> agreementStore,
         IStateStore<StatusIndexEntry> statusIndexStore,
+        IStateStore<PartyPendingCount> partyPendingStore,
         IMessageBus messageBus,
         EscrowAgreementModel agreement,
         string? etag,
@@ -343,7 +358,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowConfirmationTimeoutService.CompleteEscrowAsync");
         var previousStatus = agreement.Status;
-        var agreementKey = $"agreement:{agreement.EscrowId}";
+        var agreementKey = EscrowService.BuildAgreementKey(agreement.EscrowId);
         EscrowStatus targetStatus;
         EscrowResolution resolution;
 
@@ -379,6 +394,15 @@ public class EscrowConfirmationTimeoutService : BackgroundService
 
         // Update status index
         await UpdateStatusIndexAsync(statusIndexStore, previousStatus, targetStatus, agreement.EscrowId, agreement.ExpiresAt, now, cancellationToken);
+
+        // Decrement party pending counts (terminal state reached)
+        if (agreement.Parties != null)
+        {
+            foreach (var party in agreement.Parties)
+            {
+                await DecrementPartyPendingCountAsync(partyPendingStore, party.PartyId, party.PartyType, cancellationToken);
+            }
+        }
 
         // Publish appropriate event
         if (targetStatus == EscrowStatus.Released)
@@ -436,7 +460,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowConfirmationTimeoutService.TransitionToDisputedAsync");
         var previousStatus = agreement.Status;
-        var agreementKey = $"agreement:{agreement.EscrowId}";
+        var agreementKey = EscrowService.BuildAgreementKey(agreement.EscrowId);
 
         agreement.Status = EscrowStatus.Disputed;
 
@@ -480,10 +504,10 @@ public class EscrowConfirmationTimeoutService : BackgroundService
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
-        var oldStatusKey = $"status:{oldStatus}:{escrowId}";
+        var oldStatusKey = $"{EscrowService.BuildStatusIndexKey(oldStatus)}:{escrowId}";
         await statusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
 
-        var newStatusKey = $"status:{newStatus}:{escrowId}";
+        var newStatusKey = $"{EscrowService.BuildStatusIndexKey(newStatus)}:{escrowId}";
         var statusEntry = new StatusIndexEntry
         {
             EscrowId = escrowId,
@@ -492,6 +516,45 @@ public class EscrowConfirmationTimeoutService : BackgroundService
             AddedAt = now
         };
         await statusIndexStore.SaveAsync(newStatusKey, statusEntry, cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
+    /// Decrements the pending escrow count for a party using optimistic concurrency.
+    /// </summary>
+    private async Task DecrementPartyPendingCountAsync(
+        IStateStore<PartyPendingCount> partyPendingStore,
+        Guid partyId,
+        EntityType partyType,
+        CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowConfirmationTimeoutService.DecrementPartyPendingCountAsync");
+        var partyKey = EscrowService.BuildPartyPendingKey(partyId, partyType);
+
+        for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
+        {
+            var (existing, etag) = await partyPendingStore.GetWithETagAsync(partyKey, cancellationToken);
+            if (existing == null || existing.PendingCount <= 0)
+            {
+                return;
+            }
+
+            existing.PendingCount--;
+            existing.LastUpdated = DateTimeOffset.UtcNow;
+
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
+            var saveResult = await partyPendingStore.TrySaveAsync(partyKey, existing, etag ?? string.Empty, cancellationToken: cancellationToken);
+            if (saveResult != null)
+            {
+                return;
+            }
+
+            _logger.LogDebug("Concurrent modification on party pending count {PartyKey}, retrying decrement (attempt {Attempt})",
+                partyKey, attempt + 1);
+        }
+
+        _logger.LogWarning("Failed to decrement party pending count for {PartyType}:{PartyId} after {MaxRetries} attempts",
+            partyType, partyId, _configuration.MaxConcurrencyRetries);
     }
 
 }

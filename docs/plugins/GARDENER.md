@@ -181,7 +181,6 @@ When entity-based services (Status, Currency, Inventory, Collection, Seed, etc.)
 | lib-messaging (`IEventConsumer`) | L0 Hard | Registering handlers for `seed.bond.formed`, `seed.activated`, `game-session.deleted` |
 | lib-seed (`ISeedClient`) | L2 Hard | Seed type registration, growth queries, growth recording, bond resolution |
 | lib-game-session (`IGameSessionClient`) | L2 Hard | Creating/cleaning up game sessions backing scenarios |
-| lib-puppetmaster (`IPuppetmasterClient`) | L4 Soft | Optional notification of scenario start with behavior document ID |
 
 ## Dependents (What Relies On This Plugin)
 
@@ -358,7 +357,6 @@ When entity-based services (Status, Currency, Inventory, Collection, Seed, etc.)
 | `IEventConsumer` | Event subscription registration |
 | `ISeedClient` | Seed type registration, growth queries/recording, bond resolution |
 | `IGameSessionClient` | Game session creation and cleanup |
-| `IServiceProvider` | Soft dependency resolution (`IPuppetmasterClient`) |
 | `GardenerGardenOrchestratorWorker` | Background service: POI expiration, scoring, spawning |
 | `GardenerScenarioLifecycleWorker` | Background service: timeout/abandon detection |
 | `GardenerSeedEvolutionListener` | Singleton `ISeedEvolutionListener` for growth/phase notifications |
@@ -381,7 +379,7 @@ When entity-based services (Status, Currency, Inventory, Collection, Seed, etc.)
 
 ### Scenario Lifecycle (6 endpoints)
 
-- **EnterScenarioAsync**: Validates template active + allowed in phase + global capacity. Creates backing game session via `IGameSessionClient`. Moves player from garden tracking to scenario tracking. Cleans up garden instance and all POIs. Optionally notifies Puppetmaster (soft dependency).
+- **EnterScenarioAsync**: Validates template active + allowed in phase + prerequisites met (RequiredDomains via seed growth, RequiredScenarios/ExcludedScenarios via history) + global capacity. Creates backing game session via `IGameSessionClient`. Moves player from garden tracking to scenario tracking. Cleans up garden instance and all POIs. Optionally notifies Puppetmaster (soft dependency).
 - **GetScenarioStateAsync**: Read-only scenario lookup.
 - **CompleteScenarioAsync**: Calculates full growth via `GardenerGrowthCalculation`, awards to all participants via `ISeedClient.RecordGrowthBatchAsync`, writes history to MySQL, cleans up Redis + game session.
 - **AbandonScenarioAsync**: Same as complete but with partial growth calculation and Abandoned status.
@@ -538,10 +536,9 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 2. ~~**scenario-template.deleted event never published**~~: **FIXED** (2026-03-16) - The `scenario-template.deleted` lifecycle event is now published by `CleanDeprecatedTemplatesAsync` (Category B clean-deprecated sweep). No per-entity delete endpoint exists (correct for Category B); deletion occurs only through the admin-only sweep when deprecated templates have zero active scenario instances.
 
-3. **Puppetmaster notification**: `EnterScenarioAsync` resolves `IPuppetmasterClient` and logs intent to notify about behavior documents, but does not actually call any Puppetmaster API. The notification is a log-only stub.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/681 -->
+3. ~~**Puppetmaster notification**~~: **RESOLVED** (2026-03-18) — Log-only `IPuppetmasterClient` stub removed from `EnterScenarioAsync`. The `gardener.scenario.started` broadcast event (already published) is the correct notification mechanism per IMPLEMENTATION TENETS (T27: broadcast events for "something happened, anyone can react"). Added `scenarioTemplateCode` and `behaviorDocumentId` to the event payload so Puppetmaster can load scenario-specific behaviors when it subscribes. Puppetmaster will subscribe once watcher-actor integration ([#388](https://github.com/beyond-immersion/bannou-service/issues/388)) is complete. The full solution is the divine gardener actor pattern (Stub #11) where the god-actor orchestrates both scenario selection and scenario execution.
 
-4. **PersistentEntryEnabled / GardenMinigamesEnabled**: These phase config flags are stored and returned but never read by any service logic. They appear to be forward-looking feature flags.
+4. **PersistentEntryEnabled / GardenMinigamesEnabled**: `PersistentEntryEnabled` is the release gate — when false, `EnterScenarioAsync` should reject templates with `ConnectivityMode.Persistent` (returning BadRequest). When true, Persistent templates are allowed. `GardenMinigamesEnabled` remains unspecified — no design document describes what garden minigames are. Recommendation: keep `PersistentEntryEnabled` and wire it up; remove `GardenMinigamesEnabled` from the schema until the feature is designed.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/684 -->
 
 5. **Matchmaking integration**: The implementation plan specified `IMatchmakingClient` (L4 soft dependency) for submitting matchmaking tickets when templates have `MinPlayers > 1`. This was never implemented -- group scenarios beyond bond pairs have no queueing mechanism.
@@ -552,10 +549,9 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 7. ~~**Client event schema (gardener-client-events.yaml)**~~: **FIXED** (2026-03-17) - Created `gardener-client-events.yaml` with 7 client events (POI spawned/expired/triggered, garden entered/left, scenario started/completed). Added `IClientEventPublisher` to `GardenerService` constructor. Wired up client event publishing in `GardenerService` (garden entered/left, scenario started/completed) and `GardenerGardenOrchestratorWorker` (POI spawned/expired). Clients now receive real-time push notifications for garden/POI/scenario lifecycle changes via WebSocket instead of polling.
 
-8. **ConnectivityMode.Persistent has no special handling**: The enum value exists (Alpha, Beta, Release map to Isolated, WorldSlice, Persistent) but the code treats all connectivity modes identically during scenario creation and lifecycle. The vision describes Persistent as "a scenario that doesn't end" -- the release surprise. No code path distinguishes Persistent scenarios from Isolated ones.
+8. **ConnectivityMode.Persistent lifecycle differentiation**: The enum value exists but all connectivity modes are treated identically in the lifecycle worker. Interim fix: `GardenerScenarioLifecycleWorker` should skip `ScenarioTimeoutMinutes` and `AbandonDetectionMinutes` for Persistent scenarios (they don't end on a timer). `PersistentEntryEnabled` phase config flag gates entry. Full Persistent experience (permanent world inhabitation) requires garden-to-garden transitions (Stub #12).
 
-9. **Prerequisite validation during scenario entry**: Templates store `Prerequisites` (required domains, required/excluded scenarios) in the model but they are never validated in `EnterScenarioAsync`. A player can enter any scenario regardless of prerequisites. The `GardenerGardenOrchestratorWorker.GetEligibleTemplatesAsync` also does not filter by prerequisites.
-<!-- AUDIT:IN_PROGRESS:2026-03-18 -->
+9. ~~**Prerequisite validation during scenario entry**~~: **FIXED** (2026-03-18) - Added `MeetsPrerequisites` static helper in `GardenerService.Helpers.cs` that validates all three prerequisite types (RequiredDomains against seed growth, RequiredScenarios and ExcludedScenarios against completed history). `EnterScenarioAsync` now validates prerequisites after phase gating, returning BadRequest when not met. `GetEligibleTemplatesAsync` in the orchestrator worker also filters by prerequisites using the same helper, reusing the already-fetched seed growth data and deriving completed template codes from the existing history query.
 
 10. **Per-template MaxConcurrentInstances enforcement**: Templates store a `MaxConcurrentInstances` value but it is never checked during scenario entry. Only the global `MaxConcurrentScenariosGlobal` is enforced.
 
@@ -565,7 +561,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 2. ~~**Multi-participant history**~~: **FIXED** (2026-03-16) - `WriteScenarioHistoryAsync` now writes a history record for every participant in a scenario, not just the primary. History keys use composite `history:{scenarioInstanceId}:{accountId}` to allow per-participant records. Per-item error isolation ensures one participant's write failure doesn't block others.
 
-3. **Content flywheel connection**: Scenarios complete and award growth, but there's no mechanism to feed scenario outcomes back into future content generation. No events are consumed by Storyline, no archive data is generated from scenario history. Per VISION.md, this is a load-bearing connection: "more play produces more content, which produces more play." Gardener generates play but doesn't yet contribute to the content side of the flywheel.
+3. **Content flywheel connection**: Gardener's flywheel contribution is indirect — it creates the play contexts (scenarios) where character actions happen. Storyline generates narrative seeds from compressed character archives, not from scenario metadata. However, both Character History and Realm History are **passive stores** — they expose API endpoints but do not automatically ingest gameplay events. The bridge between "gameplay happened" and "history record exists" is authored content: god-actors (ABML behaviors) and game engine code call `/character-history/record-participation`, `/realm-history/record-participation`, `/character-history/set-backstory` etc. during and after gameplay. Scenario completion events from Gardener (`gardener.scenario.completed`) could be consumed by a god-actor to generate realm-history records (e.g., "the Battle of X scenario was completed by N participants") and character-history participation records. This is a behavior authoring task — the god-actor decides what's historically significant enough to record — not a service-level integration gap. The planning documents (LOGOS-RESONANCE-ITEMS, INFORMATION-ECONOMY, MEMENTO-INVENTORIES, CULTURAL-EMERGENCE) describe additional authored-content pathways where scenario outcomes feed the flywheel through item creation, belief propagation, memento generation, and cultural crystallization.
 
 4. **Dialog choice trigger mode**: PLAYER-VISION.md describes four acceptance modes: implicit (proximity), prompted (acknowledge), dialog choices (multiple branching options), and forced. The implementation has Proximity, Interaction, Prompted, and Forced -- but "dialog choices" (presenting multiple distinct branching options beyond Enter/Decline) is missing. Prompted mode only offers binary accept/decline.
 
@@ -628,7 +624,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 1. ~~**Growth phase ordering is unresolved**~~: **RESOLVED** (2026-03-16) - Implemented via `ISeedClient.GetSeedTypeAsync` queried once per orchestrator tick. Phase ordinals derived from `GrowthPhaseDefinition.MinTotalGrowth` sort order. See Stub #1 fix above.
 
-2. **Persistent connectivity mode and the release transition**: PLAYER-VISION.md describes the release as "a scenario that doesn't end, a door that leads to permanent inhabitation." `ConnectivityMode.Persistent` exists as an enum value but has no differentiated code path. Designing this requires answering: What makes a Persistent scenario different from Isolated? Does the player stay in-world indefinitely? Does the garden become a between-sessions lobby? How does the "surprise" transition work without disrupting players mid-scenario? In the full garden concept, this is subsumed by garden-to-garden transitions -- the "Persistent" mode is simply a garden that doesn't transition back to discovery.
+2. **Persistent connectivity mode and the release transition**: **RESOLVED** (2026-03-18) — Architecturally answered by PLAYER-VISION.md's alpha→beta→release gradient. The three `ConnectivityMode` values (Isolated, WorldSlice, Persistent) map directly to deployment phases. In the current implementation, the interim differentiation is lifecycle behavior: Persistent scenarios should skip `ScenarioTimeoutMinutes` and `AbandonDetectionMinutes` in the lifecycle worker (they don't end on a timer). `PersistentEntryEnabled` phase config flag (#684) is the release gate — flip it and Persistent templates appear in the void. The full Persistent experience (permanent world inhabitation, the void as meta-layer) requires garden-to-garden transitions (Stub #12). See PLAYER-VISION.md § "Alpha, Beta, Release: The Gradient" for the full specification.
 
 3. **Content flywheel integration point**: Gardener generates play (scenarios, growth, history) but doesn't contribute to the content side of the flywheel. The architectural question is where the connection point should be: Should scenario completion publish events that Storyline/Puppetmaster consume? Should scenario history records feed into compressed archives via lib-resource? This is a cross-cutting design question that affects multiple services.
 
@@ -644,12 +640,12 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 ### P1 -- Complete Before Beta
 
-- [ ] **Stub #9**: Implement prerequisite validation in `EnterScenarioAsync` and `GetEligibleTemplatesAsync`
+- [x] **Stub #9**: ~~Implement prerequisite validation in `EnterScenarioAsync` and `GetEligibleTemplatesAsync`~~ — **FIXED** (2026-03-18). Added `MeetsPrerequisites` helper validating RequiredDomains, RequiredScenarios, and ExcludedScenarios. Both EnterScenarioAsync and the orchestrator worker now filter by prerequisites.
 - [ ] **Stub #10**: Implement per-template `MaxConcurrentInstances` enforcement during scenario entry
 - [x] **Stub #1/Design #1**: ~~Implement `MinGrowthPhase` ordinal comparison~~ — **FIXED** (2026-03-16). Fetches seed type definition once per orchestrator tick, builds ordinal map from `MinTotalGrowth`, filters templates where player hasn't reached required phase.
 - [x] **Stub #7**: ~~Create `gardener-client-events.yaml` schema for real-time POI spawn/expire/trigger push to WebSocket clients~~ — **FIXED** (2026-03-17)
 - [x] **Extension #2**: ~~Write history records for all bond scenario participants, not just primary~~ — **FIXED** (2026-03-16)
-- [ ] **Stub #3**: Implement actual Puppetmaster API call in `EnterScenarioAsync` (not just log)
+- [x] **Stub #3**: ~~Implement Puppetmaster notification~~ — **RESOLVED** (2026-03-18). Removed dead log-only stub. `gardener.scenario.started` event (with `scenarioTemplateCode` + `behaviorDocumentId` added to payload) is the broadcast notification mechanism. Puppetmaster subscribes when watcher-actor integration (#388) completes. Full solution is the divine gardener actor pattern (Stub #11).
 - [ ] **Design #1/Stub #15**: Design and implement Entity Session Registry in Connect (L1) -- `IEntitySessionRegistry` interface in `bannou-service/`, Redis-backed implementation in Connect (generalizing existing `account-sessions` pattern), cleanup on disconnect via reverse index. Cross-cutting: affects all entity-based services that want client event routing. [Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426) (CLOSED -- design accepted). [Issue #502](https://github.com/beyond-immersion/bannou-service/issues/502) (OPEN -- rollout tracking).
 
 ### P2 -- Feature Gaps
@@ -657,8 +653,8 @@ Player connects → Gardener triggers divine actor for garden-tending
 - [ ] **Stub #6**: Add Analytics milestone integration for scenario scoring (`IAnalyticsClient` soft dependency)
 - [ ] **Stub #5**: Add Matchmaking integration for group scenarios (`IMatchmakingClient` soft dependency)
 - [ ] **Extension #1**: Implement scenario history retention policy / cleanup worker
-- [ ] **Stub #8/Design #2**: Design and implement `ConnectivityMode.Persistent` differentiation for release transition
-- [ ] **Extension #3**: Design content flywheel connection (scenario outcomes feeding Storyline/Puppetmaster)
+- [ ] **Stub #8**: Implement `ConnectivityMode.Persistent` lifecycle differentiation — skip timeout/abandon in lifecycle worker; wire `PersistentEntryEnabled` flag as entry gate. Design resolved (2026-03-18); full Persistent experience requires garden-to-garden transitions (Stub #12).
+- [x] **Extension #3**: ~~Design content flywheel connection~~ — **CLARIFIED** (2026-03-18). Gardener's flywheel contribution is indirect through character-level services. Character History and Realm History are passive stores — the bridge from gameplay to history records is authored content (god-actor ABML behaviors calling history APIs). Scenario events (`gardener.scenario.completed`) are available for god-actors to consume and create historically significant records. Not a service integration gap — a behavior authoring task for the divine gardener actor pattern (Stub #11).
 - [ ] **Extension #4**: Add dialog choice trigger mode for multi-option branching POIs
 - [ ] **Stub #4**: Wire up `PersistentEntryEnabled` and `GardenMinigamesEnabled` phase config flags to service logic
 - [ ] **Stub #11**: Divine actor as gardener pattern -- launch per-player divine actor (via Puppetmaster) with gardener behavior document instead of background workers. Dynamic character binding enables progressive rollout: start event brain actors immediately, bind divine characters later for personality-driven orchestration.

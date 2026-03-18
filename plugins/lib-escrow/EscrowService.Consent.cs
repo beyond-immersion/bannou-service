@@ -149,10 +149,23 @@ public partial class EscrowService
                         newStatus = EscrowStatus.Refunding;
                         triggered = true;
 
-                        // Set confirmation deadline for non-immediate refund modes
+                        // Set confirmation deadline and initialize confirmation tracking
+                        // for non-immediate refund modes (same pattern as Release → Releasing)
                         if (agreementModel.RefundMode != RefundMode.Immediate)
                         {
                             agreementModel.ConfirmationDeadline = now.AddSeconds(_configuration.ConfirmationTimeoutSeconds);
+
+                            // Initialize refund confirmations for depositor parties
+                            agreementModel.ReleaseConfirmations = agreementModel.Parties?
+                                .Where(p => agreementModel.Deposits?.Any(d => d.PartyId == p.PartyId && d.PartyType == p.PartyType) == true)
+                                .Select(p => new ReleaseConfirmationModel
+                                {
+                                    PartyId = p.PartyId,
+                                    PartyType = p.PartyType,
+                                    ServiceConfirmed = agreementModel.RefundMode == RefundMode.PartyRequired,
+                                    PartyConfirmed = false,
+                                    ServiceConfirmedAt = agreementModel.RefundMode == RefundMode.PartyRequired ? now : null
+                                }).ToList() ?? new List<ReleaseConfirmationModel>();
                         }
                     }
                     break;

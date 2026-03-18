@@ -185,7 +185,7 @@ public class EscrowExpirationService : BackgroundService
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowExpirationService.ProcessExpiredEscrowAsync");
-        var agreementKey = $"agreement:{agreement.EscrowId}";
+        var agreementKey = EscrowService.BuildAgreementKey(agreement.EscrowId);
         var previousStatus = agreement.Status;
 
         // Get the full agreement with ETag for optimistic concurrency
@@ -221,7 +221,9 @@ public class EscrowExpirationService : BackgroundService
         // Update escrow to Expired status
         currentAgreement.Status = EscrowStatus.Expired;
         currentAgreement.CompletedAt = now;
-        currentAgreement.Resolution = hasDeposits ? EscrowResolution.ExpiredRefunded : EscrowResolution.ExpiredRefunded;
+        // ExpiredRefunded is used for both cases until the EscrowResolution enum
+        // gains a distinct value for expired-with-no-deposits (see GH issue)
+        currentAgreement.Resolution = EscrowResolution.ExpiredRefunded;
         currentAgreement.ResolutionNotes = hasDeposits
             ? "Escrow expired - deposits automatically refunded"
             : "Escrow expired - no deposits to refund";
@@ -302,10 +304,10 @@ public class EscrowExpirationService : BackgroundService
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
-        var oldStatusKey = $"status:{oldStatus}:{escrowId}";
+        var oldStatusKey = $"{EscrowService.BuildStatusIndexKey(oldStatus)}:{escrowId}";
         await statusIndexStore.DeleteAsync(oldStatusKey, cancellationToken);
 
-        var newStatusKey = $"status:{newStatus}:{escrowId}";
+        var newStatusKey = $"{EscrowService.BuildStatusIndexKey(newStatus)}:{escrowId}";
         var statusEntry = new StatusIndexEntry
         {
             EscrowId = escrowId,
@@ -326,7 +328,7 @@ public class EscrowExpirationService : BackgroundService
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowExpirationService.DecrementPartyPendingCountAsync");
-        var partyKey = $"party:{partyType}:{partyId}";
+        var partyKey = EscrowService.BuildPartyPendingKey(partyId, partyType);
         var now = DateTimeOffset.UtcNow;
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)

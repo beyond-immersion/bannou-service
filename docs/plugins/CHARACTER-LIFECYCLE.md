@@ -1,11 +1,10 @@
 # Character Lifecycle Plugin Deep Dive
 
-> **Plugin**: lib-character-lifecycle (not yet created)
-> **Schema**: `schemas/character-lifecycle-api.yaml` (not yet created)
-> **Version**: N/A (Pre-Implementation)
-> **State Store**: character-lifecycle-profiles (MySQL), character-lifecycle-heritage (MySQL), character-lifecycle-bloodlines (MySQL), character-lifecycle-cache (Redis), character-lifecycle-lock (Redis) — all planned
+> **Plugin**: lib-character-lifecycle
+> **Schema**: schemas/character-lifecycle-api.yaml
+> **Version**: 1.0.0
 > **Layer**: GameFeatures
-> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
+> **State Store**: character-lifecycle-profiles (MySQL), character-lifecycle-heritage (MySQL), character-lifecycle-bloodlines (MySQL), character-lifecycle-cache (Redis), character-lifecycle-lock (Redis)
 > **Implementation Map**: [docs/maps/CHARACTER-LIFECYCLE.md](../maps/CHARACTER-LIFECYCLE.md)
 > **Short**: Generational cycle orchestration (aging, marriage, procreation, death, genetic inheritance)
 
@@ -687,7 +686,7 @@ All template entities follow **Category B** deprecation (instances persist indep
 
 **Deprecation behavior**: Deprecated templates are excluded from list/query results by default (`includeDeprecated: false`). Creating new instances referencing a deprecated template is rejected with `BadRequest`. Existing instances continue to function normally. Deprecation uses the triple-field model: `IsDeprecated`, `DeprecatedAt`, `DeprecationReason`. Deprecation events are published via `*.updated` with `changedFields` containing the deprecation fields (no dedicated `*.deprecated` events).
 
-**Bloodline deletion behavior**: Bloodline uses immediate hard delete (no deprecation). Deletion triggers lib-resource CASCADE cleanup of membership indexes (`bloodline:member:{characterId}`, `bloodline:members:{bloodlineId}`). Immutable `GeneticProfile.bloodlines` arrays in existing characters are unaffected — they retain the historical `BloodlineEntry` record. The `HeritageProviderFactory` variable provider filters `${heritage.has_bloodline.*}` results against live bloodline definitions, so deleted bloodlines no longer appear in ABML variable resolution. The `bloodline/list` endpoint supports `includeDeleted` is unnecessary — deleted bloodlines are gone. The `bloodline/query-members` endpoint returns empty for a deleted bloodline (membership indexes were cleaned up).
+**Bloodline deletion behavior**: Bloodline uses immediate hard delete (no deprecation). Deletion triggers lib-resource CASCADE cleanup of membership indexes (`bloodline:member:{characterId}`, `bloodline:members:{bloodlineId}`). Immutable `GeneticProfile.bloodlines` arrays in existing characters are unaffected — they retain the historical `BloodlineEntry` record. The `HeritageProviderFactory` variable provider filters `${heritage.has_bloodline.*}` results against live bloodline definitions, so deleted bloodlines no longer appear in ABML variable resolution. An `includeDeleted` parameter on the `bloodline/list` endpoint is unnecessary — deleted bloodlines are gone. The `bloodline/query-members` endpoint returns empty for a deleted bloodline (membership indexes were cleaned up).
 
 ---
 
@@ -1036,84 +1035,35 @@ Lifecycle identity, aging, and heritage computation are owned here. Marriage cer
 
 ## Stubs & Unimplemented Features
 
-**Everything is unimplemented.** This is a pre-implementation architectural specification. No schema, no code. The following phases are planned:
+All 29 API endpoints have basic implementations. Schemas, generated code, configuration, tests, resource tracking, and compression callbacks are complete. The following features remain stubbed or unimplemented:
 
-### Phase 0: Prerequisites (changes to existing services)
+### Event Handlers (Registered but TODO)
 
-- **Worldstate**: Must exist and publish `worldstate.year-changed` events. Lifecycle cannot function without the game clock. Worldstate is the highest-priority prerequisite.
-- **Organization Phase 5**: Household pattern must be at least partially implemented for household creation/member management during marriage and procreation.
-- **Disposition**: Must exist for fulfillment calculation during death processing. Without Disposition, fulfillment defaults to neutral (0.3) -- functional but the content flywheel loses its richest dimension.
+All 5 event subscriptions are registered in `CharacterLifecycleService.Events.cs` but their handler bodies are TODO stubs that only log receipt. These are the temporal engine's core — without them, aging does not advance, pregnancies do not resolve, divorces do not process, and bloodline formation does not trigger.
 
-### Phase 1: Lifecycle Templates and Profiles
+- `HandleYearChangedAsync` — batch-advance character ages, detect stage transitions, trigger natural deaths
+- `HandleSeasonChangedAsync` — update seasonal fertility modifiers
+- `HandleContractTerminatedAsync` — process marriage contract termination as divorce
+- `HandleContractBreachedAsync` — evaluate marriage contract breach severity
+- `HandleSeedPhaseChangedAsync` — evaluate bloodline formation eligibility on household seed capability gain
 
-- Create `character-lifecycle-api.yaml` schema with all endpoints
-- Create `character-service-lifecycle-events.yaml` schema
-- Create `character-lifecycle-configuration.yaml` schema
-- Generate service code
-- Implement lifecycle template CRUD (seed, get, list per species)
-- Implement lifecycle profile CRUD (seed, get, query)
-- Implement basic aging: subscribe to `worldstate.year-changed`, advance ages, detect stage transitions
-- Implement stage change event publishing
-- Implement resource cleanup and compression callbacks
+### Variable Provider Factories (Not Implemented)
 
-### Phase 2: Heritage Engine
+The implementation map specifies two `IVariableProviderFactory` implementations, but no provider factory classes exist in the plugin code:
 
-- Implement heritable trait template CRUD
-- Implement genetic profile storage
-- Implement recombination algorithm (allele selection, dominance, mutation)
-- Implement phenotype expression (immediate and delayed)
-- Implement aptitude derivation from phenotype
-- Implement heritage variable provider factory (`${heritage.*}` namespace) — register in `variable-providers.yaml`
-- Implement lifecycle variable provider factory (`${lifecycle.*}` namespace) — register in `variable-providers.yaml`
-- Implement SeedGeneticProfile for first-generation characters
-- Implement SimulateOffspring endpoint
+- `HeritageProviderFactory` — `${heritage.*}` namespace (aptitudes, phenotype, bloodline membership, generation depth)
+- `LifecycleProviderFactory` — `${lifecycle.*}` namespace (age, stage, fertility, spouse count, child count, years remaining)
 
-### Phase 3: Procreation
+These are required for NPC actors to make lifecycle-aware decisions via ABML behaviors.
 
-- Implement fertility calculation (species + age + heritage modifier)
-- Implement pregnancy tracking (pending births with expected dates)
-- Implement pregnancy worker (worldstate.day-changed → birth processing)
-- Implement full procreation flow (heritage computation → character creation → relationships → household → backstory → events)
-- Implement MaxChildrenPerPair and MaxChildrenPerCharacter limits
-- Wire Character-Personality initialization from heritage phenotype
-- Wire Character-History backstory seeding from birth context
+### Background Worker Logic
 
-### Phase 4: Marriage
+The 3 background workers described in the implementation map (LifecycleAgingWorkerService, LifecyclePregnancyWorkerService, LifecycleBloodlineWorkerService) are event-driven patterns that would execute inside the event handlers above. No standalone BackgroundService classes exist.
 
-- Implement marriage eligibility validation
-- Implement marriage contract creation via IContractClient
-- Implement household resolution (join, merge, create new)
-- Implement Disposition feeling seeds between spouses
-- Implement divorce processing (contract termination → lifecycle update)
-- Wire Organization household events
+### Prerequisites (External Services)
 
-### Phase 5: Death Processing
-
-- Implement fulfillment calculation from Disposition drives
-- Implement guardian spirit contribution calculation
-- Implement archive compression trigger via Resource
-- Implement inheritance processing (testament contracts, heirloom transfers)
-- Implement afterlife pathway determination
-- Implement full death event publishing
-- Wire to content flywheel (Storyline archive consumption)
-- Implement RecordDeath endpoint for external death reporters
-
-### Phase 6: Bloodlines
-
-- Implement bloodline storage and queries
-- Implement bloodline formation worker (automatic detection from generational trait patterns)
-- Implement manual bloodline establishment (EstablishBloodline endpoint)
-- Implement bloodline deletion (immediate hard delete with lib-resource CASCADE cleanup of membership indexes)
-- Implement bloodline variable provider (`${heritage.has_bloodline.*}`) with live-definition filtering (deleted bloodlines excluded)
-- Implement family tree query endpoint
-
-### Phase 7: Species Hybridization
-
-- Implement hybrid trait template storage
-- Implement cross-species compatibility matrix
-- Implement hybrid recombination rules
-- Implement hybrid fertility modifiers
-- Implement hybrid-specific trait emergence
+- **Organization**: Household pattern (L4 soft dependency) — required for full marriage/procreation household integration. Lifecycle degrades gracefully without it.
+- **Disposition**: Fulfillment calculation (L4 soft dependency) — required for rich death processing. Without it, fulfillment defaults to `FulfillmentNeutralDefault` (0.3).
 
 ---
 
@@ -1194,7 +1144,11 @@ Heritage provides the NATURE. Personality/Disposition/History provide the NURTUR
 
 ### Bugs (Fix Immediately)
 
-None currently.
+1. **Event handlers violate async method pattern**: All 5 event handlers in `CharacterLifecycleService.Events.cs` (`HandleYearChangedAsync`, `HandleSeasonChangedAsync`, `HandleContractTerminatedAsync`, `HandleContractBreachedAsync`, `HandleSeedPhaseChangedAsync`) return `Task.CompletedTask` without the `async` keyword. Per IMPLEMENTATION TENETS (Async Method Pattern), all methods returning `Task` MUST use `async` and contain at least one `await`. Fix: add `async` keyword and replace `return Task.CompletedTask` with `await Task.CompletedTask` in each handler.
+
+2. **Private async helpers in primary file**: Three private async helper methods (`TraverseAncestorsAsync`, `TraverseDescendantsAsync`, `DecrementChildCountAsync`) with telemetry spans (`StartActivity`) are in `CharacterLifecycleService.cs` instead of `CharacterLifecycleService.Helpers.cs`. The Helpers file explicitly documents this convention and the structural test `Services_PrimaryFile_DoesNotCallStartActivity` enforces it. Fix: move these 3 methods to the Helpers file.
+
+3. **Missing Category B deprecation and clean-deprecated endpoints**: The `x-lifecycle` entries for LifecycleTemplate, HeritableTraitTemplate, and HybridTraitTemplate all have `deprecation: true` (Category B), but the API schema has no `deprecate` or `clean-deprecated` endpoints for any of them. Per IMPLEMENTATION TENETS (Deprecation Lifecycle), Category B entities require: (a) a deprecate endpoint per template type, (b) a `clean-deprecated` endpoint using shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` with `role: admin` permissions, and (c) `ICleanDeprecatedEntity` marker interface on the service. Fix requires schema changes + regeneration.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -1246,11 +1200,15 @@ None currently.
 
 ### Active
 
-- **#436**: Character-Lifecycle service implementation (tracks all phases)
-- **#385**: Organization Phase 5 — household pattern (prerequisite for marriage/procreation)
+- **Event handler implementation**: All 5 event handlers are TODO stubs. This is the highest-priority remaining work — without event handlers, the temporal engine (aging, pregnancy, divorce, bloodline formation) does not function.
+- **Variable provider factories**: `HeritageProviderFactory` and `LifecycleProviderFactory` not yet implemented. Required for NPC ABML behavior integration.
+- **#670**: Organization: implement Dissolve endpoint for household split (external prerequisite for full household lifecycle integration)
+- **#680**: Ethology: Heritage phenotype axis mapping data location unresolved (cross-cutting: determines whether phenotype-to-ethology mapping lives in Lifecycle or Ethology)
 
 ### Completed
 
-None currently.
-
-Worldstate is the primary prerequisite (Phase 0) — lifecycle cannot function without the game clock. Organization's household pattern (Phase 5 of Organization) is the secondary prerequisite for full marriage/procreation flows but not for basic aging (Phase 1). Disposition enhances death processing but is not a blocker (fulfillment defaults to neutral without it). Phase 1 (templates and aging) is self-contained once Worldstate exists. Phase 2 (heritage engine) is self-contained. Phases 3-5 progressively integrate with more services.
+- Schema creation (api, events, configuration) — all 3 schema files exist
+- Code generation — all generated files present (controller, interface, config, event publisher, topics, reference tracking, compression callbacks)
+- Service implementation — all 29 endpoint methods implemented
+- Unit tests — 4 test files covering templates, profiles, and orchestration guard clauses
+- Implementation map — complete at docs/maps/CHARACTER-LIFECYCLE.md

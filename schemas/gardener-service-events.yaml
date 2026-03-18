@@ -389,6 +389,14 @@ components:
           type: string
           format: uuid
           description: Active seed for the entering player
+        scenarioTemplateCode:
+          type: string
+          description: Human-readable template code for the scenario
+        behaviorDocumentId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ABML behavior document ID from the template content, if any (enables Puppetmaster to load scenario-specific behaviors)
 
     GardenerScenarioCompletedEvent:
       allOf:

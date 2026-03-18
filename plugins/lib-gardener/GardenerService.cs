@@ -8,7 +8,6 @@ using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
-using BeyondImmersion.BannouService.Puppetmaster;
 using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -43,7 +42,6 @@ public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ISeedClient _seedClient;
     private readonly IGameSessionClient _gameSessionClient;
-    private readonly IServiceProvider _serviceProvider;
     private readonly IEntitySessionRegistry _entitySessionRegistry;
     private readonly IClientEventPublisher _clientEventPublisher;
     private readonly ITelemetryProvider _telemetryProvider;
@@ -107,7 +105,6 @@ public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
         IEventConsumer eventConsumer,
         ISeedClient seedClient,
         IGameSessionClient gameSessionClient,
-        IServiceProvider serviceProvider,
         IEntitySessionRegistry entitySessionRegistry,
         IClientEventPublisher clientEventPublisher,
         ITelemetryProvider telemetryProvider)
@@ -118,7 +115,6 @@ public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
         _lockProvider = lockProvider;
         _seedClient = seedClient;
         _gameSessionClient = gameSessionClient;
-        _serviceProvider = serviceProvider;
         _entitySessionRegistry = entitySessionRegistry;
         _clientEventPublisher = clientEventPublisher;
         _telemetryProvider = telemetryProvider;
@@ -820,7 +816,9 @@ public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
                 ScenarioTemplateId = body.ScenarioTemplateId,
                 GameSessionId = gameSession.SessionId,
                 WebSocketSessionId = body.SessionId,
-                SeedId = garden.SeedId
+                SeedId = garden.SeedId,
+                ScenarioTemplateCode = template.Code,
+                BehaviorDocumentId = template.Content?.BehaviorDocumentId
             }, cancellationToken);
 
         await _clientEventPublisher.PublishToSessionAsync(body.SessionId.ToString(),
@@ -832,15 +830,6 @@ public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
                 ScenarioTemplateId = body.ScenarioTemplateId,
                 GameSessionId = gameSession.SessionId
             });
-
-        // Notify Puppetmaster if available (L4 soft dependency)
-        var puppetmasterClient = _serviceProvider.GetService<IPuppetmasterClient>();
-        if (puppetmasterClient != null && template.Content?.BehaviorDocumentId != null)
-        {
-            _logger.LogDebug(
-                "Notifying Puppetmaster of scenario {ScenarioId} with behavior {BehaviorDoc}",
-                scenarioInstanceId, template.Content.BehaviorDocumentId);
-        }
 
         _logger.LogInformation(
             "Scenario {ScenarioId} started for account {AccountId}, template {TemplateCode}",
