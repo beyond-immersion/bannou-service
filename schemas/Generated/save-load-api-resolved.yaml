@@ -2356,3 +2356,5 @@ components:
 
 x-inlined-types:
 - EntityType
+x-common-inlined-types:
+- EntityType

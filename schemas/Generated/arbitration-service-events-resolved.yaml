@@ -134,18 +134,18 @@ x-lifecycle:
       petitionerEntityId: {type: string, format: uuid, nullable: true, description: "Petitioner entity ID (nullable: DETACH
           cleanup)"}
       petitionerEntityType:
-        $ref: '../common-api.yaml#/components/schemas/EntityType'
+        $ref: '#/components/schemas/EntityType'
         nullable: true
         description: "Type of the petitioner entity"
       respondentEntityId: {type: string, format: uuid, nullable: true, description: "Respondent entity ID (nullable: DETACH
           cleanup)"}
       respondentEntityType:
-        $ref: '../common-api.yaml#/components/schemas/EntityType'
+        $ref: '#/components/schemas/EntityType'
         nullable: true
         description: "Type of the respondent entity"
       arbiterEntityId: {type: string, format: uuid, nullable: true, description: "Assigned arbiter entity ID"}
       arbiterEntityType:
-        $ref: '../common-api.yaml#/components/schemas/EntityType'
+        $ref: '#/components/schemas/EntityType'
         nullable: true
         description: "Type of the assigned arbiter entity"
       contractId: {type: string, format: uuid, required: true, description: "Underlying contract instance ID"}
@@ -217,14 +217,14 @@ components:
           format: uuid
           description: Entity ID of the petitioner
         petitionerEntityType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of the petitioner entity
         respondentEntityId:
           type: string
           format: uuid
           description: Entity ID of the respondent
         respondentEntityType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of the respondent entity
         templateCode:
           type: string
@@ -398,6 +398,11 @@ components:
           items:
             $ref: '#/components/schemas/ConsequenceResult'
           description: Execution status of each consequence
+        affectedParties:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityReference'
+          description: Entities affected by the ruling (petitioner, respondent, witnesses)
 
     ArbitrationRulingAppealedEvent:
       allOf:
@@ -625,7 +630,58 @@ components:
       - OrganizationDissolution
       - SeedGrowthTransfer
 
+    EntityReference:
+      type: object
+      additionalProperties: false
+      description: A reference to an entity by ID and type. Used across services for polymorphic entity references in 
+        events, responses, and cross-service data.
+      required:
+      - entityId
+      - entityType
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Referenced entity identifier
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Type of the referenced entity
+
+    # ==========================================================================
+    # Permission Metadata Types
+    # ==========================================================================
+
+    EntityType:
+      type: string
+      description: |
+        Universal entity type identifier for first-class Bannou entities.
+        Used for polymorphic entity references (ownerType, entityType, partyType).
+
+        NOT for game-configurable content type codes (use opaque strings) or
+        service-specific roles that include non-entity values (use service-specific enums).
+        See IMPLEMENTATION TENETS polymorphic type field classification for guidance.
+      enum:
+      - System
+      - Account
+      - Character
+      - Actor
+      - Guild
+      - Organization
+      - Government
+      - Faction
+      - Location
+      - Realm
+      - Item
+      - Monster
+      - Relationship
+      - Session
+      - Deity
+      - Dungeon
+      - Other
+
 x-inlined-types:
 - ConsequenceResult
 - ConsequenceResultStatus
 - ConsequenceType
+- EntityReference
+- EntityType

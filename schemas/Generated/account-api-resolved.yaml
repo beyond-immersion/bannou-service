@@ -1074,3 +1074,6 @@ components:
 x-inlined-types:
 - AuthProvider
 - OAuthProvider
+x-common-inlined-types:
+- AuthProvider
+- OAuthProvider

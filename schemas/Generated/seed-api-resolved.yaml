@@ -1778,3 +1778,6 @@ components:
 x-inlined-types:
 - DeprecationFields
 - EntityType
+x-common-inlined-types:
+- DeprecationFields
+- EntityType

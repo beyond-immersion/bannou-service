@@ -177,46 +177,41 @@ paths:
         due to DETACH cleanup.\"\n                },\n                \"sovereignFactionId\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
         \      \"description\": \"Jurisdictional sovereign faction. Nullable due to DETACH cleanup.\"\n                },\n\
-        \                \"petitionerEntityId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Petitioner entity ID.
-        Nullable due to DETACH cleanup of character.\"\n                },\n                \"petitionerEntityType\": {\n\
-        \                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the petitioner entity\"\n                },\n                \"respondentEntityId\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Respondent entity ID. Nullable due to DETACH cleanup of character.\"\n   \
-        \             },\n                \"respondentEntityType\": {\n                    \"type\": \"object\",\n       \
-        \             \"nullable\": true,\n                    \"description\": \"Type of the respondent entity\"\n      \
-        \          },\n                \"arbiterEntityId\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Assigned
-        arbiter entity ID, null if not yet assigned\"\n                },\n                \"arbiterEntityType\": {\n    \
-        \                \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the assigned arbiter entity\"\n                },\n                \"contractId\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Underlying
-        contract instance driving the case lifecycle\"\n                },\n                \"templateCode\": {\n        \
-        \            \"type\": \"string\",\n                    \"description\": \"Procedural template code from sovereign
-        governance data\"\n                },\n                \"rulingId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Ruling ID if a ruling has been issued\"\n                },\n                \"jurisdictionChallenged\": {\n \
-        \                   \"type\": \"boolean\",\n                    \"description\": \"Whether jurisdiction has been challenged\"\
-        \n                },\n                \"closedReason\": {\n                    \"$ref\": \"#/$defs/CaseClosedReason\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Reason for case closure, null if
-        case is not closed\"\n                },\n                \"governanceParametersSnapshot\": {\n                  \
-        \  \"type\": \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n\
-        \                    \"description\": \"Governance parameters snapshot from jurisdictional faction. Stored for reference;
-        Arbitration does not read or validate specific keys. These parameters are interpreted by Contract templates.\"\n \
-        \               },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                \
-        \    \"format\": \"date-time\",\n                    \"description\": \"When the case was filed\"\n              \
-        \  },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the case was
-        last updated\"\n                }\n            }\n        },\n        \"ArbitrationCaseStatus\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Case lifecycle states managed via contract milestones\",\n   \
-        \         \"enum\": [\n                \"Filed\",\n                \"AwaitingArbiter\",\n                \"Hearing\"\
-        ,\n                \"Deliberation\",\n                \"Ruled\",\n                \"Appealed\",\n                \"\
-        Closed\",\n                \"Dismissed\",\n                \"Withdrawn\"\n            ]\n        },\n        \"CaseClosedReason\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Reason a case reached a terminal closed state\"\
-        ,\n            \"enum\": [\n                \"Withdrawal\",\n                \"Dismissal\",\n                \"RulingEnforced\"\
-        ,\n                \"PartyCharacterDeleted\",\n                \"RealmDeleted\",\n                \"JurisdictionVoid\"\
-        \n            ]\n        }\n    }\n}"
+        \                \"petitioner\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Petitioner party reference. Nullable due to DETACH cleanup of character.\"\
+        \n                },\n                \"respondent\": {\n                    \"type\": \"object\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Respondent party reference. Nullable due to DETACH
+        cleanup of character.\"\n                },\n                \"arbiterEntityId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Assigned arbiter entity ID, null if not yet assigned\"\n                },\n           \
+        \     \"arbiterEntityType\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Type of the assigned arbiter entity\"\n                },\n              \
+        \  \"contractId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n     \
+        \               \"description\": \"Underlying contract instance driving the case lifecycle\"\n                },\n\
+        \                \"templateCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Procedural template code from sovereign governance data\"\n                },\n                \"rulingId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Ruling ID if a ruling has been issued\"\n                },\n    \
+        \            \"jurisdictionChallenged\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether jurisdiction has been challenged\"\n                },\n                \"closedReason\": {\n        \
+        \            \"$ref\": \"#/$defs/CaseClosedReason\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Reason for case closure, null if case is not closed\"\n                },\n                \"\
+        governanceParametersSnapshot\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"additionalProperties\": true,\n                    \"description\": \"Governance parameters
+        snapshot from jurisdictional faction. Stored for reference; Arbitration does not read or validate specific keys. These
+        parameters are interpreted by Contract templates.\"\n                },\n                \"createdAt\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the case was filed\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"When the case was last updated\"\n                }\n            }\n        },\n  \
+        \      \"ArbitrationCaseStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Case lifecycle
+        states managed via contract milestones\",\n            \"enum\": [\n                \"Filed\",\n                \"\
+        AwaitingArbiter\",\n                \"Hearing\",\n                \"Deliberation\",\n                \"Ruled\",\n\
+        \                \"Appealed\",\n                \"Closed\",\n                \"Dismissed\",\n                \"Withdrawn\"\
+        \n            ]\n        },\n        \"CaseClosedReason\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Reason a case reached a terminal closed state\",\n            \"enum\": [\n                \"Withdrawal\",\n \
+        \               \"Dismissal\",\n                \"RulingEnforced\",\n                \"PartyCharacterDeleted\",\n\
+        \                \"RealmDeleted\",\n                \"JurisdictionVoid\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get an arbitration case by ID\",\n    \"description\": \"Returns the full
         case record enriched with current contract milestone status.\",\n    \"tags\": [\n        \"Case Management\"\n  \
         \  ],\n    \"deprecated\": false,\n    \"operationId\": \"getCase\"\n}"
@@ -272,46 +267,41 @@ paths:
         due to DETACH cleanup.\"\n                },\n                \"sovereignFactionId\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
         \      \"description\": \"Jurisdictional sovereign faction. Nullable due to DETACH cleanup.\"\n                },\n\
-        \                \"petitionerEntityId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Petitioner entity ID.
-        Nullable due to DETACH cleanup of character.\"\n                },\n                \"petitionerEntityType\": {\n\
-        \                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the petitioner entity\"\n                },\n                \"respondentEntityId\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Respondent entity ID. Nullable due to DETACH cleanup of character.\"\n   \
-        \             },\n                \"respondentEntityType\": {\n                    \"type\": \"object\",\n       \
-        \             \"nullable\": true,\n                    \"description\": \"Type of the respondent entity\"\n      \
-        \          },\n                \"arbiterEntityId\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Assigned
-        arbiter entity ID, null if not yet assigned\"\n                },\n                \"arbiterEntityType\": {\n    \
-        \                \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the assigned arbiter entity\"\n                },\n                \"contractId\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Underlying
-        contract instance driving the case lifecycle\"\n                },\n                \"templateCode\": {\n        \
-        \            \"type\": \"string\",\n                    \"description\": \"Procedural template code from sovereign
-        governance data\"\n                },\n                \"rulingId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Ruling ID if a ruling has been issued\"\n                },\n                \"jurisdictionChallenged\": {\n \
-        \                   \"type\": \"boolean\",\n                    \"description\": \"Whether jurisdiction has been challenged\"\
-        \n                },\n                \"closedReason\": {\n                    \"$ref\": \"#/$defs/CaseClosedReason\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Reason for case closure, null if
-        case is not closed\"\n                },\n                \"governanceParametersSnapshot\": {\n                  \
-        \  \"type\": \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n\
-        \                    \"description\": \"Governance parameters snapshot from jurisdictional faction. Stored for reference;
-        Arbitration does not read or validate specific keys. These parameters are interpreted by Contract templates.\"\n \
-        \               },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                \
-        \    \"format\": \"date-time\",\n                    \"description\": \"When the case was filed\"\n              \
-        \  },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the case was
-        last updated\"\n                }\n            }\n        },\n        \"ArbitrationCaseStatus\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Case lifecycle states managed via contract milestones\",\n   \
-        \         \"enum\": [\n                \"Filed\",\n                \"AwaitingArbiter\",\n                \"Hearing\"\
-        ,\n                \"Deliberation\",\n                \"Ruled\",\n                \"Appealed\",\n                \"\
-        Closed\",\n                \"Dismissed\",\n                \"Withdrawn\"\n            ]\n        },\n        \"CaseClosedReason\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Reason a case reached a terminal closed state\"\
-        ,\n            \"enum\": [\n                \"Withdrawal\",\n                \"Dismissal\",\n                \"RulingEnforced\"\
-        ,\n                \"PartyCharacterDeleted\",\n                \"RealmDeleted\",\n                \"JurisdictionVoid\"\
-        \n            ]\n        }\n    }\n}"
+        \                \"petitioner\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Petitioner party reference. Nullable due to DETACH cleanup of character.\"\
+        \n                },\n                \"respondent\": {\n                    \"type\": \"object\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Respondent party reference. Nullable due to DETACH
+        cleanup of character.\"\n                },\n                \"arbiterEntityId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Assigned arbiter entity ID, null if not yet assigned\"\n                },\n           \
+        \     \"arbiterEntityType\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Type of the assigned arbiter entity\"\n                },\n              \
+        \  \"contractId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n     \
+        \               \"description\": \"Underlying contract instance driving the case lifecycle\"\n                },\n\
+        \                \"templateCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Procedural template code from sovereign governance data\"\n                },\n                \"rulingId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Ruling ID if a ruling has been issued\"\n                },\n    \
+        \            \"jurisdictionChallenged\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether jurisdiction has been challenged\"\n                },\n                \"closedReason\": {\n        \
+        \            \"$ref\": \"#/$defs/CaseClosedReason\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Reason for case closure, null if case is not closed\"\n                },\n                \"\
+        governanceParametersSnapshot\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"additionalProperties\": true,\n                    \"description\": \"Governance parameters
+        snapshot from jurisdictional faction. Stored for reference; Arbitration does not read or validate specific keys. These
+        parameters are interpreted by Contract templates.\"\n                },\n                \"createdAt\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the case was filed\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"When the case was last updated\"\n                }\n            }\n        },\n  \
+        \      \"ArbitrationCaseStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Case lifecycle
+        states managed via contract milestones\",\n            \"enum\": [\n                \"Filed\",\n                \"\
+        AwaitingArbiter\",\n                \"Hearing\",\n                \"Deliberation\",\n                \"Ruled\",\n\
+        \                \"Appealed\",\n                \"Closed\",\n                \"Dismissed\",\n                \"Withdrawn\"\
+        \n            ]\n        },\n        \"CaseClosedReason\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Reason a case reached a terminal closed state\",\n            \"enum\": [\n                \"Withdrawal\",\n \
+        \               \"Dismissal\",\n                \"RulingEnforced\",\n                \"PartyCharacterDeleted\",\n\
+        \                \"RealmDeleted\",\n                \"JurisdictionVoid\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get an arbitration case by human-readable code\",\n    \"description\"\
         : \"Looks up a case by its sequential code (e.g., ARB-DISS-00142) within a game service scope.\",\n    \"tags\": [\n\
         \        \"Case Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getCaseByCode\"\n}"
@@ -398,32 +388,28 @@ paths:
         where the case was filed. Nullable due to DETACH cleanup.\"\n                },\n                \"sovereignFactionId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         nullable\": true,\n                    \"description\": \"Jurisdictional sovereign faction. Nullable due to DETACH
-        cleanup.\"\n                },\n                \"petitionerEntityId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Petitioner entity ID. Nullable due to DETACH cleanup of character.\"\n                },\n                \"petitionerEntityType\"\
-        : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the petitioner entity\"\n                },\n                \"respondentEntityId\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Respondent entity ID. Nullable due to DETACH cleanup of character.\"\n   \
-        \             },\n                \"respondentEntityType\": {\n                    \"type\": \"object\",\n       \
-        \             \"nullable\": true,\n                    \"description\": \"Type of the respondent entity\"\n      \
-        \          },\n                \"arbiterEntityId\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Assigned
-        arbiter entity ID, null if not yet assigned\"\n                },\n                \"arbiterEntityType\": {\n    \
-        \                \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the assigned arbiter entity\"\n                },\n                \"contractId\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Underlying
-        contract instance driving the case lifecycle\"\n                },\n                \"templateCode\": {\n        \
-        \            \"type\": \"string\",\n                    \"description\": \"Procedural template code from sovereign
-        governance data\"\n                },\n                \"rulingId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Ruling ID if a ruling has been issued\"\n                },\n                \"jurisdictionChallenged\": {\n \
-        \                   \"type\": \"boolean\",\n                    \"description\": \"Whether jurisdiction has been challenged\"\
-        \n                },\n                \"closedReason\": {\n                    \"$ref\": \"#/$defs/CaseClosedReason\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Reason for case closure, null if
-        case is not closed\"\n                },\n                \"governanceParametersSnapshot\": {\n                  \
-        \  \"type\": \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n\
-        \                    \"description\": \"Governance parameters snapshot from jurisdictional faction. Stored for reference;
+        cleanup.\"\n                },\n                \"petitioner\": {\n                    \"type\": \"object\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Petitioner party reference. Nullable
+        due to DETACH cleanup of character.\"\n                },\n                \"respondent\": {\n                   \
+        \ \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\": \"Respondent
+        party reference. Nullable due to DETACH cleanup of character.\"\n                },\n                \"arbiterEntityId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Assigned arbiter entity ID, null if not yet assigned\"\n\
+        \                },\n                \"arbiterEntityType\": {\n                    \"type\": \"object\",\n       \
+        \             \"nullable\": true,\n                    \"description\": \"Type of the assigned arbiter entity\"\n\
+        \                },\n                \"contractId\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"uuid\",\n                    \"description\": \"Underlying contract instance driving the case
+        lifecycle\"\n                },\n                \"templateCode\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Procedural template code from sovereign governance data\"\n              \
+        \  },\n                \"rulingId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Ruling ID if a ruling
+        has been issued\"\n                },\n                \"jurisdictionChallenged\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"Whether jurisdiction has been challenged\"\n              \
+        \  },\n                \"closedReason\": {\n                    \"$ref\": \"#/$defs/CaseClosedReason\",\n        \
+        \            \"nullable\": true,\n                    \"description\": \"Reason for case closure, null if case is
+        not closed\"\n                },\n                \"governanceParametersSnapshot\": {\n                    \"type\"\
+        : \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n    \
+        \                \"description\": \"Governance parameters snapshot from jurisdictional faction. Stored for reference;
         Arbitration does not read or validate specific keys. These parameters are interpreted by Contract templates.\"\n \
         \               },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                \
         \    \"format\": \"date-time\",\n                    \"description\": \"When the case was filed\"\n              \
@@ -495,46 +481,41 @@ paths:
         due to DETACH cleanup.\"\n                },\n                \"sovereignFactionId\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
         \      \"description\": \"Jurisdictional sovereign faction. Nullable due to DETACH cleanup.\"\n                },\n\
-        \                \"petitionerEntityId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Petitioner entity ID.
-        Nullable due to DETACH cleanup of character.\"\n                },\n                \"petitionerEntityType\": {\n\
-        \                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the petitioner entity\"\n                },\n                \"respondentEntityId\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Respondent entity ID. Nullable due to DETACH cleanup of character.\"\n   \
-        \             },\n                \"respondentEntityType\": {\n                    \"type\": \"object\",\n       \
-        \             \"nullable\": true,\n                    \"description\": \"Type of the respondent entity\"\n      \
-        \          },\n                \"arbiterEntityId\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Assigned
-        arbiter entity ID, null if not yet assigned\"\n                },\n                \"arbiterEntityType\": {\n    \
-        \                \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the assigned arbiter entity\"\n                },\n                \"contractId\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Underlying
-        contract instance driving the case lifecycle\"\n                },\n                \"templateCode\": {\n        \
-        \            \"type\": \"string\",\n                    \"description\": \"Procedural template code from sovereign
-        governance data\"\n                },\n                \"rulingId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Ruling ID if a ruling has been issued\"\n                },\n                \"jurisdictionChallenged\": {\n \
-        \                   \"type\": \"boolean\",\n                    \"description\": \"Whether jurisdiction has been challenged\"\
-        \n                },\n                \"closedReason\": {\n                    \"$ref\": \"#/$defs/CaseClosedReason\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Reason for case closure, null if
-        case is not closed\"\n                },\n                \"governanceParametersSnapshot\": {\n                  \
-        \  \"type\": \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n\
-        \                    \"description\": \"Governance parameters snapshot from jurisdictional faction. Stored for reference;
-        Arbitration does not read or validate specific keys. These parameters are interpreted by Contract templates.\"\n \
-        \               },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                \
-        \    \"format\": \"date-time\",\n                    \"description\": \"When the case was filed\"\n              \
-        \  },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the case was
-        last updated\"\n                }\n            }\n        },\n        \"ArbitrationCaseStatus\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Case lifecycle states managed via contract milestones\",\n   \
-        \         \"enum\": [\n                \"Filed\",\n                \"AwaitingArbiter\",\n                \"Hearing\"\
-        ,\n                \"Deliberation\",\n                \"Ruled\",\n                \"Appealed\",\n                \"\
-        Closed\",\n                \"Dismissed\",\n                \"Withdrawn\"\n            ]\n        },\n        \"CaseClosedReason\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Reason a case reached a terminal closed state\"\
-        ,\n            \"enum\": [\n                \"Withdrawal\",\n                \"Dismissal\",\n                \"RulingEnforced\"\
-        ,\n                \"PartyCharacterDeleted\",\n                \"RealmDeleted\",\n                \"JurisdictionVoid\"\
-        \n            ]\n        }\n    }\n}"
+        \                \"petitioner\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Petitioner party reference. Nullable due to DETACH cleanup of character.\"\
+        \n                },\n                \"respondent\": {\n                    \"type\": \"object\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Respondent party reference. Nullable due to DETACH
+        cleanup of character.\"\n                },\n                \"arbiterEntityId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Assigned arbiter entity ID, null if not yet assigned\"\n                },\n           \
+        \     \"arbiterEntityType\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Type of the assigned arbiter entity\"\n                },\n              \
+        \  \"contractId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n     \
+        \               \"description\": \"Underlying contract instance driving the case lifecycle\"\n                },\n\
+        \                \"templateCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Procedural template code from sovereign governance data\"\n                },\n                \"rulingId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Ruling ID if a ruling has been issued\"\n                },\n    \
+        \            \"jurisdictionChallenged\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether jurisdiction has been challenged\"\n                },\n                \"closedReason\": {\n        \
+        \            \"$ref\": \"#/$defs/CaseClosedReason\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Reason for case closure, null if case is not closed\"\n                },\n                \"\
+        governanceParametersSnapshot\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"additionalProperties\": true,\n                    \"description\": \"Governance parameters
+        snapshot from jurisdictional faction. Stored for reference; Arbitration does not read or validate specific keys. These
+        parameters are interpreted by Contract templates.\"\n                },\n                \"createdAt\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the case was filed\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"When the case was last updated\"\n                }\n            }\n        },\n  \
+        \      \"ArbitrationCaseStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Case lifecycle
+        states managed via contract milestones\",\n            \"enum\": [\n                \"Filed\",\n                \"\
+        AwaitingArbiter\",\n                \"Hearing\",\n                \"Deliberation\",\n                \"Ruled\",\n\
+        \                \"Appealed\",\n                \"Closed\",\n                \"Dismissed\",\n                \"Withdrawn\"\
+        \n            ]\n        },\n        \"CaseClosedReason\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Reason a case reached a terminal closed state\",\n            \"enum\": [\n                \"Withdrawal\",\n \
+        \               \"Dismissal\",\n                \"RulingEnforced\",\n                \"PartyCharacterDeleted\",\n\
+        \                \"RealmDeleted\",\n                \"JurisdictionVoid\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Withdraw an arbitration case\",\n    \"description\": \"Petitioner withdraws
         the case. Terminates the underlying contract and closes\\nthe case with reason Withdrawal. Returns 409 if the case
         is already in a terminal state.\\n\",\n    \"tags\": [\n        \"Case Management\"\n    ],\n    \"deprecated\": false,\n\
@@ -596,46 +577,41 @@ paths:
         due to DETACH cleanup.\"\n                },\n                \"sovereignFactionId\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
         \      \"description\": \"Jurisdictional sovereign faction. Nullable due to DETACH cleanup.\"\n                },\n\
-        \                \"petitionerEntityId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Petitioner entity ID.
-        Nullable due to DETACH cleanup of character.\"\n                },\n                \"petitionerEntityType\": {\n\
-        \                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the petitioner entity\"\n                },\n                \"respondentEntityId\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Respondent entity ID. Nullable due to DETACH cleanup of character.\"\n   \
-        \             },\n                \"respondentEntityType\": {\n                    \"type\": \"object\",\n       \
-        \             \"nullable\": true,\n                    \"description\": \"Type of the respondent entity\"\n      \
-        \          },\n                \"arbiterEntityId\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Assigned
-        arbiter entity ID, null if not yet assigned\"\n                },\n                \"arbiterEntityType\": {\n    \
-        \                \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the assigned arbiter entity\"\n                },\n                \"contractId\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Underlying
-        contract instance driving the case lifecycle\"\n                },\n                \"templateCode\": {\n        \
-        \            \"type\": \"string\",\n                    \"description\": \"Procedural template code from sovereign
-        governance data\"\n                },\n                \"rulingId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Ruling ID if a ruling has been issued\"\n                },\n                \"jurisdictionChallenged\": {\n \
-        \                   \"type\": \"boolean\",\n                    \"description\": \"Whether jurisdiction has been challenged\"\
-        \n                },\n                \"closedReason\": {\n                    \"$ref\": \"#/$defs/CaseClosedReason\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Reason for case closure, null if
-        case is not closed\"\n                },\n                \"governanceParametersSnapshot\": {\n                  \
-        \  \"type\": \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n\
-        \                    \"description\": \"Governance parameters snapshot from jurisdictional faction. Stored for reference;
-        Arbitration does not read or validate specific keys. These parameters are interpreted by Contract templates.\"\n \
-        \               },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                \
-        \    \"format\": \"date-time\",\n                    \"description\": \"When the case was filed\"\n              \
-        \  },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the case was
-        last updated\"\n                }\n            }\n        },\n        \"ArbitrationCaseStatus\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Case lifecycle states managed via contract milestones\",\n   \
-        \         \"enum\": [\n                \"Filed\",\n                \"AwaitingArbiter\",\n                \"Hearing\"\
-        ,\n                \"Deliberation\",\n                \"Ruled\",\n                \"Appealed\",\n                \"\
-        Closed\",\n                \"Dismissed\",\n                \"Withdrawn\"\n            ]\n        },\n        \"CaseClosedReason\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Reason a case reached a terminal closed state\"\
-        ,\n            \"enum\": [\n                \"Withdrawal\",\n                \"Dismissal\",\n                \"RulingEnforced\"\
-        ,\n                \"PartyCharacterDeleted\",\n                \"RealmDeleted\",\n                \"JurisdictionVoid\"\
-        \n            ]\n        }\n    }\n}"
+        \                \"petitioner\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Petitioner party reference. Nullable due to DETACH cleanup of character.\"\
+        \n                },\n                \"respondent\": {\n                    \"type\": \"object\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Respondent party reference. Nullable due to DETACH
+        cleanup of character.\"\n                },\n                \"arbiterEntityId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Assigned arbiter entity ID, null if not yet assigned\"\n                },\n           \
+        \     \"arbiterEntityType\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Type of the assigned arbiter entity\"\n                },\n              \
+        \  \"contractId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n     \
+        \               \"description\": \"Underlying contract instance driving the case lifecycle\"\n                },\n\
+        \                \"templateCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Procedural template code from sovereign governance data\"\n                },\n                \"rulingId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Ruling ID if a ruling has been issued\"\n                },\n    \
+        \            \"jurisdictionChallenged\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether jurisdiction has been challenged\"\n                },\n                \"closedReason\": {\n        \
+        \            \"$ref\": \"#/$defs/CaseClosedReason\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Reason for case closure, null if case is not closed\"\n                },\n                \"\
+        governanceParametersSnapshot\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"additionalProperties\": true,\n                    \"description\": \"Governance parameters
+        snapshot from jurisdictional faction. Stored for reference; Arbitration does not read or validate specific keys. These
+        parameters are interpreted by Contract templates.\"\n                },\n                \"createdAt\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the case was filed\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"When the case was last updated\"\n                }\n            }\n        },\n  \
+        \      \"ArbitrationCaseStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Case lifecycle
+        states managed via contract milestones\",\n            \"enum\": [\n                \"Filed\",\n                \"\
+        AwaitingArbiter\",\n                \"Hearing\",\n                \"Deliberation\",\n                \"Ruled\",\n\
+        \                \"Appealed\",\n                \"Closed\",\n                \"Dismissed\",\n                \"Withdrawn\"\
+        \n            ]\n        },\n        \"CaseClosedReason\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Reason a case reached a terminal closed state\",\n            \"enum\": [\n                \"Withdrawal\",\n \
+        \               \"Dismissal\",\n                \"RulingEnforced\",\n                \"PartyCharacterDeleted\",\n\
+        \                \"RealmDeleted\",\n                \"JurisdictionVoid\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Dismiss an arbitration case\",\n    \"description\": \"Arbiter or sovereign
         dismisses the case with reasoning. Terminates the underlying\\ncontract and closes the case with reason Dismissal.
         Returns 409 if the case is\\nalready in a terminal state.\\n\",\n    \"tags\": [\n        \"Case Management\"\n  \
@@ -702,46 +678,41 @@ paths:
         due to DETACH cleanup.\"\n                },\n                \"sovereignFactionId\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
         \      \"description\": \"Jurisdictional sovereign faction. Nullable due to DETACH cleanup.\"\n                },\n\
-        \                \"petitionerEntityId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Petitioner entity ID.
-        Nullable due to DETACH cleanup of character.\"\n                },\n                \"petitionerEntityType\": {\n\
-        \                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the petitioner entity\"\n                },\n                \"respondentEntityId\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Respondent entity ID. Nullable due to DETACH cleanup of character.\"\n   \
-        \             },\n                \"respondentEntityType\": {\n                    \"type\": \"object\",\n       \
-        \             \"nullable\": true,\n                    \"description\": \"Type of the respondent entity\"\n      \
-        \          },\n                \"arbiterEntityId\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Assigned
-        arbiter entity ID, null if not yet assigned\"\n                },\n                \"arbiterEntityType\": {\n    \
-        \                \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the assigned arbiter entity\"\n                },\n                \"contractId\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Underlying
-        contract instance driving the case lifecycle\"\n                },\n                \"templateCode\": {\n        \
-        \            \"type\": \"string\",\n                    \"description\": \"Procedural template code from sovereign
-        governance data\"\n                },\n                \"rulingId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Ruling ID if a ruling has been issued\"\n                },\n                \"jurisdictionChallenged\": {\n \
-        \                   \"type\": \"boolean\",\n                    \"description\": \"Whether jurisdiction has been challenged\"\
-        \n                },\n                \"closedReason\": {\n                    \"$ref\": \"#/$defs/CaseClosedReason\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Reason for case closure, null if
-        case is not closed\"\n                },\n                \"governanceParametersSnapshot\": {\n                  \
-        \  \"type\": \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n\
-        \                    \"description\": \"Governance parameters snapshot from jurisdictional faction. Stored for reference;
-        Arbitration does not read or validate specific keys. These parameters are interpreted by Contract templates.\"\n \
-        \               },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                \
-        \    \"format\": \"date-time\",\n                    \"description\": \"When the case was filed\"\n              \
-        \  },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the case was
-        last updated\"\n                }\n            }\n        },\n        \"ArbitrationCaseStatus\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Case lifecycle states managed via contract milestones\",\n   \
-        \         \"enum\": [\n                \"Filed\",\n                \"AwaitingArbiter\",\n                \"Hearing\"\
-        ,\n                \"Deliberation\",\n                \"Ruled\",\n                \"Appealed\",\n                \"\
-        Closed\",\n                \"Dismissed\",\n                \"Withdrawn\"\n            ]\n        },\n        \"CaseClosedReason\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Reason a case reached a terminal closed state\"\
-        ,\n            \"enum\": [\n                \"Withdrawal\",\n                \"Dismissal\",\n                \"RulingEnforced\"\
-        ,\n                \"PartyCharacterDeleted\",\n                \"RealmDeleted\",\n                \"JurisdictionVoid\"\
-        \n            ]\n        }\n    }\n}"
+        \                \"petitioner\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Petitioner party reference. Nullable due to DETACH cleanup of character.\"\
+        \n                },\n                \"respondent\": {\n                    \"type\": \"object\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Respondent party reference. Nullable due to DETACH
+        cleanup of character.\"\n                },\n                \"arbiterEntityId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Assigned arbiter entity ID, null if not yet assigned\"\n                },\n           \
+        \     \"arbiterEntityType\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Type of the assigned arbiter entity\"\n                },\n              \
+        \  \"contractId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n     \
+        \               \"description\": \"Underlying contract instance driving the case lifecycle\"\n                },\n\
+        \                \"templateCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Procedural template code from sovereign governance data\"\n                },\n                \"rulingId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Ruling ID if a ruling has been issued\"\n                },\n    \
+        \            \"jurisdictionChallenged\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether jurisdiction has been challenged\"\n                },\n                \"closedReason\": {\n        \
+        \            \"$ref\": \"#/$defs/CaseClosedReason\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Reason for case closure, null if case is not closed\"\n                },\n                \"\
+        governanceParametersSnapshot\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"additionalProperties\": true,\n                    \"description\": \"Governance parameters
+        snapshot from jurisdictional faction. Stored for reference; Arbitration does not read or validate specific keys. These
+        parameters are interpreted by Contract templates.\"\n                },\n                \"createdAt\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the case was filed\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"When the case was last updated\"\n                }\n            }\n        },\n  \
+        \      \"ArbitrationCaseStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Case lifecycle
+        states managed via contract milestones\",\n            \"enum\": [\n                \"Filed\",\n                \"\
+        AwaitingArbiter\",\n                \"Hearing\",\n                \"Deliberation\",\n                \"Ruled\",\n\
+        \                \"Appealed\",\n                \"Closed\",\n                \"Dismissed\",\n                \"Withdrawn\"\
+        \n            ]\n        },\n        \"CaseClosedReason\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Reason a case reached a terminal closed state\",\n            \"enum\": [\n                \"Withdrawal\",\n \
+        \               \"Dismissal\",\n                \"RulingEnforced\",\n                \"PartyCharacterDeleted\",\n\
+        \                \"RealmDeleted\",\n                \"JurisdictionVoid\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Challenge case jurisdiction\",\n    \"description\": \"A party challenges
         the jurisdictional authority over the case. Records the\\nchallenge reasoning and challenging party on the case record.\\
         nReturns 409 if the case is in a terminal state.\\n\",\n    \"tags\": [\n        \"Case Management\"\n    ],\n   \
@@ -931,25 +902,22 @@ paths:
         : \"Number of items per page\"\n                }\n            }\n        },\n        \"ArbitrationEvidenceInfo\"\
         : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
         : \"Full evidence item record\",\n            \"required\": [\n                \"evidenceId\",\n                \"\
-        caseId\",\n                \"evidenceType\",\n                \"content\",\n                \"submittingPartyEntityId\"\
-        ,\n                \"submittingPartyEntityType\",\n                \"submissionTimestamp\"\n            ],\n     \
-        \       \"properties\": {\n                \"evidenceId\": {\n                    \"type\": \"string\",\n        \
-        \            \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the evidence item\"\
-        \n                },\n                \"caseId\": {\n                    \"type\": \"string\",\n                 \
-        \   \"format\": \"uuid\",\n                    \"description\": \"Case this evidence belongs to\"\n              \
-        \  },\n                \"evidenceType\": {\n                    \"$ref\": \"#/$defs/ArbitrationEvidenceType\",\n \
-        \                   \"description\": \"Category of evidence\"\n                },\n                \"content\": {\n\
-        \                    \"$ref\": \"#/$defs/EvidenceContent\",\n                    \"description\": \"Typed evidence
-        content\"\n                },\n                \"submittingPartyEntityId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Entity ID of the party that submitted
-        this evidence\"\n                },\n                \"submittingPartyEntityType\": {\n                    \"type\"\
-        : \"object\",\n                    \"description\": \"Type of the submitting party entity\"\n                },\n\
-        \                \"submissionTimestamp\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"description\": \"When the evidence was submitted\"\n                }\n  \
-        \          }\n        },\n        \"ArbitrationEvidenceType\": {\n            \"type\": \"string\",\n            \"\
-        description\": \"Categories of evidence affecting relevance scoring\",\n            \"enum\": [\n                \"\
-        Testimony\",\n                \"Document\",\n                \"Witness\",\n                \"Physical\"\n        \
-        \    ]\n        },\n        \"EvidenceContent\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        caseId\",\n                \"evidenceType\",\n                \"content\",\n                \"submittingParty\",\n\
+        \                \"submissionTimestamp\"\n            ],\n            \"properties\": {\n                \"evidenceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Unique identifier for the evidence item\"\n                },\n                \"caseId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Case this evidence belongs to\"\n                },\n                \"evidenceType\": {\n                   \
+        \ \"$ref\": \"#/$defs/ArbitrationEvidenceType\",\n                    \"description\": \"Category of evidence\"\n\
+        \                },\n                \"content\": {\n                    \"$ref\": \"#/$defs/EvidenceContent\",\n\
+        \                    \"description\": \"Typed evidence content\"\n                },\n                \"submittingParty\"\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Entity that submitted this
+        evidence\"\n                },\n                \"submissionTimestamp\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the evidence was submitted\"\
+        \n                }\n            }\n        },\n        \"ArbitrationEvidenceType\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Categories of evidence affecting relevance scoring\",\n            \"enum\": [\n\
+        \                \"Testimony\",\n                \"Document\",\n                \"Witness\",\n                \"Physical\"\
+        \n            ]\n        },\n        \"EvidenceContent\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Typed evidence content with fields applicable to different evidence types\"\
         ,\n            \"required\": [\n                \"title\"\n            ],\n            \"properties\": {\n       \
         \         \"title\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n       \
@@ -1002,19 +970,16 @@ paths:
         ,\n    \"$defs\": {\n        \"ArbitrationEvidenceInfo\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Full evidence item record\",\n            \"required\": [\n             \
         \   \"evidenceId\",\n                \"caseId\",\n                \"evidenceType\",\n                \"content\",\n\
-        \                \"submittingPartyEntityId\",\n                \"submittingPartyEntityType\",\n                \"\
-        submissionTimestamp\"\n            ],\n            \"properties\": {\n                \"evidenceId\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Unique identifier for the evidence item\"\n                },\n                \"caseId\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Case
-        this evidence belongs to\"\n                },\n                \"evidenceType\": {\n                    \"$ref\"\
-        : \"#/$defs/ArbitrationEvidenceType\",\n                    \"description\": \"Category of evidence\"\n          \
-        \      },\n                \"content\": {\n                    \"$ref\": \"#/$defs/EvidenceContent\",\n          \
-        \          \"description\": \"Typed evidence content\"\n                },\n                \"submittingPartyEntityId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Entity ID of the party that submitted this evidence\"\n                },\n                \"submittingPartyEntityType\"\
-        : {\n                    \"type\": \"object\",\n                    \"description\": \"Type of the submitting party
-        entity\"\n                },\n                \"submissionTimestamp\": {\n                    \"type\": \"string\"\
+        \                \"submittingParty\",\n                \"submissionTimestamp\"\n            ],\n            \"properties\"\
+        : {\n                \"evidenceId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique identifier for the evidence item\"\n                },\n\
+        \                \"caseId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Case this evidence belongs to\"\n                },\n                \"\
+        evidenceType\": {\n                    \"$ref\": \"#/$defs/ArbitrationEvidenceType\",\n                    \"description\"\
+        : \"Category of evidence\"\n                },\n                \"content\": {\n                    \"$ref\": \"#/$defs/EvidenceContent\"\
+        ,\n                    \"description\": \"Typed evidence content\"\n                },\n                \"submittingParty\"\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Entity that submitted this
+        evidence\"\n                },\n                \"submissionTimestamp\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the evidence was submitted\"\
         \n                }\n            }\n        },\n        \"ArbitrationEvidenceType\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"Categories of evidence affecting relevance scoring\",\n            \"enum\": [\n\
@@ -1160,46 +1125,41 @@ paths:
         due to DETACH cleanup.\"\n                },\n                \"sovereignFactionId\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
         \      \"description\": \"Jurisdictional sovereign faction. Nullable due to DETACH cleanup.\"\n                },\n\
-        \                \"petitionerEntityId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Petitioner entity ID.
-        Nullable due to DETACH cleanup of character.\"\n                },\n                \"petitionerEntityType\": {\n\
-        \                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the petitioner entity\"\n                },\n                \"respondentEntityId\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Respondent entity ID. Nullable due to DETACH cleanup of character.\"\n   \
-        \             },\n                \"respondentEntityType\": {\n                    \"type\": \"object\",\n       \
-        \             \"nullable\": true,\n                    \"description\": \"Type of the respondent entity\"\n      \
-        \          },\n                \"arbiterEntityId\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Assigned
-        arbiter entity ID, null if not yet assigned\"\n                },\n                \"arbiterEntityType\": {\n    \
-        \                \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the assigned arbiter entity\"\n                },\n                \"contractId\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Underlying
-        contract instance driving the case lifecycle\"\n                },\n                \"templateCode\": {\n        \
-        \            \"type\": \"string\",\n                    \"description\": \"Procedural template code from sovereign
-        governance data\"\n                },\n                \"rulingId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Ruling ID if a ruling has been issued\"\n                },\n                \"jurisdictionChallenged\": {\n \
-        \                   \"type\": \"boolean\",\n                    \"description\": \"Whether jurisdiction has been challenged\"\
-        \n                },\n                \"closedReason\": {\n                    \"$ref\": \"#/$defs/CaseClosedReason\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Reason for case closure, null if
-        case is not closed\"\n                },\n                \"governanceParametersSnapshot\": {\n                  \
-        \  \"type\": \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n\
-        \                    \"description\": \"Governance parameters snapshot from jurisdictional faction. Stored for reference;
-        Arbitration does not read or validate specific keys. These parameters are interpreted by Contract templates.\"\n \
-        \               },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                \
-        \    \"format\": \"date-time\",\n                    \"description\": \"When the case was filed\"\n              \
-        \  },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the case was
-        last updated\"\n                }\n            }\n        },\n        \"ArbitrationCaseStatus\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Case lifecycle states managed via contract milestones\",\n   \
-        \         \"enum\": [\n                \"Filed\",\n                \"AwaitingArbiter\",\n                \"Hearing\"\
-        ,\n                \"Deliberation\",\n                \"Ruled\",\n                \"Appealed\",\n                \"\
-        Closed\",\n                \"Dismissed\",\n                \"Withdrawn\"\n            ]\n        },\n        \"CaseClosedReason\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Reason a case reached a terminal closed state\"\
-        ,\n            \"enum\": [\n                \"Withdrawal\",\n                \"Dismissal\",\n                \"RulingEnforced\"\
-        ,\n                \"PartyCharacterDeleted\",\n                \"RealmDeleted\",\n                \"JurisdictionVoid\"\
-        \n            ]\n        }\n    }\n}"
+        \                \"petitioner\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Petitioner party reference. Nullable due to DETACH cleanup of character.\"\
+        \n                },\n                \"respondent\": {\n                    \"type\": \"object\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Respondent party reference. Nullable due to DETACH
+        cleanup of character.\"\n                },\n                \"arbiterEntityId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Assigned arbiter entity ID, null if not yet assigned\"\n                },\n           \
+        \     \"arbiterEntityType\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Type of the assigned arbiter entity\"\n                },\n              \
+        \  \"contractId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n     \
+        \               \"description\": \"Underlying contract instance driving the case lifecycle\"\n                },\n\
+        \                \"templateCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Procedural template code from sovereign governance data\"\n                },\n                \"rulingId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Ruling ID if a ruling has been issued\"\n                },\n    \
+        \            \"jurisdictionChallenged\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether jurisdiction has been challenged\"\n                },\n                \"closedReason\": {\n        \
+        \            \"$ref\": \"#/$defs/CaseClosedReason\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Reason for case closure, null if case is not closed\"\n                },\n                \"\
+        governanceParametersSnapshot\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"additionalProperties\": true,\n                    \"description\": \"Governance parameters
+        snapshot from jurisdictional faction. Stored for reference; Arbitration does not read or validate specific keys. These
+        parameters are interpreted by Contract templates.\"\n                },\n                \"createdAt\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the case was filed\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"When the case was last updated\"\n                }\n            }\n        },\n  \
+        \      \"ArbitrationCaseStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Case lifecycle
+        states managed via contract milestones\",\n            \"enum\": [\n                \"Filed\",\n                \"\
+        AwaitingArbiter\",\n                \"Hearing\",\n                \"Deliberation\",\n                \"Ruled\",\n\
+        \                \"Appealed\",\n                \"Closed\",\n                \"Dismissed\",\n                \"Withdrawn\"\
+        \n            ]\n        },\n        \"CaseClosedReason\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Reason a case reached a terminal closed state\",\n            \"enum\": [\n                \"Withdrawal\",\n \
+        \               \"Dismissal\",\n                \"RulingEnforced\",\n                \"PartyCharacterDeleted\",\n\
+        \                \"RealmDeleted\",\n                \"JurisdictionVoid\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Recuse the assigned arbiter from a case\",\n    \"description\": \"Removes
         the current arbiter from the case and decrements their caseload.\\nReturns 404 if the case has no arbiter assigned.
         Returns 409 if the case\\nis in a terminal state.\\n\",\n    \"tags\": [\n        \"Arbiter\"\n    ],\n    \"deprecated\"\
@@ -1469,46 +1429,41 @@ paths:
         due to DETACH cleanup.\"\n                },\n                \"sovereignFactionId\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
         \      \"description\": \"Jurisdictional sovereign faction. Nullable due to DETACH cleanup.\"\n                },\n\
-        \                \"petitionerEntityId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Petitioner entity ID.
-        Nullable due to DETACH cleanup of character.\"\n                },\n                \"petitionerEntityType\": {\n\
-        \                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the petitioner entity\"\n                },\n                \"respondentEntityId\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Respondent entity ID. Nullable due to DETACH cleanup of character.\"\n   \
-        \             },\n                \"respondentEntityType\": {\n                    \"type\": \"object\",\n       \
-        \             \"nullable\": true,\n                    \"description\": \"Type of the respondent entity\"\n      \
-        \          },\n                \"arbiterEntityId\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Assigned
-        arbiter entity ID, null if not yet assigned\"\n                },\n                \"arbiterEntityType\": {\n    \
-        \                \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type of the assigned arbiter entity\"\n                },\n                \"contractId\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Underlying
-        contract instance driving the case lifecycle\"\n                },\n                \"templateCode\": {\n        \
-        \            \"type\": \"string\",\n                    \"description\": \"Procedural template code from sovereign
-        governance data\"\n                },\n                \"rulingId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Ruling ID if a ruling has been issued\"\n                },\n                \"jurisdictionChallenged\": {\n \
-        \                   \"type\": \"boolean\",\n                    \"description\": \"Whether jurisdiction has been challenged\"\
-        \n                },\n                \"closedReason\": {\n                    \"$ref\": \"#/$defs/CaseClosedReason\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Reason for case closure, null if
-        case is not closed\"\n                },\n                \"governanceParametersSnapshot\": {\n                  \
-        \  \"type\": \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n\
-        \                    \"description\": \"Governance parameters snapshot from jurisdictional faction. Stored for reference;
-        Arbitration does not read or validate specific keys. These parameters are interpreted by Contract templates.\"\n \
-        \               },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                \
-        \    \"format\": \"date-time\",\n                    \"description\": \"When the case was filed\"\n              \
-        \  },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the case was
-        last updated\"\n                }\n            }\n        },\n        \"ArbitrationCaseStatus\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Case lifecycle states managed via contract milestones\",\n   \
-        \         \"enum\": [\n                \"Filed\",\n                \"AwaitingArbiter\",\n                \"Hearing\"\
-        ,\n                \"Deliberation\",\n                \"Ruled\",\n                \"Appealed\",\n                \"\
-        Closed\",\n                \"Dismissed\",\n                \"Withdrawn\"\n            ]\n        },\n        \"CaseClosedReason\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Reason a case reached a terminal closed state\"\
-        ,\n            \"enum\": [\n                \"Withdrawal\",\n                \"Dismissal\",\n                \"RulingEnforced\"\
-        ,\n                \"PartyCharacterDeleted\",\n                \"RealmDeleted\",\n                \"JurisdictionVoid\"\
-        \n            ]\n        }\n    }\n}"
+        \                \"petitioner\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Petitioner party reference. Nullable due to DETACH cleanup of character.\"\
+        \n                },\n                \"respondent\": {\n                    \"type\": \"object\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Respondent party reference. Nullable due to DETACH
+        cleanup of character.\"\n                },\n                \"arbiterEntityId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Assigned arbiter entity ID, null if not yet assigned\"\n                },\n           \
+        \     \"arbiterEntityType\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Type of the assigned arbiter entity\"\n                },\n              \
+        \  \"contractId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n     \
+        \               \"description\": \"Underlying contract instance driving the case lifecycle\"\n                },\n\
+        \                \"templateCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Procedural template code from sovereign governance data\"\n                },\n                \"rulingId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Ruling ID if a ruling has been issued\"\n                },\n    \
+        \            \"jurisdictionChallenged\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether jurisdiction has been challenged\"\n                },\n                \"closedReason\": {\n        \
+        \            \"$ref\": \"#/$defs/CaseClosedReason\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Reason for case closure, null if case is not closed\"\n                },\n                \"\
+        governanceParametersSnapshot\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
+        \                    \"additionalProperties\": true,\n                    \"description\": \"Governance parameters
+        snapshot from jurisdictional faction. Stored for reference; Arbitration does not read or validate specific keys. These
+        parameters are interpreted by Contract templates.\"\n                },\n                \"createdAt\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the case was filed\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"When the case was last updated\"\n                }\n            }\n        },\n  \
+        \      \"ArbitrationCaseStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Case lifecycle
+        states managed via contract milestones\",\n            \"enum\": [\n                \"Filed\",\n                \"\
+        AwaitingArbiter\",\n                \"Hearing\",\n                \"Deliberation\",\n                \"Ruled\",\n\
+        \                \"Appealed\",\n                \"Closed\",\n                \"Dismissed\",\n                \"Withdrawn\"\
+        \n            ]\n        },\n        \"CaseClosedReason\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Reason a case reached a terminal closed state\",\n            \"enum\": [\n                \"Withdrawal\",\n \
+        \               \"Dismissal\",\n                \"RulingEnforced\",\n                \"PartyCharacterDeleted\",\n\
+        \                \"RealmDeleted\",\n                \"JurisdictionVoid\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Appeal a ruling\",\n    \"description\": \"Appeals a ruling within the
         appeal window. Resets the case to the evidence phase\\nfor appellate review with a higher authority arbiter. Returns
         409 if the case is\\nnot in Ruled status or the appeal window has expired.\\n\",\n    \"tags\": [\n        \"Ruling\"\
@@ -2323,24 +2278,14 @@ components:
           format: uuid
           nullable: true
           description: Jurisdictional sovereign faction. Nullable due to DETACH cleanup.
-        petitionerEntityId:
-          type: string
-          format: uuid
+        petitioner:
+          $ref: 'common-api.yaml#/components/schemas/EntityReference'
           nullable: true
-          description: Petitioner entity ID. Nullable due to DETACH cleanup of character.
-        petitionerEntityType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Petitioner party reference. Nullable due to DETACH cleanup of character.
+        respondent:
+          $ref: 'common-api.yaml#/components/schemas/EntityReference'
           nullable: true
-          description: Type of the petitioner entity
-        respondentEntityId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Respondent entity ID. Nullable due to DETACH cleanup of character.
-        respondentEntityType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
-          nullable: true
-          description: Type of the respondent entity
+          description: Respondent party reference. Nullable due to DETACH cleanup of character.
         arbiterEntityId:
           type: string
           format: uuid
@@ -2393,8 +2338,7 @@ components:
       - caseId
       - evidenceType
       - content
-      - submittingPartyEntityId
-      - submittingPartyEntityType
+      - submittingParty
       - submissionTimestamp
       properties:
         evidenceId:
@@ -2411,13 +2355,9 @@ components:
         content:
           $ref: '#/components/schemas/EvidenceContent'
           description: Typed evidence content
-        submittingPartyEntityId:
-          type: string
-          format: uuid
-          description: Entity ID of the party that submitted this evidence
-        submittingPartyEntityType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
-          description: Type of the submitting party entity
+        submittingParty:
+          $ref: 'common-api.yaml#/components/schemas/EntityReference'
+          description: Entity that submitted this evidence
         submissionTimestamp:
           type: string
           format: date-time

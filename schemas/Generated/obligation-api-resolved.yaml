@@ -1237,3 +1237,5 @@ components:
 
 x-inlined-types:
 - ResourceArchiveBase
+x-common-inlined-types:
+- ResourceArchiveBase

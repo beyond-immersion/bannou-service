@@ -1802,3 +1802,6 @@ components:
 x-inlined-types:
 - Bounds
 - Position3D
+x-common-inlined-types:
+- Bounds
+- Position3D

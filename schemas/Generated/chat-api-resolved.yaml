@@ -2191,3 +2191,6 @@ components:
 x-inlined-types:
 - DeprecationFields
 - SentimentCategory
+x-common-inlined-types:
+- DeprecationFields
+- SentimentCategory

@@ -88,6 +88,26 @@ components:
       enum: [Email, Google, Discord, Twitch, Steam]
 
     # ==========================================================================
+    # Shared Entity Types
+    # ==========================================================================
+
+    EntityReference:
+      type: object
+      additionalProperties: false
+      description: A reference to an entity by ID and type. Used across services for polymorphic entity references in events, responses, and cross-service data.
+      required:
+        - entityId
+        - entityType
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Referenced entity identifier
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Type of the referenced entity
+
+    # ==========================================================================
     # Permission Metadata Types
     # ==========================================================================
 

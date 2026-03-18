@@ -1771,3 +1771,5 @@ components:
 
 x-inlined-types:
 - Position3D
+x-common-inlined-types:
+- Position3D

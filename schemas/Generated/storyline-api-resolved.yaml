@@ -2670,3 +2670,6 @@ tags:
 x-inlined-types:
 - DeprecationFields
 - ResourceArchiveBase
+x-common-inlined-types:
+- DeprecationFields
+- ResourceArchiveBase

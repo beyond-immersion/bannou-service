@@ -1093,3 +1093,5 @@ x-service-registration:
   - rankings
 x-inlined-types:
 - DeprecationFields
+x-common-inlined-types:
+- DeprecationFields

@@ -1,0 +1,450 @@
+openapi: 3.0.4
+info:
+  title: Craft Service Events
+  description: |
+    AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.
+    DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py
+    Source: craft-service-events.yaml
+
+    Event models for Craft service RabbitMQ pub/sub via lib-messaging.
+    Lifecycle events (Created, Updated, Deleted) are auto-generated from
+    x-lifecycle for RecipeDefinition entities. Custom events cover session
+    lifecycle, proficiency progression, and recipe discovery.
+
+    **Topic Naming**: Uses Pattern C dot-separated format (craft.session.started).
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions:
+  - topic: contract.terminated
+    event: ContractTerminatedEvent
+    handler: HandleContractTerminated
+  x-event-publications:
+    # CraftRecipe lifecycle events (auto-generated from x-lifecycle)
+  - topic: craft.recipe.created
+    event: CraftRecipeCreatedEvent
+    description: Published when a new recipe definition is created
+  - topic: craft.recipe.updated
+    event: CraftRecipeUpdatedEvent
+    description: Published when a recipe definition is updated or deprecated
+  - topic: craft.recipe.deleted
+    event: CraftRecipeDeletedEvent
+    description: Published when a deprecated recipe is permanently removed via clean-deprecated
+    # CraftingSession lifecycle events (auto-generated from x-lifecycle, required by instanceEntity)
+  - topic: craft.session.created
+    event: CraftingSessionCreatedEvent
+    description: Published when a crafting session record is created
+  - topic: craft.session.updated
+    event: CraftingSessionUpdatedEvent
+    description: Published when a crafting session record is updated
+  - topic: craft.session.deleted
+    event: CraftingSessionDeletedEvent
+    description: Published when a crafting session record is deleted
+    # Custom events — Session
+  - topic: craft.session.started
+    event: CraftSessionStartedEvent
+    description: Published when a crafting session begins with validated prerequisites
+  - topic: craft.session.step-completed
+    event: CraftSessionStepCompletedEvent
+    description: Published when a session step is completed
+  - topic: craft.session.completed
+    event: CraftSessionCompletedEvent
+    description: Published when a session finishes successfully with outputs produced
+  - topic: craft.session.failed
+    event: CraftSessionFailedEvent
+    description: Published when a session fails due to contract termination or completion error
+  - topic: craft.session.cancelled
+    event: CraftSessionCancelledEvent
+    description: Published when a session is cancelled and materials returned
+    # Custom events — Proficiency
+  - topic: craft.proficiency.gained
+    event: CraftProficiencyGainedEvent
+    description: Published when an entity gains crafting experience in a domain
+  - topic: craft.proficiency.leveled
+    event: CraftProficiencyLeveledEvent
+    description: Published when an entity's proficiency level increases in a domain
+    # Custom events — Discovery
+  - topic: craft.recipe.discovered
+    event: CraftRecipeDiscoveredEvent
+    description: Published when an entity discovers or is taught a new recipe
+
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/craft-service-lifecycle-events.yaml
+x-lifecycle:
+  topic_prefix: craft
+  CraftRecipe:
+    deprecation: true
+    instanceEntity: CraftingSession
+    model:
+      recipeId: {type: string, format: uuid, primary: true, required: true, description: "Unique recipe identifier"}
+      gameServiceId: {type: string, format: uuid, required: true, description: "Game service this recipe belongs to"}
+      code: {type: string, required: true, description: "Unique recipe code within the game service"}
+      recipeType: {type: string, required: true, description: "Recipe paradigm (e.g., production, modification, extraction)"}
+      domain: {type: string, required: true, description: "Proficiency domain"}
+      category: {type: string, nullable: true, description: "Broad classification for filtering"}
+      tags:
+        type: array
+        nullable: true
+        items:
+          type: string
+        description: "Tags for filtering and discovery"
+      isDiscoverable: {type: boolean, required: true, description: "Whether this recipe can be discovered through experimentation"}
+  CraftingSession:
+    model:
+      sessionId: {type: string, format: uuid, primary: true, required: true, description: "Session identifier (equals contractInstanceId)"}
+      recipeId: {type: string, format: uuid, required: true, description: "Recipe being crafted"}
+      entityId: {type: string, format: uuid, required: true, description: "Primary entity performing the craft"}
+      entityType: {type: string, required: true, description: "Type of the primary entity (EntityType enum value)"}
+      currentStepCode: {type: string, required: true, description: "Code of the next step to complete"}
+      accumulatedQuality: {type: number, format: double, required: true, description: "Quality accumulated from completed
+          steps"}
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    # =========================================================================
+    # Custom Published Events (non-lifecycle)
+    # =========================================================================
+
+    CraftSessionStartedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a crafting session begins with validated prerequisites
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - sessionId
+      - recipeId
+      - recipeCode
+      - entityId
+      - entityType
+      properties:
+        eventName:
+          type: string
+          default: craft.session.started
+          description: 'Event type identifier: craft.session.started'
+        sessionId:
+          type: string
+          format: uuid
+          description: Session identifier (equals contractInstanceId)
+        recipeId:
+          type: string
+          format: uuid
+          description: Recipe being crafted
+        recipeCode:
+          type: string
+          description: Recipe code for consumer convenience
+        entityId:
+          type: string
+          format: uuid
+          description: Primary entity performing the craft
+        entityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Type of the primary entity
+        participants:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/SessionParticipant'
+          description: Session participants for multi-entity sessions
+
+    CraftSessionStepCompletedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a session step is completed
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - sessionId
+      - stepCode
+      - qualityContribution
+      properties:
+        eventName:
+          type: string
+          default: craft.session.step-completed
+          description: 'Event type identifier: craft.session.step-completed'
+        sessionId:
+          type: string
+          format: uuid
+          description: Session identifier
+        stepCode:
+          type: string
+          description: Step that was completed
+        qualityContribution:
+          type: number
+          format: double
+          description: Quality contribution from this step
+        advancedByEntityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Entity that advanced this step (for multi-entity sessions)
+
+    CraftSessionCompletedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a crafting session finishes successfully with outputs produced
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - sessionId
+      - recipeId
+      - recipeCode
+      - entityId
+      - entityType
+      - finalQuality
+      properties:
+        eventName:
+          type: string
+          default: craft.session.completed
+          description: 'Event type identifier: craft.session.completed'
+        sessionId:
+          type: string
+          format: uuid
+          description: Session identifier
+        recipeId:
+          type: string
+          format: uuid
+          description: Recipe that was crafted
+        recipeCode:
+          type: string
+          description: Recipe code
+        entityId:
+          type: string
+          format: uuid
+          description: Primary entity that performed the craft
+        entityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Type of the primary entity
+        finalQuality:
+          type: number
+          format: double
+          description: Final quality score (0-1)
+        outputItemIds:
+          type: array
+          nullable: true
+          items:
+            type: string
+            format: uuid
+          description: IDs of output items created (production recipes)
+
+    CraftSessionFailedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a session fails due to contract termination or completion error
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - sessionId
+      - recipeId
+      - entityId
+      - entityType
+      - reason
+      properties:
+        eventName:
+          type: string
+          default: craft.session.failed
+          description: 'Event type identifier: craft.session.failed'
+        sessionId:
+          type: string
+          format: uuid
+          description: Session identifier
+        recipeId:
+          type: string
+          format: uuid
+          description: Recipe that was being crafted
+        entityId:
+          type: string
+          format: uuid
+          description: Primary entity
+        entityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Type of the primary entity
+        reason:
+          type: string
+          description: Reason for failure
+
+    CraftSessionCancelledEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a session is cancelled and materials returned
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - sessionId
+      - recipeId
+      - entityId
+      - entityType
+      properties:
+        eventName:
+          type: string
+          default: craft.session.cancelled
+          description: 'Event type identifier: craft.session.cancelled'
+        sessionId:
+          type: string
+          format: uuid
+          description: Session identifier
+        recipeId:
+          type: string
+          format: uuid
+          description: Recipe of the cancelled session
+        entityId:
+          type: string
+          format: uuid
+          description: Primary entity
+        entityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Type of the primary entity
+        materialsReturned:
+          type: boolean
+          default: true
+          description: Whether reserved materials were returned
+
+    CraftProficiencyGainedEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when an entity gains crafting experience in a domain
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entityId
+      - entityType
+      - domain
+      - experienceAmount
+      properties:
+        eventName:
+          type: string
+          default: craft.proficiency.gained
+          description: 'Event type identifier: craft.proficiency.gained'
+        entityId:
+          type: string
+          format: uuid
+          description: Entity that gained experience
+        entityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Type of the entity
+        domain:
+          type: string
+          description: Proficiency domain
+        experienceAmount:
+          type: number
+          format: double
+          description: Amount of experience gained
+
+    CraftProficiencyLeveledEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when an entity's proficiency level increases
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entityId
+      - entityType
+      - domain
+      - newLevel
+      - newPhase
+      properties:
+        eventName:
+          type: string
+          default: craft.proficiency.leveled
+          description: 'Event type identifier: craft.proficiency.leveled'
+        entityId:
+          type: string
+          format: uuid
+          description: Entity whose proficiency leveled up
+        entityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Type of the entity
+        domain:
+          type: string
+          description: Proficiency domain that leveled
+        newLevel:
+          type: integer
+          description: New proficiency level
+        newPhase:
+          type: string
+          description: New mastery phase name
+
+    CraftRecipeDiscoveredEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when an entity discovers or is taught a new recipe
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entityId
+      - entityType
+      - recipeCode
+      - gameServiceId
+      properties:
+        eventName:
+          type: string
+          default: craft.recipe.discovered
+          description: 'Event type identifier: craft.recipe.discovered'
+        entityId:
+          type: string
+          format: uuid
+          description: Entity that discovered the recipe
+        entityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Type of the entity
+        recipeCode:
+          type: string
+          description: Code of the discovered recipe
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service context
+    SessionParticipant:
+      type: object
+      additionalProperties: false
+      description: A participant in a multi-entity crafting session
+      required:
+      - entityId
+      - entityType
+      - role
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Participant entity identifier
+        entityType:
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          description: Type of the participant entity
+        role:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Participant role (e.g., master, apprentice, assistant)
+
+x-inlined-types:
+- SessionParticipant

@@ -983,3 +983,5 @@ components:
 
 x-inlined-types:
 - DeprecationFields
+x-common-inlined-types:
+- DeprecationFields

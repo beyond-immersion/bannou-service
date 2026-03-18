@@ -2054,3 +2054,8 @@ x-inlined-types:
 - DeprecationFields
 - Position3D
 - ResourceArchiveBase
+x-common-inlined-types:
+- BoundingBox3D
+- DeprecationFields
+- Position3D
+- ResourceArchiveBase
