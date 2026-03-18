@@ -1,0 +1,92 @@
+openapi: 3.0.4
+info:
+  title: Genesis Service Configuration
+  description: |
+    Configuration schema for Genesis service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # Pagination
+    DefaultPageSize:
+      type: integer
+      description: Default page size for list queries when not specified by caller
+      env: GENESIS_DEFAULT_PAGE_SIZE
+      default: 20
+      minimum: 1
+      maximum: 100
+
+    # Cache TTLs
+    EntityCacheTtlMinutes:
+      type: integer
+      description: TTL in minutes for cached genesis entity records in Redis
+      env: GENESIS_ENTITY_CACHE_TTL_MINUTES
+      default: 5
+      minimum: 1
+      maximum: 60
+
+    CapabilityCacheTtlMinutes:
+      type: integer
+      description: TTL in minutes for cached seed capability manifests in Redis
+      env: GENESIS_CAPABILITY_CACHE_TTL_MINUTES
+      default: 5
+      minimum: 1
+      maximum: 60
+
+    # Growth Flush Worker
+    GrowthFlushIntervalSeconds:
+      type: integer
+      description: Interval in seconds between growth accumulator flush cycles
+      env: GENESIS_GROWTH_FLUSH_INTERVAL_SECONDS
+      default: 5
+      minimum: 1
+      maximum: 60
+
+    # Balance inclusion
+    IncludeBalancesDefault:
+      type: boolean
+      description: Default value for includeBalances when not specified by caller on GetEntity
+      env: GENESIS_INCLUDE_BALANCES_DEFAULT
+      default: false
+
+    # Cleanup
+    CleanupBatchSize:
+      type: integer
+      description: Number of entities to process per batch during realm cleanup
+      env: GENESIS_CLEANUP_BATCH_SIZE
+      default: 100
+      minimum: 10
+      maximum: 1000
+
+    # Distributed Locking
+    TransitionLockTimeoutSeconds:
+      type: integer
+      description: Maximum time in seconds to wait for phase transition distributed lock acquisition (actor spawn, character create)
+      env: GENESIS_TRANSITION_LOCK_TIMEOUT_SECONDS
+      default: 30
+      minimum: 5
+      maximum: 120
+
+    EntityLockTimeoutSeconds:
+      type: integer
+      description: Maximum time in seconds to wait for entity mutation distributed lock acquisition (create, update, destroy, bind)
+      env: GENESIS_ENTITY_LOCK_TIMEOUT_SECONDS
+      default: 30
+      minimum: 5
+      maximum: 120
+
+    # Worker Startup
+    StartupDelaySeconds:
+      type: integer
+      description: Delay in seconds before background services start processing after plugin startup
+      env: GENESIS_STARTUP_DELAY_SECONDS
+      default: 5
+      minimum: 0
+      maximum: 120

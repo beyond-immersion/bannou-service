@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>BeyondImmersion.BannouService.Genesis.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Build tools (xunit comes from test-utilities; Test.Sdk and Moq needed directly) -->
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <!-- Logging.Abstractions, Mvc.Core come from lib-genesis → bannou-service -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../lib-genesis/lib-genesis.csproj" />
+    <!-- Shared test utilities (ServiceConstructorValidator, etc.) -->
+    <ProjectReference Include="../../test-utilities/test-utilities.csproj" />
+  </ItemGroup>
+
+</Project>

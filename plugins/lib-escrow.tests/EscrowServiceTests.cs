@@ -582,8 +582,14 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         };
 
         _mockAgreementStore
-            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<EscrowAgreementModel, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<EscrowAgreementModel> { model });
+            .Setup(s => s.QueryPagedAsync(
+                It.IsAny<Expression<Func<EscrowAgreementModel, bool>>>(),
+                It.IsAny<int>(), It.IsAny<int>(),
+                It.IsAny<Expression<Func<EscrowAgreementModel, object>>>(),
+                It.IsAny<bool>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PagedResult<EscrowAgreementModel>(
+                new List<EscrowAgreementModel> { model }, 1, 1, 50));
 
         // Act
         var (status, response) = await service.ListEscrowsAsync(new ListEscrowsRequest { PartyId = partyId }, TestContext.Current.CancellationToken);
@@ -606,8 +612,14 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         };
 
         _mockAgreementStore
-            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<EscrowAgreementModel, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(models);
+            .Setup(s => s.QueryPagedAsync(
+                It.IsAny<Expression<Func<EscrowAgreementModel, bool>>>(),
+                It.IsAny<int>(), It.IsAny<int>(),
+                It.IsAny<Expression<Func<EscrowAgreementModel, object>>>(),
+                It.IsAny<bool>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PagedResult<EscrowAgreementModel>(
+                models, 2, 1, 50));
 
         // Act
         var (status, response) = await service.ListEscrowsAsync(new ListEscrowsRequest(), TestContext.Current.CancellationToken);

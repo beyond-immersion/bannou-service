@@ -666,6 +666,28 @@ x-state-stores:
     service: GameService
     purpose: Game service registry
 
+  genesis-templates:
+    backend: mysql
+    service: Genesis
+    purpose: Genesis template definitions (durable, queryable by game service)
+
+  genesis-entities:
+    backend: mysql
+    service: Genesis
+    purpose: Genesis entity records and indexes (durable, queryable by template/realm/character)
+
+  genesis-entity-cache:
+    backend: redis
+    prefix: "genesis:cache"
+    service: Genesis
+    purpose: Hot cache for entity lookups and capability manifests (ephemeral, TTL-based)
+
+  genesis-lock:
+    backend: redis
+    prefix: "genesis:lock"
+    service: Genesis
+    purpose: Distributed locks for entity mutation, phase transition, and bond operations
+
   species-statestore:
     backend: mysql
     service: Species

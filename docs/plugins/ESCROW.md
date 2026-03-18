@@ -466,10 +466,9 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 3. ~~**Configuration property not wired up**~~: **FIXED** (2026-03-16) - Duplicate of stub #2. `ValidationCheckInterval` is the interval for the periodic validation background service tracked by Issue #250. No separate fix needed — resolving #250 resolves this.
 
-4. ~~**Custom handler invocation (validation path)**~~: **FIXED** (2026-03-18) - Implemented custom handler validation invocation via `IMeshInvocationClient`. Added `CustomHandlerValidateRequest`/`CustomHandlerValidateResponse` schema types defining the standardized handler validation protocol. `ValidateCustomAssetAsync` now calls the handler's `ValidateEndpoint` via mesh with escrow context and custom asset data. `MeshInvocationException` caught for service unavailability (skip, not failure). Handler responses with `valid: false` produce `ValidationFailure` entries. Deposit/release/refund handler invocation remains with [#153](https://github.com/beyond-immersion/bannou-service/issues/153).
+4. ~~**Custom handler invocation (validation path)**~~: **FIXED** (2026-03-18) - Implemented custom handler validation invocation via `IMeshInvocationClient`. Added `CustomHandlerValidateRequest`/`CustomHandlerValidateResponse` schema types defining the standardized handler validation protocol. `ValidateCustomAssetAsync` now calls the handler's `ValidateEndpoint` via mesh with escrow context and custom asset data. `MeshInvocationException` caught for service unavailability (skip, not failure). Handler responses with `valid: false` produce `ValidationFailure` entries. All handler paths (deposit/release/refund/validate) completed with [#153](https://github.com/beyond-immersion/bannou-service/issues/153).
 
-5. ~~**Asset transfer execution (deposit path)**~~: **FIXED** (2026-03-18) - Implemented deposit-time asset transfers via `ExecuteDepositTransfersAsync`. Currency deposits call `ICurrencyClient.EscrowDepositAsync` with idempotency key. Items/ItemStacks call `IInventoryClient.TransferItemAsync` to escrow container. Contracts call `IContractClient.LockContractAsync` with escrow as guardian. Custom assets call handler's DepositEndpoint via mesh. Transfers execute BEFORE agreement mutation — failure cleanly rejects the deposit (T7). Added `IInventoryClient` as constructor dependency. Release/refund/cancel/expire asset transfer execution remains with [#153](https://github.com/beyond-immersion/bannou-service/issues/153).
-<!-- AUDIT:IMPLEMENTATION:2026-03-18:https://github.com/beyond-immersion/bannou-service/issues/153 -->
+5. ~~**Asset transfer execution (deposit path)**~~: **FIXED** (2026-03-18) - Implemented deposit-time asset transfers via `ExecuteDepositTransfersAsync`. Currency deposits call `ICurrencyClient.EscrowDepositAsync` with idempotency key. Items/ItemStacks call `IInventoryClient.TransferItemAsync` to escrow container. Contracts call `IContractClient.LockContractAsync` with escrow as guardian. Custom assets call handler's DepositEndpoint via mesh. Transfers execute BEFORE agreement mutation — failure cleanly rejects the deposit (T7). Added `IInventoryClient` as constructor dependency. All transfer paths (deposit/release/refund/cancel/expire) completed with [#153](https://github.com/beyond-immersion/bannou-service/issues/153).
 
 ---
 
@@ -602,7 +601,7 @@ Contract-bound escrows verify the contract status on release. Once the contract 
    - Per-asset-type validation: Currency (wallet/transactions), Items (escrow container), Contracts (guardian lock), Custom (handler ValidateEndpoint via mesh)
    - Service unavailability = skip + retry next cycle (NOT validation failure)
    - Only confirmed asset discrepancies trigger `Validation_failed` state and reaffirmation flow
-   - Implementation work remains open on Issue #213
+   - Implemented and closed (2026-03-18)
 
 2. **Asset transfer integration design resolved** — [Issue #153](https://github.com/beyond-immersion/bannou-service/issues/153) (2026-03-18)
    - Direct invocation (Option B) confirmed as sole tenet-compliant approach per T27, T2, T4
@@ -612,7 +611,7 @@ Contract-bound escrows verify the contract status on release. Once the contract 
    - Contract-bound escrows: Contract's `ExecuteContract` handles distribution; Escrow verifies and transitions
    - Custom handlers: same direct invocation via mesh using registered handler endpoints
    - Events remain for observability (Analytics, Regional Watchers), NOT for triggering asset movements
-   - Implementation work remains open on Issue #153
+   - Implemented and closed (2026-03-18)
 
 2. **x-references for lib-resource cleanup** — (2026-03-16)
    - Added `x-references` targeting character with CASCADE policy

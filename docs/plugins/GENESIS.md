@@ -7,6 +7,7 @@
 > **Layer**: GameFoundation
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Planning**: [ACTOR-BOUND-ENTITIES.md](../planning/ACTOR-BOUND-ENTITIES.md)
+> **Implementation Map**: [docs/maps/GENESIS.md](../maps/GENESIS.md)
 > **Short**: Template-driven entity awakening lifecycle — seed, economy, storage, and cognitive progression for entities that grow from inert objects into autonomous agents
 
 ## Overview
@@ -122,10 +123,10 @@ GenesisTemplate
 │   ├── domains[]           list of domain definitions (name, optional subdomains)
 │   ├── phases[]            ordered list:
 │   │   ├── phaseName            string ("Dormant", "Stirring", "Awakened", "Ancient")
-│   │   ├── minTotalGrowth       double
+│   │   ├── threshold             double
 │   │   ├── cognitiveStage       CognitiveStage enum: Dormant | EventBrain | CharacterBrain
 │   │   └── behaviorRef          string? (reference to pre-compiled ABML bytecode)
-│   └── capabilityRules[]   capability definitions (code, domain, threshold, formula)
+│   └── capabilityRules[]   capability definitions (code, domain, threshold)
 │
 ├── economy                 # Currency wallets and growth mappings
 │   ├── wallets[]           list:
@@ -139,15 +140,14 @@ GenesisTemplate
 │       ├── walletCode           string (→ wallet defined above)
 │       ├── domain               string (→ seed domain defined above)
 │       ├── ratio                double (currency amount × ratio = growth amount)
-│       └── direction            TransactionDirection enum: Credit | Debit | Both
+│       └── direction            GrowthDirection enum: Credit | Debit | Both
 │
 ├── storage                 # Inventories the entity owns
 │   └── inventories[]       list:
 │       ├── inventoryCode        string (local reference, e.g., "loot", "memories", "traps")
-│       ├── constraintModel      InventoryConstraintModel enum: Slot | Weight |
-│       │                        Volumetric | Unlimited
+│       ├── constraintModel      string (pass-through to Inventory's ContainerConstraintModel)
 │       ├── capacity             int?
-│       └── categoryRestrictions string[]? (item category filters)
+│       └── allowedCategories    string[]? (item category filters, passed to Inventory)
 │
 ├── awakening               # Character creation configuration
 │   ├── systemRealmCode          string ("DUNGEON_CORES", "SENTIENT_ARMS",
@@ -437,8 +437,8 @@ Chest opened (game engine):
 | `cognitiveStage` (on entity) | C (System State) | `CognitiveStage` enum | Finite set: `Dormant`, `EventBrain`, `CharacterBrain`. System-owned lifecycle states. |
 | `physicalFormType` (on entity and template) | C (System State) | `PhysicalFormType` enum | Finite set: `Item`, `Location`, `None`. System-owned classification of what the entity is in the world. |
 | `status` (on entity) | C (System State) | `GenesisEntityStatus` enum | Finite set: `Active`, `Dormant`, `Archived`. System-owned lifecycle states. |
-| `direction` (on growth mapping) | C (System State) | `TransactionDirection` enum | Finite set: `Credit`, `Debit`, `Both`. Controls which currency transactions trigger growth. |
-| `constraintModel` (on inventory definition) | C (System State) | `InventoryConstraintModel` enum | References Inventory's constraint model enum. |
+| `direction` (on growth mapping) | C (System State) | `GrowthDirection` enum | Finite set: `Credit`, `Debit`, `Both`. Controls which currency transactions trigger growth. |
+| `constraintModel` (on inventory definition) | Pass-through | Opaque string | Stored in template, passed through to Inventory's CreateContainer. Genesis does not branch on this value. |
 | `cardinality` (on bond definition) | C (System State) | `BondCardinality` enum | Finite set: `None`, `OptionalOne`, `RequiredOne`, `Many`. |
 | `walletCode`, `inventoryCode` (on entity walletIds/inventoryIds maps) | B (Content Code) | Opaque string | Local reference codes defined per template; game-configurable |
 
@@ -450,12 +450,11 @@ Chest opened (game engine):
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `genesis.template.created` | `GenesisTemplateCreatedEvent` | Template registered |
-| `genesis.template.updated` | `GenesisTemplateUpdatedEvent` | Template configuration updated |
-| `genesis.template.deprecated` | `GenesisTemplateDeprecatedEvent` | Template deprecated (Category B) |
-| `genesis.entity.created` | `GenesisEntityCreatedEvent` | Entity created from template. Includes entityId, templateCode, all provisioned IDs (wallets, inventories). |
-| `genesis.entity.updated` | `GenesisEntityUpdatedEvent` | Entity record updated (physical form bound, status changed, etc.) |
-| `genesis.entity.deleted` | `GenesisEntityDeletedEvent` | Entity destroyed and archived |
+| `genesis.template.created` | `TemplateCreatedEvent` | Template registered |
+| `genesis.template.updated` | `TemplateUpdatedEvent` | Template configuration updated (including deprecation via changedFields per IMPLEMENTATION TENETS T31) |
+| `genesis.entity.created` | `EntityCreatedEvent` | Entity created from template. Includes entityId, templateCode, all provisioned IDs (wallets, inventories). |
+| `genesis.entity.updated` | `EntityUpdatedEvent` | Entity record updated (physical form bound, status changed, etc.) |
+| `genesis.entity.deleted` | `EntityDeletedEvent` | Entity destroyed and archived |
 | `genesis.entity.phase-changed` | `GenesisEntityPhaseChangedEvent` | Cognitive stage transition processed. Includes entityId, templateCode, phaseName, cognitiveStage, actorId (if spawned), characterId (if created). This is the primary event domain plugins subscribe to. |
 | `genesis.entity.bond-created` | `GenesisEntityBondCreatedEvent` | Bond formed between entity and target |
 | `genesis.entity.bond-dissolved` | `GenesisEntityBondDissolvedEvent` | Bond removed |
@@ -463,7 +462,14 @@ Chest opened (game engine):
 
 ### Consumed Events
 
-None. Genesis uses DI Listeners exclusively (`ICurrencyTransactionListener`, `ISeedEvolutionListener`), not event subscriptions. Both source services (Currency, Seed) are L2 and guaranteed co-located.
+Genesis uses DI Listeners for growth processing (`ICurrencyTransactionListener`, `ISeedEvolutionListener`), not event subscriptions. Both source services (Currency, Seed) are L2 and guaranteed co-located.
+
+**Self-subscriptions** (for multi-node wallet map coherence):
+
+| Topic | Handler | Action |
+|-------|---------|--------|
+| `genesis.entity.created` | HandleGenesisEntityCreated | Updates in-memory wallet map with new entity's wallet-to-entity mappings |
+| `genesis.entity.deleted` | HandleGenesisEntityDeleted | Removes destroyed entity's wallet mappings from in-memory wallet map |
 
 ### Resource Cleanup (FOUNDATION TENETS)
 

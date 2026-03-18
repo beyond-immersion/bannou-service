@@ -1,0 +1,242 @@
+openapi: 3.0.4
+info:
+  title: Genesis Service Events
+  description: |
+    Event models for Genesis service RabbitMQ pub/sub via lib-messaging.
+    Genesis publishes template lifecycle events (via x-lifecycle) and custom entity
+    lifecycle events for phase transitions, bonds, and transition failures.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions:
+    - topic: genesis.entity.created
+      event: EntityCreatedEvent
+      handler: HandleGenesisEntityCreated
+    - topic: genesis.entity.deleted
+      event: EntityDeletedEvent
+      handler: HandleGenesisEntityDeleted
+  x-event-publications:
+    # Template lifecycle events (auto-generated from x-lifecycle)
+    - topic: genesis.template.created
+      event: TemplateCreatedEvent
+      description: Published when a new genesis template is registered
+    - topic: genesis.template.updated
+      event: TemplateUpdatedEvent
+      description: Published when a genesis template is updated (including deprecation via changedFields)
+    # Entity lifecycle events (auto-generated from x-lifecycle)
+    - topic: genesis.entity.created
+      event: EntityCreatedEvent
+      description: Published when a new genesis entity is created (includes provisioned walletIds and inventoryIds)
+    - topic: genesis.entity.updated
+      event: EntityUpdatedEvent
+      description: Published when a genesis entity is updated (bind physical form, status changes)
+    - topic: genesis.entity.deleted
+      event: EntityDeletedEvent
+      description: Published when a genesis entity is destroyed
+    # Custom events
+    - topic: genesis.entity.phase-changed
+      event: GenesisEntityPhaseChangedEvent
+      description: Published when a genesis entity transitions to a new cognitive stage via ISeedEvolutionListener
+    - topic: genesis.entity.bond-created
+      event: GenesisEntityBondCreatedEvent
+      description: Published when a bond is created on a genesis entity
+    - topic: genesis.entity.bond-dissolved
+      event: GenesisEntityBondDissolvedEvent
+      description: Published when a bond is dissolved on a genesis entity
+    - topic: genesis.entity.transition-failed
+      event: GenesisEntityTransitionFailedEvent
+      description: Published when ISeedEvolutionListener cannot complete a phase transition
+
+x-lifecycle:
+  topic_prefix: genesis
+  Template:
+    deprecation: true
+    model:
+      templateCode: { type: string, primary: true, required: true, minLength: 1, description: "Unique template identifier" }
+      gameServiceId: { type: string, format: uuid, required: true, description: "Game service this template is scoped to" }
+      displayName: { type: string, required: true, minLength: 1, description: "Human-readable template name" }
+      description: { type: string, required: true, minLength: 1, description: "Template description" }
+      physicalFormType: { $ref: 'genesis-api.yaml#/components/schemas/PhysicalFormType', required: true, description: "Physical form type for entities of this template" }
+    sensitive: [seed, economy, storage, awakening, bond]
+    instanceEntity: Entity
+  Entity:
+    model:
+      entityId: { type: string, format: uuid, primary: true, required: true, description: "Unique entity identifier" }
+      templateCode: { type: string, required: true, minLength: 1, description: "Template code this entity was created from" }
+      gameServiceId: { type: string, format: uuid, required: true, description: "Game service this entity belongs to" }
+      realmId: { type: string, format: uuid, required: true, description: "Realm this entity is scoped to" }
+      code: { type: string, nullable: true, description: "Human-readable entity code" }
+      displayName: { type: string, nullable: true, description: "Entity display name" }
+      walletIds:
+        type: object
+        additionalProperties: { type: string, format: uuid }
+        required: true
+        description: "Map of wallet codes to wallet IDs"
+      inventoryIds:
+        type: object
+        additionalProperties: { type: string, format: uuid }
+        required: true
+        description: "Map of inventory codes to container IDs"
+      currentPhase: { type: string, required: true, description: "Current growth phase name" }
+      cognitiveStage: { $ref: 'genesis-api.yaml#/components/schemas/CognitiveStage', required: true, description: "Current cognitive progression stage" }
+      actorId: { type: string, format: uuid, nullable: true, description: "Actor ID (populated at EventBrain)" }
+      characterId: { type: string, format: uuid, nullable: true, description: "Character ID (populated at CharacterBrain)" }
+      physicalFormType: { $ref: 'genesis-api.yaml#/components/schemas/PhysicalFormType', required: true, description: "Type of physical form" }
+      physicalFormId: { type: string, format: uuid, nullable: true, description: "ID of the bound physical form" }
+      bondTargetEntityType: { $ref: 'common-api.yaml#/components/schemas/EntityType', nullable: true, description: "Type of the bonded target entity" }
+      bondTargetEntityId: { type: string, format: uuid, nullable: true, description: "ID of the bonded target entity" }
+      bondId: { type: string, format: uuid, nullable: true, description: "Relationship ID for the materialized bond" }
+      status: { $ref: 'genesis-api.yaml#/components/schemas/GenesisEntityStatus', required: true, description: "Operational status" }
+    sensitive: [bondTargetEntityType, bondTargetEntityId, bondId]
+    resource_mapping:
+      resource_type: genesis-entity
+      resource_id_field: entityId
+      source_type: genesis-entity
+
+paths: {}
+
+components:
+  schemas:
+    # =========================================================================
+    # Custom Published Events (non-lifecycle)
+    # =========================================================================
+
+    GenesisEntityPhaseChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a genesis entity transitions to a new cognitive stage via ISeedEvolutionListener
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - entityId
+        - templateCode
+        - phaseName
+        - cognitiveStage
+      properties:
+        eventName:
+          type: string
+          default: genesis.entity.phase-changed
+          description: 'Event type identifier: genesis.entity.phase-changed'
+        entityId:
+          type: string
+          format: uuid
+          description: Entity that transitioned
+        templateCode:
+          type: string
+          minLength: 1
+          description: Template code of the entity
+        phaseName:
+          type: string
+          minLength: 1
+          description: New phase name after transition
+        cognitiveStage:
+          $ref: 'genesis-api.yaml#/components/schemas/CognitiveStage'
+          description: New cognitive stage after transition
+        actorId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Actor ID if spawned during this transition (EventBrain)
+        characterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Character ID if created during this transition (CharacterBrain)
+
+    GenesisEntityBondCreatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a bond is created on a genesis entity
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - entityId
+        - targetEntityType
+        - targetEntityId
+      properties:
+        eventName:
+          type: string
+          default: genesis.entity.bond-created
+          description: 'Event type identifier: genesis.entity.bond-created'
+        entityId:
+          type: string
+          format: uuid
+          description: Genesis entity the bond was created on
+        targetEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Type of the bonded target entity
+        targetEntityId:
+          type: string
+          format: uuid
+          description: ID of the bonded target entity
+        bondId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Relationship ID if materialized immediately (entity already awakened), null if deferred
+
+    GenesisEntityBondDissolvedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a bond is dissolved on a genesis entity
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - entityId
+      properties:
+        eventName:
+          type: string
+          default: genesis.entity.bond-dissolved
+          description: 'Event type identifier: genesis.entity.bond-dissolved'
+        entityId:
+          type: string
+          format: uuid
+          description: Genesis entity the bond was dissolved from
+
+    GenesisEntityTransitionFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when ISeedEvolutionListener cannot complete a phase transition (e.g., system realm deleted, species unavailable, actor spawn failure)
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - entityId
+        - targetPhase
+        - targetCognitiveStage
+        - failureReason
+      properties:
+        eventName:
+          type: string
+          default: genesis.entity.transition-failed
+          description: 'Event type identifier: genesis.entity.transition-failed'
+        entityId:
+          type: string
+          format: uuid
+          description: Entity that failed to transition
+        targetPhase:
+          type: string
+          minLength: 1
+          description: Phase the entity was attempting to transition to
+        targetCognitiveStage:
+          $ref: 'genesis-api.yaml#/components/schemas/CognitiveStage'
+          description: Cognitive stage the entity was attempting to reach
+        failureReason:
+          type: string
+          minLength: 1
+          description: Human-readable reason for the transition failure
