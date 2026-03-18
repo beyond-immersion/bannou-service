@@ -326,13 +326,24 @@ Each `{service}-service-events.yaml` MUST contain ONLY canonical definitions for
 
 ### Partial Class Requirement (MANDATORY)
 
-ALL service classes MUST be `partial class` from initial creation. Event handlers are implemented in separate `{Service}ServiceEvents.cs` (optional - only needed when subscribing to events).
+ALL service classes MUST be `partial class` from initial creation. Service logic is decomposed across partial class files using **dot-separated naming** to make the partial relationship explicit.
+
+**File naming convention**: A dot in the filename (before `.cs`) signals "this is a partial class of the type before the dot." No dot means a separate class.
 
 ```
 plugins/lib-{service}/
-├── {Service}Service.cs          # Main implementation (partial class, REQUIRED)
-└── {Service}ServiceEvents.cs    # Event handlers (partial class, OPTIONAL)
+├── {Service}Service.cs          # Primary — interface methods ONLY (partial class, REQUIRED)
+├── {Service}Service.Events.cs   # Event handlers (partial class, OPTIONAL)
+├── {Service}Service.Models.cs   # Internal data models (partial class, OPTIONAL)
+├── {Service}Service.Helpers.cs  # Internal helper methods (partial class, OPTIONAL)
+├── {Service}ServicePlugin.cs    # Plugin registration (SEPARATE class, REQUIRED)
+└── AssemblyInfo.cs
 ```
+
+**The dot convention**:
+- `FactionService.Events.cs` → `partial class FactionService` (extends the service)
+- `FactionService.Helpers.cs` → `partial class FactionService` (extends the service)
+- `FactionServicePlugin.cs` → `class FactionServicePlugin` (separate class — no dot)
 
 ### Service Class Pattern
 
@@ -564,23 +575,77 @@ public void LocationService_HasValidKeyBuilders() =>
 
 ### Partial Class Decomposition (GUIDELINE)
 
-T6 mandates the three-file partial class structure (`*Service.cs`, `*ServiceEvents.cs`, `*ServiceModels.cs`). When the main `{Service}Service.cs` exceeds approximately **500 lines of business logic**, decompose by domain operation into additional partial class files.
+When the main `{Service}Service.cs` exceeds approximately **500 lines of business logic**, decompose by domain operation into additional partial class files using the dot-separated naming convention.
 
-**Naming convention**: `{Service}Service{DomainConcern}.cs` with PascalCase domain names.
+**Dot-separated partial class files** extend the service class by domain concern:
 
 ```
 plugins/lib-escrow/
-├── EscrowService.cs              # Core: topics, keys, constructor, shared helpers
-├── EscrowServiceLifecycle.cs     # Create, cancel, expire
-├── EscrowServiceDeposits.cs      # Deposit, release, refund
-├── EscrowServiceCompletion.cs    # Complete, distribute
-├── EscrowServiceConsent.cs       # Consent flows
-├── EscrowServiceValidation.cs    # Validation helpers
-├── EscrowServiceEvents.cs        # Event subscriptions
-└── EscrowServiceModels.cs        # Internal models
+├── EscrowService.cs              # Primary: interface methods only
+├── EscrowService.Lifecycle.cs    # Create, cancel, expire (partial class)
+├── EscrowService.Deposits.cs     # Deposit, release, refund (partial class)
+├── EscrowService.Completion.cs   # Complete, distribute (partial class)
+├── EscrowService.Consent.cs      # Consent flows (partial class)
+├── EscrowService.Validation.cs   # Validation helpers (partial class)
+├── EscrowService.Helpers.cs      # Shared internal helpers (partial class)
+├── EscrowService.Events.cs       # Event subscriptions (partial class)
+├── EscrowService.Models.cs       # Internal data models (partial class)
+├── EscrowServicePlugin.cs        # Plugin registration (SEPARATE class)
+└── AssemblyInfo.cs
 ```
 
-**Not a hard gate**: Services with simple CRUD (game-service at 5 endpoints) don't need decomposition. This is a readability guideline — use judgment based on the complexity and cohesion of the code.
+**Not a hard gate**: Services with simple CRUD (game-service at 5 endpoints) don't need decomposition beyond the standard Events/Models/Helpers files. This is a readability guideline — use judgment based on the complexity and cohesion of the code.
+
+### Telemetry Span Placement (STRUCTURAL)
+
+The primary service file (`{Service}Service.cs`) MUST NOT contain `StartActivity` calls — the generated controller already instruments interface methods with telemetry spans. Adding spans in the primary file would double-instrument endpoints.
+
+All other partial class files (`{Service}Service.Helpers.cs`, `{Service}Service.{Domain}.cs`, etc.) MUST include `StartActivity` spans on their async methods — these methods execute outside the controller boundary and have no automatic instrumentation.
+
+This is enforced by structural tests: `Services_PrimaryFile_DoesNotCallStartActivity` and `Services_HelperFiles_ContainTelemetryInstrumentation`.
+
+### Separate Helper Services
+
+For logic that warrants its own DI-injectable class (own constructor dependencies, own lifetime, mockable in tests), create a **separate service** rather than a partial class file.
+
+**Single-file pattern** — when the helper service fits in one file:
+
+```
+plugins/lib-{service}/
+├── {Service}Service.cs
+├── {Other}Service.cs             # Separate class with [BannouHelperService]
+└── ...
+```
+
+**Subdirectory pattern** — when the helper service requires multiple files or there are several helpers:
+
+```
+plugins/lib-{service}/
+├── {Service}Service.cs
+├── Services/
+│   ├── {Other}Service.cs         # Separate class with [BannouHelperService]
+│   ├── I{Other}Service.cs        # Interface (if mockability needed)
+│   └── {Another}Service.cs       # Additional helper
+└── ...
+```
+
+**DI registration**: All separate helper services MUST use `[BannouHelperService]` for automatic DI discovery by PluginLoader. The attribute specifies the parent service type, interface type, and lifetime:
+
+```csharp
+[BannouHelperService("token", typeof(AuthService), typeof(ITokenService), ServiceLifetime.Scoped)]
+public class TokenService : ITokenService { ... }
+```
+
+When `InterfaceType` is provided, PluginLoader auto-registers the helper — no manual registration in Plugin.cs needed. Omit `InterfaceType` only for backend-conditional helpers that require explicit branch registration (e.g., `InMemoryMessageTap` vs `RabbitMQMessageTap`).
+
+**Naming distinction**: `{Other}Service.cs` (no dot, no "Service" prefix from the plugin name) signals a separate class. `{Service}Service.{Domain}.cs` (dot separator) signals a partial class of the main service. These are different patterns for different needs:
+
+| Need | Pattern | Example |
+|------|---------|---------|
+| Group related methods of the main service | Partial class: `{Service}Service.{Domain}.cs` | `EscrowService.Consent.cs` |
+| Internal helpers shared across methods | Partial class: `{Service}Service.Helpers.cs` | `FactionService.Helpers.cs` |
+| Independently injectable logic with own deps | Separate class: `{Other}Service.cs` | `TokenService.cs`, `RarityCalculationService.cs` |
+| Background worker with own lifecycle | Separate class: `{Other}Service.cs` | `ContractExpirationService.cs` |
 
 ---
 

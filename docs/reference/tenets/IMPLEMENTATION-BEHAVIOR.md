@@ -17,7 +17,7 @@ These tenets define what a service method **does** at runtime.
 
 **Rule**: Services subscribing to pub/sub events MUST use `IEventConsumer` for multi-plugin event handling.
 
-RabbitMQ allows only ONE consumer per queue. When multiple plugins need the same event, `IEventConsumer` provides application-level fan-out: generated controllers receive events and dispatch via `DispatchAsync()`, services register handlers in `{Service}ServiceEvents.cs`, and all registered handlers receive every event, isolated from each other's failures.
+RabbitMQ allows only ONE consumer per queue. When multiple plugins need the same event, `IEventConsumer` provides application-level fan-out: generated controllers receive events and dispatch via `DispatchAsync()`, services register handlers in `{Service}Service.Events.cs`, and all registered handlers receive every event, isolated from each other's failures.
 
 ### Defining Event Subscriptions
 
@@ -37,7 +37,7 @@ info:
 
 Running `make generate` produces:
 
-- `{Service}ServiceEvents.cs` - Event consumer registration and handler stubs (generated once by `generate-event-subscriptions.sh`, then manual)
+- `{Service}Service.Events.cs` - Event consumer registration and handler stubs (generated once by `generate-event-subscriptions.sh`, then manual)
 
 ### Implementation Pattern
 

@@ -69,9 +69,12 @@ plugins/lib-{service}/
 │   ├── {Service}ServiceConfiguration.cs  # Configuration class
 │   ├── {Service}PermissionRegistration.cs
 │   └── {Service}ClientEventsModels.cs    # Client event models (if applicable)
-├── {Service}Service.cs              # MANUAL - business logic only
-├── {Service}ServiceEvents.cs        # MANUAL - event handler implementations (generated once, then manual)
-└── Services/                        # MANUAL - optional helper services
+├── {Service}Service.cs              # MANUAL - interface methods only (partial class)
+├── {Service}Service.Events.cs       # MANUAL - event handlers (partial class, generated once then manual)
+├── {Service}Service.Models.cs       # MANUAL - internal data models (partial class)
+├── {Service}Service.Helpers.cs      # MANUAL - internal helper methods (partial class)
+├── {Service}ServicePlugin.cs        # MANUAL - plugin registration (SEPARATE class)
+└── Services/                        # MANUAL - optional separate helper services ([BannouHelperService])
 
 bannou-service/Generated/
 ├── Models/{Service}Models.cs        # Request/response models (use make print-models to inspect)
@@ -322,7 +325,7 @@ Tenets are organized into categories based on when they're needed:
 | Service-specific enum duplicating EntityType values | T14 | Use `$ref: EntityType` unless valid set includes non-entity roles (see T14 decision tree) |
 | L2 service using opaque string for entity types within L1/L2 | T14, T25 | EntityType is appropriate — hierarchy isolation does not apply within same layer or lower |
 | Enum defined only in C# code (no schema definition) | T1, T25 | Define in service `-api.yaml` or `common-api.yaml`; generate, don't hand-write |
-| Hand-written duplicate enum in `*ServiceModels.cs` mirroring generated type | T25 | Use the generated enum directly; internal model duplicates are V4 violations |
+| Hand-written duplicate enum in `*Service.Models.cs` mirroring generated type | T25 | Use the generated enum directly; internal model duplicates are V4 violations |
 | A2 SDK boundary enum mapping without `EnumMappingValidator` test | T11, T25 | Add `AssertFullCoverage` / `AssertSupersetToSubsetMapping` test (see TESTING-PATTERNS.md) |
 | `x-sdk-type` referencing non-Core SDK namespace enum | T1 | SDK boundary enums belong in plugin code with A2 mapping; schema enums use `common-api.yaml` or service `-api.yaml` |
 | Using `Guid.Empty` to mean "none" | T26 | Make field `Guid?` nullable |
@@ -366,8 +369,8 @@ Tenets are organized into categories based on when they're needed:
 | Lower-layer caching higher-layer data and subscribing to invalidation events | T27 | Provider owns its cache; lower layer calls provider interface for fresh data |
 | Subscribing to `*.deleted` for dependent data cleanup (non-account entities) | T28 | Declare `x-references` in schema; implement cleanup endpoint; register via generated `RegisterResourceCleanupCallbacksAsync()` |
 | Event-based cleanup for persistent dependent data (non-account entities) | T28 | Use lib-resource with CASCADE/RESTRICT/DETACH policy |
-| Cleanup handler in `*ServiceEvents.cs` for non-account entity deletion | T28 | Move to lib-resource cleanup callback; remove event subscription |
-| Service with `ownerType: Account` missing `account.deleted` handler | T28 | Add `HandleAccountDeletedAsync` in `*ServiceEvents.cs`; subscribe via `IEventConsumer` — Account Deletion Cleanup Obligation |
+| Cleanup handler in `*Service.Events.cs` for non-account entity deletion | T28 | Move to lib-resource cleanup callback; remove event subscription |
+| Service with `ownerType: Account` missing `account.deleted` handler | T28 | Add `HandleAccountDeletedAsync` in `*Service.Events.cs`; subscribe via `IEventConsumer` — Account Deletion Cleanup Obligation |
 | Using lib-resource to track account references | T28 | Subscribe to `account.deleted` instead; lib-resource registration for accounts is forbidden (privacy) |
 | Using lib-resource for high-frequency instance cleanup (items at scale) | T28 | Use DI Listener (`IItemInstanceDestructionListener`) + orphan reconciliation worker (T28 exception) |
 | Event subscription for high-frequency instance cleanup | T28 | Use DI Listener pattern, not event subscription — same T28 exception, but DI listener is the required mechanism |
