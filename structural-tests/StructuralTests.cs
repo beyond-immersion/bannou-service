@@ -1674,32 +1674,24 @@ public class StructuralTests
             var pluginDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "plugins", $"lib-{serviceName}");
             if (!Directory.Exists(pluginDir)) continue;
 
-            // Find the primary service file: {PascalName}Service.cs
-            // Exclude: *ServiceEvents.cs, *ServiceModels.cs, *ServicePlugin.cs, *Service.Helpers.cs, Generated/
-            var serviceFiles = Directory.GetFiles(pluginDir, "*Service.cs", SearchOption.TopDirectoryOnly)
-                .Where(f =>
-                {
-                    var fileName = Path.GetFileName(f);
-                    return !fileName.Contains("Events", StringComparison.Ordinal) &&
-                            !fileName.Contains("Models", StringComparison.Ordinal) &&
-                            !fileName.Contains("Plugin", StringComparison.Ordinal) &&
-                            !fileName.Contains("Helpers", StringComparison.Ordinal) &&
-                            !fileName.Contains(".Helpers.", StringComparison.Ordinal);
-                })
-                .ToList();
+            // Find the EXACT primary service file by deriving its name from the attribute.
+            // "faction" → "FactionService.cs", "character-lifecycle" → "CharacterLifecycleService.cs"
+            // This avoids false matches on BackgroundService files like ContractExpirationService.cs
+            // or helper services like RarityCalculationService.cs.
+            var primaryFileName = ServiceNameToPascalCase(serviceName) + "Service.cs";
+            var primaryFilePath = Path.Combine(pluginDir, primaryFileName);
 
-            foreach (var serviceFile in serviceFiles)
+            if (!File.Exists(primaryFilePath))
+                continue;
+
+            var content = File.ReadAllText(primaryFilePath);
+            if (content.Contains("StartActivity", StringComparison.Ordinal))
             {
-                var content = File.ReadAllText(serviceFile);
-                if (content.Contains("StartActivity", StringComparison.Ordinal))
-                {
-                    var fileName = Path.GetFileName(serviceFile);
-                    failures.Add(
-                        $"lib-{serviceName}/{fileName}: contains StartActivity call(s). " +
-                        $"Primary interface methods are instrumented by the generated controller — " +
-                        $"move internal helpers to {fileName.Replace(".cs", ".Helpers.cs")} " +
-                        $"(per IMPLEMENTATION TENETS T30)");
-                }
+                failures.Add(
+                    $"lib-{serviceName}/{primaryFileName}: contains StartActivity call(s). " +
+                    $"Primary interface methods are instrumented by the generated controller — " +
+                    $"move internal helpers to {primaryFileName.Replace(".cs", ".Helpers.cs")} " +
+                    $"(per IMPLEMENTATION TENETS T30)");
             }
         }
 
@@ -1754,7 +1746,8 @@ public class StructuralTests
                 // - Plugin registration file (infrastructure, not business logic)
                 // - Models file (no async methods, pure data)
                 // - AssemblyInfo.cs, GlobalUsings.cs (infrastructure)
-                if (IsPrimaryServiceFile(fileName) ||
+                var primaryFileName = ServiceNameToPascalCase(serviceName) + "Service.cs";
+                if (fileName.Equals(primaryFileName, StringComparison.Ordinal) ||
                     fileName.EndsWith("Plugin.cs", StringComparison.Ordinal) ||
                     fileName.EndsWith("Models.cs", StringComparison.Ordinal) ||
                     fileName.Equals("AssemblyInfo.cs", StringComparison.OrdinalIgnoreCase) ||
@@ -1796,17 +1789,14 @@ public class StructuralTests
     }
 
     /// <summary>
-    /// Checks if a filename matches the primary service file pattern ({Name}Service.cs)
-    /// while excluding events, models, plugin, and helpers partial files.
+    /// Converts a kebab-case service name to PascalCase.
+    /// "faction" → "Faction", "character-lifecycle" → "CharacterLifecycle",
+    /// "game-session" → "GameSession".
     /// </summary>
-    private static bool IsPrimaryServiceFile(string fileName)
+    private static string ServiceNameToPascalCase(string serviceName)
     {
-        return fileName.EndsWith("Service.cs", StringComparison.Ordinal) &&
-                !fileName.Contains("Events", StringComparison.Ordinal) &&
-                !fileName.Contains("Models", StringComparison.Ordinal) &&
-                !fileName.Contains("Plugin", StringComparison.Ordinal) &&
-                !fileName.Contains("Helpers", StringComparison.Ordinal) &&
-                !fileName.Contains(".Helpers.", StringComparison.Ordinal);
+        return string.Join("", serviceName.Split('-')
+            .Select(part => char.ToUpperInvariant(part[0]) + part[1..]));
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

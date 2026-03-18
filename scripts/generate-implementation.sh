@@ -202,8 +202,8 @@ namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
 /// <para>
 /// <b>RELATED FILES:</b>
 /// <list type="bullet">
-///   <item>Internal data models: ${SERVICE_PASCAL}ServiceModels.cs (storage models, cache entries, internal DTOs)</item>
-///   <item>Event handlers: ${SERVICE_PASCAL}ServiceEvents.cs (event consumer registration and handlers)</item>
+///   <item>Internal data models: ${SERVICE_PASCAL}Service.Models.cs (storage models, cache entries, internal DTOs)</item>
+///   <item>Event handlers: ${SERVICE_PASCAL}Service.Events.cs (event consumer registration and handlers)</item>
 ///   <item>Configuration: Generated/${SERVICE_PASCAL}ServiceConfiguration.cs</item>
 /// </list>
 /// </para>

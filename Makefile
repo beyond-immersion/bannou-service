@@ -100,6 +100,9 @@ inspect-list: ## List all types in a package. Usage: make inspect-list PKG="Rabb
 print-models: ## Print compact model shapes. Usage: make print-models PLUGIN="character"
 	@python3 scripts/print-model-shapes.py "$(PLUGIN)"
 
+audit-sizes: ## Audit file sizes for splitting candidates. Usage: make audit-sizes [TOP=10] [CS=2000] [DOC=1400] [FAQ=300]
+	@scripts/audit-file-sizes.sh --top "$(or $(TOP),5)" --cs-threshold "$(or $(CS),1400)" --doc-threshold "$(or $(DOC),1400)" --faq-threshold "$(or $(FAQ),300)"
+
 build-compose: ## Build Docker containers (all services)
 	if [ ! -f .env ]; then touch .env; fi
 	docker compose --env-file ./.env \

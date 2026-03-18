@@ -36,7 +36,8 @@ SCHEMA_FILE="${2:-../schemas/${SERVICE_NAME}-api.yaml}"
 
 SERVICE_PASCAL=$(to_pascal_case "$SERVICE_NAME")
 SERVICE_DIR="../plugins/lib-${SERVICE_NAME}"
-MODELS_FILE="$SERVICE_DIR/${SERVICE_PASCAL}ServiceModels.cs"
+MODELS_FILE="$SERVICE_DIR/${SERVICE_PASCAL}Service.Models.cs"
+MODELS_FILE_OLD="$SERVICE_DIR/${SERVICE_PASCAL}ServiceModels.cs"
 
 echo -e "${YELLOW}📦 Generating internal models file for: $SERVICE_NAME${NC}"
 echo -e "  📋 Schema: $SCHEMA_FILE"
@@ -48,9 +49,13 @@ if [ ! -f "$SCHEMA_FILE" ]; then
     exit 1
 fi
 
-# Check if models file already exists
+# Check if models file already exists (new or legacy naming pattern)
 if [ -f "$MODELS_FILE" ]; then
     echo -e "${YELLOW}📝 Internal models file already exists, skipping: $MODELS_FILE${NC}"
+    exit 0
+fi
+if [ -f "$MODELS_FILE_OLD" ]; then
+    echo -e "${YELLOW}📝 Internal models file already exists (legacy name), skipping: $MODELS_FILE_OLD${NC}"
     exit 0
 fi
 

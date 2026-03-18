@@ -819,6 +819,12 @@ All catalog generators use Python 3 and produce markdown index files with summar
 - **Usage**: `make help` or `./scripts/show-help.sh`
 - **Tools used**: bash (heredoc output)
 
+### `audit-file-sizes.sh`
+- **Purpose**: Audits file sizes across the codebase to identify splitting candidates. Reports: top N largest non-generated C# files, all non-generated C# files over a threshold, reference docs over a threshold, generated docs over a threshold, deep dives over a threshold, implementation maps over a threshold, and FAQs over a separate (lower) threshold. Excludes `Generated/`, `bin/`, `obj/`, `.git/`, `.claude/` directories. All thresholds configurable via flags.
+- **Usage**: `make audit-sizes` or `./scripts/audit-file-sizes.sh [--top N] [--cs-threshold N] [--doc-threshold N] [--faq-threshold N] [--cs] [--docs] [--summary] [--all]`
+- **Makefile**: `make audit-sizes [TOP=N] [CS=N] [DOC=N] [FAQ=N]`
+- **Tools used**: bash, find, wc, sort
+
 ### `validate-compose-services.sh`
 - **Purpose**: Validates that specific services are included in the latest Docker image by reading `/PLUGIN_MANIFEST.txt` from inside the container. If no services specified, shows all plugins in the image. Reports missing services with rebuild instructions.
 - **Usage**: `make validate-compose-services SERVICES="auth account connect"` or `./scripts/validate-compose-services.sh [service1] [service2] ...`

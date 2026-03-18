@@ -64,7 +64,8 @@ topic_to_method() {
 SERVICE_PASCAL=$(to_pascal_case "$SERVICE_NAME")
 PROJECT_DIR="../plugins/lib-${SERVICE_NAME}"
 GENERATED_DIR="${PROJECT_DIR}/Generated"
-SERVICE_EVENTS_FILE="${PROJECT_DIR}/${SERVICE_PASCAL}ServiceEvents.cs"
+SERVICE_EVENTS_FILE="${PROJECT_DIR}/${SERVICE_PASCAL}Service.Events.cs"
+SERVICE_EVENTS_FILE_OLD="${PROJECT_DIR}/${SERVICE_PASCAL}ServiceEvents.cs"
 
 # Clean up dead EventsController files if they exist (no longer generated)
 OLD_CONTROLLER_FILE="${GENERATED_DIR}/${SERVICE_PASCAL}EventsController.cs"
@@ -201,6 +202,8 @@ fi
 if [ "$HAS_SUBSCRIPTIONS" = false ]; then
     if [ -f "$SERVICE_EVENTS_FILE" ]; then
         echo -e "${YELLOW}📝 ServiceEvents file already exists, skipping: $SERVICE_EVENTS_FILE${NC}"
+    elif [ -f "$SERVICE_EVENTS_FILE_OLD" ]; then
+        echo -e "${YELLOW}📝 ServiceEvents file already exists (legacy name), skipping: $SERVICE_EVENTS_FILE_OLD${NC}"
     else
         echo -e "${YELLOW}🔄 Generating empty ServiceEvents partial class...${NC}"
 
@@ -309,6 +312,9 @@ fi
 # Generate {Service}ServiceEvents.cs (only if it doesn't exist)
 if [ -f "$SERVICE_EVENTS_FILE" ]; then
     echo -e "${YELLOW}📝 ServiceEvents file already exists, skipping: $SERVICE_EVENTS_FILE${NC}"
+    echo -e "${YELLOW}    To regenerate, delete the file and run this script again.${NC}"
+elif [ -f "$SERVICE_EVENTS_FILE_OLD" ]; then
+    echo -e "${YELLOW}📝 ServiceEvents file already exists (legacy name), skipping: $SERVICE_EVENTS_FILE_OLD${NC}"
     echo -e "${YELLOW}    To regenerate, delete the file and run this script again.${NC}"
 else
     echo -e "${YELLOW}🔄 Generating ServiceEvents partial class...${NC}"

@@ -36,6 +36,7 @@ SCHEMA_FILE="${2:-../schemas/${SERVICE_NAME}-api.yaml}"
 SERVICE_PASCAL=$(to_pascal_case "$SERVICE_NAME")
 SERVICE_DIR="../plugins/lib-${SERVICE_NAME}"
 HELPERS_FILE="$SERVICE_DIR/${SERVICE_PASCAL}Service.Helpers.cs"
+HELPERS_FILE_OLD="$SERVICE_DIR/${SERVICE_PASCAL}ServiceHelpers.cs"
 
 echo -e "${YELLOW}🔧 Generating service helpers file for: $SERVICE_NAME${NC}"
 echo -e "  📁 Output: $HELPERS_FILE"
@@ -46,9 +47,13 @@ if [ ! -f "$SCHEMA_FILE" ]; then
     exit 1
 fi
 
-# Check if helpers file already exists
+# Check if helpers file already exists (new or legacy naming pattern)
 if [ -f "$HELPERS_FILE" ]; then
     echo -e "${YELLOW}📝 Service helpers file already exists, skipping: $HELPERS_FILE${NC}"
+    exit 0
+fi
+if [ -f "$HELPERS_FILE_OLD" ]; then
+    echo -e "${YELLOW}📝 Service helpers file already exists (legacy name), skipping: $HELPERS_FILE_OLD${NC}"
     exit 0
 fi
 
