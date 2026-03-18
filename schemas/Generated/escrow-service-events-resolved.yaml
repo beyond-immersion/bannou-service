@@ -2,10 +2,6 @@ openapi: 3.0.4
 info:
   title: Escrow Service Events
   description: |
-    AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.
-    DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py
-    Source: escrow-service-events.yaml
-
     Event models for Escrow service RabbitMQ pub/sub via MassTransit.
 
     **Categories**:
@@ -197,7 +193,7 @@ components:
           format: uuid
           description: Party who deposited
         partyType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of the depositing party
         depositId:
           type: string
@@ -285,7 +281,7 @@ components:
           format: uuid
           description: Party who consented
         partyType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of the consenting party
         consentType:
           $ref: '../escrow-api.yaml#/components/schemas/EscrowConsentType'
@@ -398,7 +394,7 @@ components:
           format: uuid
           description: Party receiving these assets
         recipientPartyType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of the recipient party
         assets:
           type: array
@@ -573,7 +569,7 @@ components:
           description: Party who raised the dispute (null for system-initiated disputes)
         disputedByType:
           allOf:
-          - $ref: '../common-api.yaml#/components/schemas/EntityType'
+          - $ref: '#/components/schemas/EntityType'
           nullable: true
           description: Type of the disputing party (null for system-initiated disputes)
         reason:
@@ -613,7 +609,7 @@ components:
           format: uuid
           description: Arbiter ID
         arbiterType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
           description: Arbiter type
         resolution:
           $ref: '../escrow-api.yaml#/components/schemas/EscrowResolution'
@@ -693,7 +689,7 @@ components:
           nullable: true
           description: Entity that cancelled
         cancelledByType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
           nullable: true
           description: Type of cancelling entity
         reason:
@@ -773,7 +769,7 @@ components:
           format: uuid
           description: Party who reaffirmed
         reaffirmedByType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of reaffirming party
         allReaffirmed:
           type: boolean
@@ -801,7 +797,7 @@ components:
           format: uuid
           description: Party ID
         partyType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
           description: Party type
         role:
           $ref: '../escrow-api.yaml#/components/schemas/EscrowPartyRole'
@@ -821,7 +817,7 @@ components:
           format: uuid
           description: Recipient party ID
         partyType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
           description: Recipient party type
         assetSummary:
           type: string
@@ -841,7 +837,7 @@ components:
           format: uuid
           description: Depositor party ID
         partyType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
           description: Depositor party type
         assetSummary:
           type: string
@@ -886,6 +882,34 @@ components:
       - ItemStack
       - Contract
       - Custom
+
+    EntityType:
+      type: string
+      description: |
+        Universal entity type identifier for first-class Bannou entities.
+        Used for polymorphic entity references (ownerType, entityType, partyType).
+
+        NOT for game-configurable content type codes (use opaque strings) or
+        service-specific roles that include non-entity values (use service-specific enums).
+        See IMPLEMENTATION TENETS polymorphic type field classification for guidance.
+      enum:
+      - System
+      - Account
+      - Character
+      - Actor
+      - Guild
+      - Organization
+      - Government
+      - Faction
+      - Location
+      - Realm
+      - Item
+      - Monster
+      - Relationship
+      - Session
+      - Deity
+      - Dungeon
+      - Other
 
     EscrowAsset:
       type: object
@@ -976,7 +1000,7 @@ components:
           format: uuid
           description: Where this asset came from (for refunds)
         sourceOwnerType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of the source owner
         sourceContainerId:
           type: string
@@ -1037,7 +1061,7 @@ components:
           description: Party who deposited
         partyType:
           description: Type of entity (Account, Character, etc.)
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
         assets:
           $ref: '#/components/schemas/EscrowAssetBundle'
           description: Assets deposited
@@ -1055,6 +1079,7 @@ components:
 
 x-inlined-types:
 - AssetType
+- EntityType
 - EscrowAsset
 - EscrowAssetBundle
 - EscrowDeposit

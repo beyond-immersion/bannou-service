@@ -66,6 +66,13 @@ This document lists all typed events available for subscription in the Bannou Cl
 | `SessionCancelledClientEvent` | `game-session.session-cancelled` | Sent to players who claimed their reservation when a matchma... |
 | `SessionStateChangedClientEvent` | `game-session.state-changed` | Sent to all session participants when the session state chan... |
 | `GameStateUpdatedClientEvent` | `game-session.state-updated` | Sent when game state changes that all players should see. |
+| `GardenerGardenEnteredClientEvent` | `gardener.garden.entered` | Sent to the player when they successfully enter a garden. |
+| `GardenerGardenLeftClientEvent` | `gardener.garden.left` | Sent to the player when they leave a garden. |
+| `GardenerPoiExpiredClientEvent` | `gardener.poi.expired` | Sent to the garden owner when a POI expires due to TTL. |
+| `GardenerPoiSpawnedClientEvent` | `gardener.poi.spawned` | Sent to the garden owner when a new POI spawns in their gard... |
+| `GardenerPoiTriggeredClientEvent` | `gardener.poi.triggered` | Sent to the garden owner when a POI is triggered by proximit... |
+| `GardenerScenarioCompletedClientEvent` | `gardener.scenario.completed` | Sent to the player when a scenario completes. |
+| `GardenerScenarioStartedClientEvent` | `gardener.scenario.started` | Sent to the player when a scenario starts. |
 | `InventoryContainerFullClientEvent` | `inventory.container.full` | Sent to sessions observing a container owner when one of the... |
 | `InventoryItemChangedClientEvent` | `inventory.item.changed` | Sent to sessions observing a container owner when an item is... |
 | `InventoryItemTransferredClientEvent` | `inventory.item.transferred` | Sent to sessions observing either the source or target conta... |
@@ -1087,6 +1094,113 @@ Sent when game state changes that all players should see.
 
 ---
 
+## Gardener Client Events API
+
+Server-to-client push events for the Gardener service. These events notify clients of POI spawns, expirations, interactions, and garden lifecycle changes delivered via WebSocket.
+
+### `GardenerGardenEnteredClientEvent`
+
+**Event Name**: `gardener.garden.entered`
+
+Sent to the player when they successfully enter a garden.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `gardenInstanceId` | New garden instance ID |
+| `seedId` | Guardian seed ID bound to this garden |
+
+### `GardenerGardenLeftClientEvent`
+
+**Event Name**: `gardener.garden.left`
+
+Sent to the player when they leave a garden.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `gardenInstanceId` | Garden instance that was left |
+| `sessionDurationSeconds` | Total duration of the garden session in seconds |
+
+### `GardenerPoiExpiredClientEvent`
+
+**Event Name**: `gardener.poi.expired`
+
+Sent to the garden owner when a POI expires due to TTL.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `gardenInstanceId` | Garden instance this POI belonged to |
+| `poiId` | POI that expired |
+
+### `GardenerPoiSpawnedClientEvent`
+
+**Event Name**: `gardener.poi.spawned`
+
+Sent to the garden owner when a new POI spawns in their garden.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `audioHint` | Audio hint for ambient audio cue |
+| `gardenInstanceId` | Garden instance this POI belongs to |
+| `intensityRamp` | Current intensity ramp value for rendering |
+| `poiId` | Unique POI identifier |
+| `poiType` | Sensory presentation type for POI rendering |
+| `position` | POI world position |
+| `triggerMode` | How the POI is triggered (proximity, interaction,  |
+| `triggerRadius` | Proximity trigger radius in world units |
+| `visualHint` | Visual hint for scenario category (nullable for no |
+
+### `GardenerPoiTriggeredClientEvent`
+
+**Event Name**: `gardener.poi.triggered`
+
+Sent to the garden owner when a POI is triggered by proximity.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `gardenInstanceId` | Garden instance this POI belongs to |
+| `poiId` | POI that was triggered |
+| `result` | Interaction result type (ScenarioEnter for proximi |
+| `scenarioTemplateId` | Scenario template ID if the trigger leads to a sce |
+
+### `GardenerScenarioCompletedClientEvent`
+
+**Event Name**: `gardener.scenario.completed`
+
+Sent to the player when a scenario completes.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `growthAwarded` | Total growth awarded for completion |
+| `scenarioInstanceId` | Completed scenario instance ID |
+
+### `GardenerScenarioStartedClientEvent`
+
+**Event Name**: `gardener.scenario.started`
+
+Sent to the player when a scenario starts.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `gameSessionId` | Backing game session ID |
+| `scenarioInstanceId` | New scenario instance ID |
+| `scenarioTemplateId` | Template this scenario is based on |
+
+---
+
 ## Inventory Client Events API
 
 Server-to-client push events for the Inventory service. These events notify clients of real-time container content changes delivered via WebSocket through the Entity Session Registry.
@@ -1578,8 +1692,8 @@ Published on period-changed boundaries, ratio changes, admin clock advancement, 
 
 ## Summary
 
-- **Total event types**: 85
-- **Services with events**: 19
+- **Total event types**: 92
+- **Services with events**: 20
 
 ---
 

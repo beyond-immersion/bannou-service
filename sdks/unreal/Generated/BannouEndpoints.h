@@ -561,6 +561,31 @@ namespace Bannou
         /** Execute all contract clauses (idempotent) */
         constexpr const TCHAR* ContractExecuteContract = TEXT("POST:/contract/instance/execute");
 
+        // Craft Service
+        /** Create a new recipe definition */
+        constexpr const TCHAR* CraftCreateRecipe = TEXT("POST:/craft/recipe/create");
+
+        /** Update a recipe definition */
+        constexpr const TCHAR* CraftUpdateRecipe = TEXT("POST:/craft/recipe/update");
+
+        /** Deprecate a recipe definition */
+        constexpr const TCHAR* CraftDeprecateRecipe = TEXT("POST:/craft/recipe/deprecate");
+
+        /** Bulk seed recipe definitions */
+        constexpr const TCHAR* CraftSeedRecipes = TEXT("POST:/craft/recipe/seed");
+
+        /** Grant experience in a proficiency domain */
+        constexpr const TCHAR* CraftGrantExperience = TEXT("POST:/craft/proficiency/grant");
+
+        /** Set proficiency to a specific value */
+        constexpr const TCHAR* CraftSetProficiency = TEXT("POST:/craft/proficiency/set");
+
+        /** Register a crafting station */
+        constexpr const TCHAR* CraftRegisterStation = TEXT("POST:/craft/station/register");
+
+        /** Deregister a crafting station */
+        constexpr const TCHAR* CraftDeregisterStation = TEXT("POST:/craft/station/deregister");
+
         // Currency Service
         /** Update mutable fields of a currency definition */
         constexpr const TCHAR* CurrencyUpdateCurrencyDefinition = TEXT("POST:/currency/definition/update");
@@ -3240,6 +3265,70 @@ namespace Bannou
                 TEXT("FExecuteContractRequest"),
                 TEXT("FExecuteContractResponse"),
                 TEXT("Execute all contract clauses (idempotent)")
+            });
+            Registry.Add(TEXT("CraftCreateRecipe"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/craft/recipe/create"),
+                TEXT("craft"),
+                TEXT("FCreateRecipeRequest"),
+                TEXT("FCreateRecipeResponse"),
+                TEXT("Create a new recipe definition")
+            });
+            Registry.Add(TEXT("CraftUpdateRecipe"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/craft/recipe/update"),
+                TEXT("craft"),
+                TEXT("FUpdateRecipeRequest"),
+                TEXT("FUpdateRecipeResponse"),
+                TEXT("Update a recipe definition")
+            });
+            Registry.Add(TEXT("CraftDeprecateRecipe"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/craft/recipe/deprecate"),
+                TEXT("craft"),
+                TEXT("FDeprecateRecipeRequest"),
+                TEXT("FDeprecateRecipeResponse"),
+                TEXT("Deprecate a recipe definition")
+            });
+            Registry.Add(TEXT("CraftSeedRecipes"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/craft/recipe/seed"),
+                TEXT("craft"),
+                TEXT("FSeedRecipesRequest"),
+                TEXT("FSeedRecipesResponse"),
+                TEXT("Bulk seed recipe definitions")
+            });
+            Registry.Add(TEXT("CraftGrantExperience"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/craft/proficiency/grant"),
+                TEXT("craft"),
+                TEXT("FGrantExperienceRequest"),
+                TEXT("FGrantExperienceResponse"),
+                TEXT("Grant experience in a proficiency domain")
+            });
+            Registry.Add(TEXT("CraftSetProficiency"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/craft/proficiency/set"),
+                TEXT("craft"),
+                TEXT("FSetProficiencyRequest"),
+                TEXT("FSetProficiencyResponse"),
+                TEXT("Set proficiency to a specific value")
+            });
+            Registry.Add(TEXT("CraftRegisterStation"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/craft/station/register"),
+                TEXT("craft"),
+                TEXT("FRegisterStationRequest"),
+                TEXT("FRegisterStationResponse"),
+                TEXT("Register a crafting station")
+            });
+            Registry.Add(TEXT("CraftDeregisterStation"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/craft/station/deregister"),
+                TEXT("craft"),
+                TEXT("FDeregisterStationRequest"),
+                TEXT("FDeregisterStationResponse"),
+                TEXT("Deregister a crafting station")
             });
             Registry.Add(TEXT("CurrencyUpdateCurrencyDefinition"), FEndpointInfo{
                 TEXT("POST"),

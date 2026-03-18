@@ -14,6 +14,7 @@ using BeyondImmersion.BannouService.Achievement;
 using BeyondImmersion.BannouService.Actor;
 using BeyondImmersion.BannouService.Affix;
 using BeyondImmersion.BannouService.Analytics;
+using BeyondImmersion.BannouService.Arbitration;
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Behavior;
@@ -27,6 +28,7 @@ using BeyondImmersion.BannouService.Chat;
 using BeyondImmersion.BannouService.Collection;
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Contract;
+using BeyondImmersion.BannouService.Craft;
 using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Divine;
 using BeyondImmersion.BannouService.Documentation;
@@ -99,6 +101,7 @@ public partial class ServiceNavigator : IServiceNavigator
     private readonly IActorClient _actor;
     private readonly IAffixClient _affix;
     private readonly IAnalyticsClient _analytics;
+    private readonly IArbitrationClient _arbitration;
     private readonly IAssetClient _asset;
     private readonly IAuthClient _auth;
     private readonly IBehaviorClient _behavior;
@@ -112,6 +115,7 @@ public partial class ServiceNavigator : IServiceNavigator
     private readonly ICollectionClient _collection;
     private readonly IConnectClient _connect;
     private readonly IContractClient _contract;
+    private readonly ICraftClient _craft;
     private readonly ICurrencyClient _currency;
     private readonly IDivineClient _divine;
     private readonly IDocumentationClient _documentation;
@@ -169,6 +173,7 @@ public partial class ServiceNavigator : IServiceNavigator
         IActorClient actor,
         IAffixClient affix,
         IAnalyticsClient analytics,
+        IArbitrationClient arbitration,
         IAssetClient asset,
         IAuthClient auth,
         IBehaviorClient behavior,
@@ -182,6 +187,7 @@ public partial class ServiceNavigator : IServiceNavigator
         ICollectionClient collection,
         IConnectClient connect,
         IContractClient contract,
+        ICraftClient craft,
         ICurrencyClient currency,
         IDivineClient divine,
         IDocumentationClient documentation,
@@ -235,6 +241,7 @@ public partial class ServiceNavigator : IServiceNavigator
         _actor = actor;
         _affix = affix;
         _analytics = analytics;
+        _arbitration = arbitration;
         _asset = asset;
         _auth = auth;
         _behavior = behavior;
@@ -248,6 +255,7 @@ public partial class ServiceNavigator : IServiceNavigator
         _collection = collection;
         _connect = connect;
         _contract = contract;
+        _craft = craft;
         _currency = currency;
         _divine = divine;
         _documentation = documentation;
@@ -359,6 +367,9 @@ public partial class ServiceNavigator : IServiceNavigator
     public IAnalyticsClient Analytics => _analytics;
 
     /// <inheritdoc />
+    public IArbitrationClient Arbitration => _arbitration;
+
+    /// <inheritdoc />
     public IAssetClient Asset => _asset;
 
     /// <inheritdoc />
@@ -396,6 +407,9 @@ public partial class ServiceNavigator : IServiceNavigator
 
     /// <inheritdoc />
     public IContractClient Contract => _contract;
+
+    /// <inheritdoc />
+    public ICraftClient Craft => _craft;
 
     /// <inheritdoc />
     public ICurrencyClient Currency => _currency;

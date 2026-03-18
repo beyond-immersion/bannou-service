@@ -2,10 +2,6 @@ openapi: 3.0.4
 info:
   title: Environment Service Events
   description: |
-    AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.
-    DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py
-    Source: environment-service-events.yaml
-
     Event models for Environment service RabbitMQ pub/sub via lib-messaging.
     Publishes condition changes, weather event lifecycle, resource availability changes,
     and climate template lifecycle events. Consumed by Ethology, Workshop, Loot, Market,

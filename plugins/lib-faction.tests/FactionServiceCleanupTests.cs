@@ -179,13 +179,21 @@ public class FactionServiceCleanupTests : ServiceTestBase<FactionServiceConfigur
         // Setup member records for RemoveMemberInternalAsync
         var member1 = new FactionMemberModel
         {
-            FactionId = factionId1, CharacterId = characterId, Role = FactionMemberRole.Member,
-            JoinedAt = DateTimeOffset.UtcNow, FactionName = "F1", FactionCode = "F1",
+            FactionId = factionId1,
+            CharacterId = characterId,
+            Role = FactionMemberRole.Member,
+            JoinedAt = DateTimeOffset.UtcNow,
+            FactionName = "F1",
+            FactionCode = "F1",
         };
         var member2 = new FactionMemberModel
         {
-            FactionId = factionId2, CharacterId = characterId, Role = FactionMemberRole.Recruit,
-            JoinedAt = DateTimeOffset.UtcNow, FactionName = "F2", FactionCode = "F2",
+            FactionId = factionId2,
+            CharacterId = characterId,
+            Role = FactionMemberRole.Recruit,
+            JoinedAt = DateTimeOffset.UtcNow,
+            FactionName = "F2",
+            FactionCode = "F2",
         };
         _mockMemberStore
             .Setup(s => s.GetAsync(FactionService.BuildMemberKey(factionId1, characterId), It.IsAny<CancellationToken>()))
@@ -352,8 +360,12 @@ public class FactionServiceCleanupTests : ServiceTestBase<FactionServiceConfigur
 
         var member = new FactionMemberModel
         {
-            FactionId = factionId, CharacterId = characterId, Role = FactionMemberRole.Member,
-            JoinedAt = DateTimeOffset.UtcNow, FactionName = "Test", FactionCode = "TST",
+            FactionId = factionId,
+            CharacterId = characterId,
+            Role = FactionMemberRole.Member,
+            JoinedAt = DateTimeOffset.UtcNow,
+            FactionName = "Test",
+            FactionCode = "TST",
         };
         _mockMemberStore
             .Setup(s => s.GetAsync(FactionService.BuildMemberKey(factionId, characterId), It.IsAny<CancellationToken>()))
@@ -433,9 +445,15 @@ public class FactionServiceCleanupTests : ServiceTestBase<FactionServiceConfigur
 
         var faction = new FactionModel
         {
-            FactionId = factionId, GameServiceId = gsId, Name = "Test", Code = "TST",
-            RealmId = Guid.NewGuid(), Status = FactionStatus.Active, IsDeprecated = false,
-            CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow,
+            FactionId = factionId,
+            GameServiceId = gsId,
+            Name = "Test",
+            Code = "TST",
+            RealmId = Guid.NewGuid(),
+            Status = FactionStatus.Active,
+            IsDeprecated = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
         };
         _mockFactionStore
             .Setup(s => s.GetAsync(FactionService.BuildFactionKey(factionId), It.IsAny<CancellationToken>()))

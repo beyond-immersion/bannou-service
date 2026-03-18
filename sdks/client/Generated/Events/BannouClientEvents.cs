@@ -24,6 +24,7 @@ public sealed class BannouClientEvents
     private CurrencyEventSubscriptions? _currency;
     private EnvironmentEventSubscriptions? _environment;
     private GameSessionEventSubscriptions? _gamesession;
+    private GardenerEventSubscriptions? _gardener;
     private InventoryEventSubscriptions? _inventory;
     private LocationEventSubscriptions? _location;
     private MatchmakingEventSubscriptions? _matchmaking;
@@ -98,6 +99,12 @@ public sealed class BannouClientEvents
     /// </summary>
     public GameSessionEventSubscriptions GameSession =>
         _gamesession ??= new GameSessionEventSubscriptions(_client);
+
+    /// <summary>
+    /// Event subscriptions for Gardener service.
+    /// </summary>
+    public GardenerEventSubscriptions Gardener =>
+        _gardener ??= new GardenerEventSubscriptions(_client);
 
     /// <summary>
     /// Event subscriptions for Inventory service.

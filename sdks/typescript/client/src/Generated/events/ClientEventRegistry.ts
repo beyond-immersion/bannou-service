@@ -443,6 +443,62 @@ export const eventRegistry = new Map<string, EventMetadata>([
     },
   ],
   [
+    'gardener.garden.entered',
+    {
+      eventName: 'gardener.garden.entered',
+      typeName: 'GardenerGardenEnteredClientEvent',
+      service: 'gardener',
+    },
+  ],
+  [
+    'gardener.garden.left',
+    {
+      eventName: 'gardener.garden.left',
+      typeName: 'GardenerGardenLeftClientEvent',
+      service: 'gardener',
+    },
+  ],
+  [
+    'gardener.poi.expired',
+    {
+      eventName: 'gardener.poi.expired',
+      typeName: 'GardenerPoiExpiredClientEvent',
+      service: 'gardener',
+    },
+  ],
+  [
+    'gardener.poi.spawned',
+    {
+      eventName: 'gardener.poi.spawned',
+      typeName: 'GardenerPoiSpawnedClientEvent',
+      service: 'gardener',
+    },
+  ],
+  [
+    'gardener.poi.triggered',
+    {
+      eventName: 'gardener.poi.triggered',
+      typeName: 'GardenerPoiTriggeredClientEvent',
+      service: 'gardener',
+    },
+  ],
+  [
+    'gardener.scenario.completed',
+    {
+      eventName: 'gardener.scenario.completed',
+      typeName: 'GardenerScenarioCompletedClientEvent',
+      service: 'gardener',
+    },
+  ],
+  [
+    'gardener.scenario.started',
+    {
+      eventName: 'gardener.scenario.started',
+      typeName: 'GardenerScenarioStartedClientEvent',
+      service: 'gardener',
+    },
+  ],
+  [
     'inventory.container.full',
     {
       eventName: 'inventory.container.full',

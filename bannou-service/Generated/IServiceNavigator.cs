@@ -10,6 +10,7 @@ using BeyondImmersion.BannouService.Achievement;
 using BeyondImmersion.BannouService.Actor;
 using BeyondImmersion.BannouService.Affix;
 using BeyondImmersion.BannouService.Analytics;
+using BeyondImmersion.BannouService.Arbitration;
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Behavior;
@@ -23,6 +24,7 @@ using BeyondImmersion.BannouService.Chat;
 using BeyondImmersion.BannouService.Collection;
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Contract;
+using BeyondImmersion.BannouService.Craft;
 using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Divine;
 using BeyondImmersion.BannouService.Documentation;
@@ -99,6 +101,11 @@ public partial interface IServiceNavigator
     IAnalyticsClient Analytics { get; }
 
     /// <summary>
+    /// Gets the Arbitration service client.
+    /// </summary>
+    IArbitrationClient Arbitration { get; }
+
+    /// <summary>
     /// Gets the Asset service client.
     /// </summary>
     IAssetClient Asset { get; }
@@ -162,6 +169,11 @@ public partial interface IServiceNavigator
     /// Gets the Contract service client.
     /// </summary>
     IContractClient Contract { get; }
+
+    /// <summary>
+    /// Gets the Craft service client.
+    /// </summary>
+    ICraftClient Craft { get; }
 
     /// <summary>
     /// Gets the Currency service client.

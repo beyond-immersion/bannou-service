@@ -3680,6 +3680,176 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/craft/recipe/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a new recipe definition
+     * @description Creates a recipe definition with inputs, steps, outputs, and proficiency
+     *     requirements. Validates game service existence, code uniqueness, step
+     *     structure, and quality weight sums.
+     */
+    post: operations['craft_createRecipe'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/craft/recipe/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update a recipe definition
+     * @description Applies a partial update to an existing recipe. Code, gameServiceId,
+     *     and recipeType are identity-level and cannot be changed.
+     */
+    post: operations['craft_updateRecipe'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/craft/recipe/deprecate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Deprecate a recipe definition
+     * @description Marks a recipe as deprecated with a reason. Deprecated recipes cannot
+     *     be used to start new sessions. Idempotent — returns OK if already deprecated.
+     */
+    post: operations['craft_deprecateRecipe'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/craft/recipe/seed': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Bulk seed recipe definitions
+     * @description Creates multiple recipes in a single call. Skips recipes whose code
+     *     already exists (idempotent for re-seeding). Validates game service existence.
+     */
+    post: operations['craft_seedRecipes'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/craft/proficiency/grant': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Grant experience in a proficiency domain
+     * @description Grants experience to an entity in a crafting domain. Developer tool for
+     *     testing and administration. Publishes proficiency.gained and optionally
+     *     proficiency.leveled events.
+     */
+    post: operations['craft_grantExperience'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/craft/proficiency/set': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Set proficiency to a specific value
+     * @description Sets an entity's proficiency in a domain to a specific value.
+     *     Developer tool for testing and administration.
+     */
+    post: operations['craft_setProficiency'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/craft/station/register': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Register a crafting station
+     * @description Registers a crafting station at a location. Validates location existence.
+     *     Stations are associated with a game service and station type.
+     */
+    post: operations['craft_registerStation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/craft/station/deregister': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Deregister a crafting station
+     * @description Marks a station as inactive and removes it from type indexes.
+     *     Does not delete the station record.
+     */
+    post: operations['craft_deregisterStation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/currency/definition/update': {
     parameters: {
       query?: never;
@@ -12607,6 +12777,30 @@ export interface components {
        */
       updatedAt?: string | null;
     };
+    /** @description Configuration parameters for the affix operation in a modification recipe */
+    AffixOperationConfig: {
+      /** @description Tag-to-weight multiplier map for ApplyRandom operations (e.g., fire tag weight 5.0). Keys are affix tag codes, values are weight multipliers passed to IAffixClient. */
+      weightModifiers?: {
+        [key: string]: number;
+      } | null;
+      /** @description Target affix slot type for ApplyRandom or ApplySpecific operations */
+      slotType?: string | null;
+      /** @description Exact affix code to apply for ApplySpecific operations */
+      guaranteedAffixCode?: string | null;
+    };
+    /**
+     * @description Finite set of lib-affix API operations that modification recipes can invoke.
+     *     Category C system state enum — not game-configurable.
+     * @enum {string}
+     */
+    AffixOperationType:
+      | 'ApplyRandom'
+      | 'RemoveRandom'
+      | 'RerollAll'
+      | 'RerollValues'
+      | 'Corrupt'
+      | 'Fracture'
+      | 'ApplySpecific';
     /**
      * @description Describes a capability or interaction mode for a node.
      *     Used by AI systems to understand what actions are possible and by
@@ -13258,7 +13452,7 @@ export interface components {
       authorityToken: string;
     };
     /**
-     * @description Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.
+     * @description Faction authority level for jurisdictional determination. Matches Faction service AuthorityLevel enum.
      * @enum {string}
      */
     AuthorityLevel: 'Influence' | 'Delegated' | 'Sovereign';
@@ -17868,6 +18062,63 @@ export interface components {
        */
       gameServiceId: string;
     };
+    /** @description Request to create a new recipe definition */
+    CreateRecipeRequest: {
+      /**
+       * Format: uuid
+       * @description Game service this recipe belongs to
+       */
+      gameServiceId: string;
+      /** @description Unique recipe code within the game service */
+      code: string;
+      /** @description Recipe paradigm (e.g., production, modification, extraction) */
+      recipeType: string;
+      /** @description Proficiency domain */
+      domain: string;
+      /** @description Broad classification for filtering */
+      category?: string | null;
+      /** @description Tags for filtering and discovery */
+      tags?: string[] | null;
+      /** @description Material inputs consumed during crafting */
+      inputs?: components['schemas']['RecipeInput'][] | null;
+      /** @description Currency costs */
+      currencyCosts?: components['schemas']['CurrencyCost'][] | null;
+      /** @description Target item requirements for modification and extraction recipes */
+      targetRequirements?: components['schemas']['TargetRequirements'];
+      /** @description Affix operation type for modification recipes */
+      affixOperation?: components['schemas']['AffixOperationType'];
+      /** @description Configuration for the affix operation */
+      affixOperationConfig?: components['schemas']['AffixOperationConfig'];
+      /** @description Ordered steps in the recipe workflow */
+      steps: components['schemas']['RecipeStep'][];
+      /** @description Output items for production recipes */
+      outputs?: components['schemas']['RecipeOutput'][] | null;
+      /** @description Possible outputs for extraction recipes */
+      extractionOutputs?: components['schemas']['ExtractionOutput'][] | null;
+      /** @description Proficiency requirements */
+      proficiencyRequirements?: components['schemas']['ProficiencyRequirement'][] | null;
+      /** @description Quality formula weights (null uses service-wide defaults) */
+      qualityWeights?: components['schemas']['QualityWeights'];
+      /** @description Experience granted on completion */
+      experienceGrants?: components['schemas']['ExperienceGrant'][] | null;
+      /**
+       * @description Whether this recipe can be discovered through experimentation
+       * @default false
+       */
+      isDiscoverable: boolean;
+      /** @description Hints for the discovery system */
+      discoveryHints?: string[] | null;
+      /** @description Recipe codes that must be known before discovery */
+      prerequisiteRecipeCodes?: string[] | null;
+    };
+    /** @description Response after creating a recipe */
+    CreateRecipeResponse: {
+      /**
+       * Format: uuid
+       * @description ID of the newly created recipe
+       */
+      recipeId: string;
+    };
     /** @description Request to create a new relationship type with code, name, and optional hierarchy and inverse settings */
     CreateRelationshipTypeRequest: {
       /** @description Unique code for the relationship type (e.g., "SON", "MOTHER") */
@@ -18194,6 +18445,16 @@ export interface components {
       breachId: string;
       /** @description Evidence of cure */
       cureEvidence?: string | null;
+    };
+    /** @description A currency cost for executing a recipe */
+    CurrencyCost: {
+      /** @description Currency code to charge */
+      currencyCode: string;
+      /**
+       * Format: double
+       * @description Amount of currency to charge
+       */
+      amount: number;
     };
     /** @description Currency definition details */
     CurrencyDefinitionResponse: {
@@ -18986,6 +19247,21 @@ export interface components {
       /** @description Reason for deprecation */
       reason?: string | null;
     };
+    /** @description Request to deprecate a recipe definition */
+    DeprecateRecipeRequest: {
+      /**
+       * Format: uuid
+       * @description Recipe to deprecate
+       */
+      recipeId: string;
+      /** @description Reason for deprecation */
+      reason?: string | null;
+    };
+    /** @description Response after deprecating a recipe */
+    DeprecateRecipeResponse: {
+      /** @description Deprecated recipe definition */
+      recipe: components['schemas']['RecipeDefinitionInfo'];
+    };
     /** @description Request to deprecate a relationship type, preventing its use for new relationships while preserving existing ones */
     DeprecateRelationshipTypeRequest: {
       /**
@@ -19067,6 +19343,16 @@ export interface components {
       /** @description Reason for deprecation (null if not deprecated) */
       deprecationReason?: string | null;
     };
+    /** @description Request to deregister a station */
+    DeregisterStationRequest: {
+      /**
+       * Format: uuid
+       * @description Station to deregister
+       */
+      stationId: string;
+    };
+    /** @description Empty response. HTTP 200 confirms the station was deregistered. */
+    DeregisterStationResponse: Record<string, never>;
     /** @description Request to designate a faction as the realm baseline */
     DesignateRealmBaselineRequest: {
       /**
@@ -20195,6 +20481,21 @@ export interface components {
       /** @description Has this party fulfilled their deposit requirement */
       fulfilled: boolean;
     };
+    /** @description Experience granted on recipe completion */
+    ExperienceGrant: {
+      /** @description Proficiency domain to grant experience in */
+      domain: string;
+      /**
+       * Format: double
+       * @description Base experience amount granted
+       */
+      baseExperience: number;
+      /**
+       * Format: double
+       * @description Extra experience for the first successful craft of this recipe
+       */
+      firstCraftBonus?: number | null;
+    };
     /**
      * @description How currency expiration is determined
      * @enum {string}
@@ -20241,6 +20542,26 @@ export interface components {
        * @description New end time in game-seconds-since-epoch (must be later than current)
        */
       newEndGameTime: number;
+    };
+    /** @description A possible output from an extraction recipe */
+    ExtractionOutput: {
+      /** @description Item template code for the extracted output */
+      itemTemplateCode: string;
+      /**
+       * Format: double
+       * @description Base quantity of this output
+       */
+      baseQuantity: number;
+      /**
+       * Format: double
+       * @description Variance range on the base quantity
+       */
+      quantityVariance: number;
+      /**
+       * Format: double
+       * @description Chance of this output being produced (0-1)
+       */
+      probability: number;
     };
     /** @description Faction membership record linking a character to a faction with a role */
     FactionMemberResponse: {
@@ -22477,6 +22798,35 @@ export interface components {
        */
       unlockedAt: string;
     };
+    /** @description Request to grant crafting experience */
+    GrantExperienceRequest: {
+      /**
+       * Format: uuid
+       * @description Entity to grant experience to
+       */
+      entityId: string;
+      /** @description Type of the entity */
+      entityType: components['schemas']['EntityType'];
+      /** @description Proficiency domain code */
+      domain: string;
+      /**
+       * Format: double
+       * @description Experience amount to grant
+       */
+      amount: number;
+    };
+    /** @description Response after granting experience */
+    GrantExperienceResponse: {
+      /**
+       * Format: double
+       * @description New total experience after grant
+       */
+      newExperience: number;
+      /** @description Whether the experience grant triggered a level change */
+      levelChanged: boolean;
+      /** @description New level if levelChanged is true */
+      newLevel?: number | null;
+    };
     /**
      * @description How a successful status grant was resolved.
      *     - granted: new status applied (no prior instance)
@@ -23159,6 +23509,19 @@ export interface components {
      * @enum {string}
      */
     ItemScope: 'Global' | 'RealmSpecific' | 'MultiRealm';
+    /**
+     * @description Finite set of item state predicates for modification recipe target
+     *     requirements. Category C system state enum — not game-configurable.
+     * @enum {string}
+     */
+    ItemStateField: 'IsIdentified' | 'IsCorrupted' | 'IsMirrored' | 'IsFractured';
+    /** @description A typed predicate checking an item's boolean state field */
+    ItemStatePredicate: {
+      /** @description Item state field to check */
+      field: components['schemas']['ItemStateField'];
+      /** @description Required value for this state field */
+      expected: boolean;
+    };
     /** @description Item template details */
     ItemTemplateResponse: {
       /**
@@ -27378,6 +27741,13 @@ export interface components {
      * @enum {string}
      */
     ProcessingStatus: 'Pending' | 'Processing' | 'Complete' | 'Failed';
+    /** @description A proficiency level requirement for a recipe */
+    ProficiencyRequirement: {
+      /** @description Proficiency domain code */
+      domain: string;
+      /** @description Minimum proficiency level required */
+      minimumLevel: number;
+    };
     /** @description Analysis of a chord progression */
     ProgressionAnalysis: {
       /** @description Roman numeral analysis */
@@ -27450,6 +27820,24 @@ export interface components {
     PurgeTrashcanResponse: {
       /** @description Number of documents permanently deleted */
       purgedCount: number;
+    };
+    /** @description Quality formula weights defining how each factor contributes to output quality */
+    QualityWeights: {
+      /**
+       * Format: double
+       * @description Weight for input material quality (0-1)
+       */
+      materialQuality: number;
+      /**
+       * Format: double
+       * @description Weight for crafter proficiency level (0-1)
+       */
+      proficiencyLevel: number;
+      /**
+       * Format: double
+       * @description Weight for tool quality (0-1)
+       */
+      toolQuality: number;
     };
     /**
      * @description How quantities are tracked for this item type
@@ -28551,6 +28939,131 @@ export interface components {
       /** @description Number of active weather events in the realm */
       activeWeatherEventCount: number;
     };
+    /** @description Full recipe definition data */
+    RecipeDefinitionInfo: {
+      /**
+       * Format: uuid
+       * @description Unique recipe identifier
+       */
+      recipeId: string;
+      /**
+       * Format: uuid
+       * @description Game service this recipe belongs to
+       */
+      gameServiceId: string;
+      /** @description Unique recipe code within the game service */
+      code: string;
+      /** @description Recipe paradigm (e.g., production, modification, extraction) */
+      recipeType: string;
+      /** @description Proficiency domain */
+      domain: string;
+      /** @description Broad classification for filtering */
+      category?: string | null;
+      /** @description Tags for filtering and discovery */
+      tags?: string[] | null;
+      /** @description Material inputs consumed during crafting */
+      inputs?: components['schemas']['RecipeInput'][] | null;
+      /** @description Currency costs for executing the recipe */
+      currencyCosts?: components['schemas']['CurrencyCost'][] | null;
+      /** @description Target item requirements for modification and extraction recipes */
+      targetRequirements?: components['schemas']['TargetRequirements'];
+      /** @description Affix operation type for modification recipes */
+      affixOperation?: components['schemas']['AffixOperationType'];
+      /** @description Configuration for the affix operation */
+      affixOperationConfig?: components['schemas']['AffixOperationConfig'];
+      /** @description Ordered steps in the recipe workflow */
+      steps: components['schemas']['RecipeStep'][];
+      /** @description Output items for production recipes */
+      outputs?: components['schemas']['RecipeOutput'][] | null;
+      /** @description Possible outputs for extraction recipes */
+      extractionOutputs?: components['schemas']['ExtractionOutput'][] | null;
+      /** @description Proficiency requirements for this recipe */
+      proficiencyRequirements?: components['schemas']['ProficiencyRequirement'][] | null;
+      /** @description Quality formula weights (null uses service-wide defaults) */
+      qualityWeights?: components['schemas']['QualityWeights'];
+      /** @description Experience granted on completion */
+      experienceGrants?: components['schemas']['ExperienceGrant'][] | null;
+      /**
+       * @description Whether this recipe can be discovered through experimentation
+       * @default false
+       */
+      isDiscoverable: boolean;
+      /** @description Hints for the discovery system */
+      discoveryHints?: string[] | null;
+      /** @description Recipe codes that must be known before this recipe can be discovered */
+      prerequisiteRecipeCodes?: string[] | null;
+      /** @description Whether this recipe is deprecated */
+      isDeprecated: boolean;
+      /**
+       * Format: date-time
+       * @description When this recipe was deprecated
+       */
+      deprecatedAt?: string | null;
+      /** @description Reason for deprecation */
+      deprecationReason?: string | null;
+      /**
+       * Format: date-time
+       * @description When this recipe was created
+       */
+      createdAt?: string | null;
+      /**
+       * Format: date-time
+       * @description When this recipe was last updated
+       */
+      updatedAt?: string | null;
+    };
+    /** @description A material input consumed during crafting */
+    RecipeInput: {
+      /** @description Item template code for the required material */
+      itemTemplateCode: string;
+      /**
+       * Format: double
+       * @description Amount of this material consumed
+       */
+      quantity: number;
+      /**
+       * Format: double
+       * @description Minimum quality required for this material (null means any quality)
+       */
+      qualityMinimum?: number | null;
+      /** @description Step code that consumes this material (null means consumed at final step) */
+      consumeOnStep?: string | null;
+    };
+    /** @description An output item produced by a production recipe */
+    RecipeOutput: {
+      /** @description Item template code for the output */
+      itemTemplateCode: string;
+      /**
+       * Format: double
+       * @description Number of items produced
+       */
+      quantity: number;
+      /**
+       * Format: double
+       * @description How much the recipe quality affects this output's properties (0-1)
+       */
+      qualityInfluence: number;
+    };
+    /** @description An ordered step in a recipe workflow */
+    RecipeStep: {
+      /** @description Unique step identifier within the recipe */
+      code: string;
+      /** @description Human-readable step name */
+      name: string;
+      /** @description Real-time duration for this step (null means instant) */
+      durationSeconds?: number | null;
+      /** @description Required station type (null means no station needed) */
+      stationType?: string | null;
+      /** @description Required tool category (null means no tool needed) */
+      toolCategory?: string | null;
+      /**
+       * @description Whether this step has a quality-affecting skill check
+       * @default false
+       */
+      skillCheck: boolean;
+      /** @description Participant roles that can advance this step (null means primary only) */
+      eligibleRoles?: string[] | null;
+    };
     /** @description Request to recover a deleted document from the trashcan */
     RecoverDocumentRequest: {
       /** @description Documentation namespace containing the trashcan */
@@ -28795,6 +29308,41 @@ export interface components {
       sameOwnerGrowthMultiplier: number;
       /** @description Mappings from collection types to growth domains. When a collection entry is unlocked for an entity that owns seeds of this type, the entry's tags are matched against these mappings to determine growth contributions. Null means this seed type does not respond to collection unlocks. */
       collectionGrowthMappings?: components['schemas']['CollectionGrowthMapping'][] | null;
+    };
+    /** @description Request to register a crafting station */
+    RegisterStationRequest: {
+      /**
+       * Format: uuid
+       * @description Game service this station belongs to
+       */
+      gameServiceId: string;
+      /** @description Station type code */
+      stationType: string;
+      /**
+       * Format: uuid
+       * @description Physical location (null for portable stations)
+       */
+      locationId?: string | null;
+      /**
+       * Format: uuid
+       * @description Owning entity (null for unowned)
+       */
+      ownerId?: string | null;
+      /** @description Type of the owning entity (must be set when ownerId is set) */
+      ownerType?: components['schemas']['EntityType'];
+      /**
+       * Format: double
+       * @description Station quality (0-1)
+       */
+      quality: number;
+    };
+    /** @description Response after registering a station */
+    RegisterStationResponse: {
+      /**
+       * Format: uuid
+       * @description ID of the registered station
+       */
+      stationId: string;
     };
     /** @description Paginated list of relationships with metadata for navigation */
     RelationshipListResponse: {
@@ -30786,6 +31334,23 @@ export interface components {
       /** @description List of error messages for locations that failed to seed */
       errors: string[];
     };
+    /** @description Request to bulk seed recipe definitions */
+    SeedRecipesRequest: {
+      /**
+       * Format: uuid
+       * @description Game service to seed recipes for
+       */
+      gameServiceId: string;
+      /** @description Recipe definitions to seed */
+      recipes: components['schemas']['CreateRecipeRequest'][];
+    };
+    /** @description Response after bulk seeding recipes */
+    SeedRecipesResponse: {
+      /** @description Number of recipes successfully created */
+      createdCount: number;
+      /** @description Number of recipes skipped (code already exists) */
+      skippedCount: number;
+    };
     /** @description Full seed entity response. */
     SeedResponse: {
       /**
@@ -31228,6 +31793,25 @@ export interface components {
       /** @description Optional archetype code for behavior optimization */
       archetypeHint?: string | null;
     };
+    /** @description Request to set proficiency to a specific value */
+    SetProficiencyRequest: {
+      /**
+       * Format: uuid
+       * @description Entity to set proficiency for
+       */
+      entityId: string;
+      /** @description Type of the entity */
+      entityType: components['schemas']['EntityType'];
+      /** @description Proficiency domain code */
+      domain: string;
+      /**
+       * Format: double
+       * @description Target proficiency value to set
+       */
+      targetValue: number;
+    };
+    /** @description Empty response. HTTP 200 confirms the proficiency was set. */
+    SetProficiencyResponse: Record<string, never>;
     /** @description Request to set per-realm default biome configuration */
     SetRealmConfigRequest: {
       /**
@@ -32106,6 +32690,17 @@ export interface components {
      * @enum {string}
      */
     SyncTrigger: 'Manual' | 'Scheduled';
+    /** @description Requirements for the target item of a modification or extraction recipe */
+    TargetRequirements: {
+      /** @description Item template categories the recipe can target (null means any) */
+      validItemClasses?: string[] | null;
+      /** @description Minimum item level required */
+      minimumItemLevel?: number | null;
+      /** @description Boolean state predicates the target item must satisfy */
+      requiredItemStates?: components['schemas']['ItemStatePredicate'][] | null;
+      /** @description Required affix slot type for recipes that target a specific slot */
+      requiredAffixSlotType?: string | null;
+    };
     /** @description Seasonal temperature curve definition controlling base min/max temperature and intra-day variation */
     TemperatureCurve: {
       /** @description References a Worldstate calendar season code (game-configurable) */
@@ -34096,6 +34691,51 @@ export interface components {
       downtimePolicy?: components['schemas']['DowntimePolicy'] | null;
       /** @description New calendar template code (validated for existence, null = no change) */
       calendarTemplateCode?: string | null;
+    };
+    /** @description Request to update a recipe definition. Identity fields (code, gameServiceId, recipeType) cannot be changed. */
+    UpdateRecipeRequest: {
+      /**
+       * Format: uuid
+       * @description Recipe to update
+       */
+      recipeId: string;
+      /** @description Updated category */
+      category?: string | null;
+      /** @description Updated tags */
+      tags?: string[] | null;
+      /** @description Updated material inputs */
+      inputs?: components['schemas']['RecipeInput'][] | null;
+      /** @description Updated currency costs */
+      currencyCosts?: components['schemas']['CurrencyCost'][] | null;
+      /** @description Updated target requirements */
+      targetRequirements?: components['schemas']['TargetRequirements'];
+      /** @description Updated affix operation type */
+      affixOperation?: components['schemas']['AffixOperationType'];
+      /** @description Updated affix operation config */
+      affixOperationConfig?: components['schemas']['AffixOperationConfig'];
+      /** @description Updated steps */
+      steps?: components['schemas']['RecipeStep'][] | null;
+      /** @description Updated outputs */
+      outputs?: components['schemas']['RecipeOutput'][] | null;
+      /** @description Updated extraction outputs */
+      extractionOutputs?: components['schemas']['ExtractionOutput'][] | null;
+      /** @description Updated proficiency requirements */
+      proficiencyRequirements?: components['schemas']['ProficiencyRequirement'][] | null;
+      /** @description Updated quality weights */
+      qualityWeights?: components['schemas']['QualityWeights'];
+      /** @description Updated experience grants */
+      experienceGrants?: components['schemas']['ExperienceGrant'][] | null;
+      /** @description Updated discoverability */
+      isDiscoverable?: boolean | null;
+      /** @description Updated discovery hints */
+      discoveryHints?: string[] | null;
+      /** @description Updated prerequisite recipe codes */
+      prerequisiteRecipeCodes?: string[] | null;
+    };
+    /** @description Response after updating a recipe */
+    UpdateRecipeResponse: {
+      /** @description Updated recipe definition */
+      recipe: components['schemas']['RecipeDefinitionInfo'];
     };
     /** @description Request to update an existing relationship type's properties such as name, description, category, or hierarchy */
     UpdateRelationshipTypeRequest: {
@@ -40740,6 +41380,282 @@ export interface operations {
         content?: never;
       };
       /** @description Contract not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  craft_createRecipe: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateRecipeRequest'];
+      };
+    };
+    responses: {
+      /** @description Recipe created successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CreateRecipeResponse'];
+        };
+      };
+      /** @description Invalid recipe data, game service not found, or recipe limit exceeded */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Recipe with this code already exists for this game service */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  craft_updateRecipe: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateRecipeRequest'];
+      };
+    };
+    responses: {
+      /** @description Recipe updated successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UpdateRecipeResponse'];
+        };
+      };
+      /** @description Attempted to change identity-level fields */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Recipe not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Could not acquire lock on recipe */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  craft_deprecateRecipe: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeprecateRecipeRequest'];
+      };
+    };
+    responses: {
+      /** @description Recipe deprecated successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DeprecateRecipeResponse'];
+        };
+      };
+      /** @description Recipe not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Could not acquire lock on recipe */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  craft_seedRecipes: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SeedRecipesRequest'];
+      };
+    };
+    responses: {
+      /** @description Recipes seeded successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SeedRecipesResponse'];
+        };
+      };
+      /** @description Game service not found */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  craft_grantExperience: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GrantExperienceRequest'];
+      };
+    };
+    responses: {
+      /** @description Experience granted successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GrantExperienceResponse'];
+        };
+      };
+      /** @description Invalid domain or amount */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  craft_setProficiency: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetProficiencyRequest'];
+      };
+    };
+    responses: {
+      /** @description Proficiency set successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SetProficiencyResponse'];
+        };
+      };
+      /** @description Invalid domain or value */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  craft_registerStation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RegisterStationRequest'];
+      };
+    };
+    responses: {
+      /** @description Station registered successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RegisterStationResponse'];
+        };
+      };
+      /** @description Location not found */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  craft_deregisterStation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeregisterStationRequest'];
+      };
+    };
+    responses: {
+      /** @description Station deregistered successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DeregisterStationResponse'];
+        };
+      };
+      /** @description Station not found */
       404: {
         headers: {
           [name: string]: unknown;

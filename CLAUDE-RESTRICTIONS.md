@@ -109,7 +109,7 @@ Frozen directories: `scripts/`, `docs/reference/`, `structural-tests/`, `test-ut
 
 ## 6. Tool & Command Discipline
 
-- [ ] **Chunked file reading.** Always specify `limit: 300` on Read calls. Never read temp/persisted output files — go back to the original source. Read a file before using Edit on it.
+- [ ] **Read before Edit.** Read a file before using Edit on it. Never read temp/persisted output files — go back to the original source.
 - [ ] **Heavy command output capture.** Commands >10 seconds or with substantial output → redirect to file (`command > /tmp/output.txt 2>&1`), then Read. Never run a heavy command twice. Set timeouts proportional to the command (generation: 300000ms, builds: 120000ms).
 - [ ] **Never repeat commands.** If a command succeeded, do not run it again to "verify." Capture once, read many times.
 - [ ] **Scoped builds only.** Single-plugin changes → `dotnet build plugins/lib-{service}/lib-{service}.csproj --no-restore`. Full solution builds only when changes span multiple projects.

@@ -1616,6 +1616,203 @@ public class StructuralTests
         }
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Telemetry Span Placement Validation
+    // Per IMPLEMENTATION TENETS T30: primary interface methods MUST NOT have spans
+    // (generated controller wraps them); helper methods MUST have spans.
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    // ⛔ FROZEN — Only the human adds entries. Agents MUST NOT modify this list.
+    // Contains "service-name" entries for services whose primary {Service}Service.cs file
+    // still contains StartActivity calls because internal helpers have not yet been migrated
+    // to a separate {Service}Service.Helpers.cs partial class file.
+    // As helpers are migrated out, entries are removed from this list.
+    private static readonly HashSet<string> TelemetrySpanPrimaryFileExclusions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        // Populated by human only — agents must not add entries
+    };
+
+    // ⛔ FROZEN — Only the human adds entries. Agents MUST NOT modify this list.
+    // Contains "service-name:FileName.cs" entries for specific helper files that
+    // legitimately contain async methods without StartActivity spans.
+    // Valid reasons: pure data mapping, simple delegation, test infrastructure.
+    private static readonly HashSet<string> TelemetrySpanHelperFileExclusions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        // Populated by human only — agents must not add entries
+    };
+
+    // ⛔ FROZEN — Do not modify without explicit user permission.
+    /// <summary>
+    /// Validates that primary service implementation files ({Service}Service.cs) do NOT
+    /// call ITelemetryProvider.StartActivity. Primary interface methods are already wrapped
+    /// by the generated controller's catch-all boundary with telemetry instrumentation.
+    /// Adding spans in the service method would double-instrument these endpoints.
+    /// </summary>
+    /// <remarks>
+    /// This test incentivizes the {Service}Service.Helpers.cs pattern: internal helper methods
+    /// that DO need spans should live in a separate partial class file, keeping the main
+    /// service file clean of telemetry calls. Services in the exclusion list have not yet
+    /// completed the helpers migration.
+    /// </remarks>
+    [Fact]
+    public void Services_PrimaryFile_DoesNotCallStartActivity()
+    {
+        EnsureAssembliesLoaded();
+        var failures = new List<string>();
+
+        foreach (var serviceType in DiscoverAttributedTypes<BannouServiceAttribute>())
+        {
+            var attr = serviceType.GetCustomAttribute<BannouServiceAttribute>();
+            if (attr == null) continue;
+
+            var serviceName = attr.Name;
+
+            // Skip services in the exclusion list (helpers not yet migrated)
+            if (TelemetrySpanPrimaryFileExclusions.Contains(serviceName))
+                continue;
+
+            var pluginDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "plugins", $"lib-{serviceName}");
+            if (!Directory.Exists(pluginDir)) continue;
+
+            // Find the primary service file: {PascalName}Service.cs
+            // Exclude: *ServiceEvents.cs, *ServiceModels.cs, *ServicePlugin.cs, *Service.Helpers.cs, Generated/
+            var serviceFiles = Directory.GetFiles(pluginDir, "*Service.cs", SearchOption.TopDirectoryOnly)
+                .Where(f =>
+                {
+                    var fileName = Path.GetFileName(f);
+                    return !fileName.Contains("Events", StringComparison.Ordinal) &&
+                            !fileName.Contains("Models", StringComparison.Ordinal) &&
+                            !fileName.Contains("Plugin", StringComparison.Ordinal) &&
+                            !fileName.Contains("Helpers", StringComparison.Ordinal) &&
+                            !fileName.Contains(".Helpers.", StringComparison.Ordinal);
+                })
+                .ToList();
+
+            foreach (var serviceFile in serviceFiles)
+            {
+                var content = File.ReadAllText(serviceFile);
+                if (content.Contains("StartActivity", StringComparison.Ordinal))
+                {
+                    var fileName = Path.GetFileName(serviceFile);
+                    failures.Add(
+                        $"lib-{serviceName}/{fileName}: contains StartActivity call(s). " +
+                        $"Primary interface methods are instrumented by the generated controller — " +
+                        $"move internal helpers to {fileName.Replace(".cs", ".Helpers.cs")} " +
+                        $"(per IMPLEMENTATION TENETS T30)");
+                }
+            }
+        }
+
+        Assert.True(
+            failures.Count == 0,
+            $"Primary service files must not call StartActivity " +
+            $"(generated controller already instruments interface methods):\n" +
+            string.Join("\n", failures));
+    }
+
+    // ⛔ FROZEN — Do not modify without explicit user permission.
+    /// <summary>
+    /// Validates that non-primary plugin source files containing async methods also
+    /// contain at least one ITelemetryProvider.StartActivity call. Helper methods,
+    /// event handlers, providers, and workers all require telemetry span instrumentation
+    /// per IMPLEMENTATION TENETS T30.
+    /// </summary>
+    /// <remarks>
+    /// Scans all non-generated .cs files in each plugin directory, excluding the primary
+    /// service file, plugin file, and models file. If a file contains any async method
+    /// signature (async Task or async ValueTask), it must also contain StartActivity.
+    /// Files in the exclusion list are exempt (e.g., pure data mapping helpers).
+    /// </remarks>
+    [Fact]
+    public void Services_HelperFiles_ContainTelemetryInstrumentation()
+    {
+        EnsureAssembliesLoaded();
+        var failures = new List<string>();
+
+        foreach (var serviceType in DiscoverAttributedTypes<BannouServiceAttribute>())
+        {
+            var attr = serviceType.GetCustomAttribute<BannouServiceAttribute>();
+            if (attr == null) continue;
+
+            var serviceName = attr.Name;
+            var pluginDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "plugins", $"lib-{serviceName}");
+            if (!Directory.Exists(pluginDir)) continue;
+
+            // Find all non-generated .cs files
+            var allSourceFiles = Directory.GetFiles(pluginDir, "*.cs", SearchOption.AllDirectories)
+                .Where(f => !f.Contains(Path.Combine("Generated", ""), StringComparison.Ordinal) &&
+                            !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar, StringComparison.Ordinal) &&
+                            !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+                .ToList();
+
+            foreach (var sourceFile in allSourceFiles)
+            {
+                var fileName = Path.GetFileName(sourceFile);
+
+                // Skip files that are exempt from span requirements:
+                // - Primary service file (validated by the companion test above)
+                // - Plugin registration file (infrastructure, not business logic)
+                // - Models file (no async methods, pure data)
+                // - AssemblyInfo.cs, GlobalUsings.cs (infrastructure)
+                if (IsPrimaryServiceFile(fileName) ||
+                    fileName.EndsWith("Plugin.cs", StringComparison.Ordinal) ||
+                    fileName.EndsWith("Models.cs", StringComparison.Ordinal) ||
+                    fileName.Equals("AssemblyInfo.cs", StringComparison.OrdinalIgnoreCase) ||
+                    fileName.Equals("GlobalUsings.cs", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                // Check exclusion list
+                var exclusionKey = $"{serviceName}:{fileName}";
+                if (TelemetrySpanHelperFileExclusions.Contains(exclusionKey))
+                    continue;
+
+                var content = File.ReadAllText(sourceFile);
+
+                // Only check files that actually contain async methods
+                if (!content.Contains("async Task", StringComparison.Ordinal) &&
+                    !content.Contains("async ValueTask", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                // File has async methods — it should have at least one StartActivity call
+                if (!content.Contains("StartActivity", StringComparison.Ordinal))
+                {
+                    var relativePath = Path.GetRelativePath(
+                        Path.Combine(TestAssemblyDiscovery.RepoRoot, "plugins"), sourceFile);
+                    failures.Add(
+                        $"{relativePath}: contains async methods but no StartActivity call " +
+                        $"(per IMPLEMENTATION TENETS T30 — all async helper methods need telemetry spans)");
+                }
+            }
+        }
+
+        Assert.True(
+            failures.Count == 0,
+            $"Helper files with async methods must contain telemetry instrumentation:\n" +
+            string.Join("\n", failures));
+    }
+
+    /// <summary>
+    /// Checks if a filename matches the primary service file pattern ({Name}Service.cs)
+    /// while excluding events, models, plugin, and helpers partial files.
+    /// </summary>
+    private static bool IsPrimaryServiceFile(string fileName)
+    {
+        return fileName.EndsWith("Service.cs", StringComparison.Ordinal) &&
+                !fileName.Contains("Events", StringComparison.Ordinal) &&
+                !fileName.Contains("Models", StringComparison.Ordinal) &&
+                !fileName.Contains("Plugin", StringComparison.Ordinal) &&
+                !fileName.Contains("Helpers", StringComparison.Ordinal) &&
+                !fileName.Contains(".Helpers.", StringComparison.Ordinal);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Private Helper Methods
+    // ═══════════════════════════════════════════════════════════════════════════
+
     /// <summary>
     /// Parses x-event-subscriptions from event schema lines and adds to the dictionary.
     /// </summary>

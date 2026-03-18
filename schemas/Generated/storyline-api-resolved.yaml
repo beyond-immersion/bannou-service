@@ -1219,7 +1219,7 @@ components:
 
     ScenarioDefinition:
       allOf:
-      - $ref: '#/components/schemas/DeprecationFields'
+      - $ref: '../common-api.yaml#/components/schemas/DeprecationFields'
       type: object
       additionalProperties: false
       description: A scenario definition template that can be triggered when conditions are met
@@ -1686,7 +1686,7 @@ components:
 
     ScenarioDefinitionSummary:
       allOf:
-      - $ref: '#/components/schemas/DeprecationFields'
+      - $ref: '../common-api.yaml#/components/schemas/DeprecationFields'
       type: object
       additionalProperties: false
       description: Summary of a scenario definition
@@ -2589,30 +2589,6 @@ components:
           nullable: true
           description: Key choices made during the scenario (for narrative hooks)
 
-    DeprecationFields:
-      type: object
-      description: |
-        Standard deprecation fields for template and definition entities.
-        Compose into response models via allOf. Both Category A (world-building
-        definitions with undeprecate/delete) and Category B (content templates,
-        deprecate-only) use the same three-field model.
-      required:
-      - isDeprecated
-      properties:
-        isDeprecated:
-          type: boolean
-          description: Whether this entity is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the entity was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
-
     ResourceArchiveBase:
       type: object
       description: |
@@ -2668,8 +2644,4 @@ tags:
 - name: Compression
   description: Resource service compression integration
 x-inlined-types:
-- DeprecationFields
-- ResourceArchiveBase
-x-common-inlined-types:
-- DeprecationFields
 - ResourceArchiveBase

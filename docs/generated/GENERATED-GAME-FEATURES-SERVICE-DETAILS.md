@@ -31,7 +31,7 @@ The Analytics plugin (L4 GameFeatures) is the central event aggregation point fo
 
 ## Arbitration {#arbitration}
 
-**Deep Dive**: [docs/plugins/ARBITRATION.md](../plugins/ARBITRATION.md) | **Map**: [docs/maps/ARBITRATION.md](../maps/ARBITRATION.md)
+**Version**: 1.0.0 | **Schema**: `schemas/arbitration-api.yaml` | **Endpoints**: 25 | **Deep Dive**: [docs/plugins/ARBITRATION.md](../plugins/ARBITRATION.md) | **Map**: [docs/maps/ARBITRATION.md](../maps/ARBITRATION.md)
 
 Authoritative dispute resolution service (L4 GameFeatures) for competing claims that need jurisdictional ruling and enforcement. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item, Divine over Currency/Seed/Collection) that composes existing Bannou primitives to deliver adjudication game mechanics. Game-agnostic: procedural templates, arbiter selection rules, and cultural attitudes toward litigation are configured through contract templates and faction governance data at deployment time. Internal-only, never internet-facing.
 
@@ -69,7 +69,7 @@ Machine-readable personality traits and combat preferences (L4 GameFeatures) for
 
 ## Craft {#craft}
 
-**Deep Dive**: [docs/plugins/CRAFT.md](../plugins/CRAFT.md) | **Map**: [docs/maps/CRAFT.md](../maps/CRAFT.md)
+**Version**: 1.0.0 | **Schema**: `schemas/craft-api.yaml` | **Endpoints**: 31 | **Deep Dive**: [docs/plugins/CRAFT.md](../plugins/CRAFT.md) | **Map**: [docs/maps/CRAFT.md](../maps/CRAFT.md)
 
 Recipe-based crafting orchestration service (L4 GameFeatures) for production workflows, item modification, and skill-gated crafting execution. A thin orchestration layer that composes existing Bannou primitives: lib-item for storage, lib-inventory for material consumption and output placement, lib-contract for multi-step session state machines, lib-currency for costs, and lib-affix for modifier operations on existing items. Game-agnostic: recipe types, proficiency domains, station types, tool categories, and quality formulas are all opaque strings defined per game at deployment time through recipe seeding. Internal-only, never internet-facing.
 
@@ -97,7 +97,7 @@ Pantheon management service (L4 GameFeatures) for deity entities, divinity econo
 
 ## Dungeon {#dungeon}
 
-**Deep Dive**: [docs/plugins/DUNGEON.md](../plugins/DUNGEON.md)
+**Deep Dive**: [docs/plugins/DUNGEON.md](../plugins/DUNGEON.md) | **Map**: [docs/maps/DUNGEON.md](../maps/DUNGEON.md)
 
 Dungeon lifecycle orchestration service (L4 GameFeatures) for living dungeon entities that perceive, grow, and act autonomously within the Bannou actor system. A thin orchestration layer (like Divine over Currency/Seed/Collection, Quest over Contract, Escrow over Currency/Item) that composes existing Bannou primitives to deliver dungeon-as-actor game mechanics. Game-agnostic: dungeon personality types, creature species, and narrative manifestation styles are configured through ABML behaviors and seed type definitions at deployment time. Internal-only, never internet-facing.
 
@@ -266,7 +266,7 @@ Time-based automated production service (L4 GameFeatures) for continuous backgro
 ## Summary
 
 - **Services in layer**: 42
-- **Endpoints in layer**: 454
+- **Endpoints in layer**: 510
 
 ---
 

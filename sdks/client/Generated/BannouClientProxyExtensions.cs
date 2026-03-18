@@ -19,6 +19,7 @@ public partial class BannouClient
     private ActorProxy? _actor;
     private AffixProxy? _affix;
     private AnalyticsProxy? _analytics;
+    private ArbitrationProxy? _arbitration;
     private AssetProxy? _asset;
     private AuthProxy? _auth;
     private BehaviorProxy? _behavior;
@@ -32,6 +33,7 @@ public partial class BannouClient
     private CollectionProxy? _collection;
     private ConnectProxy? _connect;
     private ContractProxy? _contract;
+    private CraftProxy? _craft;
     private CurrencyProxy? _currency;
     private DivineProxy? _divine;
     private DocumentationProxy? _documentation;
@@ -104,6 +106,12 @@ public partial class BannouClient
     /// </summary>
     public AnalyticsProxy Analytics =>
         _analytics ??= new AnalyticsProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Bannou Arbitration Service API operations.
+    /// </summary>
+    public ArbitrationProxy Arbitration =>
+        _arbitration ??= new ArbitrationProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Asset Service API operations.
@@ -182,6 +190,12 @@ public partial class BannouClient
     /// </summary>
     public ContractProxy Contract =>
         _contract ??= new ContractProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Bannou Craft Service API operations.
+    /// </summary>
+    public CraftProxy Craft =>
+        _craft ??= new CraftProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Currency Service API operations.

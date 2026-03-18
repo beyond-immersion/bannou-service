@@ -477,14 +477,20 @@ public class FactionServiceGovernanceTests : ServiceTestBase<FactionServiceConfi
             .Setup(s => s.GetAsync(FactionService.BuildGovernanceKey(govId1), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GovernanceEntryModel
             {
-                GovernanceId = govId1, FactionId = factionId, Domain = "trade", TemplateCode = "T1",
+                GovernanceId = govId1,
+                FactionId = factionId,
+                Domain = "trade",
+                TemplateCode = "T1",
                 CreatedAt = DateTimeOffset.UtcNow,
             });
         _mockGovernanceStore
             .Setup(s => s.GetAsync(FactionService.BuildGovernanceKey(govId2), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new GovernanceEntryModel
             {
-                GovernanceId = govId2, FactionId = factionId, Domain = "law", TemplateCode = "T2",
+                GovernanceId = govId2,
+                FactionId = factionId,
+                Domain = "law",
+                TemplateCode = "T2",
                 CreatedAt = DateTimeOffset.UtcNow,
             });
 

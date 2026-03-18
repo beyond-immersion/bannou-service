@@ -189,6 +189,27 @@ namespace Bannou
         /** Sent when game state changes that all players should see. */
         constexpr const TCHAR* GameSessionStateUpdated = TEXT("game-session.state-updated");
 
+        /** Sent to the player when they successfully enter a garden. */
+        constexpr const TCHAR* GardenerGardenEntered = TEXT("gardener.garden.entered");
+
+        /** Sent to the player when they leave a garden. */
+        constexpr const TCHAR* GardenerGardenLeft = TEXT("gardener.garden.left");
+
+        /** Sent to the garden owner when a POI expires due to TTL. */
+        constexpr const TCHAR* GardenerPoiExpired = TEXT("gardener.poi.expired");
+
+        /** Sent to the garden owner when a new POI spawns in their garden. */
+        constexpr const TCHAR* GardenerPoiSpawned = TEXT("gardener.poi.spawned");
+
+        /** Sent to the garden owner when a POI is triggered by proximity. */
+        constexpr const TCHAR* GardenerPoiTriggered = TEXT("gardener.poi.triggered");
+
+        /** Sent to the player when a scenario completes. */
+        constexpr const TCHAR* GardenerScenarioCompleted = TEXT("gardener.scenario.completed");
+
+        /** Sent to the player when a scenario starts. */
+        constexpr const TCHAR* GardenerScenarioStarted = TEXT("gardener.scenario.started");
+
         /** Sent to sessions observing a container owner when one of their containers */
         constexpr const TCHAR* InventoryContainerFull = TEXT("inventory.container.full");
 

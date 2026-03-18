@@ -4752,6 +4752,226 @@ paths:
       x-permissions:
       - role: developer
         states: {}
+  /craft/recipe/create:
+    post:
+      summary: Create a new recipe definition
+      description: |
+        Creates a recipe definition with inputs, steps, outputs, and proficiency
+        requirements. Validates game service existence, code uniqueness, step
+        structure, and quality weight sums.
+      operationId: craft_createRecipe
+      tags:
+      - Recipe Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRecipeRequest'
+      responses:
+        '200':
+          description: Recipe created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateRecipeResponse'
+        '400':
+          description: Invalid recipe data, game service not found, or recipe 
+            limit exceeded
+        '409':
+          description: Recipe with this code already exists for this game 
+            service
+  /craft/recipe/update:
+    post:
+      summary: Update a recipe definition
+      description: |
+        Applies a partial update to an existing recipe. Code, gameServiceId,
+        and recipeType are identity-level and cannot be changed.
+      operationId: craft_updateRecipe
+      tags:
+      - Recipe Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRecipeRequest'
+      responses:
+        '200':
+          description: Recipe updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateRecipeResponse'
+        '400':
+          description: Attempted to change identity-level fields
+        '404':
+          description: Recipe not found
+        '409':
+          description: Could not acquire lock on recipe
+  /craft/recipe/deprecate:
+    post:
+      summary: Deprecate a recipe definition
+      description: |
+        Marks a recipe as deprecated with a reason. Deprecated recipes cannot
+        be used to start new sessions. Idempotent — returns OK if already deprecated.
+      operationId: craft_deprecateRecipe
+      tags:
+      - Recipe Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateRecipeRequest'
+      responses:
+        '200':
+          description: Recipe deprecated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeprecateRecipeResponse'
+        '404':
+          description: Recipe not found
+        '409':
+          description: Could not acquire lock on recipe
+  /craft/recipe/seed:
+    post:
+      summary: Bulk seed recipe definitions
+      description: |
+        Creates multiple recipes in a single call. Skips recipes whose code
+        already exists (idempotent for re-seeding). Validates game service existence.
+      operationId: craft_seedRecipes
+      tags:
+      - Recipe Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeedRecipesRequest'
+      responses:
+        '200':
+          description: Recipes seeded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedRecipesResponse'
+        '400':
+          description: Game service not found
+  /craft/proficiency/grant:
+    post:
+      summary: Grant experience in a proficiency domain
+      description: |
+        Grants experience to an entity in a crafting domain. Developer tool for
+        testing and administration. Publishes proficiency.gained and optionally
+        proficiency.leveled events.
+      operationId: craft_grantExperience
+      tags:
+      - Proficiency Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrantExperienceRequest'
+      responses:
+        '200':
+          description: Experience granted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrantExperienceResponse'
+        '400':
+          description: Invalid domain or amount
+  /craft/proficiency/set:
+    post:
+      summary: Set proficiency to a specific value
+      description: |
+        Sets an entity's proficiency in a domain to a specific value.
+        Developer tool for testing and administration.
+      operationId: craft_setProficiency
+      tags:
+      - Proficiency Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetProficiencyRequest'
+      responses:
+        '200':
+          description: Proficiency set successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetProficiencyResponse'
+        '400':
+          description: Invalid domain or value
+  /craft/station/register:
+    post:
+      summary: Register a crafting station
+      description: |
+        Registers a crafting station at a location. Validates location existence.
+        Stations are associated with a game service and station type.
+      operationId: craft_registerStation
+      tags:
+      - Station Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterStationRequest'
+      responses:
+        '200':
+          description: Station registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterStationResponse'
+        '400':
+          description: Location not found
+  /craft/station/deregister:
+    post:
+      summary: Deregister a crafting station
+      description: |
+        Marks a station as inactive and removes it from type indexes.
+        Does not delete the station record.
+      operationId: craft_deregisterStation
+      tags:
+      - Station Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeregisterStationRequest'
+      responses:
+        '200':
+          description: Station deregistered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeregisterStationResponse'
+        '404':
+          description: Station not found
   /currency/definition/update:
     post:
       operationId: currency_updateCurrencyDefinition
@@ -16259,6 +16479,45 @@ components:
           format: date-time
           nullable: true
           description: When this definition was last updated
+    AffixOperationConfig:
+      type: object
+      additionalProperties: false
+      description: Configuration parameters for the affix operation in a 
+        modification recipe
+      properties:
+        weightModifiers:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: number
+            format: double
+          description: Tag-to-weight multiplier map for ApplyRandom operations 
+            (e.g., fire tag weight 5.0). Keys are affix tag codes, values are 
+            weight multipliers passed to IAffixClient.
+        slotType:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: Target affix slot type for ApplyRandom or ApplySpecific 
+            operations
+        guaranteedAffixCode:
+          type: string
+          nullable: true
+          maxLength: 200
+          description: Exact affix code to apply for ApplySpecific operations
+    AffixOperationType:
+      type: string
+      description: |
+        Finite set of lib-affix API operations that modification recipes can invoke.
+        Category C system state enum — not game-configurable.
+      enum:
+      - ApplyRandom
+      - RemoveRandom
+      - RerollAll
+      - RerollValues
+      - Corrupt
+      - Fracture
+      - ApplySpecific
     Affordance:
       type: object
       additionalProperties: false
@@ -17322,10 +17581,8 @@ components:
           description: Checkout authority token
     AuthorityLevel:
       type: string
-      description: Authority classification determining a faction's governance 
-        power. Influence factions impose social costs only. Delegated factions 
-        inherit sovereign law and can add local rules within their delegation 
-        scope. Sovereign factions define law within their territory.
+      description: Faction authority level for jurisdictional determination. 
+        Matches Faction service AuthorityLevel enum.
       enum:
       - Influence
       - Delegated
@@ -24801,6 +25058,134 @@ components:
           type: string
           format: uuid
           description: Game service this quest belongs to
+    CreateRecipeRequest:
+      type: object
+      additionalProperties: false
+      description: Request to create a new recipe definition
+      required:
+      - gameServiceId
+      - code
+      - recipeType
+      - domain
+      - steps
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this recipe belongs to
+        code:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Unique recipe code within the game service
+        recipeType:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Recipe paradigm (e.g., production, modification, 
+            extraction)
+        domain:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Proficiency domain
+        category:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: Broad classification for filtering
+        tags:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Tags for filtering and discovery
+        inputs:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/RecipeInput'
+          description: Material inputs consumed during crafting
+        currencyCosts:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/CurrencyCost'
+          description: Currency costs
+        targetRequirements:
+          $ref: '#/components/schemas/TargetRequirements'
+          nullable: true
+          description: Target item requirements for modification and extraction 
+            recipes
+        affixOperation:
+          $ref: '#/components/schemas/AffixOperationType'
+          nullable: true
+          description: Affix operation type for modification recipes
+        affixOperationConfig:
+          $ref: '#/components/schemas/AffixOperationConfig'
+          nullable: true
+          description: Configuration for the affix operation
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeStep'
+          description: Ordered steps in the recipe workflow
+        outputs:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/RecipeOutput'
+          description: Output items for production recipes
+        extractionOutputs:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ExtractionOutput'
+          description: Possible outputs for extraction recipes
+        proficiencyRequirements:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ProficiencyRequirement'
+          description: Proficiency requirements
+        qualityWeights:
+          $ref: '#/components/schemas/QualityWeights'
+          nullable: true
+          description: Quality formula weights (null uses service-wide defaults)
+        experienceGrants:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ExperienceGrant'
+          description: Experience granted on completion
+        isDiscoverable:
+          type: boolean
+          default: false
+          description: Whether this recipe can be discovered through 
+            experimentation
+        discoveryHints:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Hints for the discovery system
+        prerequisiteRecipeCodes:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Recipe codes that must be known before discovery
+    CreateRecipeResponse:
+      type: object
+      additionalProperties: false
+      description: Response after creating a recipe
+      required:
+      - recipeId
+      properties:
+        recipeId:
+          type: string
+          format: uuid
+          description: ID of the newly created recipe
     CreateRelationshipTypeRequest:
       description: Request to create a new relationship type with code, name, 
         and optional hierarchy and inverse settings
@@ -25386,6 +25771,24 @@ components:
           maxLength: 2000
           nullable: true
           description: Evidence of cure
+    CurrencyCost:
+      type: object
+      additionalProperties: false
+      description: A currency cost for executing a recipe
+      required:
+      - currencyCode
+      - amount
+      properties:
+        currencyCode:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Currency code to charge
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Amount of currency to charge
     CurrencyDefinitionResponse:
       allOf:
       - $ref: '#/components/schemas/DeprecationFields'
@@ -26627,6 +27030,32 @@ components:
           nullable: true
           maxLength: 500
           description: Reason for deprecation
+    DeprecateRecipeRequest:
+      type: object
+      additionalProperties: false
+      description: Request to deprecate a recipe definition
+      required:
+      - recipeId
+      properties:
+        recipeId:
+          type: string
+          format: uuid
+          description: Recipe to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation
+    DeprecateRecipeResponse:
+      type: object
+      additionalProperties: false
+      description: Response after deprecating a recipe
+      required:
+      - recipe
+      properties:
+        recipe:
+          $ref: '#/components/schemas/RecipeDefinitionInfo'
+          description: Deprecated recipe definition
     DeprecateRelationshipTypeRequest:
       description: Request to deprecate a relationship type, preventing its use 
         for new relationships while preserving existing ones
@@ -26760,6 +27189,23 @@ components:
           nullable: true
           maxLength: 500
           description: Reason for deprecation (null if not deprecated)
+    DeregisterStationRequest:
+      type: object
+      additionalProperties: false
+      description: Request to deregister a station
+      required:
+      - stationId
+      properties:
+        stationId:
+          type: string
+          format: uuid
+          description: Station to deregister
+    DeregisterStationResponse:
+      type: object
+      additionalProperties: false
+      description: Empty response. HTTP 200 confirms the station was 
+        deregistered.
+      properties: {}
     DesignateRealmBaselineRequest:
       type: object
       description: Request to designate a faction as the realm baseline
@@ -28467,6 +28913,31 @@ components:
         fulfilled:
           type: boolean
           description: Has this party fulfilled their deposit requirement
+    ExperienceGrant:
+      type: object
+      additionalProperties: false
+      description: Experience granted on recipe completion
+      required:
+      - domain
+      - baseExperience
+      properties:
+        domain:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Proficiency domain to grant experience in
+        baseExperience:
+          type: number
+          format: double
+          minimum: 0
+          description: Base experience amount granted
+        firstCraftBonus:
+          type: number
+          format: double
+          nullable: true
+          minimum: 0
+          description: Extra experience for the first successful craft of this 
+            recipe
     ExpirationPolicy:
       type: string
       description: How currency expiration is determined
@@ -28543,6 +29014,37 @@ components:
           format: int64
           description: New end time in game-seconds-since-epoch (must be later 
             than current)
+    ExtractionOutput:
+      type: object
+      additionalProperties: false
+      description: A possible output from an extraction recipe
+      required:
+      - itemTemplateCode
+      - baseQuantity
+      - quantityVariance
+      - probability
+      properties:
+        itemTemplateCode:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Item template code for the extracted output
+        baseQuantity:
+          type: number
+          format: double
+          minimum: 0
+          description: Base quantity of this output
+        quantityVariance:
+          type: number
+          format: double
+          minimum: 0
+          description: Variance range on the base quantity
+        probability:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Chance of this output being produced (0-1)
     FactionMemberResponse:
       type: object
       description: Faction membership record linking a character to a faction 
@@ -31993,6 +32495,52 @@ components:
           type: string
           format: date-time
           description: When the entry was unlocked
+    GrantExperienceRequest:
+      type: object
+      additionalProperties: false
+      description: Request to grant crafting experience
+      required:
+      - entityId
+      - entityType
+      - domain
+      - amount
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity to grant experience to
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Type of the entity
+        domain:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Proficiency domain code
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Experience amount to grant
+    GrantExperienceResponse:
+      type: object
+      additionalProperties: false
+      description: Response after granting experience
+      required:
+      - newExperience
+      - levelChanged
+      properties:
+        newExperience:
+          type: number
+          format: double
+          description: New total experience after grant
+        levelChanged:
+          type: boolean
+          description: Whether the experience grant triggered a level change
+        newLevel:
+          type: integer
+          nullable: true
+          description: New level if levelChanged is true
     GrantResult:
       type: string
       description: |
@@ -33077,6 +33625,30 @@ components:
       - Global
       - RealmSpecific
       - MultiRealm
+    ItemStateField:
+      type: string
+      description: |
+        Finite set of item state predicates for modification recipe target
+        requirements. Category C system state enum — not game-configurable.
+      enum:
+      - IsIdentified
+      - IsCorrupted
+      - IsMirrored
+      - IsFractured
+    ItemStatePredicate:
+      type: object
+      additionalProperties: false
+      description: A typed predicate checking an item's boolean state field
+      required:
+      - field
+      - expected
+      properties:
+        field:
+          $ref: '#/components/schemas/ItemStateField'
+          description: Item state field to check
+        expected:
+          type: boolean
+          description: Required value for this state field
     ItemTemplateResponse:
       allOf:
       - $ref: '#/components/schemas/DeprecationFields'
@@ -39871,6 +40443,23 @@ components:
       - Complete
       - Failed
       description: Asset processing pipeline status
+    ProficiencyRequirement:
+      type: object
+      additionalProperties: false
+      description: A proficiency level requirement for a recipe
+      required:
+      - domain
+      - minimumLevel
+      properties:
+        domain:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Proficiency domain code
+        minimumLevel:
+          type: integer
+          minimum: 0
+          description: Minimum proficiency level required
     ProgressionAnalysis:
       description: Analysis of a chord progression
       type: object
@@ -40012,6 +40601,34 @@ components:
         purgedCount:
           type: integer
           description: Number of documents permanently deleted
+    QualityWeights:
+      type: object
+      additionalProperties: false
+      description: Quality formula weights defining how each factor contributes 
+        to output quality
+      required:
+      - materialQuality
+      - proficiencyLevel
+      - toolQuality
+      properties:
+        materialQuality:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Weight for input material quality (0-1)
+        proficiencyLevel:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Weight for crafter proficiency level (0-1)
+        toolQuality:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Weight for tool quality (0-1)
     QuantityModel:
       type: string
       description: How quantities are tracked for this item type
@@ -41736,6 +42353,248 @@ components:
         activeWeatherEventCount:
           type: integer
           description: Number of active weather events in the realm
+    RecipeDefinitionInfo:
+      type: object
+      additionalProperties: false
+      description: Full recipe definition data
+      required:
+      - recipeId
+      - gameServiceId
+      - code
+      - recipeType
+      - domain
+      - steps
+      - isDeprecated
+      properties:
+        recipeId:
+          type: string
+          format: uuid
+          description: Unique recipe identifier
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this recipe belongs to
+        code:
+          type: string
+          description: Unique recipe code within the game service
+        recipeType:
+          type: string
+          description: Recipe paradigm (e.g., production, modification, 
+            extraction)
+        domain:
+          type: string
+          description: Proficiency domain
+        category:
+          type: string
+          nullable: true
+          description: Broad classification for filtering
+        tags:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Tags for filtering and discovery
+        inputs:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/RecipeInput'
+          description: Material inputs consumed during crafting
+        currencyCosts:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/CurrencyCost'
+          description: Currency costs for executing the recipe
+        targetRequirements:
+          $ref: '#/components/schemas/TargetRequirements'
+          nullable: true
+          description: Target item requirements for modification and extraction 
+            recipes
+        affixOperation:
+          $ref: '#/components/schemas/AffixOperationType'
+          nullable: true
+          description: Affix operation type for modification recipes
+        affixOperationConfig:
+          $ref: '#/components/schemas/AffixOperationConfig'
+          nullable: true
+          description: Configuration for the affix operation
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeStep'
+          description: Ordered steps in the recipe workflow
+        outputs:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/RecipeOutput'
+          description: Output items for production recipes
+        extractionOutputs:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ExtractionOutput'
+          description: Possible outputs for extraction recipes
+        proficiencyRequirements:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ProficiencyRequirement'
+          description: Proficiency requirements for this recipe
+        qualityWeights:
+          $ref: '#/components/schemas/QualityWeights'
+          nullable: true
+          description: Quality formula weights (null uses service-wide defaults)
+        experienceGrants:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ExperienceGrant'
+          description: Experience granted on completion
+        isDiscoverable:
+          type: boolean
+          default: false
+          description: Whether this recipe can be discovered through 
+            experimentation
+        discoveryHints:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Hints for the discovery system
+        prerequisiteRecipeCodes:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Recipe codes that must be known before this recipe can be
+            discovered
+        isDeprecated:
+          type: boolean
+          description: Whether this recipe is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this recipe was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this recipe was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this recipe was last updated
+    RecipeInput:
+      type: object
+      additionalProperties: false
+      description: A material input consumed during crafting
+      required:
+      - itemTemplateCode
+      - quantity
+      properties:
+        itemTemplateCode:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Item template code for the required material
+        quantity:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Amount of this material consumed
+        qualityMinimum:
+          type: number
+          format: double
+          nullable: true
+          minimum: 0
+          maximum: 1
+          description: Minimum quality required for this material (null means 
+            any quality)
+        consumeOnStep:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: Step code that consumes this material (null means 
+            consumed at final step)
+    RecipeOutput:
+      type: object
+      additionalProperties: false
+      description: An output item produced by a production recipe
+      required:
+      - itemTemplateCode
+      - quantity
+      - qualityInfluence
+      properties:
+        itemTemplateCode:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Item template code for the output
+        quantity:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Number of items produced
+        qualityInfluence:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: How much the recipe quality affects this output's 
+            properties (0-1)
+    RecipeStep:
+      type: object
+      additionalProperties: false
+      description: An ordered step in a recipe workflow
+      required:
+      - code
+      - name
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Unique step identifier within the recipe
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Human-readable step name
+        durationSeconds:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: Real-time duration for this step (null means instant)
+        stationType:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: Required station type (null means no station needed)
+        toolCategory:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: Required tool category (null means no tool needed)
+        skillCheck:
+          type: boolean
+          default: false
+          description: Whether this step has a quality-affecting skill check
+        eligibleRoles:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Participant roles that can advance this step (null means 
+            primary only)
     RecoverDocumentRequest:
       description: Request to recover a deleted document from the trashcan
       type: object
@@ -42188,6 +43047,56 @@ components:
             is unlocked for an entity that owns seeds of this type, the entry's tags
             are matched against these mappings to determine growth contributions.
             Null means this seed type does not respond to collection unlocks.
+    RegisterStationRequest:
+      type: object
+      additionalProperties: false
+      description: Request to register a crafting station
+      required:
+      - gameServiceId
+      - stationType
+      - quality
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this station belongs to
+        stationType:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Station type code
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Physical location (null for portable stations)
+        ownerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Owning entity (null for unowned)
+        ownerType:
+          $ref: '#/components/schemas/EntityType'
+          nullable: true
+          description: Type of the owning entity (must be set when ownerId is 
+            set)
+        quality:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Station quality (0-1)
+    RegisterStationResponse:
+      type: object
+      additionalProperties: false
+      description: Response after registering a station
+      required:
+      - stationId
+      properties:
+        stationId:
+          type: string
+          format: uuid
+          description: ID of the registered station
     RelationshipListResponse:
       description: Paginated list of relationships with metadata for navigation
       type: object
@@ -45594,6 +46503,37 @@ components:
           items:
             type: string
           description: List of error messages for locations that failed to seed
+    SeedRecipesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to bulk seed recipe definitions
+      required:
+      - gameServiceId
+      - recipes
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service to seed recipes for
+        recipes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateRecipeRequest'
+          description: Recipe definitions to seed
+    SeedRecipesResponse:
+      type: object
+      additionalProperties: false
+      description: Response after bulk seeding recipes
+      required:
+      - createdCount
+      - skippedCount
+      properties:
+        createdCount:
+          type: integer
+          description: Number of recipes successfully created
+        skippedCount:
+          type: integer
+          description: Number of recipes skipped (code already exists)
     SeedResponse:
       type: object
       additionalProperties: false
@@ -46297,6 +47237,38 @@ components:
           type: string
           nullable: true
           description: Optional archetype code for behavior optimization
+    SetProficiencyRequest:
+      type: object
+      additionalProperties: false
+      description: Request to set proficiency to a specific value
+      required:
+      - entityId
+      - entityType
+      - domain
+      - targetValue
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity to set proficiency for
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+          description: Type of the entity
+        domain:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Proficiency domain code
+        targetValue:
+          type: number
+          format: double
+          minimum: 0
+          description: Target proficiency value to set
+    SetProficiencyResponse:
+      type: object
+      additionalProperties: false
+      description: Empty response. HTTP 200 confirms the proficiency was set.
+      properties: {}
     SetRealmConfigRequest:
       type: object
       additionalProperties: false
@@ -47676,6 +48648,36 @@ components:
       - Manual
       - Scheduled
       description: What triggered the sync operation
+    TargetRequirements:
+      type: object
+      additionalProperties: false
+      description: Requirements for the target item of a modification or 
+        extraction recipe
+      properties:
+        validItemClasses:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Item template categories the recipe can target (null 
+            means any)
+        minimumItemLevel:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: Minimum item level required
+        requiredItemStates:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ItemStatePredicate'
+          description: Boolean state predicates the target item must satisfy
+        requiredAffixSlotType:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: Required affix slot type for recipes that target a 
+            specific slot
     TemperatureCurve:
       type: object
       additionalProperties: false
@@ -51024,6 +52026,113 @@ components:
           maxLength: 128
           description: New calendar template code (validated for existence, null
             = no change)
+    UpdateRecipeRequest:
+      type: object
+      additionalProperties: false
+      description: Request to update a recipe definition. Identity fields (code,
+        gameServiceId, recipeType) cannot be changed.
+      required:
+      - recipeId
+      properties:
+        recipeId:
+          type: string
+          format: uuid
+          description: Recipe to update
+        category:
+          type: string
+          nullable: true
+          maxLength: 100
+          description: Updated category
+        tags:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Updated tags
+        inputs:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/RecipeInput'
+          description: Updated material inputs
+        currencyCosts:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/CurrencyCost'
+          description: Updated currency costs
+        targetRequirements:
+          $ref: '#/components/schemas/TargetRequirements'
+          nullable: true
+          description: Updated target requirements
+        affixOperation:
+          $ref: '#/components/schemas/AffixOperationType'
+          nullable: true
+          description: Updated affix operation type
+        affixOperationConfig:
+          $ref: '#/components/schemas/AffixOperationConfig'
+          nullable: true
+          description: Updated affix operation config
+        steps:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/RecipeStep'
+          description: Updated steps
+        outputs:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/RecipeOutput'
+          description: Updated outputs
+        extractionOutputs:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ExtractionOutput'
+          description: Updated extraction outputs
+        proficiencyRequirements:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ProficiencyRequirement'
+          description: Updated proficiency requirements
+        qualityWeights:
+          $ref: '#/components/schemas/QualityWeights'
+          nullable: true
+          description: Updated quality weights
+        experienceGrants:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ExperienceGrant'
+          description: Updated experience grants
+        isDiscoverable:
+          type: boolean
+          nullable: true
+          description: Updated discoverability
+        discoveryHints:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Updated discovery hints
+        prerequisiteRecipeCodes:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Updated prerequisite recipe codes
+    UpdateRecipeResponse:
+      type: object
+      additionalProperties: false
+      description: Response after updating a recipe
+      required:
+      - recipe
+      properties:
+        recipe:
+          $ref: '#/components/schemas/RecipeDefinitionInfo'
+          description: Updated recipe definition
     UpdateRelationshipTypeRequest:
       description: Request to update an existing relationship type's properties 
         such as name, description, category, or hierarchy
@@ -52943,6 +54052,9 @@ tags:
 - name: Bannou Connect
   description: Real-time communication and WebSocket connection management for 
     Bannou services.
+- name: Bannou Craft
+  description: Recipe-based crafting orchestration service (L4 GameFeatures) for
+    production
 - name: Bannou Documentation
   description: Knowledge base API for AI agents to query documentation.
 - name: Bannou Environment

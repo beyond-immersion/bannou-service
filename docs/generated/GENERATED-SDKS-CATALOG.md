@@ -55,15 +55,15 @@ It follows the same pattern as scene-composer-godot: a thin translation layer th
 
 ### Voxel Builder Stride Bridge SDK Deep Dive {#voxel-builder-stride}
 
-**Layer**: Bridge | **Status**: Aspirational — no code exists. | **Dependencies**: voxel-builder (-> voxel-core), Stride.Engine, Stride.Graphics | [Full Deep Dive](../sdks/VOXEL-BUILDER-STRIDE.md)
+**Layer**: Bridge | **Status**: Aspirational — no code exists. | **Dependencies**: voxel-builder (-> voxel-core), Stride.Engine 4.3, Stride.Rendering, Stride.Physics | [Implementation Map](../sdks/maps/VOXEL-BUILDER-STRIDE.md) | [Full Deep Dive](../sdks/VOXEL-BUILDER-STRIDE.md)
 
-*Stride engine bridge for voxel rendering — interleaved vertex structs, byte-color zero-copy, per-chunk MeshDraw with optional GPU compute meshing*
+*Stride engine bridge for voxel rendering — built-in VertexPositionNormalColor, byte-color zero-copy, per-chunk Entity with MeshDraw, SetData buffer updates*
 
 voxel-builder-stride is the **primary engine bridge** for the voxel domain. Stride is the first-priority engine, so this bridge is optimized for zero-copy paths wherever possible. The key advantage: Stride's `Color` struct is 4 bytes RGBA (byte-based), matching our `MeshData.Colors` exactly — no conversion needed for vertex colors. Stride's coordinate system (right-handed, Y-up, CCW front-face) also matches voxel-core exactly — no winding flips or axis swaps.
 
-The bridge packs voxel-core's separate-array MeshData into Stride's interleaved vertex structs (`VertexPositionNormalTexture` or a custom `VertexPositionNormalColorTexture` with byte Color), uploads to GPU buffers via `Buffer.Vertex.New()`, and manages per-chunk `MeshInstance` entities in the scene.
+The bridge uses Stride's **built-in `VertexPositionNormalColor`** (28 bytes: Vector3 + Vector3 + Color) — no custom vertex struct needed. Per-vertex color is the correct rendering model for blocky voxels: each face gets a flat color from the palette. UVs and palette atlas textures are a future refinement for when per-face texture detail is desired, but are not needed for correct palette-colored voxel rendering.
 
-Follows the same pattern as scene-composer-stride: thin translation layer converting engine-agnostic SDK output to engine-native rendering.
+Follows the same pattern as scene-composer-stride: thin translation layer converting engine-agnostic SDK output to engine-native rendering. Constructor takes `Scene`, `CameraComponent`, `GraphicsDevice`, and an optional `CommandList` provider for buffer uploads.
 
 ### Voxel Builder Unity Bridge SDK Deep Dive {#voxel-builder-unity}
 
@@ -79,7 +79,7 @@ Unity's `Mesh` API uses separate attribute arrays (like Godot, unlike Stride's i
 
 - **SDKs in catalog**: 6
 - **Domains**: Voxel
-- **Implementation maps**: 4
+- **Implementation maps**: 5
 
 ---
 

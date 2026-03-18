@@ -3,10 +3,6 @@ info:
   title: Actor Service Events
   version: 1.0.0
   description: |
-    AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.
-    DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py
-    Source: actor-service-events.yaml
-
     Events published and subscribed to by the Actor service.
     Includes lifecycle events for templates and instances, plus event subscriptions.
 
@@ -804,7 +800,7 @@ components:
           description: Relative direction (north, south, east, west, above, below, etc.)
         position:
           allOf:
-          - $ref: '../common-api.yaml#/components/schemas/Position3D'
+          - $ref: '#/components/schemas/Position3D'
           nullable: true
           description: Optional absolute position
 
@@ -886,6 +882,28 @@ components:
       - Service
       - System
 
+    Position3D:
+      type: object
+      additionalProperties: false
+      description: Position in world coordinates (meters, Y-up, right-handed)
+      required:
+      - x
+      - y
+      - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate in world space (meters)
+        y:
+          type: number
+          format: float
+          description: Y coordinate (up axis) in world space (meters)
+        z:
+          type: number
+          format: float
+          description: Z coordinate in world space (meters)
+
     SpatialContext:
       type: object
       additionalProperties: true
@@ -937,4 +955,5 @@ x-inlined-types:
 - NearbyObject
 - PerceptionData
 - PerceptionSourceType
+- Position3D
 - SpatialContext

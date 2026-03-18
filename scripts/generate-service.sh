@@ -136,6 +136,7 @@ declare -a GENERATION_ORDER=(
     "config"
     "implementation"
     "models-internal"
+    "helpers"
     "plugin"
     "permissions"
     "tests"

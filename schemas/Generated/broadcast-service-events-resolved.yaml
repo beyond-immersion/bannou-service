@@ -2,10 +2,6 @@ openapi: 3.0.4
 info:
   title: Broadcast Service Events
   description: |
-    AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.
-    DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py
-    Source: broadcast-service-events.yaml
-
     Event models for Broadcast service RabbitMQ pub/sub via lib-messaging.
     Broadcast publishes lifecycle events for platform links, sessions, and outputs,
     plus periodic audience sentiment pulse events. Subscribes to account deletion,

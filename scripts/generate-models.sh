@@ -59,7 +59,7 @@ ensure_dotnet_root
 # Run resolver to handle cross-file allOf refs (creates resolved schema if needed)
 SCRIPT_DIR="$(dirname "$0")"
 echo -e "${YELLOW}🔄 Checking for cross-file allOf refs...${NC}"
-python3 "$SCRIPT_DIR/resolve-api-refs.py" "$SERVICE_NAME" 2>&1 | while read line; do echo "  $line"; done
+python3 "$SCRIPT_DIR/resolve-schema-refs.py" --api "$SERVICE_NAME" 2>&1 | while read line; do echo "  $line"; done
 
 # Check if a resolved version exists (for schemas with cross-file allOf refs)
 RESOLVED_SCHEMA="../schemas/Generated/${SERVICE_NAME}-api-resolved.yaml"

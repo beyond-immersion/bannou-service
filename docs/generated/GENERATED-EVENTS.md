@@ -54,6 +54,24 @@ This document lists all events defined in Bannou's event schemas.
 | `AnalyticsRatingUpdatedEvent` | Lifecycle (Updated) | `analytics-rating.updated` | Published when an entity's Glicko-2 skill rating c... |
 | `AnalyticsScoreUpdatedEvent` | Lifecycle (Updated) | `analytics-score.updated` | Published when an entity's score or statistic chan... |
 
+### Arbitration
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `ArbitrationArbiterAssignedEvent` | Custom | `arbitration-arbiter-assigned` | Published when an arbiter is assigned to a case |
+| `ArbitrationArbiterRecusedEvent` | Custom | `arbitration-arbiter-recused` | Published when an arbiter recuses from a case |
+| `ArbitrationArbiterRequestedEvent` | Custom | `arbitration-arbiter-requested` | Published when an external arbiter is requested. C... |
+| `ArbitrationCaseClosedEvent` | Custom | `arbitration-case-closed` | Published when a case reaches a terminal closed st... |
+| `ArbitrationCaseDefaultedEvent` | Custom | `arbitration-case-defaulted` | Published when a respondent fails to respond withi... |
+| `ArbitrationCaseFiledEvent` | Custom | `arbitration-case-filed` | Published when a case is filed with accepted juris... |
+| `ArbitrationEvidenceSubmittedEvent` | Custom | `arbitration-evidence-submitted` | Published when a party submits evidence for a case |
+| `ArbitrationHearingCompletedEvent` | Custom | `arbitration-hearing-completed` | Published when a hearing milestone is completed |
+| `ArbitrationJurisdictionChallengedEvent` | Custom | `arbitration-jurisdiction-challenged` | Published when a party challenges jurisdictional a... |
+| `ArbitrationNoticeConfirmedEvent` | Custom | `arbitration-notice-confirmed` | Published when service of process is confirmed |
+| `ArbitrationRulingAppealedEvent` | Custom | `arbitration-ruling-appealed` | Published when a ruling is appealed |
+| `ArbitrationRulingEnforcedEvent` | Custom | `arbitration-ruling-enforced` | Published when all ruling consequences have been s... |
+| `ArbitrationRulingIssuedEvent` | Custom | `arbitration-ruling-issued` | Published when an arbiter issues a ruling |
+
 ### Asset
 
 | Event | Type | Likely Topic | Description |
@@ -202,6 +220,19 @@ This document lists all events defined in Bannou's event schemas.
 | `ContractTemplateValuesSetEvent` | Custom | `contract-template-values-set` | Event published when template values are set on a ... |
 | `ContractTerminatedEvent` | Custom | `contract-terminated` | Event published when contract is terminated early |
 | `ContractUnlockedEvent` | Custom | `contract-unlocked` | Event published when a contract is released from g... |
+
+### Craft
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `CraftProficiencyGainedEvent` | Custom | `craft-proficiency-gained` | Published when an entity gains crafting experience... |
+| `CraftProficiencyLeveledEvent` | Custom | `craft-proficiency-leveled` | Published when an entity's proficiency level incre... |
+| `CraftRecipeDiscoveredEvent` | Custom | `craft-recipe-discovered` | Published when an entity discovers or is taught a ... |
+| `CraftSessionCancelledEvent` | Custom | `craft-session-cancelled` | Published when a session is cancelled and material... |
+| `CraftSessionCompletedEvent` | Custom | `craft-session-completed` | Published when a crafting session finishes success... |
+| `CraftSessionFailedEvent` | Custom | `craft-session-failed` | Published when a session fails due to contract ter... |
+| `CraftSessionStartedEvent` | Custom | `craft-session-started` | Published when a crafting session begins with vali... |
+| `CraftSessionStepCompletedEvent` | Custom | `craft-session-step-completed` | Published when a session step is completed |
 
 ### Currency
 

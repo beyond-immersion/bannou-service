@@ -279,27 +279,15 @@ public partial class ArbitrationController
                     "nullable": true,
                     "description": "Jurisdictional sovereign faction. Nullable due to DETACH cleanup."
                 },
-                "petitionerEntityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Petitioner entity ID. Nullable due to DETACH cleanup of character."
-                },
-                "petitionerEntityType": {
+                "petitioner": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Type of the petitioner entity"
+                    "description": "Petitioner party reference. Nullable due to DETACH cleanup of character."
                 },
-                "respondentEntityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Respondent entity ID. Nullable due to DETACH cleanup of character."
-                },
-                "respondentEntityType": {
+                "respondent": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Type of the respondent entity"
+                    "description": "Respondent party reference. Nullable due to DETACH cleanup of character."
                 },
                 "arbiterEntityId": {
                     "type": "string",
@@ -528,27 +516,15 @@ public partial class ArbitrationController
                     "nullable": true,
                     "description": "Jurisdictional sovereign faction. Nullable due to DETACH cleanup."
                 },
-                "petitionerEntityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Petitioner entity ID. Nullable due to DETACH cleanup of character."
-                },
-                "petitionerEntityType": {
+                "petitioner": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Type of the petitioner entity"
+                    "description": "Petitioner party reference. Nullable due to DETACH cleanup of character."
                 },
-                "respondentEntityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Respondent entity ID. Nullable due to DETACH cleanup of character."
-                },
-                "respondentEntityType": {
+                "respondent": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Type of the respondent entity"
+                    "description": "Respondent party reference. Nullable due to DETACH cleanup of character."
                 },
                 "arbiterEntityId": {
                     "type": "string",
@@ -867,27 +843,15 @@ public partial class ArbitrationController
                     "nullable": true,
                     "description": "Jurisdictional sovereign faction. Nullable due to DETACH cleanup."
                 },
-                "petitionerEntityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Petitioner entity ID. Nullable due to DETACH cleanup of character."
-                },
-                "petitionerEntityType": {
+                "petitioner": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Type of the petitioner entity"
+                    "description": "Petitioner party reference. Nullable due to DETACH cleanup of character."
                 },
-                "respondentEntityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Respondent entity ID. Nullable due to DETACH cleanup of character."
-                },
-                "respondentEntityType": {
+                "respondent": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Type of the respondent entity"
+                    "description": "Respondent party reference. Nullable due to DETACH cleanup of character."
                 },
                 "arbiterEntityId": {
                     "type": "string",
@@ -1109,27 +1073,15 @@ public partial class ArbitrationController
                     "nullable": true,
                     "description": "Jurisdictional sovereign faction. Nullable due to DETACH cleanup."
                 },
-                "petitionerEntityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Petitioner entity ID. Nullable due to DETACH cleanup of character."
-                },
-                "petitionerEntityType": {
+                "petitioner": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Type of the petitioner entity"
+                    "description": "Petitioner party reference. Nullable due to DETACH cleanup of character."
                 },
-                "respondentEntityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Respondent entity ID. Nullable due to DETACH cleanup of character."
-                },
-                "respondentEntityType": {
+                "respondent": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Type of the respondent entity"
+                    "description": "Respondent party reference. Nullable due to DETACH cleanup of character."
                 },
                 "arbiterEntityId": {
                     "type": "string",
@@ -1358,27 +1310,15 @@ public partial class ArbitrationController
                     "nullable": true,
                     "description": "Jurisdictional sovereign faction. Nullable due to DETACH cleanup."
                 },
-                "petitionerEntityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Petitioner entity ID. Nullable due to DETACH cleanup of character."
-                },
-                "petitionerEntityType": {
+                "petitioner": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Type of the petitioner entity"
+                    "description": "Petitioner party reference. Nullable due to DETACH cleanup of character."
                 },
-                "respondentEntityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Respondent entity ID. Nullable due to DETACH cleanup of character."
-                },
-                "respondentEntityType": {
+                "respondent": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Type of the respondent entity"
+                    "description": "Respondent party reference. Nullable due to DETACH cleanup of character."
                 },
                 "arbiterEntityId": {
                     "type": "string",
@@ -1618,27 +1558,15 @@ public partial class ArbitrationController
                     "nullable": true,
                     "description": "Jurisdictional sovereign faction. Nullable due to DETACH cleanup."
                 },
-                "petitionerEntityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Petitioner entity ID. Nullable due to DETACH cleanup of character."
-                },
-                "petitionerEntityType": {
+                "petitioner": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Type of the petitioner entity"
+                    "description": "Petitioner party reference. Nullable due to DETACH cleanup of character."
                 },
-                "respondentEntityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Respondent entity ID. Nullable due to DETACH cleanup of character."
-                },
-                "respondentEntityType": {
+                "respondent": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Type of the respondent entity"
+                    "description": "Respondent party reference. Nullable due to DETACH cleanup of character."
                 },
                 "arbiterEntityId": {
                     "type": "string",
@@ -2200,8 +2128,7 @@ public partial class ArbitrationController
                 "caseId",
                 "evidenceType",
                 "content",
-                "submittingPartyEntityId",
-                "submittingPartyEntityType",
+                "submittingParty",
                 "submissionTimestamp"
             ],
             "properties": {
@@ -2223,14 +2150,9 @@ public partial class ArbitrationController
                     "$ref": "#/$defs/EvidenceContent",
                     "description": "Typed evidence content"
                 },
-                "submittingPartyEntityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Entity ID of the party that submitted this evidence"
-                },
-                "submittingPartyEntityType": {
+                "submittingParty": {
                     "type": "object",
-                    "description": "Type of the submitting party entity"
+                    "description": "Entity that submitted this evidence"
                 },
                 "submissionTimestamp": {
                     "type": "string",
@@ -2392,8 +2314,7 @@ public partial class ArbitrationController
                 "caseId",
                 "evidenceType",
                 "content",
-                "submittingPartyEntityId",
-                "submittingPartyEntityType",
+                "submittingParty",
                 "submissionTimestamp"
             ],
             "properties": {
@@ -2415,14 +2336,9 @@ public partial class ArbitrationController
                     "$ref": "#/$defs/EvidenceContent",
                     "description": "Typed evidence content"
                 },
-                "submittingPartyEntityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Entity ID of the party that submitted this evidence"
-                },
-                "submittingPartyEntityType": {
+                "submittingParty": {
                     "type": "object",
-                    "description": "Type of the submitting party entity"
+                    "description": "Entity that submitted this evidence"
                 },
                 "submissionTimestamp": {
                     "type": "string",
@@ -2773,27 +2689,15 @@ public partial class ArbitrationController
                     "nullable": true,
                     "description": "Jurisdictional sovereign faction. Nullable due to DETACH cleanup."
                 },
-                "petitionerEntityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Petitioner entity ID. Nullable due to DETACH cleanup of character."
-                },
-                "petitionerEntityType": {
+                "petitioner": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Type of the petitioner entity"
+                    "description": "Petitioner party reference. Nullable due to DETACH cleanup of character."
                 },
-                "respondentEntityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Respondent entity ID. Nullable due to DETACH cleanup of character."
-                },
-                "respondentEntityType": {
+                "respondent": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Type of the respondent entity"
+                    "description": "Respondent party reference. Nullable due to DETACH cleanup of character."
                 },
                 "arbiterEntityId": {
                     "type": "string",
@@ -3545,27 +3449,15 @@ public partial class ArbitrationController
                     "nullable": true,
                     "description": "Jurisdictional sovereign faction. Nullable due to DETACH cleanup."
                 },
-                "petitionerEntityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Petitioner entity ID. Nullable due to DETACH cleanup of character."
-                },
-                "petitionerEntityType": {
+                "petitioner": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Type of the petitioner entity"
+                    "description": "Petitioner party reference. Nullable due to DETACH cleanup of character."
                 },
-                "respondentEntityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Respondent entity ID. Nullable due to DETACH cleanup of character."
-                },
-                "respondentEntityType": {
+                "respondent": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Type of the respondent entity"
+                    "description": "Respondent party reference. Nullable due to DETACH cleanup of character."
                 },
                 "arbiterEntityId": {
                     "type": "string",

@@ -9,8 +9,8 @@ need deprecation marker interfaces, and the current state of Category B complian
 
 ## Summary
 
-- **Total deprecatable entities**: 26
-- **With `instanceEntity` declared**: 16
+- **Total deprecatable entities**: 27
+- **With `instanceEntity` declared**: 17
 - **Missing `instanceEntity`**: 10
 
 ## All Deprecatable Entities
@@ -26,6 +26,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 | Chat | `ChatRoomType` | `ChatRoom` | OK |
 | Collection | `CollectionEntryTemplate` | `Collection` | OK |
 | Contract | `ContractTemplate` | `ContractInstance` | OK |
+| Craft | `CraftRecipe` | `CraftingSession` | OK |
 | Currency | `CurrencyDefinition` | `CurrencyBalance` | OK |
 | Divine | `Deity` | — | Missing |
 | Environment | `ClimateTemplate` | — | Missing |
@@ -117,6 +118,14 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Topic prefix**: `contract`
 - **Instance entity**: `ContractInstance`
 - **Model fields**: `templateId`, `code`, `name`, `description`, `realmId`, `minParties`, `maxParties`, `defaultEnforcementMode`, `transferable`, `isActive`
+
+### Craft: CraftRecipe
+
+- **Service**: `craft`
+- **Schema**: `schemas/craft-service-events.yaml`
+- **Topic prefix**: `craft`
+- **Instance entity**: `CraftingSession`
+- **Model fields**: `recipeId`, `gameServiceId`, `code`, `recipeType`, `domain`, `category`, `tags`, `isDiscoverable`
 
 ### Currency: CurrencyDefinition
 

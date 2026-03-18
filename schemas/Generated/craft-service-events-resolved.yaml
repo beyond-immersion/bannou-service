@@ -2,10 +2,6 @@ openapi: 3.0.4
 info:
   title: Craft Service Events
   description: |
-    AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.
-    DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py
-    Source: craft-service-events.yaml
-
     Event models for Craft service RabbitMQ pub/sub via lib-messaging.
     Lifecycle events (Created, Updated, Deleted) are auto-generated from
     x-lifecycle for RecipeDefinition entities. Custom events cover session
@@ -147,7 +143,7 @@ components:
           format: uuid
           description: Primary entity performing the craft
         entityType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of the primary entity
         participants:
           type: array
@@ -228,7 +224,7 @@ components:
           format: uuid
           description: Primary entity that performed the craft
         entityType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of the primary entity
         finalQuality:
           type: number
@@ -275,7 +271,7 @@ components:
           format: uuid
           description: Primary entity
         entityType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of the primary entity
         reason:
           type: string
@@ -313,7 +309,7 @@ components:
           format: uuid
           description: Primary entity
         entityType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of the primary entity
         materialsReturned:
           type: boolean
@@ -344,7 +340,7 @@ components:
           format: uuid
           description: Entity that gained experience
         entityType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of the entity
         domain:
           type: string
@@ -379,7 +375,7 @@ components:
           format: uuid
           description: Entity whose proficiency leveled up
         entityType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of the entity
         domain:
           type: string
@@ -415,7 +411,7 @@ components:
           format: uuid
           description: Entity that discovered the recipe
         entityType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of the entity
         recipeCode:
           type: string
@@ -424,6 +420,34 @@ components:
           type: string
           format: uuid
           description: Game service context
+    EntityType:
+      type: string
+      description: |
+        Universal entity type identifier for first-class Bannou entities.
+        Used for polymorphic entity references (ownerType, entityType, partyType).
+
+        NOT for game-configurable content type codes (use opaque strings) or
+        service-specific roles that include non-entity values (use service-specific enums).
+        See IMPLEMENTATION TENETS polymorphic type field classification for guidance.
+      enum:
+      - System
+      - Account
+      - Character
+      - Actor
+      - Guild
+      - Organization
+      - Government
+      - Faction
+      - Location
+      - Realm
+      - Item
+      - Monster
+      - Relationship
+      - Session
+      - Deity
+      - Dungeon
+      - Other
+
     SessionParticipant:
       type: object
       additionalProperties: false
@@ -438,7 +462,7 @@ components:
           format: uuid
           description: Participant entity identifier
         entityType:
-          $ref: '../common-api.yaml#/components/schemas/EntityType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of the participant entity
         role:
           type: string
@@ -447,4 +471,5 @@ components:
           description: Participant role (e.g., master, apprentice, assistant)
 
 x-inlined-types:
+- EntityType
 - SessionParticipant

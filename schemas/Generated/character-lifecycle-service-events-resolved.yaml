@@ -2,10 +2,6 @@ openapi: 3.0.4
 info:
   title: Character Lifecycle Service Events
   description: |
-    AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.
-    DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py
-    Source: character-lifecycle-service-events.yaml
-
     Event models for Character Lifecycle service RabbitMQ pub/sub via lib-messaging.
     Publishes lifecycle orchestration events (birth, death, marriage, stage transitions)
     and CRUD lifecycle events for templates and bloodlines.

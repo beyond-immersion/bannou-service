@@ -145,6 +145,21 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ANALYTICS_RESOLUTION_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for resolution caches (game service, realm, c... |
 | `ANALYTICS_SESSION_MAPPING_TTL_SECONDS` | int | `3600` | TTL in seconds for game session mappings (should exceed typi... |
 
+### Arbitration
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `ARBITRATION_CASE_CODE_PREFIX` | string | `ARB` | Prefix for human-readable case codes (e.g., ARB produces ARB... |
+| `ARBITRATION_DEADLINE_CHECK_BATCH_SIZE` | int | `50` | Maximum number of expired cases to process per deadline work... |
+| `ARBITRATION_DEADLINE_CHECK_DELAY_MINUTES` | int | `5` | Delay in minutes before the deadline worker starts after ser... |
+| `ARBITRATION_DEADLINE_CHECK_INTERVAL_MINUTES` | int | `60` | Interval in minutes between deadline reconciliation sweeps |
+| `ARBITRATION_EXTERNAL_ARBITER_TIMEOUT_DAYS` | int | `7` | Days to wait for an external arbiter response before falling... |
+| `ARBITRATION_JURISDICTION_CACHE_TTL_MINUTES` | int | `30` | TTL in minutes for cached jurisdiction resolutions |
+| `ARBITRATION_LOCK_TIMEOUT_SECONDS` | int | `10` | Maximum time in seconds to wait for distributed lock acquisi... |
+| `ARBITRATION_MAX_ACTIVE_CASES_PER_ARBITER` | int | `10` | Maximum number of active cases an arbiter can be assigned si... |
+| `ARBITRATION_MAX_EVIDENCE_ITEMS_PER_PARTY` | int | `20` | Maximum number of evidence items each party can submit per c... |
+| `ARBITRATION_QUERY_PAGE_SIZE` | int | `20` | Default page size for list and query endpoints |
+
 ### Asset
 
 | Environment Variable | Type | Default | Description |
@@ -567,6 +582,24 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CONTRACT_PREBOUND_API_BATCH_SIZE` | int | `10` | Number of prebound APIs to execute in parallel |
 | `CONTRACT_PREBOUND_API_TIMEOUT_MS` | int | `30000` | Timeout for individual prebound API calls in milliseconds |
 | `CONTRACT_TERMS_MERGE_MODE` | string | `shallow` | How instance terms merge with template terms (shallow=replac... |
+
+### Craft
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `CRAFT_APPRENTICE_BONUS_MULTIPLIER` | double | `0.5` | XP multiplier for non-primary participants in multi-entity s... |
+| `CRAFT_COLLABORATION_BONUS_MULTIPLIER` | double | `0.05` | Quality bonus per additional participant in multi-entity ses... |
+| `CRAFT_DEFAULT_QUALITY_MATERIAL_WEIGHT` | double | `0.3` | Default material quality weight when recipe does not specify... |
+| `CRAFT_DEFAULT_QUALITY_PROFICIENCY_WEIGHT` | double | `0.5` | Default proficiency quality weight when recipe does not spec... |
+| `CRAFT_DEFAULT_QUALITY_TOOL_WEIGHT` | double | `0.2` | Default tool quality weight when recipe does not specify wei... |
+| `CRAFT_DISCOVERY_MATERIAL_CONSUMPTION_RATE` | double | `0.5` | Fraction of materials consumed on failed discovery attempt (... |
+| `CRAFT_EXPERIENCE_SCALING_FACTOR` | double | `1.0` | Global experience multiplier applied to all crafting XP gran... |
+| `CRAFT_LOCK_TIMEOUT_SECONDS` | int | `30` | Distributed lock acquisition timeout in seconds |
+| `CRAFT_MAX_ACTIVE_SESSIONS_PER_ENTITY` | int | `1` | Maximum concurrent crafting sessions per entity |
+| `CRAFT_MAX_RECIPES_PER_GAME_SERVICE` | int | `10000` | Safety limit for maximum recipe count per game service |
+| `CRAFT_RECIPE_CACHE_TTL_SECONDS` | int | `3600` | Recipe definition cache TTL in seconds |
+| `CRAFT_SESSION_TIMEOUT_SECONDS` | int | `3600` | Maximum session duration before auto-cancellation via Contra... |
+| `CRAFT_STATION_EXCLUSIVITY` | bool | `false` | Whether stations are locked to one session at a time |
 
 ### Currency
 
@@ -1444,9 +1477,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 1140
+- **Total properties**: 1163
 - **Required (no default)**: 67
-- **Optional (has default)**: 1073
+- **Optional (has default)**: 1096
 
 ## Environment Variable Naming Convention
 

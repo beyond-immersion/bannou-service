@@ -149,37 +149,38 @@ The `make generate-services` target (with optional `PLUGIN=` filter) calls `gene
 
 These Python scripts resolve cross-file `$ref` references that NSwag cannot handle natively. They produce "resolved" YAML schemas in `schemas/Generated/` with complex types inlined, enabling NSwag to process them.
 
-### `resolve-api-refs.py`
-- **Purpose**: Resolves cross-file `allOf` references in API schemas. Specifically targets `allOf` constructs with cross-file `$ref`s — these are the patterns NSwag fails on. Inlines referenced types and all their transitive local dependencies via `get_type_with_dependencies()`.
-- **Usage**: `python3 resolve-api-refs.py [service-name]` (optional service filter; processes all if omitted)
-- **Input**: `schemas/{service}-api.yaml`, referenced schemas (`common-api.yaml`, other service APIs)
-- **Output**: `schemas/Generated/{service}-api-resolved.yaml` (only if cross-file `allOf` refs found; otherwise no file is created and callers use the original schema). Cleans up stale resolved files before processing.
-- **Key functions**:
-  - `find_allof_cross_file_refs()` — Only finds refs inside `allOf` arrays (not standalone `$ref`s, which NSwag handles)
-  - `get_type_with_dependencies()` — Recursively collects a type and all its local `$ref` dependencies
-  - `convert_cross_refs_to_local()` — Rewrites cross-file refs to local `#/components/schemas/` refs for inlined types
-  - `fix_relative_paths_for_generated()` — Adds `../` prefix to remaining cross-file refs (output is in `Generated/`)
-- **Metadata**: Adds `x-inlined-types` list for downstream exclusion logic
-- **Tools used**: Python 3, `ruamel.yaml` (372 lines)
-- **Pipeline position**: Called by `generate-models.sh` before NSwag model generation
+### `resolve-schema-refs.py`
+- **Purpose**: Unified schema `$ref` resolver handling ALL schema types (API, events, lifecycle). Replaces three separate scripts (`resolve-api-refs.py`, `resolve-event-refs.py`, `resolve-lifecycle-refs.py`) with one script using the strongest resolution logic — recursive cross-file chain following with schema caching.
+- **The problem it solves**: NSwag can't handle cross-file `$ref`s where the referenced type contains its own nested `$ref`s. For example, `arbitration-api.yaml` references `EntityReference` from `common-api.yaml`, and `EntityReference` internally `$ref`s `EntityType`. NSwag resolves the inner `$ref` relative to the processing file, where `EntityType` doesn't exist. This script inlines complex types and their full transitive dependency trees.
+- **Usage**:
+  - `python3 resolve-schema-refs.py` — Resolve all schema types
+  - `python3 resolve-schema-refs.py --api [service]` — API schemas only
+  - `python3 resolve-schema-refs.py --events [service]` — Event schemas only
+  - `python3 resolve-schema-refs.py --lifecycle [service]` — Lifecycle event schemas only
+  - Modes can be combined: `--events --lifecycle` resolves both
+- **Input**: `schemas/*-api.yaml`, `schemas/*-service-events.yaml`, `schemas/Generated/*-service-lifecycle-events.yaml`, and all transitively referenced schemas
+- **Output** (only when resolution is needed):
+  - `schemas/Generated/{service}-api-resolved.yaml`
+  - `schemas/Generated/{service}-service-events-resolved.yaml`
+  - `schemas/Generated/{service}-service-lifecycle-events-resolved.yaml`
+- **Key behaviors**:
+  - Triggers on ALL cross-file `$ref`s with nested refs (not just `allOf` — fixes the bug where standalone property refs to complex common-api types were missed)
+  - Recursively follows cross-file ref chains through multiple files (lifecycle → API → common)
+  - Schema caching avoids re-reading files during recursive traversal
+  - Handles path fixing for schemas in vs out of `Generated/` subdirectory
+  - Embeds `x-inlined-types` metadata list for downstream NSwag exclusion logic
+  - Cleans up stale resolved files before processing
+- **Tools used**: Python 3, `ruamel.yaml`
+- **Pipeline position**: Called by `generate-models.sh` (`--api`), `generate-service-events.sh` (`--events --lifecycle`), `common.sh:generate_lifecycle_event_models()` (`--lifecycle`)
 
-### `resolve-event-refs.py`
-- **Purpose**: Resolves cross-file `$ref` references in both standard event schemas AND lifecycle event schemas. For standard events, checks if referenced API types have nested `$ref`s that NSwag can't handle. For lifecycle events (in `Generated/`), applies the same logic but accounts for the `../` path prefix.
-- **Usage**: `python3 resolve-event-refs.py` (processes all event schemas — both standard and lifecycle)
-- **Input**: All `schemas/*-service-events.yaml`, `schemas/Generated/*-service-lifecycle-events.yaml`, their corresponding `-api.yaml` files, `schemas/common-api.yaml`
-- **Output**: `schemas/Generated/{service}-service-events-resolved.yaml` and/or `schemas/Generated/{service}-service-lifecycle-events-resolved.yaml` (only for schemas with complex refs). Adds `x-inlined-types` list and updates `info.description` to note resolution.
-- **Key logic**: Uses `has_nested_refs()` to determine if a referenced type is "complex" — only inlines types whose definitions contain further `$ref`s. Simple enum refs are left as cross-file references (NSwag handles those fine).
-- **Tools used**: Python 3, `ruamel.yaml` (534 lines)
-- **Pipeline position**: Called by `generate-service-events.sh` during pre-processing
+### ~~`resolve-schema-refs.py`~~ (DELETED)
+- **Status**: Consolidated into `resolve-schema-refs.py`. Had a narrower trigger (allOf-only) that missed standalone `$ref`s to complex common-api types like `EntityReference`.
 
-### `resolve-lifecycle-refs.py`
-- **Purpose**: Resolves cross-file `$ref` references in generated lifecycle event schemas. Handles the specific challenge of **transitive cross-file ref chains** (lifecycle → API → common) by recursively following both local and cross-file refs through `collect_type_with_all_deps()`. Uses a schema cache to avoid re-reading files during recursive traversal.
-- **Usage**: `python3 resolve-lifecycle-refs.py <service-name>` (single service, not batch)
-- **Input**: `schemas/Generated/{service}-service-lifecycle-events.yaml`, all referenced API schemas (resolved transitively)
-- **Output**: `schemas/Generated/{service}-service-lifecycle-events-resolved.yaml` (only if complex refs found). Adds `x-inlined-types` list.
-- **Key difference from `resolve-event-refs.py`**: Takes a single service argument (called per-service), uses `_schema_cache` for performance, and follows ref chains through multiple files (not just one level).
-- **Tools used**: Python 3, `ruamel.yaml` (334 lines)
-- **Pipeline position**: Called by `common.sh:generate_lifecycle_event_models()` before NSwag lifecycle model generation
+### ~~`resolve-event-refs.py`~~ (DELETED)
+- **Status**: Consolidated into `resolve-schema-refs.py`. Had weaker resolution than `resolve-lifecycle-refs.py` (didn't follow transitive cross-file chains).
+
+### ~~`resolve-lifecycle-refs.py`~~ (DELETED)
+- **Status**: Consolidated into `resolve-schema-refs.py`. Its recursive chain-following logic with schema caching became the unified resolver's core algorithm.
 
 ---
 
@@ -192,7 +193,7 @@ These scripts are called by `generate-service.sh` for each service and use NSwag
 - **Usage**: `cd scripts && ./generate-models.sh <service-name> [schema-file]`
 - **Input**: `schemas/{service}-api.yaml` (or resolved version), `schemas/Generated/{service}-service-lifecycle-events.yaml`
 - **Output**: `bannou-service/Generated/Models/{Service}Models.cs` — Contains all request/response types. Also `bannou-service/Generated/Events/{Service}LifecycleEvents.cs` if lifecycle events exist.
-- **Tools used**: NSwag (`openapi2csclient` with `/generateDtoTypes:true`, `/generateClientClasses:false`), `resolve-api-refs.py`, `extract-sdk-types.py`, post-processing (JsonRequired injection, enum CS1591 suppressions, AdditionalProperties docs, enum PascalCase)
+- **Tools used**: NSwag (`openapi2csclient` with `/generateDtoTypes:true`, `/generateClientClasses:false`), `resolve-schema-refs.py`, `extract-sdk-types.py`, post-processing (JsonRequired injection, enum CS1591 suppressions, AdditionalProperties docs, enum PascalCase)
 - **Namespace**: `BeyondImmersion.BannouService.{Service}`
 - **Exclusion logic**: Excludes `ApiException`, common-api.yaml types (already in `CommonApiModels.cs`), and `x-sdk-type` mapped types (external SDK types)
 - **Pipeline position**: Step 2 in per-service generation order (after project)
@@ -298,7 +299,7 @@ These scripts are called by `generate-service.sh` for each service and use NSwag
 - **Usage**: `scripts/generate-service-events.sh [service-name]` (auto-cds; can run from anywhere)
 - **Input**: All `schemas/*-service-events.yaml`, resolved versions in `schemas/Generated/`
 - **Output**: `bannou-service/Generated/Events/{Service}EventsModels.cs` for each service. Also `{Service}LifecycleEvents.cs` via `generate_lifecycle_event_models()`.
-- **Pre-processing**: Runs `generate-lifecycle-events.py` (YAML schema generation) and `resolve-event-refs.py` (complex ref resolution)
+- **Pre-processing**: Runs `generate-lifecycle-events.py` (YAML schema generation) and `resolve-schema-refs.py --events --lifecycle` (complex ref resolution)
 - **Exclusion logic**: Excludes `BaseServiceEvent`, API schema types (already generated in `{Service}Models.cs`), common-api types, and inlined types from resolved schemas
 - **Tools used**: NSwag, python3, post-processing (JsonRequired, EventName override, enum suppressions, AdditionalProperties docs)
 - **Namespace**: `BeyondImmersion.BannouService.Events`
@@ -621,11 +622,8 @@ These scripts are called by `generate-service.sh` for each service and use NSwag
 - **Output**: `docs/generated/GENERATED-DEPRECATION-ENTITIES.md`
 - **Tools used**: Python 3, `ruamel.yaml` (246 lines)
 
-### `generate-state-store-docs.py`
-- **Purpose**: Generates state store documentation (standalone invocation, separate from the dual-purpose `generate-state-stores.py`).
-- **Input**: `schemas/state-stores.yaml`
-- **Output**: `docs/generated/GENERATED-STATE-STORES.md`
-- **Tools used**: Python 3, `ruamel.yaml`
+### ~~`generate-state-store-docs.py`~~ (DELETED)
+- **Status**: Removed — orphaned dead code. Read Dapr-style component YAML files from `provisioning/state-stores/` (which no longer exists). Superseded by the dual-purpose `generate-state-stores.py` which reads `schemas/state-stores.yaml` and generates both `StateStoreDefinitions.cs` and `GENERATED-STATE-STORES.md`.
 
 ### `generate-env-example.py`
 - **Purpose**: Generates `.env.example` file from all configuration schemas. Uses `example` values (priority over `default`), with smart secret detection (JWT, OAuth, API keys get appropriate placeholders), URL/connection string pattern detection, and category grouping (JWT, OAuth, State Store, Timing/TTL, etc.). Priority-ordered service sections (auth/account/connect first, then alphabetical). Appends service enable/disable flags and local development config sections.
@@ -832,7 +830,8 @@ All catalog generators use Python 3 and produce markdown index files with summar
 
 ### `wait-for-infrastructure.sh`
 - **Purpose**: Waits for infrastructure services (RabbitMQ, Redis, MySQL) to accept TCP connections. Total timeout across all services (default 60s, configurable via `TOTAL_TIMEOUT`). All hosts configurable via env vars (`RABBITMQ_HOST`, `REDIS_HOST`, `MYSQL_HOST`). Can be used as entrypoint wrapper — passes remaining args to `exec "$@"` after infrastructure is ready. Skips services with host set to `disabled` or empty.
-- **Tools used**: bash (sh), nc (netcat)
+- **Status**: Not currently referenced by any Docker Compose file or Makefile target. Previously used as a container startup mechanism. Retained as a utility for standalone/sidecar deployments and CI environments without Docker Compose healthchecks.
+- **Tools used**: sh, nc (netcat)
 
 ---
 
@@ -852,8 +851,7 @@ The complete `make generate` pipeline executes in this order:
 7.  generate-common-events.sh         → CommonEventsModels.cs
 8.  generate-service-events.sh        → {Service}EventsModels.cs + LifecycleEvents.cs
      ├── generate-lifecycle-events.py  (pre-processing)
-     ├── resolve-event-refs.py         (pre-processing)
-     └── resolve-lifecycle-refs.py     (per-service lifecycle)
+     └── resolve-schema-refs.py        (pre-processing: --events --lifecycle)
 9.  generate-published-topics.py      → {Service}PublishedTopics.cs
 10. generate-event-publishers.py      → {Service}EventPublisher.cs
 11. generate-client-events.sh         → CommonClientEventsModels.cs + {Service}ClientEventsModels.cs
@@ -865,7 +863,7 @@ The complete `make generate` pipeline executes in this order:
     │ generate-service.sh calls in order:                               │
     │  1. generate-project.sh          → Plugin project structure       │
     │  2. generate-models.sh           → {Service}Models.cs             │
-    │     ├── resolve-api-refs.py      (pre-processing)                 │
+    │     ├── resolve-schema-refs.py      (pre-processing)                 │
     │     ├── extract-sdk-types.py     (SDK type exclusions)            │
     │     └── generate_lifecycle_event_models() (from common.sh)        │
     │  3. generate-controller.sh       → {Service}Controller.cs         │

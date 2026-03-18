@@ -264,7 +264,7 @@ extract_inlined_types() {
     fi
 
     # Read the x-inlined-types list from the resolved schema
-    # This list is populated by resolve-event-refs.py with ONLY the types
+    # This list is populated by resolve-schema-refs.py with ONLY the types
     # that were actually inlined from API schemas, not types native to events schema
     local inlined_types=$(awk '
         /^x-inlined-types:/ { in_list = 1; next }
@@ -460,7 +460,7 @@ generate_lifecycle_event_models() {
 
     # Run lifecycle event resolver to handle complex cross-file refs
     echo -e "${YELLOW}🔄 Checking lifecycle events for complex cross-file refs...${NC}"
-    python3 "$script_dir/resolve-lifecycle-refs.py" "$service_name" 2>&1 | while read line; do echo "  $line"; done
+    python3 "$script_dir/resolve-schema-refs.py" --lifecycle "$service_name" 2>&1 | while read line; do echo "  $line"; done
 
     # Check if a resolved version exists (for schemas with complex cross-file refs)
     local lifecycle_schema_to_process

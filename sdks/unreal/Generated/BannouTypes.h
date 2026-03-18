@@ -47,6 +47,8 @@ struct FAdvanceDiscoveryRequest;
 struct FAdvanceDiscoveryResponse;
 struct FAdvanceJourneyRequest;
 struct FAffixDefinitionResponse;
+struct FAffixOperationConfig;
+struct FAffixOperationType;
 struct FAffordance;
 struct FAffordanceFreshness;
 struct FAffordanceLocation;
@@ -332,6 +334,8 @@ struct FCreateLocationRequest;
 struct FCreateMetabundleRequest;
 struct FCreateMetabundleResponse;
 struct FCreateQuestDefinitionRequest;
+struct FCreateRecipeRequest;
+struct FCreateRecipeResponse;
 struct FCreateRelationshipTypeRequest;
 struct FCreateRoomRequest;
 struct FCreateScenarioDefinitionRequest;
@@ -343,6 +347,7 @@ struct FCreateTemplateRequest;
 struct FCreateWeatherEventRequest;
 struct FCreateWeatherEventResponse;
 struct FCureBreachRequest;
+struct FCurrencyCost;
 struct FCurrencyDefinitionResponse;
 struct FCurrencyPrecision;
 struct FCurrencyScope;
@@ -409,6 +414,8 @@ struct FDeprecateLeaderboardDefinitionRequest;
 struct FDeprecateLocationRequest;
 struct FDeprecateModeRequest;
 struct FDeprecateQuestDefinitionRequest;
+struct FDeprecateRecipeRequest;
+struct FDeprecateRecipeResponse;
 struct FDeprecateRelationshipTypeRequest;
 struct FDeprecateRoomTypeRequest;
 struct FDeprecateScenarioDefinitionRequest;
@@ -416,6 +423,8 @@ struct FDeprecateSeedTypeRequest;
 struct FDeprecateStatusTemplateRequest;
 struct FDeprecateTemplateRequest;
 struct FDeprecationFields;
+struct FDeregisterStationRequest;
+struct FDeregisterStationResponse;
 struct FDesignateRealmBaselineRequest;
 struct FDestroyItemInstanceRequest;
 struct FDestroyItemInstanceResponse;
@@ -474,10 +483,12 @@ struct FExecuteContractRequest;
 struct FExecuteContractResponse;
 struct FExecutionMetadata;
 struct FExpectedDeposit;
+struct FExperienceGrant;
 struct FExpirationPolicy;
 struct FExportSavesRequest;
 struct FExportSavesResponse;
 struct FExtendWeatherEventRequest;
+struct FExtractionOutput;
 struct FFactionMemberResponse;
 struct FFactionMemberRole;
 struct FFactionResponse;
@@ -648,6 +659,8 @@ struct FGoapGoal;
 struct FGovernanceEntryResponse;
 struct FGrantEntryRequest;
 struct FGrantEntryResponse;
+struct FGrantExperienceRequest;
+struct FGrantExperienceResponse;
 struct FGrantResult;
 struct FGrantStatusRequest;
 struct FGrantStatusResponse;
@@ -692,6 +705,8 @@ struct FItemOriginType;
 struct FItemRarity;
 struct FItemRequirement;
 struct FItemScope;
+struct FItemStateField;
+struct FItemStatePredicate;
 struct FItemTemplateResponse;
 struct FItemUseBehavior;
 struct FJoinMatchmakingRequest;
@@ -977,6 +992,7 @@ struct FPreferredRange;
 struct FPrerequisiteDefinition;
 struct FPrerequisiteType;
 struct FProcessingStatus;
+struct FProficiencyRequirement;
 struct FProgressionAnalysis;
 struct FPromoteVersionRequest;
 struct FProposeContractInstanceRequest;
@@ -984,6 +1000,7 @@ struct FProviderInfo;
 struct FProvidersResponse;
 struct FPurgeTrashcanRequest;
 struct FPurgeTrashcanResponse;
+struct FQualityWeights;
 struct FQuantityModel;
 struct FQuaternion;
 struct FQueryActiveContractsRequest;
@@ -1038,6 +1055,10 @@ struct FRealmLoreResponse;
 struct FRealmParticipationListResponse;
 struct FRealmResourceSummaryResponse;
 struct FRealmWeatherSummaryResponse;
+struct FRecipeDefinitionInfo;
+struct FRecipeInput;
+struct FRecipeOutput;
+struct FRecipeStep;
 struct FRecoverDocumentRequest;
 struct FRecoverDocumentResponse;
 struct FReferenceInfo;
@@ -1049,6 +1070,8 @@ struct FRegisterResponse;
 struct FRegisterRoomTypeRequest;
 struct FRegisterSchemaRequest;
 struct FRegisterSeedTypeRequest;
+struct FRegisterStationRequest;
+struct FRegisterStationResponse;
 struct FRelationshipListResponse;
 struct FRelationshipResponse;
 struct FRelationshipSnapshot;
@@ -1166,6 +1189,8 @@ struct FSeedLifecycleTemplateResponse;
 struct FSeedLocation;
 struct FSeedLocationsRequest;
 struct FSeedLocationsResponse;
+struct FSeedRecipesRequest;
+struct FSeedRecipesResponse;
 struct FSeedResponse;
 struct FSeedSource;
 struct FSeedStatus;
@@ -1194,6 +1219,8 @@ struct FSetLocationParentRequest;
 struct FSetNaturalDeathYearRequest;
 struct FSetNaturalDeathYearResponse;
 struct FSetPersonalityRequest;
+struct FSetProficiencyRequest;
+struct FSetProficiencyResponse;
 struct FSetRealmConfigRequest;
 struct FSetTemplateValuesRequest;
 struct FSetTemplateValuesResponse;
@@ -1251,6 +1278,7 @@ struct FSyncRepositoryRequest;
 struct FSyncRepositoryResponse;
 struct FSyncStatus;
 struct FSyncTrigger;
+struct FTargetRequirements;
 struct FTemperatureCurve;
 struct FTemperatureCurveShape;
 struct FTemperatureResponse;
@@ -1352,6 +1380,8 @@ struct FUpdatePositionRequest;
 struct FUpdateProfileRequest;
 struct FUpdateQuestDefinitionRequest;
 struct FUpdateRealmConfigRequest;
+struct FUpdateRecipeRequest;
+struct FUpdateRecipeResponse;
 struct FUpdateRelationshipTypeRequest;
 struct FUpdateRepositoryBindingRequest;
 struct FUpdateRepositoryBindingResponse;
@@ -2323,6 +2353,38 @@ struct FAffixDefinitionResponse
     /** When this definition was last updated */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FDateTime> UpdatedAt;
+
+};
+
+/**
+ * Configuration parameters for the affix operation in a modification recipe
+ */
+USTRUCT(BlueprintType)
+struct FAffixOperationConfig
+{
+    GENERATED_BODY()
+
+    /** Tag-to-weight multiplier map for ApplyRandom operations (e.g., fire tag weight 5.0). Keys are affix tag codes, values are weight multipliers passed to IAffixClient. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TMap<FString, FString> WeightModifiers;
+
+    /** Target affix slot type for ApplyRandom or ApplySpecific operations */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SlotType;
+
+    /** Exact affix code to apply for ApplySpecific operations */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString GuaranteedAffixCode;
+
+};
+
+/**
+ * Finite set of lib-affix API operations that modification recipes can invoke.
+ */
+USTRUCT(BlueprintType)
+struct FAffixOperationType
+{
+    GENERATED_BODY()
 
 };
 
@@ -3349,7 +3411,7 @@ struct FAuthoringReleaseRequest
 };
 
 /**
- * Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory.
+ * Faction authority level for jurisdictional determination. Matches Faction service AuthorityLevel enum.
  */
 USTRUCT(BlueprintType)
 struct FAuthorityLevel
@@ -10397,6 +10459,110 @@ struct FCreateQuestDefinitionRequest
 };
 
 /**
+ * Request to create a new recipe definition
+ */
+USTRUCT(BlueprintType)
+struct FCreateRecipeRequest
+{
+    GENERATED_BODY()
+
+    /** Game service this recipe belongs to */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Unique recipe code within the game service */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Code;
+
+    /** Recipe paradigm (e.g., production, modification, extraction) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString RecipeType;
+
+    /** Proficiency domain */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Domain;
+
+    /** Broad classification for filtering */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Category;
+
+    /** Tags for filtering and discovery */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> Tags;
+
+    /** Material inputs consumed during crafting */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FRecipeInput> Inputs;
+
+    /** Currency costs */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FCurrencyCost> CurrencyCosts;
+
+    /** Target item requirements for modification and extraction recipes */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FTargetRequirements> TargetRequirements;
+
+    /** Affix operation type for modification recipes */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FAffixOperationType> AffixOperation;
+
+    /** Configuration for the affix operation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FAffixOperationConfig> AffixOperationConfig;
+
+    /** Ordered steps in the recipe workflow */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FRecipeStep> Steps;
+
+    /** Output items for production recipes */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FRecipeOutput> Outputs;
+
+    /** Possible outputs for extraction recipes */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FExtractionOutput> ExtractionOutputs;
+
+    /** Proficiency requirements */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FProficiencyRequirement> ProficiencyRequirements;
+
+    /** Quality formula weights (null uses service-wide defaults) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FQualityWeights> QualityWeights;
+
+    /** Experience granted on completion */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FExperienceGrant> ExperienceGrants;
+
+    /** Whether this recipe can be discovered through experimentation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsDiscoverable = false;
+
+    /** Hints for the discovery system */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> DiscoveryHints;
+
+    /** Recipe codes that must be known before discovery */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> PrerequisiteRecipeCodes;
+
+};
+
+/**
+ * Response after creating a recipe
+ */
+USTRUCT(BlueprintType)
+struct FCreateRecipeResponse
+{
+    GENERATED_BODY()
+
+    /** ID of the newly created recipe */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RecipeId;
+
+};
+
+/**
  * Request to create a new relationship type with code, name, and optional hierarchy and inverse settings
  */
 USTRUCT(BlueprintType)
@@ -10887,6 +11053,24 @@ struct FCureBreachRequest
     /** Evidence of cure */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString CureEvidence;
+
+};
+
+/**
+ * A currency cost for executing a recipe
+ */
+USTRUCT(BlueprintType)
+struct FCurrencyCost
+{
+    GENERATED_BODY()
+
+    /** Currency code to charge */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString CurrencyCode;
+
+    /** Amount of currency to charge */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double Amount = 0.0;
 
 };
 
@@ -12215,6 +12399,38 @@ struct FDeprecateQuestDefinitionRequest
 };
 
 /**
+ * Request to deprecate a recipe definition
+ */
+USTRUCT(BlueprintType)
+struct FDeprecateRecipeRequest
+{
+    GENERATED_BODY()
+
+    /** Recipe to deprecate */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RecipeId;
+
+    /** Reason for deprecation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Reason;
+
+};
+
+/**
+ * Response after deprecating a recipe
+ */
+USTRUCT(BlueprintType)
+struct FDeprecateRecipeResponse
+{
+    GENERATED_BODY()
+
+    /** Deprecated recipe definition */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FRecipeDefinitionInfo Recipe;
+
+};
+
+/**
  * Request to deprecate a relationship type, preventing its use for new relationships while preserving existing ones
  */
 USTRUCT(BlueprintType)
@@ -12349,6 +12565,30 @@ struct FDeprecationFields
     /** Reason for deprecation (null if not deprecated) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString DeprecationReason;
+
+};
+
+/**
+ * Request to deregister a station
+ */
+USTRUCT(BlueprintType)
+struct FDeregisterStationRequest
+{
+    GENERATED_BODY()
+
+    /** Station to deregister */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid StationId;
+
+};
+
+/**
+ * Empty response. HTTP 200 confirms the station was deregistered.
+ */
+USTRUCT(BlueprintType)
+struct FDeregisterStationResponse
+{
+    GENERATED_BODY()
 
 };
 
@@ -13961,6 +14201,28 @@ struct FExpectedDeposit
 };
 
 /**
+ * Experience granted on recipe completion
+ */
+USTRUCT(BlueprintType)
+struct FExperienceGrant
+{
+    GENERATED_BODY()
+
+    /** Proficiency domain to grant experience in */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Domain;
+
+    /** Base experience amount granted */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double BaseExperience = 0.0;
+
+    /** Extra experience for the first successful craft of this recipe */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> FirstCraftBonus;
+
+};
+
+/**
  * How currency expiration is determined
  */
 USTRUCT(BlueprintType)
@@ -14033,6 +14295,32 @@ struct FExtendWeatherEventRequest
     /** New end time in game-seconds-since-epoch (must be later than current) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     int64 NewEndGameTime = 0;
+
+};
+
+/**
+ * A possible output from an extraction recipe
+ */
+USTRUCT(BlueprintType)
+struct FExtractionOutput
+{
+    GENERATED_BODY()
+
+    /** Item template code for the extracted output */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ItemTemplateCode;
+
+    /** Base quantity of this output */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double BaseQuantity = 0.0;
+
+    /** Variance range on the base quantity */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double QuantityVariance = 0.0;
+
+    /** Chance of this output being produced (0-1) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double Probability = 0.0;
 
 };
 
@@ -17661,6 +17949,54 @@ struct FGrantEntryResponse
 };
 
 /**
+ * Request to grant crafting experience
+ */
+USTRUCT(BlueprintType)
+struct FGrantExperienceRequest
+{
+    GENERATED_BODY()
+
+    /** Entity to grant experience to */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid EntityId;
+
+    /** Type of the entity */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FEntityType EntityType;
+
+    /** Proficiency domain code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Domain;
+
+    /** Experience amount to grant */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double Amount = 0.0;
+
+};
+
+/**
+ * Response after granting experience
+ */
+USTRUCT(BlueprintType)
+struct FGrantExperienceResponse
+{
+    GENERATED_BODY()
+
+    /** New total experience after grant */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double NewExperience = 0.0;
+
+    /** Whether the experience grant triggered a level change */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool LevelChanged = false;
+
+    /** New level if levelChanged is true */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> NewLevel;
+
+};
+
+/**
  * How a successful status grant was resolved.
  */
 USTRUCT(BlueprintType)
@@ -18693,6 +19029,34 @@ USTRUCT(BlueprintType)
 struct FItemScope
 {
     GENERATED_BODY()
+
+};
+
+/**
+ * Finite set of item state predicates for modification recipe target
+ */
+USTRUCT(BlueprintType)
+struct FItemStateField
+{
+    GENERATED_BODY()
+
+};
+
+/**
+ * A typed predicate checking an item's boolean state field
+ */
+USTRUCT(BlueprintType)
+struct FItemStatePredicate
+{
+    GENERATED_BODY()
+
+    /** Item state field to check */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FItemStateField Field;
+
+    /** Required value for this state field */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool Expected = false;
 
 };
 
@@ -25595,6 +25959,24 @@ struct FProcessingStatus
 };
 
 /**
+ * A proficiency level requirement for a recipe
+ */
+USTRUCT(BlueprintType)
+struct FProficiencyRequirement
+{
+    GENERATED_BODY()
+
+    /** Proficiency domain code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Domain;
+
+    /** Minimum proficiency level required */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 MinimumLevel = 0;
+
+};
+
+/**
  * Analysis of a chord progression
  */
 USTRUCT(BlueprintType)
@@ -25733,6 +26115,28 @@ struct FPurgeTrashcanResponse
     /** Number of documents permanently deleted */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     int32 PurgedCount = 0;
+
+};
+
+/**
+ * Quality formula weights defining how each factor contributes to output quality
+ */
+USTRUCT(BlueprintType)
+struct FQualityWeights
+{
+    GENERATED_BODY()
+
+    /** Weight for input material quality (0-1) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double MaterialQuality = 0.0;
+
+    /** Weight for crafter proficiency level (0-1) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double ProficiencyLevel = 0.0;
+
+    /** Weight for tool quality (0-1) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double ToolQuality = 0.0;
 
 };
 
@@ -27393,6 +27797,206 @@ struct FRealmWeatherSummaryResponse
 };
 
 /**
+ * Full recipe definition data
+ */
+USTRUCT(BlueprintType)
+struct FRecipeDefinitionInfo
+{
+    GENERATED_BODY()
+
+    /** Unique recipe identifier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RecipeId;
+
+    /** Game service this recipe belongs to */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Unique recipe code within the game service */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Code;
+
+    /** Recipe paradigm (e.g., production, modification, extraction) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString RecipeType;
+
+    /** Proficiency domain */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Domain;
+
+    /** Broad classification for filtering */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Category;
+
+    /** Tags for filtering and discovery */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> Tags;
+
+    /** Material inputs consumed during crafting */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FRecipeInput> Inputs;
+
+    /** Currency costs for executing the recipe */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FCurrencyCost> CurrencyCosts;
+
+    /** Target item requirements for modification and extraction recipes */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FTargetRequirements> TargetRequirements;
+
+    /** Affix operation type for modification recipes */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FAffixOperationType> AffixOperation;
+
+    /** Configuration for the affix operation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FAffixOperationConfig> AffixOperationConfig;
+
+    /** Ordered steps in the recipe workflow */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FRecipeStep> Steps;
+
+    /** Output items for production recipes */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FRecipeOutput> Outputs;
+
+    /** Possible outputs for extraction recipes */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FExtractionOutput> ExtractionOutputs;
+
+    /** Proficiency requirements for this recipe */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FProficiencyRequirement> ProficiencyRequirements;
+
+    /** Quality formula weights (null uses service-wide defaults) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FQualityWeights> QualityWeights;
+
+    /** Experience granted on completion */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FExperienceGrant> ExperienceGrants;
+
+    /** Whether this recipe can be discovered through experimentation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsDiscoverable = false;
+
+    /** Hints for the discovery system */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> DiscoveryHints;
+
+    /** Recipe codes that must be known before this recipe can be discovered */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> PrerequisiteRecipeCodes;
+
+    /** Whether this recipe is deprecated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsDeprecated = false;
+
+    /** When this recipe was deprecated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> DeprecatedAt;
+
+    /** Reason for deprecation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DeprecationReason;
+
+    /** When this recipe was created */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> CreatedAt;
+
+    /** When this recipe was last updated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> UpdatedAt;
+
+};
+
+/**
+ * A material input consumed during crafting
+ */
+USTRUCT(BlueprintType)
+struct FRecipeInput
+{
+    GENERATED_BODY()
+
+    /** Item template code for the required material */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ItemTemplateCode;
+
+    /** Amount of this material consumed */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double Quantity = 0.0;
+
+    /** Minimum quality required for this material (null means any quality) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> QualityMinimum;
+
+    /** Step code that consumes this material (null means consumed at final step) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ConsumeOnStep;
+
+};
+
+/**
+ * An output item produced by a production recipe
+ */
+USTRUCT(BlueprintType)
+struct FRecipeOutput
+{
+    GENERATED_BODY()
+
+    /** Item template code for the output */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ItemTemplateCode;
+
+    /** Number of items produced */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double Quantity = 0.0;
+
+    /** How much the recipe quality affects this output's properties (0-1) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double QualityInfluence = 0.0;
+
+};
+
+/**
+ * An ordered step in a recipe workflow
+ */
+USTRUCT(BlueprintType)
+struct FRecipeStep
+{
+    GENERATED_BODY()
+
+    /** Unique step identifier within the recipe */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Code;
+
+    /** Human-readable step name */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Name;
+
+    /** Real-time duration for this step (null means instant) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> DurationSeconds;
+
+    /** Required station type (null means no station needed) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString StationType;
+
+    /** Required tool category (null means no tool needed) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ToolCategory;
+
+    /** Whether this step has a quality-affecting skill check */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool SkillCheck = false;
+
+    /** Participant roles that can advance this step (null means primary only) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> EligibleRoles;
+
+};
+
+/**
  * Request to recover a deleted document from the trashcan
  */
 USTRUCT(BlueprintType)
@@ -27763,6 +28367,54 @@ struct FRegisterSeedTypeRequest
     /** Mappings from collection types to growth domains. When a collection entry is unlocked for an entity that owns seeds of this type, the entry's tags are matched against these mappings to determine growth contributions. Null means this seed type does not respond to collection unlocks. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<FCollectionGrowthMapping> CollectionGrowthMappings;
+
+};
+
+/**
+ * Request to register a crafting station
+ */
+USTRUCT(BlueprintType)
+struct FRegisterStationRequest
+{
+    GENERATED_BODY()
+
+    /** Game service this station belongs to */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Station type code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString StationType;
+
+    /** Physical location (null for portable stations) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FGuid> LocationId;
+
+    /** Owning entity (null for unowned) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FGuid> OwnerId;
+
+    /** Type of the owning entity (must be set when ownerId is set) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FEntityType> OwnerType;
+
+    /** Station quality (0-1) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double Quality = 0.0;
+
+};
+
+/**
+ * Response after registering a station
+ */
+USTRUCT(BlueprintType)
+struct FRegisterStationResponse
+{
+    GENERATED_BODY()
+
+    /** ID of the registered station */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid StationId;
 
 };
 
@@ -31013,6 +31665,42 @@ struct FSeedLocationsResponse
 };
 
 /**
+ * Request to bulk seed recipe definitions
+ */
+USTRUCT(BlueprintType)
+struct FSeedRecipesRequest
+{
+    GENERATED_BODY()
+
+    /** Game service to seed recipes for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Recipe definitions to seed */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FCreateRecipeRequest> Recipes;
+
+};
+
+/**
+ * Response after bulk seeding recipes
+ */
+USTRUCT(BlueprintType)
+struct FSeedRecipesResponse
+{
+    GENERATED_BODY()
+
+    /** Number of recipes successfully created */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 CreatedCount = 0;
+
+    /** Number of recipes skipped (code already exists) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 SkippedCount = 0;
+
+};
+
+/**
  * Full seed entity response.
  */
 USTRUCT(BlueprintType)
@@ -31697,6 +32385,42 @@ struct FSetPersonalityRequest
     /** Optional archetype code for behavior optimization */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString ArchetypeHint;
+
+};
+
+/**
+ * Request to set proficiency to a specific value
+ */
+USTRUCT(BlueprintType)
+struct FSetProficiencyRequest
+{
+    GENERATED_BODY()
+
+    /** Entity to set proficiency for */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid EntityId;
+
+    /** Type of the entity */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FEntityType EntityType;
+
+    /** Proficiency domain code */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Domain;
+
+    /** Target proficiency value to set */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double TargetValue = 0.0;
+
+};
+
+/**
+ * Empty response. HTTP 200 confirms the proficiency was set.
+ */
+USTRUCT(BlueprintType)
+struct FSetProficiencyResponse
+{
+    GENERATED_BODY()
 
 };
 
@@ -33059,6 +33783,32 @@ USTRUCT(BlueprintType)
 struct FSyncTrigger
 {
     GENERATED_BODY()
+
+};
+
+/**
+ * Requirements for the target item of a modification or extraction recipe
+ */
+USTRUCT(BlueprintType)
+struct FTargetRequirements
+{
+    GENERATED_BODY()
+
+    /** Item template categories the recipe can target (null means any) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> ValidItemClasses;
+
+    /** Minimum item level required */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<int32> MinimumItemLevel;
+
+    /** Boolean state predicates the target item must satisfy */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FItemStatePredicate> RequiredItemStates;
+
+    /** Required affix slot type for recipes that target a specific slot */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString RequiredAffixSlotType;
 
 };
 
@@ -36133,6 +36883,98 @@ struct FUpdateRealmConfigRequest
     /** New calendar template code (validated for existence, null = no change) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString CalendarTemplateCode;
+
+};
+
+/**
+ * Request to update a recipe definition. Identity fields (code, gameServiceId, recipeType) cannot be changed.
+ */
+USTRUCT(BlueprintType)
+struct FUpdateRecipeRequest
+{
+    GENERATED_BODY()
+
+    /** Recipe to update */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid RecipeId;
+
+    /** Updated category */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Category;
+
+    /** Updated tags */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> Tags;
+
+    /** Updated material inputs */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FRecipeInput> Inputs;
+
+    /** Updated currency costs */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FCurrencyCost> CurrencyCosts;
+
+    /** Updated target requirements */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FTargetRequirements> TargetRequirements;
+
+    /** Updated affix operation type */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FAffixOperationType> AffixOperation;
+
+    /** Updated affix operation config */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FAffixOperationConfig> AffixOperationConfig;
+
+    /** Updated steps */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FRecipeStep> Steps;
+
+    /** Updated outputs */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FRecipeOutput> Outputs;
+
+    /** Updated extraction outputs */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FExtractionOutput> ExtractionOutputs;
+
+    /** Updated proficiency requirements */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FProficiencyRequirement> ProficiencyRequirements;
+
+    /** Updated quality weights */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FQualityWeights> QualityWeights;
+
+    /** Updated experience grants */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FExperienceGrant> ExperienceGrants;
+
+    /** Updated discoverability */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsDiscoverable = false;
+
+    /** Updated discovery hints */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> DiscoveryHints;
+
+    /** Updated prerequisite recipe codes */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> PrerequisiteRecipeCodes;
+
+};
+
+/**
+ * Response after updating a recipe
+ */
+USTRUCT(BlueprintType)
+struct FUpdateRecipeResponse
+{
+    GENERATED_BODY()
+
+    /** Updated recipe definition */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FRecipeDefinitionInfo Recipe;
 
 };
 

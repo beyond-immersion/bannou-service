@@ -61,7 +61,7 @@ echo ""
 # Pre-process: Resolve complex cross-file refs that NSwag can't handle
 # This creates resolved versions in schemas/Generated/ for schemas with complex refs
 log_info "Pre-processing: Resolving complex cross-file refs..."
-if python3 "$SCRIPT_DIR/resolve-event-refs.py"; then
+if python3 "$SCRIPT_DIR/resolve-schema-refs.py" --events --lifecycle; then
     log_success "Complex refs resolved successfully"
 else
     log_error "Failed to resolve complex refs"

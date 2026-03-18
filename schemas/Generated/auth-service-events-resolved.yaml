@@ -2,10 +2,6 @@ openapi: 3.0.4
 info:
   title: Auth Service Events
   description: |
-    AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.
-    DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py
-    Source: auth-service-events.yaml
-
     Event models for Auth service RabbitMQ pub/sub via MassTransit.
     Contains auth-specific events and subscription/publication declarations.
 

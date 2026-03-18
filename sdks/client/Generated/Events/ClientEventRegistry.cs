@@ -16,6 +16,7 @@ using BeyondImmersion.Bannou.Collection.ClientEvents;
 using BeyondImmersion.Bannou.Currency.ClientEvents;
 using BeyondImmersion.Bannou.Environment.ClientEvents;
 using BeyondImmersion.Bannou.GameSession.ClientEvents;
+using BeyondImmersion.Bannou.Gardener.ClientEvents;
 using BeyondImmersion.Bannou.Inventory.ClientEvents;
 using BeyondImmersion.Bannou.Location.ClientEvents;
 using BeyondImmersion.Bannou.Matchmaking.ClientEvents;
@@ -85,6 +86,13 @@ public static class ClientEventRegistry
         { typeof(DisconnectNotificationClientEvent), "connect.disconnect-notification" },
         { typeof(GameActionResultClientEvent), "game-session.action-result" },
         { typeof(GameStateUpdatedClientEvent), "game-session.state-updated" },
+        { typeof(GardenerGardenEnteredClientEvent), "gardener.garden.entered" },
+        { typeof(GardenerGardenLeftClientEvent), "gardener.garden.left" },
+        { typeof(GardenerPoiExpiredClientEvent), "gardener.poi.expired" },
+        { typeof(GardenerPoiSpawnedClientEvent), "gardener.poi.spawned" },
+        { typeof(GardenerPoiTriggeredClientEvent), "gardener.poi.triggered" },
+        { typeof(GardenerScenarioCompletedClientEvent), "gardener.scenario.completed" },
+        { typeof(GardenerScenarioStartedClientEvent), "gardener.scenario.started" },
         { typeof(InventoryContainerFullClientEvent), "inventory.container.full" },
         { typeof(InventoryItemChangedClientEvent), "inventory.item.changed" },
         { typeof(InventoryItemTransferredClientEvent), "inventory.item.transferred" },
@@ -182,6 +190,13 @@ public static class ClientEventRegistry
         { "game-session.session-cancelled", typeof(SessionCancelledClientEvent) },
         { "game-session.state-changed", typeof(SessionStateChangedClientEvent) },
         { "game-session.state-updated", typeof(GameStateUpdatedClientEvent) },
+        { "gardener.garden.entered", typeof(GardenerGardenEnteredClientEvent) },
+        { "gardener.garden.left", typeof(GardenerGardenLeftClientEvent) },
+        { "gardener.poi.expired", typeof(GardenerPoiExpiredClientEvent) },
+        { "gardener.poi.spawned", typeof(GardenerPoiSpawnedClientEvent) },
+        { "gardener.poi.triggered", typeof(GardenerPoiTriggeredClientEvent) },
+        { "gardener.scenario.completed", typeof(GardenerScenarioCompletedClientEvent) },
+        { "gardener.scenario.started", typeof(GardenerScenarioStartedClientEvent) },
         { "inventory.container.full", typeof(InventoryContainerFullClientEvent) },
         { "inventory.item.changed", typeof(InventoryItemChangedClientEvent) },
         { "inventory.item.transferred", typeof(InventoryItemTransferredClientEvent) },

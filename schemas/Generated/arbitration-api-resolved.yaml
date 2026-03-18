@@ -2061,6 +2061,3 @@ components:
 x-inlined-types:
 - EntityReference
 - EntityType
-x-common-inlined-types:
-- EntityReference
-- EntityType

@@ -2,10 +2,6 @@ openapi: 3.0.4
 info:
   title: Mapping Service Events
   description: |
-    AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.
-    DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py
-    Source: mapping-service-events.yaml
-
     Event models for Mapping service RabbitMQ pub/sub via MassTransit.
 
     The Mapping service publishes events when map data changes.

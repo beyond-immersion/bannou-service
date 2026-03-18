@@ -29,10 +29,10 @@ Compliant properties include one of these phrases in their description:
 
 | Metric | Count |
 |--------|-------|
-| Total metadata bag properties | 171 |
+| Total metadata bag properties | 173 |
 | Compliant (has marker) | 153 |
-| Non-compliant (missing marker) | 18 |
-| Compliance rate | 89% |
+| Non-compliant (missing marker) | 20 |
+| Compliance rate | 88% |
 
 ## Properties by Service
 
@@ -254,6 +254,13 @@ Compliant properties include one of these phrases in their description:
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
 | `IngestEventRequest` | `metadata` | `analytics-api.yaml` | Y | Client-only metadata. No Bannou plugin reads specific keys from this field by... |
+
+#### Arbitration
+
+| Schema Type | Property | Schema File | Compliant | Description |
+|-------------|----------|-------------|-----------|-------------|
+| `ArbitrationCaseInfo` | `governanceParametersSnapshot` | `arbitration-api.yaml` | **N** | Governance parameters snapshot from jurisdictional faction. Stored for refere... |
+| `ResolveJurisdictionResponse` | `governanceParameters` | `arbitration-api.yaml` | **N** | Governance parameters from the jurisdictional faction. Opaque pass-through in... |
 
 #### Behavior
 
@@ -489,6 +496,8 @@ or is it being misused as a cross-service data contract?
 
 | Service | Schema Type | Property | Schema File | Description |
 |---------|-------------|----------|-------------|-------------|
+| Arbitration | `ResolveJurisdictionResponse` | `governanceParameters` | `arbitration-api.yaml` | Governance parameters from the jurisdictional faction. Opaque pass-through in... |
+| Arbitration | `ArbitrationCaseInfo` | `governanceParametersSnapshot` | `arbitration-api.yaml` | Governance parameters snapshot from jurisdictional faction. Stored for refere... |
 | Asset Service | `AssetProcessingJobDispatchedEvent` | `processingOptions` | `asset-service-events.yaml` | Content-type-specific processing options (opaque pass-through to processor) |
 | Behavior | `GoapPlanRequest` | `worldState` | `behavior-api.yaml` | Planner-owned dynamic world state bag for GOAP A* search. Keys are arbitrary ... |
 | Behavior | `ValidateGoapPlanRequest` | `worldState` | `behavior-api.yaml` | Planner-owned dynamic world state bag for plan validation. Keys are arbitrary... |

@@ -29,6 +29,7 @@ import { ClientCapabilitiesProxy } from './proxies/ClientCapabilitiesProxy.js';
 import { CollectionProxy } from './proxies/CollectionProxy.js';
 import { CompileProxy } from './proxies/CompileProxy.js';
 import { ContractProxy } from './proxies/ContractProxy.js';
+import { CraftProxy } from './proxies/CraftProxy.js';
 import { CurrencyProxy } from './proxies/CurrencyProxy.js';
 import { DocumentationProxy } from './proxies/DocumentationProxy.js';
 import { EnvironmentProxy } from './proxies/EnvironmentProxy.js';
@@ -84,6 +85,7 @@ interface ProxyCache {
   collection?: CollectionProxy;
   compile?: CompileProxy;
   contract?: ContractProxy;
+  craft?: CraftProxy;
   currency?: CurrencyProxy;
   documentation?: DocumentationProxy;
   environment?: EnvironmentProxy;
@@ -320,6 +322,18 @@ Object.defineProperty(BannouClient.prototype, 'contract', {
   get(this: BannouClientWithCache): ContractProxy {
     const cache = (this[PROXY_CACHE] ??= {});
     return (cache.contract ??= new ContractProxy(this));
+  },
+  configurable: true,
+  enumerable: true,
+});
+
+/**
+ * Add lazy-initialized craft proxy property to BannouClient.
+ */
+Object.defineProperty(BannouClient.prototype, 'craft', {
+  get(this: BannouClientWithCache): CraftProxy {
+    const cache = (this[PROXY_CACHE] ??= {});
+    return (cache.craft ??= new CraftProxy(this));
   },
   configurable: true,
   enumerable: true,
@@ -780,6 +794,10 @@ declare module '../BannouClient.js' {
      * Typed proxy for Contract API endpoints.
      */
     readonly contract: ContractProxy;
+    /**
+     * Typed proxy for Craft API endpoints.
+     */
+    readonly craft: CraftProxy;
     /**
      * Typed proxy for Currency API endpoints.
      */

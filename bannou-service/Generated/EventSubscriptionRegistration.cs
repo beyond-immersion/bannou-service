@@ -56,6 +56,18 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<CharacterUpdatedEvent>("character.updated");
         EventSubscriptionRegistry.Register<RealmUpdatedEvent>("realm.updated");
 
+        // From arbitration-service-events.yaml
+        EventSubscriptionRegistry.Register<ContractMilestoneCompletedEvent>("contract.milestone.completed");
+        EventSubscriptionRegistry.Register<ContractMilestoneFailedEvent>("contract.milestone.failed");
+        EventSubscriptionRegistry.Register<ContractFulfilledEvent>("contract.fulfilled");
+        EventSubscriptionRegistry.Register<ContractTerminatedEvent>("contract.terminated");
+        EventSubscriptionRegistry.Register<FactionTerritoryClaimedEvent>("faction.territory.claimed");
+        EventSubscriptionRegistry.Register<FactionTerritoryReleasedEvent>("faction.territory.released");
+        EventSubscriptionRegistry.Register<FactionGovernanceDefinedEvent>("faction.governance.defined");
+        EventSubscriptionRegistry.Register<FactionGovernanceDeletedEvent>("faction.governance.deleted");
+        EventSubscriptionRegistry.Register<FactionAuthorityDelegatedEvent>("faction.authority.delegated");
+        EventSubscriptionRegistry.Register<FactionAuthorityRevokedEvent>("faction.authority.revoked");
+
         // From asset-service-events.yaml
         EventSubscriptionRegistry.Register<MetabundleJobQueuedEvent>("asset.metabundle.job.queued");
 
@@ -88,6 +100,9 @@ public static class EventSubscriptionRegistration
         // From connect-service-events.yaml
         EventSubscriptionRegistry.Register<SessionInvalidatedEvent>("session.invalidated");
         EventSubscriptionRegistry.Register<ServiceErrorEvent>("service.error");
+
+        // From craft-service-events.yaml
+        EventSubscriptionRegistry.Register<ContractTerminatedEvent>("contract.terminated");
 
         // From currency-service-events.yaml
         EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");

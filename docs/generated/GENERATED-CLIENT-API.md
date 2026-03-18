@@ -14,6 +14,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Actor Service API](#actor) | `client.Actor` | 17 | Distributed actor management and execution for NPC brains, e... |
 | [Bannou Affix Service API](#affix) | `client.Affix` | 27 | Item modifier definition, instance management, and stat comp... |
 | [Bannou Analytics Service API](#analytics) | `client.Analytics` | 9 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
+| [Bannou Arbitration Service API](#arbitration) | `client.Arbitration` | 25 | Dispute resolution orchestration composing Contract/Faction ... |
 | [Asset Service API](#asset) | `client.Asset` | 19 | Asset management service for storage, versioning, and distri... |
 | [Bannou Auth Service API](#auth) | `client.Auth` | 18 | Authentication and session management service (Internet-faci... |
 | [ABML Behavior Management API](#behavior) | `client.Behavior` | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
@@ -27,6 +28,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Collection Service API](#collection) | `client.Collection` | 22 | Universal content unlock and archive system for collectible ... |
 | [Bannou Connect API](#connect) | `client.Connect` | 5 | Real-time communication and WebSocket connection management ... |
 | [Contract Service API](#contract) | `client.Contract` | 31 | Binding agreements between entities with milestone-based pro... |
+| [Bannou Craft Service API](#craft) | `client.Craft` | 30 | Recipe-based crafting orchestration service (L4 GameFeatures... |
 | [Currency Service API](#currency) | `client.Currency` | 34 | Multi-currency management service for game economies. |
 | [Bannou Divine Service API](#divine) | `client.Divine` | 24 | Pantheon management service (L4 GameFeatures) for deity enti... |
 | [Bannou Documentation API](#documentation) | `client.Documentation` | 25 | Knowledge base API for AI agents to query documentation. Des... |
@@ -315,6 +317,69 @@ Event ingestion, entity statistics, skill ratings (Glicko-2), and controller his
 |--------|---------|----------|---------|
 | `GetEntitysummaryAsync` | `GetEntitySummaryRequest` | `EntitySummaryResponse` | Get entity statistics summary |
 | `QueryentitysummariesAsync` | `QueryEntitySummariesRequest` | `QueryEntitySummariesResponse` | Query entity summaries with filters |
+
+---
+
+## Bannou Arbitration Service API {#arbitration}
+
+**Proxy**: `client.Arbitration` | **Version**: 1.0.0
+
+Dispute resolution orchestration composing Contract/Faction primitives for jurisdictional rulings. A thin orchestration layer (like Quest over Cont...
+
+### Arbiter
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `AssignarbiterAsync` | `AssignArbiterRequest` | `AssignArbiterResponse` | Assign an arbiter to a case |
+| `RecusearbiterAsync` | `RecuseArbiterRequest` | `ArbitrationCaseInfo` | Recuse the assigned arbiter from a case |
+| `ListQualifiedarbitersAsync` | `ListQualifiedArbitersRequest` | `ListQualifiedArbitersResponse` | List qualified arbiters for a case type |
+| `GetArbitercaseloadAsync` | `GetArbiterCaseloadRequest` | `GetArbiterCaseloadResponse` | Get an arbiter's active caseload |
+
+### Case Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `FilecaseAsync` | `FileCaseRequest` | `FileCaseResponse` | File a new arbitration case |
+| `GetCaseAsync` | `GetCaseRequest` | `ArbitrationCaseInfo` | Get an arbitration case by ID |
+| `GetCasebycodeAsync` | `GetCaseByCodeRequest` | `ArbitrationCaseInfo` | Get an arbitration case by human-readable code |
+| `ListCasesAsync` | `ListCasesRequest` | `ListCasesResponse` | List arbitration cases with filtering |
+| `WithdrawcaseAsync` | `WithdrawCaseRequest` | `ArbitrationCaseInfo` | Withdraw an arbitration case |
+| `DismisscaseAsync` | `DismissCaseRequest` | `ArbitrationCaseInfo` | Dismiss an arbitration case |
+| `ChallengejurisdictionAsync` | `ChallengeJurisdictionRequest` | `ArbitrationCaseInfo` | Challenge case jurisdiction |
+| `GetTimelineAsync` | `GetTimelineRequest` | `GetTimelineResponse` | Get procedural timeline for a case |
+
+### Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbycharacterAsync` | `CleanupByCharacterRequest` | `CleanupResponse` | Cleanup arbitration data when a character is deleted |
+| `CleanupbyrealmAsync` | `CleanupByRealmRequest` | `CleanupResponse` | Cleanup arbitration data when a realm is deleted |
+| `CleanupbyfactionAsync` | `CleanupByFactionRequest` | `CleanupResponse` | Cleanup arbitration data when a faction is deleted |
+| `CleanupbylocationAsync` | `CleanupByLocationRequest` | `CleanupResponse` | Cleanup arbitration data when a location is deleted |
+
+### Evidence
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `SubmitevidenceAsync` | `SubmitEvidenceRequest` | `SubmitEvidenceResponse` | Submit evidence for a case |
+| `ListEvidenceAsync` | `ListEvidenceRequest` | `ListEvidenceResponse` | List evidence for a case |
+| `GetEvidenceAsync` | `GetEvidenceRequest` | `ArbitrationEvidenceInfo` | Get a specific evidence item |
+
+### Jurisdiction
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ResolvejurisdictionAsync` | `ResolveJurisdictionRequest` | `ResolveJurisdictionResponse` | Resolve jurisdiction for a location and case type |
+| `GetJurisdictionhierarchyAsync` | `GetJurisdictionHierarchyRequest` | `GetJurisdictionHierarchyResponse` | Get the jurisdictional authority hierarchy for a location |
+
+### Ruling
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `IssuerulingAsync` | `IssueRulingRequest` | `IssueRulingResponse` | Issue a ruling for a case |
+| `AppealrulingAsync` | `AppealRulingRequest` | `ArbitrationCaseInfo` | Appeal a ruling |
+| `GetRulingAsync` | `GetRulingRequest` | `ArbitrationRulingInfo` | Get a ruling by ID or case ID |
+| `EnforcerulingAsync` | `EnforceRulingRequest` | `EnforceRulingResponse` | Enforce a ruling's consequences |
 
 ---
 
@@ -971,6 +1036,84 @@ Binding agreements between entities with milestone-based progression.
 | `ListContracttemplatesAsync` | `ListContractTemplatesRequest` | `ListContractTemplatesResponse` | List templates with filters |
 | `UpdateContracttemplateAsync` | `UpdateContractTemplateRequest` | `ContractTemplateResponse` | Update template (not instances) |
 | `DeprecatecontracttemplateAsync` | `DeprecateContractTemplateRequest` | `ContractTemplateResponse` | Deprecate template (Category B — one-way, no delete) |
+
+---
+
+## Bannou Craft Service API {#craft}
+
+**Proxy**: `client.Craft` | **Version**: 1.0.0
+
+Recipe-based crafting orchestration service (L4 GameFeatures) for production workflows, item modification, and skill-gated crafting execution. A th...
+
+### Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbygameserviceAsync` | `CleanupByGameServiceRequest` | `CleanupResponse` | Clean up all craft data for a game service |
+| `CleanupbyentityAsync` | `CleanupByEntityRequest` | `CleanupResponse` | Clean up all craft data for an entity |
+| `CleanupbylocationAsync` | `CleanupByLocationRequest` | `CleanupResponse` | Clean up stations at a location |
+
+### Discovery
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `AttemptdiscoveryAsync` | `AttemptDiscoveryRequest` | `AttemptDiscoveryResponse` | Attempt to discover a recipe through experimentation |
+| `ListKnownrecipesAsync` | `ListKnownRecipesRequest` | `ListKnownRecipesResponse` | List recipes known by an entity |
+| `TeachrecipeAsync` | `TeachRecipeRequest` | `TeachRecipeResponse` | Teach a recipe to an entity |
+
+### Internal
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CompletesessionAsync` | `CompleteSessionRequest` | `CompleteSessionResponse` | Complete a crafting session (prebound API) |
+
+### Proficiency Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetProficiencyAsync` | `GetProficiencyRequest` | `GetProficiencyResponse` | Get proficiency for a domain |
+| `ListProficienciesAsync` | `ListProficienciesRequest` | `ListProficienciesResponse` | List all proficiencies for an entity |
+| `GrantexperienceAsync` | `GrantExperienceRequest` | `GrantExperienceResponse` | Grant experience in a proficiency domain |
+| `SetproficiencyAsync` | `SetProficiencyRequest` | `SetProficiencyResponse` | Set proficiency to a specific value |
+
+### Query
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CancraftAsync` | `CanCraftRequest` | `CanCraftResponse` | Check if an entity can craft a recipe |
+| `EstimatecraftqualityAsync` | `EstimateCraftQualityRequest` | `EstimateCraftQualityResponse` | Estimate crafting quality with given inputs |
+| `GetRecipeoutputpreviewAsync` | `GetRecipeOutputPreviewRequest` | `GetRecipeOutputPreviewResponse` | Preview recipe outputs at various quality levels |
+
+### Recipe Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateRecipeAsync` | `CreateRecipeRequest` | `CreateRecipeResponse` | Create a new recipe definition |
+| `GetRecipeAsync` | `GetRecipeRequest` | `GetRecipeResponse` | Get a recipe definition |
+| `ListRecipesAsync` | `ListRecipesRequest` | `ListRecipesResponse` | List recipe definitions with filtering |
+| `UpdateRecipeAsync` | `UpdateRecipeRequest` | `UpdateRecipeResponse` | Update a recipe definition |
+| `DeprecaterecipeAsync` | `DeprecateRecipeRequest` | `DeprecateRecipeResponse` | Deprecate a recipe definition |
+| `SeedrecipesAsync` | `SeedRecipesRequest` | `SeedRecipesResponse` | Bulk seed recipe definitions |
+| `ListDomainsAsync` | `ListDomainsRequest` | `ListDomainsResponse` | List distinct proficiency domains |
+
+### Session Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `StartsessionAsync` | `StartSessionRequest` | `StartSessionResponse` | Start a crafting session |
+| `AdvancesessionAsync` | `AdvanceSessionRequest` | `AdvanceSessionResponse` | Advance a crafting session by one step |
+| `CancelsessionAsync` | `CancelSessionRequest` | `CancelSessionResponse` | Cancel a crafting session |
+| `GetSessionAsync` | `GetSessionRequest` | `GetSessionResponse` | Get a crafting session |
+| `ListSessionsAsync` | `ListSessionsRequest` | `ListSessionsResponse` | List active sessions for an entity |
+
+### Station Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `RegisterStationAsync` | `RegisterStationRequest` | `RegisterStationResponse` | Register a crafting station |
+| `GetStationAsync` | `GetStationRequest` | `GetStationResponse` | Get a crafting station |
+| `ListStationsAsync` | `ListStationsRequest` | `ListStationsResponse` | List crafting stations |
+| `DeregisterstationAsync` | `DeregisterStationRequest` | `DeregisterStationResponse` | Deregister a crafting station |
 
 ---
 
@@ -2905,8 +3048,8 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 
 ## Summary
 
-- **Total services**: 60
-- **Total methods**: 1038
+- **Total services**: 62
+- **Total methods**: 1093
 
 ---
 

@@ -2,10 +2,6 @@ openapi: 3.0.4
 info:
   title: Arbitration Service Events
   description: |
-    AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.
-    DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py
-    Source: arbitration-service-events.yaml
-
     Event models for Arbitration service RabbitMQ pub/sub via lib-messaging.
     Lifecycle events (Created, Updated, Deleted) are auto-generated from x-lifecycle
     for ArbitrationCase entities. Custom events cover case filing, closure, evidence,
@@ -184,10 +180,8 @@ components:
       - caseType
       - locationId
       - sovereignFactionId
-      - petitionerEntityId
-      - petitionerEntityType
-      - respondentEntityId
-      - respondentEntityType
+      - petitioner
+      - respondent
       - templateCode
       properties:
         eventName:
@@ -212,20 +206,12 @@ components:
           type: string
           format: uuid
           description: Jurisdictional sovereign faction
-        petitionerEntityId:
-          type: string
-          format: uuid
-          description: Entity ID of the petitioner
-        petitionerEntityType:
-          $ref: '#/components/schemas/EntityType'
-          description: Type of the petitioner entity
-        respondentEntityId:
-          type: string
-          format: uuid
-          description: Entity ID of the respondent
-        respondentEntityType:
-          $ref: '#/components/schemas/EntityType'
-          description: Type of the respondent entity
+        petitioner:
+          $ref: '#/components/schemas/EntityReference'
+          description: Petitioner party reference
+        respondent:
+          $ref: '#/components/schemas/EntityReference'
+          description: Respondent party reference
         templateCode:
           type: string
           description: Procedural template code from governance data
@@ -398,11 +384,6 @@ components:
           items:
             $ref: '#/components/schemas/ConsequenceResult'
           description: Execution status of each consequence
-        affectedParties:
-          type: array
-          items:
-            $ref: '#/components/schemas/EntityReference'
-          description: Entities affected by the ruling (petitioner, respondent, witnesses)
 
     ArbitrationRulingAppealedEvent:
       allOf:

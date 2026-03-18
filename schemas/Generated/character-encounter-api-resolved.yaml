@@ -1406,7 +1406,7 @@ components:
 
     EncounterTypeResponse:
       allOf:
-      - $ref: '#/components/schemas/DeprecationFields'
+      - $ref: '../common-api.yaml#/components/schemas/DeprecationFields'
       type: object
       description: Response containing an encounter type
       additionalProperties: false
@@ -1742,30 +1742,6 @@ components:
           type: integer
           minimum: 0
           description: Number of perspectives restored
-    DeprecationFields:
-      type: object
-      description: |
-        Standard deprecation fields for template and definition entities.
-        Compose into response models via allOf. Both Category A (world-building
-        definitions with undeprecate/delete) and Category B (content templates,
-        deprecate-only) use the same three-field model.
-      required:
-      - isDeprecated
-      properties:
-        isDeprecated:
-          type: boolean
-          description: Whether this entity is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the entity was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
-
     ResourceArchiveBase:
       type: object
       description: |
@@ -1808,8 +1784,4 @@ components:
     # ==========================================================================
 
 x-inlined-types:
-- DeprecationFields
-- ResourceArchiveBase
-x-common-inlined-types:
-- DeprecationFields
 - ResourceArchiveBase

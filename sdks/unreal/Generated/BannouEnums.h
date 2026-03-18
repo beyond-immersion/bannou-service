@@ -47,6 +47,21 @@ enum class EAdjacencyMode : uint8
     EightWay UMETA(DisplayName = "EightWay"),
 };
 
+/** Finite set of lib-affix API operations that modification recipes can invoke.
+Category C system state enum — not game-configurable.
+ */
+UENUM(BlueprintType)
+enum class EAffixOperationType : uint8
+{
+    ApplyRandom UMETA(DisplayName = "ApplyRandom"),
+    RemoveRandom UMETA(DisplayName = "RemoveRandom"),
+    RerollAll UMETA(DisplayName = "RerollAll"),
+    RerollValues UMETA(DisplayName = "RerollValues"),
+    Corrupt UMETA(DisplayName = "Corrupt"),
+    Fracture UMETA(DisplayName = "Fracture"),
+    ApplySpecific UMETA(DisplayName = "ApplySpecific"),
+};
+
 /** Controls caching behavior for affordance queries */
 UENUM(BlueprintType)
 enum class EAffordanceFreshness : uint8
@@ -122,7 +137,7 @@ enum class EAuthType : uint8
     Ticket UMETA(DisplayName = "Ticket"),
 };
 
-/** Authority classification determining a faction's governance power. Influence factions impose social costs only. Delegated factions inherit sovereign law and can add local rules within their delegation scope. Sovereign factions define law within their territory. */
+/** Faction authority level for jurisdictional determination. Matches Faction service AuthorityLevel enum. */
 UENUM(BlueprintType)
 enum class EAuthorityLevel : uint8
 {
@@ -1012,6 +1027,18 @@ enum class EItemScope : uint8
     Global UMETA(DisplayName = "Global"),
     RealmSpecific UMETA(DisplayName = "RealmSpecific"),
     MultiRealm UMETA(DisplayName = "MultiRealm"),
+};
+
+/** Finite set of item state predicates for modification recipe target
+requirements. Category C system state enum — not game-configurable.
+ */
+UENUM(BlueprintType)
+enum class EItemStateField : uint8
+{
+    IsIdentified UMETA(DisplayName = "IsIdentified"),
+    IsCorrupted UMETA(DisplayName = "IsCorrupted"),
+    IsMirrored UMETA(DisplayName = "IsMirrored"),
+    IsFractured UMETA(DisplayName = "IsFractured"),
 };
 
 /** Controls item consumption on use.

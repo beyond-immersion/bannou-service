@@ -738,7 +738,7 @@ components:
 
     RealmResponse:
       allOf:
-      - $ref: '#/components/schemas/DeprecationFields'
+      - $ref: '../common-api.yaml#/components/schemas/DeprecationFields'
       description: Complete realm information returned from API operations
       type: object
       additionalProperties: false
@@ -937,30 +937,6 @@ components:
           type: string
           nullable: true
           description: Detailed description of the realm and its characteristics
-    DeprecationFields:
-      type: object
-      description: |
-        Standard deprecation fields for template and definition entities.
-        Compose into response models via allOf. Both Category A (world-building
-        definitions with undeprecate/delete) and Category B (content templates,
-        deprecate-only) use the same three-field model.
-      required:
-      - isDeprecated
-      properties:
-        isDeprecated:
-          type: boolean
-          description: Whether this entity is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the entity was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
-
     ResourceArchiveBase:
       type: object
       description: |
@@ -1003,8 +979,4 @@ components:
     # ==========================================================================
 
 x-inlined-types:
-- DeprecationFields
-- ResourceArchiveBase
-x-common-inlined-types:
-- DeprecationFields
 - ResourceArchiveBase
