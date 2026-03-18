@@ -22,7 +22,7 @@ Every system, every service, every line of code should ultimately serve one or m
 
 ### 1. Living Game Worlds
 
-The world is alive whether or not a player is watching. NPCs have autonomous cognition pipelines (perception, appraisal, memory, goal evaluation, intention formation). They pursue their own aspirations, form relationships, run businesses, participate in politics, and generate emergent stories. Regional Watcher "gods" (Moira/Fate, Thanatos/Death, Silvanus/Forest, Ares/War, Typhon/Monsters, Hermes/Commerce) monitor event streams with aesthetic preferences and orchestrate narrative opportunities. The world has genuine history that was simulated, not authored.
+The world is alive whether or not a player is watching. NPCs have autonomous cognition pipelines (perception, appraisal, memory, goal evaluation, intention formation). They pursue their own aspirations, form relationships, run businesses, participate in politics, and generate emergent stories. Regional Watcher "gods" -- Moira/Fate and other game-authored deities covering domains like death, nature, war, monsters, and commerce -- monitor event streams with aesthetic preferences and orchestrate narrative opportunities. The world has genuine history that was simulated, not authored.
 
 **Systems that serve this**: Actor, Behavior (ABML/GOAP), Character Personality, Character Encounter, Character History, Realm History, Puppetmaster, Relationship, Storyline, Analytics, Generational Cycles.
 
@@ -272,7 +272,7 @@ Item (L2) + Inventory (L2) ──item movement──▶ Trade/Loot  │
            based on needs, aspirations, personality
 ```
 
-**Why this matters**: The economy must be NPC-driven, not player-driven. Supply, demand, pricing, and trade routes emerge from NPC behavior -- what they need, what they produce, what they want. Player economies layer on top of this NPC economic substrate. If the economy is just player-to-player, the world feels dead when players are offline. God-actors (Hermes/Commerce) can manipulate currency velocity through narrative events -- "divine economic intervention."
+**Why this matters**: The economy must be NPC-driven, not player-driven. Supply, demand, pricing, and trade routes emerge from NPC behavior -- what they need, what they produce, what they want. Player economies layer on top of this NPC economic substrate. If the economy is just player-to-player, the world feels dead when players are offline. God-actors (e.g., a commerce-domain god) can manipulate currency velocity through narrative events -- "divine economic intervention."
 
 ### The Social Fabric
 

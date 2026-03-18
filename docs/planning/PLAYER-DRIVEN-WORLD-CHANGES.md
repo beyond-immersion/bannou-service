@@ -159,7 +159,7 @@ But it does not need to micromanage. The Contract state machine is the execution
 
 ### The Flower Girl vs. The Fishmonger
 
-A divine actor (Silvanus, god of nature and growth) decides the fishing village needs a seasonal celebration. Instead of decreeing one, Silvanus commissions a Storyline scenario with the goal "settlement establishes seasonal celebration." Storyline's GOAP planner evaluates the settlement and generates **multiple viable approaches** based on available NPCs and resources:
+A divine actor (a nature-domain god, overseeing growth and the natural world) decides the fishing village needs a seasonal celebration. Instead of decreeing one, the god commissions a Storyline scenario with the goal "settlement establishes seasonal celebration." Storyline's GOAP planner evaluates the settlement and generates **multiple viable approaches** based on available NPCs and resources:
 
 **Quest A: "Petals on the Tide"**
 - **Participant**: Lily, the flower girl who tends the meadow above the cliffs
@@ -198,7 +198,7 @@ These quests are **independent Contract instances** with the same high-level goa
 
 ### The Beauty of Not Controlling the Outcome
 
-The divine actor (Silvanus) has an aesthetic preference. Silvanus probably *wants* the flower festival -- it aligns with nature and growth. But Silvanus commissioned a Storyline, not a decree. If Old Gareth's fishing tournament wins because Gareth is more charismatic, has better connections, or a player helped him -- Silvanus accepts the outcome. The world got its celebration. The nature god's preference didn't override the village's organic social dynamics.
+The divine actor has an aesthetic preference. A nature-domain god probably *wants* the flower festival -- it aligns with nature and growth. But the god commissioned a Storyline, not a decree. If Old Gareth's fishing tournament wins because Gareth is more charismatic, has better connections, or a player helped him -- the nature god accepts the outcome. The world got its celebration. The nature god's preference didn't override the village's organic social dynamics.
 
 This is the purest expression of "Emergent Over Authored" (North Star #5). The divine actor authored the *opportunity for change*. The characters authored the *specific change*. Neither controlled the full outcome.
 
@@ -238,7 +238,7 @@ Gardener is the player-side counterpart to Puppetmaster. When a divine actor com
 1. Divine actor commissions Storyline scenario
 2. Storyline generates quest with participant archetypes including "player character matching [criteria]"
 3. Gardener's god-actor (the same divine actor, or a coordinating one) detects that a player character in its garden matches the archetype
-4. Gardener routes awareness through the guardian spirit: a sense of opportunity, a pull toward the quest giver, an environmental cue (the meadow seems especially beautiful today -- Silvanus nudging)
+4. Gardener routes awareness through the guardian spirit: a sense of opportunity, a pull toward the quest giver, an environmental cue (the meadow seems especially beautiful today -- the nature god nudging)
 5. Player follows the pull (or doesn't -- agency is never forced)
 6. Player encounters the quest giver NPC and the quest becomes available
 
@@ -335,7 +335,7 @@ Because the outcome is not predetermined, orchestrated changes can produce resul
 
 - **A competing faction interferes**. A rival settlement's merchants sabotage Lily's flower gathering, turning a cultural quest into a political conflict. The divine actor observes this as new narrative input.
 
-- **The custom takes on a life of its own**. The Flower Tide Festival grows beyond what Silvanus intended -- other gods invest blessings, merchants turn it into a trade fair, a romantic tradition emerges. The divine actor's "seasonal celebration" became a multi-layered cultural institution through emergent elaboration.
+- **The custom takes on a life of its own**. The Flower Tide Festival grows beyond what the nature god intended -- other gods invest blessings, merchants turn it into a trade fair, a romantic tradition emerges. The divine actor's "seasonal celebration" became a multi-layered cultural institution through emergent elaboration.
 
 - **The change is rejected**. NPCs with high `${personality.traditionalism}` resist the new custom. Obligation enforcement fails because social pressure isn't strong enough. The norm exists formally but isn't practiced. This is a form of cultural failure that generates its own narrative -- "they passed the law but no one follows it."
 
@@ -360,12 +360,12 @@ The spectrum from decree to orchestration is not binary. Divine actors choose th
 
 **Different gods gravitate toward different levels**:
 
-- **Moira / Fate**: Prefers soft orchestration. Fate has a plan. Characters carry it out. The outcome is often what Moira intended, but the journey generates narrative.
-- **Silvanus / Forest**: Prefers seed orchestration. Nature doesn't dictate -- it provides conditions and lets life find its own way.
-- **Ares / War**: Prefers open orchestration. Competition is the point. Multiple paths, one winner, the conflict itself is the value.
-- **Hermes / Commerce**: Prefers open orchestration with economic incentives. The quest that generates the most trade value wins.
-- **Thanatos / Death**: Prefers pure observation for most things, full decree only for death-related corrections. Death watches; death records; death rarely interferes.
-- **Typhon / Monsters**: Prefers soft orchestration with danger. The quest involves surviving something. Success is earned through hardship.
+- **Moira (Fate)**: Prefers soft orchestration. Fate has a plan. Characters carry it out. The outcome is often what Moira intended, but the journey generates narrative.
+- **A nature-domain god**: Prefers seed orchestration. Nature doesn't dictate -- it provides conditions and lets life find its own way.
+- **A war-domain god**: Prefers open orchestration. Competition is the point. Multiple paths, one winner, the conflict itself is the value.
+- **A commerce-domain god**: Prefers open orchestration with economic incentives. The quest that generates the most trade value wins.
+- **A death-domain god**: Prefers pure observation for most things, full decree only for death-related corrections. Death watches; death records; death rarely interferes.
+- **A monster-domain god**: Prefers soft orchestration with danger. The quest involves surviving something. Success is earned through hardship.
 
 ### Players Never Know Which Level They're In
 

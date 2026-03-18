@@ -37,7 +37,7 @@ Multi-currency management service (L2 GameFoundation) for game economies. Handle
 | lib-license | Hard dependency via `ICurrencyClient` for cost verification on license board operations |
 | lib-actor (planned) | `${currency.*}` variable provider via `IVariableProviderFactory` for NPC economic awareness in ABML behavior expressions ([#147](https://github.com/beyond-immersion/bannou-service/issues/147), in progress) |
 | lib-actor (planned) | ABML economic action handlers (`economy_credit`, `economy_debit`, `economy_transfer`) calling `ICurrencyClient` for NPC economic actions ([#428](https://github.com/beyond-immersion/bannou-service/issues/428)) |
-| lib-genesis (L2) | Implements `ICurrencyTransactionListener` to convert wallet credits into Seed growth via template-defined growth mappings, driving the entity awakening lifecycle. Genesis is the primary consumer of the listener interface — it monitors all wallet mutations and filters to genesis-managed wallets via a reverse index. |
+| lib-genesis (L2) | Implements `ICurrencyTransactionListener` to convert wallet credits into Seed growth via template-defined growth mappings, driving the entity awakening lifecycle. Genesis is the primary consumer of the listener interface — it filters to genesis-managed wallets via an in-memory `ConcurrentDictionary` (~microseconds, no network I/O) and buffers matched credits for a periodic growth flush worker that calls `Seed.RecordGrowthBatch` per entity. At 100K+ wallets, the listener adds negligible overhead to Currency's mutation paths. |
 
 ---
 
@@ -185,7 +185,7 @@ Client events are published via `IEntitySessionRegistry.PublishToEntitySessionsA
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEntitySessionRegistry` | Singleton | Client event publishing to wallet owner WebSocket sessions |
 | `ICurrencyDataCache` | Singleton | In-memory cache for ABML variable provider |
-| `IEnumerable<ICurrencyTransactionListener>` | Singleton | DI-discovered listeners notified after wallet credit/debit mutations. Interface defined in `bannou-service/Providers/ICurrencyTransactionListener.cs`. Dispatched after successful balance changes (credit, debit, transfer, autogain, escrow operations). Listeners must write to distributed state only (per SERVICE-HIERARCHY DI Listener safety rules). Primary consumer: lib-genesis (converts currency transactions into Seed growth via template-defined mappings). |
+| `IEnumerable<ICurrencyTransactionListener>` | Singleton | DI-discovered listeners notified after wallet credit/debit mutations. Interface defined in `bannou-service/Providers/ICurrencyTransactionListener.cs`. Dispatched after successful balance changes (credit, debit, transfer, autogain, escrow operations). Fires for ALL wallet mutations — consumers are responsible for fast filtering to their wallets of interest (Genesis uses an in-memory ConcurrentDictionary for O(1) filtering). Listeners must write to distributed state only (per SERVICE-HIERARCHY DI Listener safety rules). Primary consumer: lib-genesis (buffers matched credits, flushes periodically to Seed growth via template-defined mappings). |
 | `CurrencyAutogainTaskService` | Hosted (Singleton) | Background worker for proactive autogain |
 | `CurrencyExpirationTaskService` | Hosted (Singleton) | Background worker that scans and expires balances with elapsed expiration policies |
 | `HoldExpirationTaskService` | Hosted (Singleton) | Background worker that auto-releases authorization holds past their ExpiresAt timestamp |

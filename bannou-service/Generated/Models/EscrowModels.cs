@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Escrow;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Escrow;
 
@@ -215,7 +230,8 @@ public enum EscrowConsentType
 /// <br/>- released: Assets went to designated recipients
 /// <br/>- refunded: Assets returned to depositors
 /// <br/>- split: Arbiter split assets between parties
-/// <br/>- expired_refunded: Timed out, auto-refunded
+/// <br/>- expired: Timed out with no deposits to refund
+/// <br/>- expired_refunded: Timed out with deposits, auto-refunded
 /// <br/>- cancelled_refunded: Cancelled, deposits refunded
 /// <br/>- violation_refunded: Validation failure caused refund
 /// <br/>
@@ -234,14 +250,17 @@ public enum EscrowResolution
     [System.Runtime.Serialization.EnumMember(Value = @"Split")]
     Split = 2,
 
+    [System.Runtime.Serialization.EnumMember(Value = @"Expired")]
+    Expired = 3,
+
     [System.Runtime.Serialization.EnumMember(Value = @"ExpiredRefunded")]
-    ExpiredRefunded = 3,
+    ExpiredRefunded = 4,
 
     [System.Runtime.Serialization.EnumMember(Value = @"CancelledRefunded")]
-    CancelledRefunded = 4,
+    CancelledRefunded = 5,
 
     [System.Runtime.Serialization.EnumMember(Value = @"ViolationRefunded")]
-    ViolationRefunded = 5,
+    ViolationRefunded = 6,
 
 }
 #pragma warning restore CS1591
@@ -1276,6 +1295,203 @@ public partial class AssetHandlerInfo
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string ValidateEndpoint { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request sent to a custom handler's validate endpoint during periodic validation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CustomHandlerValidateRequest
+{
+
+    /// <summary>
+    /// The escrow agreement being validated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EscrowId { get; set; } = default!;
+
+    /// <summary>
+    /// The registered custom asset type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("customAssetType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CustomAssetType { get; set; } = default!;
+
+    /// <summary>
+    /// The specific asset identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("customAssetId")]
+    public string? CustomAssetId { get; set; } = default!;
+
+    /// <summary>
+    /// Opaque asset data from the original deposit. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("customAssetData")]
+    public object? CustomAssetData { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response from a custom handler's validate endpoint
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CustomHandlerValidateResponse
+{
+
+    /// <summary>
+    /// Whether the custom asset is still present and valid
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("valid")]
+    public bool Valid { get; set; } = default!;
+
+    /// <summary>
+    /// Type of validation failure if not valid
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failureType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ValidationFailureType? FailureType { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable failure description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("details")]
+    public string? Details { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request sent to a custom handler's release endpoint when escrow releases assets to recipients
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CustomHandlerReleaseRequest
+{
+
+    /// <summary>
+    /// The escrow agreement releasing assets
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EscrowId { get; set; } = default!;
+
+    /// <summary>
+    /// The registered custom asset type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("customAssetType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CustomAssetType { get; set; } = default!;
+
+    /// <summary>
+    /// The specific asset identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("customAssetId")]
+    public string? CustomAssetId { get; set; } = default!;
+
+    /// <summary>
+    /// Opaque asset data from the original deposit. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("customAssetData")]
+    public object? CustomAssetData { get; set; } = default!;
+
+    /// <summary>
+    /// The party receiving the released assets
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("recipientPartyId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RecipientPartyId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response from a custom handler's release endpoint
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CustomHandlerReleaseResponse
+{
+
+    /// <summary>
+    /// Whether the release was executed successfully
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable result description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("details")]
+    public string? Details { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request sent to a custom handler's refund endpoint when escrow refunds assets to depositors
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CustomHandlerRefundRequest
+{
+
+    /// <summary>
+    /// The escrow agreement refunding assets
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EscrowId { get; set; } = default!;
+
+    /// <summary>
+    /// The registered custom asset type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("customAssetType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CustomAssetType { get; set; } = default!;
+
+    /// <summary>
+    /// The specific asset identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("customAssetId")]
+    public string? CustomAssetId { get; set; } = default!;
+
+    /// <summary>
+    /// Opaque asset data from the original deposit. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("customAssetData")]
+    public object? CustomAssetData { get; set; } = default!;
+
+    /// <summary>
+    /// The party receiving the refunded assets
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("depositorPartyId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid DepositorPartyId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response from a custom handler's refund endpoint
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CustomHandlerRefundResponse
+{
+
+    /// <summary>
+    /// Whether the refund was executed successfully
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable result description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("details")]
+    public string? Details { get; set; } = default!;
 
 }
 

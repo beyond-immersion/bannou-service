@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Events;
 using Microsoft.Extensions.Logging;
+using System.Xml;
 
 namespace BeyondImmersion.BannouService.Escrow;
 
@@ -111,6 +112,15 @@ public partial class EscrowService
             {
                 _logger.LogWarning("Deposit rejected: asset count {Count} exceeds max {Max} for escrow {EscrowId}",
                     assetModels.Count, _configuration.MaxAssetsPerDeposit, body.EscrowId);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Execute asset transfers BEFORE recording the deposit (T7: reject cleanly if service call fails)
+            var transferError = await ExecuteDepositTransfersAsync(
+                body.EscrowId, party, assetModels, body.IdempotencyKey, cancellationToken);
+            if (transferError != null)
+            {
+                _logger.LogWarning("Deposit rejected for escrow {EscrowId}: {Error}", body.EscrowId, transferError);
                 return (StatusCodes.BadRequest, null);
             }
 
@@ -274,6 +284,16 @@ public partial class EscrowService
                     FundedAt = now
                 };
                 await _messageBus.PublishEscrowFundedAsync(fundedEvent, cancellationToken);
+
+                // Initialize periodic validation tracking
+                var validationKey = BuildValidationKey(body.EscrowId);
+                var validationInterval = XmlConvert.ToTimeSpan(_configuration.ValidationCheckInterval);
+                var validationTracking = new ValidationTrackingEntry
+                {
+                    EscrowId = body.EscrowId,
+                    NextValidationDue = now + validationInterval
+                };
+                await _validationStore.SaveAsync(validationKey, validationTracking, cancellationToken: cancellationToken);
             }
 
             _logger.LogInformation(

@@ -31,7 +31,7 @@ For full specifications: [DIVINE.md](../plugins/DIVINE.md), [DUNGEON.md](../plug
 
 Bannou has 45+ orthogonal services (Storyline composes narratives, Quest tracks objectives, Currency manages economies, etc.) but no service owns the cross-cutting gameplay loop: "character dies -> archive compressed -> god evaluates -> storyline composed -> quests spawned -> new player experiences -> more deaths -> loop." This is the **content flywheel** from VISION.md. It has no `Main()`.
 
-**The solution**: God-actors. Long-running ABML behavior documents executed by the Actor runtime. Orchestration is **authored content** (YAML behavior files), not compiled code. Adding a new gameplay pathway means writing a new behavior document, not a new service. Different gods evaluate the same events differently (Moira/Fate cares about fulfillment, Ares/War cares about combat). The Actor runtime's existing infrastructure (perception queues, GOAP planning, variable providers, pool scaling) handles execution.
+**The solution**: God-actors. Long-running ABML behavior documents executed by the Actor runtime. Orchestration is **authored content** (YAML behavior files), not compiled code. Adding a new gameplay pathway means writing a new behavior document, not a new service. Different gods evaluate the same events differently (Moira/Fate cares about fulfillment, a war-domain god cares about combat). The Actor runtime's existing infrastructure (perception queues, GOAP planning, variable providers, pool scaling) handles execution.
 
 **Why not a "gameplay loop" plugin**: It would centralize logic that varies per deity/realm/game, become a dependency magnet collapsing the service hierarchy, require code changes for every new orchestration pattern, and violate "Emergent Over Authored" (North Star #5).
 
@@ -159,7 +159,7 @@ lib-dungeon is pattern-agnostic -- it doesn't know or care which pattern is acti
 
 **Memory system**: Collection for permanent knowledge ("has experienced first adventurer death") + Inventory for consumable creative resources (memory items spent on manifestation as paintings, items, environmental echoes). Growth to `memory_depth.*` seed domain.
 
-**Dungeon spawning**: Not random -- a regional watcher god (e.g., Typhon/Monsters) detects mana stagnation via Environment/Worldstate events, evaluates location characteristics, and calls `/dungeon/create` with personality type derived from formative conditions. Pure ABML behavior authoring.
+**Dungeon spawning**: Not random -- a regional watcher god (e.g., a monster-domain god) detects mana stagnation via Environment/Worldstate events, evaluates location characteristics, and calls `/dungeon/create` with personality type derived from formative conditions. Pure ABML behavior authoring.
 
 ---
 
@@ -181,9 +181,9 @@ Same 3-stage progression: Dormant (fine sword with passive bonuses) -> Stirring 
 |---------|-----------|---------|
 | **God -> Content flywheel** | God perceives archive event, GOAP evaluates, calls Storyline/Quest/Actor APIs | Moira composes ghost quest from death archive |
 | **God -> Player experience** | Gardener god tends player garden, spawns POIs, routes spirit influences | Moira adjusts void scenario offerings based on player profile |
-| **God -> NPC behavior** | God injects perceptions into NPC actors via Actor perception API | Ares amplifies aggression in nearby warriors before battle |
-| **God -> Economy** | God monitors velocity via Analytics, spawns intervention events | Hermes drops treasure near stagnating economy |
-| **God -> Deity self** | God calls Divine API for blessings, divinity spending, follower management | Silvanus blesses a druid who pleased him |
+| **God -> NPC behavior** | God injects perceptions into NPC actors via Actor perception API | A war-domain god amplifies aggression in nearby warriors before battle |
+| **God -> Economy** | God monitors velocity via Analytics, spawns intervention events | A commerce-domain god drops treasure near stagnating economy |
+| **God -> Deity self** | God calls Divine API for blessings, divinity spending, follower management | A nature-domain god blesses a druid who pleased it |
 | **God -> Avatar** | God calls `/divine/avatar/manifest` to enter physical world | Moira manifests as "The Veiled Oracle" |
 | **Dungeon -> Combat** | Dungeon core actor spawns monsters, activates traps via ABML actions | Ancient dungeon deploys tailored defense based on ${encounters.*} grudges |
 | **Dungeon -> Master** | Core injects perceptions into master's character Actor, gated by seed capabilities | Master perceives threat level via `perception.tactical` capability |

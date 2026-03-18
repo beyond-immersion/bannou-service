@@ -150,6 +150,7 @@ public class EscrowExpirationService : BackgroundService
                 if (processed >= BatchSize) break;
 
                 var wasProcessed = await ProcessExpiredEscrowAsync(
+                    scope.ServiceProvider,
                     agreementStore,
                     statusIndexStore,
                     partyPendingStore,
@@ -176,6 +177,7 @@ public class EscrowExpirationService : BackgroundService
     /// Processes a single expired escrow.
     /// </summary>
     private async Task<bool> ProcessExpiredEscrowAsync(
+        IServiceProvider scopedServiceProvider,
         IQueryableStateStore<EscrowAgreementModel> agreementStore,
         IStateStore<StatusIndexEntry> statusIndexStore,
         IStateStore<PartyPendingCount> partyPendingStore,
@@ -221,9 +223,7 @@ public class EscrowExpirationService : BackgroundService
         // Update escrow to Expired status
         currentAgreement.Status = EscrowStatus.Expired;
         currentAgreement.CompletedAt = now;
-        // ExpiredRefunded is used for both cases until the EscrowResolution enum
-        // gains a distinct value for expired-with-no-deposits (see GH issue)
-        currentAgreement.Resolution = EscrowResolution.ExpiredRefunded;
+        currentAgreement.Resolution = hasDeposits ? EscrowResolution.ExpiredRefunded : EscrowResolution.Expired;
         currentAgreement.ResolutionNotes = hasDeposits
             ? "Escrow expired - deposits automatically refunded"
             : "Escrow expired - no deposits to refund";
@@ -280,6 +280,13 @@ public class EscrowExpirationService : BackgroundService
                 CompletedAt = now
             };
             await messageBus.PublishEscrowRefundedAsync(refundEvent, cancellationToken);
+
+            // Execute refund transfers to depositors
+            var escrowService = scopedServiceProvider.GetRequiredService<IEscrowService>() as EscrowService;
+            if (escrowService != null)
+            {
+                await escrowService.ExecuteRefundTransfersAsync(currentAgreement, cancellationToken);
+            }
 
             _logger.LogInformation("Escrow {EscrowId} expired with {DepositCount} deposits auto-refunded",
                 agreement.EscrowId, (currentAgreement.Deposits ?? new List<EscrowDepositModel>()).Count);

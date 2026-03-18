@@ -325,11 +325,11 @@ Event Brains run as standard actors using the same `ActorRunner` infrastructure 
 
 ### 6.2 Regional Watchers as Gods
 
-Regional Watchers implement Arcadia's god system. Each god (Moira/Fate, Thanatos/Death, Silvanus/Forest, Ares/War, Typhon/Monsters, Hermes/Commerce) monitors event streams within their domain with aesthetic preferences and spawns Event Brains when "interestingness" thresholds are crossed.
+Regional Watchers implement Arcadia's god system. Each god (Moira/Fate, plus domain-specific gods such as death, nature, war, monsters, commerce) monitors event streams within their domain with aesthetic preferences and spawns Event Brains when "interestingness" thresholds are crossed.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│            REGIONAL WATCHER (e.g., Ares/War)            │
+│            REGIONAL WATCHER (e.g., a war-domain god)            │
 │                                                         │
 │  Monitors: combat events, antagonism, power proximity   │
 │  Aesthetic: prefers dramatic reversals, honorable duels  │

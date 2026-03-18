@@ -1059,7 +1059,7 @@ How organizations participate in the NPC-driven economy through GOAP-based econo
 | - Local sovereign collects trade tax (if Chartered) |
 | - Analytics tracks economic activity |
 | - Trade volume affects local faction territory norms |
-| - God of Commerce (Hermes) may notice exceptional trades |
+| - A commerce-domain god may notice exceptional trades |
 +-----------------------------------------------------------------------+
 ```
 

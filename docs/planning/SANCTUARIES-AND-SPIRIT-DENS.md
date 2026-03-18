@@ -43,9 +43,9 @@ This absolute nature is what makes sanctuaries sacred. In a world where the pred
 Sanctuaries are created when a god performs a significant act that deposits energy into the local pneuma field. The act must be substantial enough to leave a **standing resonance** -- a persistent pattern in the spiritual physics of the area.
 
 Examples of originating acts:
-- A god creates an oasis in a desert (Silvanus/Forest manifesting life where none existed)
+- A god creates an oasis in a desert (a nature-domain god manifesting life where none existed)
 - A god heals a dying forest after a catastrophic fire (restoration miracle)
-- A god intervenes to stop a massacre (Moira/Fate redirecting the course of a battle)
+- A god intervenes to stop a massacre (Moira redirecting the course of a battle)
 - A god blesses a spring, giving its water healing properties (sacred water source)
 - A god manifests physically and the location where their avatar stood retains the imprint
 
@@ -773,7 +773,7 @@ This means two players visiting the same location have radically different exper
 - Days: Predators begin hunting. Prey animals that were complacent (generations of sanctuary safety) are easy targets
 - Weeks: Massive predation event generates intense memento accumulation
 - Months: Local prey populations crash. Predators expand territory. Mesopredator release may occur if the sanctuary's stability was supporting apex predator populations nearby
-- God-actor response: The originating deity perceives the desecration. Response depends on divine personality -- Silvanus might mourn and attempt restoration, Ares might see an opportunity, Moira might weave the tragedy into narrative
+- God-actor response: The originating deity perceives the desecration. Response depends on divine personality -- a nature-domain god might mourn and attempt restoration, a war-domain god might see an opportunity, Moira might weave the tragedy into narrative
 
 **Spirit den destroyed** (spirit animal killed, leyline disrupted):
 - Immediate: Conspecific attraction ceases. Species members begin dispersing

@@ -451,7 +451,7 @@ The Faction service (lib-faction, L4) now exists with seed-based growth, norms, 
 - **Faction brain ABML behaviors**: ABML behavior documents that let factions operate as autonomous actors pursuing economic and political goals. Faction brains would run as actors (category `world-admin` or a new faction-specific category) executing GOAP plans based on faction state.
 - **Faction GOAP world state provider**: A Variable Provider Factory implementation exposing faction-level data (treasury via Currency wallets, territory via faction territory claims, political standing via seed bonds, norm enforcement state). Would feed into faction brain actors.
 - **Realm economic state aggregation**: A way to query realm-level economic data (total currency in circulation, resource prices, trade volume). Currency has some of this (global supply analytics -- see [#211](https://github.com/beyond-immersion/bannou-service/issues/211)) but not realm-scoped.
-- **Regional Watcher integration**: Faction brains should interact with Regional Watchers (Puppetmaster). Hermes/Commerce god could manipulate faction dynamics through narrative events ("divine economic intervention").
+- **Regional Watcher integration**: Faction brains should interact with Regional Watchers (Puppetmaster). A commerce-domain god could manipulate faction dynamics through narrative events ("divine economic intervention").
 
 ---
 

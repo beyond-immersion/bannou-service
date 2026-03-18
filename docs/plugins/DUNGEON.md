@@ -45,7 +45,7 @@ Dungeons progress through three cognitive stages as mana accumulates in their cu
 
 **Seed Phase**: Dormant (MinTotalGrowth: 0.0)
 
-The dungeon exists as a genesis entity record and a `DungeonCoreModel`. No actor is running. The dungeon is purely reactive — intrusions trigger pre-scripted responses, but there is no autonomous decision-making. Growth accumulates passively as mana credits the dungeon's wallet (via Currency autogain from leyline proximity, or manual credits from deaths within the domain). Genesis converts mana credits to seed growth via the template's growth mappings.
+The dungeon exists as a genesis entity record and a `DungeonCoreModel`. No actor is running. The dungeon is purely reactive — intrusions trigger pre-scripted responses, but there is no autonomous decision-making. Growth accumulates passively as mana credits the dungeon's wallet (via Currency autogain from leyline proximity, or manual credits from deaths within the domain). Genesis converts mana credits to seed growth via the template's growth mappings, using a batched flush worker that consolidates multiple wallet credits into single `Seed.RecordGrowthBatch` calls every `GrowthFlushIntervalSeconds` (default: 5s). This batching is invisible to the dungeon — phase transitions that span hours/days of mana accumulation are unaffected by a 5-second aggregation window — but it reduces Seed lock contention by orders of magnitude when thousands of dormant dungeons accumulate mana simultaneously via Currency autogain.
 
 This is the cheapest state for the system: no actor runtime resources consumed, no perception subscriptions, no behavior loop ticks. A world can have thousands of dormant dungeon entities scattered across its geography, waiting to awaken.
 

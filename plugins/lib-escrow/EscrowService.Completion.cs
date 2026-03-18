@@ -203,6 +203,9 @@ public partial class EscrowService
             };
             await _messageBus.PublishEscrowReleasedAsync(releaseEvent, cancellationToken);
 
+            // Execute asset transfers to recipients (T7: after status transition, per-asset error isolation)
+            await ExecuteReleaseTransfersAsync(agreementModel, cancellationToken);
+
             _logger.LogInformation("Escrow {EscrowId} released with {ReleaseCount} transfers",
                 body.EscrowId, releases.Count);
 
@@ -326,6 +329,9 @@ public partial class EscrowService
             };
             await _messageBus.PublishEscrowRefundedAsync(refundEvent, cancellationToken);
 
+            // Execute refund transfers to depositors (T7: after status transition, per-asset error isolation)
+            await ExecuteRefundTransfersAsync(agreementModel, cancellationToken);
+
             _logger.LogInformation("Escrow {EscrowId} refunded with {RefundCount} refunds",
                 body.EscrowId, refunds.Count);
 
@@ -433,6 +439,9 @@ public partial class EscrowService
                 CancelledAt = now
             };
             await _messageBus.PublishEscrowCancelledAsync(cancelEvent, cancellationToken);
+
+            // Execute refund transfers for partial deposits (T7: after status transition, per-asset error isolation)
+            await ExecuteRefundTransfersAsync(agreementModel, cancellationToken);
 
             _logger.LogInformation("Escrow {EscrowId} cancelled, {RefundCount} deposits refunded",
                 body.EscrowId, refunds.Count);
@@ -705,6 +714,16 @@ public partial class EscrowService
             };
             await _messageBus.PublishEscrowResolvedAsync(resolveEvent, cancellationToken);
 
+            // Execute asset transfers based on resolution type
+            if (body.Resolution == EscrowResolution.Released || body.Resolution == EscrowResolution.Split)
+            {
+                await ExecuteReleaseTransfersAsync(agreementModel, cancellationToken);
+            }
+            else if (body.Resolution == EscrowResolution.Refunded)
+            {
+                await ExecuteRefundTransfersAsync(agreementModel, cancellationToken);
+            }
+
             _logger.LogInformation("Escrow {EscrowId} resolved with {Resolution}",
                 body.EscrowId, body.Resolution);
 
@@ -835,6 +854,9 @@ public partial class EscrowService
 
                 // Publish released event
                 await PublishReleasedEventAsync(agreementModel, now, cancellationToken);
+
+                // Execute asset transfers to recipients
+                await ExecuteReleaseTransfersAsync(agreementModel, cancellationToken);
 
                 _logger.LogInformation("Escrow {EscrowId} fully released after all party confirmations",
                     body.EscrowId);
@@ -967,6 +989,9 @@ public partial class EscrowService
 
                 // Publish refunded event
                 await PublishRefundedEventAsync(agreementModel, now, cancellationToken);
+
+                // Execute refund transfers to depositors
+                await ExecuteRefundTransfersAsync(agreementModel, cancellationToken);
 
                 _logger.LogInformation("Escrow {EscrowId} fully refunded after all party confirmations",
                     body.EscrowId);

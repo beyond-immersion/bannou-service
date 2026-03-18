@@ -1312,3 +1312,10 @@ clean-unreal-sdk: ## Clean Unreal SDK generated files
 	rm -rf $(UE_SDK_DIR)/Generated/*.h
 	rm -rf schemas/Generated/bannou-client-api.*
 	@echo "✅ Unreal SDK cleaned"
+
+# =============================================================================
+# DEVELOPER TOOLS
+# =============================================================================
+
+claude: ## Launch Claude Code with max effort
+	claude --effort max

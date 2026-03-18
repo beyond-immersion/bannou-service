@@ -46,7 +46,7 @@ This rule is **not enforced by any service or SDK**. It is a behavioral conventi
 Plot armor decreases when characters survive dangerous situations. The god-actor orchestrating the encounter decides the chip amount based on:
 
 - **Danger intensity**: How lethal was the scenario? A near-miss with a raid boss chips more than a tavern brawl.
-- **God personality**: Merciful gods chip slowly (Moira). Aggressive gods chip quickly (Ares). The god's `${personality.mercy}` axis influences depletion rate.
+- **God personality**: Merciful gods chip slowly (Moira, for instance). Aggressive gods chip quickly (a war-domain god, for instance). The god's `${personality.mercy}` axis influences depletion rate.
 - **Narrative position**: If the character is in the climactic phase of an active storyline scenario, the god may preserve armor to protect the arc. If the character has no active storylines and is high-level, depletion accelerates.
 - **Player agency**: The guardian spirit's combat fidelity (from Agency service) factors in. A spirit with high combat agency gets less divine protection -- the player can protect themselves.
 
@@ -95,11 +95,11 @@ When a character with plot armor faces a lethal outcome (QTE failure, scenario b
 | God | Protection Style | Example |
 |-----|-----------------|---------|
 | **Moira (Fate)** | Fate-weaving -- subtle redirection of causality | The blade glances off bone instead of piercing the heart. A loose cobblestone causes the enemy to stumble at the critical moment. |
-| **Ares (War)** | Battle fury -- the character fights beyond mortal limits | Adrenaline surge. The character's body moves on pure instinct, executing a defensive maneuver they didn't know they could do. |
-| **Silvanus (Forest)** | Nature intervention -- the environment acts | A beast crashes through the wall. Roots trip the attacker. A branch deflects the arrow. |
-| **Thanatos (Death)** | Death rejects the character -- "not yet" | The killing blow connects but the character doesn't die. A cold presence whispers "you are not finished." Deeply unsettling for witnesses. |
-| **Typhon (Monsters)** | Creature hesitation -- the monster pauses | The raid boss's attack falters. Pneuma echoes are god-controlled -- the god simply doesn't commit the killing force. |
-| **Hermes (Commerce)** | Lucky break -- improbable coincidence | A coin in the pocket deflects the dagger. The poison was slightly diluted. The bridge collapses but a merchant's cart breaks the fall. |
+| **A war-domain god** | Battle fury -- the character fights beyond mortal limits | Adrenaline surge. The character's body moves on pure instinct, executing a defensive maneuver they didn't know they could do. |
+| **A nature-domain god** | Nature intervention -- the environment acts | A beast crashes through the wall. Roots trip the attacker. A branch deflects the arrow. |
+| **A death-domain god** | Death rejects the character -- "not yet" | The killing blow connects but the character doesn't die. A cold presence whispers "you are not finished." Deeply unsettling for witnesses. |
+| **A monster-domain god** | Creature hesitation -- the monster pauses | The raid boss's attack falters. Pneuma echoes are god-controlled -- the god simply doesn't commit the killing force. |
+| **A commerce-domain god** | Lucky break -- improbable coincidence | A coin in the pocket deflects the dagger. The poison was slightly diluted. The bridge collapses but a merchant's cart breaks the fall. |
 
 Each manifestation is an ABML behavior fragment that the god-actor selects from its repertoire. The scenario SDK doesn't know about any of this -- it provided a lethal branch, the god-actor intercepted before resolution.
 
@@ -429,7 +429,7 @@ when:
                 # may not be what they were"
 ```
 
-The player doesn't know this evaluation is happening. They're just playing their final moments. Trying to help their allies. Coming to terms with death. And MAYBE the music shifts. MAYBE Thanatos whispers "not yet." Or maybe it doesn't, and they pass into the underworld proper -- and THAT'S also gameplay.
+The player doesn't know this evaluation is happening. They're just playing their final moments. Trying to help their allies. Coming to terms with death. And MAYBE the music shifts. MAYBE the death god whispers "not yet." Or maybe it doesn't, and they pass into the underworld proper -- and THAT'S also gameplay.
 
 The god's decision factors:
 
@@ -457,7 +457,7 @@ The god intervenes. The character returns -- but transformed. The "what they ret
 | **Medium** (0.4-0.8) | Functional | One arm weaker but the other stronger. A new phobia (of the creature that killed them). Night vision but light sensitivity. |
 | **Low** (< 0.4) | Significant | Personality axis shift (the character is fundamentally different). Memory gaps. A new compulsion. Changed species traits. |
 
-These transformations are permanent, recorded in character-history ("returned from death, marked by Thanatos"), and become defining character traits. The character's NPC brain incorporates them -- a character who returned with a phobia of dragons will autonomously avoid dragon-related situations unless the spirit overrides.
+These transformations are permanent, recorded in character-history ("returned from death, marked by death"), and become defining character traits. The character's NPC brain incorporates them -- a character who returned with a phobia of dragons will autonomously avoid dragon-related situations unless the spirit overrides.
 
 Resurrection is RARE. The divinity cost is high. Gods who resurrect frequently deplete their domain power and lose influence. This scarcity is what makes the possibility meaningful -- it can't be relied upon, but it can't be ruled out either.
 
@@ -621,7 +621,7 @@ The Haunting (ghost at own death scene -- optional)
 The Last Stand (spirit form / possession / ally assistance)
     │  Fight on as a freed spirit. Help allies.
     │  The gods are watching. Performance matters.
-    │  Maybe the music shifts. Maybe Thanatos whispers.
+    │  Maybe the music shifts. Maybe the death god whispers.
     │
     ▼
 Resolution

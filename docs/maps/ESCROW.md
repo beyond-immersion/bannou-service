@@ -18,7 +18,7 @@
 | Events Published | 15 (escrow.created, escrow.deposit.received, escrow.funded, escrow.consent.received, escrow.finalizing, escrow.releasing, escrow.released, escrow.refunding, escrow.refunded, escrow.disputed, escrow.resolved, escrow.expired, escrow.cancelled, escrow.validation.failed, escrow.validation.reaffirmed) |
 | Events Consumed | 3 |
 | Client Events | 0 |
-| Background Services | 2 |
+| Background Services | 3 |
 
 ---
 
@@ -77,11 +77,16 @@
 | lib-messaging (IEventConsumer) | L0 | Hard | Subscribing to account.deleted, contract.fulfilled, contract.terminated |
 | lib-telemetry (ITelemetryProvider) | L0 | Hard | Span instrumentation on async helper methods and event handlers |
 | lib-resource (IResourceClient) | L1 | Hard | x-references character cleanup: register/unregister character-escrow references, CleanupByCharacter callback |
+| lib-currency (ICurrencyClient) | L2 | Hard | ValidateEscrowAsync: verify currency deposits (wallet/balance existence) |
+| lib-item (IItemClient) | L2 | Hard | ValidateEscrowAsync: verify item/item-stack deposits (instance existence) |
+| lib-contract (IContractClient) | L1 | Hard | ValidateEscrowAsync: verify contract deposits; DepositAsync: lock contracts as escrow assets |
+| lib-inventory (IInventoryClient) | L2 | Hard | DepositAsync: transfer items to escrow container (and future release/refund transfers) |
+| lib-mesh (IMeshInvocationClient) | L0 | Hard | Custom handler endpoint invocation for validation and deposits (and future release/refund) |
 
 **Notes**:
 - Account cleanup uses event subscription (`account.deleted`) per T28 Account Deletion Cleanup Obligation — not lib-resource
 - Character cleanup uses lib-resource with CASCADE policy via `x-references`
-- No L2/L3/L4 service client dependencies currently (asset transfer execution is unimplemented — see deep dive stub #5)
+- ICurrencyClient, IItemClient, IContractClient are used for asset validation in ValidateEscrowAsync (and future asset transfer in deposit/release/refund flows per #153)
 - IStateStoreFactory is used only in constructor to acquire stores; not stored as a field
 
 ---
@@ -131,6 +136,11 @@
 | `IEventConsumer` | Registers 3 event handlers (account.deleted, contract.fulfilled, contract.terminated) |
 | `ITelemetryProvider` | Span instrumentation for async helpers and event handlers |
 | `IResourceClient` | Character reference tracking via x-references |
+| `ICurrencyClient` | Asset validation: verify currency deposits (wallet/balance existence) |
+| `IItemClient` | Asset validation: verify item/item-stack deposits (instance existence) |
+| `IContractClient` | Asset validation + contract locking during deposits |
+| `IInventoryClient` | Item transfers to escrow container during deposits |
+| `IMeshInvocationClient` | Custom handler endpoint invocation via mesh |
 
 ---
 
@@ -261,6 +271,15 @@ IF trustMode == FullConsent
 
 IF assets.Count > config.MaxAssetsPerDeposit                        -> 400
 
+// Execute asset transfers BEFORE recording deposit (reject cleanly on failure)
+FOREACH asset in deposit.Assets
+  SWITCH asset.AssetType
+    Currency: CALL ICurrencyClient.EscrowDepositAsync(walletId, currencyDefId, amount, escrowId, idempotencyKey)
+    Item/ItemStack: CALL IInventoryClient.TransferItemAsync(instanceId, escrowContainerId, quantity?)
+    Contract: CALL IContractClient.LockContractAsync(contractInstanceId, guardianId=escrowId, guardianType="escrow")
+    Custom: CALL handler.DepositEndpoint via IMeshInvocationClient
+  IF any transfer fails → 400 (deposit rejected)
+
 // Create deposit, mark expected deposit as fulfilled
 // Determine new status: all required fulfilled → Funded, else PartiallyFunded
 ETAG-WRITE escrow-agreements:agreement:{escrowId}                   -> 409 if retries exhausted
@@ -277,6 +296,8 @@ PUBLISH escrow.deposit.received { escrowId, partyId, partyType, depositId, asset
 
 IF fullyFunded
   PUBLISH escrow.funded { escrowId, totalDeposits, fundedAt }
+  // Initialize periodic validation tracking
+  WRITE escrow-active-validation:validate:{escrowId} <- { NextValidationDue: now + config.ValidationCheckInterval, LastValidatedAt: null }
 
 // Cache result for idempotent replay
 WRITE escrow-idempotency:idemp:{idempotencyKey} <- IdempotencyRecord (TTL: IdempotencyTtlHours)
@@ -572,8 +593,28 @@ POST /escrow/validate | Roles: []
 READ escrow-agreements:agreement:{escrowId} [with ETag]             -> 404 if null
 IF status is terminal                                               -> 400
 
-// STUB: Validation logic is placeholder — always produces empty failures list
-// (See deep dive stub #1 for design resolution)
+// Per-asset-type validation via direct service calls
+FOREACH deposit in agreement.Deposits
+  FOREACH asset in deposit.Assets
+    TRY
+      SWITCH asset.AssetType
+        Currency:
+          CALL ICurrencyClient.GetBalanceAsync(deposit party WalletId, asset.CurrencyDefinitionId)
+          IF ApiException(404) → failure (wallet or currency missing)
+        Item / ItemStack:
+          CALL IItemClient.GetItemInstanceAsync(asset.ItemInstanceId)
+          IF ApiException(404) → failure (item no longer exists)
+        Contract:
+          CALL IContractClient.GetContractInstanceAsync(asset.ContractInstanceId)
+          IF ApiException(404) → failure (contract no longer exists)
+          IF contract status is terminal (Fulfilled/Terminated/Expired) → failure
+        Custom:
+          READ handler from escrow-handler-registry:handler:{asset.CustomAssetType}
+          IF handler exists → invoke handler.ValidateEndpoint via lib-mesh (skip if fails)
+          IF no handler → skip (log Warning)
+    CATCH ApiException (non-404) → skip asset (service error, retry next cycle)
+    CATCH Exception → skip asset (service unavailable, retry next cycle)
+
 ETAG-WRITE escrow-agreements:agreement:{escrowId} (LastValidatedAt updated)
                                                                     -> 409 if retries exhausted
 READ escrow-active-validation:validate:{escrowId}
@@ -660,6 +701,37 @@ FOREACH agreement (per-item error isolation)
 RETURN (200, CleanupByCharacterResponse { agreementsDeleted })
 ```
 
+### Internal Helper: ExecuteReleaseTransfersAsync
+Called AFTER agreement transitions to Released. Per-allocation, per-asset error isolation.
+
+```
+FOREACH allocation in agreement.ReleaseAllocations (per-item error isolation)
+  FOREACH asset in allocation.Assets
+    TRY
+      SWITCH asset.AssetType
+        Currency: CALL ICurrencyClient.EscrowReleaseAsync(recipientWalletId, currencyDefId, amount, escrowId, idempotencyKey)
+        Item/ItemStack: CALL IInventoryClient.TransferItemAsync(instanceId, destinationContainerId, quantity?)
+        Contract: CALL IContractClient.UnlockContractAsync(contractInstanceId, guardianId=escrowId)
+        Custom: CALL handler.ReleaseEndpoint via IMeshInvocationClient
+    CATCH → log Warning, continue (FSM state is authoritative; Disputed handles failures)
+```
+
+### Internal Helper: ExecuteRefundTransfersAsync
+Called AFTER agreement transitions to Refunded/Cancelled/Expired. Per-deposit, per-asset error isolation.
+
+```
+FOREACH deposit in agreement.Deposits (per-item error isolation)
+  // Find the depositing party to get source wallet/container
+  FOREACH asset in deposit.Assets
+    TRY
+      SWITCH asset.AssetType
+        Currency: CALL ICurrencyClient.EscrowRefundAsync(partyWalletId, currencyDefId, amount, escrowId, idempotencyKey)
+        Item/ItemStack: CALL IInventoryClient.TransferItemAsync(instanceId, sourceContainerId, quantity?)
+        Contract: CALL IContractClient.UnlockContractAsync(contractInstanceId, guardianId=escrowId)
+        Custom: CALL handler.RefundEndpoint via IMeshInvocationClient
+    CATCH → log Warning, continue (FSM state is authoritative)
+```
+
 ---
 
 ## Background Services
@@ -677,7 +749,7 @@ QUERY escrow-agreements WHERE status in [PendingDeposits, PartiallyFunded, Pendi
 FOREACH agreement (per-item error isolation)
   READ escrow-agreements:agreement:{escrowId} [with ETag]
   // Verify still in expirable state (double-check after re-read)
-  ETAG-WRITE escrow-agreements:agreement:{escrowId} (status: Expired, resolution: ExpiredRefunded)
+  ETAG-WRITE escrow-agreements:agreement:{escrowId} (status: Expired, resolution: hasDeposits ? ExpiredRefunded : Expired)
   DELETE escrow-status-index:status:{previousStatus}:{escrowId}
   WRITE escrow-status-index:status:Expired:{escrowId} <- StatusIndexEntry
   FOREACH party
@@ -733,6 +805,43 @@ FOREACH agreement (per-item error isolation)
       ETAG-WRITE escrow-agreements:agreement:{escrowId} (status: Refunded, resolution: Refunded)
       DELETE/WRITE status-index
       PUBLISH escrow.refunded { escrowId, depositors, completedAt }
+```
+
+### EscrowValidationService
+**Interval**: `config.ValidationCheckInterval` (ISO 8601 duration, default PT5M)
+**Startup delay**: `config.ValidationStartupDelaySeconds` (default 25s)
+**Purpose**: Periodically validates that deposited assets still exist and are in expected state
+
+```
+QUERY escrow-agreements WHERE status in [Funded, PendingConsent, PendingCondition, Finalizing, Releasing]
+  PAGED(1, config.ValidationBatchSize)
+
+// Filter in-memory: only process where NextValidationDue <= now
+// (NextValidationDue is on the ValidationTrackingEntry in escrow-active-validation store)
+
+FOREACH agreement (per-item error isolation)
+  READ escrow-active-validation:validate:{escrowId}
+  IF tracking.NextValidationDue > now → skip
+
+  READ escrow-agreements:agreement:{escrowId} [with ETag]
+  // Verify still in validation-eligible state
+
+  // Per-asset-type validation (same logic as ValidateEscrowAsync)
+  FOREACH deposit in agreement.Deposits
+    FOREACH asset in deposit.Assets
+      TRY validate via ICurrencyClient / IItemClient / IContractClient / handler registry
+      CATCH → skip asset (service unavailable, retry next cycle)
+
+  IF failures found AND status != Releasing
+    SET agreement.PreFailureStatus = current status
+    SET agreement.Status = ValidationFailed
+    ADD failures to agreement.ValidationFailures
+    ETAG-WRITE escrow-agreements:agreement:{escrowId}
+    DELETE/WRITE status-index
+    PUBLISH escrow.validation.failed { escrowId, failures, detectedAt }
+
+  // Update NextValidationDue regardless of outcome
+  WRITE escrow-active-validation:validate:{escrowId} <- { NextValidationDue: now + interval, LastValidatedAt: now }
 ```
 
 ---

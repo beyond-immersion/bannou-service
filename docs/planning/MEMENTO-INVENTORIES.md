@@ -137,7 +137,7 @@ Not every event generates a memento. A threshold prevents trivial events from cl
 | **Betrayal** | Contract significance, relationship depth, consequences | Most breaches are minor; only dramatic betrayals register |
 | **Oath** | Contract significance, parties' status, consequences of breach | Only binding vows with real stakes |
 
-The god-actor or event brain overseeing the location evaluates significance and decides whether to generate a memento. This is an ABML behavior decision, not a hardcoded rule -- different gods weight different event types differently. Ares generates combat mementos more readily. Moira generates emotional mementos at lower thresholds. Thanatos generates death mementos for almost every death in locations under his watch.
+The god-actor or event brain overseeing the location evaluates significance and decides whether to generate a memento. This is an ABML behavior decision, not a hardcoded rule -- different gods weight different event types differently. A war-domain god generates combat mementos more readily. Moira generates emotional mementos at lower thresholds. A death-domain god generates death mementos for almost every death in locations under its watch.
 
 ---
 

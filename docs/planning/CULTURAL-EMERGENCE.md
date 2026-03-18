@@ -154,7 +154,7 @@ Once crystallized, a settlement identity is self-reinforcing but not permanent:
 
 **Drift conditions**: If the objective basis changes (mines run dry, trade routes shift, a plague kills the fishing fleet), the divine actor's next evaluation may find the identity no longer fits. The response is not instant replacement but gradual erosion -- Hearsay confidence decays as the belief stops matching observed reality, and NPCs who can see the discrepancy begin to doubt. Eventually the old identity fades and conditions are ripe for a new one.
 
-**Contested identity**: Two divine actors with different aesthetic preferences might disagree on what a settlement "is." A settlement with both mining and farming might receive "mining town" from Typhon and "agricultural commune" from Silvanus. The resolution is Hearsay propagation competition -- whichever identity has stronger objective support and more believers wins the cultural consensus. This is emergent conflict, not hardcoded resolution.
+**Contested identity**: Two divine actors with different aesthetic preferences might disagree on what a settlement "is." A settlement with both mining and farming might receive "mining town" from a monster-domain god and "agricultural commune" from a nature-domain god. The resolution is Hearsay propagation competition -- whichever identity has stronger objective support and more believers wins the cultural consensus. This is emergent conflict, not hardcoded resolution.
 
 ---
 
@@ -318,17 +318,17 @@ Different divine actors produce different cultural flavors from the same objecti
 
 | God | Cultural Aesthetic | Custom Tendency |
 |---|---|---|
-| **Moira / Fate** | Cyclical, ritual, emphasizes transitions | Elaborate ceremony, prophecy elements, destiny-themed gifts |
-| **Silvanus / Forest** | Natural, organic, seasonal | Nature-aligned gifts, seasonal timing, outdoor ceremonies |
-| **Ares / War** | Martial, trial-based, proving | Combat trial prerequisite, weapon gifts, oath-taking |
-| **Hermes / Commerce** | Practical, transactional, social | Practical gifts, market-timed ceremonies, community-funded |
-| **Thanatos / Death** | Somber, memorial, ancestral | Ancestor-honoring elements, inheritance themes, remembrance |
-| **Typhon / Monsters** | Survival, danger-aware, protective | Protective gifts, danger-awareness customs, warding traditions |
+| **Moira (Fate)** | Cyclical, ritual, emphasizes transitions | Elaborate ceremony, prophecy elements, destiny-themed gifts |
+| **A nature-domain god** | Natural, organic, seasonal | Nature-aligned gifts, seasonal timing, outdoor ceremonies |
+| **A war-domain god** | Martial, trial-based, proving | Combat trial prerequisite, weapon gifts, oath-taking |
+| **A commerce-domain god** | Practical, transactional, social | Practical gifts, market-timed ceremonies, community-funded |
+| **A death-domain god** | Somber, memorial, ancestral | Ancestor-honoring elements, inheritance themes, remembrance |
+| **A monster-domain god** | Survival, danger-aware, protective | Protective gifts, danger-awareness customs, warding traditions |
 
 The same fishing village might develop:
-- Under Silvanus: A dawn ceremony where children weave their first net from sacred reeds and cast it into the sea as an offering
-- Under Hermes: A practical affair where the guild master presents a quality net and the child's first market stall assignment
-- Under Ares: A trial where the child must catch their first fish alone in open water before receiving their adult name
+- Under a nature-domain god: A dawn ceremony where children weave their first net from sacred reeds and cast it into the sea as an offering
+- Under a commerce-domain god: A practical affair where the guild master presents a quality net and the child's first market stall assignment
+- Under a war-domain god: A trial where the child must catch their first fish alone in open water before receiving their adult name
 
 **The settlement's identity is the same. The cultural expression varies by divine personality.** This is not randomness -- it is the aesthetic preference of whichever god's domain encompasses the settlement, producing different but equally valid cultural expressions of the same material reality.
 

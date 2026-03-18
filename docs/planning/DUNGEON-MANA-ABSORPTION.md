@@ -382,7 +382,7 @@ A sustainable tourism dungeon near a settlement creates a local economy:
 - **The dungeon** gets steady mana income and grows slowly but consistently
 - **The dungeon master** (if bonded) mediates between the dungeon and the settlement
 
-This is the "dungeon town" trope (Dungeon Meshi, DanMachi, Made in Abyss) emergent from economic mechanics. No service needs to implement "dungeon towns" -- the NPC GOAP economy discovers the symbiosis naturally. Hermes/Commerce (regional watcher god) might even facilitate the arrangement through divine economic intervention.
+This is the "dungeon town" trope (Dungeon Meshi, DanMachi, Made in Abyss) emergent from economic mechanics. No service needs to implement "dungeon towns" -- the NPC GOAP economy discovers the symbiosis naturally. A commerce-domain god (regional watcher) might even facilitate the arrangement through divine economic intervention.
 
 ### The Arms Race
 
@@ -413,7 +413,7 @@ The mechanic is compelling only if players have meaningful counterplay. Resistan
 |--------|-----------|--------|
 | **Mana shield spells** | Spellcaster maintains an active barrier against the drain | Continuous mana expenditure to resist the drain (fighting drain with drain) |
 | **Group resistance aura** | Healer/support character projects a pneuma shell extension | Party-wide drain reduction while the aura is maintained |
-| **Divine blessings** | God-actor grants temporary absorption resistance | Status effect: "Blessed of Silvanus" -- nature's pneuma resists dungeon fields |
+| **Divine blessings** | God-actor grants temporary absorption resistance | Status effect: "Blessed by the nature god" -- nature's pneuma resists dungeon fields |
 | **Dungeon master aid** | Bonded master can suppress absorption for specific individuals | The master allows their allies to enter with reduced drain |
 
 ### Recovery

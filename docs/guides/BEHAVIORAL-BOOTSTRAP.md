@@ -20,7 +20,7 @@ But no single service owns the cross-cutting orchestration: "a character dies, t
 
 Building a "gameplay orchestrator" plugin would be architecturally wrong because it would:
 
-- **Centralize logic that should vary per deity, per realm, per game**: Moira (Fate) and Ares (War) evaluate the same death differently. A centralized orchestrator can't express this without becoming a god-object.
+- **Centralize logic that should vary per deity, per realm, per game**: Moira (Fate) and a war-domain god evaluate the same death differently. A centralized orchestrator can't express this without becoming a god-object.
 - **Create a dependency magnet**: Every service would depend on it or be depended upon by it. The service hierarchy would collapse.
 - **Make orchestration logic unmodifiable without code changes**: Adding a new god, changing how deaths are processed, or altering the flywheel pathway would require service code changes.
 - **Violate "Emergent Over Authored"**: The fifth design principle says content should emerge from autonomous systems interacting, not from scripted triggers. A gameplay loop plugin IS a scripted trigger.
@@ -210,7 +210,7 @@ actions:
           narrativeHints: { type: "${narrative_type}" }
 ```
 
-The key insight: **different gods evaluate the same death differently**. Thanatos (Death) cares about the manner of death. Silvanus (Forest) cares about the character's relationship with nature. Ares (War) cares about combat accomplishments. The same archive produces different narratives through different god-actors.
+The key insight: **different gods evaluate the same death differently**. A death-domain god cares about the manner of death. A nature-domain god cares about the character's relationship with nature. A war-domain god cares about combat accomplishments. The same archive produces different narratives through different god-actors.
 
 ---
 
@@ -422,7 +422,7 @@ The behavioral bootstrap pattern is deliberately **not** a service because:
 
 3. **GOAP is the universal planner.** The same A* search over action spaces that plans NPC combat also plans narrative orchestration. "Should I commission a quest from this archive?" is a GOAP goal evaluation, not a service endpoint.
 
-4. **Independent variation.** Each god has its own behavior document. Moira and Ares produce different orchestration strategies from the same events. A "gameplay loop" plugin would need configuration flags for every variation. Behavior documents express variation naturally through different ABML code.
+4. **Independent variation.** Each god has its own behavior document. Moira and a war-domain god produce different orchestration strategies from the same events. A "gameplay loop" plugin would need configuration flags for every variation. Behavior documents express variation naturally through different ABML code.
 
 5. **The Actor is already there.** Actor (L2) already runs 100,000+ concurrent cognitive processes. Adding a few dozen god-actors is negligible overhead. No new infrastructure needed.
 

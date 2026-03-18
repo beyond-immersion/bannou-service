@@ -210,7 +210,7 @@ Deer near Wolf Den (location-specific override):
 
 ### Why Location-Level Matters
 
-Location overrides enable **emergent ecological storytelling**. A deity actor (Silvanus/Forest watcher) could register overrides through its behavior:
+Location overrides enable **emergent ecological storytelling**. A deity actor (e.g., a nature-domain god) could register overrides through its behavior:
 
 ```yaml
 # Regional watcher behavior: after a wolf pack moves into the forest
@@ -442,7 +442,7 @@ flows:
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-actor (L2) | Actor discovers `NatureProviderFactory` via `IEnumerable<IVariableProviderFactory>` DI injection; creates provider instances per entity for ABML behavior execution (`${nature.*}` variables). When nature provider is unavailable, actors continue with behavior document defaults (existing graceful degradation). |
-| lib-puppetmaster (L4) | Regional watcher behaviors (god-of-monsters, Silvanus/Forest) can create and modify environmental overrides through ABML actions, dynamically adjusting creature behavior in their territories. Overrides are the mechanism through which gods shape local ecology. |
+| lib-puppetmaster (L4) | Regional watcher behaviors (e.g., monster-domain or nature-domain gods) can create and modify environmental overrides through ABML actions, dynamically adjusting creature behavior in their territories. Overrides are the mechanism through which gods shape local ecology. |
 | lib-character-lifecycle (L4) | Character-Lifecycle's Heritage Engine defines per-individual genetic traits; Ethology provides the species baseline that Heritage refines. The two services are complementary: Heritage provides NATURE for characters specifically; Ethology provides NATURE for everything. |
 | lib-actor (L2, creature behaviors) | Creature ABML behavior documents (`creature_base.yaml`, combat behaviors, territorial behaviors) reference `${nature.*}` variables for species-appropriate decision making. Without ethology, these variables return null and behaviors fall back to hardcoded defaults. |
 | lib-disposition (L4, planned) | Disposition's drive formation could use `${nature.*}` as input for species-influenced drive tendencies. A species with high `curiosity` baseline might have a higher probability of forming `explore_world` drives. Future extension. |
@@ -881,7 +881,7 @@ When a dungeon spawns a creature, the creature needs behavioral defaults. lib-et
 
 5. **Creature mood system**: A lightweight analogue to Disposition for creatures. Recent events (successful hunt, injury, pack member death) apply temporary modifiers to nature axes. Implemented as short-TTL Redis overrides scoped to individual entities. More than static nature, less than full Disposition. Blurs the line between nature and state -- use judiciously.
 
-6. **ABML action for override registration**: Regional watcher behaviors could register/modify overrides via ABML actions (`register_ethology_override`, `remove_ethology_override`). This lets god actors dynamically shape ecology: "Silvanus blesses this forest, reducing creature aggression" or "Typhon's corruption spreads, increasing monster aggression." Implemented as Puppetmaster-provided ABML action handlers that call Ethology API.
+6. **ABML action for override registration**: Regional watcher behaviors could register/modify overrides via ABML actions (`register_ethology_override`, `remove_ethology_override`). This lets god actors dynamically shape ecology: "a nature-domain god blesses this forest, reducing creature aggression" or "a monster-domain god's corruption spreads, increasing monster aggression." Implemented as Puppetmaster-provided ABML action handlers that call Ethology API.
 
 7. **Migration behavior from override changes**: When a realm-level override makes an area significantly more hostile, creatures with low `fear_threshold` might migrate to adjacent locations. This is a behavior-level response (ABML document checks `${nature.fear_threshold}` against perceived danger), not a service-level feature -- but the override system provides the data that makes migration decisions meaningful.
 

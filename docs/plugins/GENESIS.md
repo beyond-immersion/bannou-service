@@ -30,10 +30,15 @@ Game engine / NPC / background worker credits a currency wallet
     ↓
 Currency fires ICurrencyTransactionListener (DI, local — L2 co-located)
     ↓
-Genesis receives notification
-    ↓ Checks: is this wallet genesis-managed? → load entity → load template
-    ↓ Applies growth mapping: amount × ratio → seed domain growth
-    ↓ Calls Seed.RecordGrowth (internal — seed never exposed externally)
+Genesis listener: in-memory ConcurrentDictionary<walletId, WalletMapping> check
+    ↓ Miss (not genesis-managed): return immediately (~microseconds)
+    ↓ Hit: buffer credit in ConcurrentDictionary<entityId, GrowthAccumulator>
+    ↓
+GenesisGrowthFlushWorkerService (periodic, every GrowthFlushIntervalSeconds)
+    ↓ Drain accumulator atomically
+    ↓ Group by entityId
+    ↓ Per entity: apply template growth mappings (amount × ratio, direction filter)
+    ↓ Call Seed.RecordGrowthBatch once per entity (batched — NOT per-credit)
     ↓
 Seed fires ISeedEvolutionListener (DI, local — L2 co-located)
     ↓
@@ -48,6 +53,10 @@ Domain plugin (if any) subscribes to event, performs domain-specific work
 
 The entire lifecycle from "resource accumulates" to "entity awakens" runs through DI listeners. Both `ICurrencyTransactionListener` and `ISeedEvolutionListener` are L2 interfaces with guaranteed co-location. Both listeners write to distributed state (MySQL entity records, Seed growth records), satisfying multi-node safety requirements.
 
+**In-memory wallet map**: Genesis maintains a `ConcurrentDictionary<Guid, GenesisWalletMapping>` mapping `walletId → (entityId, templateCode, growthMappings[])`. Populated at startup from MySQL, updated on entity create/destroy, invalidated via self-subscription to `genesis.entity.created`/`genesis.entity.deleted` events for multi-node coherence. This is the same pattern as Currency's `ICurrencyDataCache` — in-memory, populated from state store, event-invalidated.
+
+**Batched growth flush**: Multiple currency credits to the same entity between flush cycles are consolidated into a single `Seed.RecordGrowthBatch` call. This reduces Seed lock contention by orders of magnitude at scale (one lock acquisition per entity per flush, not per wallet credit). A 5-10 second flush interval is invisible for entities whose growth phases span hours/days of accumulated experience. The interval is configurable via `GrowthFlushIntervalSeconds`.
+
 ### ICurrencyTransactionListener (New DI Interface)
 
 Defined in `bannou-service/Providers/`:
@@ -58,7 +67,7 @@ ICurrencyTransactionListener
     OnCurrencyDebited(walletId, currencyCode, amount, newBalance, cancellationToken)
 ```
 
-Currency (L2) discovers implementations via `IEnumerable<ICurrencyTransactionListener>` and fires after any wallet mutation. Genesis implements this interface to apply growth mappings on credits. Follows the same DI Listener pattern as `ISeedEvolutionListener`, `ICollectionUnlockListener`, and `IItemInstanceDestructionListener`.
+Currency (L2) discovers implementations via `IEnumerable<ICurrencyTransactionListener>` and fires after any wallet mutation. Genesis implements this interface, but does NOT process growth synchronously — it checks an in-memory wallet map (~microseconds) and buffers matched credits for the growth flush worker. Follows the same DI Listener pattern as `ISeedEvolutionListener`, `ICollectionUnlockListener`, and `IItemInstanceDestructionListener`.
 
 ### The Three Cognitive Stages
 
@@ -359,13 +368,15 @@ Chest opened (game engine):
 | lib-collection (`ICollectionClient`) | Knowledge/experience tracking via Collection grants (L2) |
 | lib-resource (`IResourceClient`) | Reference tracking, cleanup callback registration, archival for content flywheel (L1) |
 | lib-relationship (`IRelationshipClient`) | Bond creation/dissolution for simple Relationship-based bonds (L2) |
+| lib-realm (`IRealmClient`) | System realm existence and `isSystemType` validation at template registration and awakening (L2) |
+| lib-species (`ISpeciesClient`) | Species existence validation in system realm at template registration and awakening (L2) |
 | lib-game-service (`IGameServiceClient`) | Game service scoping validation (L2) |
 
 ### DI Listener Implementations (no event subscriptions)
 
 | Interface | Source | Genesis Reaction |
 |-----------|--------|-----------------|
-| `ICurrencyTransactionListener` (new) | Currency (L2) | Look up wallet → entity → template → growth mapping. Record seed growth per ratio and direction filter. |
+| `ICurrencyTransactionListener` (new) | Currency (L2) | In-memory wallet map check (~microseconds). Miss = return. Hit = buffer credit in growth accumulator. Growth flush worker drains accumulator periodically and calls Seed.RecordGrowthBatch per entity. |
 | `ISeedEvolutionListener` (existing) | Seed (L2) | Look up seed → entity → template. Handle cognitive stage transition: spawn actor (Stirring), create character + bind (Awakened). Publish `genesis.entity.phase-changed`. |
 
 ---
@@ -448,6 +459,7 @@ Chest opened (game engine):
 | `genesis.entity.phase-changed` | `GenesisEntityPhaseChangedEvent` | Cognitive stage transition processed. Includes entityId, templateCode, phaseName, cognitiveStage, actorId (if spawned), characterId (if created). This is the primary event domain plugins subscribe to. |
 | `genesis.entity.bond-created` | `GenesisEntityBondCreatedEvent` | Bond formed between entity and target |
 | `genesis.entity.bond-dissolved` | `GenesisEntityBondDissolvedEvent` | Bond removed |
+| `genesis.entity.transition-failed` | `GenesisEntityTransitionFailedEvent` | Cognitive stage transition could not complete. Includes entityId, templateCode, targetPhase, targetCognitiveStage, failureReason (e.g., "System realm 'DUNGEON_CORES' no longer exists"). Entity remains at current stage; no growth lost. Operators monitor this event for infrastructure issues. |
 
 ### Consumed Events
 
@@ -481,6 +493,7 @@ Genesis entities linked to characters (via characterId at Awakened phase) are ar
 | `EntityLockTimeoutSeconds` | `GENESIS_ENTITY_LOCK_TIMEOUT_SECONDS` | `30` | Timeout for entity mutation distributed locks (range: 5-120) |
 | `DefaultPageSize` | `GENESIS_DEFAULT_PAGE_SIZE` | `20` | Default page size for paginated queries (range: 1-100) |
 | `CleanupBatchSize` | `GENESIS_CLEANUP_BATCH_SIZE` | `100` | Number of entities to process per batch during cleanup (range: 10-1000) |
+| `GrowthFlushIntervalSeconds` | `GENESIS_GROWTH_FLUSH_INTERVAL_SECONDS` | `5` | Interval between growth accumulator flush cycles. Lower = more responsive phase transitions but more Seed lock acquisitions. Higher = more efficient batching but more growth latency. At 5s default, entities growing over game-hours/days see no perceptible delay. (range: 1-60) |
 
 ---
 
@@ -634,7 +647,7 @@ flows:
 
 Templates are Category B deprecation entities (persist forever, no delete).
 
-- **RegisterTemplate** (`/genesis/template/register`): Registers a new genesis template. Validates seed domain/phase configuration, wallet codes, growth mapping references, and system realm existence. Idempotent by `templateCode`. Requires `developer` role.
+- **RegisterTemplate** (`/genesis/template/register`): Registers a new genesis template. Validates seed domain/phase configuration, wallet codes, growth mapping references. Validates `awakening.systemRealmCode` exists and is a system realm (`isSystemType: true`) via `IRealmClient`, and `awakening.characterSpeciesCode` exists in that realm via `ISpeciesClient` — returns BadRequest with clear messages if either is missing (fail-fast, follows the universal L2 realm validation pattern used by lib-location, lib-species, lib-character, lib-faction). Idempotent by `templateCode`. Requires `developer` role.
 - **GetTemplate** (`/genesis/template/get`): Returns template by code.
 - **ListTemplates** (`/genesis/template/list`): Paginated listing with `includeDeprecated` filter (default: false).
 - **UpdateTemplate** (`/genesis/template/update`): Updates template configuration. Does not affect existing entities (they snapshot template config at creation). Requires `developer` role.
@@ -657,9 +670,9 @@ Templates are Category B deprecation entities (persist forever, no delete).
 
 Simple Relationship-based bonds only. Complex bonds (Dungeon's Contract-based dual mastery) stay in domain plugins.
 
-- **CreateBond** (`/genesis/entity/create-bond`): Creates a Relationship between the entity and a target. Uses entity's `characterId` if awakened, or `entityId` reference if dormant. Validates entity state and bond cardinality from template. Input: `targetEntityType`, `targetEntityId`.
+- **CreateBond** (`/genesis/entity/create-bond`): Stores bond intent on the entity record (`bondTargetEntityType`, `bondTargetEntityId`). Validates target entity exists (via appropriate client for target entity type), validates bond cardinality from template, and validates entity doesn't already have a bond (for `OptionalOne`/`RequiredOne`). If entity is already Awakened (has `characterId`), also creates the Relationship immediately via `IRelationshipClient` using `(characterId, Character) ↔ (targetEntityType, targetEntityId)` with the template's `relationshipTypeCode`, and sets `bondId`. If pre-awakened, `bondId` remains null — the Relationship is created automatically at the Awakened phase transition. Publishes `genesis.entity.bond-created`. Input: `targetEntityType`, `targetEntityId`.
 - **GetBond** (`/genesis/entity/get-bond`): Returns active bond for entity.
-- **DissolveBond** (`/genesis/entity/dissolve-bond`): Removes bond (Relationship deletion). Publishes `genesis.entity.bond-dissolved`.
+- **DissolveBond** (`/genesis/entity/dissolve-bond`): Clears bond fields on entity record (`bondTargetEntityType`, `bondTargetEntityId`, `bondId`). If entity has a `bondId` (Relationship was created — i.e., entity is Awakened), also deletes the Relationship via `IRelationshipClient`. Publishes `genesis.entity.bond-dissolved`.
 
 ### Resource Cleanup (2 endpoints)
 
@@ -708,11 +721,17 @@ All endpoints are internal-only (`x-permissions: []`) except:
 
 - **Seed is fully encapsulated**: The seedId never appears in any Genesis API response. Callers cannot discover genesis-managed seedIds through Genesis. All growth flows through currency wallet credits. This is a deliberate architectural choice: the seed is an implementation detail of the awakening lifecycle, not a public contract. **Exception**: When the caller provides an external seedId via the nullable `seedId` on create (see Potential Extensions), the caller already holds the seedId because they created it — Genesis doesn't leak it, the caller brought it. This enables domain plugins (e.g., Divine) to create Seed bonds on genesis-managed seeds without Genesis exposing internal state.
 
-- **ICurrencyTransactionListener is local-only**: Genesis relies on DI listeners, not event subscriptions. This is safe because Currency and Genesis are both L2 and guaranteed co-located. If a future deployment mode separates L2 services across nodes, this would need to be revisited with event subscription as a fallback.
+- **Internally-created seeds use `OwnerType: Other, OwnerId: entityId`**: Genesis creates its encapsulated seeds with `EntityType.Other` and the genesis entityId as the owner. This is consistent across all entity types (items, locations, `PhysicalFormType.None`), available at creation time (before `BindPhysicalForm`), and invisible to external consumers. The standard `${seed.*}` variable provider queries by `OwnerType: Character` and would never find genesis seeds regardless — genesis entities use `${genesis.*}` for ABML variables instead. For externally-adopted seeds (nullable `seedId` on create), the caller's chosen ownerType is preserved; Genesis doesn't modify it.
+
+- **ICurrencyTransactionListener is local-only with in-memory filtering**: Genesis relies on DI listeners, not event subscriptions. The listener checks an in-memory `ConcurrentDictionary<walletId, WalletMapping>` (~microseconds, no network I/O) and buffers matched credits for the periodic growth flush worker. This is safe because Currency and Genesis are both L2 and guaranteed co-located — the co-location is analogous to HFT firms co-locating with exchange servers for microsecond data delivery. Each node's in-memory wallet map is populated from the same MySQL state and invalidated via self-subscription events for multi-node coherence. If a future deployment mode separates L2 services across nodes, this would need to be revisited with event subscription as a fallback.
+
+- **Growth is batched, not per-transaction**: The `GenesisGrowthFlushWorkerService` drains the growth accumulator every `GrowthFlushIntervalSeconds` (default: 5s) and calls `Seed.RecordGrowthBatch` once per entity. This means growth from multiple wallet credits within a flush interval is consolidated into a single Seed operation. Phase transitions are detected in the batched response and handled normally. The 5-10 second delay between wallet credit and seed growth recording is invisible for entities whose growth phases span hours/days of accumulated experience.
 
 - **Template configuration is snapshot at entity creation**: Updating a template does not retroactively change existing entities. Each entity captures the template's seed domains, phases, wallet definitions, and growth mappings at creation time. This prevents configuration drift from affecting in-progress entity lifecycles.
 
 - **Debit-driven growth is supported but unusual**: Growth mappings can specify `direction: Debit` or `direction: Both`, meaning spending currency can also drive growth. Example: a dungeon that grows stronger as it spends mana to spawn creatures (learning from the act of creation). This is intentionally supported but should be used with care to avoid feedback loops.
+
+- **Bonds are deferred until awakening**: `CreateBond` stores bond intent on the Genesis entity record but does NOT create a Relationship in lib-relationship until the entity reaches CharacterBrain stage. Pre-awakening, `${genesis.bond.*}` variables (active, targetId, targetType) are available from the Genesis record — sufficient for `emit_perception:` targeting (RabbitMQ topic routing is not Relationship-dependent). At awakening, the Relationship is created automatically using the entity's new `characterId`. Calling `CreateBond` on an already-Awakened entity creates the Relationship immediately (no deferral). Consumers checking `bondId != null` can distinguish "bond exists as intent only" (`bondId == null`, bond fields populated) from "bond materialized as Relationship" (`bondId != null`).
 
 - **Actor spawning without Puppetmaster**: Genesis spawns actors directly via Actor (L2), bypassing Puppetmaster (L4). This means genesis-managed actors don't benefit from Puppetmaster's dynamic behavior hot-reload, processing pool management, or regional watcher coordination. This is correct: genesis-managed entities have fixed behaviors (per template phase) and are entity-bound, not task-bound.
 
@@ -720,15 +739,15 @@ All endpoints are internal-only (`x-permissions: []`) except:
 
 ### Design Considerations (Requires Planning)
 
-- **ICurrencyTransactionListener interface scope**: The proposed interface fires on ALL currency transactions, not just genesis-managed wallets. Genesis must filter to its own wallets via the `entity-wallet:{walletId}` reverse index. At scale with many non-genesis wallets, this creates unnecessary listener invocations. Options: (a) accept the overhead (filter is a fast Redis lookup), (b) Currency provides a scoped listener registration mechanism, (c) Genesis uses event subscription with topic filtering instead of DI listener.
+- ~~**ICurrencyTransactionListener interface scope**~~: **RESOLVED** — Genesis uses an in-memory `ConcurrentDictionary<walletId, WalletMapping>` for O(1) filtering (~microseconds, no network I/O), populated from MySQL at startup and invalidated via self-subscription events. Non-genesis wallets are discarded in microseconds. Matched credits are buffered in a growth accumulator, flushed periodically by `GenesisGrowthFlushWorkerService` which calls `Seed.RecordGrowthBatch` once per entity per flush interval. This eliminates both the filtering overhead concern (in-memory vs Redis) and the processing volume concern (batched vs per-transaction). At 100K wallets, the listener adds ~30ms of ConcurrentDictionary lookups per autogain tick (vs ~9 seconds with Redis lookups). The batched flush reduces Seed lock acquisitions from one-per-wallet-credit to one-per-entity-per-flush-interval, a 10-20x reduction in state store operations. See § Core Mechanics for the full design.
 
-- **System realm provisioning**: Templates reference system realm codes (`DUNGEON_CORES`, `SENTIENT_ARMS`, `SENTIENT_CONTAINERS`). These realms must be seeded before entities can awaken. Genesis should validate realm existence at template registration time and provide clear error messages. Whether Genesis provisions the realms itself or requires them to be pre-seeded is a deployment design question.
+- ~~**System realm provisioning**~~: **RESOLVED** — Genesis validates but never auto-creates. System realms are pre-seeded configuration (established by Divine, Dungeon #667, and every L2 service). **At template registration**: Genesis calls `IRealmClient.GetRealmAsync` to verify the `awakening.systemRealmCode` exists AND is a system realm (`isSystemType: true`), and calls `ISpeciesClient.GetSpeciesAsync` to verify `awakening.characterSpeciesCode` exists in that realm. Returns BadRequest with clear messages if either is missing ("System realm '{code}' does not exist or is not a system realm. Create it via `/realm/seed` with `isSystemType: true` before registering templates that reference it."). **At awakening**: Re-validates both as defense-in-depth against post-registration deletion. If validation fails, the entity remains at EventBrain stage (no growth loss), logs Error, and publishes `genesis.entity.transition-failed` with the failure reason. This follows the universal L2 pattern — lib-location, lib-species, lib-character, lib-faction, and lib-worldstate all validate realm existence via `IRealmClient` before creating realm-scoped entities.
 
-- **Bond before awakening**: The bond endpoint needs to handle pre-awakened entities (no characterId yet). Options: (a) require awakening before bonding, (b) create a Relationship using the entityId with a custom reference pattern, (c) store the bond intent and establish the Relationship when the character is created. Option (c) is most flexible but adds complexity.
+- ~~**Bond before awakening**~~: **RESOLVED** — Option (c): deferred Relationship creation. `CreateBond` at any cognitive stage stores bond intent on the Genesis entity record (`bondTargetEntityType`, `bondTargetEntityId`); `bondId` remains null (no Relationship yet). The `${genesis.bond.*}` variable provider (active, targetId, targetType) serves from the Genesis record and is available immediately at all stages — sufficient for pre-awakening communication via `emit_perception:` (RabbitMQ topic routing, not Relationship-dependent). At Awakened phase transition, Genesis creates the actual Relationship using `(characterId, Character) ↔ (bondTargetEntityId, bondTargetEntityType)` with the template's `relationshipTypeCode`, then sets `bondId`. The `${relationship.*}` variable provider activates on next tick with full relationship data (sentiment, bond depth). `DissolveBond` pre-awakened clears Genesis record fields; post-awakened also deletes the Relationship. Option (a) (require awakening) was ruled out because ACTOR-BOUND-ENTITIES specifies weapon wielder bonds at equip time, and Stirring-stage actors need `${genesis.bond.targetId}` for perception injection. Option (b) (physical form reference + migration) was ruled out because it creates temporary Relationships that get deleted and recreated at awakening, doesn't work for `PhysicalFormType.None` entities, and adds migration complexity to the transition flow.
 
-- **Multi-wallet growth mapping conflicts**: If multiple wallets map to the same seed domain, their growth contributions are additive. This is likely correct (a dungeon with both ambient and harvested mana growing `mana_reserves`), but should be documented and validated at template registration time to prevent accidental double-counting.
+- ~~**Multi-wallet growth mapping conflicts**~~: **RESOLVED** — Additive growth from multiple wallets to the same domain IS the design intent (a dungeon with ambient + harvested mana both feeding `mana_reserves`). Template authoring is a deliberate act by `developer`-role users; each mapping line is an explicit declaration. No warnings or opt-in flags — they would fire for every correctly-authored dungeon template. `RegisterTemplate` validates structural errors only: (1) every `growthMapping[].walletCode` references a wallet defined in `wallets[]`, (2) every `growthMapping[].domain` references a domain defined in `seed.domains[]`, (3) no exact duplicate `(walletCode, domain, direction)` triples (catches copy-paste errors). Different wallets mapping to the same domain at different ratios is intentional composition, not a conflict.
 
-- **Concurrent ICurrencyTransactionListener processing**: If Currency's autogain worker credits many wallets rapidly, Genesis processes them sequentially through the DI listener. At 10K+ genesis entities with autogain, this could create back-pressure. The listener should be fast (Redis lookup + Seed.RecordGrowth) but needs performance profiling at scale.
+- ~~**Concurrent ICurrencyTransactionListener processing**~~: **RESOLVED** — The batched growth flush design eliminates this concern entirely. The DI listener itself is microsecond-fast (in-memory map check + buffer write to a ConcurrentDictionary). The heavy Seed work (lock acquisition, growth recording, phase checks) happens asynchronously in the flush worker, which processes all accumulated growth for each entity in a single `Seed.RecordGrowthBatch` call. Even at 100K wallets with 30K autogain-enabled, the listener adds negligible overhead to Currency's autogain cycle. See the resolved DC-1 and § Core Mechanics for the full design.
 
 ---
 

@@ -73,6 +73,11 @@ internal class EscrowAgreementModel
     public RefundMode RefundMode { get; set; } = RefundMode.Immediate;
     public List<ReleaseConfirmationModel>? ReleaseConfirmations { get; set; }
     public DateTimeOffset? ConfirmationDeadline { get; set; }
+    /// <summary>
+    /// Status before validation failure, used to restore correct state after reaffirmation.
+    /// Set when transitioning to ValidationFailed from any funded state.
+    /// </summary>
+    public EscrowStatus? PreFailureStatus { get; set; }
 }
 
 /// <summary>

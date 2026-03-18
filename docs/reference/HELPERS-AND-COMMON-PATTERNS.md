@@ -3,6 +3,8 @@
 > **Purpose**: A guide to shared helpers, common patterns, and test validators available in `bannou-service/` and `test-utilities/`. This is **not a rules document** — tenets define what you MUST do; this document shows you what's available to help you do it well.
 >
 > **When to Reference**: When implementing a new plugin, writing tests, or looking for an existing helper before writing custom code.
+>
+> **Companion Document**: [BANNOU-DEEP-DIVE.md](../BANNOU-DEEP-DIVE.md) maps every subsystem in bannou-service (what EXISTS and where to find it). This document shows how to USE it. For subsystems not covered here — ABML execution runtime, cognition pipeline, behavior system interfaces, resource templates — see the deep dive.
 
 ---
 
@@ -23,6 +25,7 @@
 13. [Test Validators](#13-test-validators)
 14. [Miscellaneous Helpers](#14-miscellaneous-helpers)
 15. [Category B Deprecation Template](#15-category-b-deprecation-template)
+16. [Plugin Loading System](#16-plugin-loading-system)
 
 ---
 
@@ -470,6 +473,8 @@ Interfaces in `bannou-service/Providers/` that enable cross-layer communication 
 | `IBehaviorDocumentProvider` | L4→L2 | Actor pulls behavior docs from L4 | Actor runtime |
 | `ISeededResourceProvider` | L2/L3/L4→L1 | Resource discovers embedded resources | Resource service |
 | `ITransitCostModifierProvider` | L4→L2 | Transit pulls cost modifiers from L4 | Transit service |
+| `ILocalizationKeyValidator` | L1→L2+ | Localization validates entity localization keys at creation time | Entity services with localized content |
+| `IServiceMappingReceiver` | L3→L0 | Orchestrator pushes service-to-app routing table updates to mesh | Mesh service |
 
 **Shape**: Interface in `bannou-service/Providers/`, higher layer implements and registers as Singleton, lower layer discovers via `IEnumerable<T>` with graceful degradation.
 
@@ -503,21 +508,27 @@ Interfaces in `bannou-service/Providers/` that enable cross-layer communication 
 Composition helper for `ConcurrentDictionary`-based caches used by Variable Provider implementations. Encapsulates: entry storage, TTL-based expiry, stale-data fallback on load failure, and invalidation.
 
 ```csharp
-// In your cache class constructor:
+// In your cache class constructor — bucket is configured with TTL and telemetry:
 _personalityBucket = new VariableProviderCacheBucket<Guid, PersonalityData>(
-    scopeFactory,
-    async (sp, key, ct) =>
-    {
-        var client = sp.GetRequiredService<ICharacterPersonalityClient>();
-        var (status, response) = await client.GetPersonalityAsync(
-            new GetPersonalityRequest { CharacterId = key }, ct);
-        return status == StatusCodes.OK ? MapToData(response) : null;
-    },
-    TimeSpan.FromMinutes(configuration.PersonalityCacheTtlMinutes));
+    TimeSpan.FromMinutes(configuration.PersonalityCacheTtlMinutes),
+    logger,
+    telemetryProvider,
+    "bannou.character-personality",
+    "PersonalityCache");
 
-// Usage:
-var data = await _personalityBucket.GetOrLoadAsync(characterId, ct);
+// Usage — loader function is passed per-call (allows scoped service resolution):
+var data = await _personalityBucket.GetOrLoadAsync(characterId, async ct =>
+{
+    using var scope = _scopeFactory.CreateScope();
+    var client = scope.ServiceProvider.GetRequiredService<ICharacterPersonalityClient>();
+    var (status, response) = await client.GetPersonalityAsync(
+        new GetPersonalityRequest { CharacterId = characterId }, ct);
+    return status == StatusCodes.OK ? MapToData(response!) : null;
+}, ct);
+
+// Invalidation:
 _personalityBucket.Invalidate(characterId);
+_personalityBucket.InvalidateWhere(key => key == characterId);  // predicate-based (composite keys)
 _personalityBucket.InvalidateAll();
 ```
 
@@ -535,10 +546,11 @@ Shared helpers in `bannou-service/History/` used by character-personality, chara
 
 **File**: `bannou-service/History/CompressionHelper.cs`
 
-Decompresses JSON data from lib-resource compression callbacks:
+Decompresses gzipped JSON data from lib-resource compression callbacks. Returns a UTF-8 string — deserialize with `BannouJson`:
 
 ```csharp
-var data = CompressionHelper.DecompressJsonData<MyModel>(compressedBytes);
+var jsonString = CompressionHelper.DecompressJsonData(compressedBytes);
+var data = BannouJson.Deserialize<MyModel>(jsonString);
 ```
 
 ### DualIndexHelper
@@ -614,6 +626,22 @@ Middleware that captures and forwards request context (session IDs, correlation 
 **File**: `bannou-service/ServiceClients/SessionIdForwardingHandler.cs`
 
 HTTP message handler that forwards session IDs through the mesh invocation chain.
+
+### ServiceNavigator & Raw/Prebound API
+
+**Files**: `bannou-service/ServiceClients/IServiceNavigator.cs`, `ServiceNavigator.cs`, `PreboundApiModels.cs`
+
+`IServiceNavigator` aggregates all generated service clients, session context, and raw API execution into a single injectable interface. Used primarily by lib-contract for prebound API execution (executing arbitrary service calls from stored templates).
+
+- **RawApi**: Execute arbitrary JSON payloads against any service endpoint by name
+- **PreboundApi**: Execute stored `PreboundApiDefinition` templates with `{{variable}}` substitution (via `TemplateSubstitutor`), supporting single, sequential, and parallel batch modes
+- **PreboundApiResult**: Three-outcome model (success, validation failure, execution error) with JsonPath-based response validation
+
+### DirectDispatchHelper
+
+**File**: `bannou-service/ServiceClients/DirectDispatchHelper.cs`
+
+Zero-serialization in-process service dispatch for embedded/sidecar deployment mode. When all services run in the same process, mesh calls bypass HTTP serialization and route directly to the service implementation via DI. Used automatically by generated clients when embedded mode is active — plugin code does not interact with this directly.
 
 ---
 
@@ -925,6 +953,8 @@ Helpers for creating test configuration instances in per-plugin unit tests.
 
 ## 14. Miscellaneous Helpers
 
+> For the complete inventory of all bannou-service subsystems (including types listed here and many more), see [BANNOU-DEEP-DIVE.md](../BANNOU-DEEP-DIVE.md).
+
 ### AppConstants
 
 **File**: `bannou-service/AppConstants.cs`
@@ -943,35 +973,11 @@ Shared constants used across the platform. Contains default infrastructure names
 | `ENV_BANNOU_HTTP_ENDPOINT` | `"BANNOU_HTTP_ENDPOINT"` | Env var name for HTTP endpoint (test runners) |
 | `BROADCAST_GUID` | `FFFFFFFF-...` | Special GUID for broadcast messages in Relayed/Internal connection modes |
 
-### ExtensionMethods
-
-**File**: `bannou-service/ExtensionMethods.cs`
-
-General-purpose extension methods used across the codebase.
-
-### TemplateSubstitutor
-
-**File**: `bannou-service/Utilities/TemplateSubstitutor.cs`
-
-Template string substitution for payload templates (e.g., `{{resourceId}}` in `x-references` cleanup payloads).
-
-### ResponseValidator
-
-**File**: `bannou-service/Utilities/ResponseValidator.cs`
-
-Validation helpers for response data.
-
 ### GuidGenerator
 
 **File**: `bannou-service/Protocol/GuidGenerator.cs`
 
-Shared GUID generation with deterministic/shared modes for multi-instance safety. Security-critical: use `GetSharedServerSalt()` (never per-instance random generation).
-
-### IEmailService
-
-**Files**: `bannou-service/Services/IEmailService.cs`, `ConsoleEmailService.cs`, `SendGridEmailService.cs`, `SesEmailService.cs`, `SmtpEmailService.cs`
-
-Email abstraction with multiple backend implementations.
+Client-salted GUID generation with version-tagged UUIDs (v5 for services, v7 for shortcuts). SHA256-based, deterministic for same inputs. Security-critical: server salt MUST come from configuration via `GetSharedServerSalt()` (never per-instance random generation).
 
 ### IMeshInstanceIdentifier
 
@@ -979,17 +985,11 @@ Email abstraction with multiple backend implementations.
 
 Provides the process-stable instance identity for error events and distributed debugging. Priority: `MESH_INSTANCE_ID` env var > `--force-service-id` CLI > random GUID (stable for process lifetime).
 
-### IPermissionRegistry
+### IEmailService
 
-**File**: `bannou-service/Services/IPermissionRegistry.cs`
+**Files**: `bannou-service/Services/IEmailService.cs`, `ConsoleEmailService.cs`, `SendGridEmailService.cs`, `SesEmailService.cs`, `SmtpEmailService.cs`
 
-Interface for services to register their permission matrices at startup.
-
-### IServiceAppMappingResolver
-
-**File**: `bannou-service/Services/IServiceAppMappingResolver.cs`
-
-Resolves service names to app-ids for mesh routing.
+Email abstraction with multiple backend implementations (Console for dev, SendGrid/SES/SMTP for production).
 
 ---
 
@@ -1390,6 +1390,43 @@ The `hasInstancesAsync` delegate and `DeprecationCleanupHelper` are completely a
 | `isActive` field for deprecation | `isActive` is a separate concept (admin disable); deprecation is `isDeprecated` |
 | Service-specific request/response for clean-deprecated | Use shared `CleanDeprecatedRequest`/`CleanDeprecatedResponse` from `common-api.yaml` |
 | Custom cleanup loop without `DeprecationCleanupHelper` | Use the helper for standardized error isolation, grace period, and logging (B20) |
+
+---
+
+## 16. Plugin Loading System
+
+> For the complete PluginLoader internals (~1,800 lines) and full lifecycle details, see [BANNOU-DEEP-DIVE.md](../BANNOU-DEEP-DIVE.md) §7.
+
+### Plugin Base Classes
+
+**Files**: `bannou-service/Plugins/IBannouPlugin.cs`, `BaseBannouPlugin.cs`, `StandardServicePlugin.cs`
+
+| Base Class | When to Use |
+|-----------|------------|
+| `StandardServicePlugin<TService>` | Standard plugins — eliminates all lifecycle boilerplate |
+| `BaseBannouPlugin` | Custom lifecycle hooks (rare — only when `ConfigureServices` needs special logic) |
+
+Most plugins inherit `StandardServicePlugin<TService>` and override nothing. The base handles DI registration, lifecycle, and service resolution.
+
+### Plugin Lifecycle
+
+`PluginLoader` orchestrates a strict lifecycle across all loaded plugins:
+
+1. **Assembly Discovery** — scans `plugins/` directory for `IBannouPlugin` implementations
+2. **Layer-Ordered Loading** — L0 first, L5 last (infrastructure must be available before features)
+3. **6-Stage DI Registration** — `plugin.ConfigureServices()` → auto-register `[BannouService]` → auto-register `[BannouHelperService]` → register generated clients → register configs → register event consumers
+4. **Service Resolution** — resolves and validates all `IBannouService` implementations
+5. **Sequential Lifecycle** — `Initialize` → `Start` → `Running` → `Shutdown` (per plugin, in layer order)
+
+### Key Plugin Registration Attributes
+
+| Attribute | Purpose | Registration |
+|-----------|---------|-------------|
+| `[BannouService]` | Marks the primary service class for a plugin | Auto-discovered by PluginLoader (Stage 2) |
+| `[BannouHelperService]` | Marks helper/sub-services within a plugin | Auto-discovered by PluginLoader (Stage 5) |
+| `[ServiceConfiguration]` | Marks configuration classes with env prefix | Auto-discovered by PluginLoader (Stage 4) |
+
+**Auto-registration**: When `[BannouHelperService]` specifies an `interfaceType`, PluginLoader registers it automatically — no manual `Plugin.cs` entry needed. The structural test `Plugins_ShouldNotManuallyRegisterAutoDiscoverableHelpers` detects redundant registrations.
 
 ---
 

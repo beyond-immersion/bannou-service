@@ -242,7 +242,7 @@ The `MarketRestockService` background worker handles periodic restock for vendor
 
 ## Price Discovery
 
-Economic deities (Hermes/Commerce, Laverna/Thieves) monitor market health through analytics events published by lib-market (listings created, auctions sold, prices changed). When velocity stagnates or overheats, divine actors spawn narrative events that affect NPC economic behavior — a traveling merchant appears, a trade festival is announced, a robbery disrupts hoarding. lib-market sees these as normal NPC transactions; the divine intervention is invisible at the market layer. This is the same indirect influence pattern used throughout the system: gods act through the world, not on it.
+Economic deities (e.g., a commerce-domain god, a thieves-domain god) monitor market health through analytics events published by lib-market (listings created, auctions sold, prices changed). When velocity stagnates or overheats, divine actors spawn narrative events that affect NPC economic behavior — a traveling merchant appears, a trade festival is announced, a robbery disrupts hoarding. lib-market sees these as normal NPC transactions; the divine intervention is invisible at the market layer. This is the same indirect influence pattern used throughout the system: gods act through the world, not on it.
 
 lib-market maintains aggregate price data for NPC economic intelligence and divine intervention:
 
@@ -502,7 +502,7 @@ Each provider independently advertises its filterable properties via `GetSearcha
 |-----------|-------------|
 | lib-trade (L4) | Consumes supply/demand data for arbitrage detection and route planning. Subscribes to `market.supply-demand.shifted` events. Queries NPC economic profiles for merchant route decisions. |
 | lib-actor (L2) | Discovers `MarketCatalogVariableProviderFactory` and `MarketPriceVariableProviderFactory` via `IEnumerable<IVariableProviderFactory>` for NPC economic GOAP reasoning (`${market.*}`, `${market-price.*}`) |
-| divine actors (via Puppetmaster) | Economic deity god-actors (e.g., Hermes) observe price trends and supply/demand signals for narrative economic intervention |
+| divine actors (via Puppetmaster) | Economic deity god-actors (e.g., a commerce-domain god) observe price trends and supply/demand signals for narrative economic intervention |
 
 ---
 

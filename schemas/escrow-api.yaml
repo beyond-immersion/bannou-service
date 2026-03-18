@@ -744,13 +744,15 @@ components:
         - released: Assets went to designated recipients
         - refunded: Assets returned to depositors
         - split: Arbiter split assets between parties
-        - expired_refunded: Timed out, auto-refunded
+        - expired: Timed out with no deposits to refund
+        - expired_refunded: Timed out with deposits, auto-refunded
         - cancelled_refunded: Cancelled, deposits refunded
         - violation_refunded: Validation failure caused refund
       enum:
       - Released
       - Refunded
       - Split
+      - Expired
       - ExpiredRefunded
       - CancelledRefunded
       - ViolationRefunded
@@ -1418,6 +1420,145 @@ components:
         validateEndpoint:
           type: string
           description: Endpoint for validation
+
+    # ==========================================================================
+    # Custom Handler Protocol - Standardized contracts for handler endpoints
+    # ==========================================================================
+
+    CustomHandlerValidateRequest:
+      type: object
+      additionalProperties: false
+      description: Request sent to a custom handler's validate endpoint during periodic validation
+      required:
+      - escrowId
+      - customAssetType
+      - customAssetId
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow agreement being validated
+        customAssetType:
+          type: string
+          description: The registered custom asset type
+        customAssetId:
+          type: string
+          nullable: true
+          description: The specific asset identifier
+        customAssetData:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Opaque asset data from the original deposit. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+
+    CustomHandlerValidateResponse:
+      type: object
+      additionalProperties: false
+      description: Response from a custom handler's validate endpoint
+      required:
+      - valid
+      properties:
+        valid:
+          type: boolean
+          description: Whether the custom asset is still present and valid
+        failureType:
+          $ref: '#/components/schemas/ValidationFailureType'
+          nullable: true
+          description: Type of validation failure if not valid
+        details:
+          type: string
+          nullable: true
+          description: Human-readable failure description
+
+    CustomHandlerReleaseRequest:
+      type: object
+      additionalProperties: false
+      description: Request sent to a custom handler's release endpoint when escrow releases assets to recipients
+      required:
+      - escrowId
+      - customAssetType
+      - recipientPartyId
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow agreement releasing assets
+        customAssetType:
+          type: string
+          description: The registered custom asset type
+        customAssetId:
+          type: string
+          nullable: true
+          description: The specific asset identifier
+        customAssetData:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Opaque asset data from the original deposit. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+        recipientPartyId:
+          type: string
+          format: uuid
+          description: The party receiving the released assets
+
+    CustomHandlerReleaseResponse:
+      type: object
+      additionalProperties: false
+      description: Response from a custom handler's release endpoint
+      required:
+      - success
+      properties:
+        success:
+          type: boolean
+          description: Whether the release was executed successfully
+        details:
+          type: string
+          nullable: true
+          description: Human-readable result description
+
+    CustomHandlerRefundRequest:
+      type: object
+      additionalProperties: false
+      description: Request sent to a custom handler's refund endpoint when escrow refunds assets to depositors
+      required:
+      - escrowId
+      - customAssetType
+      - depositorPartyId
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow agreement refunding assets
+        customAssetType:
+          type: string
+          description: The registered custom asset type
+        customAssetId:
+          type: string
+          nullable: true
+          description: The specific asset identifier
+        customAssetData:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Opaque asset data from the original deposit. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+        depositorPartyId:
+          type: string
+          format: uuid
+          description: The party receiving the refunded assets
+
+    CustomHandlerRefundResponse:
+      type: object
+      additionalProperties: false
+      description: Response from a custom handler's refund endpoint
+      required:
+      - success
+      properties:
+        success:
+          type: boolean
+          description: Whether the refund was executed successfully
+        details:
+          type: string
+          nullable: true
+          description: Human-readable result description
 
     # ==========================================================================
     # Request/Response Models - Lifecycle

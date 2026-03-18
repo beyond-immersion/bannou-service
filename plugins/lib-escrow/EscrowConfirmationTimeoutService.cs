@@ -137,6 +137,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
                     messageBus,
                     agreement,
                     now,
+                    scope.ServiceProvider,
                     cancellationToken);
 
                 if (wasProcessed) processed++;
@@ -163,6 +164,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
         IMessageBus messageBus,
         EscrowAgreementModel agreement,
         DateTimeOffset now,
+        IServiceProvider scopedServiceProvider,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowConfirmationTimeoutService.ProcessExpiredEscrowAsync");
@@ -200,7 +202,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
             case ConfirmationTimeoutBehavior.AutoConfirm:
                 return await HandleAutoConfirmAsync(
                     agreementStore, statusIndexStore, partyPendingStore, messageBus,
-                    currentAgreement, etag, now, cancellationToken);
+                    currentAgreement, etag, now, scopedServiceProvider, cancellationToken);
 
             case ConfirmationTimeoutBehavior.Dispute:
                 return await HandleDisputeAsync(
@@ -210,13 +212,13 @@ public class EscrowConfirmationTimeoutService : BackgroundService
             case ConfirmationTimeoutBehavior.Refund:
                 return await HandleRefundAsync(
                     agreementStore, statusIndexStore, partyPendingStore, messageBus,
-                    currentAgreement, etag, now, cancellationToken);
+                    currentAgreement, etag, now, scopedServiceProvider, cancellationToken);
 
             default:
                 _logger.LogWarning("Unknown timeout behavior: {Behavior}, defaulting to auto_confirm", behavior);
                 return await HandleAutoConfirmAsync(
                     agreementStore, statusIndexStore, partyPendingStore, messageBus,
-                    currentAgreement, etag, now, cancellationToken);
+                    currentAgreement, etag, now, scopedServiceProvider, cancellationToken);
         }
     }
 
@@ -232,6 +234,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
         EscrowAgreementModel agreement,
         string? etag,
         DateTimeOffset now,
+        IServiceProvider scopedServiceProvider,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowConfirmationTimeoutService.HandleAutoConfirmAsync");
@@ -244,7 +247,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
 
             return await CompleteEscrowAsync(
                 agreementStore, statusIndexStore, partyPendingStore, messageBus,
-                agreement, etag, now, cancellationToken);
+                agreement, etag, now, scopedServiceProvider, cancellationToken);
         }
         else
         {
@@ -288,6 +291,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
         EscrowAgreementModel agreement,
         string? etag,
         DateTimeOffset now,
+        IServiceProvider scopedServiceProvider,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowConfirmationTimeoutService.HandleRefundAsync");
@@ -340,6 +344,13 @@ public class EscrowConfirmationTimeoutService : BackgroundService
         };
         await messageBus.PublishEscrowRefundedAsync(refundEvent, cancellationToken);
 
+        // Execute refund transfers to depositors
+        var escrowService = scopedServiceProvider.GetRequiredService<IEscrowService>() as EscrowService;
+        if (escrowService != null)
+        {
+            await escrowService.ExecuteRefundTransfersAsync(agreement, cancellationToken);
+        }
+
         return true;
     }
 
@@ -354,6 +365,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
         EscrowAgreementModel agreement,
         string? etag,
         DateTimeOffset now,
+        IServiceProvider scopedServiceProvider,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowConfirmationTimeoutService.CompleteEscrowAsync");
@@ -441,6 +453,20 @@ public class EscrowConfirmationTimeoutService : BackgroundService
                 CompletedAt = now
             };
             await messageBus.PublishEscrowRefundedAsync(refundEvent, cancellationToken);
+        }
+
+        // Execute asset transfers based on terminal status
+        var escrowService = scopedServiceProvider.GetRequiredService<IEscrowService>() as EscrowService;
+        if (escrowService != null)
+        {
+            if (targetStatus == EscrowStatus.Released)
+            {
+                await escrowService.ExecuteReleaseTransfersAsync(agreement, cancellationToken);
+            }
+            else
+            {
+                await escrowService.ExecuteRefundTransfersAsync(agreement, cancellationToken);
+            }
         }
 
         return true;

@@ -426,7 +426,7 @@ Phase 1: Passive Clue Accumulation (days to weeks)
     → Hearsay belief: "pre_settlement_depths" (conf 0.4, observation)
     → Collection: tier 1 for "darkspawn_architecture"
 
-  Clue C: Hearsay rumor (injected by Typhon regional watcher)
+  Clue C: Hearsay rumor (injected by a monster-domain regional watcher)
     "Miners report scratching sounds under the inn"
     → Hearsay belief: "underground_activity_old_quarter" (conf 0.2, rumor)
     → Reinforces Clue A's belief (compound confidence: 0.68)

@@ -1,6 +1,10 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Contract;
+using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Escrow;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Inventory;
+using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
@@ -115,7 +119,12 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             Configuration,
             _mockEventConsumer.Object,
             Mock.Of<ITelemetryProvider>(),
-            _mockResourceClient.Object);
+            _mockResourceClient.Object,
+            Mock.Of<ICurrencyClient>(),
+            Mock.Of<IItemClient>(),
+            Mock.Of<IContractClient>(),
+            Mock.Of<IInventoryClient>(),
+            Mock.Of<IMeshInvocationClient>());
     }
 
     #region Constructor Tests

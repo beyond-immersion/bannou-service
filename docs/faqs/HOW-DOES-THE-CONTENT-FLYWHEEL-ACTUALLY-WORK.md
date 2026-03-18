@@ -50,9 +50,9 @@ The Storyline service does not decide whether to execute these plans. It generat
 
 ### Stage 4: Orchestration
 
-**Puppetmaster** (L4) manages Regional Watchers -- the "god" actors that monitor event streams and orchestrate narrative opportunities. Each watcher has aesthetic preferences: Moira/Fate favors dramatic irony, Thanatos/Death favors transformation through loss, Ares/War favors escalating conflict.
+**Puppetmaster** (L4) manages Regional Watchers -- the "god" actors that monitor event streams and orchestrate narrative opportunities. Each watcher has aesthetic preferences: Moira/Fate favors dramatic irony, a death-domain god favors transformation through loss, a war-domain god favors escalating conflict.
 
-When a Regional Watcher receives available narrative seeds from the Storyline service, it evaluates them against the current state of its region. Is the region too peaceful? Maybe it is time for Ares to introduce a conflict seed. Is a dynasty on the verge of succession? Moira might inject a betrayal narrative from an old archive.
+When a Regional Watcher receives available narrative seeds from the Storyline service, it evaluates them against the current state of its region. Is the region too peaceful? Maybe it is time for the war-domain god to introduce a conflict seed. Is a dynasty on the verge of succession? Moira might inject a betrayal narrative from an old archive.
 
 The watcher does not just randomly spawn content. It curates, selecting seeds that complement the current narrative texture of the region. This is what gives the flywheel its escalating richness -- the seeds are real history, and the curators have aesthetic judgment.
 

@@ -1,6 +1,10 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Contract;
+using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Inventory;
+using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
@@ -54,6 +58,11 @@ public partial class EscrowService : IEscrowService
     private readonly IEventConsumer _eventConsumer;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly IResourceClient _resourceClient;
+    private readonly ICurrencyClient _currencyClient;
+    private readonly IItemClient _itemClient;
+    private readonly IContractClient _contractClient;
+    private readonly IInventoryClient _inventoryClient;
+    private readonly IMeshInvocationClient _meshInvocationClient;
 
     /// <summary>Queryable state store for escrow agreement persistence.</summary>
     private readonly IQueryableStateStore<EscrowAgreementModel> _agreementStore;
@@ -189,6 +198,9 @@ public partial class EscrowService : IEscrowService
         [EscrowStatus.ValidationFailed] = new HashSet<EscrowStatus>
         {
             EscrowStatus.PendingCondition,
+            EscrowStatus.Funded,
+            EscrowStatus.PendingConsent,
+            EscrowStatus.Finalizing,
             EscrowStatus.Refunding
         },
         [EscrowStatus.Finalizing] = new HashSet<EscrowStatus>
@@ -239,6 +251,11 @@ public partial class EscrowService : IEscrowService
     /// <param name="eventConsumer">Event consumer for subscription registration.</param>
     /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     /// <param name="resourceClient">Resource client for reference tracking (x-references).</param>
+    /// <param name="currencyClient">Currency client for asset validation (L4→L2 hard dependency).</param>
+    /// <param name="itemClient">Item client for asset validation (L4→L2 hard dependency).</param>
+    /// <param name="contractClient">Contract client for asset validation (L4→L1 hard dependency).</param>
+    /// <param name="inventoryClient">Inventory client for item asset transfers (L4→L2 hard dependency).</param>
+    /// <param name="meshInvocationClient">Mesh invocation client for custom handler endpoint calls.</param>
     public EscrowService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -246,7 +263,12 @@ public partial class EscrowService : IEscrowService
         EscrowServiceConfiguration configuration,
         IEventConsumer eventConsumer,
         ITelemetryProvider telemetryProvider,
-        IResourceClient resourceClient)
+        IResourceClient resourceClient,
+        ICurrencyClient currencyClient,
+        IItemClient itemClient,
+        IContractClient contractClient,
+        IInventoryClient inventoryClient,
+        IMeshInvocationClient meshInvocationClient)
     {
         _messageBus = messageBus;
         _logger = logger;
@@ -254,6 +276,11 @@ public partial class EscrowService : IEscrowService
         _eventConsumer = eventConsumer;
         _telemetryProvider = telemetryProvider;
         _resourceClient = resourceClient;
+        _currencyClient = currencyClient;
+        _itemClient = itemClient;
+        _contractClient = contractClient;
+        _inventoryClient = inventoryClient;
+        _meshInvocationClient = meshInvocationClient;
 
         _agreementStore = stateStoreFactory.GetQueryableStore<EscrowAgreementModel>(StateStoreDefinitions.EscrowAgreements);
         _tokenStore = stateStoreFactory.GetStore<TokenHashModel>(StateStoreDefinitions.EscrowTokens);

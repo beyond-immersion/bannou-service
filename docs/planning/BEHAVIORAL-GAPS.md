@@ -49,7 +49,7 @@ This document catalogs every identified gap, organized by architectural category
 
 **Current state**: Not implemented. Every behavior document is standalone. No inheritance, no abstract flows, no override semantics.
 
-**Impact**: Regional watchers, encounter coordinators, and dungeon cores all share common patterns (event subscription, periodic scanning, lifecycle management). Without inheritance, every game must rewrite these patterns from scratch. God behavior skeletons (Moira, Thanatos, Silvanus, Ares, Typhon, Hermes) cannot share a base template.
+**Impact**: Regional watchers, encounter coordinators, and dungeon cores all share common patterns (event subscription, periodic scanning, lifecycle management). Without inheritance, every game must rewrite these patterns from scratch. God behavior skeletons (Moira and other domain gods such as death, nature, war, monster, and commerce gods) cannot share a base template.
 
 **GH Issue**: #384
 
@@ -65,7 +65,7 @@ This document catalogs every identified gap, organized by architectural category
 
 ### 1.3 Economic Action Handlers
 
-**Required by**: VISION (NPC-driven economy), ABML-GOAP-OPPORTUNITIES (faction/economy simulation), VISION (Hermes/Commerce god-actor)
+**Required by**: VISION (NPC-driven economy), ABML-GOAP-OPPORTUNITIES (faction/economy simulation), VISION (commerce-domain god-actor)
 
 **Current state**: Not implemented. NPCs cannot interact with the economy from ABML. No `economy_credit`, `economy_debit`, `inventory_add`, `inventory_has`, or `market_query` handlers exist.
 
@@ -593,7 +593,7 @@ Bannou's role is vector storage and similarity search (cosine distance over stor
 
 **Required by**: BEHAVIORAL-BOOTSTRAP (god-actor behaviors), VISION (regional watcher orchestration)
 
-**Current state**: No ABML behavior documents exist for any deity (Moira/Fate, Thanatos/Death, Silvanus/Forest, Ares/War, Typhon/Monsters, Hermes/Commerce). No manager actors (puppetmaster-manager, gardener-manager) exist.
+**Current state**: No ABML behavior documents exist for any deity (Moira, or any of the domain gods such as death, nature, war, monster, or commerce gods). No manager actors (puppetmaster-manager, gardener-manager) exist.
 
 **Impact**: The behavioral bootstrap sequence (Phase 1-5) cannot execute without behavior documents. God-actors are "just actors with unusual behavior documents" — but those documents don't exist.
 
@@ -605,7 +605,7 @@ Bannou's role is vector storage and similarity search (cosine distance over stor
 
 **Current state**: The 5-stage cognition pipeline's attention filtering (Stage 2) **exists and works** -- actors can filter perceptions based on relevance. What is missing is **domain-aware event subscription at the message bus level** so that gods only receive events matching their domain interests in the first place. Currently, a god-actor would need to subscribe to all events in its region and rely on ABML-level attention filtering to discard irrelevant ones.
 
-**Impact**: The attention filter mechanism is correct for within-actor filtering. The gap is upstream: Ares should subscribe only to combat-related event topics, Hermes only to trade-related topics, Moira only to death-related topics. Without topic-level subscription scoping, god-actors in busy regions receive and discard large volumes of irrelevant events, which doesn't scale. The fix is subscription-level filtering (configurable topic subscriptions per actor based on domain metadata), not a new filtering mechanism.
+**Impact**: The attention filter mechanism is correct for within-actor filtering. The gap is upstream: A war-domain god should subscribe only to combat-related event topics, a commerce-domain god only to trade-related topics, Moira only to fate-and-death-related topics. Without topic-level subscription scoping, god-actors in busy regions receive and discard large volumes of irrelevant events, which doesn't scale. The fix is subscription-level filtering (configurable topic subscriptions per actor based on domain metadata), not a new filtering mechanism.
 
 **GH Issue**: None
 

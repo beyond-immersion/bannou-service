@@ -56,6 +56,7 @@ This is NOT a reference to claude-code's issues or any other repository.
 
 **On-demand references** (read when needed, not auto-included):
 - `docs/reference/HELPERS-AND-COMMON-PATTERNS.md` — Shared helpers, canonical implementation patterns, test validators. **Read this FIRST when searching for the canonical example of any pattern** (background workers, state store access, event publishing, deprecation, cleanup, enum mapping, telemetry, etc.)
+- `docs/BANNOU-DEEP-DIVE.md` — Complete inventory of bannou-service subsystems (state, messaging, mesh, ABML runtime, cognition pipeline, behavior interfaces, plugin loading, DI providers, events). Read when working on bannou-service infrastructure, investigating shared helpers/interfaces, or tracing how plugins wire into the host. Companion to HELPERS (deep dive maps what EXISTS; HELPERS shows how to USE it).
 - `docs/reference/SERVICE-HIERARCHY.md` — Full hierarchy rules, Variable Provider Factory, DI Provider vs Listener safety, deployment modes (read when designing cross-layer communication)
 - `docs/generated/GENERATED-*-SERVICE-DETAILS.md` — Full per-service details by layer (read when investigating a specific layer's services)
 - `docs/reference/ORCHESTRATION-PATTERNS.md` — Full orchestration specifications (bootstrap sequence, divine economy, dungeon patterns, living weapons)
@@ -107,6 +108,7 @@ These agents read their reference documents as Step 0 before starting work. Use 
 | **Testing work** | `docs/reference/tenets/TESTING-PATTERNS.md` — the sole testing reference. |
 | **High-level vision** | `docs/reference/VISION.md` and `docs/reference/PLAYER-VISION.md` (same as Big Brain Mode). |
 | **Documentation search** | The relevant catalog(s) — see Catalog-First Documentation Search below. |
+| **bannou-service infrastructure** (shared helpers, ABML runtime, plugin loading, DI providers) | `docs/BANNOU-DEEP-DIVE.md` — the complete bannou-service subsystem inventory. Also `docs/reference/HELPERS-AND-COMMON-PATTERNS.md` for usage patterns. |
 
 **Rules:**
 1. Every sub-agent prompt MUST include an explicit instruction to read the relevant documents BEFORE doing any work

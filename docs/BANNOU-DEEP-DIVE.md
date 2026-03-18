@@ -123,7 +123,7 @@ The heart of bannou-service. Every plugin depends on these interfaces; L0 plugin
 | `StatusCodes` | 8-value enum: OK, BadRequest, Unauthorized, Forbidden, NotFound, Conflict, InternalServerError, NotImplemented, ServiceUnavailable |
 | `ServiceLayer` | 6-value enum: Infrastructure(0), AppFoundation(100), ..., Extensions(500) |
 
-**Documented in HELPERS**: Partially — §11 covers StatusCodes and ServiceLayer. IBannouService lifecycle undocumented.
+**Documented in HELPERS**: Partially — §11 covers StatusCodes and ServiceLayer, §16 covers the plugin lifecycle (Initialize → Start → Running → Shutdown). IBannouService interface details remain here.
 
 ### Background Worker Helpers
 
@@ -168,7 +168,7 @@ All live in `bannou-service/Providers/`. Interface defined here, higher layer im
 | `ILocalizationKeyValidator` | L1→L2+ | Entity services | Validate localization keys at creation time |
 | `IServiceMappingReceiver` | L3→L0 | Mesh service | Orchestrator pushes routing table updates |
 
-**HELPERS gap**: `ILocalizationKeyValidator` and `IServiceMappingReceiver` are NOT in the §4 table.
+**Documented in HELPERS**: Yes, §4 provider table includes both `ILocalizationKeyValidator` and `IServiceMappingReceiver`.
 
 ### Push Listeners (Local-Only Fan-Out)
 
@@ -189,7 +189,7 @@ All live in `bannou-service/Providers/`. Interface defined here, higher layer im
 | `VariableProviderCacheBucket<TKey, TData>` | Cache composition helper with TTL, stale fallback, invalidation |
 | `SeededResource` | Immutable record representing a loaded embedded resource |
 
-**HELPERS accuracy note**: HELPERS §5 shows `VariableProviderCacheBucket` with an `IServiceScopeFactory` constructor. The actual code uses a direct `Func<CancellationToken, Task<TData?>>` loader parameter. HELPERS needs updating.
+**Documented in HELPERS**: Yes, §5. Constructor and `GetOrLoadAsync` signatures are accurate.
 
 ---
 
@@ -211,7 +211,7 @@ All live in `bannou-service/Providers/`. Interface defined here, higher layer im
 
 ## 4. Abml/ — ABML Execution Runtime
 
-**NOT documented in HELPERS.** This is the largest gap.
+**Not in HELPERS** (infrastructure internals, not a plugin-facing pattern). HELPERS header cross-references the deep dive for ABML runtime coverage.
 
 ### Execution Engine (Abml/Execution/)
 
@@ -380,7 +380,7 @@ Cooperative scheduling for multi-channel ABML execution (cinematic choreography)
 - Permission registration orchestration
 - Variable provider validation against schema definitions
 
-**Not documented in HELPERS.** Should be — agents frequently need to understand how plugins wire into the host.
+**Documented in HELPERS**: Yes, §16 (Plugin Loading System). Covers base classes, lifecycle, and registration attributes. Full PluginLoader internals remain here.
 
 ---
 
@@ -399,7 +399,7 @@ Cooperative scheduling for multi-channel ABML execution (cinematic choreography)
 | `ServiceClientsDependencyInjection` | Core infrastructure registration (telemetry, event consumer, ABML runtime, etc.) |
 | `PreboundApiModels` | PreboundApiDefinition, RawApiResult, PreboundApiResult, batch modes |
 
-**HELPERS gap**: DirectDispatchHelper and ServiceNavigator's raw/prebound API entirely undocumented.
+**Documented in HELPERS**: Yes, §8 covers ServiceNavigator raw/prebound API and DirectDispatchHelper.
 
 ---
 
@@ -434,9 +434,7 @@ Cooperative scheduling for multi-channel ABML execution (cinematic choreography)
 
 **Used by**: character-personality, character-history, character-encounter, realm-history.
 
-**HELPERS accuracy note**: §6 shows `CompressionHelper.DecompressJsonData<MyModel>(bytes)` with a generic parameter. Actual code: `DecompressJsonData(byte[])` returns `string`. HELPERS needs updating.
-
-**Documented in HELPERS**: Yes, §6. Mostly accurate (see note above).
+**Documented in HELPERS**: Yes, §6. Signature and usage pattern are accurate.
 
 ---
 
@@ -497,23 +495,26 @@ Runtime schema introspection for generated Controller.Meta.cs files. Builds endp
 
 ---
 
-## HELPERS-AND-COMMON-PATTERNS Gaps
+## HELPERS-AND-COMMON-PATTERNS Sync Status
 
-Items found in code that HELPERS should document but doesn't:
+Tracking what's documented in HELPERS vs. what lives only in this deep dive.
 
-| Gap | Impact | Suggested Action |
-|-----|--------|-----------------|
-| ABML Execution Runtime | HIGH — agents working on lib-actor/behavior need this | Add §16 covering DocumentExecutor, action handlers, error chain |
-| Cognition Pipeline | HIGH — agents working on NPC systems need this | Add §17 covering 5-stage pipeline, configuration, IMemoryStore |
-| Behavior System Interfaces | MEDIUM — 14 interfaces with complex relationships | Add §18 or expand §4 |
-| Plugin System (PluginLoader) | MEDIUM — agents need to understand load ordering | Add §19 covering lifecycle, layer ordering, 6-stage DI |
-| DirectDispatchHelper | LOW — only relevant for embedded mode | Add to §8 |
-| ServiceNavigator raw/prebound API | MEDIUM — used by lib-contract | Add to §8 |
-| ResourceTemplate system | LOW — only relevant for ABML semantic analysis | Add §20 |
-| ILocalizationKeyValidator in §4 table | LOW — missing from provider table | Add row to §4 |
-| IServiceMappingReceiver in §4 table | LOW — missing from provider table | Add row to §4 |
-| VariableProviderCacheBucket constructor | MEDIUM — incorrect signature in §5 | Fix constructor example |
-| CompressionHelper signature | LOW — shows generic, code is non-generic | Fix method signature |
+| Item | Status | Notes |
+|------|--------|-------|
+| ABML Execution Runtime | **Deep dive only** | Infrastructure internals; HELPERS cross-references here |
+| Cognition Pipeline | **Deep dive only** | Infrastructure internals; HELPERS cross-references here |
+| Behavior System Interfaces | **Deep dive only** | 14 interfaces; consumed by lib-behavior, not typical plugin dev |
+| ResourceTemplate system | **Deep dive only** | ABML semantic analysis only |
+| EventTemplate system | **Deep dive only** | ABML event publishing only |
+| IMessageTap | **Deep dive only** | Event forwarding between exchanges |
+| ServiceHeartbeatManager | **Deep dive only** | Periodic heartbeat publishing |
+| Plugin System (PluginLoader) | **Synced** | HELPERS §16 covers base classes, lifecycle, attributes. Full internals here. |
+| DirectDispatchHelper | **Synced** | HELPERS §8 |
+| ServiceNavigator raw/prebound API | **Synced** | HELPERS §8 |
+| ILocalizationKeyValidator | **Synced** | HELPERS §4 provider table |
+| IServiceMappingReceiver | **Synced** | HELPERS §4 provider table |
+| VariableProviderCacheBucket | **Synced** | HELPERS §5 constructor and GetOrLoadAsync corrected |
+| CompressionHelper | **Synced** | HELPERS §6 signature corrected |
 
 ---
 

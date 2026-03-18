@@ -84,11 +84,11 @@ Formative events include:
 | Event Type | Evaluator | Significance Factors |
 |-----------|-----------|---------------------|
 | **Boss kill** | Dungeon core actor or regional watcher | Boss difficulty, combat duration, combat style diversity, near-death count, predecessor failures |
-| **Climactic battle** | Regional watcher (Ares) | Participant count, stakes (territory, lives, political outcome), tactical creativity |
+| **Climactic battle** | Regional watcher (war-domain god) | Participant count, stakes (territory, lives, political outcome), tactical creativity |
 | **Masterwork creation** | Regional watcher or craft overseer | Material rarity, technique difficulty, location spiritual density, craftsman's lifetime mastery |
 | **Divine manifestation** | The manifesting god | Divinity expenditure, purpose significance, follower devotion |
 | **Dungeon awakening** | Dungeon core actor | Seed phase transition, accumulated memories, formative conditions |
-| **Profound sacrifice** | Regional watcher (Moira/Thanatos) | What was given up, for whom, fulfillment state, witness impact |
+| **Profound sacrifice** | Regional watcher (Moira or a death-domain god) | What was given up, for whom, fulfillment state, witness impact |
 
 Not every boss kill produces a logos resonance item. The god-actor evaluates significance and decides. Most kills produce standard loot (Tier 2/3 via normal loot tables). A logos resonance item is the exception -- reserved for moments that genuinely crystallize something worth remembering.
 

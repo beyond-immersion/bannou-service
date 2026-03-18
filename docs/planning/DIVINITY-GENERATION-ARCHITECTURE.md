@@ -173,7 +173,9 @@ The missing feature: when seed A records growth, **propagate** a ratio of that g
 | `Bidirectional` | Both directions at the bond's ratio. | Deep bond — mutual growth from each other's actions. |
 | `Mirrored` | Growth on either is growth on both (effective ratio 1.0). | Full spiritual union — rare, earned through high bond strength. |
 
-**Per-bond ratio** means different gods of the same domain offer different bond characteristics. Ares might offer `AToB` at ratio 0.8 (aggressive, high transfer to the god) while Athena offers `Bidirectional` at ratio 0.3 (balanced, slower but mutual influence). This is a **gameplay lever** — choosing your patron god has mechanical consequences beyond just "which blessings are available."
+**Per-bond ratio** means different gods of the same domain offer different bond characteristics. a war-domain god might offer `AToB` at ratio 0.8 (aggressive, high transfer to the god) while a wisdom-domain god offers `Bidirectional` at ratio 0.3 (balanced, slower but mutual influence). This is a **gameplay lever** — choosing your patron god has mechanical consequences beyond just "which blessings are available."
+
+> **Note**: The deity names used throughout this document (the war god, the wisdom god, the craft god, the sun god) are illustrative examples for the walkthrough, not canonical Arcadia deity names. Arcadia's actual pantheon is configured through behaviors and templates at deployment time.
 
 ### Anti-Cascade Safety
 
@@ -193,27 +195,27 @@ Safety layers (defense in depth):
 ### How It Solves the Divine Flow
 
 ```
-1. Character follows Ares → bond formed between character's "war" seed and Ares' "war" seed
+1. Character follows the war god → bond formed between character's "war" seed and the war god's "war" seed
    (PropagationDirection: AToB, PropagationRatio: 0.8)
 
 2. Character kills monsters
    → Game feeds character's "combat" wallet
    → Genesis growth mapping: wallet credit → character's "war" seed grows 10
    → Bond amplification: character gets 15 (1.5x) — existing behavior
-   → Bond propagation: Ares' "war" seed gets 10 × 0.8 = 8 growth (NEW)
-       → Ares' growth marked propagated: true (no re-propagation)
-       → Normal seed events fire for Ares' seed (seed.growth.updated, phase checks)
-       → ISeedEvolutionListener fires for Ares' seed
-       → Genesis growth mapping on Ares' side: seed growth → domain_power
-       → Ares-actor perceives accumulated power, decides autonomously
+   → Bond propagation: the war god's "war" seed gets 10 × 0.8 = 8 growth (NEW)
+       → the war god's growth marked propagated: true (no re-propagation)
+       → Normal seed events fire for the war god's seed (seed.growth.updated, phase checks)
+       → ISeedEvolutionListener fires for the war god's seed
+       → Genesis growth mapping on the war god's side: seed growth → domain_power
+       → the war god actor perceives accumulated power, decides autonomously
 
-3. Character changes patron (Ares → Athena)
+3. Character changes patron (the war god → the wisdom god)
    → Bond dissolved (#362 — dissolution endpoint needed)
-   → New bond formed with Athena's "war" seed
-   → Future combat growth propagates to Athena instead
+   → New bond formed with the wisdom god's "war" seed
+   → Future combat growth propagates to the wisdom god instead
 
 4. Bidirectional influence (if bond is Bidirectional)
-   → Athena's "war" seed grows (from her own divine actions)
+   → the wisdom god's "war" seed grows (from her own divine actions)
    → Bond propagation: character's "war" seed gets growth × ratio
    → Character becomes stronger in the god's domain
    → Same mechanism, both directions, same safety constraints
@@ -225,13 +227,13 @@ A character can have different domain seeds bonded to different gods. Each seed 
 
 ```
 Character's seeds:
-    "war" seed      ──bond──▶ Ares' "war" seed      (AToB, ratio 0.8)
-    "craft" seed    ──bond──▶ Hephaestus' "craft" seed (Bidirectional, ratio 0.4)
-    "devotion" seed ──bond──▶ Apollo's "devotion" seed (AToB, ratio 0.6)
+    "war" seed      ──bond──▶ the war god's "war" seed      (AToB, ratio 0.8)
+    "craft" seed    ──bond──▶ the craft god's "craft" seed (Bidirectional, ratio 0.4)
+    "devotion" seed ──bond──▶ the sun god's "devotion" seed (AToB, ratio 0.6)
     "nature" seed   ──(no bond)──                     (unbonded, no divine patron for nature)
 ```
 
-Each domain's divine relationship is independent. The character's combat growth only reaches Ares. Their crafting growth only reaches Hephaestus. This is both mechanically clean and narratively rich — "who do you worship in each aspect of your life?"
+Each domain's divine relationship is independent. The character's combat growth only reaches the war god. Their crafting growth only reaches the craft god. This is both mechanically clean and narratively rich — "who do you worship in each aspect of your life?"
 
 ### Patron vs Follower: Two Distinct Relationships
 
@@ -279,7 +281,7 @@ Coming of Age / Ceremony / Conversion:
 
 Override:
     Character.patronDeityCode can diverge from the bloodline
-    → "My family worships Ares, but Athena chose me"
+    → "My family worships the war god, but the wisdom god chose me"
     → Old bonds dissolved, new bonds formed
 ```
 
@@ -287,7 +289,7 @@ Override:
 
 Bond formation is **automatic and configuration-driven**, not manual API choreography:
 
-**1. Seed data loaded at startup**: Each deity's bond template is authored as part of the god's seed data — which domains to bond, with what direction and ratio. This is divine actor personality information: "Ares bonds aggressively in war (`AToB`, 0.8); Athena bonds broadly in war and knowledge (`Bidirectional`, 0.3/0.6)."
+**1. Seed data loaded at startup**: Each deity's bond template is authored as part of the god's seed data — which domains to bond, with what direction and ratio. This is divine actor personality information: "a war-domain god bonds aggressively in war (`AToB`, 0.8); a wisdom-domain god bonds broadly in war and knowledge (`Bidirectional`, 0.3/0.6)."
 
 **2. Runtime registry built from actor loading**: As gods are loaded into actors via Puppetmaster, Divine builds an in-memory registry mapping deity codes to their bond templates. This registry is dynamic — adding a new god to the world automatically makes patron bonding available. Registry invalidated and rebuilt via self-event-subscription when deity actors change (per T9 multi-instance safety).
 
@@ -300,23 +302,23 @@ Bond formation is **automatic and configuration-driven**, not manual API choreog
 ```
 Registry (built from deity actor seed data at startup):
 
-"ares" → [
+"war_god" → [
     { seedTypeCode: "war",      direction: AToB,          ratio: 0.8 },
     { seedTypeCode: "strength", direction: AToB,          ratio: 0.5 },
 ]
-"athena" → [
+"wisdom_god" → [
     { seedTypeCode: "war",       direction: Bidirectional, ratio: 0.3 },
     { seedTypeCode: "knowledge", direction: Bidirectional, ratio: 0.6 },
 ]
-"hephaestus" → [
+"craft_god" → [
     { seedTypeCode: "craft",     direction: Bidirectional, ratio: 0.4 },
     { seedTypeCode: "forge",     direction: BToA,          ratio: 0.2 },
 ]
 
-Character created with patronDeityCode: "ares"
-    → Registry lookup: "ares" found
-    → Auto-bond character's "war" seed ↔ Ares' "war" seed (AToB, 0.8)
-    → Auto-bond character's "strength" seed ↔ Ares' "strength" seed (AToB, 0.5)
+Character created with patronDeityCode: "war_god"
+    → Registry lookup: "war_god" found
+    → Auto-bond character's "war" seed ↔ the war god's "war" seed (AToB, 0.8)
+    → Auto-bond character's "strength" seed ↔ the war god's "strength" seed (AToB, 0.5)
     → Character may not have a "strength" seed yet → bond deferred or seed created
 ```
 
@@ -356,8 +358,8 @@ Divine creates deity:
     2. Create genesis entity via /genesis/entity/create with seedId → Genesis adopts it
     3. Store seedId on DeityModel (Divine's internal state)
 
-Character gets patronDeityCode: "ares":
-    1. Divine looks up Ares' DeityModel → has seedId for each domain
+Character gets patronDeityCode: "war_god":
+    1. Divine looks up the war god's DeityModel → has seedId for each domain
     2. Divine calls /seed/bond/initiate between character's seed and god's seed
     3. Bond formed. Propagation active.
 ```
@@ -494,9 +496,9 @@ Worshipper prays → credits god's wallet directly (faith currency)
 
 ```
 Character's seeds:                          God seeds:
-    "war" seed      ══bond(AToB, 0.8)══▶  Ares' "war" seed
-    "craft" seed    ══bond(Bidir, 0.4)══▶  Hephaestus' "craft" seed
-    "devotion" seed ══bond(AToB, 0.6)══▶  Apollo's "devotion" seed
+    "war" seed      ══bond(AToB, 0.8)══▶  the war god's "war" seed
+    "craft" seed    ══bond(Bidir, 0.4)══▶  the craft god's "craft" seed
+    "devotion" seed ══bond(AToB, 0.6)══▶  the sun god's "devotion" seed
     "nature" seed   ──(no bond)──          (no patron for nature)
 ```
 
@@ -568,7 +570,7 @@ If seed growth events don't exist, they need to be added to `seed-service-events
 
 ### Q3: Deity Deprecation Lifecycle (T31) — RESOLVED
 
-**Answer: Category A (deprecate + merge).** Deities are world-building definitions referenced by blessings and followers. When a god "dies" or fades, followers merge to another deity — narratively rich ("Ares fell, his followers scattered to Athena and Apollo").
+**Answer: Category A (deprecate + merge).** Deities are world-building definitions referenced by blessings and followers. When a god "dies" or fades, followers merge to another deity — narratively rich ("the war god fell, followers scattered to the wisdom god and the sun god").
 
 Schema impact:
 - **Add endpoints**: `deprecateDeity`, `undeprecateDeity`, `mergeDeity` (using shared `MergeDeprecatedRequest`/`MergeDeprecatedResponse` from `common-api.yaml`)

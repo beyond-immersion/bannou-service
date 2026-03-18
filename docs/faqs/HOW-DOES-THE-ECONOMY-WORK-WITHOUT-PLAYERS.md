@@ -76,7 +76,7 @@ This prevents race conditions, ensures atomicity, and handles failure gracefully
 
 **Workshop (L4)** provides continuous background production. An NPC blacksmith who forges swords all day does not need a GOAP action for every single sword -- Workshop provides a running production line that produces swords at their skill level, consuming materials from supply inventories and filling shop inventories. This operates via lazy evaluation with game-time-aware piecewise rate segments.
 
-**Regional Watcher gods** (specifically Hermes/Commerce) monitor economic event streams and can intervene narratively. If a realm's economy is stagnating, Hermes might orchestrate a trade route event -- caravans from a distant realm arrive with exotic goods, stimulating trade. If inflation is rampant, Hermes might inspire an NPC noble to establish a new tax. These are not mechanical economic controls -- they are narrative events that have economic consequences.
+**Regional Watcher gods** (specifically a commerce-domain god) monitor economic event streams and can intervene narratively. If a realm's economy is stagnating, the commerce god might orchestrate a trade route event -- caravans from a distant realm arrive with exotic goods, stimulating trade. If inflation is rampant, the commerce god might inspire an NPC noble to establish a new tax. These are not mechanical economic controls -- they are narrative events that have economic consequences.
 
 ---
 

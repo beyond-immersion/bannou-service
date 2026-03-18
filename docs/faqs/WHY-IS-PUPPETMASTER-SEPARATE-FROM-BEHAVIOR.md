@@ -41,7 +41,7 @@ Both are CPU-bound, stateless, pure computations. Given inputs, they produce det
 
 The Puppetmaster service manages ongoing, stateful processes:
 
-1. **Regional Watchers** -- Long-running "god" actors that monitor event streams for their region (Moira/Fate, Thanatos/Death, Ares/War, etc.), evaluate narrative seeds from the Storyline service, and decide when and where to orchestrate new scenarios. Each watcher has persistent state: current regional narrative assessment, pending seeds, cooldowns, aesthetic preference weightings.
+1. **Regional Watchers** -- Long-running "god" actors that monitor event streams for their region (Moira/Fate and other domain-specific gods (death, war, etc.)), evaluate narrative seeds from the Storyline service, and decide when and where to orchestrate new scenarios. Each watcher has persistent state: current regional narrative assessment, pending seeds, cooldowns, aesthetic preference weightings.
 
 2. **Dynamic Behavior Loading** -- Fetching compiled ABML documents from the Asset service, caching them, managing version invalidation, and providing them to Actor via `IBehaviorDocumentProvider`. This requires awareness of what behaviors exist, what versions are current, and when to invalidate cached bytecode.
 

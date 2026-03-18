@@ -190,4 +190,18 @@ public class EscrowServiceConfiguration : BaseServiceConfiguration
     [ConfigRange(Minimum = 0)]
     public int ConfirmationStartupDelaySeconds { get; set; } = 15;
 
+    /// <summary>
+    /// Delay in seconds before the validation background service starts processing
+    /// Environment variable: ESCROW_VALIDATION_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0)]
+    public int ValidationStartupDelaySeconds { get; set; } = 25;
+
+    /// <summary>
+    /// Maximum escrows to process per validation check cycle
+    /// Environment variable: ESCROW_VALIDATION_BATCH_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int ValidationBatchSize { get; set; } = 50;
+
 }

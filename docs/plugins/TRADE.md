@@ -36,7 +36,7 @@ The trade and economic systems serve three different usage patterns through the 
 │ Tier 1: Divine/System Oversight │
 │ God actors or system processes with full visibility │
 │ Use: Full analytics, automatic interventions, velocity control │
-│ Example: Hermes detects stagnant village, spawns trade event │
+│ Example: A commerce-domain god detects stagnant village, spawns trade event │
 └─────────────────────────────────────────────────────────────────┘
  │
  │ Same APIs
@@ -171,7 +171,7 @@ NEXT CYCLE:
  Other merchants enter market if profitable
  Competition drives prices toward equilibrium
  Weather closes mountain pass → price spikes
- Hermes (god actor) notices velocity drop → spawns event
+ A commerce-domain god actor notices velocity drop → spawns event
 ```
 
 This is the vision from `VISION.md`: *"The economy must be NPC-driven, not player-driven. Supply, demand, pricing, and trade routes emerge from NPC behavior."*
@@ -1382,8 +1382,8 @@ NPC economic profiles, market analysis, and supply/demand queries are owned by *
  healthyRange: VelocityHealthRange
  notes: |
  Used by divine economic actors to identify intervention targets.
- Hermes sees a coldspot → spawns business opportunity.
- Nemesis sees a hotspot → targets the speculator.
+ A commerce-domain god sees a coldspot → spawns business opportunity.
+ A justice-domain god sees a hotspot → targets the speculator.
 
 VelocityHealthRange:
  min: decimal  # From config.HealthyVelocityMin
@@ -2196,22 +2196,22 @@ Trade velocity worker computes metrics
  ↓
 trade.velocity.alerted event published
  ↓
-Hermes (god actor via Puppetmaster) subscribes
+A commerce-domain god actor (via Puppetmaster) subscribes
  ↓
-Hermes GOAP evaluates:
+The commerce god GOAP evaluates:
  Current state: riverside_village velocity = 0.08 (stagnant)
  Goal: maintain_healthy_velocity (all locations > 0.3)
  Action: spawn_business_opportunity
  Precondition: target_velocity < 0.3
  Effect: target_velocity += 0.4 (estimated)
  ↓
-Hermes spawns event:
+The commerce god spawns event:
  "A wealthy merchant caravan from the capital seeks local goods"
  NPC merchant Actor receives opportunity → GOAP evaluates trade run
  Trade creates shipment → goods flow → velocity increases
  ↓
 Next velocity calculation: riverside_village = 0.45 (healthy)
-Hermes satisfied → moves attention elsewhere
+The commerce god satisfied → moves attention elsewhere
 ```
 
 ---

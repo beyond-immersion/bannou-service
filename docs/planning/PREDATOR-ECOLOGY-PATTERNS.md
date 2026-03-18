@@ -197,7 +197,7 @@ When an apex predator is removed, medium-sized predators increase in abundance a
 - Cascading effect on small prey populations is visible
 - Reintroducing apex predators reverses the effect (also with lag)
 
-**Gameplay implication**: Players who hunt too many wolves find the rabbit population collapsing because foxes overrun the area. A god-actor (Silvanus/Forest) might intervene by spawning a new apex predator to restore balance. This is the content flywheel operating through ecological dynamics.
+**Gameplay implication**: Players who hunt too many wolves find the rabbit population collapsing because foxes overrun the area. A god-actor (a nature-domain god) might intervene by spawning a new apex predator to restore balance. This is the content flywheel operating through ecological dynamics.
 
 ---
 

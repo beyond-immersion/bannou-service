@@ -217,7 +217,7 @@ Workshop is a soft L4 dependency. Without it, dungeons can only spawn pneuma ech
 
 ### The Dungeon-Spawning God
 
-A regional watcher deity (Typhon/Monsters, or a god of Transformation/Stagnation-Breaking) monitors mana accumulation via Environment/Worldstate events:
+A regional watcher deity (a monster-domain god, or a god of Transformation/Stagnation-Breaking) monitors mana accumulation via Environment/Worldstate events:
 
 ```yaml
 # In the spawning god's ABML behavior document
@@ -322,7 +322,7 @@ Every operation is a single existing API call or a standard ABML action. There i
 Unlike dungeon bonds (Contract-based with explicit Pattern A/B), living weapon bonds are simpler -- closer to the divine follower pattern:
 
 1. **Equip the weapon**: Standard item/inventory operation. This is the physical prerequisite.
-2. **Create wielder relationship**: `POST /relationship/create` with type `weapon_wielder`. The weapon's actor (if active) perceives the new wielder.
+2. **Create wielder bond**: `POST /genesis/entity/create-bond` with `targetEntityType: Character, targetEntityId: {wielderCharacterId}`. Genesis stores the bond intent on the entity record — `${genesis.bond.*}` variables become available immediately for the weapon's ABML behavior (if at Stirring+). The Relationship in lib-relationship is created automatically when the weapon reaches Awakened phase (deferred Relationship creation pattern — see [GENESIS.md § Known Quirks](../plugins/GENESIS.md)). If the weapon is already Awakened when bonded, the Relationship is created immediately.
 3. **Compatibility evaluation**: The weapon's ABML behavior evaluates the wielder over time. `${personality.compatibility}` against the wielder's character data (loaded via `load_snapshot:`). Early in the bond, the weapon may be neutral or resistant.
 4. **Bond deepens**: The `wielder_bond` growth domain accumulates. Higher bond growth unlocks more capabilities. The weapon's personality shifts based on the wielder's actions (via CharacterPersonality's experience-driven trait evolution).
 5. **Bond breaks**: When the wielder unequips the weapon or dies. The weapon remembers the previous wielder via CharacterEncounter records. A new wielder must build trust from scratch -- but the weapon's accumulated growth and personality persist.
@@ -370,14 +370,20 @@ Weapon-actor (character brain, bound to SENTIENT_ARMS system realm character)
 |   e.g., ${encounters.sentiment.current_wielder} for relationship state
 +-- ${backstory.*}       <- CharacterHistory (forging origin, legendary deeds)
 +-- ${world.*}           <- Worldstate (time context)
-+-- ${seed.*}            <- SentientWeaponSeedVariableProviderFactory (growth domains)
-+-- ${wielder.*}         <- WielderVariableProviderFactory (current wielder data)
++-- ${genesis.*}         <- GenesisVariableProviderFactory (entity lifecycle, capabilities,
+|   |                       wallet balances, bond state — replaces ${seed.*} for genesis entities)
+|   +-- ${genesis.capability.active.protect} for gating autonomous protection
+|   +-- ${genesis.wallet.experience} for growth-level awareness
+|   +-- ${genesis.bond.targetId} for wielder identification
++-- ${wielder.*}         <- ABML load_snapshot: on wielder's character (per-tick, on demand)
 |   e.g., ${wielder.health_percent} for protection triggers
 |   e.g., ${wielder.in_combat} for combat mode activation
+|   Loaded via: load_snapshot: character_id: "${genesis.bond.targetId}"
+|              variables: ["health_percent", "in_combat", ...], namespace: "wielder"
 +-- ...can use load_snapshot: for ad-hoc data about nearby entities
 ```
 
-The weapon-specific variable providers (`${seed.*}` and `${wielder.*}`) follow the standard `IVariableProviderFactory` DI pattern. They do NOT require a new plugin -- they can be registered from any plugin, or even from the game-specific SDK layer.
+No dedicated `WielderVariableProviderFactory` or `SentientWeaponSeedVariableProviderFactory` is needed. Genesis provides `${genesis.*}` for entity lifecycle data (replacing `${seed.*}` which queries by Character owner). Wielder data is loaded via the existing ABML `load_snapshot:` action — the established pattern for cross-actor data queries used by god-actors, dungeon cores, and all other actors that need data about other entities. The behavior document author decides what wielder data to load, varying per weapon type and personality.
 
 ### The Communication Channel
 
@@ -551,12 +557,11 @@ Until then, the game engine + ABML behaviors are sufficient orchestrators.
 
 4. **Seed promotion mechanic (character-owned to account-owned)**: Required for dungeon Pattern A. Tracked at [#437](https://github.com/beyond-immersion/bannou-service/issues/437). Not relevant to living weapons.
 
-5. **Seed-to-item ownership type**: lib-seed currently supports `AllowedOwnerTypes` of `account`, `character`, and `actor`. Living weapon seeds need `item` as an owner type. This is a schema change to lib-seed (`AllowedOwnerTypes` enum addition) and a minor code change to seed validation. Alternatively, the weapon's seed could be actor-owned once the actor spawns, with a pre-actor ownership convention (game-engine-tracked).
+5. ~~**Seed-to-item ownership type**~~: **RESOLVED** — No schema or code changes needed. `AllowedOwnerTypes` already accepts any `EntityType` value (the array items are `$ref: EntityType`), and `Item`, `Location`, `Deity`, `Dungeon` are all in the EntityType enum. The statement "lib-seed currently supports account, character, and actor" described what existing seed type definitions specify, not what the schema permits. Genesis uses `OwnerType: Other, OwnerId: entityId` for all internally-created seeds — consistent across all entity types, available at creation time (before `BindPhysicalForm`), and invisible to external consumers since the seed is encapsulated. Genesis entities get ABML data from `${genesis.*}` (served from the Genesis entity record), not `${seed.*}` (which queries by `OwnerType: Character`). For externally-adopted seeds (e.g., Divine creating deity seeds for bond propagation), the caller's chosen ownerType is preserved.
 
-6. **Weapon-wielder variable provider registration**: The `${wielder.*}` and `${seed.*}` providers for living weapons need to be registered somewhere. Options:
-   - Register from a game-specific plugin (cleanest separation)
-   - Register from lib-character-personality or lib-actor (if generic enough)
-   - Register from a minimal `lib-sentient-weapon` that contains ONLY the variable provider factories (no API endpoints, no state stores -- just DI registrations)
+6. ~~**Weapon-wielder variable provider registration**~~: **RESOLVED** — Neither a dedicated provider nor a new plugin is needed. Two parts:
+   - **`${seed.*}`**: Resolved by Task 6 — Genesis provides `${genesis.*}` which covers capabilities, wallets, phases, and bond state. The standard `${seed.*}` provider queries by `OwnerType: Character` and would never find genesis seeds. `${genesis.*}` IS the seed data for genesis entities.
+   - **`${wielder.*}`**: Resolved by ABML `load_snapshot:` — the established pattern for cross-actor data queries. The weapon's behavior document loads wielder data at the start of each tick (`load_snapshot: character_id: "${genesis.bond.targetId}", variables: [...], namespace: "wielder"`), making `${wielder.*}` available for the rest of that tick. Different weapon types load different wielder data fields — a combat weapon loads `health_percent` and `in_combat`, a wisdom weapon loads `backstory.education_level`. This is authored content (ABML), not service infrastructure. It follows the same pattern used by god-actors querying mortal data and dungeon cores querying intruder data. All three alternative registration options (game-specific plugin, existing L4 plugin, minimal lib-sentient-weapon) were ruled out because `load_snapshot:` already solves the problem with zero infrastructure, matches the "emergent over authored" design principle, and lets each weapon behavior decide exactly what data it needs.
 
 7. **Cross-generational weapon memory**: When a wielder dies, the weapon's `wielder_bond` growth domain should partially reset (new wielder, new relationship) but the weapon's character encounter records persist. The weapon should gain backstory elements recording the dead wielder. This is all standard CharacterEncounter + CharacterHistory API calls, but the game engine needs to know when to make them (on wielder death event). If there's no lib-sentient-weapon, this coordination lives in the game engine.
 

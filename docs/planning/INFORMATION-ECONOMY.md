@@ -216,7 +216,7 @@ Markets for information emerge organically through the Hearsay-Disposition feedb
 8. SECONDARY EFFECTS
    Scarcity drives expeditions to discover more
    High prices attract competitors and copiers
-   God-actors (Hermes) may orchestrate trade routes for knowledge
+   God-actors (e.g., a commerce-domain god) may orchestrate trade routes for knowledge
    Factions may impose information-sharing or hoarding norms
    Monopolists form knowledge guilds to control supply
 ```
@@ -486,10 +486,10 @@ When Hearsay saturation reaches a threshold at a location (enough NPCs believe t
 ### E. God-Actor Information Manipulation
 
 Divine actors (Regional Watchers) could manipulate information markets:
-- **Hermes** orchestrates trade routes for knowledge items between settlements
-- **Athena** values and promotes scholarly pursuits, increasing information demand
-- **A trickster god** injects misinformation through forged scrolls or manipulated Hearsay
-- **A war god** might suppress information about enemy weaknesses to prolong conflict
+- **A commerce-domain god** orchestrates trade routes for knowledge items between settlements
+- **A wisdom-domain god** values and promotes scholarly pursuits, increasing information demand
+- **A trickster-domain god** injects misinformation through forged scrolls or manipulated Hearsay
+- **A war-domain god** might suppress information about enemy weaknesses to prolong conflict
 
 These are authored ABML behaviors, not service features.
 

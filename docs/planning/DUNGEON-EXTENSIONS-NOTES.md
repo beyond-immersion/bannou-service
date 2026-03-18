@@ -33,7 +33,7 @@ The existing deep dives and Arcadia knowledge base documents handle the foundati
 
 ### The Dungeon-Spawning God
 
-This fits perfectly into the existing divine architecture. One of the 18 Old Gods (Typhon/Monsters is the obvious candidate, but you could also frame it as a more neutral force -- a god
+This fits perfectly into the existing divine architecture. One of the 18 Old Gods (a monster-domain god is the obvious candidate, but you could also frame it as a more neutral force -- a god
 of Transformation or Stagnation-Breaking) would be a regional watcher whose ABML behavior includes:
 
 perception_filter:
