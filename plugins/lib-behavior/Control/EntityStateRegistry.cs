@@ -3,7 +3,9 @@
 // Thread-safe registry for tracking entity state in the behavior system.
 // =============================================================================
 
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Behavior;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
@@ -23,6 +25,7 @@ namespace BeyondImmersion.BannouService.Behavior.Control;
 /// IMPLEMENTATION TENETS (multi-instance safety).
 /// </para>
 /// </remarks>
+[BannouHelperService("entity-state-registry", typeof(BehaviorService), typeof(IEntityStateRegistry), ServiceLifetime.Singleton)]
 public sealed class EntityStateRegistry : IEntityStateRegistry
 {
     private readonly ConcurrentDictionary<Guid, EntityState> _states;

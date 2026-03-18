@@ -689,7 +689,9 @@ public partial class CraftController
                 "recipeType",
                 "domain",
                 "steps",
-                "isDeprecated"
+                "isDeprecated",
+                "createdAt",
+                "updatedAt"
             ],
             "properties": {
                 "recipeId": {
@@ -842,13 +844,11 @@ public partial class CraftController
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
-                    "nullable": true,
                     "description": "When this recipe was created"
                 },
                 "updatedAt": {
                     "type": "string",
                     "format": "date-time",
-                    "nullable": true,
                     "description": "When this recipe was last updated"
                 }
             }
@@ -979,7 +979,7 @@ public partial class CraftController
         },
         "AffixOperationType": {
             "type": "string",
-            "description": "Finite set of lib-affix API operations that modification recipes can invoke.\nCategory C system state enum \ u2014 not game-configurable.\n",
+            "description": "Finite set of lib-affix API operations that modification recipes can invoke.\nCategory C system state enum \u2014 not game-configurable.\n",
             "enum": [
                 "ApplyRandom",
                 "RemoveRandom",
@@ -1399,7 +1399,9 @@ public partial class CraftController
                 "recipeType",
                 "domain",
                 "steps",
-                "isDeprecated"
+                "isDeprecated",
+                "createdAt",
+                "updatedAt"
             ],
             "properties": {
                 "recipeId": {
@@ -1552,13 +1554,11 @@ public partial class CraftController
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
-                    "nullable": true,
                     "description": "When this recipe was created"
                 },
                 "updatedAt": {
                     "type": "string",
                     "format": "date-time",
-                    "nullable": true,
                     "description": "When this recipe was last updated"
                 }
             }
@@ -1689,7 +1689,7 @@ public partial class CraftController
         },
         "AffixOperationType": {
             "type": "string",
-            "description": "Finite set of lib-affix API operations that modification recipes can invoke.\nCategory C system state enum \ u2014 not game-configurable.\n",
+            "description": "Finite set of lib-affix API operations that modification recipes can invoke.\nCategory C system state enum \u2014 not game-configurable.\n",
             "enum": [
                 "ApplyRandom",
                 "RemoveRandom",
@@ -2534,7 +2534,9 @@ public partial class CraftController
                 "recipeType",
                 "domain",
                 "steps",
-                "isDeprecated"
+                "isDeprecated",
+                "createdAt",
+                "updatedAt"
             ],
             "properties": {
                 "recipeId": {
@@ -2687,13 +2689,11 @@ public partial class CraftController
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
-                    "nullable": true,
                     "description": "When this recipe was created"
                 },
                 "updatedAt": {
                     "type": "string",
                     "format": "date-time",
-                    "nullable": true,
                     "description": "When this recipe was last updated"
                 }
             }
@@ -2824,7 +2824,7 @@ public partial class CraftController
         },
         "AffixOperationType": {
             "type": "string",
-            "description": "Finite set of lib-affix API operations that modification recipes can invoke.\nCategory C system state enum \ u2014 not game-configurable.\n",
+            "description": "Finite set of lib-affix API operations that modification recipes can invoke.\nCategory C system state enum \u2014 not game-configurable.\n",
             "enum": [
                 "ApplyRandom",
                 "RemoveRandom",
@@ -3191,7 +3191,9 @@ public partial class CraftController
                 "recipeType",
                 "domain",
                 "steps",
-                "isDeprecated"
+                "isDeprecated",
+                "createdAt",
+                "updatedAt"
             ],
             "properties": {
                 "recipeId": {
@@ -3344,13 +3346,11 @@ public partial class CraftController
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
-                    "nullable": true,
                     "description": "When this recipe was created"
                 },
                 "updatedAt": {
                     "type": "string",
                     "format": "date-time",
-                    "nullable": true,
                     "description": "When this recipe was last updated"
                 }
             }
@@ -3481,7 +3481,7 @@ public partial class CraftController
         },
         "AffixOperationType": {
             "type": "string",
-            "description": "Finite set of lib-affix API operations that modification recipes can invoke.\nCategory C system state enum \ u2014 not game-configurable.\n",
+            "description": "Finite set of lib-affix API operations that modification recipes can invoke.\nCategory C system state enum \u2014 not game-configurable.\n",
             "enum": [
                 "ApplyRandom",
                 "RemoveRandom",
@@ -7407,6 +7407,7 @@ public partial class CraftController
                 "qualityValue": {
                     "type": "number",
                     "format": "double",
+                    "nullable": true,
                     "description": "Representative quality value for this band"
                 },
                 "outputs": {

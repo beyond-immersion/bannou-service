@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +11,7 @@ namespace BeyondImmersion.BannouService.Affix;
 /// Three batchers: created (accumulating), modified (deduplicating), destroyed (accumulating).
 /// Flushed by EventBatcherWorker on a configurable interval.
 /// </summary>
+[BannouHelperService("affix-instance-event-batcher", typeof(AffixService), lifetime: ServiceLifetime.Singleton)]
 public class AffixInstanceEventBatcher
 {
     private readonly EventBatcher<AffixInstanceBatchEntry> _created;

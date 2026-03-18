@@ -1750,7 +1750,7 @@ public partial class ListEvidenceResponse
 }
 
 /// <summary>
-/// Response after assigning or requesting an arbiter
+/// Response after assigning or requesting an arbiter. A null arbiterId indicates a deferred external request.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AssignArbiterResponse
@@ -1842,12 +1842,6 @@ public partial class EnforceRulingResponse
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RulingId { get; set; } = default!;
-
-    /// <summary>
-    /// True if all consequences have been successfully executed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("allEnforced")]
-    public bool AllEnforced { get; set; } = default!;
 
     /// <summary>
     /// Current execution status of each consequence

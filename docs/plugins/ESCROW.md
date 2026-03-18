@@ -455,26 +455,32 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 ## Stubs & Unimplemented Features
 
-1. **ValidateEscrow asset checking**: The `ValidateEscrowAsync` method contains a placeholder comment "Validate deposits (placeholder - real impl would check with currency/inventory services)". No actual cross-service validation is performed. The validation always passes (empty failure list).
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/213 -->
+1. **ValidateEscrow asset checking**: The `ValidateEscrowAsync` method contains a placeholder comment — validation always passes (empty failure list). **Design resolved** (2026-03-18): Per-asset-type validation via direct service calls — Currency (check wallet/transaction records), Items (check existence in escrow container), Contracts (check existence and guardian lock), Custom (call handler's `ValidateEndpoint` via mesh). Service unavailability is NOT validation failure — skip and retry next cycle. Only confirmed asset discrepancies trigger `Validation_failed` state. See [#213](https://github.com/beyond-immersion/bannou-service/issues/213).
+<!-- AUDIT:IMPLEMENTATION:2026-03-18:https://github.com/beyond-immersion/bannou-service/issues/213 -->
 
-2. **Periodic validation loop**: Configuration defines `ValidationCheckInterval` (PT5M) but no background process triggers periodic validation. The `ValidationStore` tracks `NextValidationDue` but nothing reads it.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/250 -->
+2. **Periodic validation loop**: Configuration defines `ValidationCheckInterval` (PT5M) but no background worker exists. **Design resolved** (2026-03-18): Implement `EscrowValidationService` following `EscrowExpirationService` pattern. Validates escrows in funded states (`Funded`, `PendingConsent`, `PendingCondition`, `Finalizing`, `Releasing`) where `NextValidationDue <= now`. `NextValidationDue` initialized on `Funded` transition. Validation failures from any funded state (except `Releasing`) transition to `Validation_failed` with `PreFailureStatus` for restoration after reaffirmation. Implementation merges with #213 (validation logic). See [#250](https://github.com/beyond-immersion/bannou-service/issues/250).
+<!-- AUDIT:IMPLEMENTATION:2026-03-18:https://github.com/beyond-immersion/bannou-service/issues/250 -->
 
 3. ~~**Configuration property not wired up**~~: **FIXED** (2026-03-16) - Duplicate of stub #2. `ValidationCheckInterval` is the interval for the periodic validation background service tracked by Issue #250. No separate fix needed — resolving #250 resolves this.
 
-4. **Custom handler invocation**: Handlers are registered with deposit/release/refund/validate endpoints, but the escrow service never actually invokes these endpoints during deposit or release flows. The handler registry is purely declarative. Sub-concern of asset transfer integration — handler invocation depends on the built-in asset type integration design being resolved first.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/153 -->
+4. **Custom handler invocation**: Handlers are registered with deposit/release/refund/validate endpoints, but the escrow service never actually invokes these endpoints during deposit or release flows. The handler registry is purely declarative. **Design resolved** (2026-03-18): follows the same direct invocation pattern as built-in asset types — look up registered handler endpoints from handler registry, call via lib-mesh during deposit/release/refund flows. See [#153](https://github.com/beyond-immersion/bannou-service/issues/153).
+<!-- AUDIT:IMPLEMENTATION:2026-03-18:https://github.com/beyond-immersion/bannou-service/issues/153 -->
 
-5. **Asset transfer execution**: Release and refund operations set status and publish events but do not call currency/inventory services to execute actual transfers. The service is purely a coordination/tracking layer that assumes downstream consumers handle the physical movements. See [#153](https://github.com/beyond-immersion/bannou-service/issues/153) for the cross-cutting integration issue.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-04:https://github.com/beyond-immersion/bannou-service/issues/153 -->
+5. **Asset transfer execution**: Release and refund operations set status and publish events but do not call currency/inventory services to execute actual transfers. **Design resolved** (2026-03-18): Escrow calls `ICurrencyClient` and `IInventoryClient` directly (L4→L2 hard dependencies via constructor injection). Currency already has 3 escrow endpoints (`/currency/escrow/deposit`, `/currency/escrow/release`, `/currency/escrow/refund`). Inventory needs 3 matching endpoints using the existing `ownerType: escrow` value. Events remain for observability only. T7 compensation via `Releasing`/`Refunding` intermediate states; `Disputed` as escalation path. See [#153](https://github.com/beyond-immersion/bannou-service/issues/153).
+<!-- AUDIT:IMPLEMENTATION:2026-03-18:https://github.com/beyond-immersion/bannou-service/issues/153 -->
 
 ---
 
 ## Potential Extensions
 
-1. **Handler invocation pipeline**: During deposit/release/refund, look up registered handlers for each asset type and invoke their endpoints via mesh, enabling plug-and-play asset type support. Tracked as part of asset transfer integration.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/153 -->
+1. **Handler invocation pipeline**: During deposit/release/refund, look up registered handlers for each asset type and invoke their endpoints via mesh, enabling plug-and-play asset type support. **Design resolved** (2026-03-18) — same direct invocation pattern as built-in types. Implementation tracked as part of [#153](https://github.com/beyond-immersion/bannou-service/issues/153).
+<!-- AUDIT:IMPLEMENTATION:2026-03-18:https://github.com/beyond-immersion/bannou-service/issues/153 -->
+
+2. **Deposit commitment window and forfeiture policy**: Progressive deposit hardening where deposits become non-refundable after a configurable `commitmentWindow` duration. Pre-agreed `forfeiturePolicy` (Refund, ForfeitToCounterparty, Proportional, Arbiter) enables automatic breach resolution without arbiter involvement. Inspired by real-world earnest money, liquidated damages, and construction progress payment patterns. When combined with typed `TerminationCategory` from [#563](https://github.com/beyond-immersion/bannou-service/issues/563), enables nuanced breach handling: breach within commitment window → refund (deposits still soft); breach after window → apply forfeiture policy. Includes potential for auto-generated return contracts when deposited assets have already been transferred/consumed. See [#698](https://github.com/beyond-immersion/bannou-service/issues/698).
+<!-- AUDIT:NEEDS_DESIGN:2026-03-18:https://github.com/beyond-immersion/bannou-service/issues/698 -->
+
+3. **Typed contract termination category consumption**: When Contract implements `TerminationCategory` enum ([#563](https://github.com/beyond-immersion/bannou-service/issues/563)), Escrow's `HandleContractTerminatedAsync` will differentiate behavior: `Breach` → `Disputed` (if arbiter exists) or `Refunded` (no arbiter); all other categories → `Refunded` (current behavior). Future commitment window feature (#698) enhances this with automatic forfeiture based on commitment status.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-18:https://github.com/beyond-immersion/bannou-service/issues/563 -->
 
 ---
 
@@ -500,7 +506,7 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 4. **Token hash double-hashing**: Tokens are first generated as SHA-256 hash of random bytes + context, then stored by hashing the token again. Validation requires SHA-256(submitted_token) lookup, providing one-way token storage.
 
-5. **Escrow service SHOULD call foundation services directly (not yet implemented)**: The intended design is that when deposits, releases, or refunds occur, Escrow calls lib-currency (`/currency/debit`, `/currency/credit`, `/currency/transfer`) and lib-inventory (`/inventory/transfer`) APIs directly. Events like `escrow.released` and `escrow.refunded` would be published for observability and analytics, NOT for triggering asset movements. This respects the service hierarchy: Escrow (L4) depends on Currency/Inventory (L2), never the reverse. **Currently unimplemented** — see stub #5 and [#153](https://github.com/beyond-immersion/bannou-service/issues/153).
+5. **Escrow service calls foundation services directly (design resolved, not yet implemented)**: When deposits, releases, or refunds occur, Escrow calls Currency's dedicated escrow endpoints (`/currency/escrow/deposit`, `/currency/escrow/release`, `/currency/escrow/refund`) and Inventory's escrow endpoints (to be added: `/inventory/escrow/deposit`, `/inventory/escrow/release`, `/inventory/escrow/refund`) directly via constructor-injected `ICurrencyClient` and `IInventoryClient`. Events like `escrow.released` and `escrow.refunded` are published for observability and analytics, NOT for triggering asset movements. T7 compensation uses the `Releasing`/`Refunding` intermediate FSM states; `Disputed` is the escalation path when automated compensation fails. For contract-bound escrows, Contract's `ExecuteContract` handles distribution via clause execution — Escrow verifies and transitions. For custom asset types, registered handler endpoints are invoked via lib-mesh. **Design resolved 2026-03-18** — implementation tracked by [#153](https://github.com/beyond-immersion/bannou-service/issues/153).
 
 6. **Contract event handlers are best-effort**: `HandleContractFulfilledAsync` and `HandleContractTerminatedAsync` use try-catch with error event emission but don't retry or queue failed operations.
 
@@ -522,8 +528,7 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 5. ~~**Party pending count failures silently logged**~~: **FIXED** (2026-03-17) - Reclassified as intentional behavior. The party pending count is a soft rate-limit (enforcing `MaxPendingPerParty`), not a data integrity mechanism. Silent failure with Warning logging is correct: (1) authoritative escrow agreements are stored in MySQL with proper concurrency, (2) a stale count self-corrects when the next successful operation updates the party's count, (3) worst-case failure modes are bounded (slightly permissive or restrictive limits) and non-catastrophic. Moved to Intentional Quirks.
 
-6. **No distributed lock for concurrent agreement modifications**: Multiple parties may deposit or consent simultaneously against the same agreement. The service uses ETag-based optimistic concurrency with retries, but under high contention (many parties, rapid actions) this could lead to excessive retry loops. A distributed lock per agreement ID would provide stronger serialization guarantees at the cost of added latency.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-17:https://github.com/beyond-immersion/bannou-service/issues/697 -->
+6. ~~**No distributed lock for concurrent agreement modifications**~~: **RESOLVED** (2026-03-18) — ETag-based optimistic concurrency with `MaxConcurrencyRetries` (default 3) is sufficient at 100K NPC scale. The dominant escrow pattern (2-party NPC vendor trades) has near-zero contention due to inherently sequential GOAP-driven operations. Multi-party escrows are rare and bounded by `MaxParties` (default 10). MySQL sub-millisecond read-modify-write resolves retry loops within microseconds. Distributed locks would add latency to every operation for zero benefit on the dominant case. If load testing reveals problems: (1) increase `MaxConcurrencyRetries` via config, (2) add retry backoff with jitter, (3) last resort: configurable per-agreement lock above a party count threshold. Closed [#697](https://github.com/beyond-immersion/bannou-service/issues/697).
 
 ---
 
@@ -531,25 +536,34 @@ Contract-bound escrows verify the contract status on release. Once the contract 
 
 ### Pending Design Review
 
-1. **Asset transfer integration** — [Issue #153](https://github.com/beyond-immersion/bannou-service/issues/153) (2026-01-31)
-   - Release and refund operations do not execute actual asset transfers (stub #5)
-   - Escrow should call lib-currency and lib-inventory directly (L4→L2, hierarchy-permitted)
-   - Events should be for observability, not for triggering asset movements
-   - Inventory has zero escrow integration; Currency has endpoints but they're never called
-   - **Must include T7 compensation strategy**: When multi-service calls are added, release/refund flows will need catch-block compensation or documented self-healing for partial failure (reclassified from Bug #3, 2026-03-16)
-
-2. **ValidateEscrow asset checking** — [Issue #213](https://github.com/beyond-immersion/bannou-service/issues/213) (2026-01-31)
-   - `ValidateEscrowAsync` contains placeholder logic — validation always passes
-   - Needs to call ICurrencyClient/IItemClient to verify deposited assets still held
-   - Design questions: contract validation, custom handler invocation, graceful degradation policy
-
-3. **Periodic validation background service** — [Issue #250](https://github.com/beyond-immersion/bannou-service/issues/250) (2026-02-01)
-   - `ValidationCheckInterval` config property is defined but unused (stub #2/#3)
-   - Needs a background worker to periodically trigger asset validation
+*No pending design items — all design questions resolved as of 2026-03-18. Implementation work remains on Issues #153, #213, #250.*
 
 ### Completed
 
-1. **x-references for lib-resource cleanup** — (2026-03-16)
+1. **Periodic validation background service design resolved** — [Issue #250](https://github.com/beyond-immersion/bannou-service/issues/250) (2026-03-18)
+   - `EscrowValidationService` follows `EscrowExpirationService` pattern
+   - Validates funded states (`Funded`, `PendingConsent`, `PendingCondition`, `Finalizing`, `Releasing`) where `NextValidationDue <= now`
+   - `NextValidationDue` initialized on `Funded` transition
+   - Validation failures transition to `Validation_failed` with `PreFailureStatus` for restoration after reaffirmation (except `Releasing` — handled by release compensation)
+   - Implementation merges with #213; both issues remain open for implementation
+
+2. **ValidateEscrow asset checking design resolved** — [Issue #213](https://github.com/beyond-immersion/bannou-service/issues/213) (2026-03-18)
+   - Per-asset-type validation: Currency (wallet/transactions), Items (escrow container), Contracts (guardian lock), Custom (handler ValidateEndpoint via mesh)
+   - Service unavailability = skip + retry next cycle (NOT validation failure)
+   - Only confirmed asset discrepancies trigger `Validation_failed` state and reaffirmation flow
+   - Implementation work remains open on Issue #213
+
+2. **Asset transfer integration design resolved** — [Issue #153](https://github.com/beyond-immersion/bannou-service/issues/153) (2026-03-18)
+   - Direct invocation (Option B) confirmed as sole tenet-compliant approach per T27, T2, T4
+   - Escrow calls `ICurrencyClient` + `IInventoryClient` via constructor injection (hard L4→L2)
+   - Currency already has 3 escrow endpoints; Inventory needs 3 matching endpoints (`ownerType: escrow`)
+   - T7 compensation via `Releasing`/`Refunding` intermediate states; `Disputed` as escalation path
+   - Contract-bound escrows: Contract's `ExecuteContract` handles distribution; Escrow verifies and transitions
+   - Custom handlers: same direct invocation via mesh using registered handler endpoints
+   - Events remain for observability (Analytics, Regional Watchers), NOT for triggering asset movements
+   - Implementation work remains open on Issue #153
+
+2. **x-references for lib-resource cleanup** — (2026-03-16)
    - Added `x-references` targeting character with CASCADE policy
    - Added `/escrow/cleanup-by-character` endpoint and `CleanupByCharacterAsync` implementation
    - Generated `EscrowReferenceTracking.cs` with register/unregister helpers and callback registration

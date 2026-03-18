@@ -234,8 +234,8 @@ components:
           format: uuid
           description: "Primary entity performing the craft"
         entityType: &id012
-          type: string
-          description: "Type of the primary entity (EntityType enum value)"
+          $ref: ../common-api.yaml#/components/schemas/EntityType
+          description: "Type of the primary entity"
         currentStepCode: &id013
           type: string
           description: "Code of the next step to complete"

@@ -75,8 +75,7 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
             return new StateStoreFactory(config, loggerFactory, telemetryProvider, messageBus);
         });
 
-        // Register distributed lock provider (used by Permission service and others)
-        services.AddSingleton<IDistributedLockProvider, Services.RedisDistributedLockProvider>();
+        // RedisDistributedLockProvider auto-registered via [BannouHelperService] attribute
 
         // Register migration helper for admin migration endpoints
         services.AddScoped<Services.StateMigrationHelper>();

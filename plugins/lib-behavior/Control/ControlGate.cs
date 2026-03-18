@@ -4,8 +4,10 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -14,6 +16,7 @@ namespace BeyondImmersion.BannouService.Behavior.Control;
 /// <summary>
 /// Per-entity control gate implementation.
 /// </summary>
+[BannouHelperService("control-gate", typeof(BehaviorService), typeof(IControlGate), ServiceLifetime.Singleton)]
 public sealed class ControlGate : IControlGate
 {
     private readonly object _lock = new();

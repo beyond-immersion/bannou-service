@@ -29005,12 +29005,12 @@ export interface components {
        * Format: date-time
        * @description When this recipe was created
        */
-      createdAt?: string | null;
+      createdAt: string;
       /**
        * Format: date-time
        * @description When this recipe was last updated
        */
-      updatedAt?: string | null;
+      updatedAt: string;
     };
     /** @description A material input consumed during crafting */
     RecipeInput: {

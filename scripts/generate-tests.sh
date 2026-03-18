@@ -68,29 +68,20 @@ if [ ! -f "$TEST_PROJECT_FILE" ]; then
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <IsPackable>false</IsPackable>
-    <IsTestProject>true</IsTestProject>
     <RootNamespace>BeyondImmersion.BannouService.$SERVICE_PASCAL.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+    <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Test infrastructure packages only - other packages come from lib → bannou-service -->
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
-    <PackageReference Include="xunit" Version="2.9.3" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="coverlet.collector" Version="6.0.4">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <!-- Build tools (xunit comes from test-utilities; Test.Sdk and Moq needed directly) -->
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
     <PackageReference Include="Moq" Version="4.20.72" />
     <!-- Logging.Abstractions, Mvc.Core come from lib-$SERVICE_NAME → bannou-service -->
   </ItemGroup>
 
   <ItemGroup>
-    <!-- bannou-service comes transitively via lib-$SERVICE_NAME -->
     <ProjectReference Include="../lib-$SERVICE_NAME/lib-$SERVICE_NAME.csproj" />
     <!-- Shared test utilities (ServiceConstructorValidator, etc.) -->
     <ProjectReference Include="../../test-utilities/test-utilities.csproj" />

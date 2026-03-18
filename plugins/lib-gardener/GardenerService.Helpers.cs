@@ -1,3 +1,5 @@
+using BeyondImmersion.BannouService.State;
+
 namespace BeyondImmersion.BannouService.Gardener;
 
 // =============================================================================
@@ -56,5 +58,90 @@ namespace BeyondImmersion.BannouService.Gardener;
 /// </remarks>
 public partial class GardenerService
 {
-    // Move private/internal helper methods here from GardenerService.cs
+    /// <summary>
+    /// Determines whether a player meets a scenario template's prerequisite requirements.
+    /// Returns true if all prerequisites are satisfied or if no prerequisites are defined.
+    /// </summary>
+    /// <param name="prerequisites">The template's prerequisite requirements (nullable — null means no prerequisites).</param>
+    /// <param name="seedGrowth">The player's per-domain growth totals from Seed service.</param>
+    /// <param name="completedTemplateCodes">Set of template codes the player has completed.</param>
+    /// <returns>True if the player meets all prerequisites or none are defined.</returns>
+    internal static bool MeetsPrerequisites(
+        ScenarioPrerequisitesModel? prerequisites,
+        IDictionary<string, float> seedGrowth,
+        IReadOnlySet<string> completedTemplateCodes)
+    {
+        if (prerequisites == null)
+            return true;
+
+        // Check required domain growth minimums
+        if (prerequisites.RequiredDomains != null)
+        {
+            foreach (var (domain, requiredAmount) in prerequisites.RequiredDomains)
+            {
+                if (!seedGrowth.TryGetValue(domain, out var currentAmount) || currentAmount < requiredAmount)
+                    return false;
+            }
+        }
+
+        // Check required completed scenarios
+        if (prerequisites.RequiredScenarios != null)
+        {
+            foreach (var requiredCode in prerequisites.RequiredScenarios)
+            {
+                if (!completedTemplateCodes.Contains(requiredCode))
+                    return false;
+            }
+        }
+
+        // Check excluded scenarios (player must NOT have completed these)
+        if (prerequisites.ExcludedScenarios != null)
+        {
+            foreach (var excludedCode in prerequisites.ExcludedScenarios)
+            {
+                if (completedTemplateCodes.Contains(excludedCode))
+                    return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Queries the set of scenario template codes that the player has completed.
+    /// Used for prerequisite validation (required/excluded scenarios).
+    /// </summary>
+    /// <param name="accountId">The account ID to query history for.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Set of completed template codes.</returns>
+    private async Task<HashSet<string>> GetCompletedScenarioCodesAsync(
+        Guid accountId, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.gardener", "GardenerService.GetCompletedScenarioCodesAsync");
+
+        var conditions = new List<QueryCondition>
+        {
+            new QueryCondition
+            {
+                Path = "$.AccountId",
+                Operator = QueryOperator.Equals,
+                Value = accountId.ToString()
+            },
+            new QueryCondition
+            {
+                Path = "$.Status",
+                Operator = QueryOperator.Equals,
+                Value = ScenarioStatus.Completed.ToString()
+            }
+        };
+
+        var result = await _historyStore.JsonQueryPagedAsync(
+            conditions, 0, 10000, cancellationToken: ct);
+
+        return result.Items
+            .Where(h => h.Value.TemplateCode != null)
+            .Select(h => h.Value.TemplateCode!)
+            .ToHashSet();
+    }
 }

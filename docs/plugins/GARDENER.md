@@ -555,6 +555,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 8. **ConnectivityMode.Persistent has no special handling**: The enum value exists (Alpha, Beta, Release map to Isolated, WorldSlice, Persistent) but the code treats all connectivity modes identically during scenario creation and lifecycle. The vision describes Persistent as "a scenario that doesn't end" -- the release surprise. No code path distinguishes Persistent scenarios from Isolated ones.
 
 9. **Prerequisite validation during scenario entry**: Templates store `Prerequisites` (required domains, required/excluded scenarios) in the model but they are never validated in `EnterScenarioAsync`. A player can enter any scenario regardless of prerequisites. The `GardenerGardenOrchestratorWorker.GetEligibleTemplatesAsync` also does not filter by prerequisites.
+<!-- AUDIT:IN_PROGRESS:2026-03-18 -->
 
 10. **Per-template MaxConcurrentInstances enforcement**: Templates store a `MaxConcurrentInstances` value but it is never checked during scenario entry. Only the global `MaxConcurrentScenariosGlobal` is enforced.
 

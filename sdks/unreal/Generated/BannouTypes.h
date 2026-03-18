@@ -27902,11 +27902,11 @@ struct FRecipeDefinitionInfo
 
     /** When this recipe was created */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FDateTime> CreatedAt;
+    FDateTime CreatedAt;
 
     /** When this recipe was last updated */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FDateTime> UpdatedAt;
+    FDateTime UpdatedAt;
 
 };
 

@@ -55,11 +55,18 @@ mkdir -p "$OUTPUT_DIR"
 require_nswag
 ensure_dotnet_root
 
-# Check for controller-only methods (x-controller-only or x-manual-implementation)
-HAS_CONTROLLER_ONLY_METHODS=false
-if grep -q "x-controller-only:\s*true\|x-manual-implementation:\s*true" "$SCHEMA_FILE"; then
-    HAS_CONTROLLER_ONLY_METHODS=true
-    echo -e "${YELLOW}🔧 Schema contains controller-only methods (requires partial controller implementation)${NC}"
+# Check for x-controller-only (generates abstract ControllerBase requiring inheritance)
+HAS_CONTROLLER_ONLY=false
+if grep -q "x-controller-only:\s*true" "$SCHEMA_FILE"; then
+    HAS_CONTROLLER_ONLY=true
+    echo -e "${YELLOW}🔧 Schema contains x-controller-only methods (requires controller inheritance)${NC}"
+fi
+
+# Check for x-manual-implementation (generates partial class with comment placeholders)
+HAS_MANUAL_IMPLEMENTATION=false
+if grep -q "x-manual-implementation:\s*true" "$SCHEMA_FILE"; then
+    HAS_MANUAL_IMPLEMENTATION=true
+    echo -e "${YELLOW}🔧 Schema contains x-manual-implementation methods (partial class routes)${NC}"
 fi
 
 # Create filtered schema for content type and URI format fixes ONLY
@@ -150,11 +157,12 @@ if [ $? -eq 0 ] && [ -f "$OUTPUT_FILE" ]; then
     FILE_SIZE=$(wc -l < "$OUTPUT_FILE" 2>/dev/null || echo "0")
     echo -e "${GREEN}✅ Generated controller ($FILE_SIZE lines)${NC}"
 
-    # Create empty partial controller if it doesn't exist and we have controller-only methods
-    if [ "$HAS_CONTROLLER_ONLY_METHODS" = true ]; then
+    # Create manual controller file if it doesn't exist
+    # x-controller-only: generated controller is abstract ControllerBase, manual inherits it
+    if [ "$HAS_CONTROLLER_ONLY" = true ]; then
         PARTIAL_CONTROLLER="../plugins/lib-${SERVICE_NAME}/${SERVICE_PASCAL}Controller.cs"
         if [ ! -f "$PARTIAL_CONTROLLER" ]; then
-            echo -e "${YELLOW}📝 Creating partial controller for x-controller-only methods: $PARTIAL_CONTROLLER${NC}"
+            echo -e "${YELLOW}📝 Creating controller for x-controller-only methods: $PARTIAL_CONTROLLER${NC}"
 
             # Generate the controller class with method overrides by parsing the generated base controller
             python3 -c "
@@ -235,7 +243,41 @@ controller_content += '''
 
 print(controller_content)
 " > "$PARTIAL_CONTROLLER"
-            echo -e "${GREEN}✅ Created partial controller template${NC}"
+            echo -e "${GREEN}✅ Created controller with ControllerBase inheritance${NC}"
+        else
+            echo -e "${YELLOW}📝 Manual controller already exists${NC}"
+        fi
+    fi
+
+    # x-manual-implementation: generated controller is partial class with comment placeholders,
+    # manual file adds routes directly via partial class (no inheritance)
+    if [ "$HAS_MANUAL_IMPLEMENTATION" = true ]; then
+        PARTIAL_CONTROLLER="../plugins/lib-${SERVICE_NAME}/${SERVICE_PASCAL}Controller.cs"
+        if [ ! -f "$PARTIAL_CONTROLLER" ]; then
+            echo -e "${YELLOW}📝 Creating partial controller for x-manual-implementation methods: $PARTIAL_CONTROLLER${NC}"
+
+            cat > "$PARTIAL_CONTROLLER" << MANUAL_EOF
+using Microsoft.AspNetCore.Mvc;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
+
+/// <summary>
+/// Manual implementation for endpoints marked with x-manual-implementation in the schema.
+/// This partial class extends the generated ${SERVICE_PASCAL}Controller.
+/// Add custom route methods here for endpoints that need non-standard handling
+/// (e.g., non-JSON content types, custom response formatting).
+/// </summary>
+public partial class ${SERVICE_PASCAL}Controller
+{
+    // Add manual endpoint implementations here.
+    // The generated partial class has comment placeholders for each
+    // x-manual-implementation endpoint showing which methods to implement.
+}
+MANUAL_EOF
+
+            echo -e "${GREEN}✅ Created partial controller stub (no inheritance)${NC}"
         else
             echo -e "${YELLOW}📝 Manual partial controller already exists${NC}"
         fi

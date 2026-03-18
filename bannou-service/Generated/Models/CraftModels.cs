@@ -628,13 +628,17 @@ public partial class RecipeDefinitionInfo
     /// When this recipe was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    public System.DateTimeOffset? CreatedAt { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
     /// When this recipe was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
 }
 
@@ -835,7 +839,7 @@ public partial class OutputPreviewBand
     /// Representative quality value for this band
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("qualityValue")]
-    public double QualityValue { get; set; } = default!;
+    public double? QualityValue { get; set; } = default!;
 
     /// <summary>
     /// Predicted outputs at this quality level

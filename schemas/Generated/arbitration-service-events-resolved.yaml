@@ -152,6 +152,8 @@ x-lifecycle:
         $ref: '../arbitration-api.yaml#/components/schemas/CaseClosedReason'
         nullable: true
         description: "Reason for case closure"
+      governanceParametersSnapshot: {type: object, additionalProperties: true, nullable: true, description: "Governance parameters
+          snapshot from jurisdictional faction. Opaque pass-through."}
     sensitive: [governanceParametersSnapshot]
 
 paths: {}  # Events don't have HTTP paths

@@ -2526,10 +2526,7 @@ public partial class ArbitrationController
         "AssignArbiterResponse": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Response after assigning or requesting an arbiter",
-            "required": [
-                "pending"
-            ],
+            "description": "Response after assigning or requesting an arbiter. A null arbiterId indicates a deferred external request.",
             "properties": {
                 "arbiterId": {
                     "type": "string",
@@ -3964,7 +3961,6 @@ public partial class ArbitrationController
             "description": "Response after attempting to enforce a ruling's consequences",
             "required": [
                 "rulingId",
-                "allEnforced",
                 "consequenceResults"
             ],
             "properties": {
@@ -3972,10 +3968,6 @@ public partial class ArbitrationController
                     "type": "string",
                     "format": "uuid",
                     "description": "Ruling that was enforced"
-                },
-                "allEnforced": {
-                    "type": "boolean",
-                    "description": "True if all consequences have been successfully executed"
                 },
                 "consequenceResults": {
                     "type": "array",

@@ -361,9 +361,9 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
             seedGrowth = new Dictionary<string, float>();
         }
 
-        // Load eligible templates
+        // Load eligible templates (including prerequisite filtering)
         var eligibleTemplates = await GetEligibleTemplatesAsync(
-            garden, historyStore, templateStore, accountId, phaseOrdinals, ct);
+            garden, historyStore, templateStore, accountId, phaseOrdinals, seedGrowth, ct);
 
         if (eligibleTemplates.Count == 0)
         {
@@ -459,7 +459,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
 
     /// <summary>
     /// Queries eligible scenario templates filtered by phase, growth phase,
-    /// cooldown, and status.
+    /// cooldown, prerequisites, and status.
     /// </summary>
     private async Task<IReadOnlyList<ScenarioTemplateModel>> GetEligibleTemplatesAsync(
         GardenInstanceModel garden,
@@ -467,6 +467,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
         IJsonQueryableStateStore<ScenarioTemplateModel> templateStore,
         Guid accountId,
         IReadOnlyDictionary<string, int>? phaseOrdinals,
+        IDictionary<string, float> seedGrowth,
         CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerGardenOrchestratorWorker.GetEligibleTemplatesAsync");
@@ -480,7 +481,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
         var templateResult = await templateStore.JsonQueryPagedAsync(
             templateConditions, 0, _configuration.ScenarioTemplateQueryPageSize, cancellationToken: ct);
 
-        // Query recent scenario history for cooldown checking
+        // Query scenario history for cooldown and prerequisite checking
         var cooldownThreshold = DateTimeOffset.UtcNow
             .AddMinutes(-_configuration.RecentScenarioCooldownMinutes);
         var historyConditions = new List<QueryCondition>
@@ -493,6 +494,12 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
         var recentTemplateIds = historyResult.Items
             .Where(h => h.Value.CompletedAt >= cooldownThreshold)
             .Select(h => h.Value.ScenarioTemplateId)
+            .ToHashSet();
+
+        // Build completed template codes for prerequisite validation
+        var completedTemplateCodes = historyResult.Items
+            .Where(h => h.Value.Status == ScenarioStatus.Completed && h.Value.TemplateCode != null)
+            .Select(h => h.Value.TemplateCode!)
             .ToHashSet();
 
         var eligible = new List<ScenarioTemplateModel>();
@@ -511,6 +518,10 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
             // MinGrowthPhase filtering: skip templates the player hasn't reached.
             // Phase ordinals are derived from seed type GrowthPhaseDefinition sorted by MinTotalGrowth.
             if (!MeetsMinGrowthPhase(garden.CachedGrowthPhase, template.MinGrowthPhase, phaseOrdinals))
+                continue;
+
+            // Prerequisite filtering: skip templates whose domain/scenario prerequisites are not met.
+            if (!GardenerService.MeetsPrerequisites(template.Prerequisites, seedGrowth, completedTemplateCodes))
                 continue;
 
             eligible.Add(template);

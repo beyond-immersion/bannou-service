@@ -3,6 +3,7 @@
 // Loads external dialogue YAML files with caching support.
 // =============================================================================
 
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Caching.Memory;
@@ -26,7 +27,12 @@ namespace BeyondImmersion.Bannou.Behavior.Dialogue;
 /// <item>YAML file parsing with snake_case naming</item>
 /// <item>Automatic override priority sorting</item>
 /// </list>
+/// <para>
+/// InterfaceType omitted: constructor takes ExternalDialogueLoaderOptions (not DI-resolvable).
+/// Requires factory lambda registration in Plugin.cs.
+/// </para>
 /// </remarks>
+[BannouHelperService("external-dialogue-loader", typeof(BeyondImmersion.BannouService.Behavior.BehaviorService))]
 public sealed class ExternalDialogueLoader : IExternalDialogueLoader, IDisposable
 {
     private readonly List<DialogueDirectory> _directories;

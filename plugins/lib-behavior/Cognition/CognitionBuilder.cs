@@ -5,8 +5,10 @@
 
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -28,6 +30,7 @@ namespace BeyondImmersion.Bannou.Behavior.Cognition;
 /// <item>Apply reorder overrides</item>
 /// </list>
 /// </remarks>
+[BannouHelperService("cognition-builder", typeof(BeyondImmersion.BannouService.Behavior.BehaviorService), typeof(ICognitionBuilder), ServiceLifetime.Singleton)]
 public sealed class CognitionBuilder : ICognitionBuilder
 {
     private readonly ICognitionTemplateRegistry _registry;

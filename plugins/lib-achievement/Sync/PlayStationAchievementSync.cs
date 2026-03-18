@@ -1,4 +1,6 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -13,6 +15,7 @@ namespace BeyondImmersion.BannouService.Achievement.Sync;
 /// NP Title ID, service config, and proper PlayStation Network authentication.
 /// Note: PlayStation calls achievements "trophies".
 /// </remarks>
+[BannouHelperService("playstation-achievement-sync", typeof(AchievementService), typeof(IPlatformAchievementSync), ServiceLifetime.Singleton)]
 public class PlayStationAchievementSync : IPlatformAchievementSync
 {
     private readonly ILogger<PlayStationAchievementSync> _logger;

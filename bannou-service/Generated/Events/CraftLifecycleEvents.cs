@@ -414,12 +414,13 @@ public partial class CraftingSessionCreatedEvent : BaseServiceEvent
     public System.Guid EntityId { get; set; } = default!;
 
     /// <summary>
-    /// Type of the primary entity (EntityType enum value)
+    /// Type of the primary entity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Code of the next step to complete
@@ -493,12 +494,13 @@ public partial class CraftingSessionUpdatedEvent : BaseServiceEvent
     public System.Guid EntityId { get; set; } = default!;
 
     /// <summary>
-    /// Type of the primary entity (EntityType enum value)
+    /// Type of the primary entity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Code of the next step to complete
@@ -580,12 +582,13 @@ public partial class CraftingSessionDeletedEvent : BaseServiceEvent
     public System.Guid EntityId { get; set; } = default!;
 
     /// <summary>
-    /// Type of the primary entity (EntityType enum value)
+    /// Type of the primary entity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Code of the next step to complete

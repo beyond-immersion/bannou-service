@@ -1,3 +1,5 @@
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Matchmaking.Helpers;
@@ -6,6 +8,7 @@ namespace BeyondImmersion.BannouService.Matchmaking.Helpers;
 /// Pure algorithmic functions for matchmaking.
 /// Extracted from MatchmakingService for improved testability.
 /// </summary>
+[BannouHelperService("matchmaking-algorithm", typeof(MatchmakingService), typeof(IMatchmakingAlgorithm), ServiceLifetime.Scoped)]
 internal class MatchmakingAlgorithm : IMatchmakingAlgorithm
 {
     private readonly ILogger<MatchmakingAlgorithm> _logger;

@@ -42365,6 +42365,8 @@ components:
       - domain
       - steps
       - isDeprecated
+      - createdAt
+      - updatedAt
       properties:
         recipeId:
           type: string
@@ -42486,12 +42488,10 @@ components:
         createdAt:
           type: string
           format: date-time
-          nullable: true
           description: When this recipe was created
         updatedAt:
           type: string
           format: date-time
-          nullable: true
           description: When this recipe was last updated
     RecipeInput:
       type: object

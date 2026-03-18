@@ -1,6 +1,8 @@
 #nullable enable
 
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using System.Collections.Concurrent;
@@ -11,6 +13,7 @@ namespace BeyondImmersion.BannouService.State.Services;
 /// Distributed lock provider using IRedisOperations when available,
 /// with in-memory fallback for testing/minimal infrastructure.
 /// </summary>
+[BannouHelperService("redis-distributed-lock-provider", typeof(StateService), typeof(IDistributedLockProvider), ServiceLifetime.Singleton)]
 public sealed class RedisDistributedLockProvider : IDistributedLockProvider, IAsyncDisposable
 {
     private readonly IStateStoreFactory _stateStoreFactory;

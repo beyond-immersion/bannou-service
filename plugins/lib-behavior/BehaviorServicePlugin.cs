@@ -96,15 +96,6 @@ public class BehaviorServicePlugin : StandardServicePlugin<IBehaviorService>
             return registry;
         });
 
-        // Cognition builder for constructing pipelines from templates with overrides
-        services.AddSingleton<ICognitionBuilder>(sp =>
-        {
-            var registry = sp.GetRequiredService<ICognitionTemplateRegistry>();
-            var handlerRegistry = sp.GetService<IActionHandlerRegistry>();
-            return new CognitionBuilder(
-                registry,
-                handlerRegistry,
-                sp.GetService<Microsoft.Extensions.Logging.ILogger<CognitionBuilder>>());
-        });
+        // CognitionBuilder auto-registered via [BannouHelperService] attribute
     }
 }

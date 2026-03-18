@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Gardener;
@@ -29,6 +30,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     private readonly Mock<IGameSessionClient> _mockGameSessionClient;
     private readonly Mock<IServiceProvider> _mockServiceProvider;
     private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
+    private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     // State stores
@@ -60,6 +62,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         _mockGameSessionClient = new Mock<IGameSessionClient>();
         _mockServiceProvider = new Mock<IServiceProvider>();
         _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
+        _mockClientEventPublisher = new Mock<IClientEventPublisher>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         _mockGardenStore = new Mock<IStateStore<GardenInstanceModel>>();
@@ -109,6 +112,9 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
+        // Client event publisher default: Moq returns default (false) for unconfigured
+        // generic methods. Client event publishing is fire-and-forget; return value not checked.
+
         // Default game session creation
         _mockGameSessionClient
             .Setup(c => c.CreateGameSessionAsync(
@@ -152,6 +158,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         _mockGameSessionClient.Object,
         _mockServiceProvider.Object,
         _mockEntitySessionRegistry.Object,
+        _mockClientEventPublisher.Object,
         _mockTelemetryProvider.Object);
 
     private SeedResponse CreateTestSeedResponse(

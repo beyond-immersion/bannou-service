@@ -1,4 +1,3 @@
-using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading;
 using System.Threading.Tasks;
@@ -6,13 +5,14 @@ using System.Threading.Tasks;
 namespace BeyondImmersion.BannouService.Craft;
 
 /// <summary>
-/// Manual implementation for endpoints that require custom logic.
-/// This class extends the generated CraftControllerBase.
+/// Manual implementation for endpoints marked with x-manual-implementation in the schema.
+/// This partial class extends the generated CraftController.
+/// Add custom route methods here for endpoints that need non-standard handling
+/// (e.g., non-JSON content types, custom response formatting).
 /// </summary>
-public partial class CraftController : CraftControllerBase
+public partial class CraftController
 {
-    public CraftController(ICraftService craftService, ITelemetryProvider telemetryProvider) : base(craftService, telemetryProvider)
-    {
-    }
-
+    // Add manual endpoint implementations here.
+    // The generated partial class has comment placeholders for each
+    // x-manual-implementation endpoint showing which methods to implement.
 }

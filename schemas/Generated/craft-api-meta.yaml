@@ -324,164 +324,163 @@ paths:
         : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Full recipe definition
         data\",\n            \"required\": [\n                \"recipeId\",\n                \"gameServiceId\",\n        \
         \        \"code\",\n                \"recipeType\",\n                \"domain\",\n                \"steps\",\n   \
-        \             \"isDeprecated\"\n            ],\n            \"properties\": {\n                \"recipeId\": {\n \
-        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Unique recipe identifier\"\n                },\n                \"gameServiceId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service this
-        recipe belongs to\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Unique recipe code within the game service\"\n                },\n       \
-        \         \"recipeType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Recipe
-        paradigm (e.g., production, modification, extraction)\"\n                },\n                \"domain\": {\n     \
-        \               \"type\": \"string\",\n                    \"description\": \"Proficiency domain\"\n             \
-        \   },\n                \"category\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Broad classification for filtering\"\n                },\n       \
-        \         \"tags\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n       \
-        \             \"items\": {\n                        \"type\": \"string\"\n                    },\n               \
-        \     \"description\": \"Tags for filtering and discovery\"\n                },\n                \"inputs\": {\n \
-        \                   \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\":
-        {\n                        \"$ref\": \"#/$defs/RecipeInput\"\n                    },\n                    \"description\"\
-        : \"Material inputs consumed during crafting\"\n                },\n                \"currencyCosts\": {\n       \
-        \             \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n  \
-        \                      \"$ref\": \"#/$defs/CurrencyCost\"\n                    },\n                    \"description\"\
-        : \"Currency costs for executing the recipe\"\n                },\n                \"targetRequirements\": {\n   \
-        \                 \"$ref\": \"#/$defs/TargetRequirements\",\n                    \"nullable\": true,\n           \
-        \         \"description\": \"Target item requirements for modification and extraction recipes\"\n                },\n\
-        \                \"affixOperation\": {\n                    \"$ref\": \"#/$defs/AffixOperationType\",\n          \
-        \          \"nullable\": true,\n                    \"description\": \"Affix operation type for modification recipes\"\
-        \n                },\n                \"affixOperationConfig\": {\n                    \"$ref\": \"#/$defs/AffixOperationConfig\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Configuration for the affix operation\"\
-        \n                },\n                \"steps\": {\n                    \"type\": \"array\",\n                   \
-        \ \"items\": {\n                        \"$ref\": \"#/$defs/RecipeStep\"\n                    },\n               \
-        \     \"description\": \"Ordered steps in the recipe workflow\"\n                },\n                \"outputs\":
-        {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/RecipeOutput\"\n                    },\n                    \"description\"\
-        : \"Output items for production recipes\"\n                },\n                \"extractionOutputs\": {\n        \
-        \            \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n   \
-        \                     \"$ref\": \"#/$defs/ExtractionOutput\"\n                    },\n                    \"description\"\
-        : \"Possible outputs for extraction recipes\"\n                },\n                \"proficiencyRequirements\": {\n\
-        \                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/ProficiencyRequirement\"\n                    },\n              \
-        \      \"description\": \"Proficiency requirements for this recipe\"\n                },\n                \"qualityWeights\"\
-        : {\n                    \"$ref\": \"#/$defs/QualityWeights\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Quality formula weights (null uses service-wide defaults)\"\n                },\n\
-        \                \"experienceGrants\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
-        : true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ExperienceGrant\"\n       \
-        \             },\n                    \"description\": \"Experience granted on completion\"\n                },\n\
-        \                \"isDiscoverable\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
-        : false,\n                    \"description\": \"Whether this recipe can be discovered through experimentation\"\n\
-        \                },\n                \"discoveryHints\": {\n                    \"type\": \"array\",\n           \
-        \         \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\n  \
-        \                  },\n                    \"description\": \"Hints for the discovery system\"\n                },\n\
-        \                \"prerequisiteRecipeCodes\": {\n                    \"type\": \"array\",\n                    \"\
-        nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\n              \
-        \      },\n                    \"description\": \"Recipe codes that must be known before this recipe can be discovered\"\
-        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
-        \          \"description\": \"Whether this recipe is deprecated\"\n                },\n                \"deprecatedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When this recipe was deprecated\"\n              \
-        \  },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\": \"Reason for deprecation\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        When this recipe was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"When this recipe was last updated\"\n                }\n            }\n        },\n\
-        \        \"RecipeInput\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n   \
-        \         \"description\": \"A material input consumed during crafting\",\n            \"required\": [\n         \
-        \       \"itemTemplateCode\",\n                \"quantity\"\n            ],\n            \"properties\": {\n     \
-        \           \"itemTemplateCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
-        : 1,\n                    \"maxLength\": 200,\n                    \"description\": \"Item template code for the required
-        material\"\n                },\n                \"quantity\": {\n                    \"type\": \"number\",\n     \
-        \               \"format\": \"double\",\n                    \"minimum\": 0.01,\n                    \"description\"\
-        : \"Amount of this material consumed\"\n                },\n                \"qualityMinimum\": {\n              \
-        \      \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n\
-        \                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"description\": \"\
-        Minimum quality required for this material (null means any quality)\"\n                },\n                \"consumeOnStep\"\
+        \             \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n \
+        \           \"properties\": {\n                \"recipeId\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"uuid\",\n                    \"description\": \"Unique recipe identifier\"\n        \
+        \        },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"uuid\",\n                    \"description\": \"Game service this recipe belongs to\"\n          \
+        \      },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique recipe code within the game service\"\n                },\n                \"recipeType\": {\n        \
+        \            \"type\": \"string\",\n                    \"description\": \"Recipe paradigm (e.g., production, modification,
+        extraction)\"\n                },\n                \"domain\": {\n                    \"type\": \"string\",\n    \
+        \                \"description\": \"Proficiency domain\"\n                },\n                \"category\": {\n  \
+        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Broad classification for filtering\"\n                },\n                \"tags\": {\n                    \"\
+        type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                  \
+        \      \"type\": \"string\"\n                    },\n                    \"description\": \"Tags for filtering and
+        discovery\"\n                },\n                \"inputs\": {\n                    \"type\": \"array\",\n       \
+        \             \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RecipeInput\"\
+        \n                    },\n                    \"description\": \"Material inputs consumed during crafting\"\n    \
+        \            },\n                \"currencyCosts\": {\n                    \"type\": \"array\",\n                \
+        \    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/CurrencyCost\"\
+        \n                    },\n                    \"description\": \"Currency costs for executing the recipe\"\n     \
+        \           },\n                \"targetRequirements\": {\n                    \"$ref\": \"#/$defs/TargetRequirements\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Target item requirements for modification
+        and extraction recipes\"\n                },\n                \"affixOperation\": {\n                    \"$ref\"\
+        : \"#/$defs/AffixOperationType\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Affix operation type for modification recipes\"\n                },\n                \"affixOperationConfig\": {\n\
+        \                    \"$ref\": \"#/$defs/AffixOperationConfig\",\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Configuration for the affix operation\"\n                },\n                \"\
+        steps\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"\
+        $ref\": \"#/$defs/RecipeStep\"\n                    },\n                    \"description\": \"Ordered steps in the
+        recipe workflow\"\n                },\n                \"outputs\": {\n                    \"type\": \"array\",\n\
+        \                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RecipeOutput\"\
+        \n                    },\n                    \"description\": \"Output items for production recipes\"\n         \
+        \       },\n                \"extractionOutputs\": {\n                    \"type\": \"array\",\n                 \
+        \   \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ExtractionOutput\"\
+        \n                    },\n                    \"description\": \"Possible outputs for extraction recipes\"\n     \
+        \           },\n                \"proficiencyRequirements\": {\n                    \"type\": \"array\",\n       \
+        \             \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ProficiencyRequirement\"\
+        \n                    },\n                    \"description\": \"Proficiency requirements for this recipe\"\n    \
+        \            },\n                \"qualityWeights\": {\n                    \"$ref\": \"#/$defs/QualityWeights\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Quality formula weights (null uses
+        service-wide defaults)\"\n                },\n                \"experienceGrants\": {\n                    \"type\"\
+        : \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"\
+        $ref\": \"#/$defs/ExperienceGrant\"\n                    },\n                    \"description\": \"Experience granted
+        on completion\"\n                },\n                \"isDiscoverable\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": false,\n                    \"description\": \"Whether this recipe can be discovered
+        through experimentation\"\n                },\n                \"discoveryHints\": {\n                    \"type\"\
+        : \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"\
+        type\": \"string\"\n                    },\n                    \"description\": \"Hints for the discovery system\"\
+        \n                },\n                \"prerequisiteRecipeCodes\": {\n                    \"type\": \"array\",\n \
+        \                   \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Recipe codes that must be known before this recipe
+        can be discovered\"\n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether this recipe is deprecated\"\n                },\n              \
+        \  \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"When this recipe was deprecated\"\
+        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\":
+        \"Reason for deprecation\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this recipe
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"When this recipe was last updated\"\
+        \n                }\n            }\n        },\n        \"RecipeInput\": {\n            \"type\": \"object\",\n  \
+        \          \"additionalProperties\": false,\n            \"description\": \"A material input consumed during crafting\"\
+        ,\n            \"required\": [\n                \"itemTemplateCode\",\n                \"quantity\"\n            ],\n\
+        \            \"properties\": {\n                \"itemTemplateCode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 200,\n                    \"description\"\
+        : \"Item template code for the required material\"\n                },\n                \"quantity\": {\n        \
+        \            \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"minimum\":
+        0.01,\n                    \"description\": \"Amount of this material consumed\"\n                },\n           \
+        \     \"qualityMinimum\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"nullable\": true,\n                    \"minimum\": 0,\n                    \"maximum\":
+        1,\n                    \"description\": \"Minimum quality required for this material (null means any quality)\"\n\
+        \                },\n                \"consumeOnStep\": {\n                    \"type\": \"string\",\n           \
+        \         \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\": \"Step
+        code that consumes this material (null means consumed at final step)\"\n                }\n            }\n       \
+        \ },\n        \"CurrencyCost\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"A currency cost for executing a recipe\",\n            \"required\": [\n         \
+        \       \"currencyCode\",\n                \"amount\"\n            ],\n            \"properties\": {\n           \
+        \     \"currencyCode\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n    \
+        \                \"maxLength\": 100,\n                    \"description\": \"Currency code to charge\"\n         \
+        \       },\n                \"amount\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"minimum\": 0.01,\n                    \"description\": \"Amount of currency to
+        charge\"\n                }\n            }\n        },\n        \"TargetRequirements\": {\n            \"type\": \"\
+        object\",\n            \"additionalProperties\": false,\n            \"description\": \"Requirements for the target
+        item of a modification or extraction recipe\",\n            \"properties\": {\n                \"validItemClasses\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Item template categories the recipe can target (null means any)\"\n                },\n                \"minimumItemLevel\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\"\
+        : 0,\n                    \"description\": \"Minimum item level required\"\n                },\n                \"\
+        requiredItemStates\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n     \
+        \               \"items\": {\n                        \"$ref\": \"#/$defs/ItemStatePredicate\"\n                 \
+        \   },\n                    \"description\": \"Boolean state predicates the target item must satisfy\"\n         \
+        \       },\n                \"requiredAffixSlotType\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\": \"Required
+        affix slot type for recipes that target a specific slot\"\n                }\n            }\n        },\n        \"\
+        ItemStatePredicate\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n       \
+        \     \"description\": \"A typed predicate checking an item's boolean state field\",\n            \"required\": [\n\
+        \                \"field\",\n                \"expected\"\n            ],\n            \"properties\": {\n       \
+        \         \"field\": {\n                    \"$ref\": \"#/$defs/ItemStateField\",\n                    \"description\"\
+        : \"Item state field to check\"\n                },\n                \"expected\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"Required value for this state field\"\n                }\n\
+        \            }\n        },\n        \"ItemStateField\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Finite set of item state predicates for modification recipe target\\nrequirements. Category C system state enum
+        \\u2014 not game-configurable.\\n\",\n            \"enum\": [\n                \"IsIdentified\",\n               \
+        \ \"IsCorrupted\",\n                \"IsMirrored\",\n                \"IsFractured\"\n            ]\n        },\n\
+        \        \"AffixOperationType\": {\n            \"type\": \"string\",\n            \"description\": \"Finite set of
+        lib-affix API operations that modification recipes can invoke.\\nCategory C system state enum \\u2014 not game-configurable.\\\
+        n\",\n            \"enum\": [\n                \"ApplyRandom\",\n                \"RemoveRandom\",\n             \
+        \   \"RerollAll\",\n                \"RerollValues\",\n                \"Corrupt\",\n                \"Fracture\"\
+        ,\n                \"ApplySpecific\"\n            ]\n        },\n        \"AffixOperationConfig\": {\n           \
+        \ \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Configuration
+        parameters for the affix operation in a modification recipe\",\n            \"properties\": {\n                \"\
+        weightModifiers\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n       \
+        \             \"additionalProperties\": {\n                        \"type\": \"number\",\n                       \
+        \ \"format\": \"double\"\n                    },\n                    \"description\": \"Tag-to-weight multiplier
+        map for ApplyRandom operations (e.g., fire tag weight 5.0). Keys are affix tag codes, values are weight multipliers
+        passed to IAffixClient.\"\n                },\n                \"slotType\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"Target affix slot type for ApplyRandom or ApplySpecific operations\"\n                },\n                \"guaranteedAffixCode\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
-        : 100,\n                    \"description\": \"Step code that consumes this material (null means consumed at final
-        step)\"\n                }\n            }\n        },\n        \"CurrencyCost\": {\n            \"type\": \"object\"\
-        ,\n            \"additionalProperties\": false,\n            \"description\": \"A currency cost for executing a recipe\"\
-        ,\n            \"required\": [\n                \"currencyCode\",\n                \"amount\"\n            ],\n  \
-        \          \"properties\": {\n                \"currencyCode\": {\n                    \"type\": \"string\",\n   \
-        \                 \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\"\
-        : \"Currency code to charge\"\n                },\n                \"amount\": {\n                    \"type\": \"\
-        number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.01,\n                 \
-        \   \"description\": \"Amount of currency to charge\"\n                }\n            }\n        },\n        \"TargetRequirements\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Requirements for the target item of a modification or extraction recipe\",\n            \"properties\": {\n  \
-        \              \"validItemClasses\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
-        : true,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n\
-        \                    \"description\": \"Item template categories the recipe can target (null means any)\"\n      \
-        \          },\n                \"minimumItemLevel\": {\n                    \"type\": \"integer\",\n             \
-        \       \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\": \"Minimum item
-        level required\"\n                },\n                \"requiredItemStates\": {\n                    \"type\": \"\
-        array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/ItemStatePredicate\"\n                    },\n                    \"description\": \"Boolean state predicates
-        the target item must satisfy\"\n                },\n                \"requiredAffixSlotType\": {\n               \
-        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n  \
-        \                  \"description\": \"Required affix slot type for recipes that target a specific slot\"\n       \
-        \         }\n            }\n        },\n        \"ItemStatePredicate\": {\n            \"type\": \"object\",\n   \
-        \         \"additionalProperties\": false,\n            \"description\": \"A typed predicate checking an item's boolean
-        state field\",\n            \"required\": [\n                \"field\",\n                \"expected\"\n          \
-        \  ],\n            \"properties\": {\n                \"field\": {\n                    \"$ref\": \"#/$defs/ItemStateField\"\
-        ,\n                    \"description\": \"Item state field to check\"\n                },\n                \"expected\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Required value for this state
-        field\"\n                }\n            }\n        },\n        \"ItemStateField\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Finite set of item state predicates for modification recipe target\\nrequirements.
-        Category C system state enum \\u2014 not game-configurable.\\n\",\n            \"enum\": [\n                \"IsIdentified\"\
-        ,\n                \"IsCorrupted\",\n                \"IsMirrored\",\n                \"IsFractured\"\n          \
-        \  ]\n        },\n        \"AffixOperationType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Finite set of lib-affix API operations that modification recipes can invoke.\\nCategory C system state enum \\
-        u2014 not game-configurable.\\n\",\n            \"enum\": [\n                \"ApplyRandom\",\n                \"\
-        RemoveRandom\",\n                \"RerollAll\",\n                \"RerollValues\",\n                \"Corrupt\",\n\
-        \                \"Fracture\",\n                \"ApplySpecific\"\n            ]\n        },\n        \"AffixOperationConfig\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Configuration parameters for the affix operation in a modification recipe\",\n            \"properties\": {\n\
-        \                \"weightModifiers\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
-        : true,\n                    \"additionalProperties\": {\n                        \"type\": \"number\",\n        \
-        \                \"format\": \"double\"\n                    },\n                    \"description\": \"Tag-to-weight
-        multiplier map for ApplyRandom operations (e.g., fire tag weight 5.0). Keys are affix tag codes, values are weight
-        multipliers passed to IAffixClient.\"\n                },\n                \"slotType\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n          \
-        \          \"description\": \"Target affix slot type for ApplyRandom or ApplySpecific operations\"\n             \
-        \   },\n                \"guaranteedAffixCode\": {\n                    \"type\": \"string\",\n                  \
-        \  \"nullable\": true,\n                    \"maxLength\": 200,\n                    \"description\": \"Exact affix
-        code to apply for ApplySpecific operations\"\n                }\n            }\n        },\n        \"RecipeStep\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"An ordered step in a recipe workflow\",\n            \"required\": [\n                \"code\",\n            \
-        \    \"name\"\n            ],\n            \"properties\": {\n                \"code\": {\n                    \"\
-        type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n            \
-        \        \"description\": \"Unique step identifier within the recipe\"\n                },\n                \"name\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 200,\n                    \"description\": \"Human-readable step name\"\n                },\n                \"\
-        durationSeconds\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n      \
-        \              \"minimum\": 0,\n                    \"description\": \"Real-time duration for this step (null means
-        instant)\"\n                },\n                \"stationType\": {\n                    \"type\": \"string\",\n  \
-        \                  \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\"\
-        : \"Required station type (null means no station needed)\"\n                },\n                \"toolCategory\":
+        : 200,\n                    \"description\": \"Exact affix code to apply for ApplySpecific operations\"\n        \
+        \        }\n            }\n        },\n        \"RecipeStep\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"An ordered step in a recipe workflow\",\n         \
+        \   \"required\": [\n                \"code\",\n                \"name\"\n            ],\n            \"properties\"\
+        : {\n                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"maxLength\": 100,\n                    \"description\": \"Unique step identifier within the
+        recipe\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n           \
+        \         \"minLength\": 1,\n                    \"maxLength\": 200,\n                    \"description\": \"Human-readable
+        step name\"\n                },\n                \"durationSeconds\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Real-time duration for this step (null means instant)\"\n                },\n                \"stationType\":
         {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
-        : 100,\n                    \"description\": \"Required tool category (null means no tool needed)\"\n            \
-        \    },\n                \"skillCheck\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
-        : false,\n                    \"description\": \"Whether this step has a quality-affecting skill check\"\n       \
-        \         },\n                \"eligibleRoles\": {\n                    \"type\": \"array\",\n                   \
-        \ \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\n          \
-        \          },\n                    \"description\": \"Participant roles that can advance this step (null means primary
-        only)\"\n                }\n            }\n        },\n        \"RecipeOutput\": {\n            \"type\": \"object\"\
-        ,\n            \"additionalProperties\": false,\n            \"description\": \"An output item produced by a production
-        recipe\",\n            \"required\": [\n                \"itemTemplateCode\",\n                \"quantity\",\n   \
-        \             \"qualityInfluence\"\n            ],\n            \"properties\": {\n                \"itemTemplateCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 200,\n                    \"description\": \"Item template code for the output\"\n                },\n         \
-        \       \"quantity\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n\
-        \                    \"minimum\": 0.01,\n                    \"description\": \"Number of items produced\"\n     \
-        \           },\n                \"qualityInfluence\": {\n                    \"type\": \"number\",\n             \
-        \       \"format\": \"double\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n      \
-        \              \"description\": \"How much the recipe quality affects this output's properties (0-1)\"\n         \
-        \       }\n            }\n        },\n        \"ExtractionOutput\": {\n            \"type\": \"object\",\n       \
-        \     \"additionalProperties\": false,\n            \"description\": \"A possible output from an extraction recipe\"\
-        ,\n            \"required\": [\n                \"itemTemplateCode\",\n                \"baseQuantity\",\n       \
-        \         \"quantityVariance\",\n                \"probability\"\n            ],\n            \"properties\": {\n\
-        \                \"itemTemplateCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 100,\n                    \"description\": \"Required station type (null means no station needed)\"\n          \
+        \      },\n                \"toolCategory\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\": \"Required tool category
+        (null means no tool needed)\"\n                },\n                \"skillCheck\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether this step
+        has a quality-affecting skill check\"\n                },\n                \"eligibleRoles\": {\n                \
+        \    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n           \
+        \             \"type\": \"string\"\n                    },\n                    \"description\": \"Participant roles
+        that can advance this step (null means primary only)\"\n                }\n            }\n        },\n        \"RecipeOutput\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"An output item produced by a production recipe\",\n            \"required\": [\n                \"itemTemplateCode\"\
+        ,\n                \"quantity\",\n                \"qualityInfluence\"\n            ],\n            \"properties\"\
+        : {\n                \"itemTemplateCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 200,\n                    \"description\": \"Item template code for the output\"\
+        \n                },\n                \"quantity\": {\n                    \"type\": \"number\",\n               \
+        \     \"format\": \"double\",\n                    \"minimum\": 0.01,\n                    \"description\": \"Number
+        of items produced\"\n                },\n                \"qualityInfluence\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0,\n                    \"\
+        maximum\": 1,\n                    \"description\": \"How much the recipe quality affects this output's properties
+        (0-1)\"\n                }\n            }\n        },\n        \"ExtractionOutput\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"A possible output from an extraction
+        recipe\",\n            \"required\": [\n                \"itemTemplateCode\",\n                \"baseQuantity\",\n\
+        \                \"quantityVariance\",\n                \"probability\"\n            ],\n            \"properties\"\
+        : {\n                \"itemTemplateCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
         : 1,\n                    \"maxLength\": 200,\n                    \"description\": \"Item template code for the extracted
         output\"\n                },\n                \"baseQuantity\": {\n                    \"type\": \"number\",\n   \
         \                 \"format\": \"double\",\n                    \"minimum\": 0,\n                    \"description\"\
@@ -583,164 +582,163 @@ paths:
         ,\n            \"additionalProperties\": false,\n            \"description\": \"Full recipe definition data\",\n \
         \           \"required\": [\n                \"recipeId\",\n                \"gameServiceId\",\n                \"\
         code\",\n                \"recipeType\",\n                \"domain\",\n                \"steps\",\n              \
-        \  \"isDeprecated\"\n            ],\n            \"properties\": {\n                \"recipeId\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
-        Unique recipe identifier\"\n                },\n                \"gameServiceId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service this
-        recipe belongs to\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Unique recipe code within the game service\"\n                },\n       \
-        \         \"recipeType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Recipe
-        paradigm (e.g., production, modification, extraction)\"\n                },\n                \"domain\": {\n     \
-        \               \"type\": \"string\",\n                    \"description\": \"Proficiency domain\"\n             \
-        \   },\n                \"category\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Broad classification for filtering\"\n                },\n       \
-        \         \"tags\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n       \
-        \             \"items\": {\n                        \"type\": \"string\"\n                    },\n               \
-        \     \"description\": \"Tags for filtering and discovery\"\n                },\n                \"inputs\": {\n \
-        \                   \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\":
-        {\n                        \"$ref\": \"#/$defs/RecipeInput\"\n                    },\n                    \"description\"\
-        : \"Material inputs consumed during crafting\"\n                },\n                \"currencyCosts\": {\n       \
-        \             \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n  \
-        \                      \"$ref\": \"#/$defs/CurrencyCost\"\n                    },\n                    \"description\"\
-        : \"Currency costs for executing the recipe\"\n                },\n                \"targetRequirements\": {\n   \
-        \                 \"$ref\": \"#/$defs/TargetRequirements\",\n                    \"nullable\": true,\n           \
-        \         \"description\": \"Target item requirements for modification and extraction recipes\"\n                },\n\
-        \                \"affixOperation\": {\n                    \"$ref\": \"#/$defs/AffixOperationType\",\n          \
-        \          \"nullable\": true,\n                    \"description\": \"Affix operation type for modification recipes\"\
-        \n                },\n                \"affixOperationConfig\": {\n                    \"$ref\": \"#/$defs/AffixOperationConfig\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Configuration for the affix operation\"\
-        \n                },\n                \"steps\": {\n                    \"type\": \"array\",\n                   \
-        \ \"items\": {\n                        \"$ref\": \"#/$defs/RecipeStep\"\n                    },\n               \
-        \     \"description\": \"Ordered steps in the recipe workflow\"\n                },\n                \"outputs\":
-        {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/RecipeOutput\"\n                    },\n                    \"description\"\
-        : \"Output items for production recipes\"\n                },\n                \"extractionOutputs\": {\n        \
-        \            \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n   \
-        \                     \"$ref\": \"#/$defs/ExtractionOutput\"\n                    },\n                    \"description\"\
-        : \"Possible outputs for extraction recipes\"\n                },\n                \"proficiencyRequirements\": {\n\
-        \                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/ProficiencyRequirement\"\n                    },\n              \
-        \      \"description\": \"Proficiency requirements for this recipe\"\n                },\n                \"qualityWeights\"\
-        : {\n                    \"$ref\": \"#/$defs/QualityWeights\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Quality formula weights (null uses service-wide defaults)\"\n                },\n\
-        \                \"experienceGrants\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
-        : true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ExperienceGrant\"\n       \
-        \             },\n                    \"description\": \"Experience granted on completion\"\n                },\n\
-        \                \"isDiscoverable\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
-        : false,\n                    \"description\": \"Whether this recipe can be discovered through experimentation\"\n\
-        \                },\n                \"discoveryHints\": {\n                    \"type\": \"array\",\n           \
-        \         \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\n  \
-        \                  },\n                    \"description\": \"Hints for the discovery system\"\n                },\n\
-        \                \"prerequisiteRecipeCodes\": {\n                    \"type\": \"array\",\n                    \"\
-        nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\n              \
-        \      },\n                    \"description\": \"Recipe codes that must be known before this recipe can be discovered\"\
-        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
-        \          \"description\": \"Whether this recipe is deprecated\"\n                },\n                \"deprecatedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When this recipe was deprecated\"\n              \
-        \  },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\": \"Reason for deprecation\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        When this recipe was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"When this recipe was last updated\"\n                }\n            }\n        },\n\
-        \        \"RecipeInput\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n   \
-        \         \"description\": \"A material input consumed during crafting\",\n            \"required\": [\n         \
-        \       \"itemTemplateCode\",\n                \"quantity\"\n            ],\n            \"properties\": {\n     \
-        \           \"itemTemplateCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
-        : 1,\n                    \"maxLength\": 200,\n                    \"description\": \"Item template code for the required
-        material\"\n                },\n                \"quantity\": {\n                    \"type\": \"number\",\n     \
-        \               \"format\": \"double\",\n                    \"minimum\": 0.01,\n                    \"description\"\
-        : \"Amount of this material consumed\"\n                },\n                \"qualityMinimum\": {\n              \
-        \      \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n\
-        \                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"description\": \"\
-        Minimum quality required for this material (null means any quality)\"\n                },\n                \"consumeOnStep\"\
+        \  \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"\
+        properties\": {\n                \"recipeId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"Unique recipe identifier\"\n                },\n     \
+        \           \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Game service this recipe belongs to\"\n                },\n            \
+        \    \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique recipe
+        code within the game service\"\n                },\n                \"recipeType\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Recipe paradigm (e.g., production, modification, extraction)\"\
+        \n                },\n                \"domain\": {\n                    \"type\": \"string\",\n                 \
+        \   \"description\": \"Proficiency domain\"\n                },\n                \"category\": {\n               \
+        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Broad
+        classification for filtering\"\n                },\n                \"tags\": {\n                    \"type\": \"\
+        array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"description\": \"Tags for filtering and discovery\"\n\
+        \                },\n                \"inputs\": {\n                    \"type\": \"array\",\n                   \
+        \ \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RecipeInput\"\
+        \n                    },\n                    \"description\": \"Material inputs consumed during crafting\"\n    \
+        \            },\n                \"currencyCosts\": {\n                    \"type\": \"array\",\n                \
+        \    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/CurrencyCost\"\
+        \n                    },\n                    \"description\": \"Currency costs for executing the recipe\"\n     \
+        \           },\n                \"targetRequirements\": {\n                    \"$ref\": \"#/$defs/TargetRequirements\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Target item requirements for modification
+        and extraction recipes\"\n                },\n                \"affixOperation\": {\n                    \"$ref\"\
+        : \"#/$defs/AffixOperationType\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Affix operation type for modification recipes\"\n                },\n                \"affixOperationConfig\": {\n\
+        \                    \"$ref\": \"#/$defs/AffixOperationConfig\",\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Configuration for the affix operation\"\n                },\n                \"\
+        steps\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"\
+        $ref\": \"#/$defs/RecipeStep\"\n                    },\n                    \"description\": \"Ordered steps in the
+        recipe workflow\"\n                },\n                \"outputs\": {\n                    \"type\": \"array\",\n\
+        \                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RecipeOutput\"\
+        \n                    },\n                    \"description\": \"Output items for production recipes\"\n         \
+        \       },\n                \"extractionOutputs\": {\n                    \"type\": \"array\",\n                 \
+        \   \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ExtractionOutput\"\
+        \n                    },\n                    \"description\": \"Possible outputs for extraction recipes\"\n     \
+        \           },\n                \"proficiencyRequirements\": {\n                    \"type\": \"array\",\n       \
+        \             \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ProficiencyRequirement\"\
+        \n                    },\n                    \"description\": \"Proficiency requirements for this recipe\"\n    \
+        \            },\n                \"qualityWeights\": {\n                    \"$ref\": \"#/$defs/QualityWeights\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Quality formula weights (null uses
+        service-wide defaults)\"\n                },\n                \"experienceGrants\": {\n                    \"type\"\
+        : \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"\
+        $ref\": \"#/$defs/ExperienceGrant\"\n                    },\n                    \"description\": \"Experience granted
+        on completion\"\n                },\n                \"isDiscoverable\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": false,\n                    \"description\": \"Whether this recipe can be discovered
+        through experimentation\"\n                },\n                \"discoveryHints\": {\n                    \"type\"\
+        : \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"\
+        type\": \"string\"\n                    },\n                    \"description\": \"Hints for the discovery system\"\
+        \n                },\n                \"prerequisiteRecipeCodes\": {\n                    \"type\": \"array\",\n \
+        \                   \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Recipe codes that must be known before this recipe
+        can be discovered\"\n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether this recipe is deprecated\"\n                },\n              \
+        \  \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"When this recipe was deprecated\"\
+        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\":
+        \"Reason for deprecation\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this recipe
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"When this recipe was last updated\"\
+        \n                }\n            }\n        },\n        \"RecipeInput\": {\n            \"type\": \"object\",\n  \
+        \          \"additionalProperties\": false,\n            \"description\": \"A material input consumed during crafting\"\
+        ,\n            \"required\": [\n                \"itemTemplateCode\",\n                \"quantity\"\n            ],\n\
+        \            \"properties\": {\n                \"itemTemplateCode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 200,\n                    \"description\"\
+        : \"Item template code for the required material\"\n                },\n                \"quantity\": {\n        \
+        \            \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"minimum\":
+        0.01,\n                    \"description\": \"Amount of this material consumed\"\n                },\n           \
+        \     \"qualityMinimum\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"nullable\": true,\n                    \"minimum\": 0,\n                    \"maximum\":
+        1,\n                    \"description\": \"Minimum quality required for this material (null means any quality)\"\n\
+        \                },\n                \"consumeOnStep\": {\n                    \"type\": \"string\",\n           \
+        \         \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\": \"Step
+        code that consumes this material (null means consumed at final step)\"\n                }\n            }\n       \
+        \ },\n        \"CurrencyCost\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"A currency cost for executing a recipe\",\n            \"required\": [\n         \
+        \       \"currencyCode\",\n                \"amount\"\n            ],\n            \"properties\": {\n           \
+        \     \"currencyCode\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n    \
+        \                \"maxLength\": 100,\n                    \"description\": \"Currency code to charge\"\n         \
+        \       },\n                \"amount\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"minimum\": 0.01,\n                    \"description\": \"Amount of currency to
+        charge\"\n                }\n            }\n        },\n        \"TargetRequirements\": {\n            \"type\": \"\
+        object\",\n            \"additionalProperties\": false,\n            \"description\": \"Requirements for the target
+        item of a modification or extraction recipe\",\n            \"properties\": {\n                \"validItemClasses\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Item template categories the recipe can target (null means any)\"\n                },\n                \"minimumItemLevel\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\"\
+        : 0,\n                    \"description\": \"Minimum item level required\"\n                },\n                \"\
+        requiredItemStates\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n     \
+        \               \"items\": {\n                        \"$ref\": \"#/$defs/ItemStatePredicate\"\n                 \
+        \   },\n                    \"description\": \"Boolean state predicates the target item must satisfy\"\n         \
+        \       },\n                \"requiredAffixSlotType\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\": \"Required
+        affix slot type for recipes that target a specific slot\"\n                }\n            }\n        },\n        \"\
+        ItemStatePredicate\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n       \
+        \     \"description\": \"A typed predicate checking an item's boolean state field\",\n            \"required\": [\n\
+        \                \"field\",\n                \"expected\"\n            ],\n            \"properties\": {\n       \
+        \         \"field\": {\n                    \"$ref\": \"#/$defs/ItemStateField\",\n                    \"description\"\
+        : \"Item state field to check\"\n                },\n                \"expected\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"Required value for this state field\"\n                }\n\
+        \            }\n        },\n        \"ItemStateField\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Finite set of item state predicates for modification recipe target\\nrequirements. Category C system state enum
+        \\u2014 not game-configurable.\\n\",\n            \"enum\": [\n                \"IsIdentified\",\n               \
+        \ \"IsCorrupted\",\n                \"IsMirrored\",\n                \"IsFractured\"\n            ]\n        },\n\
+        \        \"AffixOperationType\": {\n            \"type\": \"string\",\n            \"description\": \"Finite set of
+        lib-affix API operations that modification recipes can invoke.\\nCategory C system state enum \\u2014 not game-configurable.\\\
+        n\",\n            \"enum\": [\n                \"ApplyRandom\",\n                \"RemoveRandom\",\n             \
+        \   \"RerollAll\",\n                \"RerollValues\",\n                \"Corrupt\",\n                \"Fracture\"\
+        ,\n                \"ApplySpecific\"\n            ]\n        },\n        \"AffixOperationConfig\": {\n           \
+        \ \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Configuration
+        parameters for the affix operation in a modification recipe\",\n            \"properties\": {\n                \"\
+        weightModifiers\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n       \
+        \             \"additionalProperties\": {\n                        \"type\": \"number\",\n                       \
+        \ \"format\": \"double\"\n                    },\n                    \"description\": \"Tag-to-weight multiplier
+        map for ApplyRandom operations (e.g., fire tag weight 5.0). Keys are affix tag codes, values are weight multipliers
+        passed to IAffixClient.\"\n                },\n                \"slotType\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"Target affix slot type for ApplyRandom or ApplySpecific operations\"\n                },\n                \"guaranteedAffixCode\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
-        : 100,\n                    \"description\": \"Step code that consumes this material (null means consumed at final
-        step)\"\n                }\n            }\n        },\n        \"CurrencyCost\": {\n            \"type\": \"object\"\
-        ,\n            \"additionalProperties\": false,\n            \"description\": \"A currency cost for executing a recipe\"\
-        ,\n            \"required\": [\n                \"currencyCode\",\n                \"amount\"\n            ],\n  \
-        \          \"properties\": {\n                \"currencyCode\": {\n                    \"type\": \"string\",\n   \
-        \                 \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\"\
-        : \"Currency code to charge\"\n                },\n                \"amount\": {\n                    \"type\": \"\
-        number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.01,\n                 \
-        \   \"description\": \"Amount of currency to charge\"\n                }\n            }\n        },\n        \"TargetRequirements\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Requirements for the target item of a modification or extraction recipe\",\n            \"properties\": {\n  \
-        \              \"validItemClasses\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
-        : true,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n\
-        \                    \"description\": \"Item template categories the recipe can target (null means any)\"\n      \
-        \          },\n                \"minimumItemLevel\": {\n                    \"type\": \"integer\",\n             \
-        \       \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\": \"Minimum item
-        level required\"\n                },\n                \"requiredItemStates\": {\n                    \"type\": \"\
-        array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/ItemStatePredicate\"\n                    },\n                    \"description\": \"Boolean state predicates
-        the target item must satisfy\"\n                },\n                \"requiredAffixSlotType\": {\n               \
-        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n  \
-        \                  \"description\": \"Required affix slot type for recipes that target a specific slot\"\n       \
-        \         }\n            }\n        },\n        \"ItemStatePredicate\": {\n            \"type\": \"object\",\n   \
-        \         \"additionalProperties\": false,\n            \"description\": \"A typed predicate checking an item's boolean
-        state field\",\n            \"required\": [\n                \"field\",\n                \"expected\"\n          \
-        \  ],\n            \"properties\": {\n                \"field\": {\n                    \"$ref\": \"#/$defs/ItemStateField\"\
-        ,\n                    \"description\": \"Item state field to check\"\n                },\n                \"expected\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Required value for this state
-        field\"\n                }\n            }\n        },\n        \"ItemStateField\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Finite set of item state predicates for modification recipe target\\nrequirements.
-        Category C system state enum \\u2014 not game-configurable.\\n\",\n            \"enum\": [\n                \"IsIdentified\"\
-        ,\n                \"IsCorrupted\",\n                \"IsMirrored\",\n                \"IsFractured\"\n          \
-        \  ]\n        },\n        \"AffixOperationType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Finite set of lib-affix API operations that modification recipes can invoke.\\nCategory C system state enum \\
-        u2014 not game-configurable.\\n\",\n            \"enum\": [\n                \"ApplyRandom\",\n                \"\
-        RemoveRandom\",\n                \"RerollAll\",\n                \"RerollValues\",\n                \"Corrupt\",\n\
-        \                \"Fracture\",\n                \"ApplySpecific\"\n            ]\n        },\n        \"AffixOperationConfig\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Configuration parameters for the affix operation in a modification recipe\",\n            \"properties\": {\n\
-        \                \"weightModifiers\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
-        : true,\n                    \"additionalProperties\": {\n                        \"type\": \"number\",\n        \
-        \                \"format\": \"double\"\n                    },\n                    \"description\": \"Tag-to-weight
-        multiplier map for ApplyRandom operations (e.g., fire tag weight 5.0). Keys are affix tag codes, values are weight
-        multipliers passed to IAffixClient.\"\n                },\n                \"slotType\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n          \
-        \          \"description\": \"Target affix slot type for ApplyRandom or ApplySpecific operations\"\n             \
-        \   },\n                \"guaranteedAffixCode\": {\n                    \"type\": \"string\",\n                  \
-        \  \"nullable\": true,\n                    \"maxLength\": 200,\n                    \"description\": \"Exact affix
-        code to apply for ApplySpecific operations\"\n                }\n            }\n        },\n        \"RecipeStep\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"An ordered step in a recipe workflow\",\n            \"required\": [\n                \"code\",\n            \
-        \    \"name\"\n            ],\n            \"properties\": {\n                \"code\": {\n                    \"\
-        type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n            \
-        \        \"description\": \"Unique step identifier within the recipe\"\n                },\n                \"name\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 200,\n                    \"description\": \"Human-readable step name\"\n                },\n                \"\
-        durationSeconds\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n      \
-        \              \"minimum\": 0,\n                    \"description\": \"Real-time duration for this step (null means
-        instant)\"\n                },\n                \"stationType\": {\n                    \"type\": \"string\",\n  \
-        \                  \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\"\
-        : \"Required station type (null means no station needed)\"\n                },\n                \"toolCategory\":
+        : 200,\n                    \"description\": \"Exact affix code to apply for ApplySpecific operations\"\n        \
+        \        }\n            }\n        },\n        \"RecipeStep\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"An ordered step in a recipe workflow\",\n         \
+        \   \"required\": [\n                \"code\",\n                \"name\"\n            ],\n            \"properties\"\
+        : {\n                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"maxLength\": 100,\n                    \"description\": \"Unique step identifier within the
+        recipe\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n           \
+        \         \"minLength\": 1,\n                    \"maxLength\": 200,\n                    \"description\": \"Human-readable
+        step name\"\n                },\n                \"durationSeconds\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Real-time duration for this step (null means instant)\"\n                },\n                \"stationType\":
         {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
-        : 100,\n                    \"description\": \"Required tool category (null means no tool needed)\"\n            \
-        \    },\n                \"skillCheck\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
-        : false,\n                    \"description\": \"Whether this step has a quality-affecting skill check\"\n       \
-        \         },\n                \"eligibleRoles\": {\n                    \"type\": \"array\",\n                   \
-        \ \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\n          \
-        \          },\n                    \"description\": \"Participant roles that can advance this step (null means primary
-        only)\"\n                }\n            }\n        },\n        \"RecipeOutput\": {\n            \"type\": \"object\"\
-        ,\n            \"additionalProperties\": false,\n            \"description\": \"An output item produced by a production
-        recipe\",\n            \"required\": [\n                \"itemTemplateCode\",\n                \"quantity\",\n   \
-        \             \"qualityInfluence\"\n            ],\n            \"properties\": {\n                \"itemTemplateCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 200,\n                    \"description\": \"Item template code for the output\"\n                },\n         \
-        \       \"quantity\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n\
-        \                    \"minimum\": 0.01,\n                    \"description\": \"Number of items produced\"\n     \
-        \           },\n                \"qualityInfluence\": {\n                    \"type\": \"number\",\n             \
-        \       \"format\": \"double\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n      \
-        \              \"description\": \"How much the recipe quality affects this output's properties (0-1)\"\n         \
-        \       }\n            }\n        },\n        \"ExtractionOutput\": {\n            \"type\": \"object\",\n       \
-        \     \"additionalProperties\": false,\n            \"description\": \"A possible output from an extraction recipe\"\
-        ,\n            \"required\": [\n                \"itemTemplateCode\",\n                \"baseQuantity\",\n       \
-        \         \"quantityVariance\",\n                \"probability\"\n            ],\n            \"properties\": {\n\
-        \                \"itemTemplateCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 100,\n                    \"description\": \"Required station type (null means no station needed)\"\n          \
+        \      },\n                \"toolCategory\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\": \"Required tool category
+        (null means no tool needed)\"\n                },\n                \"skillCheck\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether this step
+        has a quality-affecting skill check\"\n                },\n                \"eligibleRoles\": {\n                \
+        \    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n           \
+        \             \"type\": \"string\"\n                    },\n                    \"description\": \"Participant roles
+        that can advance this step (null means primary only)\"\n                }\n            }\n        },\n        \"RecipeOutput\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"An output item produced by a production recipe\",\n            \"required\": [\n                \"itemTemplateCode\"\
+        ,\n                \"quantity\",\n                \"qualityInfluence\"\n            ],\n            \"properties\"\
+        : {\n                \"itemTemplateCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 200,\n                    \"description\": \"Item template code for the output\"\
+        \n                },\n                \"quantity\": {\n                    \"type\": \"number\",\n               \
+        \     \"format\": \"double\",\n                    \"minimum\": 0.01,\n                    \"description\": \"Number
+        of items produced\"\n                },\n                \"qualityInfluence\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0,\n                    \"\
+        maximum\": 1,\n                    \"description\": \"How much the recipe quality affects this output's properties
+        (0-1)\"\n                }\n            }\n        },\n        \"ExtractionOutput\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"A possible output from an extraction
+        recipe\",\n            \"required\": [\n                \"itemTemplateCode\",\n                \"baseQuantity\",\n\
+        \                \"quantityVariance\",\n                \"probability\"\n            ],\n            \"properties\"\
+        : {\n                \"itemTemplateCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
         : 1,\n                    \"maxLength\": 200,\n                    \"description\": \"Item template code for the extracted
         output\"\n                },\n                \"baseQuantity\": {\n                    \"type\": \"number\",\n   \
         \                 \"format\": \"double\",\n                    \"minimum\": 0,\n                    \"description\"\
@@ -1004,164 +1002,163 @@ paths:
         ,\n            \"additionalProperties\": false,\n            \"description\": \"Full recipe definition data\",\n \
         \           \"required\": [\n                \"recipeId\",\n                \"gameServiceId\",\n                \"\
         code\",\n                \"recipeType\",\n                \"domain\",\n                \"steps\",\n              \
-        \  \"isDeprecated\"\n            ],\n            \"properties\": {\n                \"recipeId\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
-        Unique recipe identifier\"\n                },\n                \"gameServiceId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service this
-        recipe belongs to\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Unique recipe code within the game service\"\n                },\n       \
-        \         \"recipeType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Recipe
-        paradigm (e.g., production, modification, extraction)\"\n                },\n                \"domain\": {\n     \
-        \               \"type\": \"string\",\n                    \"description\": \"Proficiency domain\"\n             \
-        \   },\n                \"category\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Broad classification for filtering\"\n                },\n       \
-        \         \"tags\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n       \
-        \             \"items\": {\n                        \"type\": \"string\"\n                    },\n               \
-        \     \"description\": \"Tags for filtering and discovery\"\n                },\n                \"inputs\": {\n \
-        \                   \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\":
-        {\n                        \"$ref\": \"#/$defs/RecipeInput\"\n                    },\n                    \"description\"\
-        : \"Material inputs consumed during crafting\"\n                },\n                \"currencyCosts\": {\n       \
-        \             \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n  \
-        \                      \"$ref\": \"#/$defs/CurrencyCost\"\n                    },\n                    \"description\"\
-        : \"Currency costs for executing the recipe\"\n                },\n                \"targetRequirements\": {\n   \
-        \                 \"$ref\": \"#/$defs/TargetRequirements\",\n                    \"nullable\": true,\n           \
-        \         \"description\": \"Target item requirements for modification and extraction recipes\"\n                },\n\
-        \                \"affixOperation\": {\n                    \"$ref\": \"#/$defs/AffixOperationType\",\n          \
-        \          \"nullable\": true,\n                    \"description\": \"Affix operation type for modification recipes\"\
-        \n                },\n                \"affixOperationConfig\": {\n                    \"$ref\": \"#/$defs/AffixOperationConfig\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Configuration for the affix operation\"\
-        \n                },\n                \"steps\": {\n                    \"type\": \"array\",\n                   \
-        \ \"items\": {\n                        \"$ref\": \"#/$defs/RecipeStep\"\n                    },\n               \
-        \     \"description\": \"Ordered steps in the recipe workflow\"\n                },\n                \"outputs\":
-        {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/RecipeOutput\"\n                    },\n                    \"description\"\
-        : \"Output items for production recipes\"\n                },\n                \"extractionOutputs\": {\n        \
-        \            \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n   \
-        \                     \"$ref\": \"#/$defs/ExtractionOutput\"\n                    },\n                    \"description\"\
-        : \"Possible outputs for extraction recipes\"\n                },\n                \"proficiencyRequirements\": {\n\
-        \                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/ProficiencyRequirement\"\n                    },\n              \
-        \      \"description\": \"Proficiency requirements for this recipe\"\n                },\n                \"qualityWeights\"\
-        : {\n                    \"$ref\": \"#/$defs/QualityWeights\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Quality formula weights (null uses service-wide defaults)\"\n                },\n\
-        \                \"experienceGrants\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
-        : true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ExperienceGrant\"\n       \
-        \             },\n                    \"description\": \"Experience granted on completion\"\n                },\n\
-        \                \"isDiscoverable\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
-        : false,\n                    \"description\": \"Whether this recipe can be discovered through experimentation\"\n\
-        \                },\n                \"discoveryHints\": {\n                    \"type\": \"array\",\n           \
-        \         \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\n  \
-        \                  },\n                    \"description\": \"Hints for the discovery system\"\n                },\n\
-        \                \"prerequisiteRecipeCodes\": {\n                    \"type\": \"array\",\n                    \"\
-        nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\n              \
-        \      },\n                    \"description\": \"Recipe codes that must be known before this recipe can be discovered\"\
-        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
-        \          \"description\": \"Whether this recipe is deprecated\"\n                },\n                \"deprecatedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When this recipe was deprecated\"\n              \
-        \  },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\": \"Reason for deprecation\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        When this recipe was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"When this recipe was last updated\"\n                }\n            }\n        },\n\
-        \        \"RecipeInput\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n   \
-        \         \"description\": \"A material input consumed during crafting\",\n            \"required\": [\n         \
-        \       \"itemTemplateCode\",\n                \"quantity\"\n            ],\n            \"properties\": {\n     \
-        \           \"itemTemplateCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
-        : 1,\n                    \"maxLength\": 200,\n                    \"description\": \"Item template code for the required
-        material\"\n                },\n                \"quantity\": {\n                    \"type\": \"number\",\n     \
-        \               \"format\": \"double\",\n                    \"minimum\": 0.01,\n                    \"description\"\
-        : \"Amount of this material consumed\"\n                },\n                \"qualityMinimum\": {\n              \
-        \      \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n\
-        \                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"description\": \"\
-        Minimum quality required for this material (null means any quality)\"\n                },\n                \"consumeOnStep\"\
+        \  \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"\
+        properties\": {\n                \"recipeId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"Unique recipe identifier\"\n                },\n     \
+        \           \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Game service this recipe belongs to\"\n                },\n            \
+        \    \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique recipe
+        code within the game service\"\n                },\n                \"recipeType\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Recipe paradigm (e.g., production, modification, extraction)\"\
+        \n                },\n                \"domain\": {\n                    \"type\": \"string\",\n                 \
+        \   \"description\": \"Proficiency domain\"\n                },\n                \"category\": {\n               \
+        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Broad
+        classification for filtering\"\n                },\n                \"tags\": {\n                    \"type\": \"\
+        array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"description\": \"Tags for filtering and discovery\"\n\
+        \                },\n                \"inputs\": {\n                    \"type\": \"array\",\n                   \
+        \ \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RecipeInput\"\
+        \n                    },\n                    \"description\": \"Material inputs consumed during crafting\"\n    \
+        \            },\n                \"currencyCosts\": {\n                    \"type\": \"array\",\n                \
+        \    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/CurrencyCost\"\
+        \n                    },\n                    \"description\": \"Currency costs for executing the recipe\"\n     \
+        \           },\n                \"targetRequirements\": {\n                    \"$ref\": \"#/$defs/TargetRequirements\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Target item requirements for modification
+        and extraction recipes\"\n                },\n                \"affixOperation\": {\n                    \"$ref\"\
+        : \"#/$defs/AffixOperationType\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Affix operation type for modification recipes\"\n                },\n                \"affixOperationConfig\": {\n\
+        \                    \"$ref\": \"#/$defs/AffixOperationConfig\",\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Configuration for the affix operation\"\n                },\n                \"\
+        steps\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"\
+        $ref\": \"#/$defs/RecipeStep\"\n                    },\n                    \"description\": \"Ordered steps in the
+        recipe workflow\"\n                },\n                \"outputs\": {\n                    \"type\": \"array\",\n\
+        \                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RecipeOutput\"\
+        \n                    },\n                    \"description\": \"Output items for production recipes\"\n         \
+        \       },\n                \"extractionOutputs\": {\n                    \"type\": \"array\",\n                 \
+        \   \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ExtractionOutput\"\
+        \n                    },\n                    \"description\": \"Possible outputs for extraction recipes\"\n     \
+        \           },\n                \"proficiencyRequirements\": {\n                    \"type\": \"array\",\n       \
+        \             \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ProficiencyRequirement\"\
+        \n                    },\n                    \"description\": \"Proficiency requirements for this recipe\"\n    \
+        \            },\n                \"qualityWeights\": {\n                    \"$ref\": \"#/$defs/QualityWeights\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Quality formula weights (null uses
+        service-wide defaults)\"\n                },\n                \"experienceGrants\": {\n                    \"type\"\
+        : \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"\
+        $ref\": \"#/$defs/ExperienceGrant\"\n                    },\n                    \"description\": \"Experience granted
+        on completion\"\n                },\n                \"isDiscoverable\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": false,\n                    \"description\": \"Whether this recipe can be discovered
+        through experimentation\"\n                },\n                \"discoveryHints\": {\n                    \"type\"\
+        : \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"\
+        type\": \"string\"\n                    },\n                    \"description\": \"Hints for the discovery system\"\
+        \n                },\n                \"prerequisiteRecipeCodes\": {\n                    \"type\": \"array\",\n \
+        \                   \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Recipe codes that must be known before this recipe
+        can be discovered\"\n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether this recipe is deprecated\"\n                },\n              \
+        \  \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"When this recipe was deprecated\"\
+        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\":
+        \"Reason for deprecation\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this recipe
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"When this recipe was last updated\"\
+        \n                }\n            }\n        },\n        \"RecipeInput\": {\n            \"type\": \"object\",\n  \
+        \          \"additionalProperties\": false,\n            \"description\": \"A material input consumed during crafting\"\
+        ,\n            \"required\": [\n                \"itemTemplateCode\",\n                \"quantity\"\n            ],\n\
+        \            \"properties\": {\n                \"itemTemplateCode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 200,\n                    \"description\"\
+        : \"Item template code for the required material\"\n                },\n                \"quantity\": {\n        \
+        \            \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"minimum\":
+        0.01,\n                    \"description\": \"Amount of this material consumed\"\n                },\n           \
+        \     \"qualityMinimum\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"nullable\": true,\n                    \"minimum\": 0,\n                    \"maximum\":
+        1,\n                    \"description\": \"Minimum quality required for this material (null means any quality)\"\n\
+        \                },\n                \"consumeOnStep\": {\n                    \"type\": \"string\",\n           \
+        \         \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\": \"Step
+        code that consumes this material (null means consumed at final step)\"\n                }\n            }\n       \
+        \ },\n        \"CurrencyCost\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"A currency cost for executing a recipe\",\n            \"required\": [\n         \
+        \       \"currencyCode\",\n                \"amount\"\n            ],\n            \"properties\": {\n           \
+        \     \"currencyCode\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n    \
+        \                \"maxLength\": 100,\n                    \"description\": \"Currency code to charge\"\n         \
+        \       },\n                \"amount\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"minimum\": 0.01,\n                    \"description\": \"Amount of currency to
+        charge\"\n                }\n            }\n        },\n        \"TargetRequirements\": {\n            \"type\": \"\
+        object\",\n            \"additionalProperties\": false,\n            \"description\": \"Requirements for the target
+        item of a modification or extraction recipe\",\n            \"properties\": {\n                \"validItemClasses\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Item template categories the recipe can target (null means any)\"\n                },\n                \"minimumItemLevel\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\"\
+        : 0,\n                    \"description\": \"Minimum item level required\"\n                },\n                \"\
+        requiredItemStates\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n     \
+        \               \"items\": {\n                        \"$ref\": \"#/$defs/ItemStatePredicate\"\n                 \
+        \   },\n                    \"description\": \"Boolean state predicates the target item must satisfy\"\n         \
+        \       },\n                \"requiredAffixSlotType\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\": \"Required
+        affix slot type for recipes that target a specific slot\"\n                }\n            }\n        },\n        \"\
+        ItemStatePredicate\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n       \
+        \     \"description\": \"A typed predicate checking an item's boolean state field\",\n            \"required\": [\n\
+        \                \"field\",\n                \"expected\"\n            ],\n            \"properties\": {\n       \
+        \         \"field\": {\n                    \"$ref\": \"#/$defs/ItemStateField\",\n                    \"description\"\
+        : \"Item state field to check\"\n                },\n                \"expected\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"Required value for this state field\"\n                }\n\
+        \            }\n        },\n        \"ItemStateField\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Finite set of item state predicates for modification recipe target\\nrequirements. Category C system state enum
+        \\u2014 not game-configurable.\\n\",\n            \"enum\": [\n                \"IsIdentified\",\n               \
+        \ \"IsCorrupted\",\n                \"IsMirrored\",\n                \"IsFractured\"\n            ]\n        },\n\
+        \        \"AffixOperationType\": {\n            \"type\": \"string\",\n            \"description\": \"Finite set of
+        lib-affix API operations that modification recipes can invoke.\\nCategory C system state enum \\u2014 not game-configurable.\\\
+        n\",\n            \"enum\": [\n                \"ApplyRandom\",\n                \"RemoveRandom\",\n             \
+        \   \"RerollAll\",\n                \"RerollValues\",\n                \"Corrupt\",\n                \"Fracture\"\
+        ,\n                \"ApplySpecific\"\n            ]\n        },\n        \"AffixOperationConfig\": {\n           \
+        \ \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Configuration
+        parameters for the affix operation in a modification recipe\",\n            \"properties\": {\n                \"\
+        weightModifiers\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n       \
+        \             \"additionalProperties\": {\n                        \"type\": \"number\",\n                       \
+        \ \"format\": \"double\"\n                    },\n                    \"description\": \"Tag-to-weight multiplier
+        map for ApplyRandom operations (e.g., fire tag weight 5.0). Keys are affix tag codes, values are weight multipliers
+        passed to IAffixClient.\"\n                },\n                \"slotType\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"Target affix slot type for ApplyRandom or ApplySpecific operations\"\n                },\n                \"guaranteedAffixCode\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
-        : 100,\n                    \"description\": \"Step code that consumes this material (null means consumed at final
-        step)\"\n                }\n            }\n        },\n        \"CurrencyCost\": {\n            \"type\": \"object\"\
-        ,\n            \"additionalProperties\": false,\n            \"description\": \"A currency cost for executing a recipe\"\
-        ,\n            \"required\": [\n                \"currencyCode\",\n                \"amount\"\n            ],\n  \
-        \          \"properties\": {\n                \"currencyCode\": {\n                    \"type\": \"string\",\n   \
-        \                 \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\"\
-        : \"Currency code to charge\"\n                },\n                \"amount\": {\n                    \"type\": \"\
-        number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.01,\n                 \
-        \   \"description\": \"Amount of currency to charge\"\n                }\n            }\n        },\n        \"TargetRequirements\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Requirements for the target item of a modification or extraction recipe\",\n            \"properties\": {\n  \
-        \              \"validItemClasses\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
-        : true,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n\
-        \                    \"description\": \"Item template categories the recipe can target (null means any)\"\n      \
-        \          },\n                \"minimumItemLevel\": {\n                    \"type\": \"integer\",\n             \
-        \       \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\": \"Minimum item
-        level required\"\n                },\n                \"requiredItemStates\": {\n                    \"type\": \"\
-        array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/ItemStatePredicate\"\n                    },\n                    \"description\": \"Boolean state predicates
-        the target item must satisfy\"\n                },\n                \"requiredAffixSlotType\": {\n               \
-        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n  \
-        \                  \"description\": \"Required affix slot type for recipes that target a specific slot\"\n       \
-        \         }\n            }\n        },\n        \"ItemStatePredicate\": {\n            \"type\": \"object\",\n   \
-        \         \"additionalProperties\": false,\n            \"description\": \"A typed predicate checking an item's boolean
-        state field\",\n            \"required\": [\n                \"field\",\n                \"expected\"\n          \
-        \  ],\n            \"properties\": {\n                \"field\": {\n                    \"$ref\": \"#/$defs/ItemStateField\"\
-        ,\n                    \"description\": \"Item state field to check\"\n                },\n                \"expected\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Required value for this state
-        field\"\n                }\n            }\n        },\n        \"ItemStateField\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Finite set of item state predicates for modification recipe target\\nrequirements.
-        Category C system state enum \\u2014 not game-configurable.\\n\",\n            \"enum\": [\n                \"IsIdentified\"\
-        ,\n                \"IsCorrupted\",\n                \"IsMirrored\",\n                \"IsFractured\"\n          \
-        \  ]\n        },\n        \"AffixOperationType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Finite set of lib-affix API operations that modification recipes can invoke.\\nCategory C system state enum \\
-        u2014 not game-configurable.\\n\",\n            \"enum\": [\n                \"ApplyRandom\",\n                \"\
-        RemoveRandom\",\n                \"RerollAll\",\n                \"RerollValues\",\n                \"Corrupt\",\n\
-        \                \"Fracture\",\n                \"ApplySpecific\"\n            ]\n        },\n        \"AffixOperationConfig\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Configuration parameters for the affix operation in a modification recipe\",\n            \"properties\": {\n\
-        \                \"weightModifiers\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
-        : true,\n                    \"additionalProperties\": {\n                        \"type\": \"number\",\n        \
-        \                \"format\": \"double\"\n                    },\n                    \"description\": \"Tag-to-weight
-        multiplier map for ApplyRandom operations (e.g., fire tag weight 5.0). Keys are affix tag codes, values are weight
-        multipliers passed to IAffixClient.\"\n                },\n                \"slotType\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n          \
-        \          \"description\": \"Target affix slot type for ApplyRandom or ApplySpecific operations\"\n             \
-        \   },\n                \"guaranteedAffixCode\": {\n                    \"type\": \"string\",\n                  \
-        \  \"nullable\": true,\n                    \"maxLength\": 200,\n                    \"description\": \"Exact affix
-        code to apply for ApplySpecific operations\"\n                }\n            }\n        },\n        \"RecipeStep\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"An ordered step in a recipe workflow\",\n            \"required\": [\n                \"code\",\n            \
-        \    \"name\"\n            ],\n            \"properties\": {\n                \"code\": {\n                    \"\
-        type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n            \
-        \        \"description\": \"Unique step identifier within the recipe\"\n                },\n                \"name\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 200,\n                    \"description\": \"Human-readable step name\"\n                },\n                \"\
-        durationSeconds\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n      \
-        \              \"minimum\": 0,\n                    \"description\": \"Real-time duration for this step (null means
-        instant)\"\n                },\n                \"stationType\": {\n                    \"type\": \"string\",\n  \
-        \                  \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\"\
-        : \"Required station type (null means no station needed)\"\n                },\n                \"toolCategory\":
+        : 200,\n                    \"description\": \"Exact affix code to apply for ApplySpecific operations\"\n        \
+        \        }\n            }\n        },\n        \"RecipeStep\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"An ordered step in a recipe workflow\",\n         \
+        \   \"required\": [\n                \"code\",\n                \"name\"\n            ],\n            \"properties\"\
+        : {\n                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"maxLength\": 100,\n                    \"description\": \"Unique step identifier within the
+        recipe\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n           \
+        \         \"minLength\": 1,\n                    \"maxLength\": 200,\n                    \"description\": \"Human-readable
+        step name\"\n                },\n                \"durationSeconds\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Real-time duration for this step (null means instant)\"\n                },\n                \"stationType\":
         {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
-        : 100,\n                    \"description\": \"Required tool category (null means no tool needed)\"\n            \
-        \    },\n                \"skillCheck\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
-        : false,\n                    \"description\": \"Whether this step has a quality-affecting skill check\"\n       \
-        \         },\n                \"eligibleRoles\": {\n                    \"type\": \"array\",\n                   \
-        \ \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\n          \
-        \          },\n                    \"description\": \"Participant roles that can advance this step (null means primary
-        only)\"\n                }\n            }\n        },\n        \"RecipeOutput\": {\n            \"type\": \"object\"\
-        ,\n            \"additionalProperties\": false,\n            \"description\": \"An output item produced by a production
-        recipe\",\n            \"required\": [\n                \"itemTemplateCode\",\n                \"quantity\",\n   \
-        \             \"qualityInfluence\"\n            ],\n            \"properties\": {\n                \"itemTemplateCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 200,\n                    \"description\": \"Item template code for the output\"\n                },\n         \
-        \       \"quantity\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n\
-        \                    \"minimum\": 0.01,\n                    \"description\": \"Number of items produced\"\n     \
-        \           },\n                \"qualityInfluence\": {\n                    \"type\": \"number\",\n             \
-        \       \"format\": \"double\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n      \
-        \              \"description\": \"How much the recipe quality affects this output's properties (0-1)\"\n         \
-        \       }\n            }\n        },\n        \"ExtractionOutput\": {\n            \"type\": \"object\",\n       \
-        \     \"additionalProperties\": false,\n            \"description\": \"A possible output from an extraction recipe\"\
-        ,\n            \"required\": [\n                \"itemTemplateCode\",\n                \"baseQuantity\",\n       \
-        \         \"quantityVariance\",\n                \"probability\"\n            ],\n            \"properties\": {\n\
-        \                \"itemTemplateCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 100,\n                    \"description\": \"Required station type (null means no station needed)\"\n          \
+        \      },\n                \"toolCategory\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\": \"Required tool category
+        (null means no tool needed)\"\n                },\n                \"skillCheck\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether this step
+        has a quality-affecting skill check\"\n                },\n                \"eligibleRoles\": {\n                \
+        \    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n           \
+        \             \"type\": \"string\"\n                    },\n                    \"description\": \"Participant roles
+        that can advance this step (null means primary only)\"\n                }\n            }\n        },\n        \"RecipeOutput\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"An output item produced by a production recipe\",\n            \"required\": [\n                \"itemTemplateCode\"\
+        ,\n                \"quantity\",\n                \"qualityInfluence\"\n            ],\n            \"properties\"\
+        : {\n                \"itemTemplateCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 200,\n                    \"description\": \"Item template code for the output\"\
+        \n                },\n                \"quantity\": {\n                    \"type\": \"number\",\n               \
+        \     \"format\": \"double\",\n                    \"minimum\": 0.01,\n                    \"description\": \"Number
+        of items produced\"\n                },\n                \"qualityInfluence\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0,\n                    \"\
+        maximum\": 1,\n                    \"description\": \"How much the recipe quality affects this output's properties
+        (0-1)\"\n                }\n            }\n        },\n        \"ExtractionOutput\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"A possible output from an extraction
+        recipe\",\n            \"required\": [\n                \"itemTemplateCode\",\n                \"baseQuantity\",\n\
+        \                \"quantityVariance\",\n                \"probability\"\n            ],\n            \"properties\"\
+        : {\n                \"itemTemplateCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
         : 1,\n                    \"maxLength\": 200,\n                    \"description\": \"Item template code for the extracted
         output\"\n                },\n                \"baseQuantity\": {\n                    \"type\": \"number\",\n   \
         \                 \"format\": \"double\",\n                    \"minimum\": 0,\n                    \"description\"\
@@ -1250,164 +1247,163 @@ paths:
         : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Full recipe definition
         data\",\n            \"required\": [\n                \"recipeId\",\n                \"gameServiceId\",\n        \
         \        \"code\",\n                \"recipeType\",\n                \"domain\",\n                \"steps\",\n   \
-        \             \"isDeprecated\"\n            ],\n            \"properties\": {\n                \"recipeId\": {\n \
-        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Unique recipe identifier\"\n                },\n                \"gameServiceId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service this
-        recipe belongs to\"\n                },\n                \"code\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Unique recipe code within the game service\"\n                },\n       \
-        \         \"recipeType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Recipe
-        paradigm (e.g., production, modification, extraction)\"\n                },\n                \"domain\": {\n     \
-        \               \"type\": \"string\",\n                    \"description\": \"Proficiency domain\"\n             \
-        \   },\n                \"category\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Broad classification for filtering\"\n                },\n       \
-        \         \"tags\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n       \
-        \             \"items\": {\n                        \"type\": \"string\"\n                    },\n               \
-        \     \"description\": \"Tags for filtering and discovery\"\n                },\n                \"inputs\": {\n \
-        \                   \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\":
-        {\n                        \"$ref\": \"#/$defs/RecipeInput\"\n                    },\n                    \"description\"\
-        : \"Material inputs consumed during crafting\"\n                },\n                \"currencyCosts\": {\n       \
-        \             \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n  \
-        \                      \"$ref\": \"#/$defs/CurrencyCost\"\n                    },\n                    \"description\"\
-        : \"Currency costs for executing the recipe\"\n                },\n                \"targetRequirements\": {\n   \
-        \                 \"$ref\": \"#/$defs/TargetRequirements\",\n                    \"nullable\": true,\n           \
-        \         \"description\": \"Target item requirements for modification and extraction recipes\"\n                },\n\
-        \                \"affixOperation\": {\n                    \"$ref\": \"#/$defs/AffixOperationType\",\n          \
-        \          \"nullable\": true,\n                    \"description\": \"Affix operation type for modification recipes\"\
-        \n                },\n                \"affixOperationConfig\": {\n                    \"$ref\": \"#/$defs/AffixOperationConfig\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Configuration for the affix operation\"\
-        \n                },\n                \"steps\": {\n                    \"type\": \"array\",\n                   \
-        \ \"items\": {\n                        \"$ref\": \"#/$defs/RecipeStep\"\n                    },\n               \
-        \     \"description\": \"Ordered steps in the recipe workflow\"\n                },\n                \"outputs\":
-        {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/RecipeOutput\"\n                    },\n                    \"description\"\
-        : \"Output items for production recipes\"\n                },\n                \"extractionOutputs\": {\n        \
-        \            \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n   \
-        \                     \"$ref\": \"#/$defs/ExtractionOutput\"\n                    },\n                    \"description\"\
-        : \"Possible outputs for extraction recipes\"\n                },\n                \"proficiencyRequirements\": {\n\
-        \                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/ProficiencyRequirement\"\n                    },\n              \
-        \      \"description\": \"Proficiency requirements for this recipe\"\n                },\n                \"qualityWeights\"\
-        : {\n                    \"$ref\": \"#/$defs/QualityWeights\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Quality formula weights (null uses service-wide defaults)\"\n                },\n\
-        \                \"experienceGrants\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
-        : true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ExperienceGrant\"\n       \
-        \             },\n                    \"description\": \"Experience granted on completion\"\n                },\n\
-        \                \"isDiscoverable\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
-        : false,\n                    \"description\": \"Whether this recipe can be discovered through experimentation\"\n\
-        \                },\n                \"discoveryHints\": {\n                    \"type\": \"array\",\n           \
-        \         \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\n  \
-        \                  },\n                    \"description\": \"Hints for the discovery system\"\n                },\n\
-        \                \"prerequisiteRecipeCodes\": {\n                    \"type\": \"array\",\n                    \"\
-        nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\n              \
-        \      },\n                    \"description\": \"Recipe codes that must be known before this recipe can be discovered\"\
-        \n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n          \
-        \          \"description\": \"Whether this recipe is deprecated\"\n                },\n                \"deprecatedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When this recipe was deprecated\"\n              \
-        \  },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\": \"Reason for deprecation\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        When this recipe was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"When this recipe was last updated\"\n                }\n            }\n        },\n\
-        \        \"RecipeInput\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n   \
-        \         \"description\": \"A material input consumed during crafting\",\n            \"required\": [\n         \
-        \       \"itemTemplateCode\",\n                \"quantity\"\n            ],\n            \"properties\": {\n     \
-        \           \"itemTemplateCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
-        : 1,\n                    \"maxLength\": 200,\n                    \"description\": \"Item template code for the required
-        material\"\n                },\n                \"quantity\": {\n                    \"type\": \"number\",\n     \
-        \               \"format\": \"double\",\n                    \"minimum\": 0.01,\n                    \"description\"\
-        : \"Amount of this material consumed\"\n                },\n                \"qualityMinimum\": {\n              \
-        \      \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n\
-        \                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"description\": \"\
-        Minimum quality required for this material (null means any quality)\"\n                },\n                \"consumeOnStep\"\
+        \             \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n \
+        \           \"properties\": {\n                \"recipeId\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"uuid\",\n                    \"description\": \"Unique recipe identifier\"\n        \
+        \        },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"uuid\",\n                    \"description\": \"Game service this recipe belongs to\"\n          \
+        \      },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique recipe code within the game service\"\n                },\n                \"recipeType\": {\n        \
+        \            \"type\": \"string\",\n                    \"description\": \"Recipe paradigm (e.g., production, modification,
+        extraction)\"\n                },\n                \"domain\": {\n                    \"type\": \"string\",\n    \
+        \                \"description\": \"Proficiency domain\"\n                },\n                \"category\": {\n  \
+        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Broad classification for filtering\"\n                },\n                \"tags\": {\n                    \"\
+        type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                  \
+        \      \"type\": \"string\"\n                    },\n                    \"description\": \"Tags for filtering and
+        discovery\"\n                },\n                \"inputs\": {\n                    \"type\": \"array\",\n       \
+        \             \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RecipeInput\"\
+        \n                    },\n                    \"description\": \"Material inputs consumed during crafting\"\n    \
+        \            },\n                \"currencyCosts\": {\n                    \"type\": \"array\",\n                \
+        \    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/CurrencyCost\"\
+        \n                    },\n                    \"description\": \"Currency costs for executing the recipe\"\n     \
+        \           },\n                \"targetRequirements\": {\n                    \"$ref\": \"#/$defs/TargetRequirements\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Target item requirements for modification
+        and extraction recipes\"\n                },\n                \"affixOperation\": {\n                    \"$ref\"\
+        : \"#/$defs/AffixOperationType\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Affix operation type for modification recipes\"\n                },\n                \"affixOperationConfig\": {\n\
+        \                    \"$ref\": \"#/$defs/AffixOperationConfig\",\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Configuration for the affix operation\"\n                },\n                \"\
+        steps\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"\
+        $ref\": \"#/$defs/RecipeStep\"\n                    },\n                    \"description\": \"Ordered steps in the
+        recipe workflow\"\n                },\n                \"outputs\": {\n                    \"type\": \"array\",\n\
+        \                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RecipeOutput\"\
+        \n                    },\n                    \"description\": \"Output items for production recipes\"\n         \
+        \       },\n                \"extractionOutputs\": {\n                    \"type\": \"array\",\n                 \
+        \   \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ExtractionOutput\"\
+        \n                    },\n                    \"description\": \"Possible outputs for extraction recipes\"\n     \
+        \           },\n                \"proficiencyRequirements\": {\n                    \"type\": \"array\",\n       \
+        \             \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ProficiencyRequirement\"\
+        \n                    },\n                    \"description\": \"Proficiency requirements for this recipe\"\n    \
+        \            },\n                \"qualityWeights\": {\n                    \"$ref\": \"#/$defs/QualityWeights\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Quality formula weights (null uses
+        service-wide defaults)\"\n                },\n                \"experienceGrants\": {\n                    \"type\"\
+        : \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"\
+        $ref\": \"#/$defs/ExperienceGrant\"\n                    },\n                    \"description\": \"Experience granted
+        on completion\"\n                },\n                \"isDiscoverable\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": false,\n                    \"description\": \"Whether this recipe can be discovered
+        through experimentation\"\n                },\n                \"discoveryHints\": {\n                    \"type\"\
+        : \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"\
+        type\": \"string\"\n                    },\n                    \"description\": \"Hints for the discovery system\"\
+        \n                },\n                \"prerequisiteRecipeCodes\": {\n                    \"type\": \"array\",\n \
+        \                   \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Recipe codes that must be known before this recipe
+        can be discovered\"\n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether this recipe is deprecated\"\n                },\n              \
+        \  \"deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"When this recipe was deprecated\"\
+        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\":
+        \"Reason for deprecation\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this recipe
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"When this recipe was last updated\"\
+        \n                }\n            }\n        },\n        \"RecipeInput\": {\n            \"type\": \"object\",\n  \
+        \          \"additionalProperties\": false,\n            \"description\": \"A material input consumed during crafting\"\
+        ,\n            \"required\": [\n                \"itemTemplateCode\",\n                \"quantity\"\n            ],\n\
+        \            \"properties\": {\n                \"itemTemplateCode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 200,\n                    \"description\"\
+        : \"Item template code for the required material\"\n                },\n                \"quantity\": {\n        \
+        \            \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"minimum\":
+        0.01,\n                    \"description\": \"Amount of this material consumed\"\n                },\n           \
+        \     \"qualityMinimum\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"nullable\": true,\n                    \"minimum\": 0,\n                    \"maximum\":
+        1,\n                    \"description\": \"Minimum quality required for this material (null means any quality)\"\n\
+        \                },\n                \"consumeOnStep\": {\n                    \"type\": \"string\",\n           \
+        \         \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\": \"Step
+        code that consumes this material (null means consumed at final step)\"\n                }\n            }\n       \
+        \ },\n        \"CurrencyCost\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"A currency cost for executing a recipe\",\n            \"required\": [\n         \
+        \       \"currencyCode\",\n                \"amount\"\n            ],\n            \"properties\": {\n           \
+        \     \"currencyCode\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n    \
+        \                \"maxLength\": 100,\n                    \"description\": \"Currency code to charge\"\n         \
+        \       },\n                \"amount\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"minimum\": 0.01,\n                    \"description\": \"Amount of currency to
+        charge\"\n                }\n            }\n        },\n        \"TargetRequirements\": {\n            \"type\": \"\
+        object\",\n            \"additionalProperties\": false,\n            \"description\": \"Requirements for the target
+        item of a modification or extraction recipe\",\n            \"properties\": {\n                \"validItemClasses\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Item template categories the recipe can target (null means any)\"\n                },\n                \"minimumItemLevel\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\"\
+        : 0,\n                    \"description\": \"Minimum item level required\"\n                },\n                \"\
+        requiredItemStates\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n     \
+        \               \"items\": {\n                        \"$ref\": \"#/$defs/ItemStatePredicate\"\n                 \
+        \   },\n                    \"description\": \"Boolean state predicates the target item must satisfy\"\n         \
+        \       },\n                \"requiredAffixSlotType\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\": \"Required
+        affix slot type for recipes that target a specific slot\"\n                }\n            }\n        },\n        \"\
+        ItemStatePredicate\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n       \
+        \     \"description\": \"A typed predicate checking an item's boolean state field\",\n            \"required\": [\n\
+        \                \"field\",\n                \"expected\"\n            ],\n            \"properties\": {\n       \
+        \         \"field\": {\n                    \"$ref\": \"#/$defs/ItemStateField\",\n                    \"description\"\
+        : \"Item state field to check\"\n                },\n                \"expected\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"Required value for this state field\"\n                }\n\
+        \            }\n        },\n        \"ItemStateField\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Finite set of item state predicates for modification recipe target\\nrequirements. Category C system state enum
+        \\u2014 not game-configurable.\\n\",\n            \"enum\": [\n                \"IsIdentified\",\n               \
+        \ \"IsCorrupted\",\n                \"IsMirrored\",\n                \"IsFractured\"\n            ]\n        },\n\
+        \        \"AffixOperationType\": {\n            \"type\": \"string\",\n            \"description\": \"Finite set of
+        lib-affix API operations that modification recipes can invoke.\\nCategory C system state enum \\u2014 not game-configurable.\\\
+        n\",\n            \"enum\": [\n                \"ApplyRandom\",\n                \"RemoveRandom\",\n             \
+        \   \"RerollAll\",\n                \"RerollValues\",\n                \"Corrupt\",\n                \"Fracture\"\
+        ,\n                \"ApplySpecific\"\n            ]\n        },\n        \"AffixOperationConfig\": {\n           \
+        \ \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Configuration
+        parameters for the affix operation in a modification recipe\",\n            \"properties\": {\n                \"\
+        weightModifiers\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n       \
+        \             \"additionalProperties\": {\n                        \"type\": \"number\",\n                       \
+        \ \"format\": \"double\"\n                    },\n                    \"description\": \"Tag-to-weight multiplier
+        map for ApplyRandom operations (e.g., fire tag weight 5.0). Keys are affix tag codes, values are weight multipliers
+        passed to IAffixClient.\"\n                },\n                \"slotType\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"Target affix slot type for ApplyRandom or ApplySpecific operations\"\n                },\n                \"guaranteedAffixCode\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
-        : 100,\n                    \"description\": \"Step code that consumes this material (null means consumed at final
-        step)\"\n                }\n            }\n        },\n        \"CurrencyCost\": {\n            \"type\": \"object\"\
-        ,\n            \"additionalProperties\": false,\n            \"description\": \"A currency cost for executing a recipe\"\
-        ,\n            \"required\": [\n                \"currencyCode\",\n                \"amount\"\n            ],\n  \
-        \          \"properties\": {\n                \"currencyCode\": {\n                    \"type\": \"string\",\n   \
-        \                 \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\"\
-        : \"Currency code to charge\"\n                },\n                \"amount\": {\n                    \"type\": \"\
-        number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0.01,\n                 \
-        \   \"description\": \"Amount of currency to charge\"\n                }\n            }\n        },\n        \"TargetRequirements\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Requirements for the target item of a modification or extraction recipe\",\n            \"properties\": {\n  \
-        \              \"validItemClasses\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
-        : true,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n\
-        \                    \"description\": \"Item template categories the recipe can target (null means any)\"\n      \
-        \          },\n                \"minimumItemLevel\": {\n                    \"type\": \"integer\",\n             \
-        \       \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\": \"Minimum item
-        level required\"\n                },\n                \"requiredItemStates\": {\n                    \"type\": \"\
-        array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/ItemStatePredicate\"\n                    },\n                    \"description\": \"Boolean state predicates
-        the target item must satisfy\"\n                },\n                \"requiredAffixSlotType\": {\n               \
-        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n  \
-        \                  \"description\": \"Required affix slot type for recipes that target a specific slot\"\n       \
-        \         }\n            }\n        },\n        \"ItemStatePredicate\": {\n            \"type\": \"object\",\n   \
-        \         \"additionalProperties\": false,\n            \"description\": \"A typed predicate checking an item's boolean
-        state field\",\n            \"required\": [\n                \"field\",\n                \"expected\"\n          \
-        \  ],\n            \"properties\": {\n                \"field\": {\n                    \"$ref\": \"#/$defs/ItemStateField\"\
-        ,\n                    \"description\": \"Item state field to check\"\n                },\n                \"expected\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Required value for this state
-        field\"\n                }\n            }\n        },\n        \"ItemStateField\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Finite set of item state predicates for modification recipe target\\nrequirements.
-        Category C system state enum \\u2014 not game-configurable.\\n\",\n            \"enum\": [\n                \"IsIdentified\"\
-        ,\n                \"IsCorrupted\",\n                \"IsMirrored\",\n                \"IsFractured\"\n          \
-        \  ]\n        },\n        \"AffixOperationType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Finite set of lib-affix API operations that modification recipes can invoke.\\nCategory C system state enum \\
-        u2014 not game-configurable.\\n\",\n            \"enum\": [\n                \"ApplyRandom\",\n                \"\
-        RemoveRandom\",\n                \"RerollAll\",\n                \"RerollValues\",\n                \"Corrupt\",\n\
-        \                \"Fracture\",\n                \"ApplySpecific\"\n            ]\n        },\n        \"AffixOperationConfig\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Configuration parameters for the affix operation in a modification recipe\",\n            \"properties\": {\n\
-        \                \"weightModifiers\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
-        : true,\n                    \"additionalProperties\": {\n                        \"type\": \"number\",\n        \
-        \                \"format\": \"double\"\n                    },\n                    \"description\": \"Tag-to-weight
-        multiplier map for ApplyRandom operations (e.g., fire tag weight 5.0). Keys are affix tag codes, values are weight
-        multipliers passed to IAffixClient.\"\n                },\n                \"slotType\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n          \
-        \          \"description\": \"Target affix slot type for ApplyRandom or ApplySpecific operations\"\n             \
-        \   },\n                \"guaranteedAffixCode\": {\n                    \"type\": \"string\",\n                  \
-        \  \"nullable\": true,\n                    \"maxLength\": 200,\n                    \"description\": \"Exact affix
-        code to apply for ApplySpecific operations\"\n                }\n            }\n        },\n        \"RecipeStep\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"An ordered step in a recipe workflow\",\n            \"required\": [\n                \"code\",\n            \
-        \    \"name\"\n            ],\n            \"properties\": {\n                \"code\": {\n                    \"\
-        type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n            \
-        \        \"description\": \"Unique step identifier within the recipe\"\n                },\n                \"name\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 200,\n                    \"description\": \"Human-readable step name\"\n                },\n                \"\
-        durationSeconds\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n      \
-        \              \"minimum\": 0,\n                    \"description\": \"Real-time duration for this step (null means
-        instant)\"\n                },\n                \"stationType\": {\n                    \"type\": \"string\",\n  \
-        \                  \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\"\
-        : \"Required station type (null means no station needed)\"\n                },\n                \"toolCategory\":
+        : 200,\n                    \"description\": \"Exact affix code to apply for ApplySpecific operations\"\n        \
+        \        }\n            }\n        },\n        \"RecipeStep\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"An ordered step in a recipe workflow\",\n         \
+        \   \"required\": [\n                \"code\",\n                \"name\"\n            ],\n            \"properties\"\
+        : {\n                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"maxLength\": 100,\n                    \"description\": \"Unique step identifier within the
+        recipe\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n           \
+        \         \"minLength\": 1,\n                    \"maxLength\": 200,\n                    \"description\": \"Human-readable
+        step name\"\n                },\n                \"durationSeconds\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Real-time duration for this step (null means instant)\"\n                },\n                \"stationType\":
         {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
-        : 100,\n                    \"description\": \"Required tool category (null means no tool needed)\"\n            \
-        \    },\n                \"skillCheck\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
-        : false,\n                    \"description\": \"Whether this step has a quality-affecting skill check\"\n       \
-        \         },\n                \"eligibleRoles\": {\n                    \"type\": \"array\",\n                   \
-        \ \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\n          \
-        \          },\n                    \"description\": \"Participant roles that can advance this step (null means primary
-        only)\"\n                }\n            }\n        },\n        \"RecipeOutput\": {\n            \"type\": \"object\"\
-        ,\n            \"additionalProperties\": false,\n            \"description\": \"An output item produced by a production
-        recipe\",\n            \"required\": [\n                \"itemTemplateCode\",\n                \"quantity\",\n   \
-        \             \"qualityInfluence\"\n            ],\n            \"properties\": {\n                \"itemTemplateCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 200,\n                    \"description\": \"Item template code for the output\"\n                },\n         \
-        \       \"quantity\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n\
-        \                    \"minimum\": 0.01,\n                    \"description\": \"Number of items produced\"\n     \
-        \           },\n                \"qualityInfluence\": {\n                    \"type\": \"number\",\n             \
-        \       \"format\": \"double\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n      \
-        \              \"description\": \"How much the recipe quality affects this output's properties (0-1)\"\n         \
-        \       }\n            }\n        },\n        \"ExtractionOutput\": {\n            \"type\": \"object\",\n       \
-        \     \"additionalProperties\": false,\n            \"description\": \"A possible output from an extraction recipe\"\
-        ,\n            \"required\": [\n                \"itemTemplateCode\",\n                \"baseQuantity\",\n       \
-        \         \"quantityVariance\",\n                \"probability\"\n            ],\n            \"properties\": {\n\
-        \                \"itemTemplateCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 100,\n                    \"description\": \"Required station type (null means no station needed)\"\n          \
+        \      },\n                \"toolCategory\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\": \"Required tool category
+        (null means no tool needed)\"\n                },\n                \"skillCheck\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether this step
+        has a quality-affecting skill check\"\n                },\n                \"eligibleRoles\": {\n                \
+        \    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n           \
+        \             \"type\": \"string\"\n                    },\n                    \"description\": \"Participant roles
+        that can advance this step (null means primary only)\"\n                }\n            }\n        },\n        \"RecipeOutput\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"An output item produced by a production recipe\",\n            \"required\": [\n                \"itemTemplateCode\"\
+        ,\n                \"quantity\",\n                \"qualityInfluence\"\n            ],\n            \"properties\"\
+        : {\n                \"itemTemplateCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 200,\n                    \"description\": \"Item template code for the output\"\
+        \n                },\n                \"quantity\": {\n                    \"type\": \"number\",\n               \
+        \     \"format\": \"double\",\n                    \"minimum\": 0.01,\n                    \"description\": \"Number
+        of items produced\"\n                },\n                \"qualityInfluence\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"double\",\n                    \"minimum\": 0,\n                    \"\
+        maximum\": 1,\n                    \"description\": \"How much the recipe quality affects this output's properties
+        (0-1)\"\n                }\n            }\n        },\n        \"ExtractionOutput\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"A possible output from an extraction
+        recipe\",\n            \"required\": [\n                \"itemTemplateCode\",\n                \"baseQuantity\",\n\
+        \                \"quantityVariance\",\n                \"probability\"\n            ],\n            \"properties\"\
+        : {\n                \"itemTemplateCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
         : 1,\n                    \"maxLength\": 200,\n                    \"description\": \"Item template code for the extracted
         output\"\n                },\n                \"baseQuantity\": {\n                    \"type\": \"number\",\n   \
         \                 \"format\": \"double\",\n                    \"minimum\": 0,\n                    \"description\"\
@@ -2859,17 +2855,18 @@ paths:
         ,\n                \"outputs\"\n            ],\n            \"properties\": {\n                \"qualityLevel\": {\n\
         \                    \"type\": \"string\",\n                    \"description\": \"Quality band label (e.g., low,
         medium, high)\"\n                },\n                \"qualityValue\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"double\",\n                    \"description\": \"Representative quality value
-        for this band\"\n                },\n                \"outputs\": {\n                    \"type\": \"array\",\n  \
-        \                  \"items\": {\n                        \"$ref\": \"#/$defs/OutputPreviewItem\"\n               \
-        \     },\n                    \"description\": \"Predicted outputs at this quality level\"\n                }\n  \
-        \          }\n        },\n        \"OutputPreviewItem\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"A single predicted output item in an output preview\",\n            \"required\"\
-        : [\n                \"itemTemplateCode\",\n                \"quantity\"\n            ],\n            \"properties\"\
-        : {\n                \"itemTemplateCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Item template code\"\n                },\n                \"quantity\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"double\",\n                    \"description\": \"Predicted quantity at this
-        quality level\"\n                }\n            }\n        }\n    }\n}"
+        ,\n                    \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Representative quality value for this band\"\n                },\n                \"outputs\": {\n           \
+        \         \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/OutputPreviewItem\"\
+        \n                    },\n                    \"description\": \"Predicted outputs at this quality level\"\n     \
+        \           }\n            }\n        },\n        \"OutputPreviewItem\": {\n            \"type\": \"object\",\n  \
+        \          \"additionalProperties\": false,\n            \"description\": \"A single predicted output item in an output
+        preview\",\n            \"required\": [\n                \"itemTemplateCode\",\n                \"quantity\"\n   \
+        \         ],\n            \"properties\": {\n                \"itemTemplateCode\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Item template code\"\n                },\n                \"\
+        quantity\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n          \
+        \          \"description\": \"Predicted quantity at this quality level\"\n                }\n            }\n     \
+        \   }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Preview recipe outputs at various quality levels\",\n    \"description\"\
         : \"Returns a preview of what outputs the recipe produces at different\\nquality bands (low, medium, high).\\n\",\n\
         \    \"tags\": [\n        \"Query\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getRecipeOutputPreview\"\
@@ -3347,6 +3344,8 @@ components:
       - domain
       - steps
       - isDeprecated
+      - createdAt
+      - updatedAt
       properties:
         recipeId:
           type: string
@@ -3464,12 +3463,10 @@ components:
         createdAt:
           type: string
           format: date-time
-          nullable: true
           description: When this recipe was created
         updatedAt:
           type: string
           format: date-time
-          nullable: true
           description: When this recipe was last updated
     SessionParticipant:
       type: object
@@ -3607,6 +3604,7 @@ components:
         qualityValue:
           type: number
           format: double
+          nullable: true
           description: Representative quality value for this band
         outputs:
           type: array

@@ -56864,7 +56864,9 @@
           "recipeType",
           "domain",
           "steps",
-          "isDeprecated"
+          "isDeprecated",
+          "createdAt",
+          "updatedAt"
         ],
         "properties": {
           "recipeId": {
@@ -57017,13 +57019,11 @@
           "createdAt": {
             "type": "string",
             "format": "date-time",
-            "nullable": true,
             "description": "When this recipe was created"
           },
           "updatedAt": {
             "type": "string",
             "format": "date-time",
-            "nullable": true,
             "description": "When this recipe was last updated"
           }
         }

@@ -14,6 +14,11 @@ namespace LibOrchestrator.Backends;
 /// Uses Docker.DotNet SDK for service management.
 /// See docs/ORCHESTRATOR-SDK-REFERENCE.md for API documentation.
 /// </summary>
+/// <remarks>
+/// InterfaceType omitted: multiple IContainerOrchestrator implementations exist (Compose, Swarm).
+/// Backend selection requires manual registration in Plugin.cs based on configuration.
+/// </remarks>
+[BeyondImmersion.BannouService.Attributes.BannouHelperService("docker-swarm-orchestrator", typeof(BeyondImmersion.BannouService.Orchestrator.OrchestratorService))]
 public class DockerSwarmOrchestrator : IContainerOrchestrator
 {
     private readonly ILogger<DockerSwarmOrchestrator> _logger;

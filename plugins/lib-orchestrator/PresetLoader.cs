@@ -1,4 +1,6 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using YamlDotNet.Serialization;
@@ -11,6 +13,7 @@ namespace BeyondImmersion.BannouService.Orchestrator;
 /// <summary>
 /// Loads deployment presets from YAML files.
 /// </summary>
+[BannouHelperService("preset-loader", typeof(OrchestratorService), lifetime: ServiceLifetime.Singleton)]
 public class PresetLoader
 {
     private readonly ILogger<PresetLoader> _logger;

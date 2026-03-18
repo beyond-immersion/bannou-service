@@ -27,7 +27,7 @@ Container and item placement management (L2 GameFoundation) for games. Handles c
 
 **Planned dependents**:
 - lib-craft (L4): Material consumption from source inventories, output placement to destination inventories
-- lib-escrow (L4): Asset custody for items in escrow (placeholder exists, integration tracked by [#153](https://github.com/beyond-immersion/bannou-service/issues/153))
+- lib-escrow (L4): Asset custody for items in escrow via 3 planned escrow endpoints (`/inventory/escrow/deposit`, `release`, `refund`) — design resolved 2026-03-18, implementation tracked by [#153](https://github.com/beyond-immersion/bannou-service/issues/153)
 - ABML action handlers: `inventory_add`/`inventory_has` handlers for NPC behavior ([#428](https://github.com/beyond-immersion/bannou-service/issues/428))
 
 **Natural L4 consumers** (standard L4→L2 API callers, no special integration needed):
@@ -273,8 +273,8 @@ Stack Operations
 5. **QueryItems pagination is inefficient**: All items are fetched from all containers, then offset/limit is applied in memory. For owners with many containers and items, this is O(n) memory even for the first page.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/485 -->
 
-6. **No escrow integration**: lib-escrow has a placeholder comment mentioning inventory but no actual integration. Asset custody for items in escrow is not implemented. See [#153](https://github.com/beyond-immersion/bannou-service/issues/153).
-<!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/153 -->
+6. **Escrow integration endpoints needed**: **Design resolved** (2026-03-18) — Inventory needs 3 escrow endpoints mirroring Currency's existing pattern: `POST /inventory/escrow/deposit` (create escrow-owned container with `ownerType: escrow`, transfer items into it), `POST /inventory/escrow/release` (transfer items from escrow container to recipient), `POST /inventory/escrow/refund` (transfer items from escrow container back to depositor). These are thin wrappers around existing transfer logic. Escrow (L4) calls Inventory (L2) directly via `IInventoryClient` constructor injection. See [#153](https://github.com/beyond-immersion/bannou-service/issues/153).
+<!-- AUDIT:IMPLEMENTATION:2026-03-18:https://github.com/beyond-immersion/bannou-service/issues/153 -->
 
 ---
 

@@ -1,4 +1,6 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -12,6 +14,7 @@ namespace BeyondImmersion.BannouService.Achievement.Sync;
 /// Microsoft Game Development Kit (GDK). Implementation would
 /// require XBL title ID, service config ID, and proper authentication.
 /// </remarks>
+[BannouHelperService("xbox-achievement-sync", typeof(AchievementService), typeof(IPlatformAchievementSync), ServiceLifetime.Singleton)]
 public class XboxAchievementSync : IPlatformAchievementSync
 {
     private readonly ILogger<XboxAchievementSync> _logger;

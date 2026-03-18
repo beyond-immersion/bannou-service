@@ -693,6 +693,45 @@ public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
             return (StatusCodes.BadRequest, null);
         }
 
+        // Prerequisite validation
+        if (template.Prerequisites != null)
+        {
+            IDictionary<string, float> seedGrowth = new Dictionary<string, float>();
+            if (template.Prerequisites.RequiredDomains?.Count > 0)
+            {
+                try
+                {
+                    var growthResponse = await _seedClient.GetGrowthAsync(
+                        new GetGrowthRequest { SeedId = garden.SeedId }, cancellationToken);
+                    seedGrowth = growthResponse.Domains;
+                }
+                catch (ApiException ex)
+                {
+                    _logger.LogError(ex,
+                        "Failed to query growth for seed {SeedId} during prerequisite check",
+                        garden.SeedId);
+                    await _messageBus.TryPublishErrorAsync(
+                        "gardener", "EnterScenario", "seed_growth_query_failed", ex.Message,
+                        dependency: "seed", endpoint: "post:/seed/get-growth",
+                        details: new { SeedId = garden.SeedId, AccountId = accountId.Value });
+                    return (StatusCodes.ServiceUnavailable, null);
+                }
+            }
+
+            var completedCodes = (template.Prerequisites.RequiredScenarios?.Count > 0
+                || template.Prerequisites.ExcludedScenarios?.Count > 0)
+                ? await GetCompletedScenarioCodesAsync(accountId.Value, cancellationToken)
+                : new HashSet<string>();
+
+            if (!MeetsPrerequisites(template.Prerequisites, seedGrowth, completedCodes))
+            {
+                _logger.LogInformation(
+                    "Account {AccountId} does not meet prerequisites for template {TemplateId}",
+                    accountId.Value, body.ScenarioTemplateId);
+                return (StatusCodes.BadRequest, null);
+            }
+        }
+
         // Global scenario capacity check
         var activeScenarioCount = (int)await _gardenCacheStore.SetCountAsync(
             ActiveScenariosTrackingKey, cancellationToken);

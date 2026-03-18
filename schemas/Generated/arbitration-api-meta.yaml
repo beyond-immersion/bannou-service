@@ -1056,13 +1056,13 @@ paths:
         \       \"ExternalRequest\",\n                \"PeerPanel\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AssignArbiterResponse\"\
         ,\n    \"$defs\": {\n        \"AssignArbiterResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Response after assigning or requesting an arbiter\",\n            \"required\"\
-        : [\n                \"pending\"\n            ],\n            \"properties\": {\n                \"arbiterId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Assigned arbiter entity ID, null if pending external request\"\n \
-        \               },\n                \"pending\": {\n                    \"type\": \"boolean\",\n                 \
-        \   \"description\": \"True if an external arbiter request was published and assignment is deferred\"\n          \
-        \      }\n            }\n        }\n    }\n}"
+        : false,\n            \"description\": \"Response after assigning or requesting an arbiter. A null arbiterId indicates
+        a deferred external request.\",\n            \"properties\": {\n                \"arbiterId\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Assigned arbiter entity ID, null if pending external request\"\n         \
+        \       },\n                \"pending\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"True if an external arbiter request was published and assignment is deferred\"\n                }\n          \
+        \  }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Assign an arbiter to a case\",\n    \"description\": \"Assigns an arbiter
         to a case using the specified selection mode.\\nFor ExternalRequest mode, publishes an arbiter.requested event and
         returns\\npending=true; the external actor later calls this endpoint again with an explicit\\narbiter ID. Returns
@@ -1632,20 +1632,18 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EnforceRulingResponse\"\
         ,\n    \"$defs\": {\n        \"EnforceRulingResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response after attempting to enforce a ruling's consequences\",\n       \
-        \     \"required\": [\n                \"rulingId\",\n                \"allEnforced\",\n                \"consequenceResults\"\
-        \n            ],\n            \"properties\": {\n                \"rulingId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Ruling that was enforced\"\
-        \n                },\n                \"allEnforced\": {\n                    \"type\": \"boolean\",\n           \
-        \         \"description\": \"True if all consequences have been successfully executed\"\n                },\n    \
-        \            \"consequenceResults\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"$ref\": \"#/$defs/ConsequenceResult\"\n                    },\n                    \"description\"\
-        : \"Current execution status of each consequence\"\n                }\n            }\n        },\n        \"ConsequenceResult\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Execution result of an individual ruling consequence, tracked for enforcement retry\",\n            \"required\"\
-        : [\n                \"consequenceType\",\n                \"status\",\n                \"attemptCount\"\n       \
-        \     ],\n            \"properties\": {\n                \"consequenceType\": {\n                    \"$ref\": \"\
-        #/$defs/ConsequenceType\",\n                    \"description\": \"Type of consequence this result tracks\"\n    \
-        \            },\n                \"status\": {\n                    \"$ref\": \"#/$defs/ConsequenceResultStatus\"\
+        \     \"required\": [\n                \"rulingId\",\n                \"consequenceResults\"\n            ],\n   \
+        \         \"properties\": {\n                \"rulingId\": {\n                    \"type\": \"string\",\n        \
+        \            \"format\": \"uuid\",\n                    \"description\": \"Ruling that was enforced\"\n          \
+        \      },\n                \"consequenceResults\": {\n                    \"type\": \"array\",\n                 \
+        \   \"items\": {\n                        \"$ref\": \"#/$defs/ConsequenceResult\"\n                    },\n      \
+        \              \"description\": \"Current execution status of each consequence\"\n                }\n            }\n\
+        \        },\n        \"ConsequenceResult\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Execution result of an individual ruling consequence, tracked for enforcement
+        retry\",\n            \"required\": [\n                \"consequenceType\",\n                \"status\",\n       \
+        \         \"attemptCount\"\n            ],\n            \"properties\": {\n                \"consequenceType\": {\n\
+        \                    \"$ref\": \"#/$defs/ConsequenceType\",\n                    \"description\": \"Type of consequence
+        this result tracks\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/ConsequenceResultStatus\"\
         ,\n                    \"description\": \"Current execution status\"\n                },\n                \"attemptCount\"\
         : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
         : \"Number of execution attempts\"\n                },\n                \"lastError\": {\n                    \"type\"\
@@ -3007,9 +3005,8 @@ components:
     AssignArbiterResponse:
       type: object
       additionalProperties: false
-      description: Response after assigning or requesting an arbiter
-      required:
-      - pending
+      description: Response after assigning or requesting an arbiter. A null arbiterId indicates a deferred external 
+        request.
       properties:
         arbiterId:
           type: string
@@ -3066,16 +3063,12 @@ components:
       description: Response after attempting to enforce a ruling's consequences
       required:
       - rulingId
-      - allEnforced
       - consequenceResults
       properties:
         rulingId:
           type: string
           format: uuid
           description: Ruling that was enforced
-        allEnforced:
-          type: boolean
-          description: True if all consequences have been successfully executed
         consequenceResults:
           type: array
           items:

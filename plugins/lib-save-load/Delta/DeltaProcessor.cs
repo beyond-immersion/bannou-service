@@ -1,5 +1,7 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Attributes;
 using Json.Patch;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text;
 using System.Text.Json;
@@ -12,6 +14,7 @@ namespace BeyondImmersion.BannouService.SaveLoad.Delta;
 /// Currently supports JSON Patch (RFC 6902). BSDIFF/XDELTA support is
 /// stubbed for future implementation with binary game state.
 /// </summary>
+[BannouHelperService("delta-processor", typeof(SaveLoadService), lifetime: ServiceLifetime.Scoped)]
 public sealed class DeltaProcessor
 {
     private readonly ILogger<DeltaProcessor> _logger;
