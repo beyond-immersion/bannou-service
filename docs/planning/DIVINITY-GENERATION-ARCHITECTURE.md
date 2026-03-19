@@ -410,12 +410,12 @@ Character gets patronDeityCode: "war_god":
 12. **Event handler for `character.created`** (or Character Lifecycle birth event) — if `patronDeityCode` is set, auto-bond per template.
 13. **Deity creation flow** — create seed externally via Seed API, pass seedId to Genesis, store seedId on DeityModel for bond operations.
 
-### Open Questions
+### Open Questions — Resolved (2026-03-19)
 
-- **`Mirrored` semantics**: Is this "ratio 1.0 both directions" (same as `Bidirectional` with ratio 1.0) or "shared growth pool" (both seeds see identical state)? The former is simpler to implement; the latter is architecturally different. Marked with `(?)` — may not be needed for v1.
-- **Performance at scale**: 100K characters × ~3 domain seeds × bond propagation per growth recording. Each propagation is one additional `RecordGrowth` call (with lock acquisition on the partner seed). Need to validate this doesn't bottleneck on god-seed locks (many characters bonded to the same god seed). Possible mitigation: batch propagation credits to god seeds via a worker rather than inline.
-- **Missing seeds at bond time**: When auto-bonding, the character may not have all the seeds the deity template expects (e.g., no "strength" seed yet). Options: (a) create the seed automatically, (b) defer bond until seed exists, (c) bond what exists, add more bonds later via `ISeedEvolutionListener` or seed creation events.
-- **Patron change cost**: Should changing patron deity have a mechanical/narrative cost? (Blessing revocation, bond strength reset, divine displeasure event.) This is gameplay design — the infrastructure supports any policy, but the default behavior needs a decision.
+- ~~**`Mirrored` semantics**~~: **Resolved**: Remove `Mirrored` from v1. `Bidirectional` with ratio 1.0 achieves the same behavioral result. "Shared growth pool" creates contention at 100K scale (atomic dual-update on every growth recording). `PropagationDirection` enum = `None`, `AToB`, `BToA`, `Bidirectional`. Add `Mirrored` later only if a distinct semantic proves necessary.
+- ~~**Performance at scale**~~: **Resolved**: Always batch propagation via `SeedBondPropagationWorker`. Accumulate credits in `ConcurrentDictionary<Guid, Dictionary<string, double>>` (target seed ID → domain → growth). Flush on configurable interval (e.g., 5s). 1 lock per god seed per flush instead of 100K. 5s delay acceptable for all cases — divinity generation is inherently aggregate.
+- ~~**Missing seeds at bond time**~~: **Resolved**: With caller-specified GUIDs and GetOrCreate semantics on `CreateSeed` (per RESOURCE-TRANSACTIONS.md), Divine creates-or-gets seeds deterministically at bond time using a GUID derived from character ID + seed type code + game service ID. Fully synchronous, idempotent, safe for distributed/sharded scenarios. No event subscription needed. Eliminates deferred bonding complexity entirely.
+- ~~**Patron change cost**~~: **Resolved**: Gameplay decision authored in deity ABML behavior, not service code. The god-actor perceives patron changes via `character.updated` events and reacts per game designer configuration (blessing revocation, divine displeasure, nothing). No infrastructure changes needed.
 
 ---
 

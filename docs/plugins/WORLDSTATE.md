@@ -151,7 +151,7 @@ The event includes a full game time snapshot (all `GameTimeSnapshot` fields inli
 | lib-seed (L2, **required migration**) | Seed decay worker MUST use `GetElapsedGameTime` for game-time-based growth decay. Real-time decay is 24x slower than intended per game-day. Requires `DecayTimeSource` config property (default: `GameTime`). Seeds representing guardian spirits, dungeon cores, and faction growth all evolve in simulated world time. |
 | lib-transit (L2) | Hard dependency on `IWorldstateClient` for journey ETA computation via `GetElapsedGameTime`, travel time calculation from distance/speed into game-hours. `SeasonalConnectionWorker` subscribes to `worldstate.season-changed` for automatic seasonal connection open/close. Validates `seasonalAvailability` keys against the realm's Worldstate calendar season codes on connection creation. |
 | lib-character-lifecycle (L4) | Subscribes to `worldstate.year-changed` for aging checks, generational milestone evaluation (turning boundaries, saeculum transitions), and death processing triggers. At 24:1 ratio, `year-changed` fires every ~12 real days -- appropriate cadence for lifecycle events that operate on year boundaries. |
-| lib-character-encounter (L4, **migration candidate**) | `MemoryDecaySchedulerService` currently uses real-time for memory decay. Since memory decay is a narrative concept, it should use game-time. Requires `DecayTimeSource` config property (default: `GameTime`). |
+| lib-character-encounter (L4, **migration confirmed**) | `MemoryDecaySchedulerService` must transition from real-time to game-time. Memory decay is a narrative concept that should track simulated world time. Requires `DecayTimeSource` config property (`$ref: TimeSource` from `common-api.yaml`, default: `GameTime`). Uses encounter's `realmId` for `GetElapsedGameTime`. Design resolved in [#544](https://github.com/beyond-immersion/bannou-service/issues/544). |
 | lib-workshop (L4, planned) | Uses `GetElapsedGameTime` for computing production output over game-time intervals. Subscribes to boundary events for materialization triggers. |
 | lib-craft (L4, planned) | Uses game-time for recipe step `durationSeconds` timing instead of real-time. |
 | lib-storyline (L4) | Evaluates `TimeOfDay` trigger conditions against worldstate to determine scenario availability. |
@@ -262,23 +262,23 @@ All 18 endpoints are fully implemented. No stubs remain.
 
 ## Potential Extensions
 
-1. **Location-specific time zones**: Locations within a realm could have time offsets (eastern regions experience dawn before western regions). The calendar template could define optional time zone offsets per location or location subtree.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/532 -->
-
-2. **Magical time dilation zones**: Locations where time flows differently (a fairy realm where 1 game hour = 10 game hours, or a cursed zone where time is frozen). Connects to the `ITemporalManager` interface already defined in `bannou-service/Behavior/` for cinematic time dilation.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/534 -->
-
-3. **Calendar events/holidays**: Named dates in the calendar that repeat annually (harvest festival on Greenleaf 15, winter solstice on Frostmere 1). Publishable as events when the date is reached.
+1. **Calendar events/holidays**: Named dates in the calendar that repeat annually (harvest festival on Greenleaf 15, winter solstice on Frostmere 1). Publishable as events when the date is reached.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/538 -->
 
-4. **Lunar cycles / celestial events**: Additional cyclical phenomena beyond seasons (moon phases, eclipses, celestial alignments). Configurable as additional cycles with their own variable namespace (`${world.moon.phase}`).
+2. **Lunar cycles / celestial events**: Additional cyclical phenomena beyond seasons (moon phases, eclipses, celestial alignments). Configurable as additional cycles with their own variable namespace (`${world.moon.phase}`).
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/540 -->
 
-5. **Historical time queries**: "What season was it on game-year 47, month 3?" Useful for Storyline's retrospective narrative generation. Pure calendar math, no state required.
+3. **Historical time queries**: "What season was it on game-year 47, month 3?" Useful for Storyline's retrospective narrative generation. Pure calendar math, no state required.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/542 -->
 
-6. **Variable-rate time**: Time ratio that changes based on player population. When no players are in a realm, time accelerates to advance the simulation faster.
+4. **Variable-rate time**: Time ratio that changes based on player population. When no players are in a realm, time accelerates to advance the simulation faster.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/543 -->
+
+### Resolved Extensions (Not Worldstate Concerns)
+
+- ~~**Location-specific time zones**~~ ([#532](https://github.com/beyond-immersion/bannou-service/issues/532), reopened as Agency concern): Not a Worldstate (L2) clock concern. Game servers can offset displayed times from the authoritative clock. However, the issue has been reframed as a potential Agency (L4) capability: Agency could register per-session client event transformers with Connect that modify Worldstate's `WorldstateTimeSyncClientEvent` in transit, applying location-based timezone offsets before the client sees them. This is part of a broader "progressive agency event pipeline" concept where Agency controls what the client perceives. See Agency deep dive § Potential Extensions #10.
+
+- ~~**Magical time dilation zones**~~ ([#534](https://github.com/beyond-immersion/bannou-service/issues/534), closed): Solved by existing realm-level time ratios. Each realm has its own configurable `timeRatio` — a fairy realm where time flows 10x faster is simply a realm with `timeRatio: 240.0`. Characters experience different time speeds by traveling between realms via Transit's cross-realm connections and Character's `TransferCharacterToRealm`. The actual unsolved problem — cross-realm journey orchestration (what happens to character state, actor bindings, and L4 data during cross-realm travel) — is tracked in [#702](https://github.com/beyond-immersion/bannou-service/issues/702). Note: the original deep dive entry incorrectly claimed a connection to `ITemporalManager` — that interface manages per-participant cinematic QTE time budgets in the behavior-compiler SDK, which is unrelated to world-level temporal zones.
 
 ---
 
@@ -442,14 +442,14 @@ flows:
 
 ### Design Considerations (Requires Planning)
 
-1. **Game-time in existing schemas**: Encounter's `inGameTime` and Relationship's `inGameTimestamp` fields are currently caller-provided. Should these services auto-populate from worldstate? Auto-population requires those L2 services to depend on worldstate (same layer -- allowed). The migration path needs consideration.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/544 -->
-
-2. **Currency/Seed migration to game-time**: Adding optional game-time support requires a configuration flag per service and careful handling of the transition (existing data uses real-time timestamps; switching mid-stream requires conversion).
-<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/545 -->
-
-3. **Background worker scalability**: With many realms (100+), a single worker iteration may not complete within the tick interval. The current implementation processes realms sequentially. Options: (a) parallel realm advancement with configurable concurrency, (b) partitioning realms across nodes via `SupportedRealms` configuration (similar to GameSession's `SupportedGameServices` pattern), (c) staggered advancement.
+1. **Background worker scalability**: With many realms (100+), a single worker iteration may not complete within the tick interval. The current implementation processes realms sequentially. Options: (a) parallel realm advancement with configurable concurrency, (b) partitioning realms across nodes via `SupportedRealms` configuration (similar to GameSession's `SupportedGameServices` pattern), (c) staggered advancement.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/546 -->
+
+### Resolved Design Considerations
+
+- ~~**Game-time in existing schemas**~~ ([#544](https://github.com/beyond-immersion/bannou-service/issues/544), resolved 2026-03-19): Character-Encounter (L4, not L2 as previously stated) will add an optional `gameTimeSnapshot` companion field alongside existing `timestamp` DateTimeOffset, and transition `MemoryDecaySchedulerService` to game-time via shared `TimeSource` enum. Relationship timestamps are NOT applicable — cross-realm entities have no single clock. See #544 for full resolution.
+
+- ~~**Currency/Seed migration to game-time**~~ ([#545](https://github.com/beyond-immersion/bannou-service/issues/545), resolved 2026-03-19): All three services (Currency autogain, Seed decay, Character-Encounter memory decay) share a `TimeSource` enum from `common-api.yaml` with per-service config properties defaulting to `GameTime`. Currency uses existing wallet `realmId` — no new field needed. Seed uses the accepted nullable `realmId` design with auto-association. Data transition: accept the discontinuity (pre-release). See #545 for full resolution.
 
 ---
 

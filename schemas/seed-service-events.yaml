@@ -44,10 +44,11 @@ info:
       description: Published when a new seed type is registered
     - topic: seed.type.updated
       event: SeedTypeUpdatedEvent
-      description: Published when a seed type is updated (including deprecation)
+      description: Published when a seed type is updated (including deprecation via changedFields)
+    # NOTE: seed.type.deleted is published by the clean-deprecated sweep when a deprecated type with zero seeds is permanently removed
     - topic: seed.type.deleted
       event: SeedTypeDeletedEvent
-      description: Published when a seed type is deleted
+      description: Published when a deprecated seed type is permanently removed by the clean-deprecated sweep
 
     # Growth events
     - topic: seed.growth.updated
@@ -97,6 +98,7 @@ x-lifecycle:
     sensitive: [metadata]
   SeedType:
     deprecation: true
+    instanceEntity: Seed
     model:
       seedTypeCode: { type: string, primary: true, required: true, minLength: 1, description: "Unique seed type code" }
       gameServiceId: { type: string, format: uuid, nullable: true, description: "Game service this type is scoped to. Null for cross-game seed types." }

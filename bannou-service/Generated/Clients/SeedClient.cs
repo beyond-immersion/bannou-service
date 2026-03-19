@@ -26,6 +26,21 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Seed;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Seed;
 
@@ -249,7 +264,7 @@ public partial interface ISeedClient
     /// Deprecate a seed type
     /// </summary>
     /// <remarks>
-    /// Marks a seed type as deprecated. Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Must be deprecated before it can be deleted.
+    /// Marks a seed type as deprecated. Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate, no delete. Idempotent — returns OK if already deprecated.
     /// </remarks>
     /// <returns>Seed type deprecated</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -258,26 +273,14 @@ public partial interface ISeedClient
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Restore a deprecated seed type
+    /// Clean deprecated seed types with zero remaining seeds
     /// </summary>
     /// <remarks>
-    /// Removes deprecated status from a seed type, allowing new seeds of this type to be created again.
+    /// Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated seed types and permanently removes those with zero remaining seeds (any status, including archived), subject to an optional grace period. Publishes seed.type.deleted events for each removed type. Idempotent and safe to call at any frequency. Supports dry-run mode for admin panel preview.
     /// </remarks>
-    /// <returns>Seed type restored</returns>
+    /// <returns>Cleanup sweep completed</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<SeedTypeResponse> UndeprecateSeedTypeAsync(UndeprecateSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-    /// <param name="body">The body parameter.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// Delete a seed type
-    /// </summary>
-    /// <remarks>
-    /// Hard deletes a deprecated seed type. Fails if any non-archived seeds of this type exist. Must deprecate first, then ensure all seeds are archived or deleted before calling this endpoint.
-    /// </remarks>
-    /// <returns>Seed type deleted</returns>
-    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task DeleteSeedTypeAsync(DeleteSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<CleanDeprecatedStringKeyResponse> CleanDeprecatedSeedTypesAsync(CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -2042,7 +2045,7 @@ public partial class SeedClient : ISeedClient, BeyondImmersion.BannouService.Ser
     /// Deprecate a seed type
     /// </summary>
     /// <remarks>
-    /// Marks a seed type as deprecated. Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Must be deprecated before it can be deleted.
+    /// Marks a seed type as deprecated. Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate, no delete. Idempotent — returns OK if already deprecated.
     /// </remarks>
     /// <returns>Seed type deprecated</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -2136,14 +2139,14 @@ public partial class SeedClient : ISeedClient, BeyondImmersion.BannouService.Ser
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Restore a deprecated seed type
+    /// Clean deprecated seed types with zero remaining seeds
     /// </summary>
     /// <remarks>
-    /// Removes deprecated status from a seed type, allowing new seeds of this type to be created again.
+    /// Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated seed types and permanently removes those with zero remaining seeds (any status, including archived), subject to an optional grace period. Publishes seed.type.deleted events for each removed type. Idempotent and safe to call at any frequency. Supports dry-run mode for admin panel preview.
     /// </remarks>
-    /// <returns>Seed type restored</returns>
+    /// <returns>Cleanup sweep completed</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<SeedTypeResponse> UndeprecateSeedTypeAsync(UndeprecateSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<CleanDeprecatedStringKeyResponse> CleanDeprecatedSeedTypesAsync(CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
@@ -2151,15 +2154,15 @@ public partial class SeedClient : ISeedClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SeedTypeResponse>(
-                _directDispatchProvider, _serviceName, "UndeprecateSeedTypeAsync",
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanDeprecatedStringKeyResponse>(
+                _directDispatchProvider, _serviceName, "CleanDeprecatedSeedTypesAsync",
                 body, cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "seed/type/undeprecate"
-        urlBuilder_.Append("seed/type/undeprecate");
+        // Operation Path: "seed/type/clean-deprecated"
+        urlBuilder_.Append("seed/type/clean-deprecated");
 
         var methodPath_ = urlBuilder_.ToString().TrimStart('/');
         var appId_ = _resolver.GetAppIdForService(ServiceName);
@@ -2197,122 +2200,12 @@ public partial class SeedClient : ISeedClient, BeyondImmersion.BannouService.Ser
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<SeedTypeResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        var objectResponse_ = await ReadObjectResponseAsync<CleanDeprecatedStringKeyResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
                             throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
-                    }
-                    else
-                    if (status_ == 404)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Seed type not found", status_, responseText_, headers_, null);
-                    }
-                    else
-                    {
-                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                    }
-                }
-                finally
-                {
-                    if (disposeResponse_)
-                        response_.Dispose();
-                }
-            }
-            finally
-            {
-                // Clear headers after request (one-time use)
-                ClearHeaders();
-            }
-        }
-    }
-
-    /// <param name="body">The body parameter.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// Delete a seed type
-    /// </summary>
-    /// <remarks>
-    /// Hard deletes a deprecated seed type. Fails if any non-archived seeds of this type exist. Must deprecate first, then ensure all seeds are archived or deleted before calling this endpoint.
-    /// </remarks>
-    /// <returns>Seed type deleted</returns>
-    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task DeleteSeedTypeAsync(DeleteSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-        if (body == null)
-            throw new System.ArgumentNullException("body");
-
-        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
-        if (_directDispatchProvider != null)
-        {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "DeleteSeedTypeAsync",
-                body, cancellationToken).ConfigureAwait(false);
-            return;
-        }
-
-        // Build method path (without base URL - mesh client handles endpoint resolution)
-        var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "seed/type/delete"
-        urlBuilder_.Append("seed/type/delete");
-
-        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
-        var appId_ = _resolver.GetAppIdForService(ServiceName);
-
-        // Create HTTP request via mesh client
-        using (var request_ = _meshClient.CreateInvokeMethodRequest(
-            new System.Net.Http.HttpMethod("POST"),
-            appId_,
-            methodPath_))
-        {
-            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
-            var content_ = new System.Net.Http.ByteArrayContent(json_);
-            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-            request_.Content = content_;
-
-            // Apply custom headers
-            ApplyHeaders(request_);
-
-            try
-            {
-                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
-                var disposeResponse_ = true;
-                try
-                {
-                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                    foreach (var item_ in response_.Headers)
-                        headers_[item_.Key] = item_.Value;
-                    if (response_.Content != null && response_.Content.Headers != null)
-                    {
-                        foreach (var item_ in response_.Content.Headers)
-                            headers_[item_.Key] = item_.Value;
-                    }
-
-                    var status_ = (int)response_.StatusCode;
-                    if (status_ == 200)
-                    {
-                        return;
-                    }
-                    else
-                    if (status_ == 400)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Seed type is not deprecated", status_, responseText_, headers_, null);
-                    }
-                    else
-                    if (status_ == 404)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Seed type not found", status_, responseText_, headers_, null);
-                    }
-                    else
-                    if (status_ == 409)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Non-archived seeds still exist for this type", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -2918,7 +2811,7 @@ public partial class SeedClient : ISeedClient, BeyondImmersion.BannouService.Ser
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -2930,7 +2823,7 @@ public partial class SeedClient : ISeedClient, BeyondImmersion.BannouService.Ser
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool)
+        else if (value is bool) 
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }

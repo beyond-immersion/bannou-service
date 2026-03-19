@@ -47,6 +47,7 @@ When you hit any of these situations, stop work and present the situation to the
 |-----------|-----------------|
 | You changed X, expected Y, got Z | What you changed, what you expected, what happened, and your options |
 | Instructions depend on data you don't have | What data is missing and why you need it |
+| Instructions require a tool or capability you don't have | What capability is missing, what you cannot do without it, and why you cannot proceed as instructed |
 | The code you'd write would be a no-op or tautology | What the test protects and what infrastructure is missing |
 | Implementation requires a behavioral choice not in instructions | The decision point, the options, and their consequences |
 

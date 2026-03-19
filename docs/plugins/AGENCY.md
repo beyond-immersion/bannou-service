@@ -229,6 +229,9 @@ Pre-implementation. No schema, no code. All features described in this document 
 
 9. **Hacking mechanic (Omega realm).** PLAYER-VISION describes "hacking" as using UX modules on characters/seeds that haven't earned them. Mechanically: temporarily override the manifest with modules the seed hasn't naturally unlocked. The character resists more strongly (compliance penalty), results may be inferior (forced fidelity reduction), and there are social/ethical consequences.
 
+10. **Per-session client event transformation pipeline.** Agency registers event transformers with Connect that modify client events in transit based on the spirit's progressive capabilities. Connect currently intercepts 3 hardcoded internal event types before client delivery; this would extend that model to a pluggable per-session event pipeline. Use cases: fidelity-gated combat option filtering (lower-fidelity spirits see fewer continuation point options), social perception filtering (reduced Lexicon message detail), environmental perception filtering (simplified weather data), economic perception filtering (simplified trade data), and timezone offsets (modifying Worldstate time sync events with per-location offsets — the original Worldstate #532 concern reframed as an Agency capability). PreboundApi's `TemplateSubstitutor` infrastructure could be extended to define the transformation rules. This mechanism makes every publishing service Agency-unaware while Agency controls what the client perceives.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-19:https://github.com/beyond-immersion/bannou-service/issues/532 -->
+
 ---
 
 ## Variable Provider Factory

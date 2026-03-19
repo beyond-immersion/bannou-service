@@ -371,6 +371,9 @@ Three client events are defined in `schemas/transit-client-events.yaml` (see [im
 3. **Mount bonding**: Integration with Relationship (L2) for character-mount relationships. A well-bonded mount has higher effective speed and lower fatigue. Bond strength grows with travel distance. Follows the existing Relationship entity-to-entity model.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/533 -->
 
+4. **Cross-realm journey orchestration**: When a journey leg crosses a realm boundary (via a cross-realm connection), the character must transition between realms. Transit has the infrastructure (cross-realm connections, route calculation), Character has the mechanism (`TransferCharacterToRealm`), but the orchestration of what happens during a cross-realm journey leg — coordination between Transit, Character, Actor (variable provider realm context switch), and L4 services — is not designed. This also serves as the mechanism for "magical time dilation" — realms already have independent time ratios, so a character entering a realm with `timeRatio: 240.0` naturally experiences faster time. In sharded deployments (DEPLOYMENT-MODES Phase 2), cross-realm travel means character data migrates between nodes.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-19:https://github.com/beyond-immersion/bannou-service/issues/702 -->
+
 
 ---
 

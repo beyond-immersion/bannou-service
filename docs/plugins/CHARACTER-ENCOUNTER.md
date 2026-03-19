@@ -406,6 +406,10 @@ None. All stubs have been implemented.
 2. **Global character index unbounded growth**: The `global-char-idx` list grows without bound as new characters encounter each other. Even after `DeleteByCharacter` removes a character, the global index is cleaned up, but during active operation this list could contain tens of thousands of character IDs.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-08:https://github.com/beyond-immersion/bannou-service/issues/604 -->
 
+### Resolved Design Considerations
+
+- ~~**Memory decay uses real-time, should use game-time**~~ ([#544](https://github.com/beyond-immersion/bannou-service/issues/544)/[#545](https://github.com/beyond-immersion/bannou-service/issues/545), resolved 2026-03-19): `MemoryDecaySchedulerService` will transition to game-time via `GetElapsedGameTime`. Add `DecayTimeSource` config property (`$ref: TimeSource` from `common-api.yaml`, default: `GameTime`). `TimeSource` enum is shared across Currency autogain, Seed decay, and Character-Encounter memory decay. Uses encounter's `realmId` for `GetElapsedGameTime`. `IWorldstateClient` (L2) is a valid hard dependency for L4. Also: add optional `gameTimeSnapshot` companion field to encounter records for narrative game-time context alongside existing DateTimeOffset `timestamp`.
+
 ---
 
 ## Work Tracking

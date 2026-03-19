@@ -283,14 +283,15 @@ The original design specified `IMatchmakingClient` (L4 soft dependency) for subm
 
 | Question | Status | Reference |
 |----------|--------|-----------|
-| Per-type growth decay configuration | Open issue | [#352](https://github.com/beyond-immersion/bannou-service/issues/352) |
+| Per-type growth decay configuration | **Resolved** (implemented) | [#352](https://github.com/beyond-immersion/bannou-service/issues/352) -- Per-type `GrowthDecayEnabled`/`GrowthDecayRatePerDay` overrides in seed type definitions |
 | Cross-seed-type growth transfer matrix | Open issue | [#354](https://github.com/beyond-immersion/bannou-service/issues/354) |
-| Bond dissolution endpoint | Open issue | [#362](https://github.com/beyond-immersion/bannou-service/issues/362) |
-| Seed type merge | Open issue | [#374](https://github.com/beyond-immersion/bannou-service/issues/374) |
-| Archived seed cleanup strategy | Open issue | [#366](https://github.com/beyond-immersion/bannou-service/issues/366) |
-| Bond growth multiplier when partner inactive | Open issue | [#367](https://github.com/beyond-immersion/bannou-service/issues/367) |
+| Bond dissolution endpoint | **Confirmed** (ready for implementation) | [#362](https://github.com/beyond-immersion/bannou-service/issues/362) -- Cancel + Dissolve flows, contract auto-dissolution, permanent bonds unbreakable |
+| Seed type deprecation reclassification | **Confirmed** (ready for implementation) | [#645](https://github.com/beyond-immersion/bannou-service/issues/645) -- Reclassify from Category A to Category B; #374 (merge) closed as superseded |
+| Archived seed cleanup strategy | **Confirmed** (ready for implementation) | [#366](https://github.com/beyond-immersion/bannou-service/issues/366) -- Remove Archived status, replace archive with hard-delete, no retention worker; depends on #362 |
+| Bond growth multiplier when partner inactive | **Resolved** (implemented) | [#367](https://github.com/beyond-immersion/bannou-service/issues/367) -- Bond multiplier applies only when bond status is Active; inactive partners receive no multiplier |
 | Variable provider for Actor behavior system | **Resolved** (implemented) | [#361](https://github.com/beyond-immersion/bannou-service/issues/361) -- `SeedProviderFactory` provides `${seed.*}` variables via `IVariableProviderFactory` |
 | Client events for seed progression | Open issue | [#497](https://github.com/beyond-immersion/bannou-service/issues/497) -- Supersedes #365; uses Entity Session Registry for direct push from Seed (L2) |
+| Seed → Collection reverse pipeline | Open issue | [#700](https://github.com/beyond-immersion/bannou-service/issues/700) -- Capability-gated collection grants for cross-seed pollination feedback loop |
 
 ### Gardener-Level
 

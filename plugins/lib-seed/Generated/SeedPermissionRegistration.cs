@@ -272,29 +272,14 @@ public static class SeedPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/seed/type/undeprecate",
+            Path = "/seed/type/clean-deprecated",
             Method = ServiceEndpointMethod.Post,
-            Description = "UndeprecateSeedType",
+            Description = "CleanDeprecatedSeedTypes",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement
                 {
-                    Role = "developer",
-                    RequiredStates = new Dictionary<string, string> {  }
-                },
-            }
-        });
-
-        endpoints.Add(new ServiceEndpoint
-        {
-            Path = "/seed/type/delete",
-            Method = ServiceEndpointMethod.Post,
-            Description = "DeleteSeedType",
-            Permissions = new List<PermissionRequirement>
-            {
-                new PermissionRequirement
-                {
-                    Role = "developer",
+                    Role = "admin",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }

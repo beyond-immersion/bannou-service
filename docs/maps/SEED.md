@@ -13,14 +13,14 @@
 |-------|-------|
 | Plugin | lib-seed |
 | Layer | L2 GameFoundation |
-| Endpoints | 25 |
+| Endpoints | 24 |
 | State Stores | seed (MySQL), seed-growth (MySQL), seed-type-definitions (MySQL), seed-bonds (MySQL), seed-capabilities-cache (Redis), seed-lock (Redis), seed-idempotency (Redis) |
 | Events Published | 12 (seed.created, seed.updated, seed.activated, seed.archived, seed.growth.updated, seed.growth.transferred, seed.phase.changed, seed.capability.updated, seed.bond.formed, seed.type.created, seed.type.updated, seed.type.deleted) |
 | Events Consumed | 0 |
 | Client Events | 0 |
 | Background Services | 1 (SeedDecayWorkerService) |
 
-> **Note**: `seed.deleted` is declared via `x-lifecycle` in the events schema but is never published. Seeds are archived (soft-deleted), not hard-deleted.
+> **Note**: `seed.deleted` is declared via `x-lifecycle` in the events schema but is never published. Seeds are currently archived (soft-deleted) — a T28 violation confirmed 2026-03-19 (#366). The fix replaces archive with hard-delete, removes `Archived` from `SeedStatus`, and publishes `seed.deleted`. See deep dive Bug #2.
 
 ---
 
@@ -31,6 +31,7 @@
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
 | `seed:{seedId}` | `SeedModel` | Core seed entity with owner, type, phase, status, bond reference |
+| `type-seeds:{gameServiceId}:{seedTypeCode}` | `List<string>` (JSON) | Reverse index: seed IDs per type (for clean-deprecated sweep instance checks). Uses "cross-game" when gameServiceId is null. |
 
 **Store**: `seed-growth` (Backend: MySQL)
 
@@ -106,8 +107,8 @@
 | `seed.capability.updated` | `SeedCapabilityUpdatedEvent` | ComputeAndCacheManifest (on cache miss/stale) |
 | `seed.bond.formed` | `SeedBondFormedEvent` | ConfirmBond (when all participants confirmed) |
 | `seed.type.created` | `SeedTypeCreatedEvent` | RegisterSeedType |
-| `seed.type.updated` | `SeedTypeUpdatedEvent` | UpdateSeedType, DeprecateSeedType, UndeprecateSeedType |
-| `seed.type.deleted` | `SeedTypeDeletedEvent` | DeleteSeedType |
+| `seed.type.updated` | `SeedTypeUpdatedEvent` | UpdateSeedType, DeprecateSeedType |
+| `seed.type.deleted` | `SeedTypeDeletedEvent` | CleanDeprecatedSeedTypes (sweep permanently removes deprecated types with zero seeds) |
 
 ---
 
@@ -123,7 +124,7 @@ This plugin does not consume external events. The Collection-to-Seed growth pipe
 |---------|------|
 | `ILogger<SeedService>` | Structured logging |
 | `SeedServiceConfiguration` | Typed configuration access |
-| `IStateStoreFactory` | State store access (constructor-only; not stored as field) |
+| `IStateStoreFactory` | State store access (constructor-only; not stored as field). Stores: `_seedStore`, `_seedQueryStore`, `_growthStore`, `_capabilityCacheStore`, `_bondStore`, `_typeStore`, `_typeQueryStore`, `_idempotencyStore`, `_seedStringStore` (reverse index for type→seeds) |
 | `IDistributedLockProvider` | Distributed locks for mutation operations |
 | `IMessageBus` | Event publishing |
 | `ITelemetryProvider` | Span instrumentation |
@@ -142,7 +143,7 @@ This plugin does not consume external events. The Collection-to-Seed growth pipe
 
 | Method | Route | Source | Roles | Mutates | Publishes |
 |--------|-------|--------|-------|---------|-----------|
-| CreateSeed | POST /seed/create | generated | user | seed, growth | seed.created |
+| CreateSeed | POST /seed/create | generated | user | seed, growth, reverse-index | seed.created |
 | GetSeed | POST /seed/get | generated | user | - | - |
 | GetSeedsByOwner | POST /seed/get-by-owner | generated | user | - | - |
 | ListSeeds | POST /seed/list | generated | developer | - | - |
@@ -160,8 +161,7 @@ This plugin does not consume external events. The Collection-to-Seed growth pipe
 | ListSeedTypes | POST /seed/type/list | generated | user | - | - |
 | UpdateSeedType | POST /seed/type/update | generated | developer | type, seed (recompute) | seed.type.updated, seed.phase.changed |
 | DeprecateSeedType | POST /seed/type/deprecate | generated | developer | type | seed.type.updated |
-| UndeprecateSeedType | POST /seed/type/undeprecate | generated | developer | type | seed.type.updated |
-| DeleteSeedType | POST /seed/type/delete | generated | developer | type (delete) | seed.type.deleted |
+| CleanDeprecatedSeedTypes | POST /seed/type/clean-deprecated | generated | admin | type (delete), reverse-index | seed.type.deleted |
 | InitiateBond | POST /seed/bond/initiate | generated | user | bond | - |
 | ConfirmBond | POST /seed/bond/confirm | generated | user | bond, seed (multiple) | seed.bond.formed |
 | GetBond | POST /seed/bond/get | generated | user | - | - |
@@ -189,6 +189,8 @@ IF count >= maxPerOwner                                    -> 409
 // Metadata wrapped: seed.Metadata["data"] = request.Metadata
 WRITE seed-store:"seed:{newId}" <- SeedModel from request
 WRITE growth-store:"growth:{newId}" <- SeedGrowthModel { empty Domains }
+// Maintain reverse index for Category B clean-deprecated sweep (type → seed list)
+ETAG-WRITE seed-store:"type-seeds:{gameServiceId}:{seedTypeCode}" <- append newId to list
 PUBLISH seed.created { seedId, ownerId, ownerType, seedTypeCode, gameServiceId, growthPhase, totalGrowth, displayName, status, bondId }
 RETURN (200, SeedResponse)
 ```
@@ -478,6 +480,8 @@ RETURN (200, SeedTypeResponse)
 ### DeprecateSeedType
 POST /seed/type/deprecate | Roles: [developer]
 
+Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate, no per-entity delete. Idempotent — returns OK if already deprecated. Deprecated types cannot be used to create new seeds.
+
 ```
 READ type-store:"type:{gameServiceId}:{seedTypeCode}"      -> 404 if null
 IF type.IsDeprecated                                       -> 200 (idempotent)
@@ -489,32 +493,34 @@ PUBLISH seed.type.updated { ..., changedFields: ["isDeprecated", "deprecatedAt",
 RETURN (200, SeedTypeResponse)
 ```
 
-### UndeprecateSeedType
-POST /seed/type/undeprecate | Roles: [developer]
+### CleanDeprecatedSeedTypes
+POST /seed/type/clean-deprecated | Roles: [admin]
+
+Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated seed types and permanently removes those with zero remaining seeds (any status, including archived), subject to an optional grace period. Publishes `seed.type.deleted` events for each removed type. Idempotent and safe to call at any frequency. Supports dry-run mode for admin panel preview.
+
+> **Note**: The clean-deprecated sweep checks for ALL seeds including archived. Because seeds are currently archived (soft-deleted) rather than hard-deleted (#366), the sweep will not find eligible types until seed hard-delete is implemented. The infrastructure is in place for when that dependency is resolved.
 
 ```
-READ type-store:"type:{gameServiceId}:{seedTypeCode}"      -> 404 if null
-IF !type.IsDeprecated                                      -> 200 (idempotent)
-type.IsDeprecated = false
-type.DeprecatedAt = null
-type.DeprecationReason = null
-WRITE type-store:"type:{...}" <- updated
-PUBLISH seed.type.updated { ..., changedFields: ["isDeprecated", "deprecatedAt", "deprecationReason"] }
-RETURN (200, SeedTypeResponse)
-```
+// Load all deprecated types
+QUERY type-store WHERE IsDeprecated == true
+IF count == 0
+  RETURN (200, CleanDeprecatedResponse { cleaned=0, remaining=0, errors=0, cleanedIds=[] })
 
-### DeleteSeedType
-POST /seed/type/delete | Roles: [developer]
+result = DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+  deprecatedTypes,
+  getEntityId: t => BuildTypeKey(t.GameServiceId, t.SeedTypeCode),
+  getDeprecatedAt: t => t.DeprecatedAt,
+  hasInstancesAsync: (t, ct) =>
+    _seedStringStore.HasStringListEntriesAsync(BuildTypeSeedsKey(t.GameServiceId, t.SeedTypeCode), ct),
+  deleteAndPublishAsync: (t, ct) =>
+    DELETE type-store:"type:{gameServiceId}:{seedTypeCode}"
+    DELETE seed-store:"type-seeds:{gameServiceId}:{seedTypeCode}"  // defensive reverse index cleanup
+    PUBLISH seed.type.deleted (SeedTypeDeletedEvent with all fields),
+  gracePeriodDays: body.GracePeriodDays,
+  dryRun: body.DryRun
+)
 
-```
-LOCK seed-lock:"type:{gameServiceId}:{seedTypeCode}"       -> 409 if fails
-  READ type-store:"type:{gameServiceId}:{seedTypeCode}"    -> 404 if null
-  IF !type.IsDeprecated                                    -> 400 (must deprecate first)
-  COUNT seed-store WHERE SeedTypeCode, GameServiceId, Status != Archived
-  IF count > 0                                             -> 409 (non-archived seeds exist)
-  DELETE type-store:"type:{gameServiceId}:{seedTypeCode}"
-  PUBLISH seed.type.deleted { seedTypeCode, gameServiceId, ... }
-RETURN (200, null)
+RETURN (200, CleanDeprecatedResponse { cleaned, remaining, errors, cleanedIds })
 ```
 
 ### InitiateBond

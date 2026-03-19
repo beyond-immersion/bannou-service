@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Seed;
 
@@ -291,7 +306,7 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
     /// </summary>
 
     /// <remarks>
-    /// Marks a seed type as deprecated. Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Must be deprecated before it can be deleted.
+    /// Marks a seed type as deprecated. Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate, no delete. Idempotent — returns OK if already deprecated.
     /// </remarks>
 
 
@@ -302,33 +317,18 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
 
 
     /// <summary>
-    /// Restore a deprecated seed type
+    /// Clean deprecated seed types with zero remaining seeds
     /// </summary>
 
     /// <remarks>
-    /// Removes deprecated status from a seed type, allowing new seeds of this type to be created again.
+    /// Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated seed types and permanently removes those with zero remaining seeds (any status, including archived), subject to an optional grace period. Publishes seed.type.deleted events for each removed type. Idempotent and safe to call at any frequency. Supports dry-run mode for admin panel preview.
     /// </remarks>
 
 
 
-    /// <returns>Seed type restored</returns>
+    /// <returns>Cleanup sweep completed</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> UndeprecateSeedType(UndeprecateSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-
-    /// <summary>
-    /// Delete a seed type
-    /// </summary>
-
-    /// <remarks>
-    /// Hard deletes a deprecated seed type. Fails if any non-archived seeds of this type exist. Must deprecate first, then ensure all seeds are archived or deleted before calling this endpoint.
-    /// </remarks>
-
-
-
-    /// <returns>Seed type deleted</returns>
-
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteSeedType(DeleteSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanDeprecatedStringKeyResponse>> CleanDeprecatedSeedTypes(CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 
     /// <summary>
@@ -1277,7 +1277,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase, I
     /// Deprecate a seed type
     /// </summary>
     /// <remarks>
-    /// Marks a seed type as deprecated. Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Must be deprecated before it can be deleted.
+    /// Marks a seed type as deprecated. Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate, no delete. Idempotent — returns OK if already deprecated.
     /// </remarks>
     /// <returns>Seed type deprecated</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("seed/type/deprecate")]
@@ -1322,94 +1322,46 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase, I
     }
 
     /// <summary>
-    /// Restore a deprecated seed type
+    /// Clean deprecated seed types with zero remaining seeds
     /// </summary>
     /// <remarks>
-    /// Removes deprecated status from a seed type, allowing new seeds of this type to be created again.
+    /// Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated seed types and permanently removes those with zero remaining seeds (any status, including archived), subject to an optional grace period. Publishes seed.type.deleted events for each removed type. Idempotent and safe to call at any frequency. Supports dry-run mode for admin panel preview.
     /// </remarks>
-    /// <returns>Seed type restored</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("seed/type/undeprecate")]
+    /// <returns>Cleanup sweep completed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("seed/type/clean-deprecated")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> UndeprecateSeedType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UndeprecateSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanDeprecatedStringKeyResponse>> CleanDeprecatedSeedTypes([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         using var activity_ = _telemetryProvider.StartActivity(
             "bannou.seed",
-            "SeedController.UndeprecateSeedType",
+            "SeedController.CleanDeprecatedSeedTypes",
             System.Diagnostics.ActivityKind.Server);
-        activity_?.SetTag("http.route", "seed/type/undeprecate");
+        activity_?.SetTag("http.route", "seed/type/clean-deprecated");
         try
         {
 
-            var (statusCode, result) = await _implementation.UndeprecateSeedTypeAsync(body, cancellationToken);
+            var (statusCode, result) = await _implementation.CleanDeprecatedSeedTypesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/type/undeprecate");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/type/clean-deprecated");
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:seed/type/undeprecate");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:seed/type/clean-deprecated");
             var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
             await messageBus_.TryPublishErrorAsync(
                 "seed",
-                "UndeprecateSeedType",
+                "CleanDeprecatedSeedTypes",
                 "unexpected_exception",
                 ex_.Message,
-                endpoint: "post:seed/type/undeprecate",
-                stack: ex_.StackTrace,
-                cancellationToken: cancellationToken);
-            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
-            return StatusCode(500);
-        }
-    }
-
-    /// <summary>
-    /// Delete a seed type
-    /// </summary>
-    /// <remarks>
-    /// Hard deletes a deprecated seed type. Fails if any non-archived seeds of this type exist. Must deprecate first, then ensure all seeds are archived or deleted before calling this endpoint.
-    /// </remarks>
-    /// <returns>Seed type deleted</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("seed/type/delete")]
-
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteSeedType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-
-        using var activity_ = _telemetryProvider.StartActivity(
-            "bannou.seed",
-            "SeedController.DeleteSeedType",
-            System.Diagnostics.ActivityKind.Server);
-        activity_?.SetTag("http.route", "seed/type/delete");
-        try
-        {
-
-            var statusCode = await _implementation.DeleteSeedTypeAsync(body, cancellationToken);
-            return ConvertToActionResult(statusCode);
-        }
-        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
-        {
-            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/type/delete");
-            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
-            return StatusCode(503);
-        }
-        catch (System.Exception ex_)
-        {
-            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:seed/type/delete");
-            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
-            await messageBus_.TryPublishErrorAsync(
-                "seed",
-                "DeleteSeedType",
-                "unexpected_exception",
-                ex_.Message,
-                endpoint: "post:seed/type/delete",
+                endpoint: "post:seed/type/clean-deprecated",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

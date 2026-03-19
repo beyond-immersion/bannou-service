@@ -101,7 +101,8 @@ None identified.
 
 ## Potential Extensions
 
-None identified.
+1. **Cross-realm journey orchestration**: When characters travel between realms via Transit cross-realm connections, the transition involves Character's `TransferCharacterToRealm`, Actor variable provider realm context switching, and Worldstate clock changes (each realm has its own `timeRatio` and calendar). This also serves as the mechanism for "magical time dilation" — a fairy realm where time flows 10x faster is simply `timeRatio: 240.0`, experienced by traveling there. In sharded deployments (DEPLOYMENT-MODES Phase 2), cross-realm travel means character data migrates between nodes. The orchestration between Transit, Character, Actor, and L4 services during a cross-realm journey leg is not yet designed.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-19:https://github.com/beyond-immersion/bannou-service/issues/702 -->
 
 ---
 

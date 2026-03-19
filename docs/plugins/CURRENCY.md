@@ -534,8 +534,8 @@ Currency definitions are **Category B entities** — balance records reference d
 2. **Transaction retention only enforced at query time**: Transactions beyond `TransactionRetentionDays` are filtered out of history queries but remain in the MySQL store indefinitely. No background cleanup task exists to actually delete old transactions.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/222 -->
 
-3. **Autogain uses real-time, should use game-time**: The autogain background worker (`CurrencyAutogainTaskService`) uses `DateTimeOffset.UtcNow` and real-time `Task.Delay` intervals. In a living world with a 24:1 game-time ratio, NPCs earning passive income in real-time receive 24x less income than they should per game-day. When Worldstate (L2) is implemented, the autogain worker must call `GetElapsedGameTime` to compute game-time elapsed since last accrual, then apply the autogain rate against game-time rather than real-time. This ensures the NPC-driven economy scales correctly with the world's simulated time. Both `Lazy` mode (on-demand calculation) and `Task` mode (background worker) need this transition.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/545 -->
+3. ~~**Autogain uses real-time, should use game-time**~~ ([#545](https://github.com/beyond-immersion/bannou-service/issues/545), resolved 2026-03-19): Design resolved. Add `AutogainTimeSource` config property (`$ref: TimeSource` from `common-api.yaml`, default: `GameTime`). Wallets with `realmId` (already in key pattern) use that realm's `GetElapsedGameTime`. Wallets without `realmId` (global/account wallets) fall back to real-time. Optional per-definition `autogainUseGameTime` nullable boolean override for fine-grained control. Both `Lazy` and `Task` modes use the same time source logic. Error handling: skip autogain for that wallet/cycle when Worldstate is unavailable.
+<!-- AUDIT:RESOLVED:2026-03-19:https://github.com/beyond-immersion/bannou-service/issues/545 -->
 
 ---
 

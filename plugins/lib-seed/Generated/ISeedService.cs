@@ -120,14 +120,9 @@ public partial interface ISeedService : IBannouService
         Task<(StatusCodes, SeedTypeResponse?)> DeprecateSeedTypeAsync(DeprecateSeedTypeRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// UndeprecateSeedType operation
+        /// CleanDeprecatedSeedTypes operation
         /// </summary>
-        Task<(StatusCodes, SeedTypeResponse?)> UndeprecateSeedTypeAsync(UndeprecateSeedTypeRequest body, CancellationToken cancellationToken = default(CancellationToken));
-
-        /// <summary>
-        /// DeleteSeedType operation
-        /// </summary>
-        Task<StatusCodes> DeleteSeedTypeAsync(DeleteSeedTypeRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, CleanDeprecatedStringKeyResponse?)> CleanDeprecatedSeedTypesAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// InitiateBond operation
