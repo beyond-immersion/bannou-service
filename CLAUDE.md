@@ -83,6 +83,14 @@ This is never a reference to claude-code's issues or any other repository.
 
 These documents provide the high-level architectural north-star context for the entire project. Read them when planning cross-cutting features, evaluating whether work aligns with project goals, designing player-facing features, or needing context on how services serve the bigger picture.
 
+**"Perform FULL-READS of..."**: When the user says **"Perform FULL-READS of [files, directories, or description]"**, you MUST follow this exact protocol:
+
+1. **Gather the file list.** Use Bash, Glob, or `find` to discover every file path that matches the user's description. Collect them into a complete list. Present the list and count to the user.
+2. **Activate the read gate.** Run: `scripts/activate-read-gate.sh {count}` — where `{count}` is the number of files in the list. This activates a PreToolUse hook (`enforce-parallel-reads.sh`) that **blocks every tool except Read** until all files have been read. Bash, Edit, Write, Agent — all blocked. There is no override.
+3. **Read every file.** Issue Read calls for all files in the list. The hook will not let you do anything else until every read completes. Once the count is met, the gate clears automatically and all tools become available again.
+
+This protocol exists because there is a behavioral tendency to serialize reads across multiple messages and interleave other work between them. The hook makes that physically impossible. The user invokes this when they need comprehensive context loaded before any analysis or work begins.
+
 ### Sub-Agent Orientation (MANDATORY)
 
 **All agents run on Opus 4.6 with 1M token context by default (inherited from the parent session).** Reading 5-10 reference documents (~100-150K tokens) is a trivial fraction of capacity. Do not hesitate to have agents read comprehensive context.
