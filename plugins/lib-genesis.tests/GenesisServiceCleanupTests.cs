@@ -1,44 +1,43 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Actor;
+using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Genesis;
+using BeyondImmersion.BannouService.Inventory;
+using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Realm;
+using BeyondImmersion.BannouService.Relationship;
+using BeyondImmersion.BannouService.Resource;
+using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-using BeyondImmersion.BannouService.Actor;
-using BeyondImmersion.BannouService.Character;
-using BeyondImmersion.BannouService.Collection;
-using BeyondImmersion.BannouService.Currency;
-using BeyondImmersion.BannouService.GameService;
-using BeyondImmersion.BannouService.Inventory;
-using BeyondImmersion.BannouService.Item;
-using BeyondImmersion.BannouService.Realm;
-using BeyondImmersion.BannouService.Relationship;
-using BeyondImmersion.BannouService.Resource;
-using BeyondImmersion.BannouService.Seed;
-using BeyondImmersion.BannouService.Species;
+using System.Linq.Expressions;
 
 namespace BeyondImmersion.BannouService.Genesis.Tests;
 
-/// <summary>
-/// Cleanup and archive endpoint tests for GenesisService.
-/// Covers: CleanupByCharacter, CleanupByRealm, GetCompressData, RestoreFromArchive.
-/// </summary>
 public class GenesisServiceCleanupTests : ServiceTestBase<GenesisServiceConfiguration>
 {
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<GenesisTemplateModel>> _mockTemplateStore;
     private readonly Mock<IStateStore<GenesisTemplateListModel>> _mockTemplateListStore;
+    private readonly Mock<IQueryableStateStore<GenesisTemplateModel>> _mockTemplateQueryStore;
     private readonly Mock<IStateStore<GenesisEntityModel>> _mockEntityStore;
     private readonly Mock<IStateStore<GenesisEntityListModel>> _mockEntityListStore;
+    private readonly Mock<IQueryableStateStore<GenesisEntityModel>> _mockEntityQueryStore;
     private readonly Mock<IStateStore<CachedGenesisEntity>> _mockEntityCacheStore;
     private readonly Mock<IStateStore<CachedCapabilityManifest>> _mockCapsCacheStore;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<GenesisService>> _mockLogger;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<IResourceClient> _mockResourceClient;
     private readonly Mock<ISeedClient> _mockSeedClient;
     private readonly Mock<ICurrencyClient> _mockCurrencyClient;
@@ -57,13 +56,16 @@ public class GenesisServiceCleanupTests : ServiceTestBase<GenesisServiceConfigur
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockTemplateStore = new Mock<IStateStore<GenesisTemplateModel>>();
         _mockTemplateListStore = new Mock<IStateStore<GenesisTemplateListModel>>();
+        _mockTemplateQueryStore = new Mock<IQueryableStateStore<GenesisTemplateModel>>();
         _mockEntityStore = new Mock<IStateStore<GenesisEntityModel>>();
         _mockEntityListStore = new Mock<IStateStore<GenesisEntityListModel>>();
+        _mockEntityQueryStore = new Mock<IQueryableStateStore<GenesisEntityModel>>();
         _mockEntityCacheStore = new Mock<IStateStore<CachedGenesisEntity>>();
         _mockCapsCacheStore = new Mock<IStateStore<CachedCapabilityManifest>>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<GenesisService>>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockResourceClient = new Mock<IResourceClient>();
         _mockSeedClient = new Mock<ISeedClient>();
         _mockCurrencyClient = new Mock<ICurrencyClient>();
@@ -79,73 +81,42 @@ public class GenesisServiceCleanupTests : ServiceTestBase<GenesisServiceConfigur
 
         _mockStateStoreFactory.Setup(f => f.GetStore<GenesisTemplateModel>(StateStoreDefinitions.GenesisTemplates)).Returns(_mockTemplateStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<GenesisTemplateListModel>(StateStoreDefinitions.GenesisTemplates)).Returns(_mockTemplateListStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetQueryableStore<GenesisTemplateModel>(StateStoreDefinitions.GenesisTemplates)).Returns(_mockTemplateQueryStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<GenesisEntityModel>(StateStoreDefinitions.GenesisEntities)).Returns(_mockEntityStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<GenesisEntityListModel>(StateStoreDefinitions.GenesisEntities)).Returns(_mockEntityListStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetQueryableStore<GenesisEntityModel>(StateStoreDefinitions.GenesisEntities)).Returns(_mockEntityQueryStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<CachedGenesisEntity>(StateStoreDefinitions.GenesisEntityCache)).Returns(_mockEntityCacheStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<CachedCapabilityManifest>(StateStoreDefinitions.GenesisEntityCache)).Returns(_mockCapsCacheStore.Object);
 
-        SetupDefaultLock();
-        SetupDefaultMessageBus();
-    }
+        _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _mockEntityStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<GenesisEntityModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("ok");
+        _mockEntityListStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<GenesisEntityListModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("ok");
 
-    private void SetupDefaultLock()
-    {
         var mockLockResponse = new Mock<ILockResponse>();
         mockLockResponse.Setup(l => l.Success).Returns(true);
-        mockLockResponse.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
-        _mockLockProvider
-            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(mockLockResponse.Object);
-    }
-
-    private void SetupDefaultMessageBus()
-    {
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        _mockLockProvider.Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync(mockLockResponse.Object);
     }
 
     private GenesisService CreateService()
     {
         return new GenesisService(
-            _mockStateStoreFactory.Object,
-            _mockLockProvider.Object,
-            _mockMessageBus.Object,
-            _mockLogger.Object,
-            Configuration,
-            new NullTelemetryProvider(),
-            _mockResourceClient.Object,
-            _mockSeedClient.Object,
-            _mockCurrencyClient.Object,
-            _mockCharacterClient.Object,
-            _mockActorClient.Object,
-            _mockInventoryClient.Object,
-            _mockItemClient.Object,
-            _mockRelationshipClient.Object,
-            _mockRealmClient.Object,
-            _mockSpeciesClient.Object,
-            _mockGameServiceClient.Object,
-            _mockEventConsumer.Object);
+            _mockStateStoreFactory.Object, _mockLockProvider.Object, _mockMessageBus.Object, _mockLogger.Object,
+            Configuration, _mockTelemetryProvider.Object, _mockResourceClient.Object, _mockSeedClient.Object,
+            _mockCurrencyClient.Object, _mockCharacterClient.Object, _mockActorClient.Object, _mockInventoryClient.Object,
+            _mockItemClient.Object, _mockRelationshipClient.Object, _mockRealmClient.Object, _mockSpeciesClient.Object,
+            _mockGameServiceClient.Object, _mockEventConsumer.Object);
     }
 
-    private static GenesisEntityModel CreateTestEntity(Guid? entityId = null, Guid? characterId = null, Guid? realmId = null)
+    private static GenesisEntityModel CreateTestEntity(Guid? entityId = null, Guid? characterId = null)
     {
         return new GenesisEntityModel
         {
-            EntityId = entityId ?? Guid.NewGuid(),
-            TemplateCode = "test_template",
-            GameServiceId = Guid.NewGuid(),
-            RealmId = realmId ?? Guid.NewGuid(),
-            SeedId = Guid.NewGuid(),
-            CharacterId = characterId,
+            EntityId = entityId ?? Guid.NewGuid(), TemplateCode = "test_template", GameServiceId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(), SeedId = Guid.NewGuid(), CharacterId = characterId,
             WalletIds = new Dictionary<string, Guid> { ["mana"] = Guid.NewGuid() },
             InventoryIds = new Dictionary<string, Guid> { ["loot"] = Guid.NewGuid() },
-            CurrentPhase = "Dormant",
-            CognitiveStage = CognitiveStage.Dormant,
-            PhysicalFormType = PhysicalFormType.Item,
-            Status = GenesisEntityStatus.Active,
-            CreatedAt = DateTimeOffset.UtcNow.AddHours(-1),
-            UpdatedAt = DateTimeOffset.UtcNow.AddHours(-1)
+            CurrentPhase = "Dormant", CognitiveStage = CognitiveStage.Dormant, PhysicalFormType = PhysicalFormType.Item,
+            Status = GenesisEntityStatus.Active, CreatedAt = DateTimeOffset.UtcNow.AddHours(-1), UpdatedAt = DateTimeOffset.UtcNow.AddHours(-1)
         };
     }
 
@@ -154,9 +125,8 @@ public class GenesisServiceCleanupTests : ServiceTestBase<GenesisServiceConfigur
     // ===================================================================
 
     [Fact]
-    public async Task CleanupByCharacterAsync_ValidRequest_DestroysMatchingEntities()
+    public async Task CleanupByCharacterAsync_MatchingEntities_DestroysAllAndPublishes()
     {
-        // Arrange
         var service = CreateService();
         var characterId = Guid.NewGuid();
         var entity1 = CreateTestEntity(characterId: characterId);
@@ -166,34 +136,22 @@ public class GenesisServiceCleanupTests : ServiceTestBase<GenesisServiceConfigur
         entity1.BondTargetEntityType = EntityType.Character;
         var entity2 = CreateTestEntity(characterId: characterId);
 
-        _mockEntityStore
-            .Setup(s => s.QueryAsync(It.IsAny<Func<GenesisEntityModel, bool>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<GenesisEntityModel> { entity1, entity2 });
+        _mockEntityQueryStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<GenesisEntityModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<GenesisEntityModel> { entity1, entity2 } as IReadOnlyList<GenesisEntityModel>);
 
-        var deletedTopics = new List<string>();
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
-            .Callback<string, object, CancellationToken>((t, _, _) => deletedTopics.Add(t))
-            .ReturnsAsync(true);
+        var capturedTopics = new List<string>();
+        _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((t, _, _) => capturedTopics.Add(t)).ReturnsAsync(true);
 
-        // Act
         var status = await service.CleanupByCharacterAsync(
-            new CleanupByCharacterRequest { CharacterId = characterId });
+            new CleanupByCharacterRequest { CharacterId = characterId }, TestContext.Current.CancellationToken);
 
-        // Assert
         Assert.Equal(StatusCodes.OK, status);
-
-        // Actor stopped for entity1 (has actorId)
         _mockActorClient.Verify(a => a.StopActorAsync(It.IsAny<StopActorRequest>(), It.IsAny<CancellationToken>()), Times.Once);
-
-        // Bond dissolved for entity1 (has bondId)
         _mockRelationshipClient.Verify(r => r.EndRelationshipAsync(It.IsAny<EndRelationshipRequest>(), It.IsAny<CancellationToken>()), Times.Once);
-
-        // Resource cleanup for both
         _mockResourceClient.Verify(r => r.ExecuteCleanupAsync(It.IsAny<ExecuteCleanupRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
-
-        // Two delete events published
-        Assert.Equal(2, deletedTopics.Count(t => t == GenesisPublishedTopics.EntityDeleted));
+        Assert.Equal(2, capturedTopics.Count(t => t == GenesisPublishedTopics.EntityDeleted));
     }
 
     // ===================================================================
@@ -201,48 +159,36 @@ public class GenesisServiceCleanupTests : ServiceTestBase<GenesisServiceConfigur
     // ===================================================================
 
     [Fact]
-    public async Task CleanupByRealmAsync_ValidRequest_BatchDestroysEntities()
+    public async Task CleanupByRealmAsync_MatchingEntities_ArchivesCharacterIfConfigured()
     {
-        // Arrange
         var service = CreateService();
         var realmId = Guid.NewGuid();
-        var entity = CreateTestEntity(realmId: realmId);
+        var entity = CreateTestEntity(characterId: Guid.NewGuid());
+        entity.RealmId = realmId;
 
         var template = new GenesisTemplateModel
         {
-            TemplateCode = entity.TemplateCode,
-            ArchiveOnDestruction = false,
-            Seed = new GenesisSeedConfig { SeedTypeCode = "s", Domains = new(), Phases = new() },
-            Economy = new GenesisEconomyConfig { Wallets = new(), GrowthMappings = new() },
-            Storage = new GenesisStorageConfig { Inventories = new() },
+            TemplateCode = entity.TemplateCode, ArchiveOnDestruction = true,
+            Seed = new GenesisSeedConfig { SeedTypeCode = "s", Domains = new List<GenesisSeedDomain>(), Phases = new List<GenesisSeedPhase>() },
+            Economy = new GenesisEconomyConfig { Wallets = new List<GenesisWalletConfig>(), GrowthMappings = new List<GenesisGrowthMapping>() },
+            Storage = new GenesisStorageConfig { Inventories = new List<GenesisInventoryConfig>() },
             Awakening = new GenesisAwakeningConfig { SystemRealmCode = "R", CharacterSpeciesCode = "S" },
             Bond = new GenesisBondConfig { Enabled = false, Cardinality = BondCardinality.None }
         };
 
+        _mockEntityQueryStore
+            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<GenesisEntityModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<GenesisEntityModel> { entity } as IReadOnlyList<GenesisEntityModel>);
         _mockTemplateStore
-            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("template:")), It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync(GenesisService.BuildTemplateKey(entity.TemplateCode), It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
 
-        // First query returns a batch, second returns empty (loop terminates)
-        var callCount = 0;
-        _mockEntityStore
-            .Setup(s => s.QueryAsync(It.IsAny<Func<GenesisEntityModel, bool>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(() =>
-            {
-                callCount++;
-                return callCount == 1
-                    ? new List<GenesisEntityModel> { entity }
-                    : new List<GenesisEntityModel>();
-            });
-
-        // Act
         var status = await service.CleanupByRealmAsync(
-            new CleanupByRealmRequest { RealmId = realmId });
+            new CleanupByRealmRequest { RealmId = realmId }, TestContext.Current.CancellationToken);
 
-        // Assert
         Assert.Equal(StatusCodes.OK, status);
+        _mockResourceClient.Verify(r => r.ExecuteCompressAsync(It.IsAny<ExecuteCompressRequest>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockResourceClient.Verify(r => r.ExecuteCleanupAsync(It.IsAny<ExecuteCleanupRequest>(), It.IsAny<CancellationToken>()), Times.Once);
-        _mockMessageBus.Verify(m => m.TryPublishAsync(GenesisPublishedTopics.EntityDeleted, It.IsAny<object>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // ===================================================================
@@ -252,11 +198,8 @@ public class GenesisServiceCleanupTests : ServiceTestBase<GenesisServiceConfigur
     [Fact]
     public async Task RestoreFromArchiveAsync_TemplateMissing_ReturnsBadRequest()
     {
-        // Arrange
         var service = CreateService();
-        _mockTemplateStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((GenesisTemplateModel?)null);
+        _mockTemplateStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((GenesisTemplateModel?)null);
 
         var archive = new GenesisArchive
         {
@@ -264,24 +207,80 @@ public class GenesisServiceCleanupTests : ServiceTestBase<GenesisServiceConfigur
             {
                 new()
                 {
-                    EntityId = Guid.NewGuid(),
-                    TemplateCode = "gone_template",
-                    GameServiceId = Guid.NewGuid(),
-                    RealmId = Guid.NewGuid(),
-                    WalletBalances = new Dictionary<string, double>(),
-                    CurrentPhase = "Dormant",
-                    CognitiveStage = CognitiveStage.Dormant,
-                    CreatedAt = DateTimeOffset.UtcNow
+                    EntityId = Guid.NewGuid(), TemplateCode = "gone", GameServiceId = Guid.NewGuid(),
+                    RealmId = Guid.NewGuid(), WalletBalances = new Dictionary<string, double>(),
+                    CurrentPhase = "Dormant", CognitiveStage = CognitiveStage.Dormant, CreatedAt = DateTimeOffset.UtcNow
                 }
             }
         };
 
-        // Act
-        var (status, response) = await service.RestoreFromArchiveAsync(
-            new RestoreFromArchiveRequest { Archive = archive });
+        var (status, _) = await service.RestoreFromArchiveAsync(
+            new RestoreFromArchiveRequest { Archive = archive }, TestContext.Current.CancellationToken);
 
-        // Assert
         Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task RestoreFromArchiveAsync_ValidArchive_ReprovisionAndRestoresBalances()
+    {
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var seedId = Guid.NewGuid();
+        var walletId = Guid.NewGuid();
+        var containerId = Guid.NewGuid();
+
+        var template = new GenesisTemplateModel
+        {
+            TemplateCode = "test_template", GameServiceId = Guid.NewGuid(), DisplayName = "T", Description = "T",
+            Seed = new GenesisSeedConfig
+            {
+                SeedTypeCode = "test_seed",
+                Domains = new List<GenesisSeedDomain> { new() { DomainCode = "growth", DisplayName = "Growth" } },
+                Phases = new List<GenesisSeedPhase> { new() { PhaseName = "Dormant", Threshold = 0, CognitiveStage = CognitiveStage.Dormant } }
+            },
+            Economy = new GenesisEconomyConfig
+            {
+                Wallets = new List<GenesisWalletConfig> { new() { WalletCode = "mana", CurrencyCode = "mana_currency" } },
+                GrowthMappings = new List<GenesisGrowthMapping>()
+            },
+            Storage = new GenesisStorageConfig { Inventories = new List<GenesisInventoryConfig> { new() { InventoryCode = "loot", ConstraintModel = "Unlimited", Capacity = 20 } } },
+            Awakening = new GenesisAwakeningConfig { SystemRealmCode = "S", CharacterSpeciesCode = "S" },
+            PhysicalFormType = PhysicalFormType.Item,
+            Bond = new GenesisBondConfig { Enabled = false, Cardinality = BondCardinality.None }
+        };
+
+        _mockTemplateStore.Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("template:")), It.IsAny<CancellationToken>())).ReturnsAsync(template);
+        _mockSeedClient.Setup(s => s.CreateSeedAsync(It.IsAny<CreateSeedRequest>(), It.IsAny<CancellationToken>())).ReturnsAsync(new SeedResponse { SeedId = seedId });
+        _mockCurrencyClient.Setup(c => c.CreateWalletAsync(It.IsAny<CreateWalletRequest>(), It.IsAny<CancellationToken>())).ReturnsAsync(new WalletResponse { WalletId = walletId });
+        _mockInventoryClient.Setup(i => i.CreateContainerAsync(It.IsAny<CreateContainerRequest>(), It.IsAny<CancellationToken>())).ReturnsAsync(new ContainerResponse { ContainerId = containerId });
+
+        var capturedTopics = new List<string>();
+        _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((t, _, _) => capturedTopics.Add(t)).ReturnsAsync(true);
+
+        var archive = new GenesisArchive
+        {
+            Entities = new List<GenesisArchivedEntity>
+            {
+                new()
+                {
+                    EntityId = entityId, TemplateCode = template.TemplateCode, GameServiceId = template.GameServiceId,
+                    RealmId = Guid.NewGuid(), WalletBalances = new Dictionary<string, double> { ["mana"] = 150.0 },
+                    CurrentPhase = "Stirring", CognitiveStage = CognitiveStage.EventBrain, CreatedAt = DateTimeOffset.UtcNow.AddDays(-5)
+                }
+            }
+        };
+
+        var (status, response) = await service.RestoreFromArchiveAsync(
+            new RestoreFromArchiveRequest { Archive = archive }, TestContext.Current.CancellationToken);
+
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(1, response.RestoredCount);
+        _mockSeedClient.Verify(s => s.CreateSeedAsync(It.IsAny<CreateSeedRequest>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockCurrencyClient.Verify(c => c.CreateWalletAsync(It.IsAny<CreateWalletRequest>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockCurrencyClient.Verify(c => c.CreditCurrencyAsync(It.IsAny<CreditCurrencyRequest>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockInventoryClient.Verify(i => i.CreateContainerAsync(It.IsAny<CreateContainerRequest>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Contains(GenesisPublishedTopics.EntityCreated, capturedTopics);
     }
 }

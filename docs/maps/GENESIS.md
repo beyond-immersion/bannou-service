@@ -80,8 +80,6 @@
 
 All dependencies are L0/L1/L2 — constructor injection per SERVICE-HIERARCHY.md. No soft dependencies (Genesis is L2; no L3/L4 clients).
 
-> **Note**: The deep dive specifies `ICollectionClient` for knowledge/experience tracking, but the current implementation does not inject or use it. This is a planned dependency not yet wired.
-
 ---
 
 ## Events Published
@@ -132,7 +130,6 @@ These are self-subscriptions for multi-node wallet map coherence. All external r
 | `IActorClient` | Actor spawning and character binding |
 | `IInventoryClient` | Container creation |
 | `IItemClient` | Physical form validation (item-based) |
-| `ICollectionClient` | Knowledge/experience tracking |
 | `IRelationshipClient` | Bond creation/dissolution |
 | `IRealmClient` | System realm validation |
 | `ISpeciesClient` | Species validation |

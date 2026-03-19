@@ -1318,4 +1318,4 @@ clean-unreal-sdk: ## Clean Unreal SDK generated files
 # =============================================================================
 
 claude: ## Launch Claude Code with max effort
-	claude --effort max
+	claude --effort max --agent bannou-dev

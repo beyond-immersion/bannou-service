@@ -331,6 +331,35 @@ private (SpeciesService service, Mock<IStateStore<SpeciesModel>> storeMock) Crea
 }
 ```
 
+### Test Class Conventions
+
+**Test classes MUST be `public`.** xUnit requires public test classes (`xUnit1000` analyzer error). Internal models (e.g., `GenesisTemplateModel`, `FactionModel`) are accessible because plugin assemblies declare `InternalsVisibleTo` for their test projects and for `DynamicProxyGenAssembly2` (Moq). Use `private readonly` fields for mock stores typed with internal models — `private` fields have no accessibility constraints on their type parameters.
+
+**Each test class is self-contained.** Every test file declares its own mock fields, constructor setup, and `CreateService()` helper. There is no shared base class for mock wiring — the internal model types cannot appear in `protected`/`public` members of a `public` base class. The only shared base is `ServiceTestBase<TConfig>` (from `bannou-service/Testing/`), which provides a `Configuration` property with defaults.
+
+**Inheritance**: `public class MyServiceTests : ServiceTestBase<MyServiceConfiguration>`
+
+### CancellationToken in Test Calls
+
+**Use `TestContext.Current.CancellationToken`** when calling service methods in tests. This is the xUnit v3 pattern for cooperative cancellation — it connects test cancellation to the framework's timeout and abort mechanisms.
+
+```csharp
+var (status, response) = await service.CreateFactionAsync(request, TestContext.Current.CancellationToken);
+```
+
+Do NOT use `default`, `CancellationToken.None`, or omit the parameter (the generated interface has a default but the concrete class implementation does not).
+
+### SaveAsync Mock Signature
+
+`IStateStore<T>.SaveAsync` takes four parameters: `(string key, TValue value, StateOptions? options, CancellationToken cancellationToken)`. Mock setups must include all four:
+
+```csharp
+_mockStore
+    .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<MyModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+    .Callback<string, MyModel, StateOptions?, CancellationToken>((key, model, _, _) => { /* capture */ })
+    .ReturnsAsync("etag");
+```
+
 ---
 
 ## What Each Tier Tests
