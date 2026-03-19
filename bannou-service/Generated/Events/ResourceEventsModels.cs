@@ -547,6 +547,453 @@ public partial class ResourceSnapshotCreatedEvent : BaseServiceEvent
 
 }
 
+/// <summary>
+/// Published when a provisioning transaction is begun.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ResourceTransactionCreatedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: resource.transaction.created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "resource.transaction.created";
+
+    /// <summary>
+    /// Unique transaction identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TransactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Service that owns the transaction (e.g., "genesis", "craft")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerService")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string OwnerService { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity being provisioned (opaque identifier)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentResourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ParentResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity being provisioned
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentResourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ParentResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// Transaction TTL before validation check
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ttlSeconds")]
+    public int TtlSeconds { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when a transaction is successfully committed. All provisions are now permanent references.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ResourceTransactionCommittedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: resource.transaction.committed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "resource.transaction.committed";
+
+    /// <summary>
+    /// Transaction identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TransactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Service that owns the transaction
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerService")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string OwnerService { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity that was provisioned
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentResourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ParentResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity that was provisioned
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentResourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ParentResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of provisions converted to permanent references
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("provisionCount")]
+    public int ProvisionCount { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when a transaction is fully aborted. All compensations completed or retries exhausted.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ResourceTransactionAbortedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: resource.transaction.aborted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "resource.transaction.aborted";
+
+    /// <summary>
+    /// Transaction identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TransactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Service that owns the transaction
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerService")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string OwnerService { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity whose provisioning was aborted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentResourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ParentResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity whose provisioning was aborted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentResourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ParentResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of provisions successfully compensated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("compensatedCount")]
+    public int CompensatedCount { get; set; } = default!;
+
+    /// <summary>
+    /// Number of provisions whose compensation failed after max retries
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failedCount")]
+    public int FailedCount { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when the recovery worker auto-commits a transaction after TTL validation confirms the parent entity exists.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ResourceTransactionAutoCommittedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: resource.transaction.auto-committed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "resource.transaction.auto-committed";
+
+    /// <summary>
+    /// Transaction identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TransactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Service that owns the transaction
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerService")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string OwnerService { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity whose provisioning was auto-committed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentResourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ParentResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity whose provisioning was auto-committed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentResourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ParentResourceId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when the recovery worker auto-aborts a transaction after TTL validation confirms the parent entity does not exist.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ResourceTransactionAutoAbortedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: resource.transaction.auto-aborted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "resource.transaction.auto-aborted";
+
+    /// <summary>
+    /// Transaction identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TransactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Service that owns the transaction
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerService")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string OwnerService { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity whose provisioning was auto-aborted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentResourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ParentResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity whose provisioning was auto-aborted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentResourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ParentResourceId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when commit reference registration exhausts retries. The transaction falls back to abort and compensation.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ResourceTransactionCommitFailedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: resource.transaction.commit-failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "resource.transaction.commit-failed";
+
+    /// <summary>
+    /// Transaction identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TransactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Service that owns the transaction
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerService")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string OwnerService { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity whose commit failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentResourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ParentResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity whose commit failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentResourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ParentResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of provisions that were successfully registered as references
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("registeredCount")]
+    public int RegisteredCount { get; set; } = default!;
+
+    /// <summary>
+    /// Number of provisions that failed reference registration
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failedCount")]
+    public int FailedCount { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when compensation retries are exhausted for one or more provisions.
+/// <br/>The transaction moves to Aborted but some provisions may remain uncompensated.
+/// <br/>Requires admin investigation.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ResourceTransactionCompensationExhaustedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: resource.transaction.compensation-exhausted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "resource.transaction.compensation-exhausted";
+
+    /// <summary>
+    /// Transaction identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TransactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Service that owns the transaction
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerService")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string OwnerService { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity whose compensation was exhausted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentResourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ParentResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity whose compensation was exhausted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentResourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ParentResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of provisions whose compensation retries were exhausted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failedProvisionCount")]
+    public int FailedProvisionCount { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when TTL validation retries are exhausted. The completion validation
+/// <br/>endpoint is unreachable or returning 5xx consistently. The transaction remains
+/// <br/>Active for admin investigation — it is NOT auto-aborted because the parent
+/// <br/>entity might exist but be temporarily unreachable.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ResourceTransactionValidationExhaustedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: resource.transaction.validation-exhausted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "resource.transaction.validation-exhausted";
+
+    /// <summary>
+    /// Transaction identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TransactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Service that owns the transaction
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerService")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string OwnerService { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity whose validation was exhausted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentResourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ParentResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity whose validation was exhausted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentResourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ParentResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// Total number of validation attempts made before giving up
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("validationAttempts")]
+    public int ValidationAttempts { get; set; } = default!;
+
+}
+
 
 
 #pragma warning restore  108

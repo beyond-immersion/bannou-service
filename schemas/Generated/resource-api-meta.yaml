@@ -1451,6 +1451,569 @@ paths:
         is not found.\\n\\nContent is returned as base64-encoded bytes with contentType indicating\\nthe MIME type for proper
         parsing.\\n\",\n    \"tags\": [\n        \"Seeded Resources\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"getSeededResource\"\n}"
+  /resource/transaction/begin:
+    post:
+      operationId: beginTransaction
+      tags:
+      - Transaction Management
+      summary: Begin a provisioning transaction
+      description: |
+        Creates a durable provisioning transaction with a TTL deadline.
+        If the transaction is neither committed nor aborted within the TTL,
+        the background worker executes the completionValidation check to determine
+        whether to auto-commit (entity exists) or auto-abort (entity does not exist).
+
+        Use this when an orchestrating service needs to provision resources
+        across multiple services with guaranteed cleanup on failure.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BeginTransactionRequest'
+      responses:
+        '200':
+          description: Transaction created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BeginTransactionResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BeginTransactionRequest\"\
+        ,\n    \"$defs\": {\n        \"BeginTransactionRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to begin a provisioning transaction with TTL and validation\",\n\
+        \            \"required\": [\n                \"ownerService\",\n                \"parentResourceType\",\n       \
+        \         \"parentResourceId\"\n            ],\n            \"properties\": {\n                \"ownerService\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Service that owns this transaction
+        (e.g., \\\"genesis\\\", \\\"craft\\\")\"\n                },\n                \"parentResourceType\": {\n        \
+        \            \"type\": \"string\",\n                    \"description\": \"Type of entity being provisioned (opaque
+        identifier)\"\n                },\n                \"parentResourceId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the entity being provisioned\"\
+        \n                },\n                \"ttlSeconds\": {\n                    \"type\": \"integer\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Transaction TTL in seconds (clamped to configured
+        max, defaults to configured default)\"\n                },\n                \"expectedProvisionCount\": {\n      \
+        \              \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"How many provisions the requester intends to register (helps worker distinguish crash scenarios)\"\n         \
+        \       },\n                \"completionValidation\": {\n                    \"$ref\": \"#/$defs/PreboundApi\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Prebound API that returns 200 if
+        the parent entity was successfully created.\\nExecuted by the recovery worker on TTL expiry to decide auto-commit
+        vs auto-abort.\\nUses {{parentResourceId}} placeholder in payloadTemplate.\\n\"\n                }\n            }\n\
+        \        },\n        \"PreboundApi\": {\n            \"type\": \"object\",\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.Core.PreboundApi\"\
+        ,\n            \"description\": \"Pre-configured API call definition with optional response transformation\",\n  \
+        \          \"additionalProperties\": false,\n            \"required\": [\n                \"serviceName\",\n     \
+        \           \"endpoint\",\n                \"payloadTemplate\"\n            ],\n            \"properties\": {\n  \
+        \              \"serviceName\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Target service name (e.g., \\\"genesis\\\", \\\"seed\\\", \\\"currency\\\")\"\n                },\n          \
+        \      \"endpoint\": {\n                    \"type\": \"string\",\n                    \"description\": \"Target endpoint
+        path (e.g., \\\"/genesis/entity/get\\\")\"\n                },\n                \"payloadTemplate\": {\n         \
+        \           \"type\": \"string\",\n                    \"description\": \"JSON payload template with {{variable}}
+        placeholders substituted at execution time\"\n                },\n                \"description\": {\n           \
+        \         \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Human-readable description of what this API call does\"\n                },\n                \"executionMode\": {\n\
+        \                    \"$ref\": \"#/$defs/PreboundApiExecutionMode\",\n                    \"description\": \"How to
+        execute this API call (defaults to Sync)\"\n                },\n                \"responseTransformation\": {\n  \
+        \                  \"$ref\": \"#/$defs/ResponseTransformation\",\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Optional transformation rules for the API response\"\n                }\n      \
+        \      }\n        },\n        \"PreboundApiExecutionMode\": {\n            \"type\": \"string\",\n            \"x-sdk-type\"\
+        : \"BeyondImmersion.Bannou.Core.PreboundApiExecutionMode\",\n            \"description\": \"How a prebound API should
+        be executed\",\n            \"enum\": [\n                \"Sync\",\n                \"Async\",\n                \"\
+        FireAndForget\"\n            ]\n        },\n        \"ResponseTransformation\": {\n            \"type\": \"object\"\
+        ,\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.Core.ResponseTransformation\",\n            \"description\"\
+        : \"Transformation rules applied to a prebound API response. First matching rule produces the result.\",\n       \
+        \     \"additionalProperties\": false,\n            \"properties\": {\n                \"rules\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/TransformationRule\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Ordered
+        list of transformation rules (first match wins)\"\n                },\n                \"transientFailureStatusCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"integer\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"HTTP status codes indicating transient failure (default 408, 429, 502, 503, 504)\"\n                }\n      \
+        \      }\n        },\n        \"TransformationRule\": {\n            \"type\": \"object\",\n            \"x-sdk-type\"\
+        : \"BeyondImmersion.Bannou.Core.TransformationRule\",\n            \"description\": \"A single transformation rule
+        with conditions and result payload\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"statusCode\"\n            ],\n            \"properties\": {\n                \"conditions\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/TransformationCondition\"\n                    },\n                    \"nullable\": true,\n             \
+        \       \"description\": \"All conditions must match (AND logic). Empty or null = unconditional match.\"\n       \
+        \         },\n                \"statusCode\": {\n                    \"type\": \"integer\",\n                    \"\
+        description\": \"HTTP status code to return when this rule matches\"\n                },\n                \"payload\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"JSON payload to return (null = pass through raw response body)\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Human-readable description for diagnostics\"\n                }\n            }\n        },\n        \"TransformationCondition\"\
+        : {\n            \"type\": \"object\",\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.Core.TransformationCondition\"\
+        ,\n            \"description\": \"A single condition to evaluate against an API response\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"type\"\n            ],\n            \"properties\": {\n \
+        \               \"type\": {\n                    \"$ref\": \"#/$defs/TransformationConditionType\",\n            \
+        \        \"description\": \"The type of condition to evaluate\"\n                },\n                \"jsonPath\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"JsonPath expression (e.g., \\\"$.balance\\\", \\\"$.species.code\\\")\"\n                },\n                \"\
+        expectedValue\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"Expected value for comparison conditions\"\n                },\n                \"\
+        operator\": {\n                    \"$ref\": \"#/$defs/ComparisonOperator\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Comparison operator for numeric conditions\"\n                },\n       \
+        \         \"statusCodes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n       \
+        \                 \"type\": \"integer\"\n                    },\n                    \"nullable\": true,\n       \
+        \             \"description\": \"HTTP status codes for StatusCodeIn condition\"\n                }\n            }\n\
+        \        },\n        \"TransformationConditionType\": {\n            \"type\": \"string\",\n            \"x-sdk-type\"\
+        : \"BeyondImmersion.Bannou.Core.TransformationConditionType\",\n            \"description\": \"Types of conditions
+        that can be evaluated against an API response\",\n            \"enum\": [\n                \"StatusCodeIn\",\n   \
+        \             \"JsonPathEquals\",\n                \"JsonPathNotEquals\",\n                \"JsonPathExists\",\n \
+        \               \"JsonPathNotExists\",\n                \"JsonPathGreaterThan\",\n                \"JsonPathLessThan\"\
+        ,\n                \"JsonPathContains\"\n            ]\n        },\n        \"ComparisonOperator\": {\n          \
+        \  \"type\": \"string\",\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.Core.ComparisonOperator\",\n      \
+        \      \"description\": \"Comparison operators for numeric conditions\",\n            \"enum\": [\n              \
+        \  \"Eq\",\n                \"Ne\",\n                \"Gt\",\n                \"Gte\",\n                \"Lt\",\n\
+        \                \"Lte\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BeginTransactionResponse\"\
+        ,\n    \"$defs\": {\n        \"BeginTransactionResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Response after beginning a provisioning transaction\",\n            \"required\"\
+        : [\n                \"transactionId\",\n                \"status\",\n                \"ttlSeconds\",\n          \
+        \      \"expiresAt\"\n            ],\n            \"properties\": {\n                \"transactionId\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique transaction identifier (use for all subsequent operations)\"\n                },\n                \"status\"\
+        : {\n                    \"$ref\": \"#/$defs/TransactionStatus\",\n                    \"description\": \"Initial
+        transaction status (always Active)\"\n                },\n                \"ttlSeconds\": {\n                    \"\
+        type\": \"integer\",\n                    \"description\": \"Effective TTL after clamping to configured max\"\n  \
+        \              },\n                \"expiresAt\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"date-time\",\n                    \"description\": \"When the transaction TTL expires\"\n      \
+        \          }\n            }\n        },\n        \"TransactionStatus\": {\n            \"type\": \"string\",\n   \
+        \         \"enum\": [\n                \"Active\",\n                \"Committing\",\n                \"Committed\"\
+        ,\n                \"Aborting\",\n                \"Aborted\"\n            ],\n            \"description\": \"Provisioning
+        transaction lifecycle state.\\nActive: Provisioning in progress, awaiting commit or abort\\nCommitting: Converting
+        provisions to permanent references (crash-safe checkpoint)\\nCommitted: All provisions confirmed as permanent references\\
+        nAborting: Compensation in progress for some or all provisions\\nAborted: All compensations completed or retries exhausted\\\
+        n\"\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Begin a provisioning transaction\",\n    \"description\": \"Creates a durable
+        provisioning transaction with a TTL deadline.\\nIf the transaction is neither committed nor aborted within the TTL,\\
+        nthe background worker executes the completionValidation check to determine\\nwhether to auto-commit (entity exists)
+        or auto-abort (entity does not exist).\\n\\nUse this when an orchestrating service needs to provision resources\\\
+        nacross multiple services with guaranteed cleanup on failure.\\n\",\n    \"tags\": [\n        \"Transaction Management\"\
+        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"beginTransaction\"\n}"
+  /resource/transaction/register-provision:
+    post:
+      operationId: registerProvision
+      tags:
+      - Transaction Management
+      summary: Register a planned provision with pre-generated ID (status Pending)
+      description: |
+        Records that a resource WILL BE provisioned as part of an active transaction.
+        Called BEFORE creating the resource. The pre-generated resourceId and
+        compensation definition are stored so that if the process crashes before
+        the resource is created, the transaction can still compensate (compensation
+        endpoint receives 404, which is treated as successful compensation).
+        Provisions are compensated in reverse registration order on abort.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterProvisionRequest'
+      responses:
+        '200':
+          description: Provision registered (Pending)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterProvisionResponse'
+        '400':
+          description: Transaction not in Active state
+        '404':
+          description: Transaction not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RegisterProvisionRequest\"\
+        ,\n    \"$defs\": {\n        \"RegisterProvisionRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to register a planned provision before creating the resource\",\n\
+        \            \"required\": [\n                \"transactionId\",\n                \"resourceType\",\n            \
+        \    \"resourceId\",\n                \"compensation\"\n            ],\n            \"properties\": {\n          \
+        \      \"transactionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"Transaction this provision belongs to\"\n                },\n            \
+        \    \"resourceType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Type of
+        resource being provisioned (e.g., \\\"seed\\\", \\\"currency-wallet\\\")\"\n                },\n                \"\
+        resourceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n          \
+        \          \"description\": \"Pre-generated ID for the resource (known before creation for register-before-create
+        flow)\"\n                },\n                \"compensation\": {\n                    \"$ref\": \"#/$defs/PreboundApi\"\
+        ,\n                    \"description\": \"Prebound API to call for compensation (undo). Must be idempotent.\\n404
+        from the compensation endpoint is treated as successful compensation.\\nUses {{provisionResourceId}} placeholder in
+        payloadTemplate.\\n\"\n                },\n                \"verification\": {\n                    \"$ref\": \"#/$defs/PreboundApi\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Optional prebound API to check
+        if the provisioned resource still exists.\\nUsed by the recovery worker during abort to skip compensating already-cleaned
+        resources.\\nUses {{provisionResourceId}} placeholder in payloadTemplate.\\n\"\n                }\n            }\n\
+        \        },\n        \"PreboundApi\": {\n            \"type\": \"object\",\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.Core.PreboundApi\"\
+        ,\n            \"description\": \"Pre-configured API call definition with optional response transformation\",\n  \
+        \          \"additionalProperties\": false,\n            \"required\": [\n                \"serviceName\",\n     \
+        \           \"endpoint\",\n                \"payloadTemplate\"\n            ],\n            \"properties\": {\n  \
+        \              \"serviceName\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Target service name (e.g., \\\"genesis\\\", \\\"seed\\\", \\\"currency\\\")\"\n                },\n          \
+        \      \"endpoint\": {\n                    \"type\": \"string\",\n                    \"description\": \"Target endpoint
+        path (e.g., \\\"/genesis/entity/get\\\")\"\n                },\n                \"payloadTemplate\": {\n         \
+        \           \"type\": \"string\",\n                    \"description\": \"JSON payload template with {{variable}}
+        placeholders substituted at execution time\"\n                },\n                \"description\": {\n           \
+        \         \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Human-readable description of what this API call does\"\n                },\n                \"executionMode\": {\n\
+        \                    \"$ref\": \"#/$defs/PreboundApiExecutionMode\",\n                    \"description\": \"How to
+        execute this API call (defaults to Sync)\"\n                },\n                \"responseTransformation\": {\n  \
+        \                  \"$ref\": \"#/$defs/ResponseTransformation\",\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Optional transformation rules for the API response\"\n                }\n      \
+        \      }\n        },\n        \"PreboundApiExecutionMode\": {\n            \"type\": \"string\",\n            \"x-sdk-type\"\
+        : \"BeyondImmersion.Bannou.Core.PreboundApiExecutionMode\",\n            \"description\": \"How a prebound API should
+        be executed\",\n            \"enum\": [\n                \"Sync\",\n                \"Async\",\n                \"\
+        FireAndForget\"\n            ]\n        },\n        \"ResponseTransformation\": {\n            \"type\": \"object\"\
+        ,\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.Core.ResponseTransformation\",\n            \"description\"\
+        : \"Transformation rules applied to a prebound API response. First matching rule produces the result.\",\n       \
+        \     \"additionalProperties\": false,\n            \"properties\": {\n                \"rules\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/TransformationRule\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Ordered
+        list of transformation rules (first match wins)\"\n                },\n                \"transientFailureStatusCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"integer\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"HTTP status codes indicating transient failure (default 408, 429, 502, 503, 504)\"\n                }\n      \
+        \      }\n        },\n        \"TransformationRule\": {\n            \"type\": \"object\",\n            \"x-sdk-type\"\
+        : \"BeyondImmersion.Bannou.Core.TransformationRule\",\n            \"description\": \"A single transformation rule
+        with conditions and result payload\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"statusCode\"\n            ],\n            \"properties\": {\n                \"conditions\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/TransformationCondition\"\n                    },\n                    \"nullable\": true,\n             \
+        \       \"description\": \"All conditions must match (AND logic). Empty or null = unconditional match.\"\n       \
+        \         },\n                \"statusCode\": {\n                    \"type\": \"integer\",\n                    \"\
+        description\": \"HTTP status code to return when this rule matches\"\n                },\n                \"payload\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"JSON payload to return (null = pass through raw response body)\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Human-readable description for diagnostics\"\n                }\n            }\n        },\n        \"TransformationCondition\"\
+        : {\n            \"type\": \"object\",\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.Core.TransformationCondition\"\
+        ,\n            \"description\": \"A single condition to evaluate against an API response\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"type\"\n            ],\n            \"properties\": {\n \
+        \               \"type\": {\n                    \"$ref\": \"#/$defs/TransformationConditionType\",\n            \
+        \        \"description\": \"The type of condition to evaluate\"\n                },\n                \"jsonPath\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"JsonPath expression (e.g., \\\"$.balance\\\", \\\"$.species.code\\\")\"\n                },\n                \"\
+        expectedValue\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"Expected value for comparison conditions\"\n                },\n                \"\
+        operator\": {\n                    \"$ref\": \"#/$defs/ComparisonOperator\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Comparison operator for numeric conditions\"\n                },\n       \
+        \         \"statusCodes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n       \
+        \                 \"type\": \"integer\"\n                    },\n                    \"nullable\": true,\n       \
+        \             \"description\": \"HTTP status codes for StatusCodeIn condition\"\n                }\n            }\n\
+        \        },\n        \"TransformationConditionType\": {\n            \"type\": \"string\",\n            \"x-sdk-type\"\
+        : \"BeyondImmersion.Bannou.Core.TransformationConditionType\",\n            \"description\": \"Types of conditions
+        that can be evaluated against an API response\",\n            \"enum\": [\n                \"StatusCodeIn\",\n   \
+        \             \"JsonPathEquals\",\n                \"JsonPathNotEquals\",\n                \"JsonPathExists\",\n \
+        \               \"JsonPathNotExists\",\n                \"JsonPathGreaterThan\",\n                \"JsonPathLessThan\"\
+        ,\n                \"JsonPathContains\"\n            ]\n        },\n        \"ComparisonOperator\": {\n          \
+        \  \"type\": \"string\",\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.Core.ComparisonOperator\",\n      \
+        \      \"description\": \"Comparison operators for numeric conditions\",\n            \"enum\": [\n              \
+        \  \"Eq\",\n                \"Ne\",\n                \"Gt\",\n                \"Gte\",\n                \"Lt\",\n\
+        \                \"Lte\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RegisterProvisionResponse\"\
+        ,\n    \"$defs\": {\n        \"RegisterProvisionResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Response after registering a provision\",\n            \"required\": [\n\
+        \                \"provisionId\",\n                \"sequenceNumber\",\n                \"status\"\n            ],\n\
+        \            \"properties\": {\n                \"provisionId\": {\n                    \"type\": \"string\",\n  \
+        \                  \"format\": \"uuid\",\n                    \"description\": \"Unique provision identifier\"\n \
+        \               },\n                \"sequenceNumber\": {\n                    \"type\": \"integer\",\n          \
+        \          \"description\": \"Provision order within the transaction (for reverse compensation)\"\n              \
+        \  },\n                \"status\": {\n                    \"$ref\": \"#/$defs/ProvisionStatus\",\n               \
+        \     \"description\": \"Initial provision status (always Pending)\"\n                }\n            }\n        },\n\
+        \        \"ProvisionStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Pending\"\
+        ,\n                \"Provisioned\",\n                \"ReferenceRegistered\",\n                \"Compensated\",\n\
+        \                \"CompensationFailed\"\n            ],\n            \"description\": \"Individual provision lifecycle
+        state within a transaction.\\nPending: Registered with pre-generated ID but resource not yet created\\nProvisioned:
+        Resource confirmed created at the pre-generated ID\\nReferenceRegistered: Converted to permanent resource reference
+        during commit\\nCompensated: Compensation endpoint called successfully (resource deleted or confirmed absent)\\nCompensationFailed:
+        Compensation attempted but failed (worker will retry)\\n\"\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Register a planned provision with pre-generated ID (status Pending)\",\n\
+        \    \"description\": \"Records that a resource WILL BE provisioned as part of an active transaction.\\nCalled BEFORE
+        creating the resource. The pre-generated resourceId and\\ncompensation definition are stored so that if the process
+        crashes before\\nthe resource is created, the transaction can still compensate (compensation\\nendpoint receives 404,
+        which is treated as successful compensation).\\nProvisions are compensated in reverse registration order on abort.\\\
+        n\",\n    \"tags\": [\n        \"Transaction Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"registerProvision\"\n}"
+  /resource/transaction/confirm-provision:
+    post:
+      operationId: confirmProvision
+      tags:
+      - Transaction Management
+      summary: Confirm a provision was successfully created (Pending to Provisioned)
+      description: |
+        Called AFTER the resource has been successfully created at the pre-generated ID.
+        Transitions the provision from Pending to Provisioned. If the process crashes
+        before this call, the provision remains Pending — on abort, the compensation
+        endpoint is called and handles the resource if it exists (idempotent).
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmProvisionRequest'
+      responses:
+        '200':
+          description: Provision confirmed (Provisioned)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmProvisionResponse'
+        '400':
+          description: Provision not in Pending state or transaction not Active
+        '404':
+          description: Transaction or provision not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ConfirmProvisionRequest\"\
+        ,\n    \"$defs\": {\n        \"ConfirmProvisionRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to confirm a provision was successfully created\",\n            \"\
+        required\": [\n                \"transactionId\",\n                \"resourceId\"\n            ],\n            \"\
+        properties\": {\n                \"transactionId\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"uuid\",\n                    \"description\": \"Transaction the provision belongs to\"\n     \
+        \           },\n                \"resourceId\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"uuid\",\n                    \"description\": \"Resource ID of the provision to confirm (matches the
+        pre-generated ID from registration)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ConfirmProvisionResponse\"\
+        ,\n    \"$defs\": {\n        \"ConfirmProvisionResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Response after confirming a provision\",\n            \"required\": [\n \
+        \               \"provisionId\",\n                \"status\"\n            ],\n            \"properties\": {\n    \
+        \            \"provisionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Provision identifier\"\n                },\n                \"status\":
+        {\n                    \"$ref\": \"#/$defs/ProvisionStatus\",\n                    \"description\": \"Updated provision
+        status (Provisioned)\"\n                }\n            }\n        },\n        \"ProvisionStatus\": {\n           \
+        \ \"type\": \"string\",\n            \"enum\": [\n                \"Pending\",\n                \"Provisioned\",\n\
+        \                \"ReferenceRegistered\",\n                \"Compensated\",\n                \"CompensationFailed\"\
+        \n            ],\n            \"description\": \"Individual provision lifecycle state within a transaction.\\nPending:
+        Registered with pre-generated ID but resource not yet created\\nProvisioned: Resource confirmed created at the pre-generated
+        ID\\nReferenceRegistered: Converted to permanent resource reference during commit\\nCompensated: Compensation endpoint
+        called successfully (resource deleted or confirmed absent)\\nCompensationFailed: Compensation attempted but failed
+        (worker will retry)\\n\"\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Confirm a provision was successfully created (Pending to Provisioned)\"\
+        ,\n    \"description\": \"Called AFTER the resource has been successfully created at the pre-generated ID.\\nTransitions
+        the provision from Pending to Provisioned. If the process crashes\\nbefore this call, the provision remains Pending
+        \\u2014 on abort, the compensation\\nendpoint is called and handles the resource if it exists (idempotent).\\n\",\n\
+        \    \"tags\": [\n        \"Transaction Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
+        confirmProvision\"\n}"
+  /resource/transaction/commit:
+    post:
+      operationId: commitTransaction
+      tags:
+      - Transaction Management
+      summary: Commit a provisioning transaction
+      description: |
+        Marks a transaction as committed. All provisions become permanent
+        resource references via the existing RegisterReference mechanism.
+        Uses a crash-safe two-phase internal process: transitions to Committing
+        first, registers references one by one (checkpointing each), then
+        transitions to Committed. The recovery worker resumes from the last
+        checkpoint if the process crashes mid-commit.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommitTransactionRequest'
+      responses:
+        '200':
+          description: Transaction committed, references registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommitTransactionResponse'
+        '400':
+          description: Transaction not in Active state
+        '404':
+          description: Transaction not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CommitTransactionRequest\"\
+        ,\n    \"$defs\": {\n        \"CommitTransactionRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to commit a provisioning transaction\",\n            \"required\"\
+        : [\n                \"transactionId\"\n            ],\n            \"properties\": {\n                \"transactionId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Transaction to commit\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CommitTransactionResponse\"\
+        ,\n    \"$defs\": {\n        \"CommitTransactionResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Response after committing a transaction\",\n            \"required\": [\n\
+        \                \"transactionId\",\n                \"status\",\n                \"referencesRegistered\"\n     \
+        \       ],\n            \"properties\": {\n                \"transactionId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Transaction identifier\"\
+        \n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/TransactionStatus\",\n\
+        \                    \"description\": \"Final transaction status (Committed)\"\n                },\n             \
+        \   \"referencesRegistered\": {\n                    \"type\": \"integer\",\n                    \"description\":
+        \"Number of provisions converted to permanent references\"\n                }\n            }\n        },\n       \
+        \ \"TransactionStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Active\"\
+        ,\n                \"Committing\",\n                \"Committed\",\n                \"Aborting\",\n              \
+        \  \"Aborted\"\n            ],\n            \"description\": \"Provisioning transaction lifecycle state.\\nActive:
+        Provisioning in progress, awaiting commit or abort\\nCommitting: Converting provisions to permanent references (crash-safe
+        checkpoint)\\nCommitted: All provisions confirmed as permanent references\\nAborting: Compensation in progress for
+        some or all provisions\\nAborted: All compensations completed or retries exhausted\\n\"\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Commit a provisioning transaction\",\n    \"description\": \"Marks a transaction
+        as committed. All provisions become permanent\\nresource references via the existing RegisterReference mechanism.\\
+        nUses a crash-safe two-phase internal process: transitions to Committing\\nfirst, registers references one by one
+        (checkpointing each), then\\ntransitions to Committed. The recovery worker resumes from the last\\ncheckpoint if the
+        process crashes mid-commit.\\n\",\n    \"tags\": [\n        \"Transaction Management\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"commitTransaction\"\n}"
+  /resource/transaction/abort:
+    post:
+      operationId: abortTransaction
+      tags:
+      - Transaction Management
+      summary: Abort a provisioning transaction
+      description: |
+        Initiates compensation for all provisions in reverse registration order.
+        Resource calls each provision's compensation endpoint using the prebound
+        API execution mechanism. Provisions that compensate successfully are marked
+        Compensated. Provisions that fail are marked CompensationFailed and retried
+        by the background recovery worker.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbortTransactionRequest'
+      responses:
+        '200':
+          description: Abort initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbortTransactionResponse'
+        '400':
+          description: Transaction not in abortable state
+        '404':
+          description: Transaction not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AbortTransactionRequest\"\
+        ,\n    \"$defs\": {\n        \"AbortTransactionRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to abort a provisioning transaction and compensate provisions\",\n\
+        \            \"required\": [\n                \"transactionId\"\n            ],\n            \"properties\": {\n \
+        \               \"transactionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Transaction to abort\"\n                },\n                \"reason\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 500,\n                    \"description\": \"Reason for aborting (stored for diagnostics)\"\n                }\n\
+        \            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AbortTransactionResponse\"\
+        ,\n    \"$defs\": {\n        \"AbortTransactionResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Response after initiating transaction abort\",\n            \"required\"\
+        : [\n                \"transactionId\",\n                \"status\",\n                \"compensatedCount\",\n    \
+        \            \"failedCount\",\n                \"pendingCount\"\n            ],\n            \"properties\": {\n \
+        \               \"transactionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Transaction identifier\"\n                },\n                \"status\"\
+        : {\n                    \"$ref\": \"#/$defs/TransactionStatus\",\n                    \"description\": \"Transaction
+        status after abort attempt (Aborted or Aborting if retries needed)\"\n                },\n                \"compensatedCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of provisions successfully
+        compensated\"\n                },\n                \"failedCount\": {\n                    \"type\": \"integer\",\n\
+        \                    \"description\": \"Number of provisions whose compensation failed (will be retried by worker)\"\
+        \n                },\n                \"pendingCount\": {\n                    \"type\": \"integer\",\n          \
+        \          \"description\": \"Number of provisions in Pending state (resource never created, compensation is no-op)\"\
+        \n                }\n            }\n        },\n        \"TransactionStatus\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"Active\",\n                \"Committing\",\n                \"Committed\"\
+        ,\n                \"Aborting\",\n                \"Aborted\"\n            ],\n            \"description\": \"Provisioning
+        transaction lifecycle state.\\nActive: Provisioning in progress, awaiting commit or abort\\nCommitting: Converting
+        provisions to permanent references (crash-safe checkpoint)\\nCommitted: All provisions confirmed as permanent references\\
+        nAborting: Compensation in progress for some or all provisions\\nAborted: All compensations completed or retries exhausted\\\
+        n\"\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Abort a provisioning transaction\",\n    \"description\": \"Initiates compensation
+        for all provisions in reverse registration order.\\nResource calls each provision's compensation endpoint using the
+        prebound\\nAPI execution mechanism. Provisions that compensate successfully are marked\\nCompensated. Provisions that
+        fail are marked CompensationFailed and retried\\nby the background recovery worker.\\n\",\n    \"tags\": [\n     \
+        \   \"Transaction Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"abortTransaction\"\n}"
+  /resource/transaction/status:
+    post:
+      operationId: getTransactionStatus
+      tags:
+      - Transaction Management
+      summary: Query transaction status with per-provision detail
+      description: |
+        Returns the current status of a transaction including per-provision
+        status. Useful for admin tooling, debugging, and monitoring.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetTransactionStatusRequest'
+      responses:
+        '200':
+          description: Transaction status with provision details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionStatusResponse'
+        '404':
+          description: Transaction not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetTransactionStatusRequest\"\
+        ,\n    \"$defs\": {\n        \"GetTransactionStatusRequest\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Request to query transaction status\",\n          \
+        \  \"required\": [\n                \"transactionId\"\n            ],\n            \"properties\": {\n           \
+        \     \"transactionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"Transaction to query\"\n                }\n            }\n        }\n    }\n\
+        }"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TransactionStatusResponse\"\
+        ,\n    \"$defs\": {\n        \"TransactionStatusResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Full transaction status with per-provision detail\",\n            \"required\"\
+        : [\n                \"transactionId\",\n                \"ownerService\",\n                \"parentResourceType\"\
+        ,\n                \"parentResourceId\",\n                \"status\",\n                \"createdAt\",\n          \
+        \      \"updatedAt\",\n                \"ttlSeconds\",\n                \"provisions\"\n            ],\n         \
+        \   \"properties\": {\n                \"transactionId\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"uuid\",\n                    \"description\": \"Transaction identifier\"\n             \
+        \   },\n                \"ownerService\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Service that owns this transaction\"\n                },\n                \"parentResourceType\": {\n        \
+        \            \"type\": \"string\",\n                    \"description\": \"Type of entity being provisioned\"\n  \
+        \              },\n                \"parentResourceId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"description\": \"ID of the entity being provisioned\"\n  \
+        \              },\n                \"status\": {\n                    \"$ref\": \"#/$defs/TransactionStatus\",\n \
+        \                   \"description\": \"Current transaction status\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"When the transaction was created\"\n                },\n                \"updatedAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        description\": \"When the transaction was last updated\"\n                },\n                \"ttlSeconds\": {\n\
+        \                    \"type\": \"integer\",\n                    \"description\": \"Transaction TTL in seconds\"\n\
+        \                },\n                \"expiresAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"When the transaction TTL expires\"\n    \
+        \            },\n                \"expectedProvisionCount\": {\n                    \"type\": \"integer\",\n     \
+        \               \"nullable\": true,\n                    \"description\": \"Expected number of provisions (null if
+        not specified)\"\n                },\n                \"validationAttempts\": {\n                    \"type\": \"\
+        integer\",\n                    \"description\": \"Number of TTL validation attempts made\"\n                },\n\
+        \                \"provisions\": {\n                    \"type\": \"array\",\n                    \"items\": {\n \
+        \                       \"$ref\": \"#/$defs/ProvisionDetail\"\n                    },\n                    \"description\"\
+        : \"Per-provision status details\"\n                }\n            }\n        },\n        \"TransactionStatus\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"Active\",\n                \"Committing\"\
+        ,\n                \"Committed\",\n                \"Aborting\",\n                \"Aborted\"\n            ],\n  \
+        \          \"description\": \"Provisioning transaction lifecycle state.\\nActive: Provisioning in progress, awaiting
+        commit or abort\\nCommitting: Converting provisions to permanent references (crash-safe checkpoint)\\nCommitted: All
+        provisions confirmed as permanent references\\nAborting: Compensation in progress for some or all provisions\\nAborted:
+        All compensations completed or retries exhausted\\n\"\n        },\n        \"ProvisionDetail\": {\n            \"\
+        type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Status detail for
+        a single provision within a transaction\",\n            \"required\": [\n                \"provisionId\",\n      \
+        \          \"sequenceNumber\",\n                \"resourceType\",\n                \"resourceId\",\n             \
+        \   \"status\",\n                \"registeredAt\"\n            ],\n            \"properties\": {\n               \
+        \ \"provisionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n     \
+        \               \"description\": \"Unique provision identifier\"\n                },\n                \"sequenceNumber\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Registration order (compensated
+        in reverse)\"\n                },\n                \"resourceType\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Type of provisioned resource\"\n                },\n                \"resourceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Pre-generated resource ID\"\n                },\n                \"status\": {\n                \
+        \    \"$ref\": \"#/$defs/ProvisionStatus\",\n                    \"description\": \"Current provision status\"\n \
+        \               },\n                \"registeredAt\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"date-time\",\n                    \"description\": \"When the provision was registered\"\n \
+        \               },\n                \"provisionedAt\": {\n                    \"type\": \"string\",\n            \
+        \        \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the resource was confirmed created (null if still Pending)\"\n                },\n                \"compensatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When compensation completed (null if not compensated)\"\
+        \n                },\n                \"compensationAttempts\": {\n                    \"type\": \"integer\",\n  \
+        \                  \"description\": \"Number of compensation attempts made\"\n                },\n               \
+        \ \"lastCompensationError\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Error from last failed compensation attempt\"\n                }\n       \
+        \     }\n        },\n        \"ProvisionStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
+        \                \"Pending\",\n                \"Provisioned\",\n                \"ReferenceRegistered\",\n      \
+        \          \"Compensated\",\n                \"CompensationFailed\"\n            ],\n            \"description\":
+        \"Individual provision lifecycle state within a transaction.\\nPending: Registered with pre-generated ID but resource
+        not yet created\\nProvisioned: Resource confirmed created at the pre-generated ID\\nReferenceRegistered: Converted
+        to permanent resource reference during commit\\nCompensated: Compensation endpoint called successfully (resource deleted
+        or confirmed absent)\\nCompensationFailed: Compensation attempted but failed (worker will retry)\\n\"\n        }\n\
+        \    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Query transaction status with per-provision detail\",\n    \"description\"\
+        : \"Returns the current status of a transaction including per-provision\\nstatus. Useful for admin tooling, debugging,
+        and monitoring.\\n\",\n    \"tags\": [\n        \"Transaction Management\"\n    ],\n    \"deprecated\": false,\n \
+        \   \"operationId\": \"getTransactionStatus\"\n}"
 components:
   schemas:
     OnDeleteAction:
@@ -1482,6 +2045,505 @@ components:
         Policy for compression callback execution.
         BestEffort: Create archive even if some callbacks fail (partial archive)
         AllRequired: Abort compression if any callback fails
+    TransactionStatus:
+      type: string
+      enum:
+      - Active
+      - Committing
+      - Committed
+      - Aborting
+      - Aborted
+      description: |
+        Provisioning transaction lifecycle state.
+        Active: Provisioning in progress, awaiting commit or abort
+        Committing: Converting provisions to permanent references (crash-safe checkpoint)
+        Committed: All provisions confirmed as permanent references
+        Aborting: Compensation in progress for some or all provisions
+        Aborted: All compensations completed or retries exhausted
+    ProvisionStatus:
+      type: string
+      enum:
+      - Pending
+      - Provisioned
+      - ReferenceRegistered
+      - Compensated
+      - CompensationFailed
+      description: |
+        Individual provision lifecycle state within a transaction.
+        Pending: Registered with pre-generated ID but resource not yet created
+        Provisioned: Resource confirmed created at the pre-generated ID
+        ReferenceRegistered: Converted to permanent resource reference during commit
+        Compensated: Compensation endpoint called successfully (resource deleted or confirmed absent)
+        CompensationFailed: Compensation attempted but failed (worker will retry)
+    PreboundApi:
+      type: object
+      x-sdk-type: BeyondImmersion.Bannou.Core.PreboundApi
+      description: Pre-configured API call definition with optional response transformation
+      additionalProperties: false
+      required:
+      - serviceName
+      - endpoint
+      - payloadTemplate
+      properties:
+        serviceName:
+          type: string
+          description: Target service name (e.g., "genesis", "seed", "currency")
+        endpoint:
+          type: string
+          description: Target endpoint path (e.g., "/genesis/entity/get")
+        payloadTemplate:
+          type: string
+          description: JSON payload template with {{variable}} placeholders substituted at execution time
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of what this API call does
+        executionMode:
+          $ref: '#/components/schemas/PreboundApiExecutionMode'
+          description: How to execute this API call (defaults to Sync)
+        responseTransformation:
+          $ref: '#/components/schemas/ResponseTransformation'
+          nullable: true
+          description: Optional transformation rules for the API response
+    PreboundApiExecutionMode:
+      type: string
+      x-sdk-type: BeyondImmersion.Bannou.Core.PreboundApiExecutionMode
+      description: How a prebound API should be executed
+      enum:
+      - Sync
+      - Async
+      - FireAndForget
+    ResponseTransformation:
+      type: object
+      x-sdk-type: BeyondImmersion.Bannou.Core.ResponseTransformation
+      description: Transformation rules applied to a prebound API response. First matching rule produces the result.
+      additionalProperties: false
+      properties:
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransformationRule'
+          nullable: true
+          description: Ordered list of transformation rules (first match wins)
+        transientFailureStatusCodes:
+          type: array
+          items:
+            type: integer
+          nullable: true
+          description: HTTP status codes indicating transient failure (default 408, 429, 502, 503, 504)
+    TransformationRule:
+      type: object
+      x-sdk-type: BeyondImmersion.Bannou.Core.TransformationRule
+      description: A single transformation rule with conditions and result payload
+      additionalProperties: false
+      required:
+      - statusCode
+      properties:
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransformationCondition'
+          nullable: true
+          description: All conditions must match (AND logic). Empty or null = unconditional match.
+        statusCode:
+          type: integer
+          description: HTTP status code to return when this rule matches
+        payload:
+          type: string
+          nullable: true
+          description: JSON payload to return (null = pass through raw response body)
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description for diagnostics
+    TransformationCondition:
+      type: object
+      x-sdk-type: BeyondImmersion.Bannou.Core.TransformationCondition
+      description: A single condition to evaluate against an API response
+      additionalProperties: false
+      required:
+      - type
+      properties:
+        type:
+          $ref: '#/components/schemas/TransformationConditionType'
+          description: The type of condition to evaluate
+        jsonPath:
+          type: string
+          nullable: true
+          description: JsonPath expression (e.g., "$.balance", "$.species.code")
+        expectedValue:
+          type: string
+          nullable: true
+          description: Expected value for comparison conditions
+        operator:
+          $ref: '#/components/schemas/ComparisonOperator'
+          nullable: true
+          description: Comparison operator for numeric conditions
+        statusCodes:
+          type: array
+          items:
+            type: integer
+          nullable: true
+          description: HTTP status codes for StatusCodeIn condition
+    TransformationConditionType:
+      type: string
+      x-sdk-type: BeyondImmersion.Bannou.Core.TransformationConditionType
+      description: Types of conditions that can be evaluated against an API response
+      enum:
+      - StatusCodeIn
+      - JsonPathEquals
+      - JsonPathNotEquals
+      - JsonPathExists
+      - JsonPathNotExists
+      - JsonPathGreaterThan
+      - JsonPathLessThan
+      - JsonPathContains
+    ComparisonOperator:
+      type: string
+      x-sdk-type: BeyondImmersion.Bannou.Core.ComparisonOperator
+      description: Comparison operators for numeric conditions
+      enum:
+      - Eq
+      - Ne
+      - Gt
+      - Gte
+      - Lt
+      - Lte
+    BeginTransactionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to begin a provisioning transaction with TTL and validation
+      required:
+      - ownerService
+      - parentResourceType
+      - parentResourceId
+      properties:
+        ownerService:
+          type: string
+          description: Service that owns this transaction (e.g., "genesis", "craft")
+        parentResourceType:
+          type: string
+          description: Type of entity being provisioned (opaque identifier)
+        parentResourceId:
+          type: string
+          format: uuid
+          description: ID of the entity being provisioned
+        ttlSeconds:
+          type: integer
+          nullable: true
+          description: Transaction TTL in seconds (clamped to configured max, defaults to configured default)
+        expectedProvisionCount:
+          type: integer
+          nullable: true
+          description: How many provisions the requester intends to register (helps worker distinguish crash scenarios)
+        completionValidation:
+          $ref: '#/components/schemas/PreboundApi'
+          nullable: true
+          description: |
+            Prebound API that returns 200 if the parent entity was successfully created.
+            Executed by the recovery worker on TTL expiry to decide auto-commit vs auto-abort.
+            Uses {{parentResourceId}} placeholder in payloadTemplate.
+    BeginTransactionResponse:
+      type: object
+      additionalProperties: false
+      description: Response after beginning a provisioning transaction
+      required:
+      - transactionId
+      - status
+      - ttlSeconds
+      - expiresAt
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Unique transaction identifier (use for all subsequent operations)
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+          description: Initial transaction status (always Active)
+        ttlSeconds:
+          type: integer
+          description: Effective TTL after clamping to configured max
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the transaction TTL expires
+    RegisterProvisionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to register a planned provision before creating the resource
+      required:
+      - transactionId
+      - resourceType
+      - resourceId
+      - compensation
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction this provision belongs to
+        resourceType:
+          type: string
+          description: Type of resource being provisioned (e.g., "seed", "currency-wallet")
+        resourceId:
+          type: string
+          format: uuid
+          description: Pre-generated ID for the resource (known before creation for register-before-create flow)
+        compensation:
+          $ref: '#/components/schemas/PreboundApi'
+          description: |
+            Prebound API to call for compensation (undo). Must be idempotent.
+            404 from the compensation endpoint is treated as successful compensation.
+            Uses {{provisionResourceId}} placeholder in payloadTemplate.
+        verification:
+          $ref: '#/components/schemas/PreboundApi'
+          nullable: true
+          description: |
+            Optional prebound API to check if the provisioned resource still exists.
+            Used by the recovery worker during abort to skip compensating already-cleaned resources.
+            Uses {{provisionResourceId}} placeholder in payloadTemplate.
+    RegisterProvisionResponse:
+      type: object
+      additionalProperties: false
+      description: Response after registering a provision
+      required:
+      - provisionId
+      - sequenceNumber
+      - status
+      properties:
+        provisionId:
+          type: string
+          format: uuid
+          description: Unique provision identifier
+        sequenceNumber:
+          type: integer
+          description: Provision order within the transaction (for reverse compensation)
+        status:
+          $ref: '#/components/schemas/ProvisionStatus'
+          description: Initial provision status (always Pending)
+    ConfirmProvisionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to confirm a provision was successfully created
+      required:
+      - transactionId
+      - resourceId
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction the provision belongs to
+        resourceId:
+          type: string
+          format: uuid
+          description: Resource ID of the provision to confirm (matches the pre-generated ID from registration)
+    ConfirmProvisionResponse:
+      type: object
+      additionalProperties: false
+      description: Response after confirming a provision
+      required:
+      - provisionId
+      - status
+      properties:
+        provisionId:
+          type: string
+          format: uuid
+          description: Provision identifier
+        status:
+          $ref: '#/components/schemas/ProvisionStatus'
+          description: Updated provision status (Provisioned)
+    CommitTransactionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to commit a provisioning transaction
+      required:
+      - transactionId
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction to commit
+    CommitTransactionResponse:
+      type: object
+      additionalProperties: false
+      description: Response after committing a transaction
+      required:
+      - transactionId
+      - status
+      - referencesRegistered
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction identifier
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+          description: Final transaction status (Committed)
+        referencesRegistered:
+          type: integer
+          description: Number of provisions converted to permanent references
+    AbortTransactionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to abort a provisioning transaction and compensate provisions
+      required:
+      - transactionId
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction to abort
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for aborting (stored for diagnostics)
+    AbortTransactionResponse:
+      type: object
+      additionalProperties: false
+      description: Response after initiating transaction abort
+      required:
+      - transactionId
+      - status
+      - compensatedCount
+      - failedCount
+      - pendingCount
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction identifier
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+          description: Transaction status after abort attempt (Aborted or Aborting if retries needed)
+        compensatedCount:
+          type: integer
+          description: Number of provisions successfully compensated
+        failedCount:
+          type: integer
+          description: Number of provisions whose compensation failed (will be retried by worker)
+        pendingCount:
+          type: integer
+          description: Number of provisions in Pending state (resource never created, compensation is no-op)
+    GetTransactionStatusRequest:
+      type: object
+      additionalProperties: false
+      description: Request to query transaction status
+      required:
+      - transactionId
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction to query
+    TransactionStatusResponse:
+      type: object
+      additionalProperties: false
+      description: Full transaction status with per-provision detail
+      required:
+      - transactionId
+      - ownerService
+      - parentResourceType
+      - parentResourceId
+      - status
+      - createdAt
+      - updatedAt
+      - ttlSeconds
+      - provisions
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction identifier
+        ownerService:
+          type: string
+          description: Service that owns this transaction
+        parentResourceType:
+          type: string
+          description: Type of entity being provisioned
+        parentResourceId:
+          type: string
+          format: uuid
+          description: ID of the entity being provisioned
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+          description: Current transaction status
+        createdAt:
+          type: string
+          format: date-time
+          description: When the transaction was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the transaction was last updated
+        ttlSeconds:
+          type: integer
+          description: Transaction TTL in seconds
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the transaction TTL expires
+        expectedProvisionCount:
+          type: integer
+          nullable: true
+          description: Expected number of provisions (null if not specified)
+        validationAttempts:
+          type: integer
+          description: Number of TTL validation attempts made
+        provisions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProvisionDetail'
+          description: Per-provision status details
+    ProvisionDetail:
+      type: object
+      additionalProperties: false
+      description: Status detail for a single provision within a transaction
+      required:
+      - provisionId
+      - sequenceNumber
+      - resourceType
+      - resourceId
+      - status
+      - registeredAt
+      properties:
+        provisionId:
+          type: string
+          format: uuid
+          description: Unique provision identifier
+        sequenceNumber:
+          type: integer
+          description: Registration order (compensated in reverse)
+        resourceType:
+          type: string
+          description: Type of provisioned resource
+        resourceId:
+          type: string
+          format: uuid
+          description: Pre-generated resource ID
+        status:
+          $ref: '#/components/schemas/ProvisionStatus'
+          description: Current provision status
+        registeredAt:
+          type: string
+          format: date-time
+          description: When the provision was registered
+        provisionedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the resource was confirmed created (null if still Pending)
+        compensatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When compensation completed (null if not compensated)
+        compensationAttempts:
+          type: integer
+          description: Number of compensation attempts made
+        lastCompensationError:
+          type: string
+          nullable: true
+          description: Error from last failed compensation attempt
     RegisterReferenceRequest:
       type: object
       additionalProperties: false

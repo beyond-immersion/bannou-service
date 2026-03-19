@@ -601,6 +601,191 @@ paths:
               schema:
                 $ref: '#/components/schemas/GetSeededResourceResponse'
 
+  # ===========================================================================
+  # Transaction Management (6 endpoints)
+  # ===========================================================================
+
+  /resource/transaction/begin:
+    post:
+      operationId: beginTransaction
+      tags:
+      - Transaction Management
+      summary: Begin a provisioning transaction
+      description: |
+        Creates a durable provisioning transaction with a TTL deadline.
+        If the transaction is neither committed nor aborted within the TTL,
+        the background worker executes the completionValidation check to determine
+        whether to auto-commit (entity exists) or auto-abort (entity does not exist).
+
+        Use this when an orchestrating service needs to provision resources
+        across multiple services with guaranteed cleanup on failure.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BeginTransactionRequest'
+      responses:
+        '200':
+          description: Transaction created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BeginTransactionResponse'
+
+  /resource/transaction/register-provision:
+    post:
+      operationId: registerProvision
+      tags:
+      - Transaction Management
+      summary: Register a planned provision with pre-generated ID (status Pending)
+      description: |
+        Records that a resource WILL BE provisioned as part of an active transaction.
+        Called BEFORE creating the resource. The pre-generated resourceId and
+        compensation definition are stored so that if the process crashes before
+        the resource is created, the transaction can still compensate (compensation
+        endpoint receives 404, which is treated as successful compensation).
+        Provisions are compensated in reverse registration order on abort.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterProvisionRequest'
+      responses:
+        '200':
+          description: Provision registered (Pending)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterProvisionResponse'
+        '400':
+          description: Transaction not in Active state
+        '404':
+          description: Transaction not found
+
+  /resource/transaction/confirm-provision:
+    post:
+      operationId: confirmProvision
+      tags:
+      - Transaction Management
+      summary: Confirm a provision was successfully created (Pending to Provisioned)
+      description: |
+        Called AFTER the resource has been successfully created at the pre-generated ID.
+        Transitions the provision from Pending to Provisioned. If the process crashes
+        before this call, the provision remains Pending — on abort, the compensation
+        endpoint is called and handles the resource if it exists (idempotent).
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmProvisionRequest'
+      responses:
+        '200':
+          description: Provision confirmed (Provisioned)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmProvisionResponse'
+        '400':
+          description: Provision not in Pending state or transaction not Active
+        '404':
+          description: Transaction or provision not found
+
+  /resource/transaction/commit:
+    post:
+      operationId: commitTransaction
+      tags:
+      - Transaction Management
+      summary: Commit a provisioning transaction
+      description: |
+        Marks a transaction as committed. All provisions become permanent
+        resource references via the existing RegisterReference mechanism.
+        Uses a crash-safe two-phase internal process: transitions to Committing
+        first, registers references one by one (checkpointing each), then
+        transitions to Committed. The recovery worker resumes from the last
+        checkpoint if the process crashes mid-commit.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommitTransactionRequest'
+      responses:
+        '200':
+          description: Transaction committed, references registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommitTransactionResponse'
+        '400':
+          description: Transaction not in Active state
+        '404':
+          description: Transaction not found
+
+  /resource/transaction/abort:
+    post:
+      operationId: abortTransaction
+      tags:
+      - Transaction Management
+      summary: Abort a provisioning transaction
+      description: |
+        Initiates compensation for all provisions in reverse registration order.
+        Resource calls each provision's compensation endpoint using the prebound
+        API execution mechanism. Provisions that compensate successfully are marked
+        Compensated. Provisions that fail are marked CompensationFailed and retried
+        by the background recovery worker.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbortTransactionRequest'
+      responses:
+        '200':
+          description: Abort initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbortTransactionResponse'
+        '400':
+          description: Transaction not in abortable state
+        '404':
+          description: Transaction not found
+
+  /resource/transaction/status:
+    post:
+      operationId: getTransactionStatus
+      tags:
+      - Transaction Management
+      summary: Query transaction status with per-provision detail
+      description: |
+        Returns the current status of a transaction including per-provision
+        status. Useful for admin tooling, debugging, and monitoring.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetTransactionStatusRequest'
+      responses:
+        '200':
+          description: Transaction status with provision details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionStatusResponse'
+        '404':
+          description: Transaction not found
+
 components:
   schemas:
     # =========================================================================
@@ -634,6 +819,529 @@ components:
         Policy for compression callback execution.
         BestEffort: Create archive even if some callbacks fail (partial archive)
         AllRequired: Abort compression if any callback fails
+
+    TransactionStatus:
+      type: string
+      enum: [Active, Committing, Committed, Aborting, Aborted]
+      description: |
+        Provisioning transaction lifecycle state.
+        Active: Provisioning in progress, awaiting commit or abort
+        Committing: Converting provisions to permanent references (crash-safe checkpoint)
+        Committed: All provisions confirmed as permanent references
+        Aborting: Compensation in progress for some or all provisions
+        Aborted: All compensations completed or retries exhausted
+
+    ProvisionStatus:
+      type: string
+      enum: [Pending, Provisioned, ReferenceRegistered, Compensated, CompensationFailed]
+      description: |
+        Individual provision lifecycle state within a transaction.
+        Pending: Registered with pre-generated ID but resource not yet created
+        Provisioned: Resource confirmed created at the pre-generated ID
+        ReferenceRegistered: Converted to permanent resource reference during commit
+        Compensated: Compensation endpoint called successfully (resource deleted or confirmed absent)
+        CompensationFailed: Compensation attempted but failed (worker will retry)
+
+    # =========================================================================
+    # Core SDK Types (x-sdk-type references to BeyondImmersion.Bannou.Core)
+    # These define the schema shape for documentation and client SDKs while
+    # directing C# code generation to use the Core SDK types.
+    # =========================================================================
+
+    PreboundApi:
+      type: object
+      x-sdk-type: BeyondImmersion.Bannou.Core.PreboundApi
+      description: Pre-configured API call definition with optional response transformation
+      additionalProperties: false
+      required:
+      - serviceName
+      - endpoint
+      - payloadTemplate
+      properties:
+        serviceName:
+          type: string
+          description: Target service name (e.g., "genesis", "seed", "currency")
+        endpoint:
+          type: string
+          description: Target endpoint path (e.g., "/genesis/entity/get")
+        payloadTemplate:
+          type: string
+          description: JSON payload template with {{variable}} placeholders substituted at execution time
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of what this API call does
+        executionMode:
+          $ref: '#/components/schemas/PreboundApiExecutionMode'
+          description: How to execute this API call (defaults to Sync)
+        responseTransformation:
+          $ref: '#/components/schemas/ResponseTransformation'
+          nullable: true
+          description: Optional transformation rules for the API response
+
+    PreboundApiExecutionMode:
+      type: string
+      x-sdk-type: BeyondImmersion.Bannou.Core.PreboundApiExecutionMode
+      description: How a prebound API should be executed
+      enum:
+      - Sync
+      - Async
+      - FireAndForget
+
+    ResponseTransformation:
+      type: object
+      x-sdk-type: BeyondImmersion.Bannou.Core.ResponseTransformation
+      description: Transformation rules applied to a prebound API response. First matching rule produces the result.
+      additionalProperties: false
+      properties:
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransformationRule'
+          nullable: true
+          description: Ordered list of transformation rules (first match wins)
+        transientFailureStatusCodes:
+          type: array
+          items:
+            type: integer
+          nullable: true
+          description: HTTP status codes indicating transient failure (default 408, 429, 502, 503, 504)
+
+    TransformationRule:
+      type: object
+      x-sdk-type: BeyondImmersion.Bannou.Core.TransformationRule
+      description: A single transformation rule with conditions and result payload
+      additionalProperties: false
+      required:
+      - statusCode
+      properties:
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransformationCondition'
+          nullable: true
+          description: All conditions must match (AND logic). Empty or null = unconditional match.
+        statusCode:
+          type: integer
+          description: HTTP status code to return when this rule matches
+        payload:
+          type: string
+          nullable: true
+          description: JSON payload to return (null = pass through raw response body)
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description for diagnostics
+
+    TransformationCondition:
+      type: object
+      x-sdk-type: BeyondImmersion.Bannou.Core.TransformationCondition
+      description: A single condition to evaluate against an API response
+      additionalProperties: false
+      required:
+      - type
+      properties:
+        type:
+          $ref: '#/components/schemas/TransformationConditionType'
+          description: The type of condition to evaluate
+        jsonPath:
+          type: string
+          nullable: true
+          description: JsonPath expression (e.g., "$.balance", "$.species.code")
+        expectedValue:
+          type: string
+          nullable: true
+          description: Expected value for comparison conditions
+        operator:
+          $ref: '#/components/schemas/ComparisonOperator'
+          nullable: true
+          description: Comparison operator for numeric conditions
+        statusCodes:
+          type: array
+          items:
+            type: integer
+          nullable: true
+          description: HTTP status codes for StatusCodeIn condition
+
+    TransformationConditionType:
+      type: string
+      x-sdk-type: BeyondImmersion.Bannou.Core.TransformationConditionType
+      description: Types of conditions that can be evaluated against an API response
+      enum:
+      - StatusCodeIn
+      - JsonPathEquals
+      - JsonPathNotEquals
+      - JsonPathExists
+      - JsonPathNotExists
+      - JsonPathGreaterThan
+      - JsonPathLessThan
+      - JsonPathContains
+
+    ComparisonOperator:
+      type: string
+      x-sdk-type: BeyondImmersion.Bannou.Core.ComparisonOperator
+      description: Comparison operators for numeric conditions
+      enum:
+      - Eq
+      - Ne
+      - Gt
+      - Gte
+      - Lt
+      - Lte
+
+    # =========================================================================
+    # Transaction Management Models
+    # =========================================================================
+
+    BeginTransactionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to begin a provisioning transaction with TTL and validation
+      required:
+      - ownerService
+      - parentResourceType
+      - parentResourceId
+      properties:
+        ownerService:
+          type: string
+          description: Service that owns this transaction (e.g., "genesis", "craft")
+        parentResourceType:
+          type: string
+          description: Type of entity being provisioned (opaque identifier)
+        parentResourceId:
+          type: string
+          format: uuid
+          description: ID of the entity being provisioned
+        ttlSeconds:
+          type: integer
+          nullable: true
+          description: Transaction TTL in seconds (clamped to configured max, defaults to configured default)
+        expectedProvisionCount:
+          type: integer
+          nullable: true
+          description: How many provisions the requester intends to register (helps worker distinguish crash scenarios)
+        completionValidation:
+          $ref: '#/components/schemas/PreboundApi'
+          nullable: true
+          description: |
+            Prebound API that returns 200 if the parent entity was successfully created.
+            Executed by the recovery worker on TTL expiry to decide auto-commit vs auto-abort.
+            Uses {{parentResourceId}} placeholder in payloadTemplate.
+
+    BeginTransactionResponse:
+      type: object
+      additionalProperties: false
+      description: Response after beginning a provisioning transaction
+      required:
+      - transactionId
+      - status
+      - ttlSeconds
+      - expiresAt
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Unique transaction identifier (use for all subsequent operations)
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+          description: Initial transaction status (always Active)
+        ttlSeconds:
+          type: integer
+          description: Effective TTL after clamping to configured max
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the transaction TTL expires
+
+    RegisterProvisionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to register a planned provision before creating the resource
+      required:
+      - transactionId
+      - resourceType
+      - resourceId
+      - compensation
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction this provision belongs to
+        resourceType:
+          type: string
+          description: Type of resource being provisioned (e.g., "seed", "currency-wallet")
+        resourceId:
+          type: string
+          format: uuid
+          description: Pre-generated ID for the resource (known before creation for register-before-create flow)
+        compensation:
+          $ref: '#/components/schemas/PreboundApi'
+          description: |
+            Prebound API to call for compensation (undo). Must be idempotent.
+            404 from the compensation endpoint is treated as successful compensation.
+            Uses {{provisionResourceId}} placeholder in payloadTemplate.
+        verification:
+          $ref: '#/components/schemas/PreboundApi'
+          nullable: true
+          description: |
+            Optional prebound API to check if the provisioned resource still exists.
+            Used by the recovery worker during abort to skip compensating already-cleaned resources.
+            Uses {{provisionResourceId}} placeholder in payloadTemplate.
+
+    RegisterProvisionResponse:
+      type: object
+      additionalProperties: false
+      description: Response after registering a provision
+      required:
+      - provisionId
+      - sequenceNumber
+      - status
+      properties:
+        provisionId:
+          type: string
+          format: uuid
+          description: Unique provision identifier
+        sequenceNumber:
+          type: integer
+          description: Provision order within the transaction (for reverse compensation)
+        status:
+          $ref: '#/components/schemas/ProvisionStatus'
+          description: Initial provision status (always Pending)
+
+    ConfirmProvisionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to confirm a provision was successfully created
+      required:
+      - transactionId
+      - resourceId
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction the provision belongs to
+        resourceId:
+          type: string
+          format: uuid
+          description: Resource ID of the provision to confirm (matches the pre-generated ID from registration)
+
+    ConfirmProvisionResponse:
+      type: object
+      additionalProperties: false
+      description: Response after confirming a provision
+      required:
+      - provisionId
+      - status
+      properties:
+        provisionId:
+          type: string
+          format: uuid
+          description: Provision identifier
+        status:
+          $ref: '#/components/schemas/ProvisionStatus'
+          description: Updated provision status (Provisioned)
+
+    CommitTransactionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to commit a provisioning transaction
+      required:
+      - transactionId
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction to commit
+
+    CommitTransactionResponse:
+      type: object
+      additionalProperties: false
+      description: Response after committing a transaction
+      required:
+      - transactionId
+      - status
+      - referencesRegistered
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction identifier
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+          description: Final transaction status (Committed)
+        referencesRegistered:
+          type: integer
+          description: Number of provisions converted to permanent references
+
+    AbortTransactionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to abort a provisioning transaction and compensate provisions
+      required:
+      - transactionId
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction to abort
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for aborting (stored for diagnostics)
+
+    AbortTransactionResponse:
+      type: object
+      additionalProperties: false
+      description: Response after initiating transaction abort
+      required:
+      - transactionId
+      - status
+      - compensatedCount
+      - failedCount
+      - pendingCount
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction identifier
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+          description: Transaction status after abort attempt (Aborted or Aborting if retries needed)
+        compensatedCount:
+          type: integer
+          description: Number of provisions successfully compensated
+        failedCount:
+          type: integer
+          description: Number of provisions whose compensation failed (will be retried by worker)
+        pendingCount:
+          type: integer
+          description: Number of provisions in Pending state (resource never created, compensation is no-op)
+
+    GetTransactionStatusRequest:
+      type: object
+      additionalProperties: false
+      description: Request to query transaction status
+      required:
+      - transactionId
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction to query
+
+    TransactionStatusResponse:
+      type: object
+      additionalProperties: false
+      description: Full transaction status with per-provision detail
+      required:
+      - transactionId
+      - ownerService
+      - parentResourceType
+      - parentResourceId
+      - status
+      - createdAt
+      - updatedAt
+      - ttlSeconds
+      - validationAttempts
+      - provisions
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction identifier
+        ownerService:
+          type: string
+          description: Service that owns this transaction
+        parentResourceType:
+          type: string
+          description: Type of entity being provisioned
+        parentResourceId:
+          type: string
+          format: uuid
+          description: ID of the entity being provisioned
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+          description: Current transaction status
+        createdAt:
+          type: string
+          format: date-time
+          description: When the transaction was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the transaction was last updated
+        ttlSeconds:
+          type: integer
+          description: Transaction TTL in seconds
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the transaction TTL expires
+        expectedProvisionCount:
+          type: integer
+          nullable: true
+          description: Expected number of provisions (null if not specified)
+        validationAttempts:
+          type: integer
+          description: Number of TTL validation attempts made
+        provisions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProvisionDetail'
+          description: Per-provision status details
+
+    ProvisionDetail:
+      type: object
+      additionalProperties: false
+      description: Status detail for a single provision within a transaction
+      required:
+      - provisionId
+      - sequenceNumber
+      - resourceType
+      - resourceId
+      - status
+      - registeredAt
+      - compensationAttempts
+      properties:
+        provisionId:
+          type: string
+          format: uuid
+          description: Unique provision identifier
+        sequenceNumber:
+          type: integer
+          description: Registration order (compensated in reverse)
+        resourceType:
+          type: string
+          description: Type of provisioned resource
+        resourceId:
+          type: string
+          format: uuid
+          description: Pre-generated resource ID
+        status:
+          $ref: '#/components/schemas/ProvisionStatus'
+          description: Current provision status
+        registeredAt:
+          type: string
+          format: date-time
+          description: When the provision was registered
+        provisionedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the resource was confirmed created (null if still Pending)
+        compensatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When compensation completed (null if not compensated)
+        compensationAttempts:
+          type: integer
+          description: Number of compensation attempts made
+        lastCompensationError:
+          type: string
+          nullable: true
+          description: Error from last failed compensation attempt
 
     # =========================================================================
     # Reference Management Models

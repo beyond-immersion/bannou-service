@@ -195,8 +195,10 @@ This document lists all state store components used in Bannou.
 | `resource-compress` | Redis | Resource | Compression callback definitions and callback index sets |
 | `resource-grace` | Redis | Resource | Grace period timestamps for resources with zero references |
 | `resource-migrate` | Redis | Resource | Migration callback definitions for reassigning dependent references |
+| `resource-provisions` | MySQL | Resource | Individual resource provisions within a transaction (sequenced for reverse-order compensation) |
 | `resource-refcounts` | Redis | Resource | Reference counts and source tracking per resource |
 | `resource-snapshots` | Redis | Resource | Ephemeral snapshots of living resources (TTL-based auto-expiry for storyline/actor consumption) |
+| `resource-transactions` | MySQL | Resource | Durable provisioning transactions with TTL validation, compensation tracking, and crash-safe commit state |
 | `save-load-cache` | Redis | SaveLoad | Recently accessed save data cache |
 | `save-load-lock` | Redis | SaveLoad | Distributed locks for save slot operations |
 | `save-load-pending` | Redis | SaveLoad | Pending save operations |
@@ -246,7 +248,7 @@ This document lists all state store components used in Bannou.
 | `worldstate-ratio-history` | MySQL | Worldstate | Time ratio change history per realm for elapsed game-time computation (append-only, compacted) |
 | `worldstate-realm-clock` | Redis | Worldstate | Current game time per realm (hot reads, updated every ClockTickIntervalSeconds) |
 
-**Total**: 236 stores (142 Redis, 94 MySQL)
+**Total**: 238 stores (142 Redis, 96 MySQL)
 
 ## Naming Conventions
 

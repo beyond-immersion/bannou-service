@@ -97,3 +97,76 @@ x-service-configuration:
       minimum: 3600
       maximum: 604800
       description: Maximum allowed TTL for snapshots (24 hours default, max 7 days)
+
+    # === Transaction Recovery Worker Configuration ===
+    TransactionRecoveryWorkerIntervalSeconds:
+      type: integer
+      env: RESOURCE_TRANSACTION_RECOVERY_WORKER_INTERVAL_SECONDS
+      default: 30
+      minimum: 5
+      maximum: 300
+      description: How often the worker scans for transactions needing recovery (TTL expiry, commit resume, compensation retry)
+
+    TransactionRecoveryWorkerStartupDelaySeconds:
+      type: integer
+      env: RESOURCE_TRANSACTION_RECOVERY_WORKER_STARTUP_DELAY_SECONDS
+      default: 15
+      minimum: 0
+      maximum: 120
+      description: Delay before first recovery cycle after startup
+
+    TransactionCompensationMaxRetries:
+      type: integer
+      env: RESOURCE_TRANSACTION_COMPENSATION_MAX_RETRIES
+      default: 10
+      minimum: 1
+      maximum: 50
+      description: Maximum compensation retry attempts per provision before giving up
+
+    TransactionCompensationBackoffBaseSeconds:
+      type: integer
+      env: RESOURCE_TRANSACTION_COMPENSATION_BACKOFF_BASE_SECONDS
+      default: 5
+      minimum: 1
+      maximum: 60
+      description: Base delay for exponential backoff between compensation retries
+
+    TransactionCommitMaxRetries:
+      type: integer
+      env: RESOURCE_TRANSACTION_COMMIT_MAX_RETRIES
+      default: 10
+      minimum: 1
+      maximum: 50
+      description: Maximum retries for reference registration during Committing state recovery
+
+    TransactionValidationMaxRetries:
+      type: integer
+      env: RESOURCE_TRANSACTION_VALIDATION_MAX_RETRIES
+      default: 5
+      minimum: 1
+      maximum: 20
+      description: Maximum validation check attempts before escalating to admin (transaction remains Active for manual intervention)
+
+    TransactionRetentionDays:
+      type: integer
+      env: RESOURCE_TRANSACTION_RETENTION_DAYS
+      default: 7
+      minimum: 1
+      maximum: 90
+      description: Days to retain completed or aborted transaction metadata before purging
+
+    TransactionDefaultTtlSeconds:
+      type: integer
+      env: RESOURCE_TRANSACTION_DEFAULT_TTL_SECONDS
+      default: 120
+      minimum: 10
+      maximum: 600
+      description: Default TTL for transactions when the caller does not specify one
+
+    TransactionMaxTtlSeconds:
+      type: integer
+      env: RESOURCE_TRANSACTION_MAX_TTL_SECONDS
+      default: 600
+      minimum: 60
+      maximum: 3600
+      description: Maximum allowed TTL — BeginTransaction clamps requested TTL to this value

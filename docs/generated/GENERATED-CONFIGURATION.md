@@ -1236,6 +1236,15 @@ This document lists all configuration options defined in Bannou's configuration 
 | `RESOURCE_SNAPSHOT_DEFAULT_TTL_SECONDS` | int | `3600` | Default TTL for snapshots when not specified in request (1 h... |
 | `RESOURCE_SNAPSHOT_MAX_TTL_SECONDS` | int | `86400` | Maximum allowed TTL for snapshots (24 hours default, max 7 d... |
 | `RESOURCE_SNAPSHOT_MIN_TTL_SECONDS` | int | `60` | Minimum allowed TTL for snapshots (1 minute default) |
+| `RESOURCE_TRANSACTION_COMMIT_MAX_RETRIES` | int | `10` | Maximum retries for reference registration during Committing... |
+| `RESOURCE_TRANSACTION_COMPENSATION_BACKOFF_BASE_SECONDS` | int | `5` | Base delay for exponential backoff between compensation retr... |
+| `RESOURCE_TRANSACTION_COMPENSATION_MAX_RETRIES` | int | `10` | Maximum compensation retry attempts per provision before giv... |
+| `RESOURCE_TRANSACTION_DEFAULT_TTL_SECONDS` | int | `120` | Default TTL for transactions when the caller does not specif... |
+| `RESOURCE_TRANSACTION_MAX_TTL_SECONDS` | int | `600` | Maximum allowed TTL — BeginTransaction clamps requested TTL ... |
+| `RESOURCE_TRANSACTION_RECOVERY_WORKER_INTERVAL_SECONDS` | int | `30` | How often the worker scans for transactions needing recovery... |
+| `RESOURCE_TRANSACTION_RECOVERY_WORKER_STARTUP_DELAY_SECONDS` | int | `15` | Delay before first recovery cycle after startup |
+| `RESOURCE_TRANSACTION_RETENTION_DAYS` | int | `7` | Days to retain completed or aborted transaction metadata bef... |
+| `RESOURCE_TRANSACTION_VALIDATION_MAX_RETRIES` | int | `5` | Maximum validation check attempts before escalating to admin... |
 
 ### Save Load
 
@@ -1493,9 +1502,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 1174
+- **Total properties**: 1183
 - **Required (no default)**: 67
-- **Optional (has default)**: 1107
+- **Optional (has default)**: 1116
 
 ## Environment Variable Naming Convention
 

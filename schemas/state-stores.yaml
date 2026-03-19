@@ -1081,6 +1081,16 @@ x-state-stores:
     service: Resource
     purpose: Ephemeral snapshots of living resources (TTL-based auto-expiry for storyline/actor consumption)
 
+  resource-transactions:
+    backend: mysql
+    service: Resource
+    purpose: Durable provisioning transactions with TTL validation, compensation tracking, and crash-safe commit state
+
+  resource-provisions:
+    backend: mysql
+    service: Resource
+    purpose: Individual resource provisions within a transaction (sequenced for reverse-order compensation)
+
   # ============================================================================
   # Storyline Stores
   # ============================================================================

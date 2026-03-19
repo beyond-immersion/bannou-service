@@ -3481,4 +3481,1291 @@ public partial class ResourceController
             _GetSeededResource_ResponseSchema));
 
     #endregion
+
+    #region Meta Endpoints for BeginTransaction
+
+    private static readonly string _BeginTransaction_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BeginTransactionRequest",
+    "$defs": {
+        "BeginTransactionRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to begin a provisioning transaction with TTL and validation",
+            "required": [
+                "ownerService",
+                "parentResourceType",
+                "parentResourceId"
+            ],
+            "properties": {
+                "ownerService": {
+                    "type": "string",
+                    "description": "Service that owns this transaction (e.g., \"genesis\", \"craft\")"
+                },
+                "parentResourceType": {
+                    "type": "string",
+                    "description": "Type of entity being provisioned (opaque identifier)"
+                },
+                "parentResourceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the entity being provisioned"
+                },
+                "ttlSeconds": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Transaction TTL in seconds (clamped to configured max, defaults to configured default)"
+                },
+                "expectedProvisionCount": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "How many provisions the requester intends to register (helps worker distinguish crash scenarios)"
+                },
+                "completionValidation": {
+                    "$ref": "#/$defs/PreboundApi",
+                    "nullable": true,
+                    "description": "Prebound API that returns 200 if the parent entity was successfully created.\nExecuted by the recovery worker on TTL expiry to decide auto-commit vs auto-abort.\nUses {{parentResourceId}} placeholder in payloadTemplate.\n"
+                }
+            }
+        },
+        "PreboundApi": {
+            "type": "object",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.PreboundApi",
+            "description": "Pre-configured API call definition with optional response transformation",
+            "additionalProperties": false,
+            "required": [
+                "serviceName",
+                "endpoint",
+                "payloadTemplate"
+            ],
+            "properties": {
+                "serviceName": {
+                    "type": "string",
+                    "description": "Target service name (e.g., \"genesis\", \"seed\", \"currency\")"
+                },
+                "endpoint": {
+                    "type": "string",
+                    "description": "Target endpoint path (e.g., \"/genesis/entity/get\")"
+                },
+                "payloadTemplate": {
+                    "type": "string",
+                    "description": "JSON payload template with {{variable}} placeholders substituted at execution time"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description of what this API call does"
+                },
+                "executionMode": {
+                    "$ref": "#/$defs/PreboundApiExecutionMode",
+                    "description": "How to execute this API call (defaults to Sync)"
+                },
+                "responseTransformation": {
+                    "$ref": "#/$defs/ResponseTransformation",
+                    "nullable": true,
+                    "description": "Optional transformation rules for the API response"
+                }
+            }
+        },
+        "PreboundApiExecutionMode": {
+            "type": "string",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.PreboundApiExecutionMode",
+            "description": "How a prebound API should be executed",
+            "enum": [
+                "Sync",
+                "Async",
+                "FireAndForget"
+            ]
+        },
+        "ResponseTransformation": {
+            "type": "object",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.ResponseTransformation",
+            "description": "Transformation rules applied to a prebound API response. First matching rule produces the result.",
+            "additionalProperties": false,
+            "properties": {
+                "rules": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TransformationRule"
+                    },
+                    "nullable": true,
+                    "description": "Ordered list of transformation rules (first match wins)"
+                },
+                "transientFailureStatusCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "nullable": true,
+                    "description": "HTTP status codes indicating transient failure (default 408, 429, 502, 503, 504)"
+                }
+            }
+        },
+        "TransformationRule": {
+            "type": "object",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationRule",
+            "description": "A single transformation rule with conditions and result payload",
+            "additionalProperties": false,
+            "required": [
+                "statusCode"
+            ],
+            "properties": {
+                "conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TransformationCondition"
+                    },
+                    "nullable": true,
+                    "description": "All conditions must match (AND logic). Empty or null = unconditional match."
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "description": "HTTP status code to return when this rule matches"
+                },
+                "payload": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JSON payload to return (null = pass through raw response body)"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description for diagnostics"
+                }
+            }
+        },
+        "TransformationCondition": {
+            "type": "object",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationCondition",
+            "description": "A single condition to evaluate against an API response",
+            "additionalProperties": false,
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "$ref": "#/$defs/TransformationConditionType",
+                    "description": "The type of condition to evaluate"
+                },
+                "jsonPath": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JsonPath expression (e.g., \"$.balance\", \"$.species.code\")"
+                },
+                "expectedValue": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Expected value for comparison conditions"
+                },
+                "operator": {
+                    "$ref": "#/$defs/ComparisonOperator",
+                    "nullable": true,
+                    "description": "Comparison operator for numeric conditions"
+                },
+                "statusCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "nullable": true,
+                    "description": "HTTP status codes for StatusCodeIn condition"
+                }
+            }
+        },
+        "TransformationConditionType": {
+            "type": "string",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationConditionType",
+            "description": "Types of conditions that can be evaluated against an API response",
+            "enum": [
+                "StatusCodeIn",
+                "JsonPathEquals",
+                "JsonPathNotEquals",
+                "JsonPathExists",
+                "JsonPathNotExists",
+                "JsonPathGreaterThan",
+                "JsonPathLessThan",
+                "JsonPathContains"
+            ]
+        },
+        "ComparisonOperator": {
+            "type": "string",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.ComparisonOperator",
+            "description": "Comparison operators for numeric conditions",
+            "enum": [
+                "Eq",
+                "Ne",
+                "Gt",
+                "Gte",
+                "Lt",
+                "Lte"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _BeginTransaction_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BeginTransactionResponse",
+    "$defs": {
+        "BeginTransactionResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response after beginning a provisioning transaction",
+            "required": [
+                "transactionId",
+                "status",
+                "ttlSeconds",
+                "expiresAt"
+            ],
+            "properties": {
+                "transactionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique transaction identifier (use for all subsequent operations)"
+                },
+                "status": {
+                    "$ref": "#/$defs/TransactionStatus",
+                    "description": "Initial transaction status (always Active)"
+                },
+                "ttlSeconds": {
+                    "type": "integer",
+                    "description": "Effective TTL after clamping to configured max"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the transaction TTL expires"
+                }
+            }
+        },
+        "TransactionStatus": {
+            "type": "string",
+            "enum": [
+                "Active",
+                "Committing",
+                "Committed",
+                "Aborting",
+                "Aborted"
+            ],
+            "description": "Provisioning transaction lifecycle state.\nActive: Provisioning in progress, awaiting commit or abort\nCommitting: Converting provisions to permanent references (crash-safe checkpoint)\nCommitted: All provisions confirmed as permanent references\ nAborting: Compensation in progress for some or all provisions\nAborted: All compensations completed or retries exhausted\n"
+        }
+    }
+}
+""";
+
+    private static readonly string _BeginTransaction_Info = """
+{
+    "summary": "Begin a provisioning transaction",
+    "description": "Creates a durable provisioning transaction with a TTL deadline.\nIf the transaction is neither committed nor aborted within the TTL,\ nthe background worker executes the completionValidation check to determine\nwhether to auto-commit (entity exists) or auto-abort (entity does not exist).\n\nUse this when an orchestrating service needs to provision resources\nacross multiple services with guaranteed cleanup on failure.\n",
+    "tags": [
+        "Transaction Management"
+    ],
+    "deprecated": false,
+    "operationId": "beginTransaction"
+}
+""";
+
+    /// <summary>Returns endpoint information for BeginTransaction</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/begin/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BeginTransaction_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/begin",
+            _BeginTransaction_Info));
+
+    /// <summary>Returns request schema for BeginTransaction</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/begin/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BeginTransaction_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/begin",
+            "request-schema",
+            _BeginTransaction_RequestSchema));
+
+    /// <summary>Returns response schema for BeginTransaction</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/begin/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BeginTransaction_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/begin",
+            "response-schema",
+            _BeginTransaction_ResponseSchema));
+
+    /// <summary>Returns full schema for BeginTransaction</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/begin/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BeginTransaction_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/begin",
+            _BeginTransaction_Info,
+            _BeginTransaction_RequestSchema,
+            _BeginTransaction_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RegisterProvision
+
+    private static readonly string _RegisterProvision_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RegisterProvisionRequest",
+    "$defs": {
+        "RegisterProvisionRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to register a planned provision before creating the resource",
+            "required": [
+                "transactionId",
+                "resourceType",
+                "resourceId",
+                "compensation"
+            ],
+            "properties": {
+                "transactionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Transaction this provision belongs to"
+                },
+                "resourceType": {
+                    "type": "string",
+                    "description": "Type of resource being provisioned (e.g., \"seed\", \"currency-wallet\")"
+                },
+                "resourceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Pre-generated ID for the resource (known before creation for register-before-create flow)"
+                },
+                "compensation": {
+                    "$ref": "#/$defs/PreboundApi",
+                    "description": "Prebound API to call for compensation (undo). Must be idempotent.\n404 from the compensation endpoint is treated as successful compensation.\nUses {{provisionResourceId}} placeholder in payloadTemplate.\n"
+                },
+                "verification": {
+                    "$ref": "#/$defs/PreboundApi",
+                    "nullable": true,
+                    "description": "Optional prebound API to check if the provisioned resource still exists.\nUsed by the recovery worker during abort to skip compensating already-cleaned resources.\nUses {{provisionResourceId}} placeholder in payloadTemplate.\n"
+                }
+            }
+        },
+        "PreboundApi": {
+            "type": "object",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.PreboundApi",
+            "description": "Pre-configured API call definition with optional response transformation",
+            "additionalProperties": false,
+            "required": [
+                "serviceName",
+                "endpoint",
+                "payloadTemplate"
+            ],
+            "properties": {
+                "serviceName": {
+                    "type": "string",
+                    "description": "Target service name (e.g., \"genesis\", \"seed\", \"currency\")"
+                },
+                "endpoint": {
+                    "type": "string",
+                    "description": "Target endpoint path (e.g., \"/genesis/entity/get\")"
+                },
+                "payloadTemplate": {
+                    "type": "string",
+                    "description": "JSON payload template with {{variable}} placeholders substituted at execution time"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description of what this API call does"
+                },
+                "executionMode": {
+                    "$ref": "#/$defs/PreboundApiExecutionMode",
+                    "description": "How to execute this API call (defaults to Sync)"
+                },
+                "responseTransformation": {
+                    "$ref": "#/$defs/ResponseTransformation",
+                    "nullable": true,
+                    "description": "Optional transformation rules for the API response"
+                }
+            }
+        },
+        "PreboundApiExecutionMode": {
+            "type": "string",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.PreboundApiExecutionMode",
+            "description": "How a prebound API should be executed",
+            "enum": [
+                "Sync",
+                "Async",
+                "FireAndForget"
+            ]
+        },
+        "ResponseTransformation": {
+            "type": "object",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.ResponseTransformation",
+            "description": "Transformation rules applied to a prebound API response. First matching rule produces the result.",
+            "additionalProperties": false,
+            "properties": {
+                "rules": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TransformationRule"
+                    },
+                    "nullable": true,
+                    "description": "Ordered list of transformation rules (first match wins)"
+                },
+                "transientFailureStatusCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "nullable": true,
+                    "description": "HTTP status codes indicating transient failure (default 408, 429, 502, 503, 504)"
+                }
+            }
+        },
+        "TransformationRule": {
+            "type": "object",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationRule",
+            "description": "A single transformation rule with conditions and result payload",
+            "additionalProperties": false,
+            "required": [
+                "statusCode"
+            ],
+            "properties": {
+                "conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TransformationCondition"
+                    },
+                    "nullable": true,
+                    "description": "All conditions must match (AND logic). Empty or null = unconditional match."
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "description": "HTTP status code to return when this rule matches"
+                },
+                "payload": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JSON payload to return (null = pass through raw response body)"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description for diagnostics"
+                }
+            }
+        },
+        "TransformationCondition": {
+            "type": "object",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationCondition",
+            "description": "A single condition to evaluate against an API response",
+            "additionalProperties": false,
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "$ref": "#/$defs/TransformationConditionType",
+                    "description": "The type of condition to evaluate"
+                },
+                "jsonPath": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JsonPath expression (e.g., \"$.balance\", \"$.species.code\")"
+                },
+                "expectedValue": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Expected value for comparison conditions"
+                },
+                "operator": {
+                    "$ref": "#/$defs/ComparisonOperator",
+                    "nullable": true,
+                    "description": "Comparison operator for numeric conditions"
+                },
+                "statusCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "nullable": true,
+                    "description": "HTTP status codes for StatusCodeIn condition"
+                }
+            }
+        },
+        "TransformationConditionType": {
+            "type": "string",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationConditionType",
+            "description": "Types of conditions that can be evaluated against an API response",
+            "enum": [
+                "StatusCodeIn",
+                "JsonPathEquals",
+                "JsonPathNotEquals",
+                "JsonPathExists",
+                "JsonPathNotExists",
+                "JsonPathGreaterThan",
+                "JsonPathLessThan",
+                "JsonPathContains"
+            ]
+        },
+        "ComparisonOperator": {
+            "type": "string",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.ComparisonOperator",
+            "description": "Comparison operators for numeric conditions",
+            "enum": [
+                "Eq",
+                "Ne",
+                "Gt",
+                "Gte",
+                "Lt",
+                "Lte"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _RegisterProvision_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RegisterProvisionResponse",
+    "$defs": {
+        "RegisterProvisionResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response after registering a provision",
+            "required": [
+                "provisionId",
+                "sequenceNumber",
+                "status"
+            ],
+            "properties": {
+                "provisionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique provision identifier"
+                },
+                "sequenceNumber": {
+                    "type": "integer",
+                    "description": "Provision order within the transaction (for reverse compensation)"
+                },
+                "status": {
+                    "$ref": "#/$defs/ProvisionStatus",
+                    "description": "Initial provision status (always Pending)"
+                }
+            }
+        },
+        "ProvisionStatus": {
+            "type": "string",
+            "enum": [
+                "Pending",
+                "Provisioned",
+                "ReferenceRegistered",
+                "Compensated",
+                "CompensationFailed"
+            ],
+            "description": "Individual provision lifecycle state within a transaction.\nPending: Registered with pre-generated ID but resource not yet created\nProvisioned: Resource confirmed created at the pre-generated ID\nReferenceRegistered: Converted to permanent resource reference during commit\nCompensated: Compensation endpoint called successfully (resource deleted or confirmed absent)\nCompensationFailed: Compensation attempted but failed (worker will retry)\n"
+        }
+    }
+}
+""";
+
+    private static readonly string _RegisterProvision_Info = """
+{
+    "summary": "Register a planned provision with pre-generated ID (status Pending)",
+    "description": "Records that a resource WILL BE provisioned as part of an active transaction.\nCalled BEFORE creating the resource. The pre-generated resourceId and\ncompensation definition are stored so that if the process crashes before\nthe resource is created, the transaction can still compensate (compensation\nendpoint receives 404, which is treated as successful compensation).\nProvisions are compensated in reverse registration order on abort.\n",
+    "tags": [
+        "Transaction Management"
+    ],
+    "deprecated": false,
+    "operationId": "registerProvision"
+}
+""";
+
+    /// <summary>Returns endpoint information for RegisterProvision</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/register-provision/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RegisterProvision_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/register-provision",
+            _RegisterProvision_Info));
+
+    /// <summary>Returns request schema for RegisterProvision</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/register-provision/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RegisterProvision_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/register-provision",
+            "request-schema",
+            _RegisterProvision_RequestSchema));
+
+    /// <summary>Returns response schema for RegisterProvision</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/register-provision/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RegisterProvision_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/register-provision",
+            "response-schema",
+            _RegisterProvision_ResponseSchema));
+
+    /// <summary>Returns full schema for RegisterProvision</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/register-provision/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RegisterProvision_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/register-provision",
+            _RegisterProvision_Info,
+            _RegisterProvision_RequestSchema,
+            _RegisterProvision_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ConfirmProvision
+
+    private static readonly string _ConfirmProvision_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ConfirmProvisionRequest",
+    "$defs": {
+        "ConfirmProvisionRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to confirm a provision was successfully created",
+            "required": [
+                "transactionId",
+                "resourceId"
+            ],
+            "properties": {
+                "transactionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Transaction the provision belongs to"
+                },
+                "resourceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Resource ID of the provision to confirm (matches the pre-generated ID from registration)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ConfirmProvision_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ConfirmProvisionResponse",
+    "$defs": {
+        "ConfirmProvisionResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response after confirming a provision",
+            "required": [
+                "provisionId",
+                "status"
+            ],
+            "properties": {
+                "provisionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Provision identifier"
+                },
+                "status": {
+                    "$ref": "#/$defs/ProvisionStatus",
+                    "description": "Updated provision status (Provisioned)"
+                }
+            }
+        },
+        "ProvisionStatus": {
+            "type": "string",
+            "enum": [
+                "Pending",
+                "Provisioned",
+                "ReferenceRegistered",
+                "Compensated",
+                "CompensationFailed"
+            ],
+            "description": "Individual provision lifecycle state within a transaction.\nPending: Registered with pre-generated ID but resource not yet created\nProvisioned: Resource confirmed created at the pre-generated ID\nReferenceRegistered: Converted to permanent resource reference during commit\nCompensated: Compensation endpoint called successfully (resource deleted or confirmed absent)\nCompensationFailed: Compensation attempted but failed (worker will retry)\n"
+        }
+    }
+}
+""";
+
+    private static readonly string _ConfirmProvision_Info = """
+{
+    "summary": "Confirm a provision was successfully created (Pending to Provisioned)",
+    "description": "Called AFTER the resource has been successfully created at the pre-generated ID.\nTransitions the provision from Pending to Provisioned. If the process crashes\nbefore this call, the provision remains Pending \u2014 on abort, the compensation\nendpoint is called and handles the resource if it exists (idempotent).\n",
+    "tags": [
+        "Transaction Management"
+    ],
+    "deprecated": false,
+    "operationId": "confirmProvision"
+}
+""";
+
+    /// <summary>Returns endpoint information for ConfirmProvision</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/confirm-provision/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmProvision_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/confirm-provision",
+            _ConfirmProvision_Info));
+
+    /// <summary>Returns request schema for ConfirmProvision</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/confirm-provision/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmProvision_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/confirm-provision",
+            "request-schema",
+            _ConfirmProvision_RequestSchema));
+
+    /// <summary>Returns response schema for ConfirmProvision</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/confirm-provision/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmProvision_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/confirm-provision",
+            "response-schema",
+            _ConfirmProvision_ResponseSchema));
+
+    /// <summary>Returns full schema for ConfirmProvision</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/confirm-provision/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmProvision_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/confirm-provision",
+            _ConfirmProvision_Info,
+            _ConfirmProvision_RequestSchema,
+            _ConfirmProvision_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CommitTransaction
+
+    private static readonly string _CommitTransaction_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CommitTransactionRequest",
+    "$defs": {
+        "CommitTransactionRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to commit a provisioning transaction",
+            "required": [
+                "transactionId"
+            ],
+            "properties": {
+                "transactionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Transaction to commit"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CommitTransaction_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CommitTransactionResponse",
+    "$defs": {
+        "CommitTransactionResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response after committing a transaction",
+            "required": [
+                "transactionId",
+                "status",
+                "referencesRegistered"
+            ],
+            "properties": {
+                "transactionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Transaction identifier"
+                },
+                "status": {
+                    "$ref": "#/$defs/TransactionStatus",
+                    "description": "Final transaction status (Committed)"
+                },
+                "referencesRegistered": {
+                    "type": "integer",
+                    "description": "Number of provisions converted to permanent references"
+                }
+            }
+        },
+        "TransactionStatus": {
+            "type": "string",
+            "enum": [
+                "Active",
+                "Committing",
+                "Committed",
+                "Aborting",
+                "Aborted"
+            ],
+            "description": "Provisioning transaction lifecycle state.\nActive: Provisioning in progress, awaiting commit or abort\nCommitting: Converting provisions to permanent references (crash-safe checkpoint)\nCommitted: All provisions confirmed as permanent references\nAborting: Compensation in progress for some or all provisions\nAborted: All compensations completed or retries exhausted\n"
+        }
+    }
+}
+""";
+
+    private static readonly string _CommitTransaction_Info = """
+{
+    "summary": "Commit a provisioning transaction",
+    "description": "Marks a transaction as committed. All provisions become permanent\nresource references via the existing RegisterReference mechanism.\ nUses a crash-safe two-phase internal process: transitions to Committing\nfirst, registers references one by one (checkpointing each), then\ntransitions to Committed. The recovery worker resumes from the last\ncheckpoint if the process crashes mid-commit.\n",
+    "tags": [
+        "Transaction Management"
+    ],
+    "deprecated": false,
+    "operationId": "commitTransaction"
+}
+""";
+
+    /// <summary>Returns endpoint information for CommitTransaction</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/commit/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CommitTransaction_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/commit",
+            _CommitTransaction_Info));
+
+    /// <summary>Returns request schema for CommitTransaction</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/commit/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CommitTransaction_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/commit",
+            "request-schema",
+            _CommitTransaction_RequestSchema));
+
+    /// <summary>Returns response schema for CommitTransaction</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/commit/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CommitTransaction_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/commit",
+            "response-schema",
+            _CommitTransaction_ResponseSchema));
+
+    /// <summary>Returns full schema for CommitTransaction</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/commit/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CommitTransaction_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/commit",
+            _CommitTransaction_Info,
+            _CommitTransaction_RequestSchema,
+            _CommitTransaction_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for AbortTransaction
+
+    private static readonly string _AbortTransaction_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AbortTransactionRequest",
+    "$defs": {
+        "AbortTransactionRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to abort a provisioning transaction and compensate provisions",
+            "required": [
+                "transactionId"
+            ],
+            "properties": {
+                "transactionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Transaction to abort"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for aborting (stored for diagnostics)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _AbortTransaction_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AbortTransactionResponse",
+    "$defs": {
+        "AbortTransactionResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response after initiating transaction abort",
+            "required": [
+                "transactionId",
+                "status",
+                "compensatedCount",
+                "failedCount",
+                "pendingCount"
+            ],
+            "properties": {
+                "transactionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Transaction identifier"
+                },
+                "status": {
+                    "$ref": "#/$defs/TransactionStatus",
+                    "description": "Transaction status after abort attempt (Aborted or Aborting if retries needed)"
+                },
+                "compensatedCount": {
+                    "type": "integer",
+                    "description": "Number of provisions successfully compensated"
+                },
+                "failedCount": {
+                    "type": "integer",
+                    "description": "Number of provisions whose compensation failed (will be retried by worker)"
+                },
+                "pendingCount": {
+                    "type": "integer",
+                    "description": "Number of provisions in Pending state (resource never created, compensation is no-op)"
+                }
+            }
+        },
+        "TransactionStatus": {
+            "type": "string",
+            "enum": [
+                "Active",
+                "Committing",
+                "Committed",
+                "Aborting",
+                "Aborted"
+            ],
+            "description": "Provisioning transaction lifecycle state.\nActive: Provisioning in progress, awaiting commit or abort\nCommitting: Converting provisions to permanent references (crash-safe checkpoint)\nCommitted: All provisions confirmed as permanent references\ nAborting: Compensation in progress for some or all provisions\nAborted: All compensations completed or retries exhausted\n"
+        }
+    }
+}
+""";
+
+    private static readonly string _AbortTransaction_Info = """
+{
+    "summary": "Abort a provisioning transaction",
+    "description": "Initiates compensation for all provisions in reverse registration order.\nResource calls each provision's compensation endpoint using the prebound\nAPI execution mechanism. Provisions that compensate successfully are marked\nCompensated. Provisions that fail are marked CompensationFailed and retried\nby the background recovery worker.\n",
+    "tags": [
+        "Transaction Management"
+    ],
+    "deprecated": false,
+    "operationId": "abortTransaction"
+}
+""";
+
+    /// <summary>Returns endpoint information for AbortTransaction</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/abort/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> AbortTransaction_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/abort",
+            _AbortTransaction_Info));
+
+    /// <summary>Returns request schema for AbortTransaction</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/abort/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> AbortTransaction_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/abort",
+            "request-schema",
+            _AbortTransaction_RequestSchema));
+
+    /// <summary>Returns response schema for AbortTransaction</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/abort/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> AbortTransaction_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/abort",
+            "response-schema",
+            _AbortTransaction_ResponseSchema));
+
+    /// <summary>Returns full schema for AbortTransaction</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/abort/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> AbortTransaction_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/abort",
+            _AbortTransaction_Info,
+            _AbortTransaction_RequestSchema,
+            _AbortTransaction_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetTransactionStatus
+
+    private static readonly string _GetTransactionStatus_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetTransactionStatusRequest",
+    "$defs": {
+        "GetTransactionStatusRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to query transaction status",
+            "required": [
+                "transactionId"
+            ],
+            "properties": {
+                "transactionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Transaction to query"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetTransactionStatus_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/TransactionStatusResponse",
+    "$defs": {
+        "TransactionStatusResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Full transaction status with per-provision detail",
+            "required": [
+                "transactionId",
+                "ownerService",
+                "parentResourceType",
+                "parentResourceId",
+                "status",
+                "createdAt",
+                "updatedAt",
+                "ttlSeconds",
+                "provisions"
+            ],
+            "properties": {
+                "transactionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Transaction identifier"
+                },
+                "ownerService": {
+                    "type": "string",
+                    "description": "Service that owns this transaction"
+                },
+                "parentResourceType": {
+                    "type": "string",
+                    "description": "Type of entity being provisioned"
+                },
+                "parentResourceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the entity being provisioned"
+                },
+                "status": {
+                    "$ref": "#/$defs/TransactionStatus",
+                    "description": "Current transaction status"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the transaction was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the transaction was last updated"
+                },
+                "ttlSeconds": {
+                    "type": "integer",
+                    "description": "Transaction TTL in seconds"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the transaction TTL expires"
+                },
+                "expectedProvisionCount": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Expected number of provisions (null if not specified)"
+                },
+                "validationAttempts": {
+                    "type": "integer",
+                    "description": "Number of TTL validation attempts made"
+                },
+                "provisions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ProvisionDetail"
+                    },
+                    "description": "Per-provision status details"
+                }
+            }
+        },
+        "TransactionStatus": {
+            "type": "string",
+            "enum": [
+                "Active",
+                "Committing",
+                "Committed",
+                "Aborting",
+                "Aborted"
+            ],
+            "description": "Provisioning transaction lifecycle state.\nActive: Provisioning in progress, awaiting commit or abort\nCommitting: Converting provisions to permanent references (crash-safe checkpoint)\nCommitted: All provisions confirmed as permanent references\nAborting: Compensation in progress for some or all provisions\nAborted: All compensations completed or retries exhausted\n"
+        },
+        "ProvisionDetail": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Status detail for a single provision within a transaction",
+            "required": [
+                "provisionId",
+                "sequenceNumber",
+                "resourceType",
+                "resourceId",
+                "status",
+                "registeredAt"
+            ],
+            "properties": {
+                "provisionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique provision identifier"
+                },
+                "sequenceNumber": {
+                    "type": "integer",
+                    "description": "Registration order (compensated in reverse)"
+                },
+                "resourceType": {
+                    "type": "string",
+                    "description": "Type of provisioned resource"
+                },
+                "resourceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Pre-generated resource ID"
+                },
+                "status": {
+                    "$ref": "#/$defs/ProvisionStatus",
+                    "description": "Current provision status"
+                },
+                "registeredAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the provision was registered"
+                },
+                "provisionedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the resource was confirmed created (null if still Pending)"
+                },
+                "compensatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When compensation completed (null if not compensated)"
+                },
+                "compensationAttempts": {
+                    "type": "integer",
+                    "description": "Number of compensation attempts made"
+                },
+                "lastCompensationError": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Error from last failed compensation attempt"
+                }
+            }
+        },
+        "ProvisionStatus": {
+            "type": "string",
+            "enum": [
+                "Pending",
+                "Provisioned",
+                "ReferenceRegistered",
+                "Compensated",
+                "CompensationFailed"
+            ],
+            "description": "Individual provision lifecycle state within a transaction.\nPending: Registered with pre-generated ID but resource not yet created\nProvisioned: Resource confirmed created at the pre-generated ID\nReferenceRegistered: Converted to permanent resource reference during commit\nCompensated: Compensation endpoint called successfully (resource deleted or confirmed absent)\nCompensationFailed: Compensation attempted but failed (worker will retry)\n"
+        }
+    }
+}
+""";
+
+    private static readonly string _GetTransactionStatus_Info = """
+{
+    "summary": "Query transaction status with per-provision detail",
+    "description": "Returns the current status of a transaction including per-provision\nstatus. Useful for admin tooling, debugging, and monitoring.\n",
+    "tags": [
+        "Transaction Management"
+    ],
+    "deprecated": false,
+    "operationId": "getTransactionStatus"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetTransactionStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/status/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetTransactionStatus_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/status",
+            _GetTransactionStatus_Info));
+
+    /// <summary>Returns request schema for GetTransactionStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/status/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetTransactionStatus_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/status",
+            "request-schema",
+            _GetTransactionStatus_RequestSchema));
+
+    /// <summary>Returns response schema for GetTransactionStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/status/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetTransactionStatus_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/status",
+            "response-schema",
+            _GetTransactionStatus_ResponseSchema));
+
+    /// <summary>Returns full schema for GetTransactionStatus</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/resource/transaction/status/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetTransactionStatus_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Resource",
+            "POST",
+            "/resource/transaction/status",
+            _GetTransactionStatus_Info,
+            _GetTransactionStatus_RequestSchema,
+            _GetTransactionStatus_ResponseSchema));
+
+    #endregion
 }

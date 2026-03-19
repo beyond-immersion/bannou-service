@@ -513,6 +513,14 @@ This document lists all events defined in Bannou's event schemas.
 | `ResourceMigrateCallbackFailedEvent` | Custom | `resource-migrate-callback-failed` | Published when a migration callback fails during r... |
 | `ResourceMigratedEvent` | Custom | `resource-migrated` | Published when a resource migration completes succ... |
 | `ResourceSnapshotCreatedEvent` | Lifecycle (Created) | `resource-snapshot.created` | Published when an ephemeral snapshot of a living r... |
+| `ResourceTransactionAbortedEvent` | Custom | `resource-transaction-aborted` | Published when a transaction is fully aborted. All... |
+| `ResourceTransactionAutoAbortedEvent` | Custom | `resource-transaction-auto-aborted` | Published when the recovery worker auto-aborts a t... |
+| `ResourceTransactionAutoCommittedEvent` | Custom | `resource-transaction-auto-committed` | Published when the recovery worker auto-commits a ... |
+| `ResourceTransactionCommitFailedEvent` | Custom | `resource-transaction-commit-failed` | Published when commit reference registration exhau... |
+| `ResourceTransactionCommittedEvent` | Custom | `resource-transaction-committed` | Published when a transaction is successfully commi... |
+| `ResourceTransactionCompensationExhaustedEvent` | Custom | `resource-transaction-compensation-exhausted` | Published when compensation retries are exhausted ... |
+| `ResourceTransactionCreatedEvent` | Lifecycle (Created) | `resource-transaction.created` | Published when a provisioning transaction is begun... |
+| `ResourceTransactionValidationExhaustedEvent` | Custom | `resource-transaction-validation-exhausted` | Published when TTL validation retries are exhauste... |
 
 ### Save Load
 

@@ -2578,4 +2578,56 @@ public partial class ResourceService : IResourceService
             Resource = null
         });
     }
+
+    // =========================================================================
+    // Transaction Management (Phase 1 — stubs, implementation next)
+    // =========================================================================
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, BeginTransactionResponse?)> BeginTransactionAsync(
+        BeginTransactionRequest body, CancellationToken ct = default)
+    {
+        await Task.CompletedTask;
+        throw new NotImplementedException("Transaction management not yet implemented");
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, RegisterProvisionResponse?)> RegisterProvisionAsync(
+        RegisterProvisionRequest body, CancellationToken ct = default)
+    {
+        await Task.CompletedTask;
+        throw new NotImplementedException("Transaction management not yet implemented");
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ConfirmProvisionResponse?)> ConfirmProvisionAsync(
+        ConfirmProvisionRequest body, CancellationToken ct = default)
+    {
+        await Task.CompletedTask;
+        throw new NotImplementedException("Transaction management not yet implemented");
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, CommitTransactionResponse?)> CommitTransactionAsync(
+        CommitTransactionRequest body, CancellationToken ct = default)
+    {
+        await Task.CompletedTask;
+        throw new NotImplementedException("Transaction management not yet implemented");
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, AbortTransactionResponse?)> AbortTransactionAsync(
+        AbortTransactionRequest body, CancellationToken ct = default)
+    {
+        await Task.CompletedTask;
+        throw new NotImplementedException("Transaction management not yet implemented");
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, TransactionStatusResponse?)> GetTransactionStatusAsync(
+        GetTransactionStatusRequest body, CancellationToken ct = default)
+    {
+        await Task.CompletedTask;
+        throw new NotImplementedException("Transaction management not yet implemented");
+    }
 }

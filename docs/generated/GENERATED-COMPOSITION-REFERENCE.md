@@ -386,7 +386,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Contract | L1 | Binding agreements with milestone progression, consent flows, and prebound API execution | 32 |
 | Localization | L1 | Multi-language translation tables with category lifecycle, pronunciation annotations, bulk export, and DI-based key validation for cross-service localization | 12 |
 | Permission | L1 | RBAC capability manifest compilation from service x state x role permission matrices | 8 |
-| Resource | L1 | Cross-layer reference tracking, cleanup coordination (CASCADE/RESTRICT/DETACH), and hierarchical compression | 20 |
+| Resource | L1 | Cross-layer reference tracking, cleanup coordination (CASCADE/RESTRICT/DETACH), and hierarchical compression | 26 |
 | Actor | L2 | NPC behavior execution runtime (ABML, GOAP, perception queues, variable providers, dynamic character binding) | 17 |
 | Character | L2 | Game world character management with realm partitioning and system realm support | 13 |
 | Collection | L2 | Universal content unlock and archive system with DI-dispatched unlock listeners | 23 |
@@ -454,7 +454,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Utility | L4 | Infrastructure network topology, flow calculation, and coverage cascading (aqueducts, power grids) | — |
 | Workshop | L4 | Time-based automated production with lazy evaluation and background materialization | — |
 
-**78 services, 1134 endpoints**
+**78 services, 1140 endpoints**
 
 For full per-service details: `docs/generated/GENERATED-*-SERVICE-DETAILS.md`
 

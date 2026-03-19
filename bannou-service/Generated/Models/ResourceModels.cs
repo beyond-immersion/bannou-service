@@ -24,6 +24,7 @@
 
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Resource;
+using BeyondImmersion.Bannou.Core;
 
 
 namespace BeyondImmersion.BannouService.Resource;
@@ -93,6 +94,612 @@ public enum CompressionPolicy
 
 }
 #pragma warning restore CS1591
+
+/// <summary>
+/// Provisioning transaction lifecycle state.
+/// <br/>Active: Provisioning in progress, awaiting commit or abort
+/// <br/>Committing: Converting provisions to permanent references (crash-safe checkpoint)
+/// <br/>Committed: All provisions confirmed as permanent references
+/// <br/>Aborting: Compensation in progress for some or all provisions
+/// <br/>Aborted: All compensations completed or retries exhausted
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum TransactionStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Active")]
+    Active = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Committing")]
+    Committing = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Committed")]
+    Committed = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Aborting")]
+    Aborting = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Aborted")]
+    Aborted = 4,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Individual provision lifecycle state within a transaction.
+/// <br/>Pending: Registered with pre-generated ID but resource not yet created
+/// <br/>Provisioned: Resource confirmed created at the pre-generated ID
+/// <br/>ReferenceRegistered: Converted to permanent resource reference during commit
+/// <br/>Compensated: Compensation endpoint called successfully (resource deleted or confirmed absent)
+/// <br/>CompensationFailed: Compensation attempted but failed (worker will retry)
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ProvisionStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Pending")]
+    Pending = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Provisioned")]
+    Provisioned = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ReferenceRegistered")]
+    ReferenceRegistered = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Compensated")]
+    Compensated = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"CompensationFailed")]
+    CompensationFailed = 4,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Request to begin a provisioning transaction with TTL and validation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BeginTransactionRequest
+{
+
+    /// <summary>
+    /// Service that owns this transaction (e.g., "genesis", "craft")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerService")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string OwnerService { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity being provisioned (opaque identifier)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentResourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ParentResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity being provisioned
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentResourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ParentResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// Transaction TTL in seconds (clamped to configured max, defaults to configured default)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ttlSeconds")]
+    public int? TtlSeconds { get; set; } = default!;
+
+    /// <summary>
+    /// How many provisions the requester intends to register (helps worker distinguish crash scenarios)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expectedProvisionCount")]
+    public int? ExpectedProvisionCount { get; set; } = default!;
+
+    /// <summary>
+    /// Prebound API that returns 200 if the parent entity was successfully created.
+    /// <br/>Executed by the recovery worker on TTL expiry to decide auto-commit vs auto-abort.
+    /// <br/>Uses {{parentResourceId}} placeholder in payloadTemplate.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("completionValidation")]
+    public PreboundApi? CompletionValidation { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response after beginning a provisioning transaction
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BeginTransactionResponse
+{
+
+    /// <summary>
+    /// Unique transaction identifier (use for all subsequent operations)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TransactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Initial transaction status (always Active)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public TransactionStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Effective TTL after clamping to configured max
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ttlSeconds")]
+    public int TtlSeconds { get; set; } = default!;
+
+    /// <summary>
+    /// When the transaction TTL expires
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset ExpiresAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to register a planned provision before creating the resource
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RegisterProvisionRequest
+{
+
+    /// <summary>
+    /// Transaction this provision belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TransactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of resource being provisioned (e.g., "seed", "currency-wallet")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Pre-generated ID for the resource (known before creation for register-before-create flow)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// Prebound API to call for compensation (undo). Must be idempotent.
+    /// <br/>404 from the compensation endpoint is treated as successful compensation.
+    /// <br/>Uses {{provisionResourceId}} placeholder in payloadTemplate.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("compensation")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public PreboundApi Compensation { get; set; } = new PreboundApi();
+
+    /// <summary>
+    /// Optional prebound API to check if the provisioned resource still exists.
+    /// <br/>Used by the recovery worker during abort to skip compensating already-cleaned resources.
+    /// <br/>Uses {{provisionResourceId}} placeholder in payloadTemplate.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("verification")]
+    public PreboundApi? Verification { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response after registering a provision
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RegisterProvisionResponse
+{
+
+    /// <summary>
+    /// Unique provision identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("provisionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ProvisionId { get; set; } = default!;
+
+    /// <summary>
+    /// Provision order within the transaction (for reverse compensation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sequenceNumber")]
+    public int SequenceNumber { get; set; } = default!;
+
+    /// <summary>
+    /// Initial provision status (always Pending)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ProvisionStatus Status { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to confirm a provision was successfully created
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ConfirmProvisionRequest
+{
+
+    /// <summary>
+    /// Transaction the provision belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TransactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Resource ID of the provision to confirm (matches the pre-generated ID from registration)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ResourceId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response after confirming a provision
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ConfirmProvisionResponse
+{
+
+    /// <summary>
+    /// Provision identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("provisionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ProvisionId { get; set; } = default!;
+
+    /// <summary>
+    /// Updated provision status (Provisioned)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ProvisionStatus Status { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to commit a provisioning transaction
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CommitTransactionRequest
+{
+
+    /// <summary>
+    /// Transaction to commit
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TransactionId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response after committing a transaction
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CommitTransactionResponse
+{
+
+    /// <summary>
+    /// Transaction identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TransactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Final transaction status (Committed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public TransactionStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Number of provisions converted to permanent references
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("referencesRegistered")]
+    public int ReferencesRegistered { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to abort a provisioning transaction and compensate provisions
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AbortTransactionRequest
+{
+
+    /// <summary>
+    /// Transaction to abort
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TransactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for aborting (stored for diagnostics)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? Reason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response after initiating transaction abort
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AbortTransactionResponse
+{
+
+    /// <summary>
+    /// Transaction identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TransactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Transaction status after abort attempt (Aborted or Aborting if retries needed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public TransactionStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Number of provisions successfully compensated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("compensatedCount")]
+    public int CompensatedCount { get; set; } = default!;
+
+    /// <summary>
+    /// Number of provisions whose compensation failed (will be retried by worker)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failedCount")]
+    public int FailedCount { get; set; } = default!;
+
+    /// <summary>
+    /// Number of provisions in Pending state (resource never created, compensation is no-op)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("pendingCount")]
+    public int PendingCount { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to query transaction status
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetTransactionStatusRequest
+{
+
+    /// <summary>
+    /// Transaction to query
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TransactionId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Full transaction status with per-provision detail
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class TransactionStatusResponse
+{
+
+    /// <summary>
+    /// Transaction identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transactionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TransactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Service that owns this transaction
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerService")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string OwnerService { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity being provisioned
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentResourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ParentResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity being provisioned
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentResourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ParentResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// Current transaction status
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public TransactionStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// When the transaction was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When the transaction was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Transaction TTL in seconds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ttlSeconds")]
+    public int TtlSeconds { get; set; } = default!;
+
+    /// <summary>
+    /// When the transaction TTL expires
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    public System.DateTimeOffset ExpiresAt { get; set; } = default!;
+
+    /// <summary>
+    /// Expected number of provisions (null if not specified)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expectedProvisionCount")]
+    public int? ExpectedProvisionCount { get; set; } = default!;
+
+    /// <summary>
+    /// Number of TTL validation attempts made
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("validationAttempts")]
+    public int ValidationAttempts { get; set; } = default!;
+
+    /// <summary>
+    /// Per-provision status details
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("provisions")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ProvisionDetail> Provisions { get; set; } = new System.Collections.ObjectModel.Collection<ProvisionDetail>();
+
+}
+
+/// <summary>
+/// Status detail for a single provision within a transaction
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ProvisionDetail
+{
+
+    /// <summary>
+    /// Unique provision identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("provisionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ProvisionId { get; set; } = default!;
+
+    /// <summary>
+    /// Registration order (compensated in reverse)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sequenceNumber")]
+    public int SequenceNumber { get; set; } = default!;
+
+    /// <summary>
+    /// Type of provisioned resource
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Pre-generated resource ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// Current provision status
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ProvisionStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// When the provision was registered
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("registeredAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset RegisteredAt { get; set; } = default!;
+
+    /// <summary>
+    /// When the resource was confirmed created (null if still Pending)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("provisionedAt")]
+    public System.DateTimeOffset? ProvisionedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When compensation completed (null if not compensated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("compensatedAt")]
+    public System.DateTimeOffset? CompensatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Number of compensation attempts made
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("compensationAttempts")]
+    public int CompensationAttempts { get; set; } = default!;
+
+    /// <summary>
+    /// Error from last failed compensation attempt
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("lastCompensationError")]
+    public string? LastCompensationError { get; set; } = default!;
+
+}
 
 /// <summary>
 /// Request to register a reference to a resource

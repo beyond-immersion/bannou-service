@@ -490,10 +490,14 @@ public static class StateStoreDefinitions
     public const string ResourceGrace = "resource-grace";
     /// <summary>Migration callback definitions for reassigning dependent references</summary>
     public const string ResourceMigrate = "resource-migrate";
+    /// <summary>Individual resource provisions within a transaction (sequenced for reverse-order compensation)</summary>
+    public const string ResourceProvisions = "resource-provisions";
     /// <summary>Reference counts and source tracking per resource</summary>
     public const string ResourceRefcounts = "resource-refcounts";
     /// <summary>Ephemeral snapshots of living resources (TTL-based auto-expiry for storyline/actor consumption)</summary>
     public const string ResourceSnapshots = "resource-snapshots";
+    /// <summary>Durable provisioning transactions with TTL validation, compensation tracking, and crash-safe commit state</summary>
+    public const string ResourceTransactions = "resource-transactions";
 
     // SaveLoad Service
     /// <summary>Recently accessed save data cache</summary>
@@ -810,8 +814,10 @@ public static class StateStoreDefinitions
             [ResourceCompress] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:compress" },
             [ResourceGrace] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:grace" },
             [ResourceMigrate] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:migrate" },
+            [ResourceProvisions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "resource_provisions" },
             [ResourceRefcounts] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:ref" },
             [ResourceSnapshots] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:snapshot" },
+            [ResourceTransactions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "resource_transactions" },
             [SaveLoadCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "saveload:cache" },
             [SaveLoadLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "saveload:lock" },
             [SaveLoadPending] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "saveload:pending" },
@@ -1058,8 +1064,10 @@ public static class StateStoreDefinitions
             [ResourceCompress] = new StoreMetadata("Resource", "Compression callback definitions and callback index sets", "redis", false),
             [ResourceGrace] = new StoreMetadata("Resource", "Grace period timestamps for resources with zero references", "redis", false),
             [ResourceMigrate] = new StoreMetadata("Resource", "Migration callback definitions for reassigning dependent references", "redis", false),
+            [ResourceProvisions] = new StoreMetadata("Resource", "Individual resource provisions within a transaction (sequenced for reverse-order compensation)", "mysql", false),
             [ResourceRefcounts] = new StoreMetadata("Resource", "Reference counts and source tracking per resource", "redis", false),
             [ResourceSnapshots] = new StoreMetadata("Resource", "Ephemeral snapshots of living resources (TTL-based auto-expiry for storyline/actor consumption)", "redis", false),
+            [ResourceTransactions] = new StoreMetadata("Resource", "Durable provisioning transactions with TTL validation, compensation tracking, and crash-safe commit state", "mysql", false),
             [SaveLoadCache] = new StoreMetadata("SaveLoad", "Recently accessed save data cache", "redis", false),
             [SaveLoadLock] = new StoreMetadata("SaveLoad", "Distributed locks for save slot operations", "redis", false),
             [SaveLoadPending] = new StoreMetadata("SaveLoad", "Pending save operations", "redis", false),

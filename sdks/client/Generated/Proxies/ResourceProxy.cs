@@ -385,4 +385,112 @@ public sealed class ResourceProxy
         return _client.InvokeAsync<GetSeededResourceRequest, GetSeededResourceResponse>(
             "/resource/seeded/get", request, channel, timeout, cancellationToken);
     }
+
+    /// <summary>
+    /// Begin a provisioning transaction
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing BeginTransactionResponse on success.</returns>
+    public Task<ApiResponse<BeginTransactionResponse>> BeginTransactionAsync(
+        BeginTransactionRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<BeginTransactionRequest, BeginTransactionResponse>(
+            "/resource/transaction/begin", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Register a planned provision with pre-generated ID (status Pending)
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing RegisterProvisionResponse on success.</returns>
+    public Task<ApiResponse<RegisterProvisionResponse>> RegisterProvisionAsync(
+        RegisterProvisionRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<RegisterProvisionRequest, RegisterProvisionResponse>(
+            "/resource/transaction/register-provision", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Confirm a provision was successfully created (Pending to Provisioned)
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ConfirmProvisionResponse on success.</returns>
+    public Task<ApiResponse<ConfirmProvisionResponse>> ConfirmProvisionAsync(
+        ConfirmProvisionRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ConfirmProvisionRequest, ConfirmProvisionResponse>(
+            "/resource/transaction/confirm-provision", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Commit a provisioning transaction
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing CommitTransactionResponse on success.</returns>
+    public Task<ApiResponse<CommitTransactionResponse>> CommitTransactionAsync(
+        CommitTransactionRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<CommitTransactionRequest, CommitTransactionResponse>(
+            "/resource/transaction/commit", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Abort a provisioning transaction
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing AbortTransactionResponse on success.</returns>
+    public Task<ApiResponse<AbortTransactionResponse>> AbortTransactionAsync(
+        AbortTransactionRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<AbortTransactionRequest, AbortTransactionResponse>(
+            "/resource/transaction/abort", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Query transaction status with per-provision detail
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing TransactionStatusResponse on success.</returns>
+    public Task<ApiResponse<TransactionStatusResponse>> GetTransactionStatusAsync(
+        GetTransactionStatusRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetTransactionStatusRequest, TransactionStatusResponse>(
+            "/resource/transaction/status", request, channel, timeout, cancellationToken);
+    }
 }

@@ -75,4 +75,60 @@ public static class ResourceEventPublisher
         ResourceSnapshotCreatedEvent eventData,
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(ResourcePublishedTopics.ResourceSnapshotCreated, eventData, cancellationToken);
+
+    /// <summary>Published when a provisioning transaction is begun (orchestration in progress).</summary>
+    public static Task<bool> PublishResourceTransactionCreatedAsync(
+        this IMessageBus messageBus,
+        ResourceTransactionCreatedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(ResourcePublishedTopics.ResourceTransactionCreated, eventData, cancellationToken);
+
+    /// <summary>Published when a transaction is successfully committed (provisions become permanent references).</summary>
+    public static Task<bool> PublishResourceTransactionCommittedAsync(
+        this IMessageBus messageBus,
+        ResourceTransactionCommittedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(ResourcePublishedTopics.ResourceTransactionCommitted, eventData, cancellationToken);
+
+    /// <summary>Published when a transaction is fully aborted (all compensations complete or retries exhausted).</summary>
+    public static Task<bool> PublishResourceTransactionAbortedAsync(
+        this IMessageBus messageBus,
+        ResourceTransactionAbortedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(ResourcePublishedTopics.ResourceTransactionAborted, eventData, cancellationToken);
+
+    /// <summary>Published when the recovery worker auto-commits a transaction via TTL validation check.</summary>
+    public static Task<bool> PublishResourceTransactionAutoCommittedAsync(
+        this IMessageBus messageBus,
+        ResourceTransactionAutoCommittedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(ResourcePublishedTopics.ResourceTransactionAutoCommitted, eventData, cancellationToken);
+
+    /// <summary>Published when the recovery worker auto-aborts a transaction after TTL validation fails.</summary>
+    public static Task<bool> PublishResourceTransactionAutoAbortedAsync(
+        this IMessageBus messageBus,
+        ResourceTransactionAutoAbortedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(ResourcePublishedTopics.ResourceTransactionAutoAborted, eventData, cancellationToken);
+
+    /// <summary>Published when commit reference registration exhausts retries and falls back to abort.</summary>
+    public static Task<bool> PublishResourceTransactionCommitFailedAsync(
+        this IMessageBus messageBus,
+        ResourceTransactionCommitFailedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(ResourcePublishedTopics.ResourceTransactionCommitFailed, eventData, cancellationToken);
+
+    /// <summary>Published when compensation retries are exhausted for one or more provisions (error event for admin).</summary>
+    public static Task<bool> PublishResourceTransactionCompensationExhaustedAsync(
+        this IMessageBus messageBus,
+        ResourceTransactionCompensationExhaustedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(ResourcePublishedTopics.ResourceTransactionCompensationExhausted, eventData, cancellationToken);
+
+    /// <summary>Published when TTL validation retries are exhausted and the transaction requires admin intervention.</summary>
+    public static Task<bool> PublishResourceTransactionValidationExhaustedAsync(
+        this IMessageBus messageBus,
+        ResourceTransactionValidationExhaustedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(ResourcePublishedTopics.ResourceTransactionValidationExhausted, eventData, cancellationToken);
 }

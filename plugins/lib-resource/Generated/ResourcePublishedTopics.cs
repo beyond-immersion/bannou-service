@@ -40,4 +40,28 @@ public static class ResourcePublishedTopics
 
     /// <summary>Published when an ephemeral snapshot of a living resource is created.</summary>
     public const string ResourceSnapshotCreated = "resource.snapshot.created";
+
+    /// <summary>Published when a provisioning transaction is begun (orchestration in progress).</summary>
+    public const string ResourceTransactionCreated = "resource.transaction.created";
+
+    /// <summary>Published when a transaction is successfully committed (provisions become permanent references).</summary>
+    public const string ResourceTransactionCommitted = "resource.transaction.committed";
+
+    /// <summary>Published when a transaction is fully aborted (all compensations complete or retries exhausted).</summary>
+    public const string ResourceTransactionAborted = "resource.transaction.aborted";
+
+    /// <summary>Published when the recovery worker auto-commits a transaction via TTL validation check.</summary>
+    public const string ResourceTransactionAutoCommitted = "resource.transaction.auto-committed";
+
+    /// <summary>Published when the recovery worker auto-aborts a transaction after TTL validation fails.</summary>
+    public const string ResourceTransactionAutoAborted = "resource.transaction.auto-aborted";
+
+    /// <summary>Published when commit reference registration exhausts retries and falls back to abort.</summary>
+    public const string ResourceTransactionCommitFailed = "resource.transaction.commit-failed";
+
+    /// <summary>Published when compensation retries are exhausted for one or more provisions (error event for admin).</summary>
+    public const string ResourceTransactionCompensationExhausted = "resource.transaction.compensation-exhausted";
+
+    /// <summary>Published when TTL validation retries are exhausted and the transaction requires admin intervention.</summary>
+    public const string ResourceTransactionValidationExhausted = "resource.transaction.validation-exhausted";
 }

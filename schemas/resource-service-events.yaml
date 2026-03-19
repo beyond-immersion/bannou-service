@@ -15,7 +15,7 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
-  x-event-subscriptions: []  # Resource is a publisher-only service; no external event subscriptions
+  x-event-subscriptions: []
   x-event-publications:
     # Cleanup failure event for monitoring
     - topic: resource.cleanup.callback-failed
@@ -46,6 +46,31 @@ info:
     - topic: resource.snapshot.created
       event: ResourceSnapshotCreatedEvent
       description: Published when an ephemeral snapshot of a living resource is created
+    # Transaction lifecycle events (provisioning coordination)
+    - topic: resource.transaction.created
+      event: ResourceTransactionCreatedEvent
+      description: Published when a provisioning transaction is begun (orchestration in progress)
+    - topic: resource.transaction.committed
+      event: ResourceTransactionCommittedEvent
+      description: Published when a transaction is successfully committed (provisions become permanent references)
+    - topic: resource.transaction.aborted
+      event: ResourceTransactionAbortedEvent
+      description: Published when a transaction is fully aborted (all compensations complete or retries exhausted)
+    - topic: resource.transaction.auto-committed
+      event: ResourceTransactionAutoCommittedEvent
+      description: Published when the recovery worker auto-commits a transaction via TTL validation check
+    - topic: resource.transaction.auto-aborted
+      event: ResourceTransactionAutoAbortedEvent
+      description: Published when the recovery worker auto-aborts a transaction after TTL validation fails
+    - topic: resource.transaction.commit-failed
+      event: ResourceTransactionCommitFailedEvent
+      description: Published when commit reference registration exhausts retries and falls back to abort
+    - topic: resource.transaction.compensation-exhausted
+      event: ResourceTransactionCompensationExhaustedEvent
+      description: Published when compensation retries are exhausted for one or more provisions (error event for admin)
+    - topic: resource.transaction.validation-exhausted
+      event: ResourceTransactionValidationExhaustedEvent
+      description: Published when TTL validation retries are exhausted and the transaction requires admin intervention
 
 paths: {}  # Events don't have HTTP paths
 
@@ -429,3 +454,318 @@ components:
         entriesCount:
           type: integer
           description: Number of services that contributed data to the snapshot
+
+    # =========================================================================
+    # Transaction Lifecycle Events (Provisioning Coordination)
+    # =========================================================================
+
+    ResourceTransactionCreatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a provisioning transaction is begun.
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - transactionId
+      - ownerService
+      - parentResourceType
+      - parentResourceId
+      - ttlSeconds
+      properties:
+        eventName:
+          type: string
+          default: resource.transaction.created
+          description: 'Event type identifier: resource.transaction.created'
+        transactionId:
+          type: string
+          format: uuid
+          description: Unique transaction identifier
+        ownerService:
+          type: string
+          description: Service that owns the transaction (e.g., "genesis", "craft")
+        parentResourceType:
+          type: string
+          description: Type of entity being provisioned (opaque identifier)
+        parentResourceId:
+          type: string
+          format: uuid
+          description: ID of the entity being provisioned
+        ttlSeconds:
+          type: integer
+          description: Transaction TTL before validation check
+
+    ResourceTransactionCommittedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a transaction is successfully committed. All provisions are now permanent references.
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - transactionId
+      - ownerService
+      - parentResourceType
+      - parentResourceId
+      - provisionCount
+      properties:
+        eventName:
+          type: string
+          default: resource.transaction.committed
+          description: 'Event type identifier: resource.transaction.committed'
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction identifier
+        ownerService:
+          type: string
+          description: Service that owns the transaction
+        parentResourceType:
+          type: string
+          description: Type of entity that was provisioned
+        parentResourceId:
+          type: string
+          format: uuid
+          description: ID of the entity that was provisioned
+        provisionCount:
+          type: integer
+          description: Number of provisions converted to permanent references
+
+    ResourceTransactionAbortedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a transaction is fully aborted. All compensations completed or retries exhausted.
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - transactionId
+      - ownerService
+      - parentResourceType
+      - parentResourceId
+      - compensatedCount
+      - failedCount
+      properties:
+        eventName:
+          type: string
+          default: resource.transaction.aborted
+          description: 'Event type identifier: resource.transaction.aborted'
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction identifier
+        ownerService:
+          type: string
+          description: Service that owns the transaction
+        parentResourceType:
+          type: string
+          description: Type of entity whose provisioning was aborted
+        parentResourceId:
+          type: string
+          format: uuid
+          description: ID of the entity whose provisioning was aborted
+        compensatedCount:
+          type: integer
+          description: Number of provisions successfully compensated
+        failedCount:
+          type: integer
+          description: Number of provisions whose compensation failed after max retries
+
+    ResourceTransactionAutoCommittedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when the recovery worker auto-commits a transaction after TTL validation confirms the parent entity exists.
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - transactionId
+      - ownerService
+      - parentResourceType
+      - parentResourceId
+      properties:
+        eventName:
+          type: string
+          default: resource.transaction.auto-committed
+          description: 'Event type identifier: resource.transaction.auto-committed'
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction identifier
+        ownerService:
+          type: string
+          description: Service that owns the transaction
+        parentResourceType:
+          type: string
+          description: Type of entity whose provisioning was auto-committed
+        parentResourceId:
+          type: string
+          format: uuid
+          description: ID of the entity whose provisioning was auto-committed
+
+    ResourceTransactionAutoAbortedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when the recovery worker auto-aborts a transaction after TTL validation confirms the parent entity does not exist.
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - transactionId
+      - ownerService
+      - parentResourceType
+      - parentResourceId
+      properties:
+        eventName:
+          type: string
+          default: resource.transaction.auto-aborted
+          description: 'Event type identifier: resource.transaction.auto-aborted'
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction identifier
+        ownerService:
+          type: string
+          description: Service that owns the transaction
+        parentResourceType:
+          type: string
+          description: Type of entity whose provisioning was auto-aborted
+        parentResourceId:
+          type: string
+          format: uuid
+          description: ID of the entity whose provisioning was auto-aborted
+
+    ResourceTransactionCommitFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when commit reference registration exhausts retries. The transaction falls back to abort and compensation.
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - transactionId
+      - ownerService
+      - parentResourceType
+      - parentResourceId
+      - registeredCount
+      - failedCount
+      properties:
+        eventName:
+          type: string
+          default: resource.transaction.commit-failed
+          description: 'Event type identifier: resource.transaction.commit-failed'
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction identifier
+        ownerService:
+          type: string
+          description: Service that owns the transaction
+        parentResourceType:
+          type: string
+          description: Type of entity whose commit failed
+        parentResourceId:
+          type: string
+          format: uuid
+          description: ID of the entity whose commit failed
+        registeredCount:
+          type: integer
+          description: Number of provisions that were successfully registered as references
+        failedCount:
+          type: integer
+          description: Number of provisions that failed reference registration
+
+    ResourceTransactionCompensationExhaustedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when compensation retries are exhausted for one or more provisions.
+        The transaction moves to Aborted but some provisions may remain uncompensated.
+        Requires admin investigation.
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - transactionId
+      - ownerService
+      - parentResourceType
+      - parentResourceId
+      - failedProvisionCount
+      properties:
+        eventName:
+          type: string
+          default: resource.transaction.compensation-exhausted
+          description: 'Event type identifier: resource.transaction.compensation-exhausted'
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction identifier
+        ownerService:
+          type: string
+          description: Service that owns the transaction
+        parentResourceType:
+          type: string
+          description: Type of entity whose compensation was exhausted
+        parentResourceId:
+          type: string
+          format: uuid
+          description: ID of the entity whose compensation was exhausted
+        failedProvisionCount:
+          type: integer
+          description: Number of provisions whose compensation retries were exhausted
+
+    ResourceTransactionValidationExhaustedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when TTL validation retries are exhausted. The completion validation
+        endpoint is unreachable or returning 5xx consistently. The transaction remains
+        Active for admin investigation — it is NOT auto-aborted because the parent
+        entity might exist but be temporarily unreachable.
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - transactionId
+      - ownerService
+      - parentResourceType
+      - parentResourceId
+      - validationAttempts
+      properties:
+        eventName:
+          type: string
+          default: resource.transaction.validation-exhausted
+          description: 'Event type identifier: resource.transaction.validation-exhausted'
+        transactionId:
+          type: string
+          format: uuid
+          description: Transaction identifier
+        ownerService:
+          type: string
+          description: Service that owns the transaction
+        parentResourceType:
+          type: string
+          description: Type of entity whose validation was exhausted
+        parentResourceId:
+          type: string
+          format: uuid
+          description: ID of the entity whose validation was exhausted
+        validationAttempts:
+          type: integer
+          description: Total number of validation attempts made before giving up

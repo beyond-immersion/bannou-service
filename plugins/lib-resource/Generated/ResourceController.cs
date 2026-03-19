@@ -417,6 +417,120 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetSeededResourceResponse>> GetSeededResource(GetSeededResourceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+
+    /// <summary>
+    /// Begin a provisioning transaction
+    /// </summary>
+
+    /// <remarks>
+    /// Creates a durable provisioning transaction with a TTL deadline.
+    /// <br/>If the transaction is neither committed nor aborted within the TTL,
+    /// <br/>the background worker executes the completionValidation check to determine
+    /// <br/>whether to auto-commit (entity exists) or auto-abort (entity does not exist).
+    /// <br/>
+    /// <br/>Use this when an orchestrating service needs to provision resources
+    /// <br/>across multiple services with guaranteed cleanup on failure.
+    /// </remarks>
+
+
+
+    /// <returns>Transaction created</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BeginTransactionResponse>> BeginTransaction(BeginTransactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Register a planned provision with pre-generated ID (status Pending)
+    /// </summary>
+
+    /// <remarks>
+    /// Records that a resource WILL BE provisioned as part of an active transaction.
+    /// <br/>Called BEFORE creating the resource. The pre-generated resourceId and
+    /// <br/>compensation definition are stored so that if the process crashes before
+    /// <br/>the resource is created, the transaction can still compensate (compensation
+    /// <br/>endpoint receives 404, which is treated as successful compensation).
+    /// <br/>Provisions are compensated in reverse registration order on abort.
+    /// </remarks>
+
+
+
+    /// <returns>Provision registered (Pending)</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterProvisionResponse>> RegisterProvision(RegisterProvisionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Confirm a provision was successfully created (Pending to Provisioned)
+    /// </summary>
+
+    /// <remarks>
+    /// Called AFTER the resource has been successfully created at the pre-generated ID.
+    /// <br/>Transitions the provision from Pending to Provisioned. If the process crashes
+    /// <br/>before this call, the provision remains Pending — on abort, the compensation
+    /// <br/>endpoint is called and handles the resource if it exists (idempotent).
+    /// </remarks>
+
+
+
+    /// <returns>Provision confirmed (Provisioned)</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfirmProvisionResponse>> ConfirmProvision(ConfirmProvisionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Commit a provisioning transaction
+    /// </summary>
+
+    /// <remarks>
+    /// Marks a transaction as committed. All provisions become permanent
+    /// <br/>resource references via the existing RegisterReference mechanism.
+    /// <br/>Uses a crash-safe two-phase internal process: transitions to Committing
+    /// <br/>first, registers references one by one (checkpointing each), then
+    /// <br/>transitions to Committed. The recovery worker resumes from the last
+    /// <br/>checkpoint if the process crashes mid-commit.
+    /// </remarks>
+
+
+
+    /// <returns>Transaction committed, references registered</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CommitTransactionResponse>> CommitTransaction(CommitTransactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Abort a provisioning transaction
+    /// </summary>
+
+    /// <remarks>
+    /// Initiates compensation for all provisions in reverse registration order.
+    /// <br/>Resource calls each provision's compensation endpoint using the prebound
+    /// <br/>API execution mechanism. Provisions that compensate successfully are marked
+    /// <br/>Compensated. Provisions that fail are marked CompensationFailed and retried
+    /// <br/>by the background recovery worker.
+    /// </remarks>
+
+
+
+    /// <returns>Abort initiated</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AbortTransactionResponse>> AbortTransaction(AbortTransactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Query transaction status with per-provision detail
+    /// </summary>
+
+    /// <remarks>
+    /// Returns the current status of a transaction including per-provision
+    /// <br/>status. Useful for admin tooling, debugging, and monitoring.
+    /// </remarks>
+
+
+
+    /// <returns>Transaction status with provision details</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TransactionStatusResponse>> GetTransactionStatus(GetTransactionStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -1509,6 +1623,318 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:resource/seeded/get",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Begin a provisioning transaction
+    /// </summary>
+    /// <remarks>
+    /// Creates a durable provisioning transaction with a TTL deadline.
+    /// <br/>If the transaction is neither committed nor aborted within the TTL,
+    /// <br/>the background worker executes the completionValidation check to determine
+    /// <br/>whether to auto-commit (entity exists) or auto-abort (entity does not exist).
+    /// <br/>
+    /// <br/>Use this when an orchestrating service needs to provision resources
+    /// <br/>across multiple services with guaranteed cleanup on failure.
+    /// </remarks>
+    /// <returns>Transaction created</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("resource/transaction/begin")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BeginTransactionResponse>> BeginTransaction([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BeginTransactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.BeginTransaction",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/transaction/begin");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.BeginTransactionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/transaction/begin");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:resource/transaction/begin");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "resource",
+                "BeginTransaction",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:resource/transaction/begin",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Register a planned provision with pre-generated ID (status Pending)
+    /// </summary>
+    /// <remarks>
+    /// Records that a resource WILL BE provisioned as part of an active transaction.
+    /// <br/>Called BEFORE creating the resource. The pre-generated resourceId and
+    /// <br/>compensation definition are stored so that if the process crashes before
+    /// <br/>the resource is created, the transaction can still compensate (compensation
+    /// <br/>endpoint receives 404, which is treated as successful compensation).
+    /// <br/>Provisions are compensated in reverse registration order on abort.
+    /// </remarks>
+    /// <returns>Provision registered (Pending)</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("resource/transaction/register-provision")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterProvisionResponse>> RegisterProvision([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RegisterProvisionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.RegisterProvision",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/transaction/register-provision");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.RegisterProvisionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/transaction/register-provision");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:resource/transaction/register-provision");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "resource",
+                "RegisterProvision",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:resource/transaction/register-provision",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Confirm a provision was successfully created (Pending to Provisioned)
+    /// </summary>
+    /// <remarks>
+    /// Called AFTER the resource has been successfully created at the pre-generated ID.
+    /// <br/>Transitions the provision from Pending to Provisioned. If the process crashes
+    /// <br/>before this call, the provision remains Pending — on abort, the compensation
+    /// <br/>endpoint is called and handles the resource if it exists (idempotent).
+    /// </remarks>
+    /// <returns>Provision confirmed (Provisioned)</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("resource/transaction/confirm-provision")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfirmProvisionResponse>> ConfirmProvision([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ConfirmProvisionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.ConfirmProvision",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/transaction/confirm-provision");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.ConfirmProvisionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/transaction/confirm-provision");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:resource/transaction/confirm-provision");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "resource",
+                "ConfirmProvision",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:resource/transaction/confirm-provision",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Commit a provisioning transaction
+    /// </summary>
+    /// <remarks>
+    /// Marks a transaction as committed. All provisions become permanent
+    /// <br/>resource references via the existing RegisterReference mechanism.
+    /// <br/>Uses a crash-safe two-phase internal process: transitions to Committing
+    /// <br/>first, registers references one by one (checkpointing each), then
+    /// <br/>transitions to Committed. The recovery worker resumes from the last
+    /// <br/>checkpoint if the process crashes mid-commit.
+    /// </remarks>
+    /// <returns>Transaction committed, references registered</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("resource/transaction/commit")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CommitTransactionResponse>> CommitTransaction([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CommitTransactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.CommitTransaction",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/transaction/commit");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.CommitTransactionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/transaction/commit");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:resource/transaction/commit");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "resource",
+                "CommitTransaction",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:resource/transaction/commit",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Abort a provisioning transaction
+    /// </summary>
+    /// <remarks>
+    /// Initiates compensation for all provisions in reverse registration order.
+    /// <br/>Resource calls each provision's compensation endpoint using the prebound
+    /// <br/>API execution mechanism. Provisions that compensate successfully are marked
+    /// <br/>Compensated. Provisions that fail are marked CompensationFailed and retried
+    /// <br/>by the background recovery worker.
+    /// </remarks>
+    /// <returns>Abort initiated</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("resource/transaction/abort")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AbortTransactionResponse>> AbortTransaction([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AbortTransactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.AbortTransaction",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/transaction/abort");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.AbortTransactionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/transaction/abort");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:resource/transaction/abort");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "resource",
+                "AbortTransaction",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:resource/transaction/abort",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Query transaction status with per-provision detail
+    /// </summary>
+    /// <remarks>
+    /// Returns the current status of a transaction including per-provision
+    /// <br/>status. Useful for admin tooling, debugging, and monitoring.
+    /// </remarks>
+    /// <returns>Transaction status with provision details</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("resource/transaction/status")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TransactionStatusResponse>> GetTransactionStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetTransactionStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.GetTransactionStatus",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/transaction/status");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetTransactionStatusAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/transaction/status");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:resource/transaction/status");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "resource",
+                "GetTransactionStatus",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:resource/transaction/status",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

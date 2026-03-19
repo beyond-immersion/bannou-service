@@ -119,4 +119,67 @@ public class ResourceServiceConfiguration : BaseServiceConfiguration
     [ConfigRange(Minimum = 3600, Maximum = 604800)]
     public int SnapshotMaxTtlSeconds { get; set; } = 86400;
 
+    /// <summary>
+    /// How often the worker scans for transactions needing recovery (TTL expiry, commit resume, compensation retry)
+    /// Environment variable: RESOURCE_TRANSACTION_RECOVERY_WORKER_INTERVAL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 300)]
+    public int TransactionRecoveryWorkerIntervalSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Delay before first recovery cycle after startup
+    /// Environment variable: RESOURCE_TRANSACTION_RECOVERY_WORKER_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 120)]
+    public int TransactionRecoveryWorkerStartupDelaySeconds { get; set; } = 15;
+
+    /// <summary>
+    /// Maximum compensation retry attempts per provision before giving up
+    /// Environment variable: RESOURCE_TRANSACTION_COMPENSATION_MAX_RETRIES
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 50)]
+    public int TransactionCompensationMaxRetries { get; set; } = 10;
+
+    /// <summary>
+    /// Base delay for exponential backoff between compensation retries
+    /// Environment variable: RESOURCE_TRANSACTION_COMPENSATION_BACKOFF_BASE_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 60)]
+    public int TransactionCompensationBackoffBaseSeconds { get; set; } = 5;
+
+    /// <summary>
+    /// Maximum retries for reference registration during Committing state recovery
+    /// Environment variable: RESOURCE_TRANSACTION_COMMIT_MAX_RETRIES
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 50)]
+    public int TransactionCommitMaxRetries { get; set; } = 10;
+
+    /// <summary>
+    /// Maximum validation check attempts before escalating to admin (transaction remains Active for manual intervention)
+    /// Environment variable: RESOURCE_TRANSACTION_VALIDATION_MAX_RETRIES
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 20)]
+    public int TransactionValidationMaxRetries { get; set; } = 5;
+
+    /// <summary>
+    /// Days to retain completed or aborted transaction metadata before purging
+    /// Environment variable: RESOURCE_TRANSACTION_RETENTION_DAYS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 90)]
+    public int TransactionRetentionDays { get; set; } = 7;
+
+    /// <summary>
+    /// Default TTL for transactions when the caller does not specify one
+    /// Environment variable: RESOURCE_TRANSACTION_DEFAULT_TTL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 600)]
+    public int TransactionDefaultTtlSeconds { get; set; } = 120;
+
+    /// <summary>
+    /// Maximum allowed TTL — BeginTransaction clamps requested TTL to this value
+    /// Environment variable: RESOURCE_TRANSACTION_MAX_TTL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 60, Maximum = 3600)]
+    public int TransactionMaxTtlSeconds { get; set; } = 600;
+
 }

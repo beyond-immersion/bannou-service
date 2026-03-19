@@ -58,7 +58,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Realm Service API](#realm) | `client.Realm` | 13 | Realm management service for game worlds. |
 | [Bannou Realm History Service API](#realm-history) | `client.RealmHistory` | 12 | Historical event participation and lore management for realm... |
 | [Relationship Service API](#relationship) | `client.Relationship` | 21 | Relationship and relationship type management service for en... |
-| [Resource Lifecycle API](#resource) | `client.Resource` | 20 | Resource reference tracking and lifecycle management. |
+| [Resource Lifecycle API](#resource) | `client.Resource` | 26 | Resource reference tracking and lifecycle management. |
 | [Save-Load Service API](#save-load) | `client.SaveLoad` | 26 | Generic save/load system for game state persistence. Support... |
 | [Bannou Scene Service API](#scene) | `client.Scene` | 19 | Hierarchical composition storage for game worlds. |
 | [Seed Service API](#seed) | `client.Seed` | 25 | Generic progressive growth entity service (L2 GameFoundation... |
@@ -2538,6 +2538,17 @@ Resource reference tracking and lifecycle management.
 | `ExecutesnapshotAsync` | `ExecuteSnapshotRequest` | `ExecuteSnapshotResponse` | Create ephemeral snapshot of a living resource |
 | `GetSnapshotAsync` | `GetSnapshotRequest` | `GetSnapshotResponse` | Retrieve an ephemeral snapshot |
 
+### Transaction Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `BegintransactionAsync` | `BeginTransactionRequest` | `BeginTransactionResponse` | Begin a provisioning transaction |
+| `RegisterProvisionAsync` | `RegisterProvisionRequest` | `RegisterProvisionResponse` | Register a planned provision with pre-generated ID (status Pending) |
+| `ConfirmprovisionAsync` | `ConfirmProvisionRequest` | `ConfirmProvisionResponse` | Confirm a provision was successfully created (Pending to Provisioned) |
+| `CommittransactionAsync` | `CommitTransactionRequest` | `CommitTransactionResponse` | Commit a provisioning transaction |
+| `AborttransactionAsync` | `AbortTransactionRequest` | `AbortTransactionResponse` | Abort a provisioning transaction |
+| `GetTransactionstatusAsync` | `GetTransactionStatusRequest` | `TransactionStatusResponse` | Query transaction status with per-provision detail |
+
 ---
 
 ## Save-Load Service API {#save-load}
@@ -3091,7 +3102,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 ## Summary
 
 - **Total services**: 63
-- **Total methods**: 1111
+- **Total methods**: 1117
 
 ---
 

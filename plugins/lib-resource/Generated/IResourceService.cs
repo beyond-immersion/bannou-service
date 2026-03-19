@@ -129,4 +129,34 @@ public partial interface IResourceService : IBannouService
         /// </summary>
         Task<(StatusCodes, GetSeededResourceResponse?)> GetSeededResourceAsync(GetSeededResourceRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// BeginTransaction operation
+        /// </summary>
+        Task<(StatusCodes, BeginTransactionResponse?)> BeginTransactionAsync(BeginTransactionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// RegisterProvision operation
+        /// </summary>
+        Task<(StatusCodes, RegisterProvisionResponse?)> RegisterProvisionAsync(RegisterProvisionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// ConfirmProvision operation
+        /// </summary>
+        Task<(StatusCodes, ConfirmProvisionResponse?)> ConfirmProvisionAsync(ConfirmProvisionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// CommitTransaction operation
+        /// </summary>
+        Task<(StatusCodes, CommitTransactionResponse?)> CommitTransactionAsync(CommitTransactionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// AbortTransaction operation
+        /// </summary>
+        Task<(StatusCodes, AbortTransactionResponse?)> AbortTransactionAsync(AbortTransactionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// GetTransactionStatus operation
+        /// </summary>
+        Task<(StatusCodes, TransactionStatusResponse?)> GetTransactionStatusAsync(GetTransactionStatusRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }
