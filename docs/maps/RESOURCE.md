@@ -11,12 +11,12 @@
 |-------|-------|
 | Plugin | lib-resource |
 | Layer | L1 AppFoundation |
-| Endpoints | 20 |
-| State Stores | resource-refcounts (Redis), resource-grace (Redis), resource-cleanup (Redis), resource-compress (Redis), resource-archives (MySQL), resource-snapshots (Redis), resource-migrate (Redis) |
-| Events Published | 8 (resource.grace-period.started, resource.cleanup.callback-failed, resource.compressed, resource.compress.callback-failed, resource.decompressed, resource.snapshot.created, resource.migrated, resource.migrate.callback-failed) |
+| Endpoints | 26 |
+| State Stores | resource-refcounts (Redis), resource-grace (Redis), resource-cleanup (Redis), resource-compress (Redis), resource-archives (MySQL), resource-snapshots (Redis), resource-migrate (Redis), resource-transactions (MySQL), resource-provisions (MySQL) |
+| Events Published | 16 (resource.grace-period.started, resource.cleanup.callback-failed, resource.compressed, resource.compress.callback-failed, resource.decompressed, resource.snapshot.created, resource.migrated, resource.migrate.callback-failed, resource.transaction.created, resource.transaction.committed, resource.transaction.aborted, resource.transaction.auto-committed, resource.transaction.auto-aborted, resource.transaction.commit-failed, resource.transaction.compensation-exhausted, resource.transaction.validation-exhausted) |
 | Events Consumed | 0 |
 | Client Events | 0 |
-| Background Services | 0 |
+| Background Services | 1 (TransactionRecoveryWorker) |
 
 ---
 
@@ -69,6 +69,19 @@
 | `callback:{resourceType}:{sourceType}` | `MigrateCallbackDefinition` | Migrate callback registration (service, endpoint, template) |
 | `callback-index:{resourceType}` | Set of `string` | Source types with registered migrate callbacks for this resource type |
 
+**Store**: `resource-transactions` (Backend: MySQL)
+
+| Key Pattern | Data Type | Purpose |
+|-------------|-----------|---------|
+| `tx:{transactionId}` | `ResourceTransactionModel` | Provisioning transaction record: owner, parent resource, status, TTL, validation state, serialized completionValidation PreboundApi |
+
+**Store**: `resource-provisions` (Backend: MySQL)
+
+| Key Pattern | Data Type | Purpose |
+|-------------|-----------|---------|
+| `prov:{provisionId}` | `ResourceProvisionModel` | Individual provision within a transaction: resource type/ID, sequence number, status, serialized compensation/verification PreboundApi |
+| `prov-tx:{transactionId}` | `string` (JSON list of provisionIds) | Provisions belonging to a transaction (ordered by sequenceNumber) |
+
 ---
 
 ## Dependencies
@@ -101,6 +114,14 @@
 | `resource.snapshot.created` | `ResourceSnapshotCreatedEvent` | ExecuteSnapshot on successful snapshot creation |
 | `resource.migrated` | `ResourceMigratedEvent` | ExecuteMigrate on success |
 | `resource.migrate.callback-failed` | `ResourceMigrateCallbackFailedEvent` | ExecuteMigrate per failed callback |
+| `resource.transaction.created` | `ResourceTransactionCreatedEvent` | BeginTransaction |
+| `resource.transaction.committed` | `ResourceTransactionCommittedEvent` | CommitTransaction (or worker auto-commit) |
+| `resource.transaction.aborted` | `ResourceTransactionAbortedEvent` | AbortTransaction (or worker auto-abort) when all compensations complete |
+| `resource.transaction.auto-committed` | `ResourceTransactionAutoCommittedEvent` | TransactionRecoveryWorker TTL validation → entity exists |
+| `resource.transaction.auto-aborted` | `ResourceTransactionAutoAbortedEvent` | TransactionRecoveryWorker TTL validation → entity not found |
+| `resource.transaction.commit-failed` | `ResourceTransactionCommitFailedEvent` | TransactionRecoveryWorker commit resume retries exhausted |
+| `resource.transaction.compensation-exhausted` | `ResourceTransactionCompensationExhaustedEvent` | TransactionRecoveryWorker compensation retries exhausted |
+| `resource.transaction.validation-exhausted` | `ResourceTransactionValidationExhaustedEvent` | TransactionRecoveryWorker TTL validation retries exhausted |
 
 ---
 
@@ -150,6 +171,12 @@ This plugin does not consume external events. `ResourceServiceEvents.cs` registe
 | DefineMigrateCallback | POST /resource/migrate/define | generated | [] | migrate-callback, migrate-index | - |
 | ExecuteMigrate | POST /resource/migrate/execute | generated | [] | - | resource.migrated, resource.migrate.callback-failed |
 | ListMigrateCallbacks | POST /resource/migrate/list | generated | [] | - | - |
+| BeginTransaction | POST /resource/transaction/begin | generated | [] | transactions | resource.transaction.created |
+| RegisterProvision | POST /resource/transaction/register-provision | generated | [] | provisions, prov-tx | - |
+| ConfirmProvision | POST /resource/transaction/confirm-provision | generated | [] | provisions | - |
+| CommitTransaction | POST /resource/transaction/commit | generated | [] | transactions, provisions, refs | resource.transaction.committed |
+| AbortTransaction | POST /resource/transaction/abort | generated | [] | transactions, provisions | resource.transaction.aborted |
+| GetTransactionStatus | POST /resource/transaction/status | generated | admin | - | - |
 
 ---
 
@@ -624,14 +651,321 @@ RETURN (200, ListMigrateCallbacksResponse { callbacks, totalCount })
 
 ---
 
+### BeginTransaction
+POST /resource/transaction/begin | Roles: []
+
+```
+// Clamp TTL to configured range
+effectiveTtl = clamp(body.TtlSeconds ?? config.TransactionDefaultTtlSeconds, 10, config.TransactionMaxTtlSeconds)
+// Serialize completionValidation PreboundApi for storage (preserves registration-time field values)
+serializedValidation = body.CompletionValidation != null ? BannouJson.Serialize(body.CompletionValidation) : null
+WRITE _transactionStore:tx:{newTransactionId} <- ResourceTransactionModel {
+  TransactionId: newGuid, OwnerService: body.OwnerService,
+  ParentResourceType: body.ParentResourceType, ParentResourceId: body.ParentResourceId,
+  Status: Active, CreatedAt: now, UpdatedAt: now,
+  TtlSeconds: effectiveTtl, ExpectedProvisionCount: body.ExpectedProvisionCount,
+  ValidationAttempts: 0, CompletionValidation: serializedValidation
+}
+PUBLISH resource.transaction.created { transactionId, ownerService, parentResourceType, parentResourceId, ttlSeconds }
+RETURN (200, BeginTransactionResponse { transactionId, status: Active, ttlSeconds: effectiveTtl, expiresAt: now + effectiveTtl })
+```
+
+---
+
+### RegisterProvision
+POST /resource/transaction/register-provision | Roles: []
+
+```
+READ _transactionStore:tx:{body.TransactionId}                        -> 404 if null
+IF transaction.Status != Active                                       -> 400
+// Determine sequence number from existing provisions
+READ _provisionStore:prov-tx:{body.TransactionId}                     // list of provisionIds
+sequenceNumber = existingProvisions.Count
+// Serialize compensation and verification PreboundApi for storage
+serializedCompensation = BannouJson.Serialize(body.Compensation)
+serializedVerification = body.Verification != null ? BannouJson.Serialize(body.Verification) : null
+WRITE _provisionStore:prov:{newProvisionId} <- ResourceProvisionModel {
+  ProvisionId: newGuid, TransactionId: body.TransactionId,
+  SequenceNumber: sequenceNumber,
+  ResourceType: body.ResourceType, ResourceId: body.ResourceId,
+  Status: Pending, RegisteredAt: now,
+  CompensationAttempts: 0,
+  Compensation: serializedCompensation, Verification: serializedVerification
+}
+WRITE _provisionStore:prov-tx:{body.TransactionId} <- append newProvisionId
+RETURN (200, RegisterProvisionResponse { provisionId, sequenceNumber, status: Pending })
+```
+
+---
+
+### ConfirmProvision
+POST /resource/transaction/confirm-provision | Roles: []
+
+```
+READ _transactionStore:tx:{body.TransactionId}                        -> 404 if null
+IF transaction.Status != Active                                       -> 400
+// Find provision by resourceId within this transaction
+READ _provisionStore:prov-tx:{body.TransactionId}                     // list of provisionIds
+FOREACH provisionId in list
+  READ _provisionStore:prov:{provisionId}
+  IF provision.ResourceId == body.ResourceId                          -> found
+IF not found                                                          -> 404
+IF provision.Status != Pending                                        -> 400
+provision.Status = Provisioned
+provision.ProvisionedAt = now
+WRITE _provisionStore:prov:{provision.ProvisionId} <- updated
+RETURN (200, ConfirmProvisionResponse { provisionId, status: Provisioned })
+```
+
+---
+
+### CommitTransaction
+POST /resource/transaction/commit | Roles: []
+
+```
+READ _transactionStore:tx:{body.TransactionId} [with ETag]            -> 404 if null
+IF transaction.Status != Active                                       -> 400
+
+// Phase 1: Transition to Committing (single atomic write — crash-safe checkpoint)
+transaction.Status = Committing
+transaction.UpdatedAt = now
+ETAG-WRITE _transactionStore:tx:{body.TransactionId}                  -> 409 if ETag conflict (R10)
+
+// Phase 2: Register references one by one, checkpointing each provision
+READ _provisionStore:prov-tx:{body.TransactionId}                     // ordered list
+FOREACH provisionId in list (by sequenceNumber)
+  READ _provisionStore:prov:{provisionId}
+  IF provision.Status != Provisioned                                  -> skip (already registered or not confirmed)
+  // Register as permanent reference via existing internal path
+  CALL RegisterReferenceInternal({
+    ResourceType: transaction.ParentResourceType,
+    ResourceId: transaction.ParentResourceId,
+    SourceType: provision.ResourceType,
+    SourceId: provision.ResourceId.ToString()
+  })
+  provision.Status = ReferenceRegistered
+  WRITE _provisionStore:prov:{provisionId} <- updated                 // checkpoint
+
+referencesRegistered = count of provisions transitioned to ReferenceRegistered
+
+// Phase 3: Transition to Committed
+transaction.Status = Committed
+transaction.UpdatedAt = now
+WRITE _transactionStore:tx:{body.TransactionId} <- updated
+PUBLISH resource.transaction.committed { transactionId, ownerService, parentResourceType, parentResourceId, provisionCount: referencesRegistered }
+RETURN (200, CommitTransactionResponse { transactionId, status: Committed, referencesRegistered })
+```
+
+---
+
+### AbortTransaction
+POST /resource/transaction/abort | Roles: []
+
+```
+READ _transactionStore:tx:{body.TransactionId} [with ETag]            -> 404 if null
+IF transaction.Status NOT IN [Active, Aborting]                       -> 400
+
+// Transition to Aborting
+transaction.Status = Aborting
+transaction.UpdatedAt = now
+ETAG-WRITE _transactionStore:tx:{body.TransactionId}                  -> 409 if ETag conflict (R10)
+
+// Compensate provisions in reverse sequence order
+READ _provisionStore:prov-tx:{body.TransactionId}
+SORT provisions by SequenceNumber DESCENDING
+compensatedCount = 0, failedCount = 0, pendingCount = 0
+FOREACH provisionId in reversed list
+  READ _provisionStore:prov:{provisionId}
+  IF provision.Status == Pending
+    // Resource was never created — mark as compensated directly (no-op)
+    provision.Status = Compensated
+    provision.CompensatedAt = now
+    WRITE _provisionStore:prov:{provisionId} <- updated
+    pendingCount++
+    CONTINUE
+  IF provision.Status IN [ReferenceRegistered, Provisioned, CompensationFailed]
+    // Execute compensation via prebound API
+    compensationApi = BannouJson.Deserialize<PreboundApi>(provision.Compensation)
+    context = { "provisionResourceId": provision.ResourceId.ToString() }
+    result = CALL _navigator.ExecutePreboundApiAsync(compensationApi, context)
+    // Apply response transformation if configured on the PreboundApi
+    transformedResult = ResponseTransformer.Transform(result.StatusCode, result.ResponseBody, compensationApi.ResponseTransformation)
+    IF transformedResult.IsSuccess OR result.StatusCode == 404
+      // 404 = resource doesn't exist = compensation succeeded (per planning doc)
+      provision.Status = Compensated
+      provision.CompensatedAt = now
+      compensatedCount++
+    ELSE
+      provision.Status = CompensationFailed
+      provision.CompensationAttempts++
+      provision.LastCompensationError = result.ErrorMessage ?? transformedResult.Payload
+      failedCount++
+    WRITE _provisionStore:prov:{provisionId} <- updated
+
+IF failedCount == 0
+  transaction.Status = Aborted
+  transaction.UpdatedAt = now
+  WRITE _transactionStore:tx:{body.TransactionId} <- updated
+  PUBLISH resource.transaction.aborted { transactionId, ownerService, parentResourceType, parentResourceId, compensatedCount, failedCount: 0 }
+// ELSE: remain Aborting — worker will retry failed compensations
+
+RETURN (200, AbortTransactionResponse { transactionId, status: transaction.Status, compensatedCount, failedCount, pendingCount })
+```
+
+---
+
+### GetTransactionStatus
+POST /resource/transaction/status | Roles: [admin]
+
+```
+READ _transactionStore:tx:{body.TransactionId}                        -> 404 if null
+READ _provisionStore:prov-tx:{body.TransactionId}
+provisions = []
+FOREACH provisionId in list
+  READ _provisionStore:prov:{provisionId}
+  provisions.add(ProvisionDetail from provision model)
+RETURN (200, TransactionStatusResponse {
+  transactionId, ownerService, parentResourceType, parentResourceId,
+  status, createdAt, updatedAt, ttlSeconds,
+  expiresAt: createdAt + ttlSeconds,
+  expectedProvisionCount, validationAttempts,
+  provisions: sorted by sequenceNumber
+})
+```
+
+---
+
 ## Background Services
 
-No background services.
+### TransactionRecoveryWorker
+**Interval**: `config.TransactionRecoveryWorkerIntervalSeconds` (default: 30s)
+**Startup Delay**: `config.TransactionRecoveryWorkerStartupDelaySeconds` (default: 15s)
+**Purpose**: Recovers transactions that were not properly committed or aborted — TTL validation, commit resume, compensation retry, metadata retention purge.
+
+Follows the canonical BackgroundService polling loop pattern (FOUNDATION TENETS T6):
+- Startup delay with cancellation handler
+- Double-catch filter: `OperationCanceledException when stoppingToken.IsCancellationRequested` before generic `Exception`
+- Per-cycle telemetry span
+- Error event publishing via `WorkerErrorPublisher.TryPublishWorkerErrorAsync`
+- Store access: resolve `IStateStoreFactory` from DI scope once per cycle, call `GetStore<T>()` for each needed store immediately, pass store references as parameters
+
+```
+// Scoped: resolve transaction + provision stores once per cycle
+// Per-item error isolation on every transaction processed (IMPLEMENTATION TENETS T7)
+
+// ─── Scan 1: TTL Validation (Active transactions past expiry) ───
+QUERY _transactionStore WHERE $.Status == Active
+FOREACH transaction (per-item try-catch)
+  expiresAt = transaction.CreatedAt + TimeSpan.FromSeconds(transaction.TtlSeconds)
+  IF now < expiresAt -> skip (not yet expired)
+
+  // Count current provisions
+  READ _provisionStore:prov-tx:{transaction.TransactionId}
+  provisionCount = list.Count
+
+  IF transaction.ExpectedProvisionCount != null AND provisionCount < transaction.ExpectedProvisionCount
+    // Orchestrator crashed before finishing provisioning — auto-abort
+    CALL AbortTransactionAsync({ TransactionId: transaction.TransactionId, Reason: "TTL expired, provision count not met" })
+    PUBLISH resource.transaction.auto-aborted { ... }
+    CONTINUE
+
+  IF transaction.ValidationAttempts >= config.TransactionValidationMaxRetries
+    // Validation exhausted — remain Active for admin
+    PUBLISH resource.transaction.validation-exhausted { ..., validationAttempts }
+    CONTINUE
+
+  IF transaction.CompletionValidation == null
+    // No validation check — conservative auto-abort
+    CALL AbortTransactionAsync({ TransactionId: transaction.TransactionId, Reason: "TTL expired, no completion validation" })
+    PUBLISH resource.transaction.auto-aborted { ... }
+    CONTINUE
+
+  // Execute completion validation via prebound API
+  validationApi = BannouJson.Deserialize<PreboundApi>(transaction.CompletionValidation)
+  context = { "parentResourceId": transaction.ParentResourceId.ToString() }
+  result = CALL _navigator.ExecutePreboundApiAsync(validationApi, context)
+  transformedResult = ResponseTransformer.Transform(result.StatusCode, result.ResponseBody, validationApi.ResponseTransformation)
+
+  IF transformedResult.Outcome == TransientFailure
+    // Unreachable — increment attempts and retry next cycle
+    transaction.ValidationAttempts++
+    transaction.UpdatedAt = now
+    WRITE _transactionStore:tx:{transaction.TransactionId} <- updated
+    CONTINUE
+
+  IF transformedResult.IsSuccess
+    // Entity exists — auto-commit
+    CALL CommitTransactionAsync({ TransactionId: transaction.TransactionId })
+    PUBLISH resource.transaction.auto-committed { ... }
+  ELSE
+    // Entity does not exist (4xx) — auto-abort
+    CALL AbortTransactionAsync({ TransactionId: transaction.TransactionId, Reason: "TTL validation: entity not found" })
+    PUBLISH resource.transaction.auto-aborted { ... }
+
+// ─── Scan 2: Resume Commit (Committing transactions with uncheckpointed provisions) ───
+QUERY _transactionStore WHERE $.Status == Committing
+FOREACH transaction (per-item try-catch)
+  // Resume from the first provision not yet ReferenceRegistered
+  // Same logic as CommitTransaction Phase 2, starting from checkpoint
+  READ _provisionStore:prov-tx:{transaction.TransactionId}
+  unregistered = provisions WHERE Status == Provisioned
+  IF unregistered is empty
+    // All registered — finalize to Committed
+    transaction.Status = Committed; transaction.UpdatedAt = now
+    WRITE _transactionStore; PUBLISH resource.transaction.committed
+    CONTINUE
+  // Attempt to register remaining references
+  // On failure: increment internal retry counter
+  // If retries exhausted (config.TransactionCommitMaxRetries):
+  //   PUBLISH resource.transaction.commit-failed
+  //   transition to Aborting (compensate instead of commit)
+
+// ─── Scan 3: Compensation Retry (Aborting transactions with CompensationFailed provisions) ───
+QUERY _transactionStore WHERE $.Status == Aborting
+FOREACH transaction (per-item try-catch)
+  READ _provisionStore:prov-tx:{transaction.TransactionId}
+  failed = provisions WHERE Status == CompensationFailed
+  IF failed is empty
+    // All compensated — finalize to Aborted
+    transaction.Status = Aborted; transaction.UpdatedAt = now
+    WRITE _transactionStore; PUBLISH resource.transaction.aborted
+    CONTINUE
+  FOREACH provision in failed (reverse sequence order)
+    IF provision.CompensationAttempts >= config.TransactionCompensationMaxRetries
+      // Exhausted — leave as CompensationFailed, publish error
+      PUBLISH resource.transaction.compensation-exhausted { ... failedProvisionCount }
+      CONTINUE
+    // Exponential backoff: skip if not enough time has passed since last attempt
+    backoffSeconds = config.TransactionCompensationBackoffBaseSeconds * (2 ^ (provision.CompensationAttempts - 1))
+    // Retry compensation (same logic as AbortTransaction per-provision)
+  IF all failed provisions now exhausted or compensated
+    transaction.Status = Aborted; transaction.UpdatedAt = now
+    WRITE _transactionStore
+
+// ─── Scan 4: Metadata Retention Purge ───
+QUERY _transactionStore WHERE $.Status IN [Committed, Aborted]
+FOREACH transaction (per-item try-catch)
+  age = now - transaction.UpdatedAt
+  IF age.TotalDays < config.TransactionRetentionDays -> skip
+  // Purge transaction + all provisions
+  READ _provisionStore:prov-tx:{transaction.TransactionId}
+  FOREACH provisionId: DELETE _provisionStore:prov:{provisionId}
+  DELETE _provisionStore:prov-tx:{transaction.TransactionId}
+  DELETE _transactionStore:tx:{transaction.TransactionId}
+```
 
 ---
 
 ## Non-Standard Implementation Patterns
 
-**All-200 response pattern**: Unlike most Bannou services that use HTTP status codes (404, 409, etc.) to communicate business failures, Resource returns `200 OK` for all outcomes and uses structured response flags (`success`, `found`, `abortReason`) to communicate results. This is intentional — Resource's callers are other Bannou services performing orchestration, and they need structured callback results (per-entry success/failure details, abort reasons, duration metrics) that cannot be expressed through HTTP status codes alone. The only non-200 return is a defensive `500` in ExecuteCleanup when CheckReferences unexpectedly returns null.
+**All-200 response pattern (existing endpoints)**: Unlike most Bannou services that use HTTP status codes (404, 409, etc.) to communicate business failures, Resource's existing endpoints (reference, cleanup, compress, migrate, snapshot, seeded) return `200 OK` for all outcomes and use structured response flags (`success`, `found`, `abortReason`) to communicate results. This is intentional — Resource's callers are other Bannou services performing orchestration, and they need structured callback results (per-entry success/failure details, abort reasons, duration metrics) that cannot be expressed through HTTP status codes alone.
+
+**Transaction endpoints use proper status codes**: The new transaction management endpoints (begin, register-provision, confirm-provision, commit, abort, status) use standard HTTP status codes (400, 404, 409) for business failures. This is a deliberate break from the all-200 pattern for two reasons: (1) transaction callers need clear, immediate signal on whether an operation succeeded without parsing response bodies for success flags; (2) transaction operations are simpler request/response pairs, not multi-callback orchestrations where per-callback detail necessitates structured responses. Per the planning document R8: "Either existing Resource moves to proper status codes, or new endpoints follow the existing convention. This is an implementation-time decision."
 
 **Migrate callbacks mirror cleanup callbacks**: The `resource-migrate` store uses the same key patterns and indexing strategy as `resource-cleanup`. Migration callbacks substitute `{{sourceResourceId}}` and `{{targetResourceId}}` in payload templates (vs. cleanup's `{{resourceId}}`), enabling dependent services to re-point their references from one resource to another.
+
+**Transaction PreboundApi fields stored as serialized JSON**: Transaction and provision models store `PreboundApi` objects as `BannouJson.Serialize()`'d strings in MySQL. This preserves all fields at registration-time values — if `PreboundApi` gains new fields (TimeoutSeconds, Headers, etc.), stored transactions retain their registration-time values instead of silently inheriting new defaults. Deserialized via `BannouJson.Deserialize<PreboundApi>()` at execution time.
+
+**Response transformation in compensation and validation**: When executing compensation or completion validation prebound APIs, the worker runs `ResponseTransformer.Transform()` on the raw response BEFORE interpreting the result. This allows the prebound API creator to declaratively define what "success" and "failure" mean in their context (e.g., a 200 with `{"error": "..."}` in the body can be transformed to a failure). If no `ResponseTransformation` is configured on the `PreboundApi`, the raw response passes through unchanged.
+
+**Optimistic concurrency on transaction state transitions (R10)**: Concurrent requests to the same transaction (e.g., orchestrator calls Abort while worker auto-aborts) are handled by `GetWithETagAsync` + `TrySaveAsync` on the transaction record. The loser gets Conflict and retries or no-ops (state already transitioned).
