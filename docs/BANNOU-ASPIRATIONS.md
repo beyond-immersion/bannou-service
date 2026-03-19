@@ -16,16 +16,16 @@ Bannou is not "a server you connect to." It is a runtime that can host your game
 
 #### Cloud Deployment (Traditional)
 
-The familiar model: Bannou runs as a containerized service (Docker Compose, Kubernetes, Portainer, Docker Swarm -- all supported via the Orchestrator's pluggable backend architecture). Game clients connect via WebSocket through the Connect gateway. Services scale horizontally via environment variables -- enable or disable any of the 76 plugins per node without code changes.
+The familiar model: Bannou runs as a containerized service (Docker Compose, Kubernetes, Portainer, Docker Swarm -- all supported via the Orchestrator's pluggable backend architecture). Game clients connect via WebSocket through the Connect gateway. Services scale horizontally via environment variables -- enable or disable any of the 78 plugins per node without code changes.
 
 ```
-Game Client ──WebSocket──▶ Connect Gateway ──mesh──▶ 76 Service Plugins
+Game Client ──WebSocket──▶ Connect Gateway ──mesh──▶ 78 Service Plugins
                                                       (distributed across nodes)
 ```
 
 #### Self-Hosted / Sidecar Deployment
 
-The Satisfactory/Valheim model: Bannou ships as a sidecar binary alongside the game client or dedicated server. Infrastructure backends swap to local alternatives (SQLite instead of MySQL, InMemory message bus instead of RabbitMQ, local mesh routing instead of YARP). A factory game can run on ~15 of the 76 plugins, with Workshop's lazy evaluation computing production retroactively from elapsed game-time on next query -- the server does not need to stay running between play sessions.
+The Satisfactory/Valheim model: Bannou ships as a sidecar binary alongside the game client or dedicated server. Infrastructure backends swap to local alternatives (SQLite instead of MySQL, InMemory message bus instead of RabbitMQ, local mesh routing instead of YARP). A factory game can run on ~15 of the 78 plugins, with Workshop's lazy evaluation computing production retroactively from elapsed game-time on next query -- the server does not need to stay running between play sessions.
 
 ```
 Game Client + Bannou Sidecar (same machine, localhost:5012)
@@ -50,7 +50,7 @@ Game Process
 
 ---
 
-### The 76-Plugin Composition Model
+### The 78-Plugin Composition Model
 
 Bannou's services are not a monolithic "game server framework." They are **composable primitives** -- small, orthogonal services that combine to create emergent game systems. No single service "is" the economy, or "is" combat, or "is" crafting. These are behaviors that emerge from primitives interacting.
 
@@ -58,7 +58,7 @@ Bannou's services are not a monolithic "game server framework." They are **compo
 
 ```
 L0: Infrastructure (4 plugins)     State, Messaging, Mesh, Telemetry
-L1: App Foundation (7 plugins)     Account, Auth, Chat, Connect, Permission, Contract, Resource
+L1: App Foundation (8 plugins)     Account, Auth, Chat, Connect, Localization, Permission, Contract, Resource
 L2: Game Foundation (17 plugins)   Character, Realm, Species, Location, Currency, Item, Inventory,
                                    Actor, Quest, Seed, Collection, Transit, Worldstate, and more
 L3: App Features (6 plugins)       Asset, Orchestrator, Documentation, Website, Voice, Broadcast
@@ -319,7 +319,7 @@ Bannou generates typed client artifacts for major game engines:
 
 ### The Platform in One Paragraph
 
-Bannou is a monoservice game backend platform comprising 76 planned service plugins (903 endpoints across 184 maintained YAML schemas) that provides everything a multiplayer game needs -- authentication, real-time WebSocket communication, economies, inventories, quests, matchmaking, voice chat, spatial data, save/load, procedural content generation, and an autonomous NPC intelligence stack capable of running 100,000+ concurrent AI-driven characters. It compiles into a single binary that deploys as anything from an in-process library embedded directly in a game client (no server required) to a fully distributed microservices architecture spanning thousands of nodes. The same game code, the same SDK calls, the same ABML behavior documents work identically across all deployment modes. The game is the data; Bannou runs the simulation.
+Bannou is a monoservice game backend platform comprising 78 service plugins (1115 endpoints across 210 maintained YAML schemas) that provides everything a multiplayer game needs -- authentication, real-time WebSocket communication, economies, inventories, quests, matchmaking, voice chat, spatial data, save/load, procedural content generation, and an autonomous NPC intelligence stack capable of running 100,000+ concurrent AI-driven characters. It compiles into a single binary that deploys as anything from an in-process library embedded directly in a game client (no server required) to a fully distributed microservices architecture spanning thousands of nodes. The same game code, the same SDK calls, the same ABML behavior documents work identically across all deployment modes. The game is the data; Bannou runs the simulation.
 
 ---
 
@@ -487,7 +487,7 @@ This is not theoretical. The infrastructure is built:
 | **Deployment** | Cloud-only, vendor-locked | Self-hosted, embedded, cloud, hybrid -- zero vendor lock-in |
 | **Customization** | Dashboard configuration | Full source code, schema-first extensibility, L5 extension plugins |
 | **Progressive Systems** | Level/XP numbers | Seed (generic growth), License (grid boards), Collection (discovery), Agency (UX-as-progression) |
-| **Services** | 10-15 features | 76 composable primitives (903 endpoints) |
+| **Services** | 10-15 features | 78 composable primitives (1115 endpoints) |
 | **AI/LLM Dependency** | Some use LLM for NPCs | Zero LLM dependency -- formal theory, deterministic, cacheable, cost-predictable |
 
 ---

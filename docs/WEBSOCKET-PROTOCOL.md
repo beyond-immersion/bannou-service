@@ -397,7 +397,7 @@ Payload: (empty - meta requests have no body)
 - `/lib-connect/Protocol/BinaryMessage.cs` - Message structure and parsing
 - `/lib-connect/Protocol/MessageFlags.cs` - Flag definitions
 - `/lib-connect/Protocol/MetaType.cs` - Meta endpoint type enumeration
-- `/lib-connect/Protocol/GuidGenerator.cs` - GUID generation
+- `/bannou-service/Protocol/GuidGenerator.cs` - GUID generation (shared infrastructure)
 - `/lib-connect/Protocol/ConnectionState.cs` - Connection lifecycle
 - `/lib-connect/Protocol/NetworkByteOrder.cs` - Byte order utilities
 - `/lib-connect/Protocol/MessageRouter.cs` - Message routing logic
@@ -407,6 +407,6 @@ Payload: (empty - meta requests have no body)
 1. **JWT Validation**: All connections require valid JWT
 2. **Session Isolation**: Client-salted GUIDs prevent cross-session attacks
 3. **SHA256 Hashing**: Cryptographic security for GUID generation
-4. **Server Salt**: Per-instance salt adds entropy
+4. **Server Salt**: Shared configuration-based salt ensures cross-instance consistency
 5. **Permission Validation**: All API calls validated against capabilities
 6. **Empty Error Payloads**: Error responses don't leak server implementation details

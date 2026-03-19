@@ -11,7 +11,7 @@ bannou-service is the shared .NET project that every plugin references. It defin
 
 - **Infrastructure abstractions** (state stores, messaging, mesh, telemetry) that L0 plugins implement
 - **Service framework** (IBannouService, plugin loading, DI registration, configuration) that all plugins use
-- **DI inversion interfaces** (16 Provider/Listener interfaces) that enable cross-layer communication
+- **DI inversion interfaces** (12 Provider/Listener interfaces + 5 provider-like types) that enable cross-layer communication
 - **ABML execution runtime** (tree-walking interpreter, channel scheduler, cognition pipeline) used by lib-actor
 - **Behavior system interfaces** (14 interfaces) for the behavior stacking, control gating, and cinematic systems
 - **Shared helpers** (deprecation cleanup, error responses, event batching, pagination, enum mapping) used across plugins

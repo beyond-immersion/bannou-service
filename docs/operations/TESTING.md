@@ -156,21 +156,31 @@ bannou-service.tests/                # Core framework tests (replaces unit-tests
 structural-tests/                    # Cross-cutting structural validation tests
 ```
 
-**Generated Test Structure**: Tests follow xUnit patterns with proper dependency injection:
+**Generated Test Structure**: Tests follow xUnit patterns with proper dependency injection. Real service constructors have many dependencies (IStateStoreFactory, IMessageBus, IEventConsumer, etc. per T6); configuration classes are concrete (use `new`, not `Mock`). Constructor validation is centralized in `structural-tests/` via `ServiceConstructorValidator`. See `docs/reference/tenets/TESTING-PATTERNS.md` for the authoritative patterns.
 
 ```csharp
-public class AccountServiceTests
+public class AccountServiceTests : ServiceTestBase<AccountServiceConfiguration>
 {
+    private readonly Mock<IStateStoreFactory> _mockStoreFactory = new();
+    private readonly Mock<IMessageBus> _mockMessageBus = new();
     private readonly Mock<ILogger<AccountService>> _mockLogger = new();
-    private readonly Mock<AccountServiceConfiguration> _mockConfiguration = new();
+    private readonly Mock<IEventConsumer> _mockEventConsumer = new();
 
-    [Fact]
-    public void Constructor_WithValidParameters_ShouldNotThrow()
-    {
-        var service = new AccountService(_mockLogger.Object, _mockConfiguration.Object);
-        Assert.NotNull(service);
-    }
+    // Configuration classes are concrete — use new, not Mock
+    // See TESTING-PATTERNS.md for the full pattern
 }
+```
+
+**xUnit v3 Test Filtering**: Use testing platform filter syntax (NOT the old `--filter` vstest flag):
+
+```bash
+# Filter by test class:
+dotnet test --project plugins/lib-account.tests/ --filter-class "BeyondImmersion.BannouService.Account.Tests.AccountServiceTests"
+# Filter by test method (wildcards supported):
+dotnet test --project plugins/lib-account.tests/ --filter-method "*CreateAccount*"
+# Filter by namespace:
+dotnet test --project plugins/lib-account.tests/ --filter-namespace "BeyondImmersion.BannouService.Account.Tests"
+# NEVER use --filter (old vstest flag — does not work with xUnit v3)
 ```
 
 ### 2. HTTP Integration Testing (`tools/http-tester`)

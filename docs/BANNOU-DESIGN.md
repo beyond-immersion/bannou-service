@@ -4,12 +4,12 @@ This document explains the architectural decisions and design philosophy behind 
 
 ## Overview
 
-Bannou is a **composable game platform** -- 76 service primitives that combine to produce emergent game systems (economies, crafting, combat, housing, NPC societies) without per-feature backend code. The same binary deploys as a cloud service, a self-hosted sidecar alongside a dedicated server, or embedded in-process inside the game itself. A mobile RPG, a LAN co-op survival game, and an MMO with 100,000 concurrent AI-driven NPCs all build on the same SDK; the deployment mode is a configuration choice, not an architectural one.
+Bannou is a **composable game platform** -- 78 service primitives that combine to produce emergent game systems (economies, crafting, combat, housing, NPC societies) without per-feature backend code. The same binary deploys as a cloud service, a self-hosted sidecar alongside a dedicated server, or embedded in-process inside the game itself. A mobile RPG, a LAN co-op survival game, and an MMO with 100,000 concurrent AI-driven NPCs all build on the same SDK; the deployment mode is a configuration choice, not an architectural one.
 
 The platform rests on three architectural pillars:
 
 1. **Schema-First Development** - OpenAPI specifications are the single source of truth; code generation produces controllers, models, clients, and tests
-2. **Plugin Architecture** - Each service is an independent, loadable assembly; environment variables control which of the 76 plugins are active per node
+2. **Plugin Architecture** - Each service is an independent, loadable assembly; environment variables control which of the 78 plugins are active per node
 3. **Infrastructure Libs** - State, messaging, and service invocation are abstracted (lib-state, lib-messaging, lib-mesh), allowing infrastructure backends to swap between Redis/MySQL, SQLite/InMemory, and direct DI calls without code changes
 
 Alongside the service runtime, a family of **pure-computation creative SDKs** generate music, narratives, scene compositions, and NPC behaviors procedurally using GOAP planning and formal academic theory. Developers write behavior documents (ABML), seed data, and game-specific extensions -- not systems code.
@@ -89,7 +89,7 @@ Body: {"account_id": "abc123"}
 
 When a WebSocket message arrives, the Connect service extracts a 16-byte GUID from the binary header and routes the message without ever examining the payload. This works only when each endpoint has exactly one GUID - which requires static paths.
 
-**Exception**: Website service uses traditional REST patterns for browser compatibility (bookmarkable URLs, SEO, caching).
+**Exceptions**: A small number of services use GET with path parameters for browser compatibility: Website (public pages, SEO), Auth (OAuth redirect flows), Connect (WebSocket upgrade handshake), and Documentation (browser-rendered markdown views). See T15 in the tenets for the complete list.
 
 ## Plugin Architecture
 
@@ -101,10 +101,10 @@ plugins/lib-account/              # Account service plugin
 │   ├── AccountController.cs      # HTTP routing
 │   ├── IAccountService.cs        # Service interface
 │   └── AccountServiceConfiguration.cs  # Typed config class
-├── AccountService.cs             # Business logic implementation
-├── AccountServiceModels.cs       # Internal data models (storage, cache, DTOs)
-├── AccountServiceEvents.cs       # Event handlers (partial class)
-├── AccountServicePlugin.cs       # Plugin registration
+├── AccountService.cs             # Business logic implementation (partial class)
+├── AccountService.Models.cs      # Internal data models (partial class)
+├── AccountService.Events.cs      # Event handlers (partial class)
+├── AccountServicePlugin.cs       # Plugin registration (separate class)
 └── lib-account.csproj
 
 bannou-service/Generated/         # Shared generated code (never edit)
@@ -118,13 +118,13 @@ Use `make print-models PLUGIN="account"` to inspect request/response model shape
 **Key principles**:
 - **One schema, one plugin** - Clear ownership and boundaries
 - **Generated code is untouchable** - Never edit files in `Generated/`
-- **Clean separation** - Business logic in `*Service.cs`, internal models in `*ServiceModels.cs`, event handlers in `*ServiceEvents.cs`
+- **Clean separation** - Business logic in `*Service.cs`, internal models in `*Service.Models.cs`, event handlers in `*Service.Events.cs` (dot-separated filenames signal partial class membership; no dot means a separate class)
 - **Assembly loading** - Plugins loaded based on environment configuration
 
 **Service registration**:
 ```csharp
 [BannouService("account", typeof(IAccountService), lifetime: ServiceLifetime.Scoped)]
-public class AccountService : IAccountService
+public partial class AccountService : IAccountService
 {
     // Business logic implementation
 }
@@ -149,13 +149,13 @@ var data = await _stateStore.GetAsync(key);
 
 State stores are defined in `schemas/state-stores.yaml` and code is generated to `StateStoreDefinitions.cs` - change the schema, not the code.
 
-The factory provides specialized interfaces for backend-specific capabilities: `ICacheableStateStore<T>` for Redis sets/sorted sets, `IQueryableStateStore<T>` for MySQL LINQ queries, and `IRedisOperations` for Lua scripts and atomic operations. See [Plugin Development Guide](guides/PLUGIN_DEVELOPMENT.md) for details.
+The factory provides specialized interfaces for backend-specific capabilities: `ICacheableStateStore<T>` for Redis sets/sorted sets, `IQueryableStateStore<T>` for MySQL LINQ queries, and `IRedisOperations` for Lua scripts and atomic operations. See [Plugin Development Guide](guides/PLUGIN-DEVELOPMENT.md) for details.
 
 ### Pub/Sub Messaging (lib-messaging)
 Services publish and subscribe to events without knowing the message broker details:
 ```csharp
-// Publisher
-await _messageBus.PublishAsync("account.created", event);
+// Publisher — use generated typed extension methods (inline topic strings are forbidden)
+await _messageBus.PublishAccountCreatedAsync(event, ct);
 
 // Subscriber
 await _messageSubscriber.SubscribeAsync<AccountCreatedEvent>(

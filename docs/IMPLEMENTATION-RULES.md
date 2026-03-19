@@ -88,13 +88,13 @@ Event types must be defined in the service's events schema (`*-service-events.ya
 
 ## 6. Event Consumption
 
-Multi-handler event consumption uses `IEventConsumer` with `RegisterEventConsumers` called in the service constructor. Event handler implementations go in `*ServiceEvents.cs` (the partial class).
+Multi-handler event consumption uses `IEventConsumer` with `RegisterEventConsumers` called in the service constructor. Event handler implementations go in `*Service.Events.cs` (the partial class).
 
 ```csharp
 // In constructor
 RegisterEventConsumers(eventConsumer);
 
-// In *ServiceEvents.cs (partial class)
+// In *Service.Events.cs (partial class)
 protected void RegisterEventConsumers(IEventConsumer eventConsumer)
 {
     eventConsumer.RegisterHandler<IMyService, EntityDeletedEvent>(
@@ -140,8 +140,8 @@ Never: lower-layer subscribing to higher-layer events for data acquisition, publ
 
 Dependent data cleanup uses lib-resource exclusively — never subscribe to `*.deleted` lifecycle events for cleanup purposes.
 
-- **Producers** (services with dependent data in higher layers): Call `_resourceClient.ExecuteCleanupAsync()` in their delete flow
-- **Consumers** (services that store data referencing other entities): Implement `ISeededResourceProvider` and register with lib-resource
+- **Producers** (services whose entities are referenced by higher layers): Call `_resourceClient.ExecuteCleanupAsync()` in their delete flow
+- **Consumers** (services that store data referencing other entities): Declare `x-references` in their API schema and implement cleanup endpoints; the generated `RegisterResourceCleanupCallbacksAsync()` handles registration at startup
 
 Exceptions: Account-owned data uses `account.deleted` event subscription instead of lib-resource (Account Deletion Cleanup Obligation — privacy prohibits centralized account reference tracking). High-frequency instance cleanup (items at scale) uses DI Listener pattern instead. See FOUNDATION TENETS for both exceptions.
 
@@ -194,7 +194,7 @@ Two categories with different lifecycles:
 | Category | Entities | Deprecation | Deletion | Undeprecation |
 |----------|----------|-------------|----------|---------------|
 | **A** (Definitions) | Species, locations, relationship types | Required before delete | Allowed after deprecation | Allowed (reversible) |
-| **B** (Templates) | Quest definitions, contract templates | One-way | Never deleted | Not allowed |
+| **B** (Templates) | Quest definitions, contract templates | One-way | Via clean-deprecated sweep (zero instances) | Not allowed |
 
 Both categories use the triple-field model: `IsDeprecated`, `DeprecatedAt`, `DeprecationReason`. Deprecation is always idempotent (return 200 OK if already deprecated). Publish via `*.updated` event with `changedFields` — no dedicated deprecation events.
 

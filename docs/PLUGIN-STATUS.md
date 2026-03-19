@@ -51,6 +51,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Chat](#chat-status) | L1 | 97% | 0 | L3-hardened. All 30 endpoints, 4 background workers, dual storage, rate limiting, moderation. 0 bugs, 0 stubs. |
 | [Connect](#connect-status) | L1 | 93% | 1 | L3-hardened gateway. Zero-copy routing, reconnection, multi-node broadcast. 1 orphaned config property. |
 | [Contract](#contract-status) | L1 | 98% | 0 | L3-hardened. All 25 endpoints, 0 stubs. Expiration, payment schedules, clause execution all done. Only extensions remain. |
+| [Localization](#localization-status) | L1 | — | 0 | Multi-language translation tables with category lifecycle, pronunciation annotations, bulk export, and DI-based key validation. 12 endpoints. |
 | [Permission](#permission-status) | L1 | 95% | 0 | L3-hardened RBAC. Heartbeat-driven session TTL, distributed locks, in-memory cache removed. 27 tests. Feature-complete. |
 | [Resource](#resource-status) | L1 | 93% | 0 | Feature-complete lifecycle management. Reference tracking, cleanup, compression all done. |
 | [Actor](#actor-status) | L2 | 90% | 2 | L3-hardened. Two-phase tick, dynamic character binding, pool mode, ~80 telemetry spans. 2 bugs. Auto-scale stubbed. |

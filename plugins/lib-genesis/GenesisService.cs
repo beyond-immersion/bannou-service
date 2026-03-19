@@ -4,9 +4,9 @@ using BeyondImmersion.BannouService.Actor;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Currency;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Helpers;
-using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Realm;
@@ -29,19 +29,29 @@ namespace BeyondImmersion.BannouService.Genesis;
 [BannouService("genesis", typeof(IGenesisService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
 public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
 {
+    // Primary data stores (one model type per store — clean for IQueryableStateStore)
     private readonly IStateStore<GenesisTemplateModel> _templateStore;
-    private readonly IStateStore<GenesisTemplateListModel> _templateListStore;
     private readonly IQueryableStateStore<GenesisTemplateModel> _templateQueryStore;
     private readonly IStateStore<GenesisEntityModel> _entityStore;
-    private readonly IStateStore<GenesisEntityListModel> _entityListStore;
     private readonly IQueryableStateStore<GenesisEntityModel> _entityQueryStore;
+
+    // Index stores (separate from primary data to prevent QueryAsync contamination)
+    private readonly IStateStore<string> _entityIndexStore;
+    private readonly IStateStore<GenesisEntityListModel> _entityListIndexStore;
+    private readonly IStateStore<GenesisTemplateListModel> _templateListIndexStore;
+
+    // Cache stores
     private readonly IStateStore<CachedGenesisEntity> _entityCacheStore;
     private readonly IStateStore<CachedCapabilityManifest> _capsCacheStore;
+
+    // Infrastructure
     private readonly IDistributedLockProvider _lockProvider;
     private readonly IMessageBus _messageBus;
     private readonly ILogger<GenesisService> _logger;
     private readonly GenesisServiceConfiguration _configuration;
     private readonly ITelemetryProvider _telemetryProvider;
+
+    // Service clients (all L0/L1/L2 — hard dependencies per SERVICE-HIERARCHY)
     private readonly IResourceClient _resourceClient;
     private readonly ISeedClient _seedClient;
     private readonly ICurrencyClient _currencyClient;
@@ -77,14 +87,21 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         IGameServiceClient gameServiceClient,
         IEventConsumer eventConsumer)
     {
+        // Primary data stores
         _templateStore = stateStoreFactory.GetStore<GenesisTemplateModel>(StateStoreDefinitions.GenesisTemplates);
-        _templateListStore = stateStoreFactory.GetStore<GenesisTemplateListModel>(StateStoreDefinitions.GenesisTemplates);
         _templateQueryStore = stateStoreFactory.GetQueryableStore<GenesisTemplateModel>(StateStoreDefinitions.GenesisTemplates);
         _entityStore = stateStoreFactory.GetStore<GenesisEntityModel>(StateStoreDefinitions.GenesisEntities);
-        _entityListStore = stateStoreFactory.GetStore<GenesisEntityListModel>(StateStoreDefinitions.GenesisEntities);
         _entityQueryStore = stateStoreFactory.GetQueryableStore<GenesisEntityModel>(StateStoreDefinitions.GenesisEntities);
+
+        // Index stores (separate tables — prevents QueryAsync from scanning index rows)
+        _entityIndexStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.GenesisEntityIndexes);
+        _entityListIndexStore = stateStoreFactory.GetStore<GenesisEntityListModel>(StateStoreDefinitions.GenesisEntityIndexes);
+        _templateListIndexStore = stateStoreFactory.GetStore<GenesisTemplateListModel>(StateStoreDefinitions.GenesisTemplateIndexes);
+
+        // Cache stores
         _entityCacheStore = stateStoreFactory.GetStore<CachedGenesisEntity>(StateStoreDefinitions.GenesisEntityCache);
         _capsCacheStore = stateStoreFactory.GetStore<CachedCapabilityManifest>(StateStoreDefinitions.GenesisEntityCache);
+
         _lockProvider = lockProvider;
         _messageBus = messageBus;
         _logger = logger;
@@ -112,7 +129,6 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         _logger.LogDebug("Registering template {TemplateCode} for game {GameServiceId}",
             body.TemplateCode, body.GameServiceId);
 
-        // Validate template structure per map specification
         var validationError = ValidateTemplateStructure(body);
         if (validationError != null)
         {
@@ -120,7 +136,7 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             return (StatusCodes.BadRequest, null);
         }
 
-        // Validate system realm — generated clients throw ApiException on error
+        // Validate system realm
         try
         {
             var realm = await _realmClient.GetRealmByCodeAsync(
@@ -137,7 +153,7 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             return (StatusCodes.BadRequest, null);
         }
 
-        // Validate species in system realm
+        // Validate species
         try
         {
             await _speciesClient.GetSpeciesByCodeAsync(
@@ -152,12 +168,9 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         // Idempotent check
         var existing = await _templateStore.GetAsync(BuildTemplateKey(body.TemplateCode), cancellationToken);
         if (existing != null)
-        {
-            _logger.LogDebug("Template {TemplateCode} already exists, returning idempotent", body.TemplateCode);
             return (StatusCodes.OK, MapTemplateToResponse(existing));
-        }
 
-        // Register seed type with Seed service
+        // Register seed type
         try
         {
             await _seedClient.RegisterSeedTypeAsync(
@@ -243,7 +256,6 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
     {
         var template = await _templateStore.GetAsync(BuildTemplateKey(body.TemplateCode), cancellationToken);
         if (template == null) return (StatusCodes.NotFound, null);
-
         return (StatusCodes.OK, MapTemplateToResponse(template));
     }
 
@@ -252,7 +264,7 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         ListTemplatesRequest body, CancellationToken cancellationToken)
     {
         var pageSize = body.PageSize ?? _configuration.DefaultPageSize;
-        var index = await _templateListStore.GetAsync(BuildTemplateGameKey(body.GameServiceId), cancellationToken);
+        var index = await _templateListIndexStore.GetAsync(BuildTemplateGameKey(body.GameServiceId), cancellationToken);
         if (index == null || index.TemplateCodes.Count == 0)
         {
             return (StatusCodes.OK, new ListTemplatesResponse
@@ -300,30 +312,22 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
 
         var changedFields = new List<string>();
 
-        // Validate awakening if changed
         if (body.Awakening != null)
         {
             try
             {
                 var realm = await _realmClient.GetRealmByCodeAsync(
                     new GetRealmByCodeRequest { Code = body.Awakening.SystemRealmCode }, cancellationToken);
-                if (!realm.IsSystemType)
-                    return (StatusCodes.BadRequest, null);
+                if (!realm.IsSystemType) return (StatusCodes.BadRequest, null);
             }
-            catch (ApiException)
-            {
-                return (StatusCodes.BadRequest, null);
-            }
+            catch (ApiException) { return (StatusCodes.BadRequest, null); }
 
             try
             {
                 await _speciesClient.GetSpeciesByCodeAsync(
                     new GetSpeciesByCodeRequest { Code = body.Awakening.CharacterSpeciesCode }, cancellationToken);
             }
-            catch (ApiException)
-            {
-                return (StatusCodes.BadRequest, null);
-            }
+            catch (ApiException) { return (StatusCodes.BadRequest, null); }
 
             template.Awakening = body.Awakening;
             changedFields.Add("Awakening");
@@ -347,17 +351,12 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
 
         await _messageBus.PublishTemplateUpdatedAsync(new TemplateUpdatedEvent
         {
-            TemplateCode = template.TemplateCode,
-            GameServiceId = template.GameServiceId,
-            DisplayName = template.DisplayName,
-            Description = template.Description,
+            TemplateCode = template.TemplateCode, GameServiceId = template.GameServiceId,
+            DisplayName = template.DisplayName, Description = template.Description,
             PhysicalFormType = template.PhysicalFormType,
-            CreatedAt = template.CreatedAt,
-            UpdatedAt = template.UpdatedAt,
-            IsDeprecated = template.IsDeprecated,
-            DeprecatedAt = template.DeprecatedAt,
-            DeprecationReason = template.DeprecationReason,
-            ChangedFields = changedFields,
+            CreatedAt = template.CreatedAt, UpdatedAt = template.UpdatedAt,
+            IsDeprecated = template.IsDeprecated, DeprecatedAt = template.DeprecatedAt,
+            DeprecationReason = template.DeprecationReason, ChangedFields = changedFields,
         }, cancellationToken);
 
         return (StatusCodes.OK, MapTemplateToResponse(template));
@@ -370,7 +369,6 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         var template = await _templateStore.GetAsync(BuildTemplateKey(body.TemplateCode), cancellationToken);
         if (template == null) return (StatusCodes.NotFound, null);
 
-        // Idempotent per IMPLEMENTATION TENETS
         if (template.IsDeprecated)
             return (StatusCodes.OK, MapTemplateToResponse(template));
 
@@ -383,21 +381,16 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
 
         await _messageBus.PublishTemplateUpdatedAsync(new TemplateUpdatedEvent
         {
-            TemplateCode = template.TemplateCode,
-            GameServiceId = template.GameServiceId,
-            DisplayName = template.DisplayName,
-            Description = template.Description,
+            TemplateCode = template.TemplateCode, GameServiceId = template.GameServiceId,
+            DisplayName = template.DisplayName, Description = template.Description,
             PhysicalFormType = template.PhysicalFormType,
-            CreatedAt = template.CreatedAt,
-            UpdatedAt = template.UpdatedAt,
-            IsDeprecated = template.IsDeprecated,
-            DeprecatedAt = template.DeprecatedAt,
+            CreatedAt = template.CreatedAt, UpdatedAt = template.UpdatedAt,
+            IsDeprecated = template.IsDeprecated, DeprecatedAt = template.DeprecatedAt,
             DeprecationReason = template.DeprecationReason,
             ChangedFields = new List<string> { "IsDeprecated", "DeprecatedAt", "DeprecationReason" },
         }, cancellationToken);
 
         _logger.LogInformation("Deprecated template {TemplateCode}", body.TemplateCode);
-
         return (StatusCodes.OK, MapTemplateToResponse(template));
     }
 
@@ -405,6 +398,7 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
     public async Task<(StatusCodes, CleanDeprecatedStringKeyResponse?)> CleanDeprecatedAsync(
         CleanDeprecatedRequest body, CancellationToken cancellationToken)
     {
+        // QueryAsync on template store is now clean — no index rows contaminate the scan
         var deprecatedTemplates = await _templateQueryStore.QueryAsync(
             t => t.IsDeprecated, cancellationToken);
 
@@ -414,7 +408,7 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             getDeprecatedAt: t => t.DeprecatedAt,
             hasInstancesAsync: async (t, ct) =>
             {
-                // Check if any entities reference this template across any realm
+                // QueryAsync on entity store is now clean — no duplicate index rows
                 var entities = await _entityQueryStore.QueryAsync(
                     e => e.TemplateCode == t.TemplateCode, ct);
                 return entities.Count > 0;
@@ -432,10 +426,8 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
 
         return (StatusCodes.OK, new CleanDeprecatedStringKeyResponse
         {
-            Cleaned = result.Cleaned,
-            Remaining = result.Remaining,
-            Errors = result.Errors,
-            CleanedIds = result.CleanedIds.ToList(),
+            Cleaned = result.Cleaned, Remaining = result.Remaining,
+            Errors = result.Errors, CleanedIds = result.CleanedIds.ToList(),
         });
     }
 
@@ -446,28 +438,38 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         _logger.LogDebug("Creating entity from template {TemplateCode} in realm {RealmId}",
             body.TemplateCode, body.RealmId);
 
-        // Validate template
         var template = await _templateStore.GetAsync(BuildTemplateKey(body.TemplateCode), cancellationToken);
         if (template == null) return (StatusCodes.NotFound, null);
         if (template.IsDeprecated) return (StatusCodes.BadRequest, null);
 
-        // Validate game service — generated clients throw ApiException
-        try
-        {
-            await _gameServiceClient.GetServiceAsync(
-                new GetServiceRequest { ServiceId = body.GameServiceId }, cancellationToken);
-        }
-        catch (ApiException)
-        {
-            return (StatusCodes.BadRequest, null);
-        }
+        // Validate game service
+        try { await _gameServiceClient.GetServiceAsync(new GetServiceRequest { ServiceId = body.GameServiceId }, cancellationToken); }
+        catch (ApiException) { return (StatusCodes.BadRequest, null); }
 
-        // Code uniqueness check
+        // Code uniqueness check (index store — lightweight string lookup)
         if (body.Code != null)
         {
-            var existing = await _entityStore.GetAsync(
+            var existingId = await _entityIndexStore.GetAsync(
                 BuildEntityCodeKey(body.GameServiceId, body.RealmId, body.Code), cancellationToken);
-            if (existing != null) return (StatusCodes.Conflict, null);
+            if (existingId != null) return (StatusCodes.Conflict, null);
+        }
+
+        // Resolve currency definition IDs from template wallet codes — validate they exist
+        var currencyDefIds = new Dictionary<string, Guid>();
+        foreach (var wallet in template.Economy.Wallets)
+        {
+            try
+            {
+                var currencyDef = await _currencyClient.GetCurrencyDefinitionAsync(
+                    new GetCurrencyDefinitionRequest { Code = wallet.CurrencyCode }, cancellationToken);
+                currencyDefIds[wallet.WalletCode] = currencyDef.DefinitionId;
+            }
+            catch (ApiException)
+            {
+                _logger.LogDebug("Currency definition {Code} not found for wallet {WalletCode}",
+                    wallet.CurrencyCode, wallet.WalletCode);
+                return (StatusCodes.BadRequest, null);
+            }
         }
 
         var entityId = Guid.NewGuid();
@@ -478,44 +480,52 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             lockOwner, _configuration.EntityLockTimeoutSeconds, cancellationToken: cancellationToken);
         if (!lockHandle.Success) return (StatusCodes.Conflict, null);
 
-        // Provision seed — generated clients throw ApiException on error
-        var seedResponse = await _seedClient.CreateSeedAsync(
-            new CreateSeedRequest
+        // Multi-service provisioning with direct catch-block compensation per IMPLEMENTATION TENETS
+        var provisionedWalletIds = new Dictionary<string, Guid>();
+        var provisionedInventoryIds = new Dictionary<string, Guid>();
+        Guid provisionedSeedId;
+
+        try
+        {
+            // Provision seed
+            var seedResponse = await _seedClient.CreateSeedAsync(
+                new CreateSeedRequest
+                {
+                    OwnerType = EntityType.Other, OwnerId = entityId,
+                    SeedTypeCode = template.Seed.SeedTypeCode, GameServiceId = body.GameServiceId,
+                }, cancellationToken);
+            provisionedSeedId = seedResponse.SeedId;
+
+            // Provision wallets
+            foreach (var wallet in template.Economy.Wallets)
             {
-                OwnerType = EntityType.Other,
-                OwnerId = entityId,
-                SeedTypeCode = template.Seed.SeedTypeCode,
-                GameServiceId = body.GameServiceId,
-            }, cancellationToken);
+                var wResponse = await _currencyClient.CreateWalletAsync(
+                    new CreateWalletRequest
+                    {
+                        OwnerId = entityId, OwnerType = EntityType.Other, RealmId = body.RealmId,
+                    }, cancellationToken);
+                provisionedWalletIds[wallet.WalletCode] = wResponse.WalletId;
+            }
 
-        // Provision wallets
-        var walletIds = new Dictionary<string, Guid>();
-        foreach (var wallet in template.Economy.Wallets)
-        {
-            var wResponse = await _currencyClient.CreateWalletAsync(
-                new CreateWalletRequest
-                {
-                    OwnerId = entityId,
-                    OwnerType = EntityType.Other,
-                    RealmId = body.RealmId,
-                }, cancellationToken);
-            walletIds[wallet.WalletCode] = wResponse.WalletId;
+            // Provision inventories
+            foreach (var inv in template.Storage.Inventories)
+            {
+                var iResponse = await _inventoryClient.CreateContainerAsync(
+                    new CreateContainerRequest
+                    {
+                        OwnerId = entityId, OwnerType = ContainerOwnerType.Other,
+                        ContainerType = inv.InventoryCode,
+                        ConstraintModel = inv.ConstraintModel.MapByName<ContainerConstraintModel>(),
+                        MaxSlots = inv.Capacity,
+                    }, cancellationToken);
+                provisionedInventoryIds[inv.InventoryCode] = iResponse.ContainerId;
+            }
         }
-
-        // Provision inventories
-        var inventoryIds = new Dictionary<string, Guid>();
-        foreach (var inv in template.Storage.Inventories)
+        catch (Exception)
         {
-            var iResponse = await _inventoryClient.CreateContainerAsync(
-                new CreateContainerRequest
-                {
-                    OwnerId = entityId,
-                    OwnerType = ContainerOwnerType.Other,
-                    ContainerType = inv.InventoryCode,
-                    ConstraintModel = inv.ConstraintModel.MapByName<ContainerConstraintModel>(),
-                    MaxSlots = inv.Capacity,
-                }, cancellationToken);
-            inventoryIds[inv.InventoryCode] = iResponse.ContainerId;
+            // Direct compensation: undo whatever was successfully provisioned
+            await CompensateProvisioningAsync(provisionedWalletIds, provisionedInventoryIds, cancellationToken);
+            throw;
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -527,9 +537,9 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             RealmId = body.RealmId,
             Code = body.Code,
             DisplayName = body.DisplayName,
-            SeedId = seedResponse.SeedId,
-            WalletIds = walletIds,
-            InventoryIds = inventoryIds,
+            SeedId = provisionedSeedId,
+            WalletIds = provisionedWalletIds,
+            InventoryIds = provisionedInventoryIds,
             CurrentPhase = template.Seed.Phases.First().PhaseName,
             CognitiveStage = CognitiveStage.Dormant,
             PhysicalFormType = template.PhysicalFormType,
@@ -538,36 +548,31 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             UpdatedAt = now,
         };
 
-        // Save entity and all indexes
+        // Save entity record (primary store only)
         await _entityStore.SaveAsync(BuildEntityKey(entityId), entity, cancellationToken: cancellationToken);
+
+        // Save lightweight indexes (separate store)
         if (body.Code != null)
-            await _entityStore.SaveAsync(
-                BuildEntityCodeKey(body.GameServiceId, body.RealmId, body.Code), entity, cancellationToken: cancellationToken);
+            await _entityIndexStore.SaveAsync(
+                BuildEntityCodeKey(body.GameServiceId, body.RealmId, body.Code),
+                entityId.ToString(), cancellationToken: cancellationToken);
         await AddToEntityTemplateIndexAsync(body.TemplateCode, body.RealmId, entityId, cancellationToken);
-        foreach (var walletId in walletIds.Values)
-            await _entityStore.SaveAsync(BuildEntityWalletKey(walletId), entity, cancellationToken: cancellationToken);
+        foreach (var walletId in entity.WalletIds.Values)
+            await _entityIndexStore.SaveAsync(
+                BuildEntityWalletKey(walletId), entityId.ToString(), cancellationToken: cancellationToken);
 
         await _messageBus.PublishEntityCreatedAsync(new EntityCreatedEvent
         {
-            EntityId = entityId,
-            TemplateCode = body.TemplateCode,
-            GameServiceId = body.GameServiceId,
-            RealmId = body.RealmId,
-            Code = body.Code,
-            DisplayName = body.DisplayName,
-            WalletIds = walletIds,
-            InventoryIds = inventoryIds,
-            CurrentPhase = entity.CurrentPhase,
-            CognitiveStage = entity.CognitiveStage,
-            PhysicalFormType = entity.PhysicalFormType,
-            Status = entity.Status,
-            CreatedAt = entity.CreatedAt,
-            UpdatedAt = entity.UpdatedAt,
+            EntityId = entityId, TemplateCode = body.TemplateCode,
+            GameServiceId = body.GameServiceId, RealmId = body.RealmId,
+            Code = body.Code, DisplayName = body.DisplayName,
+            WalletIds = entity.WalletIds, InventoryIds = entity.InventoryIds,
+            CurrentPhase = entity.CurrentPhase, CognitiveStage = entity.CognitiveStage,
+            PhysicalFormType = entity.PhysicalFormType, Status = entity.Status,
+            CreatedAt = entity.CreatedAt, UpdatedAt = entity.UpdatedAt,
         }, cancellationToken);
 
-        _logger.LogInformation("Created entity {EntityId} from template {TemplateCode}",
-            entityId, body.TemplateCode);
-
+        _logger.LogInformation("Created entity {EntityId} from template {TemplateCode}", entityId, body.TemplateCode);
         return (StatusCodes.OK, MapEntityToResponse(entity, null));
     }
 
@@ -575,7 +580,6 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
     public async Task<(StatusCodes, GenesisEntityResponse?)> GetEntityAsync(
         GetEntityRequest body, CancellationToken cancellationToken)
     {
-        // Check cache first
         var cached = await _entityCacheStore.GetAsync(BuildEntityCacheKey(body.EntityId), cancellationToken);
         GenesisEntityModel? entity;
 
@@ -588,20 +592,16 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             entity = await _entityStore.GetAsync(BuildEntityKey(body.EntityId), cancellationToken);
             if (entity == null) return (StatusCodes.NotFound, null);
 
-            // Write-through cache with TTL in seconds
             await _entityCacheStore.SaveAsync(
                 BuildEntityCacheKey(body.EntityId), MapEntityToCache(entity),
                 new StateOptions { Ttl = _configuration.EntityCacheTtlMinutes * 60 },
                 cancellationToken);
         }
 
-        // Fetch wallet balances if requested
         Dictionary<string, double>? walletBalances = null;
         var includeBalances = body.IncludeBalances ?? _configuration.IncludeBalancesDefault;
         if (includeBalances)
-        {
             walletBalances = await FetchWalletBalancesAsync(entity, cancellationToken);
-        }
 
         return (StatusCodes.OK, MapEntityToResponse(entity, walletBalances));
     }
@@ -611,17 +611,15 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         ListEntitiesRequest body, CancellationToken cancellationToken)
     {
         var pageSize = body.PageSize ?? _configuration.DefaultPageSize;
-        var index = await _entityListStore.GetAsync(
+        var index = await _entityListIndexStore.GetAsync(
             BuildEntityTemplateKey(body.TemplateCode, body.RealmId), cancellationToken);
 
         if (index == null || index.EntityIds.Count == 0)
         {
             return (StatusCodes.OK, new ListEntitiesResponse
             {
-                Entities = new List<GenesisEntityResponse>(),
-                TotalCount = 0,
-                Page = body.Page,
-                PageSize = pageSize
+                Entities = new List<GenesisEntityResponse>(), TotalCount = 0,
+                Page = body.Page, PageSize = pageSize
             });
         }
 
@@ -630,12 +628,9 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         {
             var entity = await _entityStore.GetAsync(BuildEntityKey(entityId), cancellationToken);
             if (entity == null) continue;
-
-            // Apply filters
             if (body.CognitiveStage.HasValue && entity.CognitiveStage != body.CognitiveStage.Value) continue;
             if (body.Status.HasValue && entity.Status != body.Status.Value) continue;
             if (body.CurrentPhase != null && entity.CurrentPhase != body.CurrentPhase) continue;
-
             entities.Add(entity);
         }
 
@@ -648,10 +643,8 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
 
         return (StatusCodes.OK, new ListEntitiesResponse
         {
-            Entities = paged,
-            TotalCount = totalCount,
-            Page = body.Page,
-            PageSize = pageSize
+            Entities = paged, TotalCount = totalCount,
+            Page = body.Page, PageSize = pageSize
         });
     }
 
@@ -662,19 +655,15 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         var entity = await _entityStore.GetAsync(BuildEntityKey(body.EntityId), cancellationToken);
         if (entity == null) return (StatusCodes.NotFound, null);
 
-        // Check caps cache
         var cached = await _capsCacheStore.GetAsync(BuildCapsCacheKey(body.EntityId), cancellationToken);
         if (cached != null)
         {
             return (StatusCodes.OK, new GetCapabilitiesResponse
             {
-                EntityId = body.EntityId,
-                Capabilities = cached.Capabilities,
-                Version = cached.Version,
+                EntityId = body.EntityId, Capabilities = cached.Capabilities, Version = cached.Version,
             });
         }
 
-        // Cache miss — query seed service
         List<GenesisCapability> capabilities;
         int version;
         try
@@ -683,8 +672,7 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
                 new GetCapabilityManifestRequest { SeedId = entity.SeedId }, cancellationToken);
             capabilities = capResponse.Capabilities.Select(c => new GenesisCapability
             {
-                CapabilityCode = c.CapabilityCode,
-                IsUnlocked = c.Unlocked,
+                CapabilityCode = c.CapabilityCode, IsUnlocked = c.Unlocked,
             }).ToList();
             version = capResponse.Version;
         }
@@ -694,20 +682,14 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             version = 0;
         }
 
-        // Cache result
         await _capsCacheStore.SaveAsync(BuildCapsCacheKey(body.EntityId), new CachedCapabilityManifest
         {
-            EntityId = body.EntityId,
-            Capabilities = capabilities,
-            Version = version,
-        }, new StateOptions { Ttl = _configuration.CapabilityCacheTtlMinutes * 60 },
-        cancellationToken);
+            EntityId = body.EntityId, Capabilities = capabilities, Version = version,
+        }, new StateOptions { Ttl = _configuration.CapabilityCacheTtlMinutes * 60 }, cancellationToken);
 
         return (StatusCodes.OK, new GetCapabilitiesResponse
         {
-            EntityId = body.EntityId,
-            Capabilities = capabilities,
-            Version = version,
+            EntityId = body.EntityId, Capabilities = capabilities, Version = version,
         });
     }
 
@@ -727,9 +709,7 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         if (!lockHandle.Success) return StatusCodes.Conflict;
 
         await DestroyEntityCoreAsync(entity, template, cancellationToken);
-
         _logger.LogInformation("Destroyed entity {EntityId}", body.EntityId);
-
         return StatusCodes.OK;
     }
 
@@ -741,23 +721,13 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         if (entity == null) return (StatusCodes.NotFound, null);
 
         var template = await _templateStore.GetAsync(BuildTemplateKey(entity.TemplateCode), cancellationToken);
-
-        // Validate form type matches template
         if (template != null && body.PhysicalFormType != template.PhysicalFormType)
             return (StatusCodes.BadRequest, null);
 
-        // If Item type, validate item exists
         if (body.PhysicalFormType == PhysicalFormType.Item)
         {
-            try
-            {
-                await _itemClient.GetItemInstanceAsync(
-                    new GetItemInstanceRequest { InstanceId = body.PhysicalFormId }, cancellationToken);
-            }
-            catch (ApiException)
-            {
-                return (StatusCodes.BadRequest, null);
-            }
+            try { await _itemClient.GetItemInstanceAsync(new GetItemInstanceRequest { InstanceId = body.PhysicalFormId }, cancellationToken); }
+            catch (ApiException) { return (StatusCodes.BadRequest, null); }
         }
 
         var lockOwner = $"bind-form-{Guid.NewGuid():N}";
@@ -775,23 +745,14 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
 
         await _messageBus.PublishEntityUpdatedAsync(new EntityUpdatedEvent
         {
-            EntityId = entity.EntityId,
-            TemplateCode = entity.TemplateCode,
-            GameServiceId = entity.GameServiceId,
-            RealmId = entity.RealmId,
-            Code = entity.Code,
-            DisplayName = entity.DisplayName,
-            WalletIds = entity.WalletIds,
-            InventoryIds = entity.InventoryIds,
-            CurrentPhase = entity.CurrentPhase,
-            CognitiveStage = entity.CognitiveStage,
-            ActorId = entity.ActorId,
-            CharacterId = entity.CharacterId,
-            PhysicalFormType = entity.PhysicalFormType,
-            PhysicalFormId = entity.PhysicalFormId,
-            Status = entity.Status,
-            CreatedAt = entity.CreatedAt,
-            UpdatedAt = entity.UpdatedAt,
+            EntityId = entity.EntityId, TemplateCode = entity.TemplateCode,
+            GameServiceId = entity.GameServiceId, RealmId = entity.RealmId,
+            Code = entity.Code, DisplayName = entity.DisplayName,
+            WalletIds = entity.WalletIds, InventoryIds = entity.InventoryIds,
+            CurrentPhase = entity.CurrentPhase, CognitiveStage = entity.CognitiveStage,
+            ActorId = entity.ActorId, CharacterId = entity.CharacterId,
+            PhysicalFormType = entity.PhysicalFormType, PhysicalFormId = entity.PhysicalFormId,
+            Status = entity.Status, CreatedAt = entity.CreatedAt, UpdatedAt = entity.UpdatedAt,
             ChangedFields = new List<string> { "PhysicalFormType", "PhysicalFormId" },
         }, cancellationToken);
 
@@ -808,12 +769,8 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         var template = await _templateStore.GetAsync(BuildTemplateKey(entity.TemplateCode), cancellationToken);
         if (template == null) return (StatusCodes.NotFound, null);
 
-        if (!template.Bond.Enabled)
-            return (StatusCodes.BadRequest, null);
-
-        if (template.Bond.Cardinality == BondCardinality.None)
-            return (StatusCodes.BadRequest, null);
-
+        if (!template.Bond.Enabled) return (StatusCodes.BadRequest, null);
+        if (template.Bond.Cardinality == BondCardinality.None) return (StatusCodes.BadRequest, null);
         if ((template.Bond.Cardinality == BondCardinality.OptionalOne ||
              template.Bond.Cardinality == BondCardinality.RequiredOne) &&
             entity.BondTargetEntityId != null)
@@ -828,23 +785,18 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         entity.BondTargetEntityType = body.TargetEntityType;
         entity.BondTargetEntityId = body.TargetEntityId;
 
-        // If already awakened, create Relationship immediately
         if (entity.CharacterId != null)
         {
             try
             {
                 var relType = await _relationshipClient.GetRelationshipTypeByCodeAsync(
-                    new GetRelationshipTypeByCodeRequest { Code = template.Bond.RelationshipTypeCode ?? "bond" },
-                    cancellationToken);
+                    new GetRelationshipTypeByCodeRequest { Code = template.Bond.RelationshipTypeCode ?? "bond" }, cancellationToken);
                 var relResponse = await _relationshipClient.CreateRelationshipAsync(
                     new CreateRelationshipRequest
                     {
-                        Entity1Id = entity.CharacterId.Value,
-                        Entity1Type = EntityType.Character,
-                        Entity2Id = body.TargetEntityId,
-                        Entity2Type = body.TargetEntityType,
-                        RelationshipTypeId = relType.RelationshipTypeId,
-                        StartedAt = DateTimeOffset.UtcNow,
+                        Entity1Id = entity.CharacterId.Value, Entity1Type = EntityType.Character,
+                        Entity2Id = body.TargetEntityId, Entity2Type = body.TargetEntityType,
+                        RelationshipTypeId = relType.RelationshipTypeId, StartedAt = DateTimeOffset.UtcNow,
                     }, cancellationToken);
                 entity.BondId = relResponse.RelationshipId;
             }
@@ -860,10 +812,8 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
 
         await _messageBus.PublishGenesisEntityBondCreatedAsync(new GenesisEntityBondCreatedEvent
         {
-            EntityId = entity.EntityId,
-            TargetEntityType = body.TargetEntityType,
-            TargetEntityId = body.TargetEntityId,
-            BondId = entity.BondId,
+            EntityId = entity.EntityId, TargetEntityType = body.TargetEntityType,
+            TargetEntityId = body.TargetEntityId, BondId = entity.BondId,
         }, cancellationToken);
 
         return (StatusCodes.OK, MapEntityToResponse(entity, null));
@@ -875,9 +825,7 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
     {
         var entity = await _entityStore.GetAsync(BuildEntityKey(body.EntityId), cancellationToken);
         if (entity == null) return (StatusCodes.NotFound, null);
-
-        if (entity.BondTargetEntityId == null)
-            return (StatusCodes.NotFound, null);
+        if (entity.BondTargetEntityId == null) return (StatusCodes.NotFound, null);
 
         return (StatusCodes.OK, new GenesisBondResponse
         {
@@ -893,7 +841,6 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
     {
         var entity = await _entityStore.GetAsync(BuildEntityKey(body.EntityId), cancellationToken);
         if (entity == null) return StatusCodes.NotFound;
-
         if (entity.BondTargetEntityId == null) return StatusCodes.NotFound;
 
         var lockOwner = $"dissolve-bond-{Guid.NewGuid():N}";
@@ -902,18 +849,10 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             lockOwner, _configuration.EntityLockTimeoutSeconds, cancellationToken: cancellationToken);
         if (!lockHandle.Success) return StatusCodes.Conflict;
 
-        // Delete materialized relationship if it exists
         if (entity.BondId != null)
         {
-            try
-            {
-                await _relationshipClient.EndRelationshipAsync(
-                    new EndRelationshipRequest { RelationshipId = entity.BondId.Value }, cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogWarning(ex, "Failed to delete bond relationship {BondId}", entity.BondId);
-            }
+            try { await _relationshipClient.EndRelationshipAsync(new EndRelationshipRequest { RelationshipId = entity.BondId.Value }, cancellationToken); }
+            catch (ApiException ex) { _logger.LogWarning(ex, "Failed to end bond relationship {BondId}", entity.BondId); }
         }
 
         entity.BondTargetEntityType = null;
@@ -923,11 +862,7 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
 
         await _entityStore.SaveAsync(BuildEntityKey(body.EntityId), entity, cancellationToken: cancellationToken);
         await _entityCacheStore.DeleteAsync(BuildEntityCacheKey(body.EntityId), cancellationToken);
-
-        await _messageBus.PublishGenesisEntityBondDissolvedAsync(new GenesisEntityBondDissolvedEvent
-        {
-            EntityId = entity.EntityId,
-        }, cancellationToken);
+        await _messageBus.PublishGenesisEntityBondDissolvedAsync(new GenesisEntityBondDissolvedEvent { EntityId = entity.EntityId }, cancellationToken);
 
         return StatusCodes.OK;
     }
@@ -937,7 +872,6 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         CleanupByCharacterRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Cleaning up genesis entities for character {CharacterId}", body.CharacterId);
-
         var entitiesToDestroy = await FindEntitiesByCharacterIdAsync(body.CharacterId, cancellationToken);
 
         foreach (var entity in entitiesToDestroy)
@@ -945,28 +879,25 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             try
             {
                 var lockOwner = $"cleanup-char-{Guid.NewGuid():N}";
-                await using var lockHandle = await _lockProvider.LockAsync(
+                await using var lh = await _lockProvider.LockAsync(
                     StateStoreDefinitions.GenesisLock, $"entity:{entity.EntityId}",
                     lockOwner, _configuration.EntityLockTimeoutSeconds, cancellationToken: cancellationToken);
-                if (!lockHandle.Success) continue;
+                if (!lh.Success) continue;
 
                 if (entity.ActorId != null)
                 {
                     try { await _actorClient.StopActorAsync(new StopActorRequest { ActorId = entity.ActorId.Value.ToString() }, cancellationToken); }
                     catch (ApiException ex) { _logger.LogWarning(ex, "Failed to stop actor for entity {EntityId}", entity.EntityId); }
                 }
-
                 if (entity.BondId != null)
                 {
                     try { await _relationshipClient.EndRelationshipAsync(new EndRelationshipRequest { RelationshipId = entity.BondId.Value }, cancellationToken); }
-                    catch (ApiException ex) { _logger.LogWarning(ex, "Failed to delete bond for entity {EntityId}", entity.EntityId); }
+                    catch (ApiException ex) { _logger.LogWarning(ex, "Failed to end bond for entity {EntityId}", entity.EntityId); }
                 }
-
                 try
                 {
                     await _resourceClient.ExecuteCleanupAsync(
-                        new ExecuteCleanupRequest { ResourceType = "genesis-entity", ResourceId = entity.EntityId },
-                        cancellationToken);
+                        new ExecuteCleanupRequest { ResourceType = "genesis-entity", ResourceId = entity.EntityId }, cancellationToken);
                 }
                 catch (ApiException ex) { _logger.LogWarning(ex, "Failed resource cleanup for entity {EntityId}", entity.EntityId); }
 
@@ -975,12 +906,9 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             }
             catch (Exception ex)
             {
-                // Per-item error isolation per IMPLEMENTATION TENETS
-                _logger.LogWarning(ex, "Failed to cleanup genesis entity {EntityId} for character {CharacterId}",
-                    entity.EntityId, body.CharacterId);
+                _logger.LogWarning(ex, "Failed to cleanup genesis entity {EntityId} for character {CharacterId}", entity.EntityId, body.CharacterId);
             }
         }
-
         return StatusCodes.OK;
     }
 
@@ -989,50 +917,39 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         CleanupByRealmRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Cleaning up genesis entities for realm {RealmId}", body.RealmId);
-
         var entitiesToDestroy = await FindEntitiesByRealmIdAsync(body.RealmId, cancellationToken);
 
         foreach (var entity in entitiesToDestroy)
         {
             try
             {
-                var template = await _templateStore.GetAsync(
-                    BuildTemplateKey(entity.TemplateCode), cancellationToken);
+                var template = await _templateStore.GetAsync(BuildTemplateKey(entity.TemplateCode), cancellationToken);
 
                 var lockOwner = $"cleanup-realm-{Guid.NewGuid():N}";
-                await using var lockHandle = await _lockProvider.LockAsync(
+                await using var lh = await _lockProvider.LockAsync(
                     StateStoreDefinitions.GenesisLock, $"entity:{entity.EntityId}",
                     lockOwner, _configuration.EntityLockTimeoutSeconds, cancellationToken: cancellationToken);
-                if (!lockHandle.Success) continue;
+                if (!lh.Success) continue;
 
                 if (entity.ActorId != null)
                 {
                     try { await _actorClient.StopActorAsync(new StopActorRequest { ActorId = entity.ActorId.Value.ToString() }, cancellationToken); }
                     catch (ApiException ex) { _logger.LogWarning(ex, "Failed to stop actor for entity {EntityId}", entity.EntityId); }
                 }
-
                 if (entity.CharacterId != null && template?.ArchiveOnDestruction == true)
                 {
-                    try
-                    {
-                        await _resourceClient.ExecuteCompressAsync(
-                            new ExecuteCompressRequest { ResourceType = "character", ResourceId = entity.CharacterId.Value },
-                            cancellationToken);
-                    }
+                    try { await _resourceClient.ExecuteCompressAsync(new ExecuteCompressRequest { ResourceType = "character", ResourceId = entity.CharacterId.Value }, cancellationToken); }
                     catch (ApiException ex) { _logger.LogWarning(ex, "Failed to archive character for entity {EntityId}", entity.EntityId); }
                 }
-
                 if (entity.BondId != null)
                 {
                     try { await _relationshipClient.EndRelationshipAsync(new EndRelationshipRequest { RelationshipId = entity.BondId.Value }, cancellationToken); }
-                    catch (ApiException ex) { _logger.LogWarning(ex, "Failed to delete bond for entity {EntityId}", entity.EntityId); }
+                    catch (ApiException ex) { _logger.LogWarning(ex, "Failed to end bond for entity {EntityId}", entity.EntityId); }
                 }
-
                 try
                 {
                     await _resourceClient.ExecuteCleanupAsync(
-                        new ExecuteCleanupRequest { ResourceType = "genesis-entity", ResourceId = entity.EntityId },
-                        cancellationToken);
+                        new ExecuteCleanupRequest { ResourceType = "genesis-entity", ResourceId = entity.EntityId }, cancellationToken);
                 }
                 catch (ApiException ex) { _logger.LogWarning(ex, "Failed resource cleanup for entity {EntityId}", entity.EntityId); }
 
@@ -1041,11 +958,9 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to cleanup genesis entity {EntityId} for realm {RealmId}",
-                    entity.EntityId, body.RealmId);
+                _logger.LogWarning(ex, "Failed to cleanup genesis entity {EntityId} for realm {RealmId}", entity.EntityId, body.RealmId);
             }
         }
-
         return StatusCodes.OK;
     }
 
@@ -1054,31 +969,23 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         GetCompressDataRequest body, CancellationToken cancellationToken)
     {
         var entities = await FindEntitiesByCharacterIdAsync(body.CharacterId, cancellationToken);
-
         var archivedEntities = new List<GenesisArchivedEntity>();
+
         foreach (var entity in entities)
         {
             var walletBalances = await FetchWalletBalancesAsync(entity, cancellationToken);
-
             archivedEntities.Add(new GenesisArchivedEntity
             {
-                EntityId = entity.EntityId,
-                TemplateCode = entity.TemplateCode,
-                GameServiceId = entity.GameServiceId,
-                RealmId = entity.RealmId,
-                Code = entity.Code,
-                DisplayName = entity.DisplayName,
+                EntityId = entity.EntityId, TemplateCode = entity.TemplateCode,
+                GameServiceId = entity.GameServiceId, RealmId = entity.RealmId,
+                Code = entity.Code, DisplayName = entity.DisplayName,
                 WalletBalances = walletBalances ?? new Dictionary<string, double>(),
-                CurrentPhase = entity.CurrentPhase,
-                CognitiveStage = entity.CognitiveStage,
+                CurrentPhase = entity.CurrentPhase, CognitiveStage = entity.CognitiveStage,
                 CreatedAt = entity.CreatedAt,
             });
         }
 
-        return (StatusCodes.OK, new GenesisArchive
-        {
-            Entities = archivedEntities,
-        });
+        return (StatusCodes.OK, new GenesisArchive { Entities = archivedEntities });
     }
 
     /// <inheritdoc/>
@@ -1086,119 +993,108 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         RestoreFromArchiveRequest body, CancellationToken cancellationToken)
     {
         var restoredCount = 0;
-
         foreach (var archived in body.Archive.Entities)
         {
             var template = await _templateStore.GetAsync(BuildTemplateKey(archived.TemplateCode), cancellationToken);
-            if (template == null)
-                return (StatusCodes.BadRequest, null);
+            if (template == null) return (StatusCodes.BadRequest, null);
 
-            // Re-provision seed
-            var seedResponse = await _seedClient.CreateSeedAsync(
-                new CreateSeedRequest
-                {
-                    OwnerType = EntityType.Other,
-                    OwnerId = archived.EntityId,
-                    SeedTypeCode = template.Seed.SeedTypeCode,
-                    GameServiceId = archived.GameServiceId,
-                }, cancellationToken);
+            // Multi-service provisioning with direct compensation
+            var provisionedWalletIds = new Dictionary<string, Guid>();
+            var provisionedInventoryIds = new Dictionary<string, Guid>();
+            Guid provisionedSeedId;
 
-            // Re-provision wallets with archived balances
-            var walletIds = new Dictionary<string, Guid>();
-            foreach (var wallet in template.Economy.Wallets)
+            try
             {
-                var wResponse = await _currencyClient.CreateWalletAsync(
-                    new CreateWalletRequest
+                var seedResponse = await _seedClient.CreateSeedAsync(
+                    new CreateSeedRequest
                     {
-                        OwnerId = archived.EntityId,
-                        OwnerType = EntityType.Other,
-                        RealmId = archived.RealmId,
+                        OwnerType = EntityType.Other, OwnerId = archived.EntityId,
+                        SeedTypeCode = template.Seed.SeedTypeCode, GameServiceId = archived.GameServiceId,
                     }, cancellationToken);
-                walletIds[wallet.WalletCode] = wResponse.WalletId;
+                provisionedSeedId = seedResponse.SeedId;
 
-                // Restore balance
-                if (archived.WalletBalances.TryGetValue(wallet.WalletCode, out var balance) && balance > 0)
+                foreach (var wallet in template.Economy.Wallets)
                 {
-                    try
+                    var wResponse = await _currencyClient.CreateWalletAsync(
+                        new CreateWalletRequest { OwnerId = archived.EntityId, OwnerType = EntityType.Other, RealmId = archived.RealmId },
+                        cancellationToken);
+                    provisionedWalletIds[wallet.WalletCode] = wResponse.WalletId;
+
+                    if (archived.WalletBalances.TryGetValue(wallet.WalletCode, out var balance) && balance > 0)
                     {
-                        await _currencyClient.CreditCurrencyAsync(
-                            new CreditCurrencyRequest { WalletId = wResponse.WalletId, Amount = balance },
-                            cancellationToken);
-                    }
-                    catch (ApiException ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to restore balance for wallet {WalletCode}", wallet.WalletCode);
+                        try
+                        {
+                            var currencyDef = await _currencyClient.GetCurrencyDefinitionAsync(
+                                new GetCurrencyDefinitionRequest { Code = wallet.CurrencyCode }, cancellationToken);
+                            await _currencyClient.CreditCurrencyAsync(
+                                new CreditCurrencyRequest
+                                {
+                                    WalletId = wResponse.WalletId,
+                                    CurrencyDefinitionId = currencyDef.DefinitionId,
+                                    Amount = balance,
+                                    TransactionType = TransactionType.Refund,
+                                }, cancellationToken);
+                        }
+                        catch (ApiException ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to restore balance for wallet {WalletCode}", wallet.WalletCode);
+                        }
                     }
                 }
-            }
 
-            // Re-provision inventories
-            var inventoryIds = new Dictionary<string, Guid>();
-            foreach (var inv in template.Storage.Inventories)
+                foreach (var inv in template.Storage.Inventories)
+                {
+                    var iResponse = await _inventoryClient.CreateContainerAsync(
+                        new CreateContainerRequest
+                        {
+                            OwnerId = archived.EntityId, OwnerType = ContainerOwnerType.Other,
+                            ContainerType = inv.InventoryCode,
+                            ConstraintModel = inv.ConstraintModel.MapByName<ContainerConstraintModel>(),
+                            MaxSlots = inv.Capacity,
+                        }, cancellationToken);
+                    provisionedInventoryIds[inv.InventoryCode] = iResponse.ContainerId;
+                }
+            }
+            catch (Exception)
             {
-                var iResponse = await _inventoryClient.CreateContainerAsync(
-                    new CreateContainerRequest
-                    {
-                        OwnerId = archived.EntityId,
-                        OwnerType = ContainerOwnerType.Other,
-                        ContainerType = inv.InventoryCode,
-                        ConstraintModel = inv.ConstraintModel.MapByName<ContainerConstraintModel>(),
-                        MaxSlots = inv.Capacity,
-                    }, cancellationToken);
-                inventoryIds[inv.InventoryCode] = iResponse.ContainerId;
+                await CompensateProvisioningAsync(provisionedWalletIds, provisionedInventoryIds, cancellationToken);
+                throw;
             }
 
             var now = DateTimeOffset.UtcNow;
             var entity = new GenesisEntityModel
             {
-                EntityId = archived.EntityId,
-                TemplateCode = archived.TemplateCode,
-                GameServiceId = archived.GameServiceId,
-                RealmId = archived.RealmId,
-                Code = archived.Code,
-                DisplayName = archived.DisplayName,
-                SeedId = seedResponse.SeedId,
-                WalletIds = walletIds,
-                InventoryIds = inventoryIds,
-                CurrentPhase = archived.CurrentPhase,
-                CognitiveStage = CognitiveStage.Dormant,
-                PhysicalFormType = template.PhysicalFormType,
-                Status = GenesisEntityStatus.Active,
-                CreatedAt = archived.CreatedAt,
-                UpdatedAt = now,
+                EntityId = archived.EntityId, TemplateCode = archived.TemplateCode,
+                GameServiceId = archived.GameServiceId, RealmId = archived.RealmId,
+                Code = archived.Code, DisplayName = archived.DisplayName,
+                SeedId = provisionedSeedId, WalletIds = provisionedWalletIds,
+                InventoryIds = provisionedInventoryIds, CurrentPhase = archived.CurrentPhase,
+                CognitiveStage = CognitiveStage.Dormant, PhysicalFormType = template.PhysicalFormType,
+                Status = GenesisEntityStatus.Active, CreatedAt = archived.CreatedAt, UpdatedAt = now,
             };
 
-            // Save entity and indexes
             await _entityStore.SaveAsync(BuildEntityKey(archived.EntityId), entity, cancellationToken: cancellationToken);
             if (archived.Code != null)
-                await _entityStore.SaveAsync(
+                await _entityIndexStore.SaveAsync(
                     BuildEntityCodeKey(archived.GameServiceId, archived.RealmId, archived.Code),
-                    entity, cancellationToken: cancellationToken);
+                    archived.EntityId.ToString(), cancellationToken: cancellationToken);
             await AddToEntityTemplateIndexAsync(archived.TemplateCode, archived.RealmId, archived.EntityId, cancellationToken);
-            foreach (var walletId in walletIds.Values)
-                await _entityStore.SaveAsync(BuildEntityWalletKey(walletId), entity, cancellationToken: cancellationToken);
+            foreach (var walletId in provisionedWalletIds.Values)
+                await _entityIndexStore.SaveAsync(BuildEntityWalletKey(walletId), archived.EntityId.ToString(), cancellationToken: cancellationToken);
 
             await _messageBus.PublishEntityCreatedAsync(new EntityCreatedEvent
             {
-                EntityId = archived.EntityId,
-                TemplateCode = archived.TemplateCode,
-                GameServiceId = archived.GameServiceId,
-                RealmId = archived.RealmId,
-                Code = archived.Code,
-                DisplayName = archived.DisplayName,
-                WalletIds = walletIds,
-                InventoryIds = inventoryIds,
-                CurrentPhase = entity.CurrentPhase,
-                CognitiveStage = entity.CognitiveStage,
-                PhysicalFormType = entity.PhysicalFormType,
-                Status = entity.Status,
-                CreatedAt = entity.CreatedAt,
-                UpdatedAt = entity.UpdatedAt,
+                EntityId = archived.EntityId, TemplateCode = archived.TemplateCode,
+                GameServiceId = archived.GameServiceId, RealmId = archived.RealmId,
+                Code = archived.Code, DisplayName = archived.DisplayName,
+                WalletIds = provisionedWalletIds, InventoryIds = provisionedInventoryIds,
+                CurrentPhase = entity.CurrentPhase, CognitiveStage = entity.CognitiveStage,
+                PhysicalFormType = entity.PhysicalFormType, Status = entity.Status,
+                CreatedAt = entity.CreatedAt, UpdatedAt = entity.UpdatedAt,
             }, cancellationToken);
 
             restoredCount++;
         }
-
         return (StatusCodes.OK, new RestoreFromArchiveResponse { RestoredCount = restoredCount });
     }
 }

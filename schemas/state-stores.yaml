@@ -674,7 +674,17 @@ x-state-stores:
   genesis-entities:
     backend: mysql
     service: Genesis
-    purpose: Genesis entity records and indexes (durable, queryable by template/realm/character)
+    purpose: Genesis entity records (durable, queryable by template/realm/character — primary data only, no index entries)
+
+  genesis-entity-indexes:
+    backend: mysql
+    service: Genesis
+    purpose: Lightweight reverse indexes for entity lookups (code uniqueness, wallet-to-entity, template-realm entity lists)
+
+  genesis-template-indexes:
+    backend: mysql
+    service: Genesis
+    purpose: Lightweight reverse indexes for template lookups (game-service-to-template lists)
 
   genesis-entity-cache:
     backend: redis

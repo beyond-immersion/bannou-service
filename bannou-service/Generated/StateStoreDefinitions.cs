@@ -312,12 +312,16 @@ public static class StateStoreDefinitions
     public const string GardenerScenarioTemplates = "gardener-scenario-templates";
 
     // Genesis Service
-    /// <summary>Genesis entity records and indexes (durable, queryable by template/realm/character)</summary>
+    /// <summary>Genesis entity records (durable, queryable by template/realm/character — primary data only, no index entries)</summary>
     public const string GenesisEntities = "genesis-entities";
     /// <summary>Hot cache for entity lookups and capability manifests (ephemeral, TTL-based)</summary>
     public const string GenesisEntityCache = "genesis-entity-cache";
+    /// <summary>Lightweight reverse indexes for entity lookups (code uniqueness, wallet-to-entity, template-realm entity lists)</summary>
+    public const string GenesisEntityIndexes = "genesis-entity-indexes";
     /// <summary>Distributed locks for entity mutation, phase transition, and bond operations</summary>
     public const string GenesisLock = "genesis-lock";
+    /// <summary>Lightweight reverse indexes for template lookups (game-service-to-template lists)</summary>
+    public const string GenesisTemplateIndexes = "genesis-template-indexes";
     /// <summary>Genesis template definitions (durable, queryable by game service)</summary>
     public const string GenesisTemplates = "genesis-templates";
 
@@ -738,7 +742,9 @@ public static class StateStoreDefinitions
             [GardenerScenarioTemplates] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "gardener_scenario_templates" },
             [GenesisEntities] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "genesis_entities" },
             [GenesisEntityCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "genesis:cache" },
+            [GenesisEntityIndexes] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "genesis_entity_indexes" },
             [GenesisLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "genesis:lock" },
+            [GenesisTemplateIndexes] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "genesis_template_indexes" },
             [GenesisTemplates] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "genesis_templates" },
             [InventoryContainerCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "inv:cont" },
             [InventoryContainerStore] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "inventory_container_store" },
@@ -982,9 +988,11 @@ public static class StateStoreDefinitions
             [GardenerScenarioHistory] = new StoreMetadata("Gardener", "Completed scenario history per player (durable, queryable for cooldown)", "mysql", false),
             [GardenerScenarioInstances] = new StoreMetadata("Gardener", "Active scenario instance state (ephemeral, keyed by instance ID)", "redis", false),
             [GardenerScenarioTemplates] = new StoreMetadata("Gardener", "Scenario template definitions (durable, queryable by category/status)", "mysql", false),
-            [GenesisEntities] = new StoreMetadata("Genesis", "Genesis entity records and indexes (durable, queryable by template/realm/character)", "mysql", false),
+            [GenesisEntities] = new StoreMetadata("Genesis", "Genesis entity records (durable, queryable by template/realm/character — primary data only, no index entries)", "mysql", false),
             [GenesisEntityCache] = new StoreMetadata("Genesis", "Hot cache for entity lookups and capability manifests (ephemeral, TTL-based)", "redis", false),
+            [GenesisEntityIndexes] = new StoreMetadata("Genesis", "Lightweight reverse indexes for entity lookups (code uniqueness, wallet-to-entity, template-realm entity lists)", "mysql", false),
             [GenesisLock] = new StoreMetadata("Genesis", "Distributed locks for entity mutation, phase transition, and bond operations", "redis", false),
+            [GenesisTemplateIndexes] = new StoreMetadata("Genesis", "Lightweight reverse indexes for template lookups (game-service-to-template lists)", "mysql", false),
             [GenesisTemplates] = new StoreMetadata("Genesis", "Genesis template definitions (durable, queryable by game service)", "mysql", false),
             [InventoryContainerCache] = new StoreMetadata("Inventory", "Container state and item list cache", "redis", false),
             [InventoryContainerStore] = new StoreMetadata("Inventory", "Container definitions (persistent)", "mysql", false),

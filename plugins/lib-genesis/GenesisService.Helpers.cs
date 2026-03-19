@@ -28,15 +28,12 @@ public partial class GenesisService
         {
             if (!walletCodes.Contains(mapping.WalletCode))
                 return $"Growth mapping references unknown wallet code: {mapping.WalletCode}";
-
             if (!domainCodes.Contains(mapping.Domain))
                 return $"Growth mapping references unknown domain: {mapping.Domain}";
-
             var triple = (mapping.WalletCode, mapping.Domain, mapping.Direction);
             if (!seen.Add(triple))
                 return $"Duplicate growth mapping: ({mapping.WalletCode}, {mapping.Domain}, {mapping.Direction})";
         }
-
         return null;
     }
 
@@ -45,22 +42,14 @@ public partial class GenesisService
     /// </summary>
     private static GenesisTemplateResponse MapTemplateToResponse(GenesisTemplateModel model) => new()
     {
-        TemplateCode = model.TemplateCode,
-        GameServiceId = model.GameServiceId,
-        DisplayName = model.DisplayName,
-        Description = model.Description,
-        Seed = model.Seed,
-        Economy = model.Economy,
-        Storage = model.Storage,
-        Awakening = model.Awakening,
-        PhysicalFormType = model.PhysicalFormType,
-        Bond = model.Bond,
-        ArchiveOnDestruction = model.ArchiveOnDestruction,
-        IsDeprecated = model.IsDeprecated,
-        DeprecatedAt = model.DeprecatedAt,
+        TemplateCode = model.TemplateCode, GameServiceId = model.GameServiceId,
+        DisplayName = model.DisplayName, Description = model.Description,
+        Seed = model.Seed, Economy = model.Economy, Storage = model.Storage,
+        Awakening = model.Awakening, PhysicalFormType = model.PhysicalFormType,
+        Bond = model.Bond, ArchiveOnDestruction = model.ArchiveOnDestruction,
+        IsDeprecated = model.IsDeprecated, DeprecatedAt = model.DeprecatedAt,
         DeprecationReason = model.DeprecationReason,
-        CreatedAt = model.CreatedAt,
-        UpdatedAt = model.UpdatedAt,
+        CreatedAt = model.CreatedAt, UpdatedAt = model.UpdatedAt,
     };
 
     /// <summary>
@@ -69,27 +58,17 @@ public partial class GenesisService
     private static GenesisEntityResponse MapEntityToResponse(
         GenesisEntityModel model, Dictionary<string, double>? walletBalances) => new()
     {
-        EntityId = model.EntityId,
-        TemplateCode = model.TemplateCode,
-        GameServiceId = model.GameServiceId,
-        RealmId = model.RealmId,
-        Code = model.Code,
-        DisplayName = model.DisplayName,
-        WalletIds = model.WalletIds,
-        WalletBalances = walletBalances,
+        EntityId = model.EntityId, TemplateCode = model.TemplateCode,
+        GameServiceId = model.GameServiceId, RealmId = model.RealmId,
+        Code = model.Code, DisplayName = model.DisplayName,
+        WalletIds = model.WalletIds, WalletBalances = walletBalances,
         InventoryIds = model.InventoryIds,
-        CurrentPhase = model.CurrentPhase,
-        CognitiveStage = model.CognitiveStage,
-        ActorId = model.ActorId,
-        CharacterId = model.CharacterId,
-        PhysicalFormType = model.PhysicalFormType,
-        PhysicalFormId = model.PhysicalFormId,
+        CurrentPhase = model.CurrentPhase, CognitiveStage = model.CognitiveStage,
+        ActorId = model.ActorId, CharacterId = model.CharacterId,
+        PhysicalFormType = model.PhysicalFormType, PhysicalFormId = model.PhysicalFormId,
         BondTargetEntityType = model.BondTargetEntityType,
-        BondTargetEntityId = model.BondTargetEntityId,
-        BondId = model.BondId,
-        Status = model.Status,
-        CreatedAt = model.CreatedAt,
-        UpdatedAt = model.UpdatedAt,
+        BondTargetEntityId = model.BondTargetEntityId, BondId = model.BondId,
+        Status = model.Status, CreatedAt = model.CreatedAt, UpdatedAt = model.UpdatedAt,
     };
 
     /// <summary>
@@ -97,27 +76,17 @@ public partial class GenesisService
     /// </summary>
     private static CachedGenesisEntity MapEntityToCache(GenesisEntityModel model) => new()
     {
-        EntityId = model.EntityId,
-        TemplateCode = model.TemplateCode,
-        GameServiceId = model.GameServiceId,
-        RealmId = model.RealmId,
-        Code = model.Code,
-        DisplayName = model.DisplayName,
-        SeedId = model.SeedId,
+        EntityId = model.EntityId, TemplateCode = model.TemplateCode,
+        GameServiceId = model.GameServiceId, RealmId = model.RealmId,
+        Code = model.Code, DisplayName = model.DisplayName, SeedId = model.SeedId,
         WalletIds = new Dictionary<string, Guid>(model.WalletIds),
         InventoryIds = new Dictionary<string, Guid>(model.InventoryIds),
-        CurrentPhase = model.CurrentPhase,
-        CognitiveStage = model.CognitiveStage,
-        ActorId = model.ActorId,
-        CharacterId = model.CharacterId,
-        PhysicalFormType = model.PhysicalFormType,
-        PhysicalFormId = model.PhysicalFormId,
+        CurrentPhase = model.CurrentPhase, CognitiveStage = model.CognitiveStage,
+        ActorId = model.ActorId, CharacterId = model.CharacterId,
+        PhysicalFormType = model.PhysicalFormType, PhysicalFormId = model.PhysicalFormId,
         BondTargetEntityType = model.BondTargetEntityType,
-        BondTargetEntityId = model.BondTargetEntityId,
-        BondId = model.BondId,
-        Status = model.Status,
-        CreatedAt = model.CreatedAt,
-        UpdatedAt = model.UpdatedAt,
+        BondTargetEntityId = model.BondTargetEntityId, BondId = model.BondId,
+        Status = model.Status, CreatedAt = model.CreatedAt, UpdatedAt = model.UpdatedAt,
     };
 
     /// <summary>
@@ -125,27 +94,17 @@ public partial class GenesisService
     /// </summary>
     private static GenesisEntityModel MapCachedToEntity(CachedGenesisEntity cached) => new()
     {
-        EntityId = cached.EntityId,
-        TemplateCode = cached.TemplateCode,
-        GameServiceId = cached.GameServiceId,
-        RealmId = cached.RealmId,
-        Code = cached.Code,
-        DisplayName = cached.DisplayName,
-        SeedId = cached.SeedId,
+        EntityId = cached.EntityId, TemplateCode = cached.TemplateCode,
+        GameServiceId = cached.GameServiceId, RealmId = cached.RealmId,
+        Code = cached.Code, DisplayName = cached.DisplayName, SeedId = cached.SeedId,
         WalletIds = new Dictionary<string, Guid>(cached.WalletIds),
         InventoryIds = new Dictionary<string, Guid>(cached.InventoryIds),
-        CurrentPhase = cached.CurrentPhase,
-        CognitiveStage = cached.CognitiveStage,
-        ActorId = cached.ActorId,
-        CharacterId = cached.CharacterId,
-        PhysicalFormType = cached.PhysicalFormType,
-        PhysicalFormId = cached.PhysicalFormId,
+        CurrentPhase = cached.CurrentPhase, CognitiveStage = cached.CognitiveStage,
+        ActorId = cached.ActorId, CharacterId = cached.CharacterId,
+        PhysicalFormType = cached.PhysicalFormType, PhysicalFormId = cached.PhysicalFormId,
         BondTargetEntityType = cached.BondTargetEntityType,
-        BondTargetEntityId = cached.BondTargetEntityId,
-        BondId = cached.BondId,
-        Status = cached.Status,
-        CreatedAt = cached.CreatedAt,
-        UpdatedAt = cached.UpdatedAt,
+        BondTargetEntityId = cached.BondTargetEntityId, BondId = cached.BondId,
+        Status = cached.Status, CreatedAt = cached.CreatedAt, UpdatedAt = cached.UpdatedAt,
     };
 
     /// <summary>
@@ -153,23 +112,14 @@ public partial class GenesisService
     /// </summary>
     private static EntityDeletedEvent BuildEntityDeletedEvent(GenesisEntityModel entity) => new()
     {
-        EntityId = entity.EntityId,
-        TemplateCode = entity.TemplateCode,
-        GameServiceId = entity.GameServiceId,
-        RealmId = entity.RealmId,
-        Code = entity.Code,
-        DisplayName = entity.DisplayName,
-        WalletIds = entity.WalletIds,
-        InventoryIds = entity.InventoryIds,
-        CurrentPhase = entity.CurrentPhase,
-        CognitiveStage = entity.CognitiveStage,
-        ActorId = entity.ActorId,
-        CharacterId = entity.CharacterId,
-        PhysicalFormType = entity.PhysicalFormType,
-        PhysicalFormId = entity.PhysicalFormId,
-        Status = entity.Status,
-        CreatedAt = entity.CreatedAt,
-        UpdatedAt = entity.UpdatedAt,
+        EntityId = entity.EntityId, TemplateCode = entity.TemplateCode,
+        GameServiceId = entity.GameServiceId, RealmId = entity.RealmId,
+        Code = entity.Code, DisplayName = entity.DisplayName,
+        WalletIds = entity.WalletIds, InventoryIds = entity.InventoryIds,
+        CurrentPhase = entity.CurrentPhase, CognitiveStage = entity.CognitiveStage,
+        ActorId = entity.ActorId, CharacterId = entity.CharacterId,
+        PhysicalFormType = entity.PhysicalFormType, PhysicalFormId = entity.PhysicalFormId,
+        Status = entity.Status, CreatedAt = entity.CreatedAt, UpdatedAt = entity.UpdatedAt,
     };
 
     /// <summary>
@@ -181,50 +131,33 @@ public partial class GenesisService
         using var activity = _telemetryProvider.StartActivity(
             "bannou.genesis", "GenesisService.DestroyEntityCore");
 
-        // Stop actor if running
         if (entity.ActorId != null)
         {
-            try { await _actorClient.StopActorAsync(new Actor.StopActorRequest { ActorId = entity.ActorId.Value.ToString() }, cancellationToken); }
+            try { await _actorClient.StopActorAsync(new StopActorRequest { ActorId = entity.ActorId.Value.ToString() }, cancellationToken); }
             catch (ApiException ex) { _logger.LogWarning(ex, "Failed to stop actor for entity {EntityId}", entity.EntityId); }
         }
 
-        // Archive character if awakened and template says to
         if (entity.CharacterId != null && template?.ArchiveOnDestruction == true)
         {
-            try
-            {
-                await _resourceClient.ExecuteCompressAsync(
-                    new Resource.ExecuteCompressRequest { ResourceType = "character", ResourceId = entity.CharacterId.Value },
-                    cancellationToken);
-            }
+            try { await _resourceClient.ExecuteCompressAsync(new ExecuteCompressRequest { ResourceType = "character", ResourceId = entity.CharacterId.Value }, cancellationToken); }
             catch (ApiException ex) { _logger.LogWarning(ex, "Failed to archive character for entity {EntityId}", entity.EntityId); }
         }
 
-        // Dissolve bond if exists
         if (entity.BondId != null)
         {
-            try { await _relationshipClient.EndRelationshipAsync(new Relationship.EndRelationshipRequest { RelationshipId = entity.BondId.Value }, cancellationToken); }
-            catch (ApiException ex) { _logger.LogWarning(ex, "Failed to delete bond for entity {EntityId}", entity.EntityId); }
+            try { await _relationshipClient.EndRelationshipAsync(new EndRelationshipRequest { RelationshipId = entity.BondId.Value }, cancellationToken); }
+            catch (ApiException ex) { _logger.LogWarning(ex, "Failed to end bond for entity {EntityId}", entity.EntityId); }
         }
 
-        // Cleanup provisioned infrastructure via Resource
-        try
-        {
-            await _resourceClient.ExecuteCleanupAsync(
-                new Resource.ExecuteCleanupRequest { ResourceType = "genesis-entity", ResourceId = entity.EntityId },
-                cancellationToken);
-        }
+        try { await _resourceClient.ExecuteCleanupAsync(new ExecuteCleanupRequest { ResourceType = "genesis-entity", ResourceId = entity.EntityId }, cancellationToken); }
         catch (ApiException ex) { _logger.LogWarning(ex, "Failed resource cleanup for entity {EntityId}", entity.EntityId); }
 
-        // Delete all records and indexes
         await DeleteEntityRecordsAsync(entity, cancellationToken);
-
-        // Publish deletion event
         await _messageBus.PublishEntityDeletedAsync(BuildEntityDeletedEvent(entity), cancellationToken);
     }
 
     /// <summary>
-    /// Deletes all entity records and indexes from state stores and cache.
+    /// Deletes all entity records from primary store, index stores, and cache.
     /// </summary>
     private async Task DeleteEntityRecordsAsync(
         GenesisEntityModel entity, CancellationToken cancellationToken)
@@ -232,25 +165,27 @@ public partial class GenesisService
         using var activity = _telemetryProvider.StartActivity(
             "bannou.genesis", "GenesisService.DeleteEntityRecords");
 
+        // Primary entity record
         await _entityStore.DeleteAsync(BuildEntityKey(entity.EntityId), cancellationToken);
 
+        // Index store entries
         if (entity.Code != null)
-            await _entityStore.DeleteAsync(
+            await _entityIndexStore.DeleteAsync(
                 BuildEntityCodeKey(entity.GameServiceId, entity.RealmId, entity.Code), cancellationToken);
 
         await RemoveFromEntityTemplateIndexAsync(
             entity.TemplateCode, entity.RealmId, entity.EntityId, cancellationToken);
 
         foreach (var walletId in entity.WalletIds.Values)
-            await _entityStore.DeleteAsync(BuildEntityWalletKey(walletId), cancellationToken);
+            await _entityIndexStore.DeleteAsync(BuildEntityWalletKey(walletId), cancellationToken);
 
+        // Cache entries
         await _entityCacheStore.DeleteAsync(BuildEntityCacheKey(entity.EntityId), cancellationToken);
         await _capsCacheStore.DeleteAsync(BuildCapsCacheKey(entity.EntityId), cancellationToken);
     }
 
     /// <summary>
-    /// Fetches wallet balances for an entity by resolving currency definitions from the template
-    /// and querying the Currency service for each wallet.
+    /// Fetches wallet balances by resolving currency definitions from the template.
     /// </summary>
     private async Task<Dictionary<string, double>?> FetchWalletBalancesAsync(
         GenesisEntityModel entity, CancellationToken cancellationToken)
@@ -266,13 +201,11 @@ public partial class GenesisService
         {
             try
             {
-                // Resolve currency definition ID from template wallet config
                 var walletConfig = template.Economy.Wallets.FirstOrDefault(w => w.WalletCode == walletCode);
                 if (walletConfig == null) continue;
 
                 var currencyDef = await _currencyClient.GetCurrencyDefinitionAsync(
                     new GetCurrencyDefinitionRequest { Code = walletConfig.CurrencyCode }, cancellationToken);
-
                 var balResponse = await _currencyClient.GetBalanceAsync(
                     new GetBalanceRequest { WalletId = walletId, CurrencyDefinitionId = currencyDef.DefinitionId },
                     cancellationToken);
@@ -280,15 +213,43 @@ public partial class GenesisService
             }
             catch (ApiException ex)
             {
-                _logger.LogWarning(ex, "Failed to get balance for wallet {WalletCode} ({WalletId})",
-                    walletCode, walletId);
+                _logger.LogWarning(ex, "Failed to get balance for wallet {WalletCode} ({WalletId})", walletCode, walletId);
             }
         }
         return walletBalances;
     }
 
     /// <summary>
-    /// Adds a template code to the template-game index.
+    /// Compensates for partially-provisioned infrastructure when CreateEntity fails mid-provisioning.
+    /// Directly closes wallets and deletes containers that were successfully created. Seed has no
+    /// individual delete API — orphaned seeds owned by a nonexistent entity are cleaned up by Seed's
+    /// owner reconciliation worker. Best-effort: logs warnings on individual failures, does not throw.
+    /// </summary>
+    private async Task CompensateProvisioningAsync(
+        Dictionary<string, Guid> walletIds, Dictionary<string, Guid> inventoryIds,
+        CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.genesis", "GenesisService.CompensateProvisioning");
+
+        _logger.LogWarning("Compensating failed entity provisioning: wallets={WalletCount}, inventories={InventoryCount}",
+            walletIds.Count, inventoryIds.Count);
+
+        foreach (var (code, containerId) in inventoryIds)
+        {
+            try { await _inventoryClient.DeleteContainerAsync(new Inventory.DeleteContainerRequest { ContainerId = containerId }, cancellationToken); }
+            catch (ApiException ex) { _logger.LogWarning(ex, "Failed to compensate inventory {Code} ({ContainerId})", code, containerId); }
+        }
+
+        foreach (var (code, walletId) in walletIds)
+        {
+            try { await _currencyClient.CloseWalletAsync(new CloseWalletRequest { WalletId = walletId }, cancellationToken); }
+            catch (ApiException ex) { _logger.LogWarning(ex, "Failed to compensate wallet {Code} ({WalletId})", code, walletId); }
+        }
+    }
+
+    /// <summary>
+    /// Adds a template code to the template-game index (template index store).
     /// </summary>
     private async Task AddToTemplateGameIndexAsync(
         Guid gameServiceId, string templateCode, CancellationToken cancellationToken)
@@ -297,11 +258,11 @@ public partial class GenesisService
             "bannou.genesis", "GenesisService.AddToTemplateGameIndex");
 
         var key = BuildTemplateGameKey(gameServiceId);
-        var index = await _templateListStore.GetAsync(key, cancellationToken) ?? new GenesisTemplateListModel();
+        var index = await _templateListIndexStore.GetAsync(key, cancellationToken) ?? new GenesisTemplateListModel();
         if (!index.TemplateCodes.Contains(templateCode))
         {
             index.TemplateCodes.Add(templateCode);
-            await _templateListStore.SaveAsync(key, index, cancellationToken: cancellationToken);
+            await _templateListIndexStore.SaveAsync(key, index, cancellationToken: cancellationToken);
         }
     }
 
@@ -315,16 +276,16 @@ public partial class GenesisService
             "bannou.genesis", "GenesisService.RemoveFromTemplateGameIndex");
 
         var key = BuildTemplateGameKey(gameServiceId);
-        var index = await _templateListStore.GetAsync(key, cancellationToken);
+        var index = await _templateListIndexStore.GetAsync(key, cancellationToken);
         if (index != null)
         {
             index.TemplateCodes.Remove(templateCode);
-            await _templateListStore.SaveAsync(key, index, cancellationToken: cancellationToken);
+            await _templateListIndexStore.SaveAsync(key, index, cancellationToken: cancellationToken);
         }
     }
 
     /// <summary>
-    /// Adds an entity ID to the entity-template index.
+    /// Adds an entity ID to the entity-template index (entity index store).
     /// </summary>
     private async Task AddToEntityTemplateIndexAsync(
         string templateCode, Guid realmId, Guid entityId, CancellationToken cancellationToken)
@@ -333,11 +294,11 @@ public partial class GenesisService
             "bannou.genesis", "GenesisService.AddToEntityTemplateIndex");
 
         var key = BuildEntityTemplateKey(templateCode, realmId);
-        var index = await _entityListStore.GetAsync(key, cancellationToken) ?? new GenesisEntityListModel();
+        var index = await _entityListIndexStore.GetAsync(key, cancellationToken) ?? new GenesisEntityListModel();
         if (!index.EntityIds.Contains(entityId))
         {
             index.EntityIds.Add(entityId);
-            await _entityListStore.SaveAsync(key, index, cancellationToken: cancellationToken);
+            await _entityListIndexStore.SaveAsync(key, index, cancellationToken: cancellationToken);
         }
     }
 
@@ -351,16 +312,17 @@ public partial class GenesisService
             "bannou.genesis", "GenesisService.RemoveFromEntityTemplateIndex");
 
         var key = BuildEntityTemplateKey(templateCode, realmId);
-        var index = await _entityListStore.GetAsync(key, cancellationToken);
+        var index = await _entityListIndexStore.GetAsync(key, cancellationToken);
         if (index != null)
         {
             index.EntityIds.Remove(entityId);
-            await _entityListStore.SaveAsync(key, index, cancellationToken: cancellationToken);
+            await _entityListIndexStore.SaveAsync(key, index, cancellationToken: cancellationToken);
         }
     }
 
     /// <summary>
     /// Finds all genesis entities linked to a character ID via IQueryableStateStore.
+    /// Clean query — entity store contains only primary entity records, no index duplicates.
     /// </summary>
     private async Task<List<GenesisEntityModel>> FindEntitiesByCharacterIdAsync(
         Guid characterId, CancellationToken cancellationToken)
@@ -370,13 +332,12 @@ public partial class GenesisService
 
         var results = await _entityQueryStore.QueryAsync(
             e => e.CharacterId == characterId, cancellationToken);
-
-        // Deduplicate by EntityId (duplicate key entries in MySQL store)
-        return results.DistinctBy(e => e.EntityId).ToList();
+        return results.ToList();
     }
 
     /// <summary>
     /// Finds all genesis entities in a realm via IQueryableStateStore.
+    /// Clean query — entity store contains only primary entity records, no index duplicates.
     /// </summary>
     private async Task<List<GenesisEntityModel>> FindEntitiesByRealmIdAsync(
         Guid realmId, CancellationToken cancellationToken)
@@ -386,7 +347,6 @@ public partial class GenesisService
 
         var results = await _entityQueryStore.QueryAsync(
             e => e.RealmId == realmId, cancellationToken);
-
-        return results.DistinctBy(e => e.EntityId).ToList();
+        return results.ToList();
     }
 }

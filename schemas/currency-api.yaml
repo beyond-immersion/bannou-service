@@ -1745,7 +1745,6 @@ components:
       additionalProperties: false
       required:
       - walletId
-      - transferRemainingTo
       properties:
         walletId:
           type: string
@@ -1754,7 +1753,8 @@ components:
         transferRemainingTo:
           type: string
           format: uuid
-          description: Destination wallet for remaining balances
+          nullable: true
+          description: Destination wallet for remaining balances. Null to discard any remaining balances (e.g., compensation cleanup of empty wallets).
 
     WalletResponse:
       type: object

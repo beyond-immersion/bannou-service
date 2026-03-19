@@ -125,9 +125,11 @@ This document lists all state store components used in Bannou.
 | `gardener-scenario-history` | MySQL | Gardener | Completed scenario history per player (durable, queryable for cooldown) |
 | `gardener-scenario-instances` | Redis | Gardener | Active scenario instance state (ephemeral, keyed by instance ID) |
 | `gardener-scenario-templates` | MySQL | Gardener | Scenario template definitions (durable, queryable by category/status) |
-| `genesis-entities` | MySQL | Genesis | Genesis entity records and indexes (durable, queryable by template/realm/character) |
+| `genesis-entities` | MySQL | Genesis | Genesis entity records (durable, queryable by template/realm/character — primary data only, no index entries) |
 | `genesis-entity-cache` | Redis | Genesis | Hot cache for entity lookups and capability manifests (ephemeral, TTL-based) |
+| `genesis-entity-indexes` | MySQL | Genesis | Lightweight reverse indexes for entity lookups (code uniqueness, wallet-to-entity, template-realm entity lists) |
 | `genesis-lock` | Redis | Genesis | Distributed locks for entity mutation, phase transition, and bond operations |
+| `genesis-template-indexes` | MySQL | Genesis | Lightweight reverse indexes for template lookups (game-service-to-template lists) |
 | `genesis-templates` | MySQL | Genesis | Genesis template definitions (durable, queryable by game service) |
 | `inventory-container-cache` | Redis | Inventory | Container state and item list cache |
 | `inventory-container-store` | MySQL | Inventory | Container definitions (persistent) |
@@ -244,7 +246,7 @@ This document lists all state store components used in Bannou.
 | `worldstate-ratio-history` | MySQL | Worldstate | Time ratio change history per realm for elapsed game-time computation (append-only, compacted) |
 | `worldstate-realm-clock` | Redis | Worldstate | Current game time per realm (hot reads, updated every ClockTickIntervalSeconds) |
 
-**Total**: 234 stores (142 Redis, 92 MySQL)
+**Total**: 236 stores (142 Redis, 94 MySQL)
 
 ## Naming Conventions
 
