@@ -346,6 +346,19 @@ public class ResourceServiceTests
         Assert.Equal(3600, config.SnapshotDefaultTtlSeconds);  // 1 hour
         Assert.Equal(60, config.SnapshotMinTtlSeconds);        // 1 minute
         Assert.Equal(86400, config.SnapshotMaxTtlSeconds);     // 24 hours
+
+        // Transaction management defaults
+        Assert.Equal(30, config.TransactionRecoveryWorkerIntervalSeconds);
+        Assert.Equal(15, config.TransactionRecoveryWorkerStartupDelaySeconds);
+        Assert.Equal(10, config.TransactionCompensationMaxRetries);
+        Assert.Equal(5, config.TransactionCompensationBackoffBaseSeconds);
+        Assert.Equal(10, config.TransactionCommitMaxRetries);
+        Assert.Equal(5, config.TransactionValidationMaxRetries);
+        Assert.Equal(7, config.TransactionRetentionDays);
+        Assert.Equal(10, config.TransactionMinTtlSeconds);
+        Assert.Equal(120, config.TransactionDefaultTtlSeconds);
+        Assert.Equal(600, config.TransactionMaxTtlSeconds);
+        Assert.Equal(3, config.ProvisionIndexMaxRetries);
     }
 
     #endregion
