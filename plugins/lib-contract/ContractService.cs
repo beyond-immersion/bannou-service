@@ -2165,7 +2165,7 @@ public partial class ContractService : IContractService, ICleanDeprecatedEntity
             var context = BuildContractContext(contract);
 
             // Convert to PreboundApiDefinition for ServiceNavigator
-            var apiDefinition = new ServiceClients.PreboundApiDefinition
+            var apiDefinition = new PreboundApiDefinition
             {
                 ServiceName = api.ServiceName,
                 Endpoint = api.Endpoint,
@@ -2343,16 +2343,16 @@ public partial class ContractService : IContractService, ICleanDeprecatedEntity
     }
 
     /// <summary>
-    /// Converts PreboundApiExecutionMode to ServiceClients.ExecutionMode.
+    /// Converts PreboundApiExecutionMode to ExecutionMode.
     /// </summary>
-    private static ServiceClients.ExecutionMode ConvertExecutionMode(PreboundApiExecutionMode mode)
+    private static ExecutionMode ConvertExecutionMode(PreboundApiExecutionMode mode)
     {
         return mode switch
         {
-            PreboundApiExecutionMode.Sync => ServiceClients.ExecutionMode.Sync,
-            PreboundApiExecutionMode.Async => ServiceClients.ExecutionMode.Async,
-            PreboundApiExecutionMode.FireAndForget => ServiceClients.ExecutionMode.FireAndForget,
-            _ => ServiceClients.ExecutionMode.Sync
+            PreboundApiExecutionMode.Sync => ExecutionMode.Sync,
+            PreboundApiExecutionMode.Async => ExecutionMode.Async,
+            PreboundApiExecutionMode.FireAndForget => ExecutionMode.FireAndForget,
+            _ => ExecutionMode.Sync
         };
     }
 

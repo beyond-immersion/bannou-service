@@ -2893,11 +2893,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Setup navigator to return success
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<PreboundApiDefinition>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceClients.PreboundApiResult.Success(
-                new ServiceClients.PreboundApiDefinition
+                new PreboundApiDefinition
                 {
                     ServiceName = "currency",
                     Endpoint = "/currency/transfer"
@@ -2922,7 +2922,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Verify navigator was called
         _mockNavigator.Verify(
             n => n.ExecutePreboundApiAsync(
-                It.Is<ServiceClients.PreboundApiDefinition>(api =>
+                It.Is<PreboundApiDefinition>(api =>
                     api.ServiceName == "currency" &&
                     api.Endpoint == "/currency/transfer"),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
@@ -2982,11 +2982,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Setup navigator to return substitution failure
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<PreboundApiDefinition>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceClients.PreboundApiResult.SubstitutionFailed(
-                new ServiceClients.PreboundApiDefinition
+                new PreboundApiDefinition
                 {
                     ServiceName = "currency",
                     Endpoint = "/currency/transfer"
@@ -3071,11 +3071,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Setup navigator to return HTTP 400 (which will fail the statusCode validation)
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<PreboundApiDefinition>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceClients.PreboundApiResult.Success(
-                new ServiceClients.PreboundApiDefinition
+                new PreboundApiDefinition
                 {
                     ServiceName = "currency",
                     Endpoint = "/currency/transfer"
@@ -3156,10 +3156,10 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Setup navigator to return success for both calls
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<PreboundApiDefinition>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((ServiceClients.PreboundApiDefinition api, IReadOnlyDictionary<string, object?> ctx, CancellationToken ct) =>
+            .ReturnsAsync((PreboundApiDefinition api, IReadOnlyDictionary<string, object?> ctx, CancellationToken ct) =>
                 ServiceClients.PreboundApiResult.Success(
                     api,
                     api.PayloadTemplate,
@@ -3180,7 +3180,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Verify navigator was called twice
         _mockNavigator.Verify(
             n => n.ExecutePreboundApiAsync(
-                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<PreboundApiDefinition>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()),
             Times.Exactly(2));
@@ -3237,11 +3237,11 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
 
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<PreboundApiDefinition>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceClients.PreboundApiResult.Success(
-                new ServiceClients.PreboundApiDefinition
+                new PreboundApiDefinition
                 {
                     ServiceName = "notification",
                     Endpoint = "/notification/send"
@@ -3267,7 +3267,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Verify onExpire API was called
         _mockNavigator.Verify(
             n => n.ExecutePreboundApiAsync(
-                It.Is<ServiceClients.PreboundApiDefinition>(api =>
+                It.Is<PreboundApiDefinition>(api =>
                     api.ServiceName == "notification" &&
                     api.Endpoint == "/notification/send"),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
@@ -3319,7 +3319,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Setup navigator to throw exception
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<PreboundApiDefinition>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("Connection refused"));
@@ -3395,7 +3395,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Verify navigator was NOT called
         _mockNavigator.Verify(
             n => n.ExecutePreboundApiAsync(
-                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<PreboundApiDefinition>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
@@ -3464,13 +3464,13 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         IReadOnlyDictionary<string, object?>? capturedContext = null;
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<PreboundApiDefinition>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<ServiceClients.PreboundApiDefinition, IReadOnlyDictionary<string, object?>, CancellationToken>((api, ctx, ct) =>
+            .Callback<PreboundApiDefinition, IReadOnlyDictionary<string, object?>, CancellationToken>((api, ctx, ct) =>
                 capturedContext = ctx)
             .ReturnsAsync(ServiceClients.PreboundApiResult.Success(
-                new ServiceClients.PreboundApiDefinition(),
+                new PreboundApiDefinition(),
                 "{}",
                 ServiceClients.RawApiResult.Success(200, "{}", TimeSpan.Zero)));
 
@@ -4571,7 +4571,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Verify prebound APIs were NOT executed (persist failed, so side effects should not fire)
         _mockNavigator.Verify(
             n => n.ExecutePreboundApiAsync(
-                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<PreboundApiDefinition>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
@@ -4633,7 +4633,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Verify prebound APIs were NOT executed
         _mockNavigator.Verify(
             n => n.ExecutePreboundApiAsync(
-                It.IsAny<ServiceClients.PreboundApiDefinition>(),
+                It.IsAny<PreboundApiDefinition>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
@@ -4710,9 +4710,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
 
         // Setup navigator to return success
         _mockNavigator
-            .Setup(n => n.ExecutePreboundApiAsync(It.IsAny<ServiceClients.PreboundApiDefinition>(), It.IsAny<IReadOnlyDictionary<string, object?>>(), It.IsAny<CancellationToken>()))
+            .Setup(n => n.ExecutePreboundApiAsync(It.IsAny<PreboundApiDefinition>(), It.IsAny<IReadOnlyDictionary<string, object?>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceClients.PreboundApiResult.Success(
-                new ServiceClients.PreboundApiDefinition
+                new PreboundApiDefinition
                 {
                     ServiceName = "currency",
                     Endpoint = "/currency/transfer"
@@ -4806,9 +4806,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
 
         // Setup navigator to return success
         _mockNavigator
-            .Setup(n => n.ExecutePreboundApiAsync(It.IsAny<ServiceClients.PreboundApiDefinition>(), It.IsAny<IReadOnlyDictionary<string, object?>>(), It.IsAny<CancellationToken>()))
+            .Setup(n => n.ExecutePreboundApiAsync(It.IsAny<PreboundApiDefinition>(), It.IsAny<IReadOnlyDictionary<string, object?>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceClients.PreboundApiResult.Success(
-                new ServiceClients.PreboundApiDefinition
+                new PreboundApiDefinition
                 {
                     ServiceName = "inventory",
                     Endpoint = "/inventory/transfer"
@@ -4902,9 +4902,9 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
 
         // Setup navigator to return success
         _mockNavigator
-            .Setup(n => n.ExecutePreboundApiAsync(It.IsAny<ServiceClients.PreboundApiDefinition>(), It.IsAny<IReadOnlyDictionary<string, object?>>(), It.IsAny<CancellationToken>()))
+            .Setup(n => n.ExecutePreboundApiAsync(It.IsAny<PreboundApiDefinition>(), It.IsAny<IReadOnlyDictionary<string, object?>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ServiceClients.PreboundApiResult.Success(
-                new ServiceClients.PreboundApiDefinition
+                new PreboundApiDefinition
                 {
                     ServiceName = "currency",
                     Endpoint = "/currency/transfer"

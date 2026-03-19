@@ -457,5 +457,55 @@
             Null when no specific reason was provided.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.Core.PreboundApiDefinition">
+            <summary>
+            Definition of a prebound API call.
+            Decoupled from generated contract models for use across services.
+            </summary>
+            <remarks>
+            This model is used by ServiceNavigator.ExecutePreboundApiAsync to define
+            what service/endpoint to call and what payload template to use.
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.PreboundApiDefinition.ServiceName">
+            <summary>
+            Target service name (e.g., "currency", "inventory", "character").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.PreboundApiDefinition.Endpoint">
+            <summary>
+            Target endpoint path (e.g., "/currency/transfer", "/inventory/add").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.PreboundApiDefinition.PayloadTemplate">
+            <summary>
+            JSON payload template with {{variable}} placeholders.
+            Variables are substituted from the context dictionary at execution time.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.PreboundApiDefinition.Description">
+            <summary>
+            Human-readable description of what this API call does.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.PreboundApiDefinition.ExecutionMode">
+            <summary>
+            How to execute this API call.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Core.ExecutionMode">
+            <summary>
+            How a prebound API should be executed.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.ExecutionMode.Sync">
+            <summary>Execute synchronously and wait for response.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.ExecutionMode.Async">
+            <summary>Execute asynchronously but still track completion.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.ExecutionMode.FireAndForget">
+            <summary>Execute and don't wait or track - fire and forget.</summary>
+        </member>
     </members>
 </doc>

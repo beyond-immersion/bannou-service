@@ -1,5 +1,6 @@
 #nullable enable
 
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Utilities;
 using System.Diagnostics;
