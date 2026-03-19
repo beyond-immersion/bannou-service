@@ -169,6 +169,13 @@ public class ResourceServiceConfiguration : BaseServiceConfiguration
     public int TransactionRetentionDays { get; set; } = 7;
 
     /// <summary>
+    /// Minimum allowed TTL for transactions (BeginTransaction clamps requested TTL to this floor)
+    /// Environment variable: RESOURCE_TRANSACTION_MIN_TTL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 120)]
+    public int TransactionMinTtlSeconds { get; set; } = 10;
+
+    /// <summary>
     /// Default TTL for transactions when the caller does not specify one
     /// Environment variable: RESOURCE_TRANSACTION_DEFAULT_TTL_SECONDS
     /// </summary>
@@ -181,5 +188,12 @@ public class ResourceServiceConfiguration : BaseServiceConfiguration
     /// </summary>
     [ConfigRange(Minimum = 60, Maximum = 3600)]
     public int TransactionMaxTtlSeconds { get; set; } = 600;
+
+    /// <summary>
+    /// Maximum optimistic concurrency retries for provision index list operations
+    /// Environment variable: RESOURCE_PROVISION_INDEX_MAX_RETRIES
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10)]
+    public int ProvisionIndexMaxRetries { get; set; } = 3;
 
 }

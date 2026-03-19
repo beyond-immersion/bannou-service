@@ -78,6 +78,21 @@ public partial class ResourceService : IResourceService
     private readonly ICacheableStateStore<string> _migrateIndexStore;
 
     /// <summary>
+    /// State store for provisioning transaction records (MySQL, durable).
+    /// </summary>
+    private readonly IStateStore<ResourceTransactionModel> _transactionStore;
+
+    /// <summary>
+    /// State store for individual provisions within transactions (MySQL, durable).
+    /// </summary>
+    private readonly IStateStore<ResourceProvisionModel> _provisionStore;
+
+    /// <summary>
+    /// String store for provision index lists (transactionId → provisionId list).
+    /// </summary>
+    private readonly IStateStore<string> _provisionStringStore;
+
+    /// <summary>
     /// Initializes a new instance of the ResourceService.
     /// </summary>
     public ResourceService(
@@ -120,6 +135,12 @@ public partial class ResourceService : IResourceService
             StateStoreDefinitions.ResourceMigrate);
         _migrateIndexStore = stateStoreFactory.GetCacheableStore<string>(
             StateStoreDefinitions.ResourceMigrate);
+        _transactionStore = stateStoreFactory.GetStore<ResourceTransactionModel>(
+            StateStoreDefinitions.ResourceTransactions);
+        _provisionStore = stateStoreFactory.GetStore<ResourceProvisionModel>(
+            StateStoreDefinitions.ResourceProvisions);
+        _provisionStringStore = stateStoreFactory.GetStore<string>(
+            StateStoreDefinitions.ResourceProvisions);
 
         // Register event handlers via partial class (ResourceServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
@@ -1860,6 +1881,9 @@ public partial class ResourceService : IResourceService
     private const string MIGRATE_KEY_PREFIX = "callback:";
     private const string MIGRATE_INDEX_KEY_PREFIX = "callback-index:";
     private const string MasterMigrateResourceTypeIndexKey = "callback-resource-types";
+    private const string TRANSACTION_KEY_PREFIX = "tx:";
+    private const string PROVISION_KEY_PREFIX = "prov:";
+    private const string PROVISION_TX_INDEX_PREFIX = "prov-tx:";
 
     // =========================================================================
     // Internal Helpers
@@ -1936,6 +1960,24 @@ public partial class ResourceService : IResourceService
     /// </summary>
     internal static string BuildArchiveKey(string resourceType, Guid resourceId)
         => $"{ARCHIVE_KEY_PREFIX}{resourceType}:{resourceId}";
+
+    /// <summary>
+    /// Builds the MySQL key for a provisioning transaction record.
+    /// </summary>
+    internal static string BuildTransactionKey(Guid transactionId)
+        => $"{TRANSACTION_KEY_PREFIX}{transactionId}";
+
+    /// <summary>
+    /// Builds the MySQL key for a provision record.
+    /// </summary>
+    internal static string BuildProvisionKey(Guid provisionId)
+        => $"{PROVISION_KEY_PREFIX}{provisionId}";
+
+    /// <summary>
+    /// Builds the MySQL key for the provision index (transaction → provision list).
+    /// </summary>
+    internal static string BuildProvisionTxIndexKey(Guid transactionId)
+        => $"{PROVISION_TX_INDEX_PREFIX}{transactionId}";
 
     /// <summary>
     /// Gets all compression callbacks for a resource type, sorted by priority.
@@ -2580,54 +2622,507 @@ public partial class ResourceService : IResourceService
     }
 
     // =========================================================================
-    // Transaction Management (Phase 1 — stubs, implementation next)
+    // Transaction Management
     // =========================================================================
 
     /// <inheritdoc />
     public async Task<(StatusCodes, BeginTransactionResponse?)> BeginTransactionAsync(
         BeginTransactionRequest body, CancellationToken ct = default)
     {
-        await Task.CompletedTask;
-        throw new NotImplementedException("Transaction management not yet implemented");
+        var now = DateTimeOffset.UtcNow;
+        var effectiveTtl = Math.Clamp(
+            body.TtlSeconds ?? _configuration.TransactionDefaultTtlSeconds,
+            _configuration.TransactionMinTtlSeconds,
+            _configuration.TransactionMaxTtlSeconds);
+
+        string? serializedValidation = null;
+        if (body.CompletionValidation != null)
+        {
+            serializedValidation = BannouJson.Serialize(body.CompletionValidation);
+        }
+
+        var transactionId = Guid.NewGuid();
+        var transaction = new ResourceTransactionModel
+        {
+            TransactionId = transactionId,
+            OwnerService = body.OwnerService,
+            ParentResourceType = body.ParentResourceType,
+            ParentResourceId = body.ParentResourceId,
+            Status = TransactionStatus.Active,
+            CreatedAt = now,
+            UpdatedAt = now,
+            TtlSeconds = effectiveTtl,
+            ExpectedProvisionCount = body.ExpectedProvisionCount,
+            ValidationAttempts = 0,
+            CompletionValidation = serializedValidation
+        };
+
+        await _transactionStore.SaveAsync(BuildTransactionKey(transactionId), transaction, cancellationToken: ct);
+
+        await _messageBus.PublishResourceTransactionCreatedAsync(
+            new ResourceTransactionCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                TransactionId = transactionId,
+                OwnerService = body.OwnerService,
+                ParentResourceType = body.ParentResourceType,
+                ParentResourceId = body.ParentResourceId,
+                TtlSeconds = effectiveTtl,
+            }, ct);
+
+        _logger.LogInformation(
+            "Transaction {TransactionId} begun for {OwnerService}/{ParentResourceType}:{ParentResourceId} with TTL {TtlSeconds}s",
+            transactionId, body.OwnerService, body.ParentResourceType, body.ParentResourceId, effectiveTtl);
+
+        return (StatusCodes.OK, new BeginTransactionResponse
+        {
+            TransactionId = transactionId,
+            Status = TransactionStatus.Active,
+            TtlSeconds = effectiveTtl,
+            ExpiresAt = now.AddSeconds(effectiveTtl)
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, RegisterProvisionResponse?)> RegisterProvisionAsync(
         RegisterProvisionRequest body, CancellationToken ct = default)
     {
-        await Task.CompletedTask;
-        throw new NotImplementedException("Transaction management not yet implemented");
+        var transaction = await _transactionStore.GetAsync(BuildTransactionKey(body.TransactionId), ct);
+        if (transaction == null)
+            return (StatusCodes.NotFound, null);
+        if (transaction.Status != TransactionStatus.Active)
+            return (StatusCodes.BadRequest, null);
+
+        // Determine sequence number: read current index to count existing provisions
+        var indexKey = BuildProvisionTxIndexKey(body.TransactionId);
+        var indexJson = await _provisionStringStore.GetAsync(indexKey, ct);
+        var existingCount = 0;
+        if (!string.IsNullOrEmpty(indexJson))
+        {
+            var existing = BannouJson.Deserialize<List<string>>(indexJson);
+            existingCount = existing?.Count ?? 0;
+        }
+
+        var provisionId = Guid.NewGuid();
+        var provision = new ResourceProvisionModel
+        {
+            ProvisionId = provisionId,
+            TransactionId = body.TransactionId,
+            SequenceNumber = existingCount,
+            ResourceType = body.ResourceType,
+            ResourceId = body.ResourceId,
+            Status = ProvisionStatus.Pending,
+            RegisteredAt = DateTimeOffset.UtcNow,
+            CompensationAttempts = 0,
+            Compensation = BannouJson.Serialize(body.Compensation),
+            Verification = body.Verification != null ? BannouJson.Serialize(body.Verification) : null
+        };
+
+        // Save provision record first (idempotent by key)
+        await _provisionStore.SaveAsync(BuildProvisionKey(provisionId), provision, cancellationToken: ct);
+
+        // Append to index using ETag-protected helper (per IMPLEMENTATION TENETS — multi-instance safe)
+        await _provisionStringStore.AddToStringListAsync(
+            indexKey,
+            provisionId.ToString(),
+            _configuration.ProvisionIndexMaxRetries,
+            _logger,
+            ct);
+
+        _logger.LogDebug(
+            "Provision {ProvisionId} registered for transaction {TransactionId}: {ResourceType}:{ResourceId} (seq {Seq})",
+            provisionId, body.TransactionId, body.ResourceType, body.ResourceId, provision.SequenceNumber);
+
+        return (StatusCodes.OK, new RegisterProvisionResponse
+        {
+            ProvisionId = provisionId,
+            SequenceNumber = provision.SequenceNumber,
+            Status = ProvisionStatus.Pending
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, ConfirmProvisionResponse?)> ConfirmProvisionAsync(
         ConfirmProvisionRequest body, CancellationToken ct = default)
     {
-        await Task.CompletedTask;
-        throw new NotImplementedException("Transaction management not yet implemented");
+        var transaction = await _transactionStore.GetAsync(BuildTransactionKey(body.TransactionId), ct);
+        if (transaction == null)
+            return (StatusCodes.NotFound, null);
+        if (transaction.Status != TransactionStatus.Active)
+            return (StatusCodes.BadRequest, null);
+
+        // Find provision by resourceId within this transaction
+        var provision = await FindProvisionByResourceIdAsync(body.TransactionId, body.ResourceId, ct);
+        if (provision == null)
+            return (StatusCodes.NotFound, null);
+        if (provision.Status != ProvisionStatus.Pending)
+            return (StatusCodes.BadRequest, null);
+
+        provision.Status = ProvisionStatus.Provisioned;
+        provision.ProvisionedAt = DateTimeOffset.UtcNow;
+        await _provisionStore.SaveAsync(BuildProvisionKey(provision.ProvisionId), provision, cancellationToken: ct);
+
+        _logger.LogDebug(
+            "Provision {ProvisionId} confirmed for transaction {TransactionId}: {ResourceType}:{ResourceId}",
+            provision.ProvisionId, body.TransactionId, provision.ResourceType, body.ResourceId);
+
+        return (StatusCodes.OK, new ConfirmProvisionResponse
+        {
+            ProvisionId = provision.ProvisionId,
+            Status = ProvisionStatus.Provisioned
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, CommitTransactionResponse?)> CommitTransactionAsync(
         CommitTransactionRequest body, CancellationToken ct = default)
     {
-        await Task.CompletedTask;
-        throw new NotImplementedException("Transaction management not yet implemented");
+        var (transaction, etag) = await _transactionStore.GetWithETagAsync(
+            BuildTransactionKey(body.TransactionId), ct);
+        if (transaction == null)
+            return (StatusCodes.NotFound, null);
+        if (transaction.Status != TransactionStatus.Active)
+            return (StatusCodes.BadRequest, null);
+
+        // Phase 1: Transition to Committing (crash-safe checkpoint per R2)
+        transaction.Status = TransactionStatus.Committing;
+        transaction.UpdatedAt = DateTimeOffset.UtcNow;
+        var newEtag = await _transactionStore.TrySaveAsync(
+            BuildTransactionKey(body.TransactionId), transaction, etag ?? string.Empty, cancellationToken: ct);
+        if (newEtag == null)
+            return (StatusCodes.Conflict, null);
+
+        // Phase 2: Register references one by one, checkpointing each provision
+        // Per-item error isolation (IMPLEMENTATION TENETS T7) — one failed registration must not block others
+        var provisions = await GetOrderedProvisionsAsync(body.TransactionId, ct);
+        var referencesRegistered = 0;
+        var registrationFailed = false;
+
+        foreach (var provision in provisions)
+        {
+            if (provision.Status != ProvisionStatus.Provisioned)
+                continue;
+
+            try
+            {
+                // Register as permanent reference via existing internal path
+                var (refStatus, _) = await RegisterReferenceAsync(new RegisterReferenceRequest
+                {
+                    ResourceType = transaction.ParentResourceType,
+                    ResourceId = transaction.ParentResourceId,
+                    SourceType = provision.ResourceType,
+                    SourceId = provision.ResourceId.ToString()
+                }, ct);
+
+                if (refStatus != StatusCodes.OK)
+                {
+                    _logger.LogWarning(
+                        "Reference registration returned {Status} for provision {ProvisionId} ({ResourceType}:{ResourceId}), skipping checkpoint",
+                        refStatus, provision.ProvisionId, provision.ResourceType, provision.ResourceId);
+                    registrationFailed = true;
+                    continue;
+                }
+
+                provision.Status = ProvisionStatus.ReferenceRegistered;
+                await _provisionStore.SaveAsync(
+                    BuildProvisionKey(provision.ProvisionId), provision, cancellationToken: ct);
+                referencesRegistered++;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Failed to register reference for provision {ProvisionId} ({ResourceType}:{ResourceId}), continuing",
+                    provision.ProvisionId, provision.ResourceType, provision.ResourceId);
+                registrationFailed = true;
+            }
+        }
+
+        if (registrationFailed)
+        {
+            // Some provisions failed — remain in Committing state for the recovery worker to resume
+            _logger.LogWarning(
+                "Transaction {TransactionId} commit partially failed: {Registered} registered, some remaining — worker will resume",
+                body.TransactionId, referencesRegistered);
+            transaction.UpdatedAt = DateTimeOffset.UtcNow;
+            await _transactionStore.SaveAsync(
+                BuildTransactionKey(body.TransactionId), transaction, cancellationToken: ct);
+            return (StatusCodes.OK, new CommitTransactionResponse
+            {
+                TransactionId = body.TransactionId,
+                Status = TransactionStatus.Committing,
+                ReferencesRegistered = referencesRegistered
+            });
+        }
+
+        // Phase 3: Transition to Committed
+        transaction.Status = TransactionStatus.Committed;
+        transaction.UpdatedAt = DateTimeOffset.UtcNow;
+        await _transactionStore.SaveAsync(BuildTransactionKey(body.TransactionId), transaction, cancellationToken: ct);
+
+        await _messageBus.PublishResourceTransactionCommittedAsync(
+            new ResourceTransactionCommittedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                TransactionId = body.TransactionId,
+                OwnerService = transaction.OwnerService,
+                ParentResourceType = transaction.ParentResourceType,
+                ParentResourceId = transaction.ParentResourceId,
+                ProvisionCount = referencesRegistered,
+            }, ct);
+
+        _logger.LogInformation(
+            "Transaction {TransactionId} committed: {RefsRegistered} references registered for {ParentResourceType}:{ParentResourceId}",
+            body.TransactionId, referencesRegistered, transaction.ParentResourceType, transaction.ParentResourceId);
+
+        return (StatusCodes.OK, new CommitTransactionResponse
+        {
+            TransactionId = body.TransactionId,
+            Status = TransactionStatus.Committed,
+            ReferencesRegistered = referencesRegistered
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, AbortTransactionResponse?)> AbortTransactionAsync(
         AbortTransactionRequest body, CancellationToken ct = default)
     {
-        await Task.CompletedTask;
-        throw new NotImplementedException("Transaction management not yet implemented");
+        var (transaction, etag) = await _transactionStore.GetWithETagAsync(
+            BuildTransactionKey(body.TransactionId), ct);
+        if (transaction == null)
+            return (StatusCodes.NotFound, null);
+        if (transaction.Status != TransactionStatus.Active && transaction.Status != TransactionStatus.Aborting)
+            return (StatusCodes.BadRequest, null);
+
+        // Transition to Aborting (optimistic concurrency per R10)
+        if (transaction.Status == TransactionStatus.Active)
+        {
+            transaction.Status = TransactionStatus.Aborting;
+            transaction.AbortReason = body.Reason;
+            transaction.UpdatedAt = DateTimeOffset.UtcNow;
+            var newEtag = await _transactionStore.TrySaveAsync(
+                BuildTransactionKey(body.TransactionId), transaction, etag ?? string.Empty, cancellationToken: ct);
+            if (newEtag == null)
+                return (StatusCodes.Conflict, null);
+        }
+
+        // Compensate provisions in reverse sequence order
+        var provisions = await GetOrderedProvisionsAsync(body.TransactionId, ct);
+        provisions.Reverse(); // Reverse for compensation order
+
+        var compensatedCount = 0;
+        var failedCount = 0;
+        var pendingCount = 0;
+
+        foreach (var provision in provisions)
+        {
+            if (provision.Status == ProvisionStatus.Compensated ||
+                provision.Status == ProvisionStatus.ReferenceRegistered)
+                continue;
+
+            if (provision.Status == ProvisionStatus.Pending)
+            {
+                // Resource was never created — mark as compensated directly
+                provision.Status = ProvisionStatus.Compensated;
+                provision.CompensatedAt = DateTimeOffset.UtcNow;
+                await _provisionStore.SaveAsync(BuildProvisionKey(provision.ProvisionId), provision, cancellationToken: ct);
+                pendingCount++;
+                continue;
+            }
+
+            // Status is Provisioned or CompensationFailed — execute compensation
+            try
+            {
+                var compensationApi = BannouJson.Deserialize<PreboundApi>(provision.Compensation);
+                if (compensationApi == null)
+                {
+                    _logger.LogWarning(
+                        "Provision {ProvisionId} has invalid compensation definition, marking as failed",
+                        provision.ProvisionId);
+                    provision.Status = ProvisionStatus.CompensationFailed;
+                    provision.CompensationAttempts++;
+                    provision.LastCompensationError = "Invalid compensation PreboundApi definition";
+                    failedCount++;
+                    await _provisionStore.SaveAsync(BuildProvisionKey(provision.ProvisionId), provision, cancellationToken: ct);
+                    continue;
+                }
+
+                var context = new Dictionary<string, object?>
+                {
+                    ["provisionResourceId"] = provision.ResourceId.ToString()
+                };
+                var result = await _navigator.ExecutePreboundApiAsync(compensationApi, context, ct);
+
+                // Apply response transformation if configured
+                var transformed = ResponseTransformer.Transform(
+                    result.Result.StatusCode, result.Result.ResponseBody,
+                    compensationApi.ResponseTransformation);
+
+                // 404 = resource doesn't exist = compensation succeeded (per planning doc)
+                if (transformed.IsSuccess || result.Result.StatusCode == 404)
+                {
+                    provision.Status = ProvisionStatus.Compensated;
+                    provision.CompensatedAt = DateTimeOffset.UtcNow;
+                    compensatedCount++;
+                }
+                else
+                {
+                    provision.Status = ProvisionStatus.CompensationFailed;
+                    provision.CompensationAttempts++;
+                    provision.LastCompensationError = result.Result.ErrorMessage
+                        ?? $"Compensation returned status {result.Result.StatusCode}";
+                    failedCount++;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Compensation failed for provision {ProvisionId} ({ResourceType}:{ResourceId})",
+                    provision.ProvisionId, provision.ResourceType, provision.ResourceId);
+                provision.Status = ProvisionStatus.CompensationFailed;
+                provision.CompensationAttempts++;
+                provision.LastCompensationError = ex.Message;
+                failedCount++;
+            }
+
+            await _provisionStore.SaveAsync(BuildProvisionKey(provision.ProvisionId), provision, cancellationToken: ct);
+        }
+
+        // If all compensated, finalize to Aborted
+        if (failedCount == 0)
+        {
+            transaction.Status = TransactionStatus.Aborted;
+            transaction.UpdatedAt = DateTimeOffset.UtcNow;
+            await _transactionStore.SaveAsync(BuildTransactionKey(body.TransactionId), transaction, cancellationToken: ct);
+
+            await _messageBus.PublishResourceTransactionAbortedAsync(
+                new ResourceTransactionAbortedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    TransactionId = body.TransactionId,
+                    OwnerService = transaction.OwnerService,
+                    ParentResourceType = transaction.ParentResourceType,
+                    ParentResourceId = transaction.ParentResourceId,
+                    CompensatedCount = compensatedCount + pendingCount,
+                    FailedCount = 0,
+                }, ct);
+        }
+
+        _logger.LogInformation(
+            "Transaction {TransactionId} abort: {Compensated} compensated, {Failed} failed, {Pending} pending (never created)",
+            body.TransactionId, compensatedCount, failedCount, pendingCount);
+
+        return (StatusCodes.OK, new AbortTransactionResponse
+        {
+            TransactionId = body.TransactionId,
+            Status = transaction.Status,
+            CompensatedCount = compensatedCount,
+            FailedCount = failedCount,
+            PendingCount = pendingCount
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, TransactionStatusResponse?)> GetTransactionStatusAsync(
         GetTransactionStatusRequest body, CancellationToken ct = default)
     {
-        await Task.CompletedTask;
-        throw new NotImplementedException("Transaction management not yet implemented");
+        var transaction = await _transactionStore.GetAsync(BuildTransactionKey(body.TransactionId), ct);
+        if (transaction == null)
+            return (StatusCodes.NotFound, null);
+
+        var provisions = await GetOrderedProvisionsAsync(body.TransactionId, ct);
+
+        return (StatusCodes.OK, new TransactionStatusResponse
+        {
+            TransactionId = transaction.TransactionId,
+            OwnerService = transaction.OwnerService,
+            ParentResourceType = transaction.ParentResourceType,
+            ParentResourceId = transaction.ParentResourceId,
+            Status = transaction.Status,
+            CreatedAt = transaction.CreatedAt,
+            UpdatedAt = transaction.UpdatedAt,
+            TtlSeconds = transaction.TtlSeconds,
+            ExpiresAt = transaction.CreatedAt.AddSeconds(transaction.TtlSeconds),
+            ExpectedProvisionCount = transaction.ExpectedProvisionCount,
+            ValidationAttempts = transaction.ValidationAttempts,
+            Provisions = provisions.Select(p => new ProvisionDetail
+            {
+                ProvisionId = p.ProvisionId,
+                SequenceNumber = p.SequenceNumber,
+                ResourceType = p.ResourceType,
+                ResourceId = p.ResourceId,
+                Status = p.Status,
+                RegisteredAt = p.RegisteredAt,
+                ProvisionedAt = p.ProvisionedAt,
+                CompensatedAt = p.CompensatedAt,
+                CompensationAttempts = p.CompensationAttempts,
+                LastCompensationError = p.LastCompensationError,
+            }).ToList()
+        });
+    }
+
+    // =========================================================================
+    // Transaction Internal Helpers
+    // =========================================================================
+
+    /// <summary>
+    /// Finds a provision by resourceId within a transaction.
+    /// </summary>
+    private async Task<ResourceProvisionModel?> FindProvisionByResourceIdAsync(
+        Guid transactionId, Guid resourceId, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.resource", "ResourceService.FindProvisionByResourceId");
+
+        var indexJson = await _provisionStringStore.GetAsync(BuildProvisionTxIndexKey(transactionId), ct);
+        if (string.IsNullOrEmpty(indexJson))
+            return null;
+
+        var provisionIds = BannouJson.Deserialize<List<string>>(indexJson);
+        if (provisionIds == null)
+            return null;
+
+        foreach (var idStr in provisionIds)
+        {
+            if (!Guid.TryParse(idStr, out var provisionId))
+                continue;
+            var provision = await _provisionStore.GetAsync(BuildProvisionKey(provisionId), ct);
+            if (provision != null && provision.ResourceId == resourceId)
+                return provision;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Gets all provisions for a transaction, ordered by sequence number.
+    /// </summary>
+    private async Task<List<ResourceProvisionModel>> GetOrderedProvisionsAsync(
+        Guid transactionId, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.resource", "ResourceService.GetOrderedProvisions");
+
+        var indexJson = await _provisionStringStore.GetAsync(BuildProvisionTxIndexKey(transactionId), ct);
+        if (string.IsNullOrEmpty(indexJson))
+            return new List<ResourceProvisionModel>();
+
+        var provisionIds = BannouJson.Deserialize<List<string>>(indexJson);
+        if (provisionIds == null)
+            return new List<ResourceProvisionModel>();
+
+        var provisions = new List<ResourceProvisionModel>();
+        foreach (var idStr in provisionIds)
+        {
+            if (!Guid.TryParse(idStr, out var provisionId))
+                continue;
+            var provision = await _provisionStore.GetAsync(BuildProvisionKey(provisionId), ct);
+            if (provision != null)
+                provisions.Add(provision);
+        }
+
+        return provisions.OrderBy(p => p.SequenceNumber).ToList();
     }
 }

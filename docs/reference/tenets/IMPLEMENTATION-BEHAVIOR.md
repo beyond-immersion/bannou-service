@@ -441,7 +441,7 @@ eventConsumer.RegisterHandler<IMyService, MyEntityUpdatedEvent>(
     async (svc, evt) => ((MyService)svc)._cache.Invalidate(evt.EntityId));
 
 // WRONG: Inline invalidation — only works on the processing node
-await _store.SaveAsync(key, model, ct);
+await _store.SaveAsync(key, model, cancellationToken: ct);
 _cache.Invalidate(model.EntityId);  // Other nodes never see this
 await _messageBus.TryPublishAsync("my-entity.updated", event, ct);
 ```
@@ -481,8 +481,8 @@ await using var lockResponse = await _lockProvider.LockAsync(
 
 ```csharp
 var (value, etag) = await _stateStore.GetWithETagAsync(key, ct);
-var saved = await _stateStore.TrySaveAsync(key, modifiedValue, etag, ct);
-if (!saved) return (StatusCodes.Conflict, null);
+var newEtag = await _stateStore.TrySaveAsync(key, modifiedValue, etag ?? string.Empty, cancellationToken: ct);
+if (newEtag == null) return (StatusCodes.Conflict, null);
 ```
 
 ### Shared Security Components (CRITICAL)

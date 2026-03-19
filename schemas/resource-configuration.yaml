@@ -155,6 +155,14 @@ x-service-configuration:
       maximum: 90
       description: Days to retain completed or aborted transaction metadata before purging
 
+    TransactionMinTtlSeconds:
+      type: integer
+      env: RESOURCE_TRANSACTION_MIN_TTL_SECONDS
+      default: 10
+      minimum: 1
+      maximum: 120
+      description: Minimum allowed TTL for transactions (BeginTransaction clamps requested TTL to this floor)
+
     TransactionDefaultTtlSeconds:
       type: integer
       env: RESOURCE_TRANSACTION_DEFAULT_TTL_SECONDS
@@ -170,3 +178,11 @@ x-service-configuration:
       minimum: 60
       maximum: 3600
       description: Maximum allowed TTL — BeginTransaction clamps requested TTL to this value
+
+    ProvisionIndexMaxRetries:
+      type: integer
+      env: RESOURCE_PROVISION_INDEX_MAX_RETRIES
+      default: 3
+      minimum: 1
+      maximum: 10
+      description: Maximum optimistic concurrency retries for provision index list operations

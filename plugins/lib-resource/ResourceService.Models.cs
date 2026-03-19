@@ -316,6 +316,116 @@ internal class ResourceSnapshotModel
     public DateTimeOffset ExpiresAt { get; set; }
 }
 
+// =========================================================================
+// Transaction Management Models (Provisioning Coordination)
+// =========================================================================
+
+/// <summary>
+/// Durable provisioning transaction record stored in MySQL.
+/// Tracks the lifecycle of a multi-service provisioning operation with
+/// TTL-based validation, crash-safe commit, and automatic compensation.
+/// </summary>
+internal class ResourceTransactionModel
+{
+    /// <summary>Unique transaction identifier.</summary>
+    public Guid TransactionId { get; set; }
+
+    /// <summary>Service that owns this transaction (e.g., "genesis", "craft").</summary>
+    public string OwnerService { get; set; } = string.Empty;
+
+    /// <summary>Type of entity being provisioned (opaque identifier).</summary>
+    public string ParentResourceType { get; set; } = string.Empty;
+
+    /// <summary>ID of the entity being provisioned.</summary>
+    public Guid ParentResourceId { get; set; }
+
+    /// <summary>Current transaction lifecycle state.</summary>
+    public TransactionStatus Status { get; set; } = TransactionStatus.Active;
+
+    /// <summary>When the transaction was created.</summary>
+    public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>When the transaction was last updated.</summary>
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    /// <summary>Transaction TTL in seconds (validation deadline).</summary>
+    public int TtlSeconds { get; set; }
+
+    /// <summary>How many provisions the requester intends to register (null = unspecified).</summary>
+    public int? ExpectedProvisionCount { get; set; }
+
+    /// <summary>How many times TTL validation has been attempted by the recovery worker.</summary>
+    public int ValidationAttempts { get; set; }
+
+    /// <summary>
+    /// Serialized PreboundApi for completion validation (BannouJson.Serialize).
+    /// Executed by the recovery worker on TTL expiry to determine auto-commit vs auto-abort.
+    /// Null if the requester did not provide one.
+    /// </summary>
+    /// <remarks>
+    /// Stored as serialized JSON rather than the typed object to preserve ALL fields
+    /// at registration-time values. If PreboundApi gains new fields, stored transactions
+    /// retain their original values instead of silently inheriting new defaults.
+    /// </remarks>
+    public string? CompletionValidation { get; set; }
+
+    /// <summary>Reason for abort (stored for diagnostics, null if not aborted).</summary>
+    public string? AbortReason { get; set; }
+}
+
+/// <summary>
+/// Individual resource provision within a transaction, stored in MySQL.
+/// Provisions are registered BEFORE resource creation (register-before-create pattern)
+/// and compensated in reverse registration order on abort.
+/// </summary>
+internal class ResourceProvisionModel
+{
+    /// <summary>Unique provision identifier.</summary>
+    public Guid ProvisionId { get; set; }
+
+    /// <summary>Transaction this provision belongs to.</summary>
+    public Guid TransactionId { get; set; }
+
+    /// <summary>Registration order within the transaction (for reverse compensation).</summary>
+    public int SequenceNumber { get; set; }
+
+    /// <summary>Type of provisioned resource (e.g., "seed", "currency-wallet").</summary>
+    public string ResourceType { get; set; } = string.Empty;
+
+    /// <summary>Pre-generated resource ID (known before creation).</summary>
+    public Guid ResourceId { get; set; }
+
+    /// <summary>Current provision lifecycle state.</summary>
+    public ProvisionStatus Status { get; set; } = ProvisionStatus.Pending;
+
+    /// <summary>When the provision was registered (Pending).</summary>
+    public DateTimeOffset RegisteredAt { get; set; }
+
+    /// <summary>When the resource was confirmed created (null if still Pending).</summary>
+    public DateTimeOffset? ProvisionedAt { get; set; }
+
+    /// <summary>When compensation completed (null if not compensated).</summary>
+    public DateTimeOffset? CompensatedAt { get; set; }
+
+    /// <summary>Number of compensation attempts made.</summary>
+    public int CompensationAttempts { get; set; }
+
+    /// <summary>Error from last failed compensation attempt.</summary>
+    public string? LastCompensationError { get; set; }
+
+    /// <summary>
+    /// Serialized PreboundApi for compensation (BannouJson.Serialize).
+    /// Called to undo the provisioned resource on abort. Must be idempotent.
+    /// </summary>
+    public string Compensation { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Serialized PreboundApi for verification (BannouJson.Serialize).
+    /// Optional health check to determine if the resource still exists before compensating.
+    /// </summary>
+    public string? Verification { get; set; }
+}
+
 /// <summary>
 /// Definition of a migration callback for reassigning dependent references
 /// from one resource to another.

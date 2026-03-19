@@ -160,8 +160,8 @@ string? savedKey = null;
 SpeciesModel? savedModel = null;
 
 _mockStore.Setup(x => x.SaveAsync(
-        It.IsAny<string>(), It.IsAny<SpeciesModel>(), It.IsAny<CancellationToken>()))
-    .Callback<string, SpeciesModel, CancellationToken>((k, m, _) =>
+        It.IsAny<string>(), It.IsAny<SpeciesModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+    .Callback<string, SpeciesModel, StateOptions?, CancellationToken>((k, m, _, _) =>
     {
         savedKey = k;
         savedModel = m;
@@ -473,12 +473,13 @@ If you need internal access, the design is wrong.
 
 ```csharp
 // BAD: Accepts anything
-_mockStore.Setup(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<Model>(), ...))
+_mockStore.Setup(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<Model>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
 
 // GOOD: Validate key format at minimum
 _mockStore.Setup(x => x.SaveAsync(
     It.Is<string>(k => k.StartsWith("species:")),
     It.IsAny<SpeciesModel>(),
+    It.IsAny<StateOptions?>(),
     It.IsAny<CancellationToken>()))
 ```
 

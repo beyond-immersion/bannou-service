@@ -1184,7 +1184,7 @@ public async Task<(StatusCodes, TemplateResponse?)> DeprecateTemplateAsync(
     template.DeprecationReason = body.Reason;
     template.UpdatedAt = DateTimeOffset.UtcNow;
 
-    await _templateStore.SaveAsync(key, template, ct);
+    await _templateStore.SaveAsync(key, template, cancellationToken: ct);
 
     // Publish as *.updated with changedFields — NOT a dedicated deprecation event
     await _messageBus.PublishTemplateUpdatedAsync(template,
