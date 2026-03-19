@@ -2840,10 +2840,13 @@ public class ResourceServiceTests
         // Act
         var endpoints = ResourcePermissionRegistration.GetEndpoints();
 
-        // Assert - All resource endpoints have x-permissions: [] (service-to-service only via lib-mesh).
-        // No endpoints are exposed to WebSocket clients, so no permission registrations.
+        // Assert - Most resource endpoints have x-permissions: [] (service-to-service only via lib-mesh).
+        // The only endpoint with permissions is getTransactionStatus (role: admin).
         Assert.NotNull(endpoints);
-        Assert.Empty(endpoints);
+        var endpointList = endpoints.ToList();
+        Assert.Single(endpointList);
+        Assert.Equal("/resource/transaction/status", endpointList.First().Path);
+        Assert.Equal("admin", endpointList.First().Permissions.First().Role);
     }
 
     [Fact]

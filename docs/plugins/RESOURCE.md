@@ -457,6 +457,14 @@ None.
 
 4. **Cleanup callbacks registered in OnRunningAsync**: Consumer plugins MUST register their cleanup callbacks in `OnRunningAsync`, not `OnStartAsync`. This is because `OnRunningAsync` runs after ALL plugins have completed their `StartAsync` phase, guaranteeing lib-resource is available. Plugin load order is not guaranteed beyond infrastructure plugins (L0), so registering during `OnStartAsync` could fail if lib-resource hasn't started yet. See ActorServicePlugin for the reference implementation.
 
+5. **Transaction compensation backoff uses transaction-level timestamp**: The `TransactionRecoveryWorker`'s exponential backoff for compensation retries uses `transaction.UpdatedAt` as the base time rather than a per-provision `lastAttemptedAt` timestamp. This means the backoff window is relative to when the transaction was last updated, not when a specific provision's compensation was last attempted. If the transaction's `UpdatedAt` advances because another provision succeeds in the same cycle, the backoff window effectively resets for all remaining failed provisions. In practice this produces a slightly looser backoff than strict per-provision timing — compensations may be retried slightly earlier than the pure exponential schedule would dictate. This is an acceptable tradeoff: per-provision timestamps would add a field to `ResourceProvisionModel` and tracking complexity for marginal scheduling precision, while the transaction-level approach is simpler and still prevents rapid-fire retry floods (the backoff grows with `CompensationAttempts` which IS per-provision).
+
+6. **Transaction endpoints use proper HTTP status codes**: Unlike Resource's existing endpoints which return `200 OK` for all outcomes with structured `success`/`found`/`abortReason` flags, the transaction management endpoints (begin, register-provision, confirm-provision, commit, abort, status) use standard HTTP status codes (400, 404, 409) for business failures. This is a deliberate divergence documented in the implementation map — transaction callers need clear, immediate signal without parsing response bodies. See planning document R8.
+
+7. **PreboundApi fields stored as serialized JSON strings**: Transaction and provision models store `PreboundApi` objects (completionValidation, compensation, verification) as `BannouJson.Serialize()`'d strings in MySQL rather than as typed objects. This preserves all fields at registration-time values — if `PreboundApi` gains new fields, stored transactions retain their original values instead of silently inheriting new defaults. Deserialized via `BannouJson.Deserialize<PreboundApi>()` at execution time.
+
+8. **Commit retry cap is time-based, not counter-based**: The `TransactionRecoveryWorker` determines whether commit resume retries are exhausted by checking how long the transaction has been in `Committing` state (`UpdatedAt` age > `TransactionCommitMaxRetries * WorkerIntervalSeconds`) rather than maintaining an explicit retry counter. This avoids adding a separate counter field to the transaction model while providing equivalent protection — each worker cycle is one implicit retry attempt.
+
 ### Design Considerations (Requires Planning)
 
 None currently. Previous design gaps (callback listing/removal, dry-run preview) have been addressed.
@@ -477,9 +485,9 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Active
 
-*No active work items.*
+- **Resource Transactions (Phase 1)**: Durable multi-service provisioning and cleanup coordination. 6 new endpoints (begin, register-provision, confirm-provision, commit, abort, status), TransactionRecoveryWorker background service (TTL validation, commit resume, compensation retry, metadata purge), 2 MySQL state stores, 8 transaction lifecycle events, 11 configuration properties. See [RESOURCE-TRANSACTIONS.md](../planning/RESOURCE-TRANSACTIONS.md) for the full design. Phase 1a (prerequisite compensation endpoints — Seed delete) and Phase 1b (caller-specified IDs) pending. Phase 2 (Genesis migration) depends on 1a/1b.
 
 ### Completed
 
-*Historical entries cleared — see git history for past work tracking.*
+- **2026-03-19**: PreboundApi moved to Core SDK (`sdks/core/PreboundApi.cs`) with `x-sdk-type` schema references. ResponseTransformer added to Core SDK for declarative response validation. Contract schema modernization tracked in [#701](https://github.com/beyond-immersion/bannou-service/issues/701).
 

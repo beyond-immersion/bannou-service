@@ -743,6 +743,18 @@ All catalog generators use Python 3 and produce markdown index files with summar
 - **Output**: stdout — Sectioned output (`[API]`, `[Events]`, `[Lifecycle Events]`, `[Client Events]`) with model/enum count summary on stderr. Models with ≤3 properties are inline; larger ones use multi-line format.
 - **Tools used**: Python 3, `ruamel.yaml` (287 lines)
 
+### `print-interface-shapes.py`
+- **Purpose**: Prints compact interface shapes for bannou-service shared interfaces — the infrastructure API surface (state stores, messaging, DI providers/listeners, telemetry, behavior system). Two modes: catalog (all interfaces organized by category with one-line summaries) and detail (full method signatures, properties, inheritance, and generic constraints for a specific interface). Partial name matching supported.
+- **Usage**:
+  - `make print-interfaces` — Catalog mode (all 84 interfaces by category)
+  - `make print-interfaces INTERFACE="IStateStore"` — Detail mode (full method signatures)
+  - `make print-interfaces INTERFACE="Cacheable"` — Partial match
+  - `python3 scripts/print-interface-shapes.py --list` — List all interface names
+- **Input**: Reads C# source files directly from `bannou-service/` (non-generated `I*.cs` files). Parses interface declarations, XML doc summaries, method signatures (including tuple return types), properties, generic params, and constraints.
+- **Output**: stdout — Catalog mode: interfaces grouped into categories (State Store, Messaging & Events, DI Providers, DI Listeners, Telemetry, Service Markers, Behavior System, etc.) with one-line summaries. Detail mode: full method/property signatures per interface. Interface/method count summary on stderr.
+- **Categories**: State Store (9), Messaging & Events (7), Service Mesh & Invocation (5), DI Providers (8), DI Listeners (4), Entity Session (1), Telemetry (1), Service Markers & Lifecycle (12), Behavior System (23+), History & Storage (5), Exception Handling (1)
+- **Tools used**: Python 3, regex-based C# parsing (no external dependencies)
+
 ---
 
 ## Utility & Non-Generation Scripts

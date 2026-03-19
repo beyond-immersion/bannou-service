@@ -100,6 +100,17 @@ inspect-list: ## List all types in a package. Usage: make inspect-list PKG="Rabb
 print-models: ## Print compact model shapes. Usage: make print-models PLUGIN="character"
 	@python3 scripts/print-model-shapes.py "$(PLUGIN)"
 
+# =============================================================================
+# INTERFACE SHAPE INSPECTOR
+# =============================================================================
+# Print compact interface shapes for bannou-service shared interfaces.
+# Catalog mode shows all interfaces by category; detail mode shows full
+# method signatures for a specific interface. Partial name matching supported.
+# =============================================================================
+
+print-interfaces: ## Print interface shapes. Usage: make print-interfaces [INTERFACE="IStateStore"]
+	@python3 scripts/print-interface-shapes.py $(if $(INTERFACE),"$(INTERFACE)")
+
 audit-sizes: ## Audit file sizes for splitting candidates. Usage: make audit-sizes [TOP=10] [CS=2000] [DOC=1400] [FAQ=300]
 	@scripts/audit-file-sizes.sh --top "$(or $(TOP),5)" --cs-threshold "$(or $(CS),1400)" --doc-threshold "$(or $(DOC),1400)" --faq-threshold "$(or $(FAQ),300)"
 

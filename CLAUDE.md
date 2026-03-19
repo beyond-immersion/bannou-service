@@ -250,6 +250,14 @@ make test-structural-info METHOD=PackageReferences_AreLatestStableVersions  # Sp
 # all models for a service. Format: * = required, ? = nullable, = val = default.
 make print-models PLUGIN="character"     # Print all model shapes for a service
 
+# Interface Shape Inspection (for understanding bannou-service shared interfaces)
+# Prints compact interface shapes — method signatures, properties, inheritance.
+# Use this INSTEAD of reading 400+ line interface files when you need to understand
+# the infrastructure API surface (state stores, messaging, DI providers, etc.).
+make print-interfaces                         # Catalog: all interfaces by category
+make print-interfaces INTERFACE="IStateStore" # Detail: full method signatures
+make print-interfaces INTERFACE="Cacheable"   # Partial name match supported
+
 # Assembly Inspection (for understanding external APIs)
 make inspect-type TYPE="IChannel" PKG="RabbitMQ.Client"
 make inspect-method METHOD="IChannel.BasicPublishAsync" PKG="RabbitMQ.Client"
