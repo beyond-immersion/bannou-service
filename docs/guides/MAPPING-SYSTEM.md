@@ -481,7 +481,8 @@ public partial class RegionEventActor : RegionEventActorBase
     public async Task<List<AffordanceLocation>> FindAmbushPointsAsync(CancellationToken ct)
     {
         // Use affordance query - lib-mapping does the heavy lifting
-        var (status, response) = await _mappingClient.QueryAffordanceAsync(
+        // Generated clients return Task<TResponse> and throw ApiException on error
+        var response = await _mappingClient.QueryAffordanceAsync(
             new AffordanceQueryRequest
             {
                 RegionId = RegionId,
@@ -490,7 +491,7 @@ public partial class RegionEventActor : RegionEventActorBase
                 MaxResults = 5
             }, ct);
 
-        return response?.Locations ?? [];
+        return response.Locations ?? [];
     }
 }
 ```

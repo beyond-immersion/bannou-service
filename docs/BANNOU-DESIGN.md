@@ -311,9 +311,9 @@ topology:
 ## Service Communication Patterns
 
 ### Synchronous (Request/Response)
-For operations requiring immediate results:
+For operations requiring immediate results (generated clients return `Task<TResponse>` and throw `ApiException` on error):
 ```csharp
-var (status, response) = await _authClient.ValidateTokenAsync(request);
+var response = await _authClient.ValidateTokenAsync(request);
 ```
 
 ### Asynchronous (Events)

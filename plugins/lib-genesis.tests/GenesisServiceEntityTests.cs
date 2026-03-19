@@ -1,87 +1,277 @@
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Genesis;
+using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Testing;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
+using BeyondImmersion.BannouService.Actor;
+using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.Collection;
+using BeyondImmersion.BannouService.Currency;
+using BeyondImmersion.BannouService.GameService;
+using BeyondImmersion.BannouService.Inventory;
+using BeyondImmersion.BannouService.Item;
+using BeyondImmersion.BannouService.Realm;
+using BeyondImmersion.BannouService.Relationship;
+using BeyondImmersion.BannouService.Resource;
+using BeyondImmersion.BannouService.Seed;
+using BeyondImmersion.BannouService.Species;
+
 namespace BeyondImmersion.BannouService.Genesis.Tests;
 
 /// <summary>
-/// Entity core endpoint tests for GenesisService.
+/// Entity endpoint tests for GenesisService.
 /// Covers: CreateEntity, GetEntity, ListEntities, GetCapabilities, DestroyEntity, BindPhysicalForm.
-///
-/// PRE-IMPLEMENTATION: These are stub tests with detailed pseudocode comments
-/// tracing to the implementation map. Full Arrange/Act/Assert will be filled in
-/// during /implement-plugin when GenesisEntityModel exists.
 /// </summary>
-public class GenesisServiceEntityTests
+public class GenesisServiceEntityTests : ServiceTestBase<GenesisServiceConfiguration>
 {
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<GenesisTemplateModel>> _mockTemplateStore;
+    private readonly Mock<IStateStore<GenesisTemplateListModel>> _mockTemplateListStore;
+    private readonly Mock<IStateStore<GenesisEntityModel>> _mockEntityStore;
+    private readonly Mock<IStateStore<GenesisEntityListModel>> _mockEntityListStore;
+    private readonly Mock<IStateStore<CachedGenesisEntity>> _mockEntityCacheStore;
+    private readonly Mock<IStateStore<CachedCapabilityManifest>> _mockCapsCacheStore;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<ILogger<GenesisService>> _mockLogger;
+    private readonly Mock<IResourceClient> _mockResourceClient;
+    private readonly Mock<ISeedClient> _mockSeedClient;
+    private readonly Mock<ICurrencyClient> _mockCurrencyClient;
+    private readonly Mock<ICharacterClient> _mockCharacterClient;
+    private readonly Mock<IActorClient> _mockActorClient;
+    private readonly Mock<IInventoryClient> _mockInventoryClient;
+    private readonly Mock<IItemClient> _mockItemClient;
+    private readonly Mock<IRelationshipClient> _mockRelationshipClient;
+    private readonly Mock<IRealmClient> _mockRealmClient;
+    private readonly Mock<ISpeciesClient> _mockSpeciesClient;
+    private readonly Mock<IGameServiceClient> _mockGameServiceClient;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
+
+    public GenesisServiceEntityTests()
+    {
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockTemplateStore = new Mock<IStateStore<GenesisTemplateModel>>();
+        _mockTemplateListStore = new Mock<IStateStore<GenesisTemplateListModel>>();
+        _mockEntityStore = new Mock<IStateStore<GenesisEntityModel>>();
+        _mockEntityListStore = new Mock<IStateStore<GenesisEntityListModel>>();
+        _mockEntityCacheStore = new Mock<IStateStore<CachedGenesisEntity>>();
+        _mockCapsCacheStore = new Mock<IStateStore<CachedCapabilityManifest>>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockMessageBus = new Mock<IMessageBus>();
+        _mockLogger = new Mock<ILogger<GenesisService>>();
+        _mockResourceClient = new Mock<IResourceClient>();
+        _mockSeedClient = new Mock<ISeedClient>();
+        _mockCurrencyClient = new Mock<ICurrencyClient>();
+        _mockCharacterClient = new Mock<ICharacterClient>();
+        _mockActorClient = new Mock<IActorClient>();
+        _mockInventoryClient = new Mock<IInventoryClient>();
+        _mockItemClient = new Mock<IItemClient>();
+        _mockRelationshipClient = new Mock<IRelationshipClient>();
+        _mockRealmClient = new Mock<IRealmClient>();
+        _mockSpeciesClient = new Mock<ISpeciesClient>();
+        _mockGameServiceClient = new Mock<IGameServiceClient>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
+
+        _mockStateStoreFactory.Setup(f => f.GetStore<GenesisTemplateModel>(StateStoreDefinitions.GenesisTemplates)).Returns(_mockTemplateStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<GenesisTemplateListModel>(StateStoreDefinitions.GenesisTemplates)).Returns(_mockTemplateListStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<GenesisEntityModel>(StateStoreDefinitions.GenesisEntities)).Returns(_mockEntityStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<GenesisEntityListModel>(StateStoreDefinitions.GenesisEntities)).Returns(_mockEntityListStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<CachedGenesisEntity>(StateStoreDefinitions.GenesisEntityCache)).Returns(_mockEntityCacheStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<CachedCapabilityManifest>(StateStoreDefinitions.GenesisEntityCache)).Returns(_mockCapsCacheStore.Object);
+
+        SetupDefaultLock();
+        SetupDefaultMessageBus();
+    }
+
+    private void SetupDefaultLock()
+    {
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        mockLockResponse.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
+    }
+
+    private void SetupDefaultMessageBus()
+    {
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+    }
+
+    private GenesisService CreateService()
+    {
+        return new GenesisService(
+            _mockStateStoreFactory.Object,
+            _mockLockProvider.Object,
+            _mockMessageBus.Object,
+            _mockLogger.Object,
+            Configuration,
+            new NullTelemetryProvider(),
+            _mockResourceClient.Object,
+            _mockSeedClient.Object,
+            _mockCurrencyClient.Object,
+            _mockCharacterClient.Object,
+            _mockActorClient.Object,
+            _mockInventoryClient.Object,
+            _mockItemClient.Object,
+            _mockRelationshipClient.Object,
+            _mockRealmClient.Object,
+            _mockSpeciesClient.Object,
+            _mockGameServiceClient.Object,
+            _mockEventConsumer.Object);
+    }
+
+    private static GenesisTemplateModel CreateTestTemplate(string templateCode = "test_template")
+    {
+        return new GenesisTemplateModel
+        {
+            TemplateCode = templateCode,
+            GameServiceId = Guid.NewGuid(),
+            DisplayName = "Test Template",
+            Description = "A test template",
+            Seed = new GenesisSeedConfig
+            {
+                SeedTypeCode = "test_seed",
+                Domains = new List<GenesisSeedDomain> { new() { DomainCode = "growth", DisplayName = "Growth" } },
+                Phases = new List<GenesisSeedPhase>
+                {
+                    new() { PhaseName = "Dormant", Threshold = 0, CognitiveStage = CognitiveStage.Dormant },
+                    new() { PhaseName = "Stirring", Threshold = 100, CognitiveStage = CognitiveStage.EventBrain }
+                }
+            },
+            Economy = new GenesisEconomyConfig
+            {
+                Wallets = new List<GenesisWalletConfig>
+                {
+                    new() { WalletCode = "mana", CurrencyCode = "mana_currency" }
+                },
+                GrowthMappings = new List<GenesisGrowthMapping>
+                {
+                    new() { WalletCode = "mana", Domain = "growth", Ratio = 1.0, Direction = GrowthDirection.Credit }
+                }
+            },
+            Storage = new GenesisStorageConfig
+            {
+                Inventories = new List<GenesisInventoryConfig>
+                {
+                    new() { InventoryCode = "loot", ConstraintModel = "Unlimited", Capacity = 20 }
+                }
+            },
+            Awakening = new GenesisAwakeningConfig { SystemRealmCode = "SYSTEM", CharacterSpeciesCode = "spirit" },
+            PhysicalFormType = PhysicalFormType.Item,
+            Bond = new GenesisBondConfig { Enabled = false, Cardinality = BondCardinality.None },
+            ArchiveOnDestruction = true,
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+        };
+    }
+
+    private static GenesisEntityModel CreateTestEntity(Guid? entityId = null, string templateCode = "test_template")
+    {
+        var id = entityId ?? Guid.NewGuid();
+        return new GenesisEntityModel
+        {
+            EntityId = id,
+            TemplateCode = templateCode,
+            GameServiceId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Code = "test_entity",
+            DisplayName = "Test Entity",
+            SeedId = Guid.NewGuid(),
+            WalletIds = new Dictionary<string, Guid> { ["mana"] = Guid.NewGuid() },
+            InventoryIds = new Dictionary<string, Guid> { ["loot"] = Guid.NewGuid() },
+            CurrentPhase = "Dormant",
+            CognitiveStage = CognitiveStage.Dormant,
+            PhysicalFormType = PhysicalFormType.Item,
+            Status = GenesisEntityStatus.Active,
+            CreatedAt = DateTimeOffset.UtcNow.AddHours(-1),
+            UpdatedAt = DateTimeOffset.UtcNow.AddHours(-1)
+        };
+    }
+
     // ===================================================================
     // CreateEntity
     // ===================================================================
 
     [Fact]
-    public async Task CreateEntityAsync_ValidRequest_ReturnsOkAndProvisions()
-    {
-        // Map: READ template -> 404 if null, IF deprecated -> 400,
-        //   CALL IGameServiceClient.GetGameServiceAsync -> 400 if not found,
-        //   IF code -> READ entity-code index -> 409 if exists,
-        //   LOCK, CALL ISeedClient.CreateSeedAsync, FOREACH wallet CALL ICurrencyClient.CreateWalletAsync,
-        //   FOREACH inventory CALL IInventoryClient.CreateContainerAsync,
-        //   CALL IResourceClient.RegisterResourceCleanupCallbacksAsync + RegisterCompressCallbacksAsync,
-        //   WRITE entity + entity-code + entity-template + entity-wallet indexes,
-        //   PUBLISH genesis.entity.created { entityId, templateCode, gameServiceId, realmId, walletIds, inventoryIds }
-        // Arrange: mock template store returns valid non-deprecated template with 2 wallets and 1 inventory,
-        //   mock game service client returns valid, mock entity-code store returns null (no duplicate),
-        //   mock lock provider, mock seed/currency/inventory/resource clients return success,
-        //   setup state save captures for entity + all indexes, setup event capture
-        // Act: call CreateEntityAsync with valid request including code
-        // Assert: status == OK, response has entityId/templateCode/walletIds/inventoryIds,
-        //   entity saved with cognitiveStage=Dormant, status=Active, currentPhase=first phase,
-        //   seed created, wallets created (2), inventory created (1),
-        //   entity-code index written, entity-template index written, entity-wallet indexes written (2),
-        //   event published to "genesis.entity.created" with all expected fields
-        // TODO: Implement after GenesisEntityModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
-    }
-
-    [Fact]
     public async Task CreateEntityAsync_TemplateNotFound_ReturnsNotFound()
     {
-        // Map: READ genesis-templates:"template:{templateCode}" -> 404 if null
-        // Arrange: mock template store returns null
-        // Act: call CreateEntityAsync
-        // Assert: status == NotFound, no provisioning calls made, no state saved, no event published
-        // TODO: Implement after GenesisEntityModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
+        // Arrange
+        var service = CreateService();
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GenesisTemplateModel?)null);
+
+        // Act
+        var (status, response) = await service.CreateEntityAsync(
+            new CreateEntityRequest { TemplateCode = "missing", GameServiceId = Guid.NewGuid(), RealmId = Guid.NewGuid() });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
     }
 
     [Fact]
     public async Task CreateEntityAsync_TemplateDeprecated_ReturnsBadRequest()
     {
-        // Map: IF template.IsDeprecated -> 400 "template deprecated, cannot create new entities"
-        // Arrange: mock template store returns deprecated template (IsDeprecated=true)
-        // Act: call CreateEntityAsync
-        // Assert: status == BadRequest, no provisioning calls made
-        // TODO: Implement after GenesisEntityModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
-    }
+        // Arrange
+        var service = CreateService();
+        var template = CreateTestTemplate();
+        template.IsDeprecated = true;
 
-    [Fact]
-    public async Task CreateEntityAsync_GameServiceNotFound_ReturnsBadRequest()
-    {
-        // Map: CALL IGameServiceClient.GetGameServiceAsync(gameServiceId) -> 400 if not found
-        // Arrange: mock template store returns valid template, mock game service client returns not found
-        // Act: call CreateEntityAsync
-        // Assert: status == BadRequest, no provisioning calls made
-        // TODO: Implement after GenesisEntityModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("template:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Act
+        var (status, response) = await service.CreateEntityAsync(
+            new CreateEntityRequest { TemplateCode = template.TemplateCode, GameServiceId = Guid.NewGuid(), RealmId = Guid.NewGuid() });
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
     }
 
     [Fact]
     public async Task CreateEntityAsync_DuplicateCode_ReturnsConflict()
     {
-        // Map: IF request.code != null -> READ entity-code index -> IF exists -> 409
-        // Arrange: mock template store returns valid template, mock game service client returns valid,
-        //   mock entity-code store returns existing entity (duplicate code in same game/realm)
-        // Act: call CreateEntityAsync with code that already exists
-        // Assert: status == Conflict, no provisioning calls made
-        // TODO: Implement after GenesisEntityModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
+        // Arrange
+        var service = CreateService();
+        var template = CreateTestTemplate();
+        var gameServiceId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("template:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        _mockGameServiceClient
+            .Setup(g => g.GetServiceAsync(It.IsAny<GetServiceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetServiceResponse { ServiceId = gameServiceId });
+
+        _mockCurrencyClient
+            .Setup(c => c.GetCurrencyDefinitionAsync(It.IsAny<GetCurrencyDefinitionRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CurrencyDefinitionResponse { DefinitionId = Guid.NewGuid() });
+
+        // Code uniqueness check returns existing entity
+        _mockEntityStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("entity-code:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTestEntity());
+
+        // Act
+        var (status, response) = await service.CreateEntityAsync(
+            new CreateEntityRequest { TemplateCode = template.TemplateCode, GameServiceId = gameServiceId, RealmId = realmId, Code = "duplicate" });
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
     }
 
     // ===================================================================
@@ -91,64 +281,94 @@ public class GenesisServiceEntityTests
     [Fact]
     public async Task GetEntityAsync_CacheHit_ReturnsOk()
     {
-        // Map: READ genesis-entity-cache:"entity:{entityId}" -> cache hit -> skip MySQL read
-        // Arrange: mock cache store returns cached entity
-        // Act: call GetEntityAsync with entityId, includeBalances=false
-        // Assert: status == OK, response fields match cached entity, no MySQL store read
-        // TODO: Implement after GenesisEntityModel/CachedGenesisEntity exists
-        await Task.CompletedTask;
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var cached = new CachedGenesisEntity
+        {
+            EntityId = entityId,
+            TemplateCode = "test_template",
+            GameServiceId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            WalletIds = new Dictionary<string, Guid>(),
+            InventoryIds = new Dictionary<string, Guid>(),
+            CurrentPhase = "Dormant",
+            CognitiveStage = CognitiveStage.Dormant,
+            PhysicalFormType = PhysicalFormType.None,
+            Status = GenesisEntityStatus.Active,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockEntityCacheStore
+            .Setup(s => s.GetAsync($"entity:{entityId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cached);
+
+        // Act
+        var (status, response) = await service.GetEntityAsync(
+            new GetEntityRequest { EntityId = entityId, IncludeBalances = false });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(entityId, response.EntityId);
+        // Cache hit — entity store should NOT be read
+        _mockEntityStore.Verify(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task GetEntityAsync_CacheMiss_ReadsThroughAndCaches()
     {
-        // Map: READ cache -> miss, READ genesis-entities:"entity:{entityId}" -> found,
-        //   WRITE cache with TTL: config.EntityCacheTtlMinutes
-        // Arrange: mock cache store returns null, mock entity store returns entity model
-        //   setup cache save capture
-        // Act: call GetEntityAsync
-        // Assert: status == OK, entity read from MySQL, cached copy written to Redis with correct key
-        // TODO: Implement after GenesisEntityModel/CachedGenesisEntity exists
-        await Task.CompletedTask;
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var entity = CreateTestEntity(entityId);
+
+        _mockEntityCacheStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CachedGenesisEntity?)null);
+
+        _mockEntityStore
+            .Setup(s => s.GetAsync($"entity:{entityId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entity);
+
+        CachedGenesisEntity? cachedModel = null;
+        _mockEntityCacheStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CachedGenesisEntity>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CachedGenesisEntity, CancellationToken>((_, m, _) => cachedModel = m)
+            .ReturnsAsync("etag-1");
+
+        // Act
+        var (status, response) = await service.GetEntityAsync(
+            new GetEntityRequest { EntityId = entityId, IncludeBalances = false });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(entityId, response.EntityId);
+        Assert.NotNull(cachedModel);
+        Assert.Equal(entityId, cachedModel.EntityId);
     }
 
     [Fact]
     public async Task GetEntityAsync_NotFound_ReturnsNotFound()
     {
-        // Map: READ cache -> miss, READ entity store -> 404 if null
-        // Arrange: mock cache returns null, mock entity store returns null
-        // Act: call GetEntityAsync
-        // Assert: status == NotFound
-        // TODO: Implement after GenesisEntityModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
-    }
+        // Arrange
+        var service = CreateService();
+        _mockEntityCacheStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CachedGenesisEntity?)null);
+        _mockEntityStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GenesisEntityModel?)null);
 
-    [Fact]
-    public async Task GetEntityAsync_IncludeBalances_FetchesWalletBalances()
-    {
-        // Map: IF request.includeBalances -> FOREACH walletCode, walletId in entity.walletIds
-        //   CALL ICurrencyClient.GetBalancesAsync(walletId) -> walletBalances[walletCode] = amount
-        // Arrange: mock cache returns entity with 2 walletIds, mock currency client returns balances
-        // Act: call GetEntityAsync with includeBalances=true
-        // Assert: status == OK, response.walletBalances has 2 entries with correct amounts
-        // TODO: Implement after GenesisEntityModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
-    }
+        // Act
+        var (status, response) = await service.GetEntityAsync(
+            new GetEntityRequest { EntityId = Guid.NewGuid() });
 
-    // ===================================================================
-    // ListEntities
-    // ===================================================================
-
-    [Fact]
-    public async Task ListEntitiesAsync_ValidRequest_ReturnsPagedResults()
-    {
-        // Map: QUERY genesis-entities:"entity-template:{templateCode}:{realmId}"
-        //   WHERE CognitiveStage/Status/CurrentPhase filters, PAGED(page, pageSize)
-        // Arrange: mock entity store query returns paginated entity list
-        // Act: call ListEntitiesAsync with templateCode, realmId, filters, pagination
-        // Assert: status == OK, response.entities populated, totalCount/page/pageSize correct
-        // TODO: Implement after GenesisEntityModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
     }
 
     // ===================================================================
@@ -156,27 +376,21 @@ public class GenesisServiceEntityTests
     // ===================================================================
 
     [Fact]
-    public async Task GetCapabilitiesAsync_EntityExists_ReturnsCapabilities()
-    {
-        // Map: READ entity -> 404 if null, READ caps cache -> IF miss CALL ISeedClient.GetCapabilityManifestAsync,
-        //   WRITE caps cache with TTL, RETURN (200, GetCapabilitiesResponse)
-        // Arrange: mock entity store returns entity with seedId, mock caps cache returns null (miss),
-        //   mock seed client returns capability manifest
-        // Act: call GetCapabilitiesAsync
-        // Assert: status == OK, response.capabilities matches seed manifest, cache written
-        // TODO: Implement after GenesisEntityModel/CachedCapabilityManifest exists
-        await Task.CompletedTask;
-    }
-
-    [Fact]
     public async Task GetCapabilitiesAsync_NotFound_ReturnsNotFound()
     {
-        // Map: READ genesis-entities:"entity:{entityId}" -> 404 if null
-        // Arrange: mock entity store returns null
-        // Act: call GetCapabilitiesAsync
-        // Assert: status == NotFound
-        // TODO: Implement after GenesisEntityModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
+        // Arrange
+        var service = CreateService();
+        _mockEntityStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GenesisEntityModel?)null);
+
+        // Act
+        var (status, response) = await service.GetCapabilitiesAsync(
+            new GetCapabilitiesRequest { EntityId = Guid.NewGuid() });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
     }
 
     // ===================================================================
@@ -184,35 +398,83 @@ public class GenesisServiceEntityTests
     // ===================================================================
 
     [Fact]
-    public async Task DestroyEntityAsync_ValidRequest_DestroysAndPublishesEvent()
+    public async Task DestroyEntityAsync_NotFound_ReturnsNotFound()
     {
-        // Map: READ entity -> 404 if null, READ template,
-        //   LOCK, IF actorId -> CALL IActorClient.StopActorAsync,
-        //   IF characterId AND archiveOnDestruction -> CALL IResourceClient.ExecuteCompressAsync,
-        //   IF bondId -> CALL IRelationshipClient.DeleteRelationshipAsync,
-        //   CALL IResourceClient.ExecuteCleanupAsync (cascades seed/wallets/inventories),
-        //   DELETE entity + entity-code + entity-template + entity-wallet indexes + cache entries,
-        //   PUBLISH genesis.entity.deleted { entityId, templateCode, gameServiceId, realmId }
-        // Arrange: mock entity store returns entity with actorId + characterId + bondId + code,
-        //   mock template store returns template with archiveOnDestruction=true,
-        //   mock lock, mock actor/resource/relationship clients, setup delete captures + event capture
-        // Act: call DestroyEntityAsync
-        // Assert: status == OK, actor stopped, character archived, bond deleted, resource cleanup called,
-        //   all store keys deleted (entity, code index, template index, wallet indexes, cache),
-        //   event published to "genesis.entity.deleted"
-        // TODO: Implement after GenesisEntityModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
+        // Arrange
+        var service = CreateService();
+        _mockEntityStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GenesisEntityModel?)null);
+
+        // Act
+        var status = await service.DestroyEntityAsync(
+            new DestroyEntityRequest { EntityId = Guid.NewGuid() });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
     }
 
     [Fact]
-    public async Task DestroyEntityAsync_NotFound_ReturnsNotFound()
+    public async Task DestroyEntityAsync_ValidRequest_DestroysAndPublishesEvent()
     {
-        // Map: READ genesis-entities:"entity:{entityId}" -> 404 if null
-        // Arrange: mock entity store returns null
-        // Act: call DestroyEntityAsync
-        // Assert: status == NotFound
-        // TODO: Implement after GenesisEntityModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var entity = CreateTestEntity(entityId);
+        entity.ActorId = Guid.NewGuid();
+        entity.CharacterId = Guid.NewGuid();
+        entity.BondId = Guid.NewGuid();
+        entity.BondTargetEntityId = Guid.NewGuid();
+        entity.BondTargetEntityType = EntityType.Character;
+
+        var template = CreateTestTemplate(entity.TemplateCode);
+
+        _mockEntityStore
+            .Setup(s => s.GetAsync($"entity:{entityId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entity);
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"template:{entity.TemplateCode}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((t, e, _) =>
+            {
+                capturedTopic = t;
+                capturedEvent = e;
+            })
+            .ReturnsAsync(true);
+
+        // Act
+        var status = await service.DestroyEntityAsync(
+            new DestroyEntityRequest { EntityId = entityId });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Actor stopped
+        _mockActorClient.Verify(a => a.StopActorAsync(It.IsAny<StopActorRequest>(), It.IsAny<CancellationToken>()), Times.Once);
+
+        // Character archived (archiveOnDestruction = true)
+        _mockResourceClient.Verify(r => r.ExecuteCompressAsync(It.IsAny<ExecuteCompressRequest>(), It.IsAny<CancellationToken>()), Times.Once);
+
+        // Bond dissolved
+        _mockRelationshipClient.Verify(r => r.EndRelationshipAsync(It.IsAny<EndRelationshipRequest>(), It.IsAny<CancellationToken>()), Times.Once);
+
+        // Resource cleanup called
+        _mockResourceClient.Verify(r => r.ExecuteCleanupAsync(It.IsAny<ExecuteCleanupRequest>(), It.IsAny<CancellationToken>()), Times.Once);
+
+        // Entity record deleted
+        _mockEntityStore.Verify(s => s.DeleteAsync($"entity:{entityId}", It.IsAny<CancellationToken>()), Times.Once);
+
+        // Event published
+        Assert.Equal(GenesisPublishedTopics.EntityDeleted, capturedTopic);
+        var typedEvent = Assert.IsType<EntityDeletedEvent>(capturedEvent);
+        Assert.Equal(entityId, typedEvent.EntityId);
+        Assert.Equal(entity.TemplateCode, typedEvent.TemplateCode);
     }
 
     // ===================================================================
@@ -220,53 +482,105 @@ public class GenesisServiceEntityTests
     // ===================================================================
 
     [Fact]
-    public async Task BindPhysicalFormAsync_ValidRequest_ReturnsOkAndUpdatesEntity()
-    {
-        // Map: READ entity -> 404 if null, READ template,
-        //   VALIDATE physicalFormType matches template -> 400 if mismatch,
-        //   IF Item -> CALL IItemClient.GetItemInstanceAsync -> 400 if not found,
-        //   LOCK, SET physicalFormType/physicalFormId, WRITE entity, DELETE cache,
-        //   PUBLISH genesis.entity.updated { entityId, changedFields: [physicalFormType, physicalFormId] }
-        // Arrange: mock entity store returns entity, mock template with physicalFormType=Item,
-        //   mock item client returns valid item instance, mock lock, setup save + event capture
-        // Act: call BindPhysicalFormAsync with matching physicalFormType=Item and valid physicalFormId
-        // Assert: status == OK, entity updated with form fields, cache invalidated,
-        //   event published to "genesis.entity.updated" with physicalForm changedFields
-        // TODO: Implement after GenesisEntityModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
-    }
-
-    [Fact]
     public async Task BindPhysicalFormAsync_NotFound_ReturnsNotFound()
     {
-        // Map: READ genesis-entities:"entity:{entityId}" -> 404 if null
-        // Arrange: mock entity store returns null
-        // Act: call BindPhysicalFormAsync
-        // Assert: status == NotFound
-        // TODO: Implement after GenesisEntityModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
+        // Arrange
+        var service = CreateService();
+        _mockEntityStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GenesisEntityModel?)null);
+
+        // Act
+        var (status, response) = await service.BindPhysicalFormAsync(
+            new BindPhysicalFormRequest { EntityId = Guid.NewGuid(), PhysicalFormType = PhysicalFormType.Item, PhysicalFormId = Guid.NewGuid() });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
     }
 
     [Fact]
     public async Task BindPhysicalFormAsync_FormTypeMismatch_ReturnsBadRequest()
     {
-        // Map: VALIDATE request.physicalFormType matches template.physicalFormType -> 400 if mismatch
-        // Arrange: mock entity store returns entity, mock template with physicalFormType=Location,
-        //   request sends physicalFormType=Item
-        // Act: call BindPhysicalFormAsync
-        // Assert: status == BadRequest, no state written, no event published
-        // TODO: Implement after GenesisEntityModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var entity = CreateTestEntity(entityId);
+        var template = CreateTestTemplate(entity.TemplateCode);
+        template.PhysicalFormType = PhysicalFormType.Location;
+
+        _mockEntityStore
+            .Setup(s => s.GetAsync($"entity:{entityId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entity);
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"template:{entity.TemplateCode}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Act
+        var (status, response) = await service.BindPhysicalFormAsync(
+            new BindPhysicalFormRequest { EntityId = entityId, PhysicalFormType = PhysicalFormType.Item, PhysicalFormId = Guid.NewGuid() });
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
     }
 
     [Fact]
-    public async Task BindPhysicalFormAsync_ItemNotFound_ReturnsBadRequest()
+    public async Task BindPhysicalFormAsync_ValidRequest_ReturnsOkAndUpdatesEntity()
     {
-        // Map: IF physicalFormType == Item -> CALL IItemClient.GetItemInstanceAsync -> 400 if not found
-        // Arrange: mock entity + template (both Item type), mock item client returns not found
-        // Act: call BindPhysicalFormAsync with non-existent physicalFormId
-        // Assert: status == BadRequest, no state written, no event published
-        // TODO: Implement after GenesisEntityModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var entity = CreateTestEntity(entityId);
+        var template = CreateTestTemplate(entity.TemplateCode);
+        var physicalFormId = Guid.NewGuid();
+
+        _mockEntityStore
+            .Setup(s => s.GetAsync($"entity:{entityId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entity);
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"template:{entity.TemplateCode}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        _mockItemClient
+            .Setup(i => i.GetItemInstanceAsync(It.IsAny<GetItemInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = physicalFormId });
+
+        GenesisEntityModel? savedEntity = null;
+        _mockEntityStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<GenesisEntityModel>(), It.IsAny<CancellationToken>()))
+            .Callback<string, GenesisEntityModel, CancellationToken>((_, m, _) => savedEntity = m)
+            .ReturnsAsync("etag-1");
+
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((t, e, _) =>
+            {
+                capturedTopic = t;
+                capturedEvent = e;
+            })
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, response) = await service.BindPhysicalFormAsync(
+            new BindPhysicalFormRequest { EntityId = entityId, PhysicalFormType = PhysicalFormType.Item, PhysicalFormId = physicalFormId });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        Assert.NotNull(savedEntity);
+        Assert.Equal(PhysicalFormType.Item, savedEntity.PhysicalFormType);
+        Assert.Equal(physicalFormId, savedEntity.PhysicalFormId);
+
+        // Cache invalidated
+        _mockEntityCacheStore.Verify(s => s.DeleteAsync($"entity:{entityId}", It.IsAny<CancellationToken>()), Times.Once);
+
+        Assert.Equal(GenesisPublishedTopics.EntityUpdated, capturedTopic);
+        var typedEvent = Assert.IsType<EntityUpdatedEvent>(capturedEvent);
+        Assert.Equal(entityId, typedEvent.EntityId);
+        Assert.Contains("PhysicalFormType", typedEvent.ChangedFields);
     }
 }

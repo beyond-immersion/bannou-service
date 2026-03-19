@@ -746,7 +746,8 @@ When a package changes license, pin to the last permissive version with XML comm
 
 ```csharp
 // CORRECT: L4 (Collection) calls L2 (Seed) directly — valid hierarchy direction
-var (status, response) = await _seedClient.RecordGrowthAsync(new RecordGrowthRequest
+// Generated clients return Task<TResponse> and throw ApiException on error
+var response = await _seedClient.RecordGrowthAsync(new RecordGrowthRequest
 {
     SeedId = seedId,
     Entries = domainEntries

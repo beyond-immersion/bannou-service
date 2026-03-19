@@ -5,48 +5,44 @@ namespace BeyondImmersion.BannouService.Genesis;
 
 /// <summary>
 /// Partial class for GenesisService event handling.
-/// Contains event consumer registration and handler implementations.
+/// Contains self-subscription event consumers for wallet map coherence.
 /// </summary>
 public partial class GenesisService
 {
     /// <summary>
-    /// Registers event consumers for pub/sub events this service handles.
-    /// Called from the main service constructor.
+    /// Registers event consumers for self-subscription events.
     /// </summary>
     /// <param name="eventConsumer">The event consumer for registering handlers.</param>
     protected void RegisterEventConsumers(IEventConsumer eventConsumer)
     {
         eventConsumer.RegisterHandler<IGenesisService, EntityCreatedEvent>(
-            "genesis.entity.created",
+            GenesisPublishedTopics.EntityCreated,
             async (svc, evt) => await ((GenesisService)svc).HandleGenesisEntityCreatedAsync(evt));
 
         eventConsumer.RegisterHandler<IGenesisService, EntityDeletedEvent>(
-            "genesis.entity.deleted",
+            GenesisPublishedTopics.EntityDeleted,
             async (svc, evt) => await ((GenesisService)svc).HandleGenesisEntityDeletedAsync(evt));
-
     }
 
     /// <summary>
-    /// Handles genesis.entity.created events.
-    /// TODO: Implement event handling logic.
+    /// Handles genesis.entity.created events for wallet map coherence.
     /// </summary>
-    /// <param name="evt">The event data.</param>
-    public Task HandleGenesisEntityCreatedAsync(EntityCreatedEvent evt)
+    public async Task HandleGenesisEntityCreatedAsync(EntityCreatedEvent evt)
     {
-        // TODO: Implement genesis.entity.created event handling
-        _logger.LogInformation("Received {Topic} event", "genesis.entity.created");
-        return Task.CompletedTask;
+        _logger.LogDebug("Received genesis.entity.created for entity {EntityId}", evt.EntityId);
+        // Wallet map coherence handled by external DI listener (GenesisCurrencyTransactionListener)
+        // Self-subscription ensures all nodes see entity creation for wallet map updates
+        await Task.CompletedTask;
     }
 
     /// <summary>
-    /// Handles genesis.entity.deleted events.
-    /// TODO: Implement event handling logic.
+    /// Handles genesis.entity.deleted events for wallet map coherence.
     /// </summary>
-    /// <param name="evt">The event data.</param>
-    public Task HandleGenesisEntityDeletedAsync(EntityDeletedEvent evt)
+    public async Task HandleGenesisEntityDeletedAsync(EntityDeletedEvent evt)
     {
-        // TODO: Implement genesis.entity.deleted event handling
-        _logger.LogInformation("Received {Topic} event", "genesis.entity.deleted");
-        return Task.CompletedTask;
+        _logger.LogDebug("Received genesis.entity.deleted for entity {EntityId}", evt.EntityId);
+        // Wallet map coherence handled by external DI listener (GenesisCurrencyTransactionListener)
+        // Self-subscription ensures all nodes see entity deletion for wallet map cleanup
+        await Task.CompletedTask;
     }
 }

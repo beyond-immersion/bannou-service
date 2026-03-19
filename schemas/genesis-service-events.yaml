@@ -27,6 +27,9 @@ info:
     - topic: genesis.template.updated
       event: TemplateUpdatedEvent
       description: Published when a genesis template is updated (including deprecation via changedFields)
+    - topic: genesis.template.deleted
+      event: TemplateDeletedEvent
+      description: Published by clean-deprecated sweep when removing a deprecated template with zero remaining entities
     # Entity lifecycle events (auto-generated from x-lifecycle)
     - topic: genesis.entity.created
       event: EntityCreatedEvent

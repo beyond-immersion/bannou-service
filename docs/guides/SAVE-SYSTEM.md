@@ -73,7 +73,7 @@ var request = new CreateSlotRequest
     Tags = new List<string> { "chapter-3", "boss-fight" }
 };
 
-var (status, response) = await _saveLoadClient.CreateSlotAsync(request);
+var response = await _saveLoadClient.CreateSlotAsync(request);
 ```
 
 ### Saving Data
@@ -98,7 +98,7 @@ var request = new SaveRequest
     }
 };
 
-var (status, response) = await _saveLoadClient.SaveAsync(request);
+var response = await _saveLoadClient.SaveAsync(request);
 // response.VersionNumber contains the new version
 ```
 
@@ -114,7 +114,7 @@ var request = new LoadRequest
     SlotName = "autosave"
 };
 
-var (status, response) = await _saveLoadClient.LoadAsync(request);
+var response = await _saveLoadClient.LoadAsync(request);
 var gameState = BannouJson.Deserialize<GameState>(response.Data);
 
 // Load specific version
@@ -134,7 +134,7 @@ var request = new ListSlotsRequest
     Category = SaveCategory.ManualSave  // Optional filter
 };
 
-var (status, response) = await _saveLoadClient.ListSlotsAsync(request);
+var response = await _saveLoadClient.ListSlotsAsync(request);
 foreach (var slot in response.Slots)
 {
     Console.WriteLine($"{slot.SlotName}: {slot.VersionCount} versions, {slot.TotalSizeBytes} bytes");
@@ -158,7 +158,7 @@ var request = new PinVersionRequest
     CheckpointName = "before-final-boss"  // Optional name for easy retrieval
 };
 
-var (status, response) = await _saveLoadClient.PinVersionAsync(request);
+var response = await _saveLoadClient.PinVersionAsync(request);
 ```
 
 ### Promoting Old Versions
@@ -176,7 +176,7 @@ var request = new PromoteVersionRequest
     DisplayName = "Restored from checkpoint"
 };
 
-var (status, response) = await _saveLoadClient.PromoteVersionAsync(request);
+var response = await _saveLoadClient.PromoteVersionAsync(request);
 // Creates a NEW version with the old version's data
 ```
 
@@ -199,7 +199,7 @@ var request = new SaveDeltaRequest
     Algorithm = DeltaAlgorithm.JsonPatch
 };
 
-var (status, response) = await _saveLoadClient.SaveDeltaAsync(request);
+var response = await _saveLoadClient.SaveDeltaAsync(request);
 // response.ChainLength shows depth of delta chain
 ```
 
@@ -217,7 +217,7 @@ var request = new LoadRequest
     SlotName = "world-state"
 };
 
-var (status, response) = await _saveLoadClient.LoadWithDeltasAsync(request);
+var response = await _saveLoadClient.LoadWithDeltasAsync(request);
 // Returns fully reconstructed data, not raw delta
 ```
 
@@ -235,7 +235,7 @@ var request = new CollapseDeltasRequest
     DeleteIntermediates = true  // Remove intermediate delta versions
 };
 
-var (status, response) = await _saveLoadClient.CollapseDeltasAsync(request);
+var response = await _saveLoadClient.CollapseDeltasAsync(request);
 ```
 
 ## Schema Migration
@@ -260,7 +260,7 @@ var request = new RegisterSchemaRequest
     FromVersion = "1.0.0"
 };
 
-var (status, response) = await _saveLoadClient.RegisterSchemaAsync(request);
+var response = await _saveLoadClient.RegisterSchemaAsync(request);
 ```
 
 ### Migrating a Save
@@ -275,7 +275,7 @@ var request = new MigrateSaveRequest
     TargetSchemaVersion = "2.0.0"
 };
 
-var (status, response) = await _saveLoadClient.MigrateSaveAsync(request);
+var response = await _saveLoadClient.MigrateSaveAsync(request);
 // Creates new version with migrated data
 ```
 
@@ -292,7 +292,7 @@ var request = new ExportSavesRequest
     SlotNames = new List<string> { "settings", "achievements" }  // Or null for all
 };
 
-var (status, response) = await _saveLoadClient.ExportSavesAsync(request);
+var response = await _saveLoadClient.ExportSavesAsync(request);
 // response.DownloadUrl is a pre-signed URL to download the archive
 ```
 
@@ -308,7 +308,7 @@ var request = new ImportSavesRequest
     ConflictResolution = ConflictResolution.Rename  // Skip, Overwrite, Rename, or Fail
 };
 
-var (status, response) = await _saveLoadClient.ImportSavesAsync(request);
+var response = await _saveLoadClient.ImportSavesAsync(request);
 ```
 
 ## Querying Saves
@@ -327,7 +327,7 @@ var request = new QuerySavesRequest
     Limit = 20
 };
 
-var (status, response) = await _saveLoadClient.QuerySavesAsync(request);
+var response = await _saveLoadClient.QuerySavesAsync(request);
 ```
 
 ## Integrity Verification
@@ -344,7 +344,7 @@ var request = new VerifyIntegrityRequest
     VersionNumber = 5  // Or null for latest
 };
 
-var (status, response) = await _saveLoadClient.VerifyIntegrityAsync(request);
+var response = await _saveLoadClient.VerifyIntegrityAsync(request);
 if (!response.Valid)
 {
     _logger.LogError("Save corruption detected: {Error}", response.ErrorMessage);

@@ -237,26 +237,31 @@ public async Task<(StatusCodes, GetSkillLevelResponse?)> GetSkillLevelAsync(
 {
     // "Skill level" is actually a seed domain depth for the character's
     // combat/warrior seed. The extension translates vocabulary.
-    var (status, growth) = await _seedClient.GetGrowthAsync(
-        new GetGrowthRequest
-        {
-            SeedId = request.CharacterSeedId,
-            Domain = $"skills.{request.SkillCode}"
-        }, ct);
-
-    if (status != StatusCodes.OK || growth == null)
-        return (status, null);
-
-    // Translate floating-point depth to integer skill level
-    var level = (int)Math.Floor(growth.Depth);
-    var progress = growth.Depth - level;
-
-    return (StatusCodes.OK, new GetSkillLevelResponse
+    // Generated clients return Task<TResponse> and throw ApiException on error
+    try
     {
-        SkillCode = request.SkillCode,
-        Level = level,
-        ProgressToNext = progress
-    });
+        var growth = await _seedClient.GetGrowthAsync(
+            new GetGrowthRequest
+            {
+                SeedId = request.CharacterSeedId,
+                Domain = $"skills.{request.SkillCode}"
+            }, ct);
+
+        // Translate floating-point depth to integer skill level
+        var level = (int)Math.Floor(growth.Depth);
+        var progress = growth.Depth - level;
+
+        return (StatusCodes.OK, new GetSkillLevelResponse
+        {
+            SkillCode = request.SkillCode,
+            Level = level,
+            ProgressToNext = progress
+        });
+    }
+    catch (ApiException ex)
+    {
+        return ((StatusCodes)ex.StatusCode, null);
+    }
 }
 ```
 
@@ -1387,15 +1392,28 @@ public partial class ReputationService : IReputationService
     {
         var seedTypeCode = $"{_configuration.DefaultSeedTypePrefix}{request.FactionCode}";
 
-        var (status, growth) = await _seedClient.GetGrowthAsync(
-            new GetGrowthRequest
-            {
-                OwnerId = request.CharacterId,
-                OwnerType = "character",
-                SeedTypeCode = seedTypeCode
-            }, ct);
+        // Generated clients return Task<TResponse> and throw ApiException on error
+        try
+        {
+            var growth = await _seedClient.GetGrowthAsync(
+                new GetGrowthRequest
+                {
+                    OwnerId = request.CharacterId,
+                    OwnerType = "character",
+                    SeedTypeCode = seedTypeCode
+                }, ct);
 
-        if (status == StatusCodes.NotFound)
+            var level = (int)Math.Floor(growth.TotalDepth);
+
+            return (StatusCodes.OK, new GetReputationResponse
+            {
+                FactionCode = request.FactionCode,
+                Level = level,
+                Tier = GetTierForDepth(growth.TotalDepth),
+                ProgressToNext = growth.TotalDepth - level
+            });
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
         {
             // No reputation yet - return neutral
             return (StatusCodes.OK, new GetReputationResponse
@@ -1406,19 +1424,10 @@ public partial class ReputationService : IReputationService
                 ProgressToNext = 0.0
             });
         }
-
-        if (status != StatusCodes.OK || growth == null)
-            return (status, null);
-
-        var level = (int)Math.Floor(growth.TotalDepth);
-
-        return (StatusCodes.OK, new GetReputationResponse
+        catch (ApiException ex)
         {
-            FactionCode = request.FactionCode,
-            Level = level,
-            Tier = GetTierForDepth(growth.TotalDepth),
-            ProgressToNext = growth.TotalDepth - level
-        });
+            return ((StatusCodes)ex.StatusCode, null);
+        }
     }
 
     public async Task<(StatusCodes, ModifyReputationResponse?)> ModifyReputationAsync(
@@ -1426,60 +1435,71 @@ public partial class ReputationService : IReputationService
     {
         var seedTypeCode = $"{_configuration.DefaultSeedTypePrefix}{request.FactionCode}";
 
-        // Get current standing for tier comparison
-        var (_, currentGrowth) = await _seedClient.GetGrowthAsync(
-            new GetGrowthRequest
-            {
-                OwnerId = request.CharacterId,
-                OwnerType = "character",
-                SeedTypeCode = seedTypeCode
-            }, ct);
-
-        var previousTier = GetTierForDepth(currentGrowth?.TotalDepth ?? 0);
-
-        // Record growth
-        var (status, result) = await _seedClient.RecordGrowthAsync(
-            new RecordGrowthRequest
-            {
-                OwnerId = request.CharacterId,
-                OwnerType = "character",
-                SeedTypeCode = seedTypeCode,
-                Domain = "standing",
-                Amount = request.Amount
-            }, ct);
-
-        if (status != StatusCodes.OK || result == null)
-            return (status, null);
-
-        var newLevel = (int)Math.Floor(result.NewTotalDepth);
-        var newTier = GetTierForDepth(result.NewTotalDepth);
-        var tierChanged = previousTier != newTier;
-
-        // Publish tier change event if applicable
-        if (tierChanged)
+        // Generated clients return Task<TResponse> and throw ApiException on error
+        try
         {
-            await _messageBus.PublishAsync("reputation.tier.changed",
-                new ReputationTierChangedEvent
+            // Get current standing for tier comparison
+            double previousDepth = 0;
+            try
+            {
+                var currentGrowth = await _seedClient.GetGrowthAsync(
+                    new GetGrowthRequest
+                    {
+                        OwnerId = request.CharacterId,
+                        OwnerType = "character",
+                        SeedTypeCode = seedTypeCode
+                    }, ct);
+                previousDepth = currentGrowth.TotalDepth;
+            }
+            catch (ApiException) { /* No prior growth — use 0 */ }
+
+            var previousTier = GetTierForDepth(previousDepth);
+
+            // Record growth
+            var result = await _seedClient.RecordGrowthAsync(
+                new RecordGrowthRequest
                 {
-                    CharacterId = request.CharacterId,
-                    FactionCode = request.FactionCode,
-                    PreviousTier = previousTier,
-                    NewTier = newTier,
-                    NewLevel = newLevel
+                    OwnerId = request.CharacterId,
+                    OwnerType = "character",
+                    SeedTypeCode = seedTypeCode,
+                    Domain = "standing",
+                    Amount = request.Amount
                 }, ct);
 
-            _logger.LogInformation(
-                "Character {CharacterId} reputation with {Faction} changed tier: {Old} -> {New}",
-                request.CharacterId, request.FactionCode, previousTier, newTier);
-        }
+            var newLevel = (int)Math.Floor(result.NewTotalDepth);
+            var newTier = GetTierForDepth(result.NewTotalDepth);
+            var tierChanged = previousTier != newTier;
 
-        return (StatusCodes.OK, new ModifyReputationResponse
+            // Publish tier change event if applicable
+            if (tierChanged)
+            {
+                await _messageBus.PublishAsync("reputation.tier.changed",
+                    new ReputationTierChangedEvent
+                    {
+                        CharacterId = request.CharacterId,
+                        FactionCode = request.FactionCode,
+                        PreviousTier = previousTier,
+                        NewTier = newTier,
+                        NewLevel = newLevel
+                    }, ct);
+
+                _logger.LogInformation(
+                    "Character {CharacterId} reputation with {Faction} changed tier: {Old} -> {New}",
+                    request.CharacterId, request.FactionCode, previousTier, newTier);
+            }
+
+            return (StatusCodes.OK, new ModifyReputationResponse
+            {
+                FactionCode = request.FactionCode,
+                NewLevel = newLevel,
+                NewTier = newTier,
+                TierChanged = tierChanged
+            });
+        }
+        catch (ApiException ex)
         {
-            FactionCode = request.FactionCode,
-            NewLevel = newLevel,
-            NewTier = newTier,
-            TierChanged = tierChanged
-        });
+            return ((StatusCodes)ex.StatusCode, null);
+        }
     }
 
     // ... ListReputationAsync and CheckTierAsync follow similar patterns

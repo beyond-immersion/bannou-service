@@ -517,13 +517,21 @@ _personalityBucket = new VariableProviderCacheBucket<Guid, PersonalityData>(
     "PersonalityCache");
 
 // Usage — loader function is passed per-call (allows scoped service resolution):
+// Generated clients return Task<TResponse> and throw ApiException on error
 var data = await _personalityBucket.GetOrLoadAsync(characterId, async ct =>
 {
     using var scope = _scopeFactory.CreateScope();
     var client = scope.ServiceProvider.GetRequiredService<ICharacterPersonalityClient>();
-    var (status, response) = await client.GetPersonalityAsync(
-        new GetPersonalityRequest { CharacterId = characterId }, ct);
-    return status == StatusCodes.OK ? MapToData(response!) : null;
+    try
+    {
+        var response = await client.GetPersonalityAsync(
+            new GetPersonalityRequest { CharacterId = characterId }, ct);
+        return MapToData(response);
+    }
+    catch (ApiException)
+    {
+        return null;
+    }
 }, ct);
 
 // Invalidation:
@@ -723,7 +731,9 @@ For metric instrumentation patterns — `RecordCounter`, `RecordHistogram`, `Reg
 
 **File**: `bannou-service/Enums.cs` — `BeyondImmersion.BannouService.StatusCodes`
 
-All service methods return `(StatusCodes, TResponse?)` tuples. Use this, NOT `Microsoft.AspNetCore.Http.StatusCodes`.
+All service **implementation** methods (`I{Service}Service` implementations) return `(StatusCodes, TResponse?)` tuples. Use this, NOT `Microsoft.AspNetCore.Http.StatusCodes`.
+
+> **Generated clients are different.** `I{Service}Client` methods return `Task<TResponse>` (or `Task` for void endpoints) and throw `ApiException` on error — they do NOT return status tuples. See T7 for the correct inter-service calling pattern.
 
 ### ServiceLayer
 

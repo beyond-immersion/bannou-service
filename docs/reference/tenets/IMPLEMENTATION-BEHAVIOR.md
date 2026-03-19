@@ -104,19 +104,29 @@ catch (Exception ex_)
 Service methods need their own try-catch in exactly two situations:
 
 **1. Inter-service calls via generated clients** (e.g., `IItemClient`, `ICharacterClient`):
+
+Generated clients return `Task<TResponse>` (or `Task` for void endpoints), NOT status tuples. On error (4xx/5xx), they **throw `ApiException`**. This is a different contract from service implementation methods, which return `(StatusCodes, TResponse?)` tuples.
+
 ```csharp
-// CORRECT: Catch ApiException on inter-service calls to map status codes
+// CORRECT: Generated clients throw ApiException on error — they do NOT return tuples
 try
 {
-    var (status, character) = await _characterClient.GetCharacterAsync(request, ct);
-    if (status != StatusCodes.OK) return (status, null);
-    // ... use character
+    var character = await _characterClient.GetCharacterAsync(request, ct);
+    // Success guaranteed here — errors throw ApiException
+    // ... use character directly
+}
+catch (ApiException ex) when (ex.StatusCode == 404)
+{
+    return (StatusCodes.NotFound, null);  // Map specific status
 }
 catch (ApiException ex)
 {
     _logger.LogWarning(ex, "Character service call failed with status {Status}", ex.StatusCode);
     return ((StatusCodes)ex.StatusCode, null);
 }
+
+// WRONG: Generated clients do NOT return status tuples — this does not compile
+var (status, character) = await _characterClient.GetCharacterAsync(request, ct);
 ```
 
 **2. Specific recovery logic** (e.g., partial failure in a loop, graceful degradation):
@@ -310,7 +320,9 @@ await _resourceClient.ExecuteCleanupAsync(request, ct);  // May fail — data no
 
 ## Tenet 8: Return Pattern (MANDATORY)
 
-**Rule**: All service methods MUST return `(StatusCodes, TResponse?)` tuples using `BeyondImmersion.BannouService.StatusCodes` (NOT `Microsoft.AspNetCore.Http.StatusCodes`).
+**Rule**: All service **implementation** methods (i.e., methods implementing `I{Service}Service`) MUST return `(StatusCodes, TResponse?)` tuples using `BeyondImmersion.BannouService.StatusCodes` (NOT `Microsoft.AspNetCore.Http.StatusCodes`).
+
+> **Do not confuse with generated clients.** Generated service clients (`I{Service}Client`) return `Task<TResponse>` and throw `ApiException` on error — they do NOT return tuples. See T7 § "Inter-service calls via generated clients" for the correct calling pattern.
 
 ```csharp
 return (StatusCodes.OK, response);              // Success
@@ -868,10 +880,18 @@ When a service creates entities that reference a definition in another service, 
 
 ```csharp
 // CORRECT: Check deprecation before creating referencing entity
-var (status, exists) = await _realmClient.RealmExistsAsync(
-    new RealmExistsRequest { RealmId = body.RealmId }, ct);
-if (status != StatusCodes.OK || exists?.IsActive != true)
-    return (StatusCodes.BadRequest, null);  // Realm is deprecated or missing
+// Generated clients return Task<TResponse> and throw ApiException on error
+try
+{
+    var exists = await _realmClient.RealmExistsAsync(
+        new RealmExistsRequest { RealmId = body.RealmId }, ct);
+    if (exists.IsActive != true)
+        return (StatusCodes.BadRequest, null);  // Realm is deprecated
+}
+catch (ApiException)
+{
+    return (StatusCodes.BadRequest, null);  // Realm missing or unavailable
+}
 ```
 
 ---

@@ -367,19 +367,21 @@ private readonly IAuthClient _authClient;
 public async Task<(StatusCodes, SomeResponse?)> SomeMethodAsync(...)
 {
     // Validate token with Auth service
-    var (status, validation) = await _authClient.ValidateTokenAsync(
-        new ValidateTokenRequest { Token = token });
-
-    if (status != StatusCodes.OK)
+    // Generated clients return Task<TResponse> and throw ApiException on error
+    try
+    {
+        var validation = await _authClient.ValidateTokenAsync(
+            new ValidateTokenRequest { Token = token });
+        // Continue with business logic using validation...
+    }
+    catch (ApiException)
     {
         return (StatusCodes.Unauthorized, null);
     }
-
-    // Continue with business logic...
 }
 ```
 
-Generated clients use mesh service resolution for routing, supporting both monolith ("bannou") and distributed deployment topologies.
+Generated clients use mesh service resolution for routing, supporting both monolith ("bannou") and distributed deployment topologies. They return `Task<TResponse>` (not status tuples) and throw `ApiException` on error — see T7 for the full inter-service calling pattern.
 
 For direct mesh invocation without generated clients:
 

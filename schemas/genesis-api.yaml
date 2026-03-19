@@ -828,7 +828,6 @@ components:
       required:
       - systemRealmCode
       - characterSpeciesCode
-      - archiveOnDestruction
       properties:
         systemRealmCode:
           type: string

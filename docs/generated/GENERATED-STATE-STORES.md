@@ -125,6 +125,10 @@ This document lists all state store components used in Bannou.
 | `gardener-scenario-history` | MySQL | Gardener | Completed scenario history per player (durable, queryable for cooldown) |
 | `gardener-scenario-instances` | Redis | Gardener | Active scenario instance state (ephemeral, keyed by instance ID) |
 | `gardener-scenario-templates` | MySQL | Gardener | Scenario template definitions (durable, queryable by category/status) |
+| `genesis-entities` | MySQL | Genesis | Genesis entity records and indexes (durable, queryable by template/realm/character) |
+| `genesis-entity-cache` | Redis | Genesis | Hot cache for entity lookups and capability manifests (ephemeral, TTL-based) |
+| `genesis-lock` | Redis | Genesis | Distributed locks for entity mutation, phase transition, and bond operations |
+| `genesis-templates` | MySQL | Genesis | Genesis template definitions (durable, queryable by game service) |
 | `inventory-container-cache` | Redis | Inventory | Container state and item list cache |
 | `inventory-container-store` | MySQL | Inventory | Container definitions (persistent) |
 | `inventory-lock` | Redis | Inventory | Distributed locks for concurrent modifications |
@@ -240,7 +244,7 @@ This document lists all state store components used in Bannou.
 | `worldstate-ratio-history` | MySQL | Worldstate | Time ratio change history per realm for elapsed game-time computation (append-only, compacted) |
 | `worldstate-realm-clock` | Redis | Worldstate | Current game time per realm (hot reads, updated every ClockTickIntervalSeconds) |
 
-**Total**: 230 stores (140 Redis, 90 MySQL)
+**Total**: 234 stores (142 Redis, 92 MySQL)
 
 ## Naming Conventions
 

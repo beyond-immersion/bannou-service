@@ -4,7 +4,6 @@
 > **Schema**: schemas/genesis-api.yaml
 > **Layer**: GameFoundation
 > **Deep Dive**: [docs/plugins/GENESIS.md](../plugins/GENESIS.md)
-> **Status**: Aspirational -- pseudo-code represents intended behavior, not verified implementation
 
 ---
 
@@ -14,12 +13,13 @@
 |-------|-------|
 | Plugin | lib-genesis |
 | Layer | L2 GameFoundation |
-| Endpoints | 19 |
+| Endpoints | 19 (all generated) |
 | State Stores | genesis-templates (MySQL), genesis-entities (MySQL), genesis-entity-cache (Redis), genesis-lock (Redis) |
 | Events Published | 9 (genesis.template.created, genesis.template.updated, genesis.entity.created, genesis.entity.updated, genesis.entity.deleted, genesis.entity.phase-changed, genesis.entity.bond-created, genesis.entity.bond-dissolved, genesis.entity.transition-failed) |
-| Events Consumed | 2 (self-subscription: genesis.entity.created, genesis.entity.deleted — in-memory wallet map coherence) |
+| Events Consumed | 2 (self-subscription: genesis.entity.created, genesis.entity.deleted) |
 | Client Events | 0 |
-| Background Services | 1 (GenesisGrowthFlushWorkerService) |
+| Background Services | 0 implemented (1 planned: GenesisGrowthFlushWorkerService) |
+| DI Interfaces | 0 implemented (3 planned: ICurrencyTransactionListener, ISeedEvolutionListener, IVariableProviderFactory) |
 
 ---
 
@@ -68,18 +68,19 @@
 | lib-telemetry (`ITelemetryProvider`) | L0 | Hard | Span instrumentation on async helpers |
 | lib-resource (`IResourceClient`) | L1 | Hard | Cleanup callback registration, compression callback registration, cascade cleanup execution |
 | lib-seed (`ISeedClient`) | L2 | Hard | Seed type registration, seed creation, growth batch recording, capability manifest queries |
-| lib-currency (`ICurrencyClient`) | L2 | Hard | Wallet creation, balance queries (includeBalances flag), autogain configuration |
+| lib-currency (`ICurrencyClient`) | L2 | Hard | Wallet creation, balance queries (includeBalances flag), balance credit on restore |
 | lib-character (`ICharacterClient`) | L2 | Hard | Character creation in system realm at Awakened phase |
 | lib-actor (`IActorClient`) | L2 | Hard | Actor spawning at Stirring phase, character binding at Awakened phase |
 | lib-inventory (`IInventoryClient`) | L2 | Hard | Container creation for template-defined inventories |
 | lib-item (`IItemClient`) | L2 | Hard | Physical form validation when entity is item-based |
-| lib-collection (`ICollectionClient`) | L2 | Hard | Knowledge/experience tracking via Collection grants |
 | lib-relationship (`IRelationshipClient`) | L2 | Hard | Bond creation/dissolution (Relationship-based bonds) |
 | lib-realm (`IRealmClient`) | L2 | Hard | System realm existence and isSystemType validation at template registration and awakening |
 | lib-species (`ISpeciesClient`) | L2 | Hard | Species existence validation in system realm at template registration and awakening |
 | lib-game-service (`IGameServiceClient`) | L2 | Hard | Game service scoping validation |
 
 All dependencies are L0/L1/L2 — constructor injection per SERVICE-HIERARCHY.md. No soft dependencies (Genesis is L2; no L3/L4 clients).
+
+> **Note**: The deep dive specifies `ICollectionClient` for knowledge/experience tracking, but the current implementation does not inject or use it. This is a planned dependency not yet wired.
 
 ---
 
@@ -138,13 +139,15 @@ These are self-subscriptions for multi-node wallet map coherence. All external r
 | `IGameServiceClient` | Game service scoping validation |
 | `IEventConsumer` | Event consumer registration (self-subscriptions) |
 
-#### DI Interfaces Implemented by This Plugin
+#### DI Interfaces Implemented by This Plugin (Planned — Not Yet Implemented)
 
-| Interface | Registered As | Direction | Consumer |
-|-----------|---------------|-----------|----------|
-| `ICurrencyTransactionListener` (new) | `Singleton` | L2→L2 push | Currency (L2) dispatches wallet credit/debit notifications; Genesis checks in-memory wallet map and buffers matched credits |
-| `ISeedEvolutionListener` | `Singleton` | L2→L2 push | Seed (L2) dispatches phase change, growth recorded, and capability change notifications; Genesis handles cognitive stage transitions |
-| `IVariableProviderFactory` | `Singleton` | L2→L2 pull | Actor (L2) discovers `${genesis.*}` variables for ABML behavior execution |
+> The following DI interfaces are specified in the deep dive but are NOT yet implemented in code. No listener or provider classes exist in the plugin. The growth flush worker, wallet map, and variable provider are planned infrastructure.
+
+| Interface | Registered As | Direction | Consumer | Status |
+|-----------|---------------|-----------|----------|--------|
+| `ICurrencyTransactionListener` (new) | `Singleton` | L2→L2 push | Currency (L2) dispatches wallet credit/debit notifications; Genesis checks in-memory wallet map and buffers matched credits | **Not implemented** |
+| `ISeedEvolutionListener` | `Singleton` | L2→L2 push | Seed (L2) dispatches phase change, growth recorded, and capability change notifications; Genesis handles cognitive stage transitions | **Not implemented** |
+| `IVariableProviderFactory` | `Singleton` | L2→L2 pull | Actor (L2) discovers `${genesis.*}` variables for ABML behavior execution | **Not implemented** |
 
 ---
 
@@ -184,12 +187,15 @@ VALIDATE template structure:
   - every growthMapping[].walletCode references a wallet in wallets[]
   - every growthMapping[].domain references a domain in seed.domains[]
   - no duplicate (walletCode, domain, direction) triples               -> 400 if invalid
-CALL IRealmClient.GetRealmAsync(awakening.systemRealmCode)             -> 400 if not found or not isSystemType
-CALL ISpeciesClient.GetSpeciesAsync(awakening.characterSpeciesCode)    -> 400 if not found in realm
+CALL IRealmClient.GetRealmByCodeAsync({ code: awakening.systemRealmCode })  -> 400 if not found or not isSystemType
+CALL ISpeciesClient.GetSpeciesByCodeAsync({ code: awakening.characterSpeciesCode })  -> 400 if not found in realm
 READ genesis-templates:"template:{templateCode}"
 IF exists                                                              -> RETURN (200, existing)  // idempotent
-CALL ISeedClient.RegisterSeedTypeAsync(
-  seedTypeCode, gameServiceId, domains, phases, capabilityRules)
+CALL ISeedClient.RegisterSeedTypeAsync({
+  seedTypeCode, gameServiceId, displayName, description,
+  maxPerOwner: 1, allowedOwnerTypes: [Other],
+  growthPhases: [{ phaseCode, displayName, minTotalGrowth }],
+  bondCardinality: 0, bondPermanent: false, capabilityRules })
 LOCK genesis-lock:"entity:{templateCode}"
   WRITE genesis-templates:"template:{templateCode}" <- GenesisTemplateModel from request
   WRITE genesis-templates:"template-game:{gameServiceId}" <- add to index
@@ -222,8 +228,8 @@ POST /genesis/template/update | Roles: [developer]
 READ genesis-templates:"template:{templateCode}"                       -> 404 if null
 VALIDATE updated fields (same structural validations as RegisterTemplate)
 IF awakening fields changed
-  CALL IRealmClient.GetRealmAsync(awakening.systemRealmCode)           -> 400 if invalid
-  CALL ISpeciesClient.GetSpeciesAsync(awakening.characterSpeciesCode)  -> 400 if invalid
+  CALL IRealmClient.GetRealmByCodeAsync({ code: awakening.systemRealmCode })  -> 400 if invalid
+  CALL ISpeciesClient.GetSpeciesByCodeAsync({ code: awakening.characterSpeciesCode })  -> 400 if invalid
 LOCK genesis-lock:"entity:{templateCode}"
   // Template config is snapshot at entity creation — update only affects new entities
   WRITE genesis-templates:"template:{templateCode}" <- updated GenesisTemplateModel
@@ -269,32 +275,33 @@ POST /genesis/entity/create | Roles: []
 ```
 READ genesis-templates:"template:{templateCode}"                       -> 404 if null
 IF template.IsDeprecated                                               -> 400 "template deprecated, cannot create new entities"
-CALL IGameServiceClient.GetGameServiceAsync(gameServiceId)             -> 400 if not found
+CALL IGameServiceClient.GetServiceAsync({ serviceId: gameServiceId })   -> 400 if not found
 IF request.code != null
   READ genesis-entities:"entity-code:{gameServiceId}:{realmId}:{code}"
   IF exists                                                            -> 409 "entity code already in use"
+// Resolve currencyDefinitionIds from template wallet codes (needed for balance queries)
+FOREACH wallet in template.economy.wallets
+  CALL ICurrencyClient.GetCurrencyDefinitionAsync({ code: wallet.currencyCode })  -> 400 if not found
+  currencyDefIds[wallet.walletCode] = response.definitionId
 LOCK genesis-lock:"entity:{newEntityId}"
   // Provision seed (internal — seedId never exposed in API)
-  CALL ISeedClient.CreateSeedAsync(
-    ownerType: Other, ownerId: entityId,
+  CALL ISeedClient.CreateSeedAsync({
+    ownerId: entityId, ownerType: Other,
     seedTypeCode: template.seed.seedTypeCode,
-    gameServiceId: gameServiceId)
+    gameServiceId: gameServiceId })
   // Provision wallets
   FOREACH wallet in template.economy.wallets
-    CALL ICurrencyClient.CreateWalletAsync(
-      ownerId: entityId, ownerType: Other,
-      currencyCode: wallet.currencyCode,
-      autogainEnabled: wallet.autogainEnabled,
-      autogainBaseRate: wallet.autogainBaseRate,
-      autogainCap: wallet.autogainCap)
-    walletIds[wallet.walletCode] = response.walletId
+    CALL ICurrencyClient.CreateWalletAsync({
+      ownerId: entityId, ownerType: Other, realmId: realmId })
+    walletIds[wallet.walletCode] = response.wallet.walletId
   // Provision inventories
   FOREACH inventory in template.storage.inventories
-    CALL IInventoryClient.CreateContainerAsync(
+    CALL IInventoryClient.CreateContainerAsync({
       ownerId: entityId, ownerType: Other,
-      constraintModel: inventory.constraintModel,
-      capacity: inventory.capacity,
-      allowedCategories: inventory.allowedCategories)
+      containerType: inventory.inventoryCode,
+      constraintModel: inventory.constraintModel,  // ContainerConstraintModel enum
+      maxSlots: inventory.capacity,
+      allowedCategories: inventory.allowedCategories })
     inventoryIds[inventory.inventoryCode] = response.containerId
   // Register resource cleanup callbacks
   CALL IResourceClient.RegisterResourceCleanupCallbacksAsync(...)
@@ -326,9 +333,12 @@ IF cache miss
   READ genesis-entities:"entity:{entityId}"                            -> 404 if null
   WRITE genesis-entity-cache:"entity:{entityId}" <- cached (TTL: config.EntityCacheTtlMinutes)
 IF request.includeBalances (default: config.IncludeBalancesDefault)
+  READ genesis-templates:"template:{entity.templateCode}"
   FOREACH walletCode, walletId in entity.walletIds
-    CALL ICurrencyClient.GetBalancesAsync(walletId)
-    walletBalances[walletCode] = balance.amount
+    CALL ICurrencyClient.GetCurrencyDefinitionAsync({ code: template.wallet[walletCode].currencyCode })
+    CALL ICurrencyClient.GetBalanceAsync({
+      walletId: walletId, currencyDefinitionId: response.definitionId })
+    walletBalances[walletCode] = response.amount
 RETURN (200, GenesisEntityResponse { ..., walletBalances })
 ```
 
@@ -349,7 +359,9 @@ POST /genesis/entity/get-capabilities | Roles: []
 READ genesis-entities:"entity:{entityId}"                              -> 404 if null
 READ genesis-entity-cache:"caps:{entityId}"
 IF cache miss
-  CALL ISeedClient.GetCapabilityManifestAsync(entity.seedId)
+  CALL ISeedClient.GetCapabilityManifestAsync({ seedId: entity.seedId })
+  // Response: CapabilityManifestResponse { capabilities: Capability[], version }
+  // Map Capability.unlocked -> GenesisCapability.isUnlocked
   WRITE genesis-entity-cache:"caps:{entityId}" <- cached (TTL: config.CapabilityCacheTtlMinutes)
 RETURN (200, GetCapabilitiesResponse)
 ```
@@ -363,17 +375,17 @@ READ genesis-templates:"template:{entity.templateCode}"
 LOCK genesis-lock:"entity:{entityId}"
   // Stop actor if running
   IF entity.actorId != null
-    CALL IActorClient.StopActorAsync(entity.actorId)
+    CALL IActorClient.StopActorAsync({ actorId: entity.actorId.ToString() })  // actorId is string in Actor API
   // Archive character if awakened and template says to
   IF entity.characterId != null AND template.archiveOnDestruction
-    CALL IResourceClient.ExecuteCompressAsync(
-      resourceType: "character", resourceId: entity.characterId)
+    CALL IResourceClient.ExecuteCompressAsync({
+      resourceType: "character", resourceId: entity.characterId })
   // Dissolve bond if exists
   IF entity.bondId != null
-    CALL IRelationshipClient.DeleteRelationshipAsync(entity.bondId)
+    CALL IRelationshipClient.EndRelationshipAsync({ relationshipId: entity.bondId })
   // Cleanup provisioned infrastructure via Resource (cascades to seed, wallets, inventories)
-  CALL IResourceClient.ExecuteCleanupAsync(
-    resourceType: "genesis-entity", resourceId: entityId)
+  CALL IResourceClient.ExecuteCleanupAsync({
+    resourceType: "genesis-entity", resourceId: entityId })
   // Delete entity record and all indexes
   DELETE genesis-entities:"entity:{entityId}"
   IF entity.code != null
@@ -395,7 +407,7 @@ READ genesis-entities:"entity:{entityId}"                              -> 404 if
 READ genesis-templates:"template:{entity.templateCode}"
 VALIDATE request.physicalFormType matches template.physicalFormType     -> 400 if mismatch
 IF request.physicalFormType == Item
-  CALL IItemClient.GetItemInstanceAsync(request.physicalFormId)        -> 400 if not found
+  CALL IItemClient.GetItemInstanceAsync({ instanceId: request.physicalFormId })  -> 400 if not found
 // Location validation deferred to caller (deep dive does not specify ILocationClient dependency)
 LOCK genesis-lock:"entity:{entityId}"
   SET entity.physicalFormType = request.physicalFormType
@@ -424,10 +436,12 @@ LOCK genesis-lock:"bond:{entityId}"
   SET entity.bondTargetEntityId = request.targetEntityId
   // If already awakened, create Relationship immediately
   IF entity.characterId != null
-    CALL IRelationshipClient.CreateRelationshipAsync(
+    CALL IRelationshipClient.GetRelationshipTypeByCodeAsync({
+      code: template.bond.relationshipTypeCode })                      -> 400 if not found
+    CALL IRelationshipClient.CreateRelationshipAsync({
       entity1Id: entity.characterId, entity1Type: Character,
       entity2Id: request.targetEntityId, entity2Type: request.targetEntityType,
-      relationshipTypeCode: template.bond.relationshipTypeCode)
+      relationshipTypeId: relType.relationshipTypeId, startedAt: now })
     SET entity.bondId = response.relationshipId
   SET entity.updatedAt = now
   WRITE genesis-entities:"entity:{entityId}" <- updated entity
@@ -452,9 +466,9 @@ POST /genesis/entity/dissolve-bond | Roles: []
 READ genesis-entities:"entity:{entityId}"                              -> 404 if null
 IF entity.bondTargetEntityId == null                                   -> 404 "no active bond"
 LOCK genesis-lock:"bond:{entityId}"
-  // If Relationship was materialized (entity is awakened), delete it
+  // If Relationship was materialized (entity is awakened), end it
   IF entity.bondId != null
-    CALL IRelationshipClient.DeleteRelationshipAsync(entity.bondId)
+    CALL IRelationshipClient.EndRelationshipAsync({ relationshipId: entity.bondId })
   SET entity.bondTargetEntityType = null
   SET entity.bondTargetEntityId = null
   SET entity.bondId = null
@@ -472,23 +486,19 @@ POST /genesis/cleanup-by-character | Roles: []
 // Called by lib-resource during character deletion (x-references CASCADE)
 QUERY genesis-entities WHERE $.CharacterId == request.characterId
 FOREACH entity in results
-  // Cascade: destroy each entity linked to this character
-  // Inline DestroyEntity logic (stop actor, cleanup wallets/inventories/seed, delete records)
-  LOCK genesis-lock:"entity:{entity.entityId}"
-    IF entity.actorId != null
-      CALL IActorClient.StopActorAsync(entity.actorId)
-    IF entity.bondId != null
-      CALL IRelationshipClient.DeleteRelationshipAsync(entity.bondId)
-    CALL IResourceClient.ExecuteCleanupAsync(
-      resourceType: "genesis-entity", resourceId: entity.entityId)
-    DELETE genesis-entities:"entity:{entity.entityId}"
-    DELETE genesis-entities:"entity-code:..." (if code)
-    DELETE genesis-entities:"entity-template:..." <- remove from index
-    FOREACH walletId in entity.walletIds.Values
-      DELETE genesis-entities:"entity-wallet:{walletId}"
-    DELETE genesis-entity-cache:"entity:{entity.entityId}"
-    DELETE genesis-entity-cache:"caps:{entity.entityId}"
-    PUBLISH genesis.entity.deleted { entity.entityId, ... }
+  // Per-item error isolation (T7) — one corrupt entity must not block cleanup of others
+  TRY
+    LOCK genesis-lock:"entity:{entity.entityId}"
+      IF entity.actorId != null
+        CALL IActorClient.StopActorAsync({ actorId: entity.actorId.ToString() })
+      IF entity.bondId != null
+        CALL IRelationshipClient.EndRelationshipAsync({ relationshipId: entity.bondId })
+      CALL IResourceClient.ExecuteCleanupAsync({
+        resourceType: "genesis-entity", resourceId: entity.entityId })
+      DELETE genesis-entities (all keys for entity)
+      DELETE genesis-entity-cache (all keys for entity)
+      PUBLISH genesis.entity.deleted { entity.entityId, ... }
+  CATCH -> log Warning, continue
 RETURN (200, null)
 ```
 
@@ -503,20 +513,23 @@ LOOP
     PAGED(1, config.CleanupBatchSize)
   IF no results -> BREAK
   FOREACH entity in batch
-    // Same destruction logic as CleanupByCharacter
-    LOCK genesis-lock:"entity:{entity.entityId}"
-      IF entity.actorId != null
-        CALL IActorClient.StopActorAsync(entity.actorId)
-      IF entity.characterId != null AND template.archiveOnDestruction
-        CALL IResourceClient.ExecuteCompressAsync(
-          resourceType: "character", resourceId: entity.characterId)
-      IF entity.bondId != null
-        CALL IRelationshipClient.DeleteRelationshipAsync(entity.bondId)
-      CALL IResourceClient.ExecuteCleanupAsync(
-        resourceType: "genesis-entity", resourceId: entity.entityId)
-      DELETE genesis-entities (all keys for entity)
-      DELETE genesis-entity-cache (all keys for entity)
-      PUBLISH genesis.entity.deleted { entity.entityId, ... }
+    // Per-item error isolation (T7)
+    TRY
+      READ genesis-templates:"template:{entity.templateCode}"
+      LOCK genesis-lock:"entity:{entity.entityId}"
+        IF entity.actorId != null
+          CALL IActorClient.StopActorAsync({ actorId: entity.actorId.ToString() })
+        IF entity.characterId != null AND template?.archiveOnDestruction
+          CALL IResourceClient.ExecuteCompressAsync({
+            resourceType: "character", resourceId: entity.characterId })
+        IF entity.bondId != null
+          CALL IRelationshipClient.EndRelationshipAsync({ relationshipId: entity.bondId })
+        CALL IResourceClient.ExecuteCleanupAsync({
+          resourceType: "genesis-entity", resourceId: entity.entityId })
+        DELETE genesis-entities (all keys for entity)
+        DELETE genesis-entity-cache (all keys for entity)
+        PUBLISH genesis.entity.deleted { entity.entityId, ... }
+    CATCH -> log Warning, continue
 RETURN (200, null)
 ```
 
@@ -530,9 +543,12 @@ FOREACH entity in results
   READ genesis-entity-cache:"caps:{entity.entityId}"
   IF cache miss
     CALL ISeedClient.GetCapabilityManifestAsync(entity.seedId)
+  READ genesis-templates:"template:{entity.templateCode}"
   FOREACH walletCode, walletId in entity.walletIds
-    CALL ICurrencyClient.GetBalancesAsync(walletId)
-    walletBalances[walletCode] = balance.amount
+    CALL ICurrencyClient.GetCurrencyDefinitionAsync({ code: template.wallet[walletCode].currencyCode })
+    CALL ICurrencyClient.GetBalanceAsync({
+      walletId: walletId, currencyDefinitionId: response.definitionId })
+    walletBalances[walletCode] = response.amount
   archive.entities.add {
     entity state snapshot, walletBalances, capabilities, currentPhase, cognitiveStage
   }
@@ -553,21 +569,25 @@ FOREACH archivedEntity in request.archive.entities
     gameServiceId: archivedEntity.gameServiceId)
   // Re-provision wallets with archived balances
   FOREACH wallet in template.economy.wallets
-    CALL ICurrencyClient.CreateWalletAsync(
-      ownerId: archivedEntity.entityId, ownerType: Other,
-      currencyCode: wallet.currencyCode,
-      autogainEnabled: wallet.autogainEnabled,
-      autogainBaseRate: wallet.autogainBaseRate,
-      autogainCap: wallet.autogainCap)
-    CALL ICurrencyClient.CreditAsync(walletId, archivedEntity.walletBalances[wallet.walletCode])
-    walletIds[wallet.walletCode] = response.walletId
+    CALL ICurrencyClient.GetCurrencyDefinitionAsync({ code: wallet.currencyCode })  -> 400 if not found
+    CALL ICurrencyClient.CreateWalletAsync({
+      ownerId: archivedEntity.entityId, ownerType: Other, realmId: archivedEntity.realmId })
+    walletIds[wallet.walletCode] = response.wallet.walletId
+    // Restore balance via Credit
+    IF archivedEntity.walletBalances[wallet.walletCode] > 0
+      CALL ICurrencyClient.CreditCurrencyAsync({
+        walletId: walletIds[wallet.walletCode],
+        currencyDefinitionId: currencyDef.definitionId,
+        amount: archivedEntity.walletBalances[wallet.walletCode],
+        transactionType: Refund, idempotencyKey: unique })
   // Re-provision inventories
   FOREACH inventory in template.storage.inventories
-    CALL IInventoryClient.CreateContainerAsync(
+    CALL IInventoryClient.CreateContainerAsync({
       ownerId: archivedEntity.entityId, ownerType: Other,
-      constraintModel: inventory.constraintModel,
-      capacity: inventory.capacity,
-      allowedCategories: inventory.allowedCategories)
+      containerType: inventory.inventoryCode,
+      constraintModel: inventory.constraintModel,  // ContainerConstraintModel enum
+      maxSlots: inventory.capacity,
+      allowedCategories: inventory.allowedCategories })
     inventoryIds[inventory.inventoryCode] = response.containerId
   // Register resource callbacks
   CALL IResourceClient.RegisterResourceCleanupCallbacksAsync(...)
@@ -594,7 +614,9 @@ RETURN (200, RestoreFromArchiveResponse)
 
 ## Background Services
 
-### GenesisGrowthFlushWorkerService
+> **Not yet implemented.** The growth flush worker is specified in the deep dive but no `BackgroundService` class exists in the plugin code. `GenesisServicePlugin` inherits `StandardServicePlugin<IGenesisService>` with no overrides.
+
+### GenesisGrowthFlushWorkerService (Planned)
 **Interval**: config.GrowthFlushIntervalSeconds (default: 5s)
 **Purpose**: Drains the in-memory growth accumulator and applies batched seed growth. Consolidates multiple currency credits per entity into a single Seed.RecordGrowthBatch call, reducing lock contention from one-per-credit to one-per-entity-per-flush.
 
@@ -612,7 +634,10 @@ FOREACH entityId, accumulated in groups
       AND accumulated.direction matches mapping.direction
       growthBatch.add(domain: mapping.domain, amount: accumulated.amount * mapping.ratio)
   IF growthBatch is empty -> skip
-  CALL ISeedClient.RecordGrowthBatchAsync(entity.seedId, growthBatch)
+  CALL ISeedClient.RecordGrowthBatchAsync({
+    seedId: entity.seedId,
+    entries: growthBatch,  // [{ domain, amount }]
+    source: "genesis-growth-flush" })
   // Phase transitions are detected by ISeedEvolutionListener (fired by Seed after growth recording)
 ```
 
@@ -620,7 +645,9 @@ FOREACH entityId, accumulated in groups
 
 ## Non-Standard Implementation Patterns
 
-#### Plugin Lifecycle (OnStartAsync)
+> **Partially implemented.** The plugin lifecycle and DI listener sections below are specified in the deep dive but NOT yet implemented in code. `GenesisServicePlugin` is a bare `StandardServicePlugin<IGenesisService>` with no lifecycle overrides. No listener or provider classes exist.
+
+#### Plugin Lifecycle (OnStartAsync) — Planned
 
 ```
 // Populate in-memory wallet map from MySQL for ICurrencyTransactionListener fast-path
@@ -636,7 +663,7 @@ SUBSCRIBE genesis.entity.created -> add wallet mappings to walletMap
 SUBSCRIBE genesis.entity.deleted -> remove wallet mappings from walletMap
 ```
 
-#### Plugin Lifecycle (OnRunningAsync)
+#### Plugin Lifecycle (OnRunningAsync) — Planned
 
 ```
 // Register seed type definitions with Seed service
@@ -645,9 +672,15 @@ SUBSCRIBE genesis.entity.deleted -> remove wallet mappings from walletMap
 // but pre-existing templates need their types re-registered on startup
 QUERY genesis-templates (all)
 FOREACH template in results
-  CALL ISeedClient.RegisterSeedTypeAsync(
-    template.seed.seedTypeCode, template.gameServiceId,
-    template.seed.domains, template.seed.phases, template.seed.capabilityRules)
+  CALL ISeedClient.RegisterSeedTypeAsync({
+    seedTypeCode: template.seed.seedTypeCode,
+    gameServiceId: template.gameServiceId,
+    displayName: template.displayName,
+    description: template.description,
+    maxPerOwner: 1, allowedOwnerTypes: [Other],
+    growthPhases: [{ phaseCode, displayName, minTotalGrowth }],
+    bondCardinality: 0, bondPermanent: false,
+    capabilityRules: template.seed.capabilityRules })
 // Register resource cleanup callbacks
 CALL IResourceClient.RegisterResourceCleanupCallbacksAsync([
   { resourceType: "character", sourceType: "genesis", onDelete: CASCADE,
@@ -663,7 +696,7 @@ CALL IResourceClient.RegisterCompressCallbacksAsync([
 ])
 ```
 
-#### DI Listener: GenesisCurrencyTransactionListener (ICurrencyTransactionListener)
+#### DI Listener: GenesisCurrencyTransactionListener (ICurrencyTransactionListener) — Planned
 
 ```
 // Called in-process by Currency (L2) after any wallet credit/debit
@@ -686,7 +719,7 @@ OnCurrencyDebited(walletId, currencyCode, amount, newBalance):
   })
 ```
 
-#### DI Listener: GenesisEvolutionListener (ISeedEvolutionListener)
+#### DI Listener: GenesisEvolutionListener (ISeedEvolutionListener) — Planned
 
 ```
 // Called in-process by Seed (L2) after growth recording, phase transitions, capability changes
@@ -701,38 +734,45 @@ OnPhaseChangedAsync(seedId, seedTypeCode, oldPhase, newPhase, totalGrowth):
   IF targetCognitiveStage == entity.cognitiveStage -> RETURN  // Phase changed but stage didn't
   LOCK genesis-lock:"transition:{entity.entityId}"
     IF targetCognitiveStage == EventBrain AND entity.cognitiveStage == Dormant
-      // Stage 2: Spawn Actor
-      behaviorRef = template.seed.phases[newPhase].behaviorRef
-      CALL IActorClient.SpawnActorAsync(
-        behaviorRef: behaviorRef,
-        entityId: entity.entityId)                                     -> on failure: publish transition-failed
-      SET entity.actorId = response.actorId
+      // Stage 2: Spawn Actor — Actor API is template-based (templateId: Guid), not behaviorRef
+      // Genesis must have a pre-registered actor template; resolve templateId from template config
+      CALL IActorClient.SpawnActorAsync({
+        templateId: resolved actor template Guid,
+        actorId: entity.entityId.ToString(),  // actorId is string in Actor API
+        characterId: null, realmId: entity.realmId })               -> on failure: publish transition-failed
+      SET entity.actorId = response.actorId  // string, stored as string
       SET entity.cognitiveStage = EventBrain
     ELSE IF targetCognitiveStage == CharacterBrain AND entity.cognitiveStage == EventBrain
       // Stage 3: Create Character and bind to Actor
       // Re-validate system realm (defense-in-depth against post-registration deletion)
-      CALL IRealmClient.GetRealmAsync(template.awakening.systemRealmCode)
+      CALL IRealmClient.GetRealmByCodeAsync({ code: template.awakening.systemRealmCode })
       IF not found or not system realm                                 -> publish transition-failed, RETURN
-      CALL ISpeciesClient.GetSpeciesAsync(template.awakening.characterSpeciesCode)
+      CALL ISpeciesClient.GetSpeciesByCodeAsync({ code: template.awakening.characterSpeciesCode })
       IF not found                                                     -> publish transition-failed, RETURN
-      CALL ICharacterClient.CreateCharacterAsync(
-        realmCode: template.awakening.systemRealmCode,
-        speciesCode: template.awakening.characterSpeciesCode,
-        displayName: entity.displayName)
+      // Character API uses realmId (Guid) and speciesId (Guid), not codes
+      // Resolve IDs from the GetRealmByCode/GetSpeciesByCode responses
+      CALL ICharacterClient.CreateCharacterAsync({
+        name: entity.displayName ?? entity.templateCode,
+        realmId: realm.realmId,
+        speciesId: species.speciesId,
+        birthDate: now })
       SET entity.characterId = response.characterId
       // Seed personality traits if configured
       IF template.awakening.initialPersonalityTraits != null
         // Behavior not specified in deep dive: personality seeding mechanism
         // (likely ICharacterPersonalityClient or direct PersonalityTraits on character)
-      // Bind actor to character
-      CALL IActorClient.BindCharacterAsync(entity.actorId, entity.characterId)
+      // Bind actor to character — actorId is string in Actor API
+      CALL IActorClient.BindActorCharacterAsync({
+        actorId: entity.actorId, characterId: entity.characterId })
       SET entity.cognitiveStage = CharacterBrain
       // Create deferred bond Relationship if bond intent exists
       IF entity.bondTargetEntityId != null AND entity.bondId == null
-        CALL IRelationshipClient.CreateRelationshipAsync(
+        CALL IRelationshipClient.GetRelationshipTypeByCodeAsync({
+          code: template.bond.relationshipTypeCode })
+        CALL IRelationshipClient.CreateRelationshipAsync({
           entity1Id: entity.characterId, entity1Type: Character,
           entity2Id: entity.bondTargetEntityId, entity2Type: entity.bondTargetEntityType,
-          relationshipTypeCode: template.bond.relationshipTypeCode)
+          relationshipTypeId: relType.relationshipTypeId, startedAt: now })
         SET entity.bondId = response.relationshipId
     SET entity.currentPhase = newPhase
     SET entity.updatedAt = now
@@ -757,7 +797,7 @@ OnCapabilitiesChangedAsync(seedId, capabilityCount):
     DELETE genesis-entity-cache:"caps:{entity.entityId}"
 ```
 
-#### DI Provider: GenesisVariableProviderFactory (IVariableProviderFactory)
+#### DI Provider: GenesisVariableProviderFactory (IVariableProviderFactory) — Planned
 
 ```
 // Provides ${genesis.*} namespace to Actor (L2) for ABML behavior execution
@@ -770,7 +810,7 @@ CreateAsync(characterId):
   READ genesis-templates:"template:{entity.templateCode}"
   READ genesis-entity-cache:"caps:{entity.entityId}"
   IF cache miss
-    CALL ISeedClient.GetCapabilityManifestAsync(entity.seedId)
+    CALL ISeedClient.GetCapabilityManifestAsync({ seedId: entity.seedId })
   RETURN GenesisVariableProvider(entity, template, capabilities)
 
 // Variables provided:
@@ -780,10 +820,10 @@ CreateAsync(characterId):
 // ${genesis.entityId}                  -> entity.entityId
 // ${genesis.physicalFormType}          -> entity.physicalFormType
 // ${genesis.physicalFormId}            -> entity.physicalFormId
-// ${genesis.wallet.<code>}             -> lazy: CALL ICurrencyClient.GetBalance
-// ${genesis.wallet.<code>.cap}         -> template wallet config
-// ${genesis.wallet.<code>.rate}        -> template wallet config
-// ${genesis.wallet.<code>.ratio}       -> balance / cap
+// ${genesis.wallet.<code>}             -> lazy: CALL ICurrencyClient.GetBalanceAsync({ walletId, currencyDefinitionId })
+// ${genesis.wallet.<code>.cap}         -> from CurrencyDefinition.perWalletCap (resolved via GetCurrencyDefinitionAsync)
+// ${genesis.wallet.<code>.rate}        -> from CurrencyDefinition.autogainAmount (resolved via GetCurrencyDefinitionAsync)
+// ${genesis.wallet.<code>.ratio}       -> balance / perWalletCap
 // ${genesis.inventory.<code>.count}    -> lazy: CALL IInventoryClient.GetContainerSummary
 // ${genesis.inventory.<code>.capacity} -> template inventory config
 // ${genesis.inventory.<code>.full}     -> count >= capacity
@@ -796,4 +836,4 @@ CreateAsync(characterId):
 
 ---
 
-*This map is aspirational — pseudo-code represents intended behavior derived from the deep dive. Schemas and generated code stubs exist (L4 Schema'd); implementation is pending.*
+*Implementation exists for all 19 schema endpoints. DI listeners (ICurrencyTransactionListener, ISeedEvolutionListener), variable provider (IVariableProviderFactory), growth flush worker, and plugin lifecycle hooks are specified in the deep dive but not yet implemented — pseudo-code for those sections represents intended behavior.*

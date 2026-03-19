@@ -275,6 +275,7 @@ Tenets are organized into categories based on when they're needed:
 | Missing x-permissions on endpoint | T13 | Add to schema; use `[]` for service-to-service only, `role: anonymous` for pre-auth public |
 | GPL library in NuGet package | T18 | Use MIT/BSD alternative |
 | Missing event consumer registration | T3 | Add RegisterEventConsumers call |
+| Tuple-destructuring a generated client call (`var (status, resp) = await _client.MethodAsync(...)`) | T7, T8 | Generated clients return `Task<TResponse>` and throw `ApiException` on error — they do NOT return tuples; only service implementation methods return `(StatusCodes, TResponse?)` |
 | Adding top-level try-catch to service endpoint methods | T7 | Generated controller already provides catch-all boundary with logging, error events, and 500 response; do not duplicate |
 | Generic catch returning 500 in service method | T7 | Let it propagate to the generated controller; only catch for specific recovery logic or inter-service `ApiException` |
 | Using IErrorEventEmitter (deprecated) | T7 | Use IMessageBus.TryPublishErrorAsync instead |

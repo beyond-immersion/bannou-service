@@ -1,11 +1,10 @@
 # Genesis Plugin Deep Dive
 
-> **Plugin**: lib-genesis (not yet created)
-> **Schema**: `schemas/genesis-api.yaml` (not yet created)
-> **Version**: N/A (Pre-Implementation)
-> **State Store**: genesis-templates (MySQL), genesis-entities (MySQL), genesis-entity-cache (Redis), genesis-lock (Redis) — all planned
+> **Plugin**: lib-genesis
+> **Schema**: schemas/genesis-api.yaml
+> **Version**: 1.0.0
 > **Layer**: GameFoundation
-> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
+> **State Store**: genesis-templates (MySQL), genesis-entities (MySQL), genesis-entity-cache (Redis), genesis-lock (Redis)
 > **Planning**: [ACTOR-BOUND-ENTITIES.md](../planning/ACTOR-BOUND-ENTITIES.md)
 > **Implementation Map**: [docs/maps/GENESIS.md](../maps/GENESIS.md)
 > **Short**: Template-driven entity awakening lifecycle — seed, economy, storage, and cognitive progression for entities that grow from inert objects into autonomous agents
@@ -350,37 +349,6 @@ Chest opened (game engine):
 
 ---
 
-## Dependencies (What This Plugin Relies On)
-
-### Hard Dependencies (constructor injection — crash if missing)
-
-| Dependency | Usage |
-|------------|-------|
-| lib-state (`IStateStoreFactory`) | Template store (MySQL), entity store (MySQL), entity cache (Redis), distributed locks (Redis) |
-| lib-state (`IDistributedLockProvider`) | Distributed locks for lifecycle transitions and entity mutations |
-| lib-messaging (`IMessageBus`) | Publishing lifecycle events (entity created, phase changed, destroyed) |
-| lib-seed (`ISeedClient`) | Seed type registration at startup, seed creation, growth recording, capability manifest queries (L2) |
-| lib-currency (`ICurrencyClient`) | Wallet creation, balance queries (for `includeBalances` flag), autogain configuration (L2) |
-| lib-character (`ICharacterClient`) | Character creation in system realm at Awakened phase, character validation (L2) |
-| lib-actor (`IActorClient`) | Actor spawning at Stirring phase, character binding at Awakened phase (L2) |
-| lib-inventory (`IInventoryClient`) | Container creation for entity storage (L2) |
-| lib-item (`IItemClient`) | Physical form tracking and validation when entity is item-based (L2) |
-| lib-collection (`ICollectionClient`) | Knowledge/experience tracking via Collection grants (L2) |
-| lib-resource (`IResourceClient`) | Reference tracking, cleanup callback registration, archival for content flywheel (L1) |
-| lib-relationship (`IRelationshipClient`) | Bond creation/dissolution for simple Relationship-based bonds (L2) |
-| lib-realm (`IRealmClient`) | System realm existence and `isSystemType` validation at template registration and awakening (L2) |
-| lib-species (`ISpeciesClient`) | Species existence validation in system realm at template registration and awakening (L2) |
-| lib-game-service (`IGameServiceClient`) | Game service scoping validation (L2) |
-
-### DI Listener Implementations (no event subscriptions)
-
-| Interface | Source | Genesis Reaction |
-|-----------|--------|-----------------|
-| `ICurrencyTransactionListener` (new) | Currency (L2) | In-memory wallet map check (~microseconds). Miss = return. Hit = buffer credit in growth accumulator. Growth flush worker drains accumulator periodically and calls Seed.RecordGrowthBatch per entity. |
-| `ISeedEvolutionListener` (existing) | Seed (L2) | Look up seed → entity → template. Handle cognitive stage transition: spawn actor (Stirring), create character + bind (Awakened). Publish `genesis.entity.phase-changed`. |
-
----
-
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
@@ -392,44 +360,7 @@ Chest opened (game engine):
 
 ---
 
-## State Storage
-
-### Template Store
-**Store**: `genesis-templates` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `template:{templateCode}` | `GenesisTemplateModel` | Primary lookup by template code. Stores full template configuration including seed, economy, storage, awakening, and bond definitions. |
-| `template-game:{gameServiceId}` | `GenesisTemplateListModel` | Templates registered for a game service (paginated query). |
-
-### Entity Store
-**Store**: `genesis-entities` (Backend: MySQL)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `entity:{entityId}` | `GenesisEntityModel` | Primary lookup by entity ID. Stores lifecycle state, all provisioned references (seedId internal, walletIds, inventoryIds), cognitive stage, actor/character IDs, physical form, bond, status. |
-| `entity-code:{gameServiceId}:{realmId}:{code}` | `GenesisEntityModel` | Code-uniqueness lookup within game/realm scope. |
-| `entity-template:{templateCode}:{realmId}` | `GenesisEntityListModel` | Entities by template and realm (paginated query). |
-| `entity-wallet:{walletId}` | `GenesisEntityModel` | Reverse index: wallet → entity. Used by ICurrencyTransactionListener to look up genesis entity from a wallet credit event. |
-
-### Entity Cache
-**Store**: `genesis-entity-cache` (Backend: Redis, prefix: `genesis:cache`)
-
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `entity:{entityId}` | `CachedGenesisEntity` | Hot cache for entity lookups. TTL-based with event-driven invalidation. |
-| `caps:{entityId}` | `CachedCapabilityManifest` | Cached seed capability manifest for fast capability checks and variable provider reads. |
-
-### Distributed Locks
-**Store**: `genesis-lock` (Backend: Redis, prefix: `genesis:lock`)
-
-| Key Pattern | Purpose |
-|-------------|---------|
-| `transition:{entityId}` | Phase transition lock — serializes actor spawning and character creation. Prevents duplicate actors/characters in multi-node deployments. |
-| `entity:{entityId}` | Entity mutation lock — create, update, destroy, bind-physical-form. |
-| `bond:{entityId}` | Bond formation/dissolution lock. |
-
-### Type Field Classification
+## Type Field Classification
 
 | Field | Category | Type | Rationale |
 |-------|----------|------|-----------|
@@ -441,50 +372,6 @@ Chest opened (game engine):
 | `constraintModel` (on inventory definition) | Pass-through | Opaque string | Stored in template, passed through to Inventory's CreateContainer. Genesis does not branch on this value. |
 | `cardinality` (on bond definition) | C (System State) | `BondCardinality` enum | Finite set: `None`, `OptionalOne`, `RequiredOne`, `Many`. |
 | `walletCode`, `inventoryCode` (on entity walletIds/inventoryIds maps) | B (Content Code) | Opaque string | Local reference codes defined per template; game-configurable |
-
----
-
-## Events
-
-### Published Events
-
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `genesis.template.created` | `TemplateCreatedEvent` | Template registered |
-| `genesis.template.updated` | `TemplateUpdatedEvent` | Template configuration updated (including deprecation via changedFields per IMPLEMENTATION TENETS T31) |
-| `genesis.entity.created` | `EntityCreatedEvent` | Entity created from template. Includes entityId, templateCode, all provisioned IDs (wallets, inventories). |
-| `genesis.entity.updated` | `EntityUpdatedEvent` | Entity record updated (physical form bound, status changed, etc.) |
-| `genesis.entity.deleted` | `EntityDeletedEvent` | Entity destroyed and archived |
-| `genesis.entity.phase-changed` | `GenesisEntityPhaseChangedEvent` | Cognitive stage transition processed. Includes entityId, templateCode, phaseName, cognitiveStage, actorId (if spawned), characterId (if created). This is the primary event domain plugins subscribe to. |
-| `genesis.entity.bond-created` | `GenesisEntityBondCreatedEvent` | Bond formed between entity and target |
-| `genesis.entity.bond-dissolved` | `GenesisEntityBondDissolvedEvent` | Bond removed |
-| `genesis.entity.transition-failed` | `GenesisEntityTransitionFailedEvent` | Cognitive stage transition could not complete. Includes entityId, templateCode, targetPhase, targetCognitiveStage, failureReason (e.g., "System realm 'DUNGEON_CORES' no longer exists"). Entity remains at current stage; no growth lost. Operators monitor this event for infrastructure issues. |
-
-### Consumed Events
-
-Genesis uses DI Listeners for growth processing (`ICurrencyTransactionListener`, `ISeedEvolutionListener`), not event subscriptions. Both source services (Currency, Seed) are L2 and guaranteed co-located.
-
-**Self-subscriptions** (for multi-node wallet map coherence):
-
-| Topic | Handler | Action |
-|-------|---------|--------|
-| `genesis.entity.created` | HandleGenesisEntityCreated | Updates in-memory wallet map with new entity's wallet-to-entity mappings |
-| `genesis.entity.deleted` | HandleGenesisEntityDeleted | Removes destroyed entity's wallet mappings from in-memory wallet map |
-
-### Resource Cleanup (FOUNDATION TENETS)
-
-| Target Resource | Source Type | On Delete | Cleanup Endpoint |
-|----------------|-------------|-----------|-----------------|
-| character | genesis | CASCADE | `/genesis/cleanup-by-character` |
-| realm | genesis | CASCADE | `/genesis/cleanup-by-realm` |
-
-### Compression Callback (via x-compression-callback)
-
-| Resource Type | Source Type | Priority | Compress Endpoint | Decompress Endpoint |
-|--------------|-------------|----------|-------------------|---------------------|
-| character | genesis | 10 | `/genesis/get-compress-data` | `/genesis/restore-from-archive` |
-
-Genesis entities linked to characters (via characterId at Awakened phase) are archived when the character is compressed. Priority 10 ensures genesis data is archived before domain-specific data that depends on it.
 
 ---
 
@@ -500,6 +387,7 @@ Genesis entities linked to characters (via characterId at Awakened phase) are ar
 | `DefaultPageSize` | `GENESIS_DEFAULT_PAGE_SIZE` | `20` | Default page size for paginated queries (range: 1-100) |
 | `CleanupBatchSize` | `GENESIS_CLEANUP_BATCH_SIZE` | `100` | Number of entities to process per batch during cleanup (range: 10-1000) |
 | `GrowthFlushIntervalSeconds` | `GENESIS_GROWTH_FLUSH_INTERVAL_SECONDS` | `5` | Interval between growth accumulator flush cycles. Lower = more responsive phase transitions but more Seed lock acquisitions. Higher = more efficient batching but more growth latency. At 5s default, entities growing over game-hours/days see no perceptible delay. (range: 1-60) |
+| `StartupDelaySeconds` | `GENESIS_STARTUP_DELAY_SECONDS` | `5` | Delay before background services start processing after plugin startup (range: 0-120) |
 
 ---
 
@@ -566,136 +454,21 @@ Genesis entities linked to characters (via characterId at Awakened phase) are ar
 
 ---
 
-## Variable Provider: `${genesis.*}` Namespace
+## Stubs & Unimplemented Features
 
-Implements `IVariableProviderFactory` (via `GenesisVariableProviderFactory`) providing entity state to Actor (L2) via the Variable Provider Factory pattern. Loads from the cached entity record and capability manifest.
+1. **Growth flush worker (`GenesisGrowthFlushWorkerService`)**: Specified in the implementation map but not implemented. No `BackgroundService` class exists. Config properties `GrowthFlushIntervalSeconds` and `StartupDelaySeconds` are defined but unreferenced. The worker would drain the in-memory growth accumulator and batch-call `ISeedClient.RecordGrowthBatchAsync` per entity, reducing lock contention from one-per-credit to one-per-entity-per-flush.
 
-### Entity State
+2. **`ICurrencyTransactionListener` implementation**: Specified in the implementation map but no listener class exists. This is the microsecond-fast filtering path that checks an in-memory `ConcurrentDictionary<walletId, WalletMapping>` to determine whether a wallet credit/debit belongs to a genesis entity, then buffers the credit in the growth accumulator for the flush worker.
 
-| Variable | Type | Description |
-|----------|------|-------------|
-| `${genesis.templateCode}` | string | Template code of this entity |
-| `${genesis.currentPhase}` | string | Current growth phase name |
-| `${genesis.cognitiveStage}` | string | Current cognitive stage (Dormant, EventBrain, CharacterBrain) |
-| `${genesis.entityId}` | Guid | Entity identifier |
-| `${genesis.physicalFormType}` | string | Physical form type (Item, Location, None) |
-| `${genesis.physicalFormId}` | Guid? | Physical form entity ID |
+3. **`ISeedEvolutionListener` implementation**: Specified in the implementation map but no listener class exists. This handles the Dormant → EventBrain → CharacterBrain cognitive stage transitions: spawning actors, creating characters in system realms, binding actors to characters, and creating deferred bond Relationships.
 
-### Wallet State
+4. **`IVariableProviderFactory` implementation (`GenesisVariableProviderFactory`)**: Specified in the implementation map but no provider class exists. Would provide `${genesis.*}` variables to the Actor runtime for ABML behavior execution (entity state, wallet balances, inventory counts, capabilities, bond state).
 
-| Variable | Type | Description |
-|----------|------|-------------|
-| `${genesis.wallet.<code>}` | double | Current balance of named wallet (triggers lazy eval on access) |
-| `${genesis.wallet.<code>.cap}` | double | Maximum balance from template configuration |
-| `${genesis.wallet.<code>.rate}` | double | Autogain base rate from template configuration |
-| `${genesis.wallet.<code>.ratio}` | double | Balance as fraction of cap (0.0 = empty, 1.0 = full) |
+5. **Plugin lifecycle hooks (`OnStartAsync`, `OnRunningAsync`)**: `GenesisServicePlugin` is a bare `StandardServicePlugin<IGenesisService>` with no overrides. The map specifies startup wallet map population, seed type re-registration for pre-existing templates, and resource cleanup/compression callback registration during lifecycle hooks.
 
-### Inventory State
+6. **Event handlers are no-ops**: `HandleGenesisEntityCreatedAsync` and `HandleGenesisEntityDeletedAsync` in `GenesisService.Events.cs` are registered but do nothing (just `await Task.CompletedTask` with a debug log). They are placeholders for the wallet map coherence logic that depends on stub #2 (ICurrencyTransactionListener).
 
-| Variable | Type | Description |
-|----------|------|-------------|
-| `${genesis.inventory.<code>.count}` | int | Number of items in named inventory |
-| `${genesis.inventory.<code>.capacity}` | int | Maximum capacity from template configuration |
-| `${genesis.inventory.<code>.full}` | bool | Whether inventory is at capacity |
-
-### Capabilities
-
-| Variable | Type | Description |
-|----------|------|-------------|
-| `${genesis.capability.<code>}` | bool | Whether entity has unlocked this capability |
-| `${genesis.capability.count}` | int | Total number of unlocked capabilities |
-
-### Bond State
-
-| Variable | Type | Description |
-|----------|------|-------------|
-| `${genesis.bond.active}` | bool | Whether the entity has an active bond |
-| `${genesis.bond.targetId}` | Guid? | Bond target entity ID |
-| `${genesis.bond.targetType}` | string? | Bond target entity type |
-
-### ABML Usage Examples
-
-```yaml
-flows:
-  treasure_chest_behavior:
-    # Should I generate loot?
-    - cond:
-      - when: "${genesis.wallet.mana.ratio > 0.8}"
-        then:
-          - call: signal_ready_for_harvest
-          - set:
-              glow_intensity: "${genesis.wallet.mana.ratio}"
-
-      # Am I full of items already?
-      - when: "${genesis.inventory.loot.full}"
-        then:
-          - call: enter_dormant_mode
-
-  weapon_stirring_behavior:
-    # Can I communicate with my wielder?
-    - cond:
-      - when: "${genesis.capability.active.impulse}"
-        then:
-          - call: send_danger_impulse
-            when: "${world.nearby_hostiles > 0}"
-
-      - when: "${genesis.capability.active.speak}"
-        then:
-          - call: whisper_to_wielder
-            message: "danger_ahead"
-```
-
----
-
-## API Endpoints
-
-### Template Management (5 endpoints)
-
-Templates are Category B deprecation entities (persist forever, no delete).
-
-- **RegisterTemplate** (`/genesis/template/register`): Registers a new genesis template. Validates seed domain/phase configuration, wallet codes, growth mapping references. Validates `awakening.systemRealmCode` exists and is a system realm (`isSystemType: true`) via `IRealmClient`, and `awakening.characterSpeciesCode` exists in that realm via `ISpeciesClient` — returns BadRequest with clear messages if either is missing (fail-fast, follows the universal L2 realm validation pattern used by lib-location, lib-species, lib-character, lib-faction). Idempotent by `templateCode`. Requires `developer` role.
-- **GetTemplate** (`/genesis/template/get`): Returns template by code.
-- **ListTemplates** (`/genesis/template/list`): Paginated listing with `includeDeprecated` filter (default: false).
-- **UpdateTemplate** (`/genesis/template/update`): Updates template configuration. Does not affect existing entities (they snapshot template config at creation). Requires `developer` role.
-- **DeprecateTemplate** (`/genesis/template/deprecate`): Category B deprecation with optional reason. Idempotent (returns OK if already deprecated). Prevents new entity creation from this template.
-- **CleanDeprecated** (`/genesis/template/clean-deprecated`): Standard Category B sweep using `DeprecationCleanupHelper`. Admin role.
-
-### Entity Lifecycle (5 endpoints)
-
-- **CreateEntity** (`/genesis/entity/create`): Creates entity from template. Provisions seed, wallets (with autogain configuration), inventories, and resource references. Returns entity with all wallet and inventory IDs. Input: `templateCode`, `gameServiceId`, `realmId`, optional `code`, `displayName`.
-- **GetEntity** (`/genesis/entity/get`): Returns entity state. `includeBalances: bool` (default from `IncludeBalancesDefault` config) triggers Currency queries for wallet balances when true.
-- **ListEntities** (`/genesis/entity/list`): Paginated listing. Filters by `templateCode`, `realmId`, `cognitiveStage`, `status`, `currentPhase`.
-- **GetCapabilities** (`/genesis/entity/get-capabilities`): Returns current seed capability manifest (passthrough to internal Seed query).
-- **DestroyEntity** (`/genesis/entity/destroy`): Stops actor (if running), archives character (if awakened, and `archiveOnDestruction` is true), cleans up wallets/inventories/seed via Resource, publishes `genesis.entity.deleted`.
-
-### Physical Form (1 endpoint)
-
-- **BindPhysicalForm** (`/genesis/entity/bind-physical-form`): Associates entity with its physical form (item instance ID or location ID). Called after the physical form is created by the domain plugin or game engine. Validates form existence.
-
-### Bond Management (3 endpoints)
-
-Simple Relationship-based bonds only. Complex bonds (Dungeon's Contract-based dual mastery) stay in domain plugins.
-
-- **CreateBond** (`/genesis/entity/create-bond`): Stores bond intent on the entity record (`bondTargetEntityType`, `bondTargetEntityId`). Validates target entity exists (via appropriate client for target entity type), validates bond cardinality from template, and validates entity doesn't already have a bond (for `OptionalOne`/`RequiredOne`). If entity is already Awakened (has `characterId`), also creates the Relationship immediately via `IRelationshipClient` using `(characterId, Character) ↔ (targetEntityType, targetEntityId)` with the template's `relationshipTypeCode`, and sets `bondId`. If pre-awakened, `bondId` remains null — the Relationship is created automatically at the Awakened phase transition. Publishes `genesis.entity.bond-created`. Input: `targetEntityType`, `targetEntityId`.
-- **GetBond** (`/genesis/entity/get-bond`): Returns active bond for entity.
-- **DissolveBond** (`/genesis/entity/dissolve-bond`): Clears bond fields on entity record (`bondTargetEntityType`, `bondTargetEntityId`, `bondId`). If entity has a `bondId` (Relationship was created — i.e., entity is Awakened), also deletes the Relationship via `IRelationshipClient`. Publishes `genesis.entity.bond-dissolved`.
-
-### Resource Cleanup (2 endpoints)
-
-- **CleanupByCharacter** (`/genesis/cleanup-by-character`): Called by lib-resource during character deletion. Removes genesis entities where `characterId` matches. Cascades destruction (stops actors, cleans up wallets/inventories).
-- **CleanupByRealm** (`/genesis/cleanup-by-realm`): Called by lib-resource during realm deletion. Removes all genesis entities in the realm.
-
-### Compression (2 endpoints)
-
-- **GetCompressData** (`/genesis/get-compress-data`): Returns `GenesisArchive` (extends `ResourceArchiveBase`) containing entity state snapshot, wallet balances, capability manifest, and growth progress for character archival.
-- **RestoreFromArchive** (`/genesis/restore-from-archive`): Restores entity from archive. Re-provisions seed, wallets, and inventories. Does not restore actor/character (those are re-created when growth conditions are met again).
-
-### Endpoint Permissions
-
-All endpoints are internal-only (`x-permissions: []`) except:
-- Template management: `x-permissions: [role: developer]`
-- CleanDeprecated: `x-permissions: [role: admin]`
-- RestoreFromArchive: `x-permissions: [role: admin]`
+7. **Test implementations**: All 5 test classes contain pseudocode stubs (`// TODO: Implement after GenesisEntityModel exists`). GenesisEntityModel now exists in `GenesisService.Models.cs` — tests are ready to be implemented.
 
 ---
 

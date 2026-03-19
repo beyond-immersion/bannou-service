@@ -1,15 +1,218 @@
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Genesis;
+using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Testing;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
+using BeyondImmersion.BannouService.Actor;
+using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.Collection;
+using BeyondImmersion.BannouService.Currency;
+using BeyondImmersion.BannouService.GameService;
+using BeyondImmersion.BannouService.Inventory;
+using BeyondImmersion.BannouService.Item;
+using BeyondImmersion.BannouService.Realm;
+using BeyondImmersion.BannouService.Relationship;
+using BeyondImmersion.BannouService.Resource;
+using BeyondImmersion.BannouService.Seed;
+using BeyondImmersion.BannouService.Species;
+
 namespace BeyondImmersion.BannouService.Genesis.Tests;
 
 /// <summary>
 /// Template endpoint tests for GenesisService.
 /// Covers: RegisterTemplate, GetTemplate, ListTemplates, UpdateTemplate, DeprecateTemplate, CleanDeprecated.
-///
-/// PRE-IMPLEMENTATION: These are stub tests with detailed pseudocode comments
-/// tracing to the implementation map. Full Arrange/Act/Assert will be filled in
-/// during /implement-plugin when GenesisTemplateModel and GenesisEntityModel exist.
 /// </summary>
-public class GenesisServiceTemplateTests
+public class GenesisServiceTemplateTests : ServiceTestBase<GenesisServiceConfiguration>
 {
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<GenesisTemplateModel>> _mockTemplateStore;
+    private readonly Mock<IStateStore<GenesisTemplateListModel>> _mockTemplateListStore;
+    private readonly Mock<IStateStore<GenesisEntityModel>> _mockEntityStore;
+    private readonly Mock<IStateStore<GenesisEntityListModel>> _mockEntityListStore;
+    private readonly Mock<IStateStore<CachedGenesisEntity>> _mockEntityCacheStore;
+    private readonly Mock<IStateStore<CachedCapabilityManifest>> _mockCapsCacheStore;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<ILogger<GenesisService>> _mockLogger;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IResourceClient> _mockResourceClient;
+    private readonly Mock<ISeedClient> _mockSeedClient;
+    private readonly Mock<ICurrencyClient> _mockCurrencyClient;
+    private readonly Mock<ICharacterClient> _mockCharacterClient;
+    private readonly Mock<IActorClient> _mockActorClient;
+    private readonly Mock<IInventoryClient> _mockInventoryClient;
+    private readonly Mock<IItemClient> _mockItemClient;
+    private readonly Mock<IRelationshipClient> _mockRelationshipClient;
+    private readonly Mock<IRealmClient> _mockRealmClient;
+    private readonly Mock<ISpeciesClient> _mockSpeciesClient;
+    private readonly Mock<IGameServiceClient> _mockGameServiceClient;
+    private readonly Mock<IEventConsumer> _mockEventConsumer;
+
+    public GenesisServiceTemplateTests()
+    {
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockTemplateStore = new Mock<IStateStore<GenesisTemplateModel>>();
+        _mockTemplateListStore = new Mock<IStateStore<GenesisTemplateListModel>>();
+        _mockEntityStore = new Mock<IStateStore<GenesisEntityModel>>();
+        _mockEntityListStore = new Mock<IStateStore<GenesisEntityListModel>>();
+        _mockEntityCacheStore = new Mock<IStateStore<CachedGenesisEntity>>();
+        _mockCapsCacheStore = new Mock<IStateStore<CachedCapabilityManifest>>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockMessageBus = new Mock<IMessageBus>();
+        _mockLogger = new Mock<ILogger<GenesisService>>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockResourceClient = new Mock<IResourceClient>();
+        _mockSeedClient = new Mock<ISeedClient>();
+        _mockCurrencyClient = new Mock<ICurrencyClient>();
+        _mockCharacterClient = new Mock<ICharacterClient>();
+        _mockActorClient = new Mock<IActorClient>();
+        _mockInventoryClient = new Mock<IInventoryClient>();
+        _mockItemClient = new Mock<IItemClient>();
+        _mockRelationshipClient = new Mock<IRelationshipClient>();
+        _mockRealmClient = new Mock<IRealmClient>();
+        _mockSpeciesClient = new Mock<ISpeciesClient>();
+        _mockGameServiceClient = new Mock<IGameServiceClient>();
+        _mockEventConsumer = new Mock<IEventConsumer>();
+
+        _mockStateStoreFactory.Setup(f => f.GetStore<GenesisTemplateModel>(StateStoreDefinitions.GenesisTemplates)).Returns(_mockTemplateStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<GenesisTemplateListModel>(StateStoreDefinitions.GenesisTemplates)).Returns(_mockTemplateListStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<GenesisEntityModel>(StateStoreDefinitions.GenesisEntities)).Returns(_mockEntityStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<GenesisEntityListModel>(StateStoreDefinitions.GenesisEntities)).Returns(_mockEntityListStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<CachedGenesisEntity>(StateStoreDefinitions.GenesisEntityCache)).Returns(_mockEntityCacheStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<CachedCapabilityManifest>(StateStoreDefinitions.GenesisEntityCache)).Returns(_mockCapsCacheStore.Object);
+
+        SetupDefaultLock();
+        SetupDefaultMessageBus();
+    }
+
+    private void SetupDefaultLock()
+    {
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        mockLockResponse.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
+    }
+
+    private void SetupDefaultMessageBus()
+    {
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+    }
+
+    private GenesisService CreateService()
+    {
+        return new GenesisService(
+            _mockStateStoreFactory.Object,
+            _mockLockProvider.Object,
+            _mockMessageBus.Object,
+            _mockLogger.Object,
+            Configuration,
+            new NullTelemetryProvider(),
+            _mockResourceClient.Object,
+            _mockSeedClient.Object,
+            _mockCurrencyClient.Object,
+            _mockCharacterClient.Object,
+            _mockActorClient.Object,
+            _mockInventoryClient.Object,
+            _mockItemClient.Object,
+            _mockRelationshipClient.Object,
+            _mockRealmClient.Object,
+            _mockSpeciesClient.Object,
+            _mockGameServiceClient.Object,
+            _mockEventConsumer.Object);
+    }
+
+    private static RegisterTemplateRequest CreateValidRegisterRequest(string templateCode = "test_template")
+    {
+        return new RegisterTemplateRequest
+        {
+            TemplateCode = templateCode,
+            GameServiceId = Guid.NewGuid(),
+            DisplayName = "Test Template",
+            Description = "A test genesis template",
+            Seed = new GenesisSeedConfig
+            {
+                SeedTypeCode = "test_seed_type",
+                Domains = new List<GenesisSeedDomain>
+                {
+                    new() { DomainCode = "growth", DisplayName = "Growth" }
+                },
+                Phases = new List<GenesisSeedPhase>
+                {
+                    new() { PhaseName = "Dormant", Threshold = 0, CognitiveStage = CognitiveStage.Dormant },
+                    new() { PhaseName = "Stirring", Threshold = 100, CognitiveStage = CognitiveStage.EventBrain },
+                    new() { PhaseName = "Awakened", Threshold = 500, CognitiveStage = CognitiveStage.CharacterBrain }
+                }
+            },
+            Economy = new GenesisEconomyConfig
+            {
+                Wallets = new List<GenesisWalletConfig>
+                {
+                    new() { WalletCode = "mana", CurrencyCode = "mana_currency" }
+                },
+                GrowthMappings = new List<GenesisGrowthMapping>
+                {
+                    new() { WalletCode = "mana", Domain = "growth", Ratio = 1.0, Direction = GrowthDirection.Credit }
+                }
+            },
+            Storage = new GenesisStorageConfig
+            {
+                Inventories = new List<GenesisInventoryConfig>
+                {
+                    new() { InventoryCode = "loot", ConstraintModel = "Unlimited", Capacity = 20 }
+                }
+            },
+            Awakening = new GenesisAwakeningConfig
+            {
+                SystemRealmCode = "SENTIENT_CONTAINERS",
+                CharacterSpeciesCode = "treasure_spirit"
+            },
+            PhysicalFormType = PhysicalFormType.Item,
+            Bond = new GenesisBondConfig { Enabled = false, Cardinality = BondCardinality.None },
+            ArchiveOnDestruction = true
+        };
+    }
+
+    private void SetupRealmValidation(bool exists = true, bool isSystem = true)
+    {
+        if (exists)
+        {
+            _mockRealmClient
+                .Setup(r => r.GetRealmByCodeAsync(It.IsAny<GetRealmByCodeRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new RealmResponse { RealmId = Guid.NewGuid(), Code = "SENTIENT_CONTAINERS", IsSystemType = isSystem });
+        }
+        else
+        {
+            _mockRealmClient
+                .Setup(r => r.GetRealmByCodeAsync(It.IsAny<GetRealmByCodeRequest>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new ApiException("Not found", 404, null, null, null));
+        }
+    }
+
+    private void SetupSpeciesValidation(bool exists = true)
+    {
+        if (exists)
+        {
+            _mockSpeciesClient
+                .Setup(s => s.GetSpeciesByCodeAsync(It.IsAny<GetSpeciesByCodeRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new SpeciesResponse { SpeciesId = Guid.NewGuid(), Code = "treasure_spirit" });
+        }
+        else
+        {
+            _mockSpeciesClient
+                .Setup(s => s.GetSpeciesByCodeAsync(It.IsAny<GetSpeciesByCodeRequest>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new ApiException("Not found", 404, null, null, null));
+        }
+    }
+
     // ===================================================================
     // RegisterTemplate
     // ===================================================================
@@ -17,63 +220,158 @@ public class GenesisServiceTemplateTests
     [Fact]
     public async Task RegisterTemplateAsync_ValidRequest_ReturnsOkAndSavesTemplate()
     {
-        // Map: VALIDATE structure, CALL IRealmClient (system realm), CALL ISpeciesClient,
-        //   READ template -> null (new), CALL ISeedClient.RegisterSeedTypeAsync,
-        //   LOCK, WRITE template + template-game index, PUBLISH genesis.template.created
-        // Arrange: mock realm client returns valid system realm, mock species client returns valid species,
-        //   mock template store returns null (no existing), mock seed client returns success,
-        //   mock lock provider returns lock, setup state save capture + event capture
-        // Act: call RegisterTemplateAsync with valid RegisterTemplateRequest
-        // Assert: status == OK, response has templateCode, state saved with correct fields,
-        //   template-game index updated, event published to "genesis.template.created" with templateCode + gameServiceId
-        // TODO: Implement after GenesisTemplateModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
+        // Arrange
+        var service = CreateService();
+        var request = CreateValidRegisterRequest();
+        SetupRealmValidation();
+        SetupSpeciesValidation();
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("template:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GenesisTemplateModel?)null);
+
+        _mockSeedClient
+            .Setup(s => s.RegisterSeedTypeAsync(It.IsAny<RegisterSeedTypeRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RegisterSeedTypeResponse());
+
+        string? savedKey = null;
+        GenesisTemplateModel? savedModel = null;
+        _mockTemplateStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<GenesisTemplateModel>(), It.IsAny<CancellationToken>()))
+            .Callback<string, GenesisTemplateModel, CancellationToken>((k, m, _) =>
+            {
+                savedKey = k;
+                savedModel = m;
+            })
+            .ReturnsAsync("etag-1");
+
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((t, e, _) =>
+            {
+                capturedTopic = t;
+                capturedEvent = e;
+            })
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, response) = await service.RegisterTemplateAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(request.TemplateCode, response.TemplateCode);
+        Assert.Equal(request.GameServiceId, response.GameServiceId);
+
+        Assert.Equal($"template:{request.TemplateCode}", savedKey);
+        Assert.NotNull(savedModel);
+        Assert.Equal(request.TemplateCode, savedModel.TemplateCode);
+        Assert.Equal(request.DisplayName, savedModel.DisplayName);
+        Assert.False(savedModel.IsDeprecated);
+
+        Assert.Equal(GenesisPublishedTopics.TemplateCreated, capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var typedEvent = Assert.IsType<TemplateCreatedEvent>(capturedEvent);
+        Assert.Equal(request.TemplateCode, typedEvent.TemplateCode);
+        Assert.Equal(request.GameServiceId, typedEvent.GameServiceId);
     }
 
     [Fact]
     public async Task RegisterTemplateAsync_InvalidGrowthMappings_ReturnsBadRequest()
     {
-        // Map: VALIDATE template structure -> 400 if invalid
-        //   Structural validation: walletCode references wallet in wallets[],
-        //   domain references domain in seed.domains[], no duplicate (walletCode, domain, direction) triples
-        // Arrange: construct request with growthMapping referencing a walletCode not in wallets[]
-        // Act: call RegisterTemplateAsync
-        // Assert: status == BadRequest, no state saved, no event published
-        // TODO: Implement after GenesisTemplateModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
+        // Arrange
+        var service = CreateService();
+        var request = CreateValidRegisterRequest();
+        request.Economy.GrowthMappings = new List<GenesisGrowthMapping>
+        {
+            new() { WalletCode = "nonexistent_wallet", Domain = "growth", Ratio = 1.0, Direction = GrowthDirection.Credit }
+        };
+
+        // Act
+        var (status, response) = await service.RegisterTemplateAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+        _mockTemplateStore.Verify(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<GenesisTemplateModel>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task RegisterTemplateAsync_InvalidSystemRealm_ReturnsBadRequest()
     {
-        // Map: CALL IRealmClient.GetRealmAsync(awakening.systemRealmCode) -> 400 if not found or not isSystemType
-        // Arrange: mock realm client returns not found (404 or null)
-        // Act: call RegisterTemplateAsync with valid structure but non-existent realm code
-        // Assert: status == BadRequest, no state saved, no event published
-        // TODO: Implement after GenesisTemplateModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
+        // Arrange
+        var service = CreateService();
+        var request = CreateValidRegisterRequest();
+        SetupRealmValidation(exists: false);
+
+        // Act
+        var (status, response) = await service.RegisterTemplateAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+        _mockTemplateStore.Verify(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<GenesisTemplateModel>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task RegisterTemplateAsync_InvalidSpecies_ReturnsBadRequest()
     {
-        // Map: CALL ISpeciesClient.GetSpeciesAsync(awakening.characterSpeciesCode) -> 400 if not found in realm
-        // Arrange: mock realm client returns valid system realm, mock species client returns not found
-        // Act: call RegisterTemplateAsync
-        // Assert: status == BadRequest, no state saved, no event published
-        // TODO: Implement after GenesisTemplateModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
+        // Arrange
+        var service = CreateService();
+        var request = CreateValidRegisterRequest();
+        SetupRealmValidation();
+        SetupSpeciesValidation(exists: false);
+
+        // Act
+        var (status, response) = await service.RegisterTemplateAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+        _mockTemplateStore.Verify(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<GenesisTemplateModel>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task RegisterTemplateAsync_ExistingTemplate_ReturnsIdempotent()
     {
-        // Map: READ genesis-templates:"template:{templateCode}" -> IF exists -> RETURN (200, existing)
-        // Arrange: mock template store returns existing template model (idempotent re-registration)
-        // Act: call RegisterTemplateAsync with same templateCode
-        // Assert: status == OK, response matches existing template, no WRITE, no PUBLISH (idempotent)
-        // TODO: Implement after GenesisTemplateModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
+        // Arrange
+        var service = CreateService();
+        var request = CreateValidRegisterRequest();
+        SetupRealmValidation();
+        SetupSpeciesValidation();
+
+        var existing = new GenesisTemplateModel
+        {
+            TemplateCode = request.TemplateCode,
+            GameServiceId = request.GameServiceId,
+            DisplayName = request.DisplayName,
+            Description = request.Description,
+            Seed = request.Seed,
+            Economy = request.Economy,
+            Storage = request.Storage,
+            Awakening = request.Awakening,
+            PhysicalFormType = request.PhysicalFormType,
+            Bond = request.Bond,
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+        };
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("template:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existing);
+
+        // Act
+        var (status, response) = await service.RegisterTemplateAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(request.TemplateCode, response.TemplateCode);
+        // Idempotent — no new save, no event published
+        _mockTemplateStore.Verify(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<GenesisTemplateModel>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockMessageBus.Verify(m => m.TryPublishAsync(GenesisPublishedTopics.TemplateCreated, It.IsAny<object>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     // ===================================================================
@@ -83,78 +381,53 @@ public class GenesisServiceTemplateTests
     [Fact]
     public async Task GetTemplateAsync_ExistingTemplate_ReturnsOk()
     {
-        // Map: READ genesis-templates:"template:{templateCode}" -> RETURN (200, GenesisTemplateResponse)
-        // Arrange: mock template store returns template model with all fields populated
-        // Act: call GetTemplateAsync with valid templateCode
-        // Assert: status == OK, response fields match stored template
-        // TODO: Implement after GenesisTemplateModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
+        // Arrange
+        var service = CreateService();
+        var templateCode = "my_template";
+        var model = new GenesisTemplateModel
+        {
+            TemplateCode = templateCode,
+            GameServiceId = Guid.NewGuid(),
+            DisplayName = "My Template",
+            Description = "Description",
+            Seed = new GenesisSeedConfig { SeedTypeCode = "s", Domains = new(), Phases = new() },
+            Economy = new GenesisEconomyConfig { Wallets = new(), GrowthMappings = new() },
+            Storage = new GenesisStorageConfig { Inventories = new() },
+            Awakening = new GenesisAwakeningConfig { SystemRealmCode = "R", CharacterSpeciesCode = "S" },
+            Bond = new GenesisBondConfig { Enabled = false, Cardinality = BondCardinality.None },
+            CreatedAt = DateTimeOffset.UtcNow.AddHours(-1),
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"template:{templateCode}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        // Act
+        var (status, response) = await service.GetTemplateAsync(new GetTemplateRequest { TemplateCode = templateCode });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(templateCode, response.TemplateCode);
+        Assert.Equal(model.DisplayName, response.DisplayName);
     }
 
     [Fact]
     public async Task GetTemplateAsync_NotFound_ReturnsNotFound()
     {
-        // Map: READ genesis-templates:"template:{templateCode}" -> 404 if null
-        // Arrange: mock template store returns null
-        // Act: call GetTemplateAsync
-        // Assert: status == NotFound
-        // TODO: Implement after GenesisTemplateModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
-    }
+        // Arrange
+        var service = CreateService();
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GenesisTemplateModel?)null);
 
-    // ===================================================================
-    // ListTemplates
-    // ===================================================================
+        // Act
+        var (status, response) = await service.GetTemplateAsync(new GetTemplateRequest { TemplateCode = "missing" });
 
-    [Fact]
-    public async Task ListTemplatesAsync_ValidRequest_ReturnsPagedResults()
-    {
-        // Map: QUERY genesis-templates:"template-game:{gameServiceId}" WHERE IsDeprecated filter, PAGED
-        // Arrange: mock template store query returns list of templates with pagination
-        // Act: call ListTemplatesAsync with gameServiceId, page, pageSize
-        // Assert: status == OK, response.templates populated, totalCount/page/pageSize correct
-        // TODO: Implement after GenesisTemplateModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
-    }
-
-    // ===================================================================
-    // UpdateTemplate
-    // ===================================================================
-
-    [Fact]
-    public async Task UpdateTemplateAsync_ValidRequest_ReturnsOkAndPublishesEvent()
-    {
-        // Map: READ template -> 404 if null, VALIDATE updated fields,
-        //   LOCK, WRITE updated template, PUBLISH genesis.template.updated with changedFields
-        // Arrange: mock template store returns existing template, mock lock provider,
-        //   setup state save capture + event capture
-        // Act: call UpdateTemplateAsync with updated displayName and description
-        // Assert: status == OK, saved template has updated fields, event published
-        //   to "genesis.template.updated" with changedFields list
-        // TODO: Implement after GenesisTemplateModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
-    }
-
-    [Fact]
-    public async Task UpdateTemplateAsync_NotFound_ReturnsNotFound()
-    {
-        // Map: READ genesis-templates:"template:{templateCode}" -> 404 if null
-        // Arrange: mock template store returns null
-        // Act: call UpdateTemplateAsync
-        // Assert: status == NotFound, no state written, no event published
-        // TODO: Implement after GenesisTemplateModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
-    }
-
-    [Fact]
-    public async Task UpdateTemplateAsync_InvalidAwakeningRealm_ReturnsBadRequest()
-    {
-        // Map: IF awakening fields changed -> CALL IRealmClient.GetRealmAsync -> 400 if invalid
-        // Arrange: mock template store returns existing, mock realm client returns not found
-        // Act: call UpdateTemplateAsync with changed awakening.systemRealmCode
-        // Assert: status == BadRequest, no state written, no event published
-        // TODO: Implement after GenesisTemplateModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
     }
 
     // ===================================================================
@@ -164,54 +437,121 @@ public class GenesisServiceTemplateTests
     [Fact]
     public async Task DeprecateTemplateAsync_ValidRequest_ReturnsOkAndSetsDeprecation()
     {
-        // Map: READ template -> 404 if null, IF NOT deprecated -> SET IsDeprecated/DeprecatedAt/Reason,
-        //   WRITE, PUBLISH genesis.template.updated with changedFields [IsDeprecated, DeprecatedAt, DeprecationReason]
-        // Arrange: mock template store returns non-deprecated template, setup save + event capture
-        // Act: call DeprecateTemplateAsync with reason
-        // Assert: status == OK, saved template has IsDeprecated=true, DeprecatedAt set, reason set,
-        //   event published to "genesis.template.updated" with deprecation changedFields
-        // TODO: Implement after GenesisTemplateModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
+        // Arrange
+        var service = CreateService();
+        var templateCode = "deprecate_me";
+        var model = new GenesisTemplateModel
+        {
+            TemplateCode = templateCode,
+            GameServiceId = Guid.NewGuid(),
+            DisplayName = "To Deprecate",
+            Description = "Will be deprecated",
+            Seed = new GenesisSeedConfig { SeedTypeCode = "s", Domains = new(), Phases = new() },
+            Economy = new GenesisEconomyConfig { Wallets = new(), GrowthMappings = new() },
+            Storage = new GenesisStorageConfig { Inventories = new() },
+            Awakening = new GenesisAwakeningConfig { SystemRealmCode = "R", CharacterSpeciesCode = "S" },
+            Bond = new GenesisBondConfig { Enabled = false, Cardinality = BondCardinality.None },
+            IsDeprecated = false,
+            CreatedAt = DateTimeOffset.UtcNow.AddHours(-1),
+            UpdatedAt = DateTimeOffset.UtcNow.AddHours(-1)
+        };
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"template:{templateCode}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
+
+        GenesisTemplateModel? savedModel = null;
+        _mockTemplateStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<GenesisTemplateModel>(), It.IsAny<CancellationToken>()))
+            .Callback<string, GenesisTemplateModel, CancellationToken>((_, m, _) => savedModel = m)
+            .ReturnsAsync("etag-2");
+
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((t, e, _) =>
+            {
+                capturedTopic = t;
+                capturedEvent = e;
+            })
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, response) = await service.DeprecateTemplateAsync(
+            new DeprecateTemplateRequest { TemplateCode = templateCode, Reason = "No longer needed" });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.IsDeprecated);
+
+        Assert.NotNull(savedModel);
+        Assert.True(savedModel.IsDeprecated);
+        Assert.NotNull(savedModel.DeprecatedAt);
+        Assert.Equal("No longer needed", savedModel.DeprecationReason);
+
+        Assert.Equal(GenesisPublishedTopics.TemplateUpdated, capturedTopic);
+        var typedEvent = Assert.IsType<TemplateUpdatedEvent>(capturedEvent);
+        Assert.Equal(templateCode, typedEvent.TemplateCode);
+        Assert.Contains("IsDeprecated", typedEvent.ChangedFields);
     }
 
     [Fact]
     public async Task DeprecateTemplateAsync_NotFound_ReturnsNotFound()
     {
-        // Map: READ genesis-templates:"template:{templateCode}" -> 404 if null
-        // Arrange: mock template store returns null
-        // Act: call DeprecateTemplateAsync
-        // Assert: status == NotFound
-        // TODO: Implement after GenesisTemplateModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
+        // Arrange
+        var service = CreateService();
+        _mockTemplateStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GenesisTemplateModel?)null);
+
+        // Act
+        var (status, response) = await service.DeprecateTemplateAsync(
+            new DeprecateTemplateRequest { TemplateCode = "missing" });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
     }
 
     [Fact]
     public async Task DeprecateTemplateAsync_AlreadyDeprecated_ReturnsIdempotent()
     {
-        // Map: IF template.IsDeprecated -> RETURN (200, existing) — idempotent per IMPLEMENTATION TENETS
-        // Arrange: mock template store returns already-deprecated template
-        // Act: call DeprecateTemplateAsync
-        // Assert: status == OK, no WRITE, no PUBLISH (idempotent)
-        // TODO: Implement after GenesisTemplateModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
-    }
+        // Arrange
+        var service = CreateService();
+        var templateCode = "already_deprecated";
+        var model = new GenesisTemplateModel
+        {
+            TemplateCode = templateCode,
+            GameServiceId = Guid.NewGuid(),
+            DisplayName = "Already Deprecated",
+            Description = "Already deprecated",
+            Seed = new GenesisSeedConfig { SeedTypeCode = "s", Domains = new(), Phases = new() },
+            Economy = new GenesisEconomyConfig { Wallets = new(), GrowthMappings = new() },
+            Storage = new GenesisStorageConfig { Inventories = new() },
+            Awakening = new GenesisAwakeningConfig { SystemRealmCode = "R", CharacterSpeciesCode = "S" },
+            Bond = new GenesisBondConfig { Enabled = false, Cardinality = BondCardinality.None },
+            IsDeprecated = true,
+            DeprecatedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            DeprecationReason = "Old reason",
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-7),
+            UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+        };
 
-    // ===================================================================
-    // CleanDeprecated
-    // ===================================================================
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"template:{templateCode}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(model);
 
-    [Fact]
-    public async Task CleanDeprecatedAsync_ValidRequest_ReturnsCleanupResults()
-    {
-        // Map: DeprecationCleanupHelper.ExecuteCleanupSweepAsync — standard Category B sweep.
-        //   For each deprecated template with no referencing entities:
-        //   DELETE template, DELETE template-game index entry
-        // Arrange: mock template store to have deprecated templates, mock entity query returns 0 for
-        //   one template (deletable) and >0 for another (skipped)
-        // Act: call CleanDeprecatedAsync
-        // Assert: status == OK, response.deletedCount == 1, response.skippedCount == 1,
-        //   deletable template removed from store, skipped template still exists
-        // TODO: Implement after GenesisTemplateModel exists in GenesisServiceModels.cs
-        await Task.CompletedTask;
+        // Act
+        var (status, response) = await service.DeprecateTemplateAsync(
+            new DeprecateTemplateRequest { TemplateCode = templateCode });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        // Idempotent — no save, no event
+        _mockTemplateStore.Verify(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<GenesisTemplateModel>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockMessageBus.Verify(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

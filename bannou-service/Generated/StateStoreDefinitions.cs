@@ -311,6 +311,16 @@ public static class StateStoreDefinitions
     /// <summary>Scenario template definitions (durable, queryable by category/status)</summary>
     public const string GardenerScenarioTemplates = "gardener-scenario-templates";
 
+    // Genesis Service
+    /// <summary>Genesis entity records and indexes (durable, queryable by template/realm/character)</summary>
+    public const string GenesisEntities = "genesis-entities";
+    /// <summary>Hot cache for entity lookups and capability manifests (ephemeral, TTL-based)</summary>
+    public const string GenesisEntityCache = "genesis-entity-cache";
+    /// <summary>Distributed locks for entity mutation, phase transition, and bond operations</summary>
+    public const string GenesisLock = "genesis-lock";
+    /// <summary>Genesis template definitions (durable, queryable by game service)</summary>
+    public const string GenesisTemplates = "genesis-templates";
+
     // Inventory Service
     /// <summary>Container state and item list cache</summary>
     public const string InventoryContainerCache = "inventory-container-cache";
@@ -726,6 +736,10 @@ public static class StateStoreDefinitions
             [GardenerScenarioHistory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "gardener_scenario_history" },
             [GardenerScenarioInstances] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "gardener:scenario" },
             [GardenerScenarioTemplates] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "gardener_scenario_templates" },
+            [GenesisEntities] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "genesis_entities" },
+            [GenesisEntityCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "genesis:cache" },
+            [GenesisLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "genesis:lock" },
+            [GenesisTemplates] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "genesis_templates" },
             [InventoryContainerCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "inv:cont" },
             [InventoryContainerStore] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "inventory_container_store" },
             [InventoryLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "inv:lock" },
@@ -968,6 +982,10 @@ public static class StateStoreDefinitions
             [GardenerScenarioHistory] = new StoreMetadata("Gardener", "Completed scenario history per player (durable, queryable for cooldown)", "mysql", false),
             [GardenerScenarioInstances] = new StoreMetadata("Gardener", "Active scenario instance state (ephemeral, keyed by instance ID)", "redis", false),
             [GardenerScenarioTemplates] = new StoreMetadata("Gardener", "Scenario template definitions (durable, queryable by category/status)", "mysql", false),
+            [GenesisEntities] = new StoreMetadata("Genesis", "Genesis entity records and indexes (durable, queryable by template/realm/character)", "mysql", false),
+            [GenesisEntityCache] = new StoreMetadata("Genesis", "Hot cache for entity lookups and capability manifests (ephemeral, TTL-based)", "redis", false),
+            [GenesisLock] = new StoreMetadata("Genesis", "Distributed locks for entity mutation, phase transition, and bond operations", "redis", false),
+            [GenesisTemplates] = new StoreMetadata("Genesis", "Genesis template definitions (durable, queryable by game service)", "mysql", false),
             [InventoryContainerCache] = new StoreMetadata("Inventory", "Container state and item list cache", "redis", false),
             [InventoryContainerStore] = new StoreMetadata("Inventory", "Container definitions (persistent)", "mysql", false),
             [InventoryLock] = new StoreMetadata("Inventory", "Distributed locks for concurrent modifications", "redis", false),

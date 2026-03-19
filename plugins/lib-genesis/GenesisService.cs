@@ -1,9 +1,20 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Actor;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.Currency;
+using BeyondImmersion.BannouService.GameService;
+using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Inventory;
+using BeyondImmersion.BannouService.Item;
+using BeyondImmersion.BannouService.Realm;
+using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.Resource;
+using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -11,317 +22,1183 @@ using Microsoft.Extensions.Logging;
 namespace BeyondImmersion.BannouService.Genesis;
 
 /// <summary>
-/// Implementation of the Genesis service.
-/// This class contains the business logic for all Genesis operations.
+/// Template-driven entity awakening lifecycle service.
+/// Manages entities that progressively grow from inert objects into autonomous agents
+/// with personalities, memories, and the full cognitive stack.
 /// </summary>
-/// <remarks>
-/// <para>
-/// <b>FOUNDATION TENETS - PARTIAL CLASS REQUIRED:</b> This class MUST remain a partial class.
-/// Generated code (event handlers, permissions) is placed in companion partial classes.
-/// </para>
-/// <para>
-/// <b>IMPLEMENTATION TENETS CHECKLIST:</b>
-/// <list type="bullet">
-///   <item><b>Type Safety:</b> Internal POCOs MUST use proper C# types (enums, Guids, DateTimeOffset) - never string representations. No Enum.Parse in business logic.</item>
-///   <item><b>Configuration:</b> ALL config properties in GenesisServiceConfiguration MUST be wired up. No hardcoded magic numbers for tunables.</item>
-///   <item><b>Events:</b> ALL meaningful state changes MUST publish typed events, even without current consumers.</item>
-///   <item><b>Cache Stores:</b> If state-stores.yaml defines cache stores for this service, implement read-through/write-through caching.</item>
-///   <item><b>Concurrency:</b> Use GetWithETagAsync + TrySaveAsync for list/index operations. No non-atomic read-modify-write.</item>
-/// </list>
-/// </para>
-/// <para>
-/// <b>MODELS:</b> Run <c>make print-models PLUGIN="genesis"</c> to view compact request/response model shapes.
-/// If print-models fails or generation has not been run, DO NOT proceed with implementation.
-/// Generate first (<c>cd scripts &amp;&amp; ./generate-service.sh genesis</c>) or ask the developer how to continue.
-/// Never guess at model definitions.
-/// </para>
-/// <para>
-/// <b>RELATED FILES:</b>
-/// <list type="bullet">
-///   <item>Internal data models: GenesisService.Models.cs (storage models, cache entries, internal DTOs)</item>
-///   <item>Event handlers: GenesisService.Events.cs (event consumer registration and handlers)</item>
-///   <item>Configuration: Generated/GenesisServiceConfiguration.cs</item>
-/// </list>
-/// </para>
-/// </remarks>
 [BannouService("genesis", typeof(IGenesisService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
-public partial class GenesisService : IGenesisService
+public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
 {
+    private readonly IStateStore<GenesisTemplateModel> _templateStore;
+    private readonly IStateStore<GenesisTemplateListModel> _templateListStore;
+    private readonly IQueryableStateStore<GenesisTemplateModel> _templateQueryStore;
+    private readonly IStateStore<GenesisEntityModel> _entityStore;
+    private readonly IStateStore<GenesisEntityListModel> _entityListStore;
+    private readonly IQueryableStateStore<GenesisEntityModel> _entityQueryStore;
+    private readonly IStateStore<CachedGenesisEntity> _entityCacheStore;
+    private readonly IStateStore<CachedCapabilityManifest> _capsCacheStore;
+    private readonly IDistributedLockProvider _lockProvider;
     private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
-    private readonly IResourceClient _resourceClient;
     private readonly ILogger<GenesisService> _logger;
     private readonly GenesisServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
+    private readonly IResourceClient _resourceClient;
+    private readonly ISeedClient _seedClient;
+    private readonly ICurrencyClient _currencyClient;
+    private readonly ICharacterClient _characterClient;
+    private readonly IActorClient _actorClient;
+    private readonly IInventoryClient _inventoryClient;
+    private readonly IItemClient _itemClient;
+    private readonly IRelationshipClient _relationshipClient;
+    private readonly IRealmClient _realmClient;
+    private readonly ISpeciesClient _speciesClient;
+    private readonly IGameServiceClient _gameServiceClient;
 
-    private const string STATE_STORE = "genesis-statestore";
-
+    /// <summary>
+    /// Initializes a new instance of <see cref="GenesisService"/>.
+    /// </summary>
     public GenesisService(
-        IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
-        IResourceClient resourceClient,
+        IDistributedLockProvider lockProvider,
+        IMessageBus messageBus,
         ILogger<GenesisService> logger,
-        GenesisServiceConfiguration configuration)
+        GenesisServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider,
+        IResourceClient resourceClient,
+        ISeedClient seedClient,
+        ICurrencyClient currencyClient,
+        ICharacterClient characterClient,
+        IActorClient actorClient,
+        IInventoryClient inventoryClient,
+        IItemClient itemClient,
+        IRelationshipClient relationshipClient,
+        IRealmClient realmClient,
+        ISpeciesClient speciesClient,
+        IGameServiceClient gameServiceClient,
+        IEventConsumer eventConsumer)
     {
+        _templateStore = stateStoreFactory.GetStore<GenesisTemplateModel>(StateStoreDefinitions.GenesisTemplates);
+        _templateListStore = stateStoreFactory.GetStore<GenesisTemplateListModel>(StateStoreDefinitions.GenesisTemplates);
+        _templateQueryStore = stateStoreFactory.GetQueryableStore<GenesisTemplateModel>(StateStoreDefinitions.GenesisTemplates);
+        _entityStore = stateStoreFactory.GetStore<GenesisEntityModel>(StateStoreDefinitions.GenesisEntities);
+        _entityListStore = stateStoreFactory.GetStore<GenesisEntityListModel>(StateStoreDefinitions.GenesisEntities);
+        _entityQueryStore = stateStoreFactory.GetQueryableStore<GenesisEntityModel>(StateStoreDefinitions.GenesisEntities);
+        _entityCacheStore = stateStoreFactory.GetStore<CachedGenesisEntity>(StateStoreDefinitions.GenesisEntityCache);
+        _capsCacheStore = stateStoreFactory.GetStore<CachedCapabilityManifest>(StateStoreDefinitions.GenesisEntityCache);
+        _lockProvider = lockProvider;
         _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
-        _resourceClient = resourceClient;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
+        _resourceClient = resourceClient;
+        _seedClient = seedClient;
+        _currencyClient = currencyClient;
+        _characterClient = characterClient;
+        _actorClient = actorClient;
+        _inventoryClient = inventoryClient;
+        _itemClient = itemClient;
+        _relationshipClient = relationshipClient;
+        _realmClient = realmClient;
+        _speciesClient = speciesClient;
+        _gameServiceClient = gameServiceClient;
+
+        RegisterEventConsumers(eventConsumer);
     }
 
-    /// <summary>
-    /// Implementation of RegisterTemplate operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, GenesisTemplateResponse?)> RegisterTemplateAsync(RegisterTemplateRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, GenesisTemplateResponse?)> RegisterTemplateAsync(
+        RegisterTemplateRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing RegisterTemplate operation");
+        _logger.LogDebug("Registering template {TemplateCode} for game {GameServiceId}",
+            body.TemplateCode, body.GameServiceId);
 
-        // TODO: Implement your business logic here
-        // Note: The generated controller wraps this method with try/catch for error handling.
-        // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
-        // published as error events by the controller automatically.
-        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
-        throw new NotImplementedException("Method RegisterTemplate not yet implemented");
+        // Validate template structure per map specification
+        var validationError = ValidateTemplateStructure(body);
+        if (validationError != null)
+        {
+            _logger.LogDebug("Template structure validation failed: {Error}", validationError);
+            return (StatusCodes.BadRequest, null);
+        }
 
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return StatusCodes.NoContent;
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+        // Validate system realm — generated clients throw ApiException on error
+        try
+        {
+            var realm = await _realmClient.GetRealmByCodeAsync(
+                new GetRealmByCodeRequest { Code = body.Awakening.SystemRealmCode }, cancellationToken);
+            if (!realm.IsSystemType)
+            {
+                _logger.LogDebug("Realm {RealmCode} is not a system realm", body.Awakening.SystemRealmCode);
+                return (StatusCodes.BadRequest, null);
+            }
+        }
+        catch (ApiException)
+        {
+            _logger.LogDebug("System realm {RealmCode} not found", body.Awakening.SystemRealmCode);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Validate species in system realm
+        try
+        {
+            await _speciesClient.GetSpeciesByCodeAsync(
+                new GetSpeciesByCodeRequest { Code = body.Awakening.CharacterSpeciesCode }, cancellationToken);
+        }
+        catch (ApiException)
+        {
+            _logger.LogDebug("Species {SpeciesCode} not found", body.Awakening.CharacterSpeciesCode);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Idempotent check
+        var existing = await _templateStore.GetAsync(BuildTemplateKey(body.TemplateCode), cancellationToken);
+        if (existing != null)
+        {
+            _logger.LogDebug("Template {TemplateCode} already exists, returning idempotent", body.TemplateCode);
+            return (StatusCodes.OK, MapTemplateToResponse(existing));
+        }
+
+        // Register seed type with Seed service
+        try
+        {
+            await _seedClient.RegisterSeedTypeAsync(
+                new RegisterSeedTypeRequest
+                {
+                    SeedTypeCode = body.Seed.SeedTypeCode,
+                    GameServiceId = body.GameServiceId,
+                    DisplayName = body.DisplayName,
+                    Description = body.Description,
+                    MaxPerOwner = 1,
+                    AllowedOwnerTypes = new List<EntityType> { EntityType.Other },
+                    GrowthPhases = body.Seed.Phases.Select(p => new GrowthPhaseDefinition
+                    {
+                        PhaseCode = p.PhaseName,
+                        DisplayName = p.PhaseName,
+                        MinTotalGrowth = (float)p.Threshold,
+                    }).ToList(),
+                    BondCardinality = 0,
+                    BondPermanent = false,
+                    CapabilityRules = body.Seed.CapabilityRules?.Select(c => new CapabilityRule
+                    {
+                        CapabilityCode = c.CapabilityCode,
+                        Domain = c.Domain,
+                        UnlockThreshold = (float)c.Threshold,
+                        FidelityFormula = "linear",
+                    }).ToList(),
+                }, cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Failed to register seed type {SeedTypeCode}", body.Seed.SeedTypeCode);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var template = new GenesisTemplateModel
+        {
+            TemplateCode = body.TemplateCode,
+            GameServiceId = body.GameServiceId,
+            DisplayName = body.DisplayName,
+            Description = body.Description,
+            Seed = body.Seed,
+            Economy = body.Economy,
+            Storage = body.Storage,
+            Awakening = body.Awakening,
+            PhysicalFormType = body.PhysicalFormType,
+            Bond = body.Bond,
+            ArchiveOnDestruction = body.ArchiveOnDestruction,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        var lockOwner = $"register-template-{Guid.NewGuid():N}";
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.GenesisLock, $"entity:{body.TemplateCode}",
+            lockOwner, _configuration.EntityLockTimeoutSeconds, cancellationToken: cancellationToken);
+        if (!lockHandle.Success) return (StatusCodes.Conflict, null);
+
+        await _templateStore.SaveAsync(BuildTemplateKey(body.TemplateCode), template, cancellationToken: cancellationToken);
+        await AddToTemplateGameIndexAsync(body.GameServiceId, body.TemplateCode, cancellationToken);
+
+        await _messageBus.PublishTemplateCreatedAsync(new TemplateCreatedEvent
+        {
+            TemplateCode = template.TemplateCode,
+            GameServiceId = template.GameServiceId,
+            DisplayName = template.DisplayName,
+            Description = template.Description,
+            PhysicalFormType = template.PhysicalFormType,
+            CreatedAt = template.CreatedAt,
+            UpdatedAt = template.UpdatedAt,
+            IsDeprecated = false,
+        }, cancellationToken);
+
+        _logger.LogInformation("Registered template {TemplateCode} for game {GameServiceId}",
+            body.TemplateCode, body.GameServiceId);
+
+        return (StatusCodes.OK, MapTemplateToResponse(template));
     }
 
-    /// <summary>
-    /// Implementation of GetTemplate operation.
-    /// </summary>
-    public async Task<(StatusCodes, GenesisTemplateResponse?)> GetTemplateAsync(GetTemplateRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, GenesisTemplateResponse?)> GetTemplateAsync(
+        GetTemplateRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement GetTemplate
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method GetTemplate not yet implemented");
+        var template = await _templateStore.GetAsync(BuildTemplateKey(body.TemplateCode), cancellationToken);
+        if (template == null) return (StatusCodes.NotFound, null);
+
+        return (StatusCodes.OK, MapTemplateToResponse(template));
     }
 
-    /// <summary>
-    /// Implementation of ListTemplates operation.
-    /// </summary>
-    public async Task<(StatusCodes, ListTemplatesResponse?)> ListTemplatesAsync(ListTemplatesRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, ListTemplatesResponse?)> ListTemplatesAsync(
+        ListTemplatesRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement ListTemplates
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method ListTemplates not yet implemented");
+        var pageSize = body.PageSize ?? _configuration.DefaultPageSize;
+        var index = await _templateListStore.GetAsync(BuildTemplateGameKey(body.GameServiceId), cancellationToken);
+        if (index == null || index.TemplateCodes.Count == 0)
+        {
+            return (StatusCodes.OK, new ListTemplatesResponse
+            {
+                Templates = new List<GenesisTemplateResponse>(),
+                TotalCount = 0,
+                Page = body.Page,
+                PageSize = pageSize
+            });
+        }
+
+        var templates = new List<GenesisTemplateModel>();
+        foreach (var code in index.TemplateCodes)
+        {
+            var template = await _templateStore.GetAsync(BuildTemplateKey(code), cancellationToken);
+            if (template != null)
+            {
+                if (!body.IncludeDeprecated && template.IsDeprecated) continue;
+                templates.Add(template);
+            }
+        }
+
+        var totalCount = templates.Count;
+        var paged = templates
+            .Skip((body.Page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(MapTemplateToResponse)
+            .ToList();
+
+        return (StatusCodes.OK, new ListTemplatesResponse
+        {
+            Templates = paged,
+            TotalCount = totalCount,
+            Page = body.Page,
+            PageSize = pageSize
+        });
     }
 
-    /// <summary>
-    /// Implementation of UpdateTemplate operation.
-    /// </summary>
-    public async Task<(StatusCodes, GenesisTemplateResponse?)> UpdateTemplateAsync(UpdateTemplateRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, GenesisTemplateResponse?)> UpdateTemplateAsync(
+        UpdateTemplateRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement UpdateTemplate
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method UpdateTemplate not yet implemented");
+        var template = await _templateStore.GetAsync(BuildTemplateKey(body.TemplateCode), cancellationToken);
+        if (template == null) return (StatusCodes.NotFound, null);
+
+        var changedFields = new List<string>();
+
+        // Validate awakening if changed
+        if (body.Awakening != null)
+        {
+            try
+            {
+                var realm = await _realmClient.GetRealmByCodeAsync(
+                    new GetRealmByCodeRequest { Code = body.Awakening.SystemRealmCode }, cancellationToken);
+                if (!realm.IsSystemType)
+                    return (StatusCodes.BadRequest, null);
+            }
+            catch (ApiException)
+            {
+                return (StatusCodes.BadRequest, null);
+            }
+
+            try
+            {
+                await _speciesClient.GetSpeciesByCodeAsync(
+                    new GetSpeciesByCodeRequest { Code = body.Awakening.CharacterSpeciesCode }, cancellationToken);
+            }
+            catch (ApiException)
+            {
+                return (StatusCodes.BadRequest, null);
+            }
+
+            template.Awakening = body.Awakening;
+            changedFields.Add("Awakening");
+        }
+
+        if (body.DisplayName != null) { template.DisplayName = body.DisplayName; changedFields.Add("DisplayName"); }
+        if (body.Description != null) { template.Description = body.Description; changedFields.Add("Description"); }
+        if (body.Seed != null) { template.Seed = body.Seed; changedFields.Add("Seed"); }
+        if (body.Economy != null) { template.Economy = body.Economy; changedFields.Add("Economy"); }
+        if (body.Storage != null) { template.Storage = body.Storage; changedFields.Add("Storage"); }
+        if (body.Bond != null) { template.Bond = body.Bond; changedFields.Add("Bond"); }
+
+        var lockOwner = $"update-template-{Guid.NewGuid():N}";
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.GenesisLock, $"entity:{body.TemplateCode}",
+            lockOwner, _configuration.EntityLockTimeoutSeconds, cancellationToken: cancellationToken);
+        if (!lockHandle.Success) return (StatusCodes.Conflict, null);
+
+        template.UpdatedAt = DateTimeOffset.UtcNow;
+        await _templateStore.SaveAsync(BuildTemplateKey(body.TemplateCode), template, cancellationToken: cancellationToken);
+
+        await _messageBus.PublishTemplateUpdatedAsync(new TemplateUpdatedEvent
+        {
+            TemplateCode = template.TemplateCode,
+            GameServiceId = template.GameServiceId,
+            DisplayName = template.DisplayName,
+            Description = template.Description,
+            PhysicalFormType = template.PhysicalFormType,
+            CreatedAt = template.CreatedAt,
+            UpdatedAt = template.UpdatedAt,
+            IsDeprecated = template.IsDeprecated,
+            DeprecatedAt = template.DeprecatedAt,
+            DeprecationReason = template.DeprecationReason,
+            ChangedFields = changedFields,
+        }, cancellationToken);
+
+        return (StatusCodes.OK, MapTemplateToResponse(template));
     }
 
-    /// <summary>
-    /// Implementation of DeprecateTemplate operation.
-    /// </summary>
-    public async Task<(StatusCodes, GenesisTemplateResponse?)> DeprecateTemplateAsync(DeprecateTemplateRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, GenesisTemplateResponse?)> DeprecateTemplateAsync(
+        DeprecateTemplateRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement DeprecateTemplate
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method DeprecateTemplate not yet implemented");
+        var template = await _templateStore.GetAsync(BuildTemplateKey(body.TemplateCode), cancellationToken);
+        if (template == null) return (StatusCodes.NotFound, null);
+
+        // Idempotent per IMPLEMENTATION TENETS
+        if (template.IsDeprecated)
+            return (StatusCodes.OK, MapTemplateToResponse(template));
+
+        template.IsDeprecated = true;
+        template.DeprecatedAt = DateTimeOffset.UtcNow;
+        template.DeprecationReason = body.Reason;
+        template.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _templateStore.SaveAsync(BuildTemplateKey(body.TemplateCode), template, cancellationToken: cancellationToken);
+
+        await _messageBus.PublishTemplateUpdatedAsync(new TemplateUpdatedEvent
+        {
+            TemplateCode = template.TemplateCode,
+            GameServiceId = template.GameServiceId,
+            DisplayName = template.DisplayName,
+            Description = template.Description,
+            PhysicalFormType = template.PhysicalFormType,
+            CreatedAt = template.CreatedAt,
+            UpdatedAt = template.UpdatedAt,
+            IsDeprecated = template.IsDeprecated,
+            DeprecatedAt = template.DeprecatedAt,
+            DeprecationReason = template.DeprecationReason,
+            ChangedFields = new List<string> { "IsDeprecated", "DeprecatedAt", "DeprecationReason" },
+        }, cancellationToken);
+
+        _logger.LogInformation("Deprecated template {TemplateCode}", body.TemplateCode);
+
+        return (StatusCodes.OK, MapTemplateToResponse(template));
     }
 
-    /// <summary>
-    /// Implementation of CleanDeprecated operation.
-    /// </summary>
-    public async Task<(StatusCodes, CleanDeprecatedStringKeyResponse?)> CleanDeprecatedAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, CleanDeprecatedStringKeyResponse?)> CleanDeprecatedAsync(
+        CleanDeprecatedRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement CleanDeprecated
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method CleanDeprecated not yet implemented");
+        var deprecatedTemplates = await _templateQueryStore.QueryAsync(
+            t => t.IsDeprecated, cancellationToken);
+
+        var result = await DeprecationCleanupHelper.ExecuteCleanupSweepAsync(
+            deprecatedTemplates,
+            getEntityId: t => t.TemplateCode,
+            getDeprecatedAt: t => t.DeprecatedAt,
+            hasInstancesAsync: async (t, ct) =>
+            {
+                // Check if any entities reference this template across any realm
+                var entities = await _entityQueryStore.QueryAsync(
+                    e => e.TemplateCode == t.TemplateCode, ct);
+                return entities.Count > 0;
+            },
+            deleteAndPublishAsync: async (t, ct) =>
+            {
+                await _templateStore.DeleteAsync(BuildTemplateKey(t.TemplateCode), ct);
+                await RemoveFromTemplateGameIndexAsync(t.GameServiceId, t.TemplateCode, ct);
+            },
+            gracePeriodDays: body.GracePeriodDays,
+            dryRun: body.DryRun,
+            _logger,
+            _telemetryProvider,
+            cancellationToken);
+
+        return (StatusCodes.OK, new CleanDeprecatedStringKeyResponse
+        {
+            Cleaned = result.Cleaned,
+            Remaining = result.Remaining,
+            Errors = result.Errors,
+            CleanedIds = result.CleanedIds.ToList(),
+        });
     }
 
-    /// <summary>
-    /// Implementation of CreateEntity operation.
-    /// </summary>
-    public async Task<(StatusCodes, GenesisEntityResponse?)> CreateEntityAsync(CreateEntityRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, GenesisEntityResponse?)> CreateEntityAsync(
+        CreateEntityRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement CreateEntity
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method CreateEntity not yet implemented");
+        _logger.LogDebug("Creating entity from template {TemplateCode} in realm {RealmId}",
+            body.TemplateCode, body.RealmId);
+
+        // Validate template
+        var template = await _templateStore.GetAsync(BuildTemplateKey(body.TemplateCode), cancellationToken);
+        if (template == null) return (StatusCodes.NotFound, null);
+        if (template.IsDeprecated) return (StatusCodes.BadRequest, null);
+
+        // Validate game service — generated clients throw ApiException
+        try
+        {
+            await _gameServiceClient.GetServiceAsync(
+                new GetServiceRequest { ServiceId = body.GameServiceId }, cancellationToken);
+        }
+        catch (ApiException)
+        {
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Code uniqueness check
+        if (body.Code != null)
+        {
+            var existing = await _entityStore.GetAsync(
+                BuildEntityCodeKey(body.GameServiceId, body.RealmId, body.Code), cancellationToken);
+            if (existing != null) return (StatusCodes.Conflict, null);
+        }
+
+        var entityId = Guid.NewGuid();
+
+        var lockOwner = $"create-entity-{Guid.NewGuid():N}";
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.GenesisLock, $"entity:{entityId}",
+            lockOwner, _configuration.EntityLockTimeoutSeconds, cancellationToken: cancellationToken);
+        if (!lockHandle.Success) return (StatusCodes.Conflict, null);
+
+        // Provision seed — generated clients throw ApiException on error
+        var seedResponse = await _seedClient.CreateSeedAsync(
+            new CreateSeedRequest
+            {
+                OwnerType = EntityType.Other,
+                OwnerId = entityId,
+                SeedTypeCode = template.Seed.SeedTypeCode,
+                GameServiceId = body.GameServiceId,
+            }, cancellationToken);
+
+        // Provision wallets
+        var walletIds = new Dictionary<string, Guid>();
+        foreach (var wallet in template.Economy.Wallets)
+        {
+            var wResponse = await _currencyClient.CreateWalletAsync(
+                new CreateWalletRequest
+                {
+                    OwnerId = entityId,
+                    OwnerType = EntityType.Other,
+                    RealmId = body.RealmId,
+                }, cancellationToken);
+            walletIds[wallet.WalletCode] = wResponse.WalletId;
+        }
+
+        // Provision inventories
+        var inventoryIds = new Dictionary<string, Guid>();
+        foreach (var inv in template.Storage.Inventories)
+        {
+            var iResponse = await _inventoryClient.CreateContainerAsync(
+                new CreateContainerRequest
+                {
+                    OwnerId = entityId,
+                    OwnerType = ContainerOwnerType.Other,
+                    ContainerType = inv.InventoryCode,
+                    ConstraintModel = inv.ConstraintModel.MapByName<ContainerConstraintModel>(),
+                    MaxSlots = inv.Capacity,
+                }, cancellationToken);
+            inventoryIds[inv.InventoryCode] = iResponse.ContainerId;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var entity = new GenesisEntityModel
+        {
+            EntityId = entityId,
+            TemplateCode = body.TemplateCode,
+            GameServiceId = body.GameServiceId,
+            RealmId = body.RealmId,
+            Code = body.Code,
+            DisplayName = body.DisplayName,
+            SeedId = seedResponse.SeedId,
+            WalletIds = walletIds,
+            InventoryIds = inventoryIds,
+            CurrentPhase = template.Seed.Phases.First().PhaseName,
+            CognitiveStage = CognitiveStage.Dormant,
+            PhysicalFormType = template.PhysicalFormType,
+            Status = GenesisEntityStatus.Active,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+
+        // Save entity and all indexes
+        await _entityStore.SaveAsync(BuildEntityKey(entityId), entity, cancellationToken: cancellationToken);
+        if (body.Code != null)
+            await _entityStore.SaveAsync(
+                BuildEntityCodeKey(body.GameServiceId, body.RealmId, body.Code), entity, cancellationToken: cancellationToken);
+        await AddToEntityTemplateIndexAsync(body.TemplateCode, body.RealmId, entityId, cancellationToken);
+        foreach (var walletId in walletIds.Values)
+            await _entityStore.SaveAsync(BuildEntityWalletKey(walletId), entity, cancellationToken: cancellationToken);
+
+        await _messageBus.PublishEntityCreatedAsync(new EntityCreatedEvent
+        {
+            EntityId = entityId,
+            TemplateCode = body.TemplateCode,
+            GameServiceId = body.GameServiceId,
+            RealmId = body.RealmId,
+            Code = body.Code,
+            DisplayName = body.DisplayName,
+            WalletIds = walletIds,
+            InventoryIds = inventoryIds,
+            CurrentPhase = entity.CurrentPhase,
+            CognitiveStage = entity.CognitiveStage,
+            PhysicalFormType = entity.PhysicalFormType,
+            Status = entity.Status,
+            CreatedAt = entity.CreatedAt,
+            UpdatedAt = entity.UpdatedAt,
+        }, cancellationToken);
+
+        _logger.LogInformation("Created entity {EntityId} from template {TemplateCode}",
+            entityId, body.TemplateCode);
+
+        return (StatusCodes.OK, MapEntityToResponse(entity, null));
     }
 
-    /// <summary>
-    /// Implementation of GetEntity operation.
-    /// </summary>
-    public async Task<(StatusCodes, GenesisEntityResponse?)> GetEntityAsync(GetEntityRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, GenesisEntityResponse?)> GetEntityAsync(
+        GetEntityRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement GetEntity
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method GetEntity not yet implemented");
+        // Check cache first
+        var cached = await _entityCacheStore.GetAsync(BuildEntityCacheKey(body.EntityId), cancellationToken);
+        GenesisEntityModel? entity;
+
+        if (cached != null)
+        {
+            entity = MapCachedToEntity(cached);
+        }
+        else
+        {
+            entity = await _entityStore.GetAsync(BuildEntityKey(body.EntityId), cancellationToken);
+            if (entity == null) return (StatusCodes.NotFound, null);
+
+            // Write-through cache with TTL in seconds
+            await _entityCacheStore.SaveAsync(
+                BuildEntityCacheKey(body.EntityId), MapEntityToCache(entity),
+                new StateOptions { Ttl = _configuration.EntityCacheTtlMinutes * 60 },
+                cancellationToken);
+        }
+
+        // Fetch wallet balances if requested
+        Dictionary<string, double>? walletBalances = null;
+        var includeBalances = body.IncludeBalances ?? _configuration.IncludeBalancesDefault;
+        if (includeBalances)
+        {
+            walletBalances = await FetchWalletBalancesAsync(entity, cancellationToken);
+        }
+
+        return (StatusCodes.OK, MapEntityToResponse(entity, walletBalances));
     }
 
-    /// <summary>
-    /// Implementation of ListEntities operation.
-    /// </summary>
-    public async Task<(StatusCodes, ListEntitiesResponse?)> ListEntitiesAsync(ListEntitiesRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, ListEntitiesResponse?)> ListEntitiesAsync(
+        ListEntitiesRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement ListEntities
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method ListEntities not yet implemented");
+        var pageSize = body.PageSize ?? _configuration.DefaultPageSize;
+        var index = await _entityListStore.GetAsync(
+            BuildEntityTemplateKey(body.TemplateCode, body.RealmId), cancellationToken);
+
+        if (index == null || index.EntityIds.Count == 0)
+        {
+            return (StatusCodes.OK, new ListEntitiesResponse
+            {
+                Entities = new List<GenesisEntityResponse>(),
+                TotalCount = 0,
+                Page = body.Page,
+                PageSize = pageSize
+            });
+        }
+
+        var entities = new List<GenesisEntityModel>();
+        foreach (var entityId in index.EntityIds)
+        {
+            var entity = await _entityStore.GetAsync(BuildEntityKey(entityId), cancellationToken);
+            if (entity == null) continue;
+
+            // Apply filters
+            if (body.CognitiveStage.HasValue && entity.CognitiveStage != body.CognitiveStage.Value) continue;
+            if (body.Status.HasValue && entity.Status != body.Status.Value) continue;
+            if (body.CurrentPhase != null && entity.CurrentPhase != body.CurrentPhase) continue;
+
+            entities.Add(entity);
+        }
+
+        var totalCount = entities.Count;
+        var paged = entities
+            .Skip((body.Page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(e => MapEntityToResponse(e, null))
+            .ToList();
+
+        return (StatusCodes.OK, new ListEntitiesResponse
+        {
+            Entities = paged,
+            TotalCount = totalCount,
+            Page = body.Page,
+            PageSize = pageSize
+        });
     }
 
-    /// <summary>
-    /// Implementation of GetCapabilities operation.
-    /// </summary>
-    public async Task<(StatusCodes, GetCapabilitiesResponse?)> GetCapabilitiesAsync(GetCapabilitiesRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, GetCapabilitiesResponse?)> GetCapabilitiesAsync(
+        GetCapabilitiesRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement GetCapabilities
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method GetCapabilities not yet implemented");
+        var entity = await _entityStore.GetAsync(BuildEntityKey(body.EntityId), cancellationToken);
+        if (entity == null) return (StatusCodes.NotFound, null);
+
+        // Check caps cache
+        var cached = await _capsCacheStore.GetAsync(BuildCapsCacheKey(body.EntityId), cancellationToken);
+        if (cached != null)
+        {
+            return (StatusCodes.OK, new GetCapabilitiesResponse
+            {
+                EntityId = body.EntityId,
+                Capabilities = cached.Capabilities,
+                Version = cached.Version,
+            });
+        }
+
+        // Cache miss — query seed service
+        List<GenesisCapability> capabilities;
+        int version;
+        try
+        {
+            var capResponse = await _seedClient.GetCapabilityManifestAsync(
+                new GetCapabilityManifestRequest { SeedId = entity.SeedId }, cancellationToken);
+            capabilities = capResponse.Capabilities.Select(c => new GenesisCapability
+            {
+                CapabilityCode = c.CapabilityCode,
+                IsUnlocked = c.Unlocked,
+            }).ToList();
+            version = capResponse.Version;
+        }
+        catch (ApiException)
+        {
+            capabilities = new List<GenesisCapability>();
+            version = 0;
+        }
+
+        // Cache result
+        await _capsCacheStore.SaveAsync(BuildCapsCacheKey(body.EntityId), new CachedCapabilityManifest
+        {
+            EntityId = body.EntityId,
+            Capabilities = capabilities,
+            Version = version,
+        }, new StateOptions { Ttl = _configuration.CapabilityCacheTtlMinutes * 60 },
+        cancellationToken);
+
+        return (StatusCodes.OK, new GetCapabilitiesResponse
+        {
+            EntityId = body.EntityId,
+            Capabilities = capabilities,
+            Version = version,
+        });
     }
 
-    /// <summary>
-    /// Implementation of DestroyEntity operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<StatusCodes> DestroyEntityAsync(DestroyEntityRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<StatusCodes> DestroyEntityAsync(
+        DestroyEntityRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing DestroyEntity operation");
+        var entity = await _entityStore.GetAsync(BuildEntityKey(body.EntityId), cancellationToken);
+        if (entity == null) return StatusCodes.NotFound;
 
-        // TODO: Implement your business logic here
-        // Note: The generated controller wraps this method with try/catch for error handling.
-        // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
-        // published as error events by the controller automatically.
-        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
-        throw new NotImplementedException("Method DestroyEntity not yet implemented");
+        var template = await _templateStore.GetAsync(BuildTemplateKey(entity.TemplateCode), cancellationToken);
 
-        // Example: return StatusCodes.NoContent;
+        var lockOwner = $"destroy-entity-{Guid.NewGuid():N}";
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.GenesisLock, $"entity:{body.EntityId}",
+            lockOwner, _configuration.EntityLockTimeoutSeconds, cancellationToken: cancellationToken);
+        if (!lockHandle.Success) return StatusCodes.Conflict;
+
+        await DestroyEntityCoreAsync(entity, template, cancellationToken);
+
+        _logger.LogInformation("Destroyed entity {EntityId}", body.EntityId);
+
+        return StatusCodes.OK;
     }
 
-    /// <summary>
-    /// Implementation of BindPhysicalForm operation.
-    /// </summary>
-    public async Task<(StatusCodes, GenesisEntityResponse?)> BindPhysicalFormAsync(BindPhysicalFormRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, GenesisEntityResponse?)> BindPhysicalFormAsync(
+        BindPhysicalFormRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement BindPhysicalForm
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method BindPhysicalForm not yet implemented");
+        var entity = await _entityStore.GetAsync(BuildEntityKey(body.EntityId), cancellationToken);
+        if (entity == null) return (StatusCodes.NotFound, null);
+
+        var template = await _templateStore.GetAsync(BuildTemplateKey(entity.TemplateCode), cancellationToken);
+
+        // Validate form type matches template
+        if (template != null && body.PhysicalFormType != template.PhysicalFormType)
+            return (StatusCodes.BadRequest, null);
+
+        // If Item type, validate item exists
+        if (body.PhysicalFormType == PhysicalFormType.Item)
+        {
+            try
+            {
+                await _itemClient.GetItemInstanceAsync(
+                    new GetItemInstanceRequest { InstanceId = body.PhysicalFormId }, cancellationToken);
+            }
+            catch (ApiException)
+            {
+                return (StatusCodes.BadRequest, null);
+            }
+        }
+
+        var lockOwner = $"bind-form-{Guid.NewGuid():N}";
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.GenesisLock, $"entity:{body.EntityId}",
+            lockOwner, _configuration.EntityLockTimeoutSeconds, cancellationToken: cancellationToken);
+        if (!lockHandle.Success) return (StatusCodes.Conflict, null);
+
+        entity.PhysicalFormType = body.PhysicalFormType;
+        entity.PhysicalFormId = body.PhysicalFormId;
+        entity.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _entityStore.SaveAsync(BuildEntityKey(body.EntityId), entity, cancellationToken: cancellationToken);
+        await _entityCacheStore.DeleteAsync(BuildEntityCacheKey(body.EntityId), cancellationToken);
+
+        await _messageBus.PublishEntityUpdatedAsync(new EntityUpdatedEvent
+        {
+            EntityId = entity.EntityId,
+            TemplateCode = entity.TemplateCode,
+            GameServiceId = entity.GameServiceId,
+            RealmId = entity.RealmId,
+            Code = entity.Code,
+            DisplayName = entity.DisplayName,
+            WalletIds = entity.WalletIds,
+            InventoryIds = entity.InventoryIds,
+            CurrentPhase = entity.CurrentPhase,
+            CognitiveStage = entity.CognitiveStage,
+            ActorId = entity.ActorId,
+            CharacterId = entity.CharacterId,
+            PhysicalFormType = entity.PhysicalFormType,
+            PhysicalFormId = entity.PhysicalFormId,
+            Status = entity.Status,
+            CreatedAt = entity.CreatedAt,
+            UpdatedAt = entity.UpdatedAt,
+            ChangedFields = new List<string> { "PhysicalFormType", "PhysicalFormId" },
+        }, cancellationToken);
+
+        return (StatusCodes.OK, MapEntityToResponse(entity, null));
     }
 
-    /// <summary>
-    /// Implementation of CreateBond operation.
-    /// </summary>
-    public async Task<(StatusCodes, GenesisEntityResponse?)> CreateBondAsync(CreateBondRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, GenesisEntityResponse?)> CreateBondAsync(
+        CreateBondRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement CreateBond
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method CreateBond not yet implemented");
+        var entity = await _entityStore.GetAsync(BuildEntityKey(body.EntityId), cancellationToken);
+        if (entity == null) return (StatusCodes.NotFound, null);
+
+        var template = await _templateStore.GetAsync(BuildTemplateKey(entity.TemplateCode), cancellationToken);
+        if (template == null) return (StatusCodes.NotFound, null);
+
+        if (!template.Bond.Enabled)
+            return (StatusCodes.BadRequest, null);
+
+        if (template.Bond.Cardinality == BondCardinality.None)
+            return (StatusCodes.BadRequest, null);
+
+        if ((template.Bond.Cardinality == BondCardinality.OptionalOne ||
+             template.Bond.Cardinality == BondCardinality.RequiredOne) &&
+            entity.BondTargetEntityId != null)
+            return (StatusCodes.Conflict, null);
+
+        var lockOwner = $"create-bond-{Guid.NewGuid():N}";
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.GenesisLock, $"bond:{body.EntityId}",
+            lockOwner, _configuration.EntityLockTimeoutSeconds, cancellationToken: cancellationToken);
+        if (!lockHandle.Success) return (StatusCodes.Conflict, null);
+
+        entity.BondTargetEntityType = body.TargetEntityType;
+        entity.BondTargetEntityId = body.TargetEntityId;
+
+        // If already awakened, create Relationship immediately
+        if (entity.CharacterId != null)
+        {
+            try
+            {
+                var relType = await _relationshipClient.GetRelationshipTypeByCodeAsync(
+                    new GetRelationshipTypeByCodeRequest { Code = template.Bond.RelationshipTypeCode ?? "bond" },
+                    cancellationToken);
+                var relResponse = await _relationshipClient.CreateRelationshipAsync(
+                    new CreateRelationshipRequest
+                    {
+                        Entity1Id = entity.CharacterId.Value,
+                        Entity1Type = EntityType.Character,
+                        Entity2Id = body.TargetEntityId,
+                        Entity2Type = body.TargetEntityType,
+                        RelationshipTypeId = relType.RelationshipTypeId,
+                        StartedAt = DateTimeOffset.UtcNow,
+                    }, cancellationToken);
+                entity.BondId = relResponse.RelationshipId;
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Failed to create bond relationship for entity {EntityId}", body.EntityId);
+            }
+        }
+
+        entity.UpdatedAt = DateTimeOffset.UtcNow;
+        await _entityStore.SaveAsync(BuildEntityKey(body.EntityId), entity, cancellationToken: cancellationToken);
+        await _entityCacheStore.DeleteAsync(BuildEntityCacheKey(body.EntityId), cancellationToken);
+
+        await _messageBus.PublishGenesisEntityBondCreatedAsync(new GenesisEntityBondCreatedEvent
+        {
+            EntityId = entity.EntityId,
+            TargetEntityType = body.TargetEntityType,
+            TargetEntityId = body.TargetEntityId,
+            BondId = entity.BondId,
+        }, cancellationToken);
+
+        return (StatusCodes.OK, MapEntityToResponse(entity, null));
     }
 
-    /// <summary>
-    /// Implementation of GetBond operation.
-    /// </summary>
-    public async Task<(StatusCodes, GenesisBondResponse?)> GetBondAsync(GetBondRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, GenesisBondResponse?)> GetBondAsync(
+        GetBondRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement GetBond
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method GetBond not yet implemented");
+        var entity = await _entityStore.GetAsync(BuildEntityKey(body.EntityId), cancellationToken);
+        if (entity == null) return (StatusCodes.NotFound, null);
+
+        if (entity.BondTargetEntityId == null)
+            return (StatusCodes.NotFound, null);
+
+        return (StatusCodes.OK, new GenesisBondResponse
+        {
+            BondId = entity.BondId,
+            BondTargetEntityType = entity.BondTargetEntityType!.Value,
+            BondTargetEntityId = entity.BondTargetEntityId.Value,
+        });
     }
 
-    /// <summary>
-    /// Implementation of DissolveBond operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<StatusCodes> DissolveBondAsync(DissolveBondRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<StatusCodes> DissolveBondAsync(
+        DissolveBondRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing DissolveBond operation");
+        var entity = await _entityStore.GetAsync(BuildEntityKey(body.EntityId), cancellationToken);
+        if (entity == null) return StatusCodes.NotFound;
 
-        // TODO: Implement your business logic here
-        // Note: The generated controller wraps this method with try/catch for error handling.
-        // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
-        // published as error events by the controller automatically.
-        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
-        throw new NotImplementedException("Method DissolveBond not yet implemented");
+        if (entity.BondTargetEntityId == null) return StatusCodes.NotFound;
 
-        // Example: return StatusCodes.NoContent;
+        var lockOwner = $"dissolve-bond-{Guid.NewGuid():N}";
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.GenesisLock, $"bond:{body.EntityId}",
+            lockOwner, _configuration.EntityLockTimeoutSeconds, cancellationToken: cancellationToken);
+        if (!lockHandle.Success) return StatusCodes.Conflict;
+
+        // Delete materialized relationship if it exists
+        if (entity.BondId != null)
+        {
+            try
+            {
+                await _relationshipClient.EndRelationshipAsync(
+                    new EndRelationshipRequest { RelationshipId = entity.BondId.Value }, cancellationToken);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Failed to delete bond relationship {BondId}", entity.BondId);
+            }
+        }
+
+        entity.BondTargetEntityType = null;
+        entity.BondTargetEntityId = null;
+        entity.BondId = null;
+        entity.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _entityStore.SaveAsync(BuildEntityKey(body.EntityId), entity, cancellationToken: cancellationToken);
+        await _entityCacheStore.DeleteAsync(BuildEntityCacheKey(body.EntityId), cancellationToken);
+
+        await _messageBus.PublishGenesisEntityBondDissolvedAsync(new GenesisEntityBondDissolvedEvent
+        {
+            EntityId = entity.EntityId,
+        }, cancellationToken);
+
+        return StatusCodes.OK;
     }
 
-    /// <summary>
-    /// Implementation of CleanupByCharacter operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<StatusCodes> CleanupByCharacterAsync(CleanupByCharacterRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<StatusCodes> CleanupByCharacterAsync(
+        CleanupByCharacterRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing CleanupByCharacter operation");
+        _logger.LogInformation("Cleaning up genesis entities for character {CharacterId}", body.CharacterId);
 
-        // TODO: Implement your business logic here
-        // Note: The generated controller wraps this method with try/catch for error handling.
-        // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
-        // published as error events by the controller automatically.
-        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
-        throw new NotImplementedException("Method CleanupByCharacter not yet implemented");
+        var entitiesToDestroy = await FindEntitiesByCharacterIdAsync(body.CharacterId, cancellationToken);
 
-        // Example: return StatusCodes.NoContent;
+        foreach (var entity in entitiesToDestroy)
+        {
+            try
+            {
+                var lockOwner = $"cleanup-char-{Guid.NewGuid():N}";
+                await using var lockHandle = await _lockProvider.LockAsync(
+                    StateStoreDefinitions.GenesisLock, $"entity:{entity.EntityId}",
+                    lockOwner, _configuration.EntityLockTimeoutSeconds, cancellationToken: cancellationToken);
+                if (!lockHandle.Success) continue;
+
+                if (entity.ActorId != null)
+                {
+                    try { await _actorClient.StopActorAsync(new StopActorRequest { ActorId = entity.ActorId.Value.ToString() }, cancellationToken); }
+                    catch (ApiException ex) { _logger.LogWarning(ex, "Failed to stop actor for entity {EntityId}", entity.EntityId); }
+                }
+
+                if (entity.BondId != null)
+                {
+                    try { await _relationshipClient.EndRelationshipAsync(new EndRelationshipRequest { RelationshipId = entity.BondId.Value }, cancellationToken); }
+                    catch (ApiException ex) { _logger.LogWarning(ex, "Failed to delete bond for entity {EntityId}", entity.EntityId); }
+                }
+
+                try
+                {
+                    await _resourceClient.ExecuteCleanupAsync(
+                        new ExecuteCleanupRequest { ResourceType = "genesis-entity", ResourceId = entity.EntityId },
+                        cancellationToken);
+                }
+                catch (ApiException ex) { _logger.LogWarning(ex, "Failed resource cleanup for entity {EntityId}", entity.EntityId); }
+
+                await DeleteEntityRecordsAsync(entity, cancellationToken);
+                await _messageBus.PublishEntityDeletedAsync(BuildEntityDeletedEvent(entity), cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                // Per-item error isolation per IMPLEMENTATION TENETS
+                _logger.LogWarning(ex, "Failed to cleanup genesis entity {EntityId} for character {CharacterId}",
+                    entity.EntityId, body.CharacterId);
+            }
+        }
+
+        return StatusCodes.OK;
     }
 
-    /// <summary>
-    /// Implementation of CleanupByRealm operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<StatusCodes> CleanupByRealmAsync(CleanupByRealmRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<StatusCodes> CleanupByRealmAsync(
+        CleanupByRealmRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing CleanupByRealm operation");
+        _logger.LogInformation("Cleaning up genesis entities for realm {RealmId}", body.RealmId);
 
-        // TODO: Implement your business logic here
-        // Note: The generated controller wraps this method with try/catch for error handling.
-        // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
-        // published as error events by the controller automatically.
-        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
-        throw new NotImplementedException("Method CleanupByRealm not yet implemented");
+        var entitiesToDestroy = await FindEntitiesByRealmIdAsync(body.RealmId, cancellationToken);
 
-        // Example: return StatusCodes.NoContent;
+        foreach (var entity in entitiesToDestroy)
+        {
+            try
+            {
+                var template = await _templateStore.GetAsync(
+                    BuildTemplateKey(entity.TemplateCode), cancellationToken);
+
+                var lockOwner = $"cleanup-realm-{Guid.NewGuid():N}";
+                await using var lockHandle = await _lockProvider.LockAsync(
+                    StateStoreDefinitions.GenesisLock, $"entity:{entity.EntityId}",
+                    lockOwner, _configuration.EntityLockTimeoutSeconds, cancellationToken: cancellationToken);
+                if (!lockHandle.Success) continue;
+
+                if (entity.ActorId != null)
+                {
+                    try { await _actorClient.StopActorAsync(new StopActorRequest { ActorId = entity.ActorId.Value.ToString() }, cancellationToken); }
+                    catch (ApiException ex) { _logger.LogWarning(ex, "Failed to stop actor for entity {EntityId}", entity.EntityId); }
+                }
+
+                if (entity.CharacterId != null && template?.ArchiveOnDestruction == true)
+                {
+                    try
+                    {
+                        await _resourceClient.ExecuteCompressAsync(
+                            new ExecuteCompressRequest { ResourceType = "character", ResourceId = entity.CharacterId.Value },
+                            cancellationToken);
+                    }
+                    catch (ApiException ex) { _logger.LogWarning(ex, "Failed to archive character for entity {EntityId}", entity.EntityId); }
+                }
+
+                if (entity.BondId != null)
+                {
+                    try { await _relationshipClient.EndRelationshipAsync(new EndRelationshipRequest { RelationshipId = entity.BondId.Value }, cancellationToken); }
+                    catch (ApiException ex) { _logger.LogWarning(ex, "Failed to delete bond for entity {EntityId}", entity.EntityId); }
+                }
+
+                try
+                {
+                    await _resourceClient.ExecuteCleanupAsync(
+                        new ExecuteCleanupRequest { ResourceType = "genesis-entity", ResourceId = entity.EntityId },
+                        cancellationToken);
+                }
+                catch (ApiException ex) { _logger.LogWarning(ex, "Failed resource cleanup for entity {EntityId}", entity.EntityId); }
+
+                await DeleteEntityRecordsAsync(entity, cancellationToken);
+                await _messageBus.PublishEntityDeletedAsync(BuildEntityDeletedEvent(entity), cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to cleanup genesis entity {EntityId} for realm {RealmId}",
+                    entity.EntityId, body.RealmId);
+            }
+        }
+
+        return StatusCodes.OK;
     }
 
-    /// <summary>
-    /// Implementation of GetCompressData operation.
-    /// </summary>
-    public async Task<(StatusCodes, GenesisArchive?)> GetCompressDataAsync(GetCompressDataRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, GenesisArchive?)> GetCompressDataAsync(
+        GetCompressDataRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement GetCompressData
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method GetCompressData not yet implemented");
+        var entities = await FindEntitiesByCharacterIdAsync(body.CharacterId, cancellationToken);
+
+        var archivedEntities = new List<GenesisArchivedEntity>();
+        foreach (var entity in entities)
+        {
+            var walletBalances = await FetchWalletBalancesAsync(entity, cancellationToken);
+
+            archivedEntities.Add(new GenesisArchivedEntity
+            {
+                EntityId = entity.EntityId,
+                TemplateCode = entity.TemplateCode,
+                GameServiceId = entity.GameServiceId,
+                RealmId = entity.RealmId,
+                Code = entity.Code,
+                DisplayName = entity.DisplayName,
+                WalletBalances = walletBalances ?? new Dictionary<string, double>(),
+                CurrentPhase = entity.CurrentPhase,
+                CognitiveStage = entity.CognitiveStage,
+                CreatedAt = entity.CreatedAt,
+            });
+        }
+
+        return (StatusCodes.OK, new GenesisArchive
+        {
+            Entities = archivedEntities,
+        });
     }
 
-    /// <summary>
-    /// Implementation of RestoreFromArchive operation.
-    /// </summary>
-    public async Task<(StatusCodes, RestoreFromArchiveResponse?)> RestoreFromArchiveAsync(RestoreFromArchiveRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, RestoreFromArchiveResponse?)> RestoreFromArchiveAsync(
+        RestoreFromArchiveRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement RestoreFromArchive
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method RestoreFromArchive not yet implemented");
-    }
+        var restoredCount = 0;
 
+        foreach (var archived in body.Archive.Entities)
+        {
+            var template = await _templateStore.GetAsync(BuildTemplateKey(archived.TemplateCode), cancellationToken);
+            if (template == null)
+                return (StatusCodes.BadRequest, null);
+
+            // Re-provision seed
+            var seedResponse = await _seedClient.CreateSeedAsync(
+                new CreateSeedRequest
+                {
+                    OwnerType = EntityType.Other,
+                    OwnerId = archived.EntityId,
+                    SeedTypeCode = template.Seed.SeedTypeCode,
+                    GameServiceId = archived.GameServiceId,
+                }, cancellationToken);
+
+            // Re-provision wallets with archived balances
+            var walletIds = new Dictionary<string, Guid>();
+            foreach (var wallet in template.Economy.Wallets)
+            {
+                var wResponse = await _currencyClient.CreateWalletAsync(
+                    new CreateWalletRequest
+                    {
+                        OwnerId = archived.EntityId,
+                        OwnerType = EntityType.Other,
+                        RealmId = archived.RealmId,
+                    }, cancellationToken);
+                walletIds[wallet.WalletCode] = wResponse.WalletId;
+
+                // Restore balance
+                if (archived.WalletBalances.TryGetValue(wallet.WalletCode, out var balance) && balance > 0)
+                {
+                    try
+                    {
+                        await _currencyClient.CreditCurrencyAsync(
+                            new CreditCurrencyRequest { WalletId = wResponse.WalletId, Amount = balance },
+                            cancellationToken);
+                    }
+                    catch (ApiException ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to restore balance for wallet {WalletCode}", wallet.WalletCode);
+                    }
+                }
+            }
+
+            // Re-provision inventories
+            var inventoryIds = new Dictionary<string, Guid>();
+            foreach (var inv in template.Storage.Inventories)
+            {
+                var iResponse = await _inventoryClient.CreateContainerAsync(
+                    new CreateContainerRequest
+                    {
+                        OwnerId = archived.EntityId,
+                        OwnerType = ContainerOwnerType.Other,
+                        ContainerType = inv.InventoryCode,
+                        ConstraintModel = inv.ConstraintModel.MapByName<ContainerConstraintModel>(),
+                        MaxSlots = inv.Capacity,
+                    }, cancellationToken);
+                inventoryIds[inv.InventoryCode] = iResponse.ContainerId;
+            }
+
+            var now = DateTimeOffset.UtcNow;
+            var entity = new GenesisEntityModel
+            {
+                EntityId = archived.EntityId,
+                TemplateCode = archived.TemplateCode,
+                GameServiceId = archived.GameServiceId,
+                RealmId = archived.RealmId,
+                Code = archived.Code,
+                DisplayName = archived.DisplayName,
+                SeedId = seedResponse.SeedId,
+                WalletIds = walletIds,
+                InventoryIds = inventoryIds,
+                CurrentPhase = archived.CurrentPhase,
+                CognitiveStage = CognitiveStage.Dormant,
+                PhysicalFormType = template.PhysicalFormType,
+                Status = GenesisEntityStatus.Active,
+                CreatedAt = archived.CreatedAt,
+                UpdatedAt = now,
+            };
+
+            // Save entity and indexes
+            await _entityStore.SaveAsync(BuildEntityKey(archived.EntityId), entity, cancellationToken: cancellationToken);
+            if (archived.Code != null)
+                await _entityStore.SaveAsync(
+                    BuildEntityCodeKey(archived.GameServiceId, archived.RealmId, archived.Code),
+                    entity, cancellationToken: cancellationToken);
+            await AddToEntityTemplateIndexAsync(archived.TemplateCode, archived.RealmId, archived.EntityId, cancellationToken);
+            foreach (var walletId in walletIds.Values)
+                await _entityStore.SaveAsync(BuildEntityWalletKey(walletId), entity, cancellationToken: cancellationToken);
+
+            await _messageBus.PublishEntityCreatedAsync(new EntityCreatedEvent
+            {
+                EntityId = archived.EntityId,
+                TemplateCode = archived.TemplateCode,
+                GameServiceId = archived.GameServiceId,
+                RealmId = archived.RealmId,
+                Code = archived.Code,
+                DisplayName = archived.DisplayName,
+                WalletIds = walletIds,
+                InventoryIds = inventoryIds,
+                CurrentPhase = entity.CurrentPhase,
+                CognitiveStage = entity.CognitiveStage,
+                PhysicalFormType = entity.PhysicalFormType,
+                Status = entity.Status,
+                CreatedAt = entity.CreatedAt,
+                UpdatedAt = entity.UpdatedAt,
+            }, cancellationToken);
+
+            restoredCount++;
+        }
+
+        return (StatusCodes.OK, new RestoreFromArchiveResponse { RestoredCount = restoredCount });
+    }
 }
