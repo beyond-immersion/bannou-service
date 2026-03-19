@@ -38,6 +38,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Game Service API](#game-service) | `client.GameService` | 5 | Registry service for game services that users can subscribe ... |
 | [Bannou Game Session Service API](#game-session) | `client.GameSession` | 11 | Minimal game session management for games. |
 | [Bannou Gardener Service API](#gardener) | `client.Gardener` | 23 | Player experience orchestration service (L4 GameFeatures) fo... |
+| [Bannou Genesis Service API](#genesis) | `client.Genesis` | 18 | Template-driven entity awakening lifecycle service (L2 GameF... |
 | [Inventory Service API](#inventory) | `client.Inventory` | 16 | Container and inventory management service for games. |
 | [Item Service API](#item) | `client.Item` | 16 | Item template and instance management service. |
 | [Bannou Leaderboard Service API](#leaderboard) | `client.Leaderboard` | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
@@ -1668,6 +1669,47 @@ Player experience orchestration service (L4 GameFeatures) for garden navigation,
 
 ---
 
+## Bannou Genesis Service API {#genesis}
+
+**Proxy**: `client.Genesis` | **Version**: 1.0.0
+
+Template-driven entity awakening lifecycle service (L2 GameFoundation). Manages entities that progressively grow from inert objects into autonomous...
+
+### Genesis Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbycharacterEventAsync` | `CleanupByCharacterRequest` | *(fire-and-forget)* | Cascade-delete genesis entities linked to a character |
+| `CleanupbyrealmEventAsync` | `CleanupByRealmRequest` | *(fire-and-forget)* | Cascade-delete genesis entities in a realm |
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `GenesisArchive` | Get compression archive data for genesis entities linked to a character |
+| `RestorefromarchiveAsync` | `RestoreFromArchiveRequest` | `RestoreFromArchiveResponse` | Restore genesis entities from a compressed archive |
+
+### Genesis Entities
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateEntityAsync` | `CreateEntityRequest` | `GenesisEntityResponse` | Create a genesis entity from a template |
+| `GetEntityAsync` | `GetEntityRequest` | `GenesisEntityResponse` | Get a genesis entity by ID |
+| `ListEntitiesAsync` | `ListEntitiesRequest` | `ListEntitiesResponse` | List genesis entities by template and realm |
+| `GetCapabilitiesAsync` | `GetCapabilitiesRequest` | `GetCapabilitiesResponse` | Get capability manifest for a genesis entity |
+| `DestroyentityEventAsync` | `DestroyEntityRequest` | *(fire-and-forget)* | Destroy a genesis entity |
+| `BindphysicalformAsync` | `BindPhysicalFormRequest` | `GenesisEntityResponse` | Bind a physical form to a genesis entity |
+| `CreateBondAsync` | `CreateBondRequest` | `GenesisEntityResponse` | Create a bond between a genesis entity and a target entity |
+| `GetBondAsync` | `GetBondRequest` | `GenesisBondResponse` | Get bond information for a genesis entity |
+| `DissolvebondEventAsync` | `DissolveBondRequest` | *(fire-and-forget)* | Dissolve a bond on a genesis entity |
+
+### Genesis Templates
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `RegisterTemplateAsync` | `RegisterTemplateRequest` | `GenesisTemplateResponse` | Register a new genesis template |
+| `GetTemplateAsync` | `GetTemplateRequest` | `GenesisTemplateResponse` | Get a genesis template by code |
+| `ListTemplatesAsync` | `ListTemplatesRequest` | `ListTemplatesResponse` | List genesis templates for a game service |
+| `UpdateTemplateAsync` | `UpdateTemplateRequest` | `GenesisTemplateResponse` | Update a genesis template |
+| `DeprecatetemplateAsync` | `DeprecateTemplateRequest` | `GenesisTemplateResponse` | Deprecate a genesis template |
+
+---
+
 ## Inventory Service API {#inventory}
 
 **Proxy**: `client.Inventory` | **Version**: 1.0.0
@@ -3048,8 +3090,8 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 
 ## Summary
 
-- **Total services**: 62
-- **Total methods**: 1093
+- **Total services**: 63
+- **Total methods**: 1111
 
 ---
 

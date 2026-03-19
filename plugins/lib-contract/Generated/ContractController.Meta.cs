@@ -438,6 +438,7 @@ public partial class ContractController
         },
         "PreboundApi": {
             "type": "object",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.PreboundApi",
             "description": "Pre-configured API call to execute on contract events",
             "additionalProperties": false,
             "required": [
@@ -469,18 +470,19 @@ public partial class ContractController
                             "$ref": "#/$defs/PreboundApiExecutionMode"
                         }
                     ],
-                    "default": "sync",
+                    "default": "Sync",
                     "description": "How to execute the API call"
                 },
-                "responseValidation": {
-                    "$ref": "#/$defs/ResponseValidation",
+                "responseTransformation": {
+                    "$ref": "#/$defs/ResponseTransformation",
                     "nullable": true,
-                    "description": "Optional validation rules for the response"
+                    "description": "Optional transformation rules for the API response"
                 }
             }
         },
         "PreboundApiExecutionMode": {
             "type": "string",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.PreboundApiExecutionMode",
             "description": "How to execute a prebound API call",
             "enum": [
                 "Sync",
@@ -488,37 +490,64 @@ public partial class ContractController
                 "FireAndForget"
             ]
         },
-        "ResponseValidation": {
+        "ResponseTransformation": {
             "type": "object",
-            "description": "Validation rules for API responses with three-outcome model (success, permanent failure, transient failure)",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.ResponseTransformation",
+            "description": "Transformation rules applied to a prebound API response. First matching rule produces the result.",
             "additionalProperties": false,
             "properties": {
-                "successConditions": {
+                "rules": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/ValidationCondition"
+                        "$ref": "#/$defs/TransformationRule"
                     },
-                    "description": "Conditions that must ALL pass for success; if any fail, checks permanent failure conditions"
-                },
-                "permanentFailureConditions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/ValidationCondition"
-                    },
-                    "description": "Conditions that indicate permanent failure (clause violated); checked when success conditions fail"
+                    "description": "Ordered list of transformation rules. First matching rule wins."
                 },
                 "transientFailureStatusCodes": {
                     "type": "array",
                     "items": {
                         "type": "integer"
                     },
-                    "description": "HTTP status codes indicating transient failure for retry (default 408, 429, 502, 503, 504)"
+                    "description": "HTTP status codes indicating transient failure (retryable). Default when null 408, 429, 502, 503, 504."
                 }
             }
         },
-        "ValidationCondition": {
+        "TransformationRule": {
             "type": "object",
-            "description": "A single condition to check against an API response",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationRule",
+            "description": "A single transformation rule with conditions and result payload",
+            "additionalProperties": false,
+            "required": [
+                "statusCode"
+            ],
+            "properties": {
+                "conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TransformationCondition"
+                    },
+                    "description": "All conditions must match for this rule to fire (AND logic). Empty or null always matches."
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "description": "HTTP status code to return when this rule matches"
+                },
+                "payload": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JSON payload to return when matched. Null passes through raw response body."
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description of what this rule does"
+                }
+            }
+        },
+        "TransformationCondition": {
+            "type": "object",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationCondition",
+            "description": "A single condition to evaluate against an API response",
             "additionalProperties": false,
             "required": [
                 "type"
@@ -527,20 +556,20 @@ public partial class ContractController
                 "type": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/ValidationConditionType"
+                            "$ref": "#/$defs/TransformationConditionType"
                         }
                     ],
-                    "description": "The type of validation condition to check"
+                    "description": "The type of condition to evaluate"
                 },
                 "jsonPath": {
                     "type": "string",
                     "nullable": true,
-                    "description": "JsonPath expression to extract value from response (required for jsonPathEquals/Exists/NotExists, e.g. \"$.balance\")"
+                    "description": "JsonPath expression to extract value from response (e.g. \"$.balance\", \"$.species.code\")"
                 },
                 "expectedValue": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Expected value for comparison conditions with type coercion (\"true\"/\"false\" for booleans, numeric strings for numbers)"
+                    "description": "Expected value for comparison conditions with type coercion"
                 },
                 "operator": {
                     "$ref": "#/$defs/ComparisonOperator",
@@ -552,13 +581,14 @@ public partial class ContractController
                     "items": {
                         "type": "integer"
                     },
-                    "description": "HTTP status codes for statusCodeIn condition"
+                    "description": "HTTP status codes for StatusCodeIn condition"
                 }
             }
         },
-        "ValidationConditionType": {
+        "TransformationConditionType": {
             "type": "string",
-            "description": "Type of validation condition",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationConditionType",
+            "description": "Types of conditions that can be evaluated against an API response",
             "enum": [
                 "StatusCodeIn",
                 "JsonPathEquals",
@@ -572,6 +602,7 @@ public partial class ContractController
         },
         "ComparisonOperator": {
             "type": "string",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.ComparisonOperator",
             "description": "Comparison operators for numeric conditions",
             "enum": [
                 "Eq",
@@ -1031,6 +1062,7 @@ public partial class ContractController
         },
         "PreboundApi": {
             "type": "object",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.PreboundApi",
             "description": "Pre-configured API call to execute on contract events",
             "additionalProperties": false,
             "required": [
@@ -1062,18 +1094,19 @@ public partial class ContractController
                             "$ref": "#/$defs/PreboundApiExecutionMode"
                         }
                     ],
-                    "default": "sync",
+                    "default": "Sync",
                     "description": "How to execute the API call"
                 },
-                "responseValidation": {
-                    "$ref": "#/$defs/ResponseValidation",
+                "responseTransformation": {
+                    "$ref": "#/$defs/ResponseTransformation",
                     "nullable": true,
-                    "description": "Optional validation rules for the response"
+                    "description": "Optional transformation rules for the API response"
                 }
             }
         },
         "PreboundApiExecutionMode": {
             "type": "string",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.PreboundApiExecutionMode",
             "description": "How to execute a prebound API call",
             "enum": [
                 "Sync",
@@ -1081,37 +1114,64 @@ public partial class ContractController
                 "FireAndForget"
             ]
         },
-        "ResponseValidation": {
+        "ResponseTransformation": {
             "type": "object",
-            "description": "Validation rules for API responses with three-outcome model (success, permanent failure, transient failure)",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.ResponseTransformation",
+            "description": "Transformation rules applied to a prebound API response. First matching rule produces the result.",
             "additionalProperties": false,
             "properties": {
-                "successConditions": {
+                "rules": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/ValidationCondition"
+                        "$ref": "#/$defs/TransformationRule"
                     },
-                    "description": "Conditions that must ALL pass for success; if any fail, checks permanent failure conditions"
-                },
-                "permanentFailureConditions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/ValidationCondition"
-                    },
-                    "description": "Conditions that indicate permanent failure (clause violated); checked when success conditions fail"
+                    "description": "Ordered list of transformation rules. First matching rule wins."
                 },
                 "transientFailureStatusCodes": {
                     "type": "array",
                     "items": {
                         "type": "integer"
                     },
-                    "description": "HTTP status codes indicating transient failure for retry (default 408, 429, 502, 503, 504)"
+                    "description": "HTTP status codes indicating transient failure (retryable). Default when null 408, 429, 502, 503, 504."
                 }
             }
         },
-        "ValidationCondition": {
+        "TransformationRule": {
             "type": "object",
-            "description": "A single condition to check against an API response",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationRule",
+            "description": "A single transformation rule with conditions and result payload",
+            "additionalProperties": false,
+            "required": [
+                "statusCode"
+            ],
+            "properties": {
+                "conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TransformationCondition"
+                    },
+                    "description": "All conditions must match for this rule to fire (AND logic). Empty or null always matches."
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "description": "HTTP status code to return when this rule matches"
+                },
+                "payload": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JSON payload to return when matched. Null passes through raw response body."
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description of what this rule does"
+                }
+            }
+        },
+        "TransformationCondition": {
+            "type": "object",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationCondition",
+            "description": "A single condition to evaluate against an API response",
             "additionalProperties": false,
             "required": [
                 "type"
@@ -1120,20 +1180,20 @@ public partial class ContractController
                 "type": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/ValidationConditionType"
+                            "$ref": "#/$defs/TransformationConditionType"
                         }
                     ],
-                    "description": "The type of validation condition to check"
+                    "description": "The type of condition to evaluate"
                 },
                 "jsonPath": {
                     "type": "string",
                     "nullable": true,
-                    "description": "JsonPath expression to extract value from response (required for jsonPathEquals/Exists/NotExists, e.g. \"$.balance\")"
+                    "description": "JsonPath expression to extract value from response (e.g. \"$.balance\", \"$.species.code\")"
                 },
                 "expectedValue": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Expected value for comparison conditions with type coercion (\"true\"/\"false\" for booleans, numeric strings for numbers)"
+                    "description": "Expected value for comparison conditions with type coercion"
                 },
                 "operator": {
                     "$ref": "#/$defs/ComparisonOperator",
@@ -1145,13 +1205,14 @@ public partial class ContractController
                     "items": {
                         "type": "integer"
                     },
-                    "description": "HTTP status codes for statusCodeIn condition"
+                    "description": "HTTP status codes for StatusCodeIn condition"
                 }
             }
         },
-        "ValidationConditionType": {
+        "TransformationConditionType": {
             "type": "string",
-            "description": "Type of validation condition",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationConditionType",
+            "description": "Types of conditions that can be evaluated against an API response",
             "enum": [
                 "StatusCodeIn",
                 "JsonPathEquals",
@@ -1165,6 +1226,7 @@ public partial class ContractController
         },
         "ComparisonOperator": {
             "type": "string",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.ComparisonOperator",
             "description": "Comparison operators for numeric conditions",
             "enum": [
                 "Eq",
@@ -1707,6 +1769,7 @@ public partial class ContractController
         },
         "PreboundApi": {
             "type": "object",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.PreboundApi",
             "description": "Pre-configured API call to execute on contract events",
             "additionalProperties": false,
             "required": [
@@ -1738,18 +1801,19 @@ public partial class ContractController
                             "$ref": "#/$defs/PreboundApiExecutionMode"
                         }
                     ],
-                    "default": "sync",
+                    "default": "Sync",
                     "description": "How to execute the API call"
                 },
-                "responseValidation": {
-                    "$ref": "#/$defs/ResponseValidation",
+                "responseTransformation": {
+                    "$ref": "#/$defs/ResponseTransformation",
                     "nullable": true,
-                    "description": "Optional validation rules for the response"
+                    "description": "Optional transformation rules for the API response"
                 }
             }
         },
         "PreboundApiExecutionMode": {
             "type": "string",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.PreboundApiExecutionMode",
             "description": "How to execute a prebound API call",
             "enum": [
                 "Sync",
@@ -1757,37 +1821,64 @@ public partial class ContractController
                 "FireAndForget"
             ]
         },
-        "ResponseValidation": {
+        "ResponseTransformation": {
             "type": "object",
-            "description": "Validation rules for API responses with three-outcome model (success, permanent failure, transient failure)",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.ResponseTransformation",
+            "description": "Transformation rules applied to a prebound API response. First matching rule produces the result.",
             "additionalProperties": false,
             "properties": {
-                "successConditions": {
+                "rules": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/ValidationCondition"
+                        "$ref": "#/$defs/TransformationRule"
                     },
-                    "description": "Conditions that must ALL pass for success; if any fail, checks permanent failure conditions"
-                },
-                "permanentFailureConditions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/ValidationCondition"
-                    },
-                    "description": "Conditions that indicate permanent failure (clause violated); checked when success conditions fail"
+                    "description": "Ordered list of transformation rules. First matching rule wins."
                 },
                 "transientFailureStatusCodes": {
                     "type": "array",
                     "items": {
                         "type": "integer"
                     },
-                    "description": "HTTP status codes indicating transient failure for retry (default 408, 429, 502, 503, 504)"
+                    "description": "HTTP status codes indicating transient failure (retryable). Default when null 408, 429, 502, 503, 504."
                 }
             }
         },
-        "ValidationCondition": {
+        "TransformationRule": {
             "type": "object",
-            "description": "A single condition to check against an API response",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationRule",
+            "description": "A single transformation rule with conditions and result payload",
+            "additionalProperties": false,
+            "required": [
+                "statusCode"
+            ],
+            "properties": {
+                "conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TransformationCondition"
+                    },
+                    "description": "All conditions must match for this rule to fire (AND logic). Empty or null always matches."
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "description": "HTTP status code to return when this rule matches"
+                },
+                "payload": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JSON payload to return when matched. Null passes through raw response body."
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description of what this rule does"
+                }
+            }
+        },
+        "TransformationCondition": {
+            "type": "object",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationCondition",
+            "description": "A single condition to evaluate against an API response",
             "additionalProperties": false,
             "required": [
                 "type"
@@ -1796,20 +1887,20 @@ public partial class ContractController
                 "type": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/ValidationConditionType"
+                            "$ref": "#/$defs/TransformationConditionType"
                         }
                     ],
-                    "description": "The type of validation condition to check"
+                    "description": "The type of condition to evaluate"
                 },
                 "jsonPath": {
                     "type": "string",
                     "nullable": true,
-                    "description": "JsonPath expression to extract value from response (required for jsonPathEquals/Exists/NotExists, e.g. \"$.balance\")"
+                    "description": "JsonPath expression to extract value from response (e.g. \"$.balance\", \"$.species.code\")"
                 },
                 "expectedValue": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Expected value for comparison conditions with type coercion (\"true\"/\"false\" for booleans, numeric strings for numbers)"
+                    "description": "Expected value for comparison conditions with type coercion"
                 },
                 "operator": {
                     "$ref": "#/$defs/ComparisonOperator",
@@ -1821,13 +1912,14 @@ public partial class ContractController
                     "items": {
                         "type": "integer"
                     },
-                    "description": "HTTP status codes for statusCodeIn condition"
+                    "description": "HTTP status codes for StatusCodeIn condition"
                 }
             }
         },
-        "ValidationConditionType": {
+        "TransformationConditionType": {
             "type": "string",
-            "description": "Type of validation condition",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationConditionType",
+            "description": "Types of conditions that can be evaluated against an API response",
             "enum": [
                 "StatusCodeIn",
                 "JsonPathEquals",
@@ -1841,6 +1933,7 @@ public partial class ContractController
         },
         "ComparisonOperator": {
             "type": "string",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.ComparisonOperator",
             "description": "Comparison operators for numeric conditions",
             "enum": [
                 "Eq",
@@ -2432,6 +2525,7 @@ public partial class ContractController
         },
         "PreboundApi": {
             "type": "object",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.PreboundApi",
             "description": "Pre-configured API call to execute on contract events",
             "additionalProperties": false,
             "required": [
@@ -2463,18 +2557,19 @@ public partial class ContractController
                             "$ref": "#/$defs/PreboundApiExecutionMode"
                         }
                     ],
-                    "default": "sync",
+                    "default": "Sync",
                     "description": "How to execute the API call"
                 },
-                "responseValidation": {
-                    "$ref": "#/$defs/ResponseValidation",
+                "responseTransformation": {
+                    "$ref": "#/$defs/ResponseTransformation",
                     "nullable": true,
-                    "description": "Optional validation rules for the response"
+                    "description": "Optional transformation rules for the API response"
                 }
             }
         },
         "PreboundApiExecutionMode": {
             "type": "string",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.PreboundApiExecutionMode",
             "description": "How to execute a prebound API call",
             "enum": [
                 "Sync",
@@ -2482,37 +2577,64 @@ public partial class ContractController
                 "FireAndForget"
             ]
         },
-        "ResponseValidation": {
+        "ResponseTransformation": {
             "type": "object",
-            "description": "Validation rules for API responses with three-outcome model (success, permanent failure, transient failure)",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.ResponseTransformation",
+            "description": "Transformation rules applied to a prebound API response. First matching rule produces the result.",
             "additionalProperties": false,
             "properties": {
-                "successConditions": {
+                "rules": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/ValidationCondition"
+                        "$ref": "#/$defs/TransformationRule"
                     },
-                    "description": "Conditions that must ALL pass for success; if any fail, checks permanent failure conditions"
-                },
-                "permanentFailureConditions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/ValidationCondition"
-                    },
-                    "description": "Conditions that indicate permanent failure (clause violated); checked when success conditions fail"
+                    "description": "Ordered list of transformation rules. First matching rule wins."
                 },
                 "transientFailureStatusCodes": {
                     "type": "array",
                     "items": {
                         "type": "integer"
                     },
-                    "description": "HTTP status codes indicating transient failure for retry (default 408, 429, 502, 503, 504)"
+                    "description": "HTTP status codes indicating transient failure (retryable). Default when null 408, 429, 502, 503, 504."
                 }
             }
         },
-        "ValidationCondition": {
+        "TransformationRule": {
             "type": "object",
-            "description": "A single condition to check against an API response",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationRule",
+            "description": "A single transformation rule with conditions and result payload",
+            "additionalProperties": false,
+            "required": [
+                "statusCode"
+            ],
+            "properties": {
+                "conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TransformationCondition"
+                    },
+                    "description": "All conditions must match for this rule to fire (AND logic). Empty or null always matches."
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "description": "HTTP status code to return when this rule matches"
+                },
+                "payload": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JSON payload to return when matched. Null passes through raw response body."
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description of what this rule does"
+                }
+            }
+        },
+        "TransformationCondition": {
+            "type": "object",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationCondition",
+            "description": "A single condition to evaluate against an API response",
             "additionalProperties": false,
             "required": [
                 "type"
@@ -2521,20 +2643,20 @@ public partial class ContractController
                 "type": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/ValidationConditionType"
+                            "$ref": "#/$defs/TransformationConditionType"
                         }
                     ],
-                    "description": "The type of validation condition to check"
+                    "description": "The type of condition to evaluate"
                 },
                 "jsonPath": {
                     "type": "string",
                     "nullable": true,
-                    "description": "JsonPath expression to extract value from response (required for jsonPathEquals/Exists/NotExists, e.g. \"$.balance\")"
+                    "description": "JsonPath expression to extract value from response (e.g. \"$.balance\", \"$.species.code\")"
                 },
                 "expectedValue": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Expected value for comparison conditions with type coercion (\"true\"/\"false\" for booleans, numeric strings for numbers)"
+                    "description": "Expected value for comparison conditions with type coercion"
                 },
                 "operator": {
                     "$ref": "#/$defs/ComparisonOperator",
@@ -2546,13 +2668,14 @@ public partial class ContractController
                     "items": {
                         "type": "integer"
                     },
-                    "description": "HTTP status codes for statusCodeIn condition"
+                    "description": "HTTP status codes for StatusCodeIn condition"
                 }
             }
         },
-        "ValidationConditionType": {
+        "TransformationConditionType": {
             "type": "string",
-            "description": "Type of validation condition",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationConditionType",
+            "description": "Types of conditions that can be evaluated against an API response",
             "enum": [
                 "StatusCodeIn",
                 "JsonPathEquals",
@@ -2566,6 +2689,7 @@ public partial class ContractController
         },
         "ComparisonOperator": {
             "type": "string",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.ComparisonOperator",
             "description": "Comparison operators for numeric conditions",
             "enum": [
                 "Eq",
@@ -3128,6 +3252,7 @@ public partial class ContractController
         },
         "PreboundApi": {
             "type": "object",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.PreboundApi",
             "description": "Pre-configured API call to execute on contract events",
             "additionalProperties": false,
             "required": [
@@ -3159,18 +3284,19 @@ public partial class ContractController
                             "$ref": "#/$defs/PreboundApiExecutionMode"
                         }
                     ],
-                    "default": "sync",
+                    "default": "Sync",
                     "description": "How to execute the API call"
                 },
-                "responseValidation": {
-                    "$ref": "#/$defs/ResponseValidation",
+                "responseTransformation": {
+                    "$ref": "#/$defs/ResponseTransformation",
                     "nullable": true,
-                    "description": "Optional validation rules for the response"
+                    "description": "Optional transformation rules for the API response"
                 }
             }
         },
         "PreboundApiExecutionMode": {
             "type": "string",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.PreboundApiExecutionMode",
             "description": "How to execute a prebound API call",
             "enum": [
                 "Sync",
@@ -3178,37 +3304,64 @@ public partial class ContractController
                 "FireAndForget"
             ]
         },
-        "ResponseValidation": {
+        "ResponseTransformation": {
             "type": "object",
-            "description": "Validation rules for API responses with three-outcome model (success, permanent failure, transient failure)",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.ResponseTransformation",
+            "description": "Transformation rules applied to a prebound API response. First matching rule produces the result.",
             "additionalProperties": false,
             "properties": {
-                "successConditions": {
+                "rules": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/ValidationCondition"
+                        "$ref": "#/$defs/TransformationRule"
                     },
-                    "description": "Conditions that must ALL pass for success; if any fail, checks permanent failure conditions"
-                },
-                "permanentFailureConditions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/ValidationCondition"
-                    },
-                    "description": "Conditions that indicate permanent failure (clause violated); checked when success conditions fail"
+                    "description": "Ordered list of transformation rules. First matching rule wins."
                 },
                 "transientFailureStatusCodes": {
                     "type": "array",
                     "items": {
                         "type": "integer"
                     },
-                    "description": "HTTP status codes indicating transient failure for retry (default 408, 429, 502, 503, 504)"
+                    "description": "HTTP status codes indicating transient failure (retryable). Default when null 408, 429, 502, 503, 504."
                 }
             }
         },
-        "ValidationCondition": {
+        "TransformationRule": {
             "type": "object",
-            "description": "A single condition to check against an API response",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationRule",
+            "description": "A single transformation rule with conditions and result payload",
+            "additionalProperties": false,
+            "required": [
+                "statusCode"
+            ],
+            "properties": {
+                "conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TransformationCondition"
+                    },
+                    "description": "All conditions must match for this rule to fire (AND logic). Empty or null always matches."
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "description": "HTTP status code to return when this rule matches"
+                },
+                "payload": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JSON payload to return when matched. Null passes through raw response body."
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description of what this rule does"
+                }
+            }
+        },
+        "TransformationCondition": {
+            "type": "object",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationCondition",
+            "description": "A single condition to evaluate against an API response",
             "additionalProperties": false,
             "required": [
                 "type"
@@ -3217,20 +3370,20 @@ public partial class ContractController
                 "type": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/ValidationConditionType"
+                            "$ref": "#/$defs/TransformationConditionType"
                         }
                     ],
-                    "description": "The type of validation condition to check"
+                    "description": "The type of condition to evaluate"
                 },
                 "jsonPath": {
                     "type": "string",
                     "nullable": true,
-                    "description": "JsonPath expression to extract value from response (required for jsonPathEquals/Exists/NotExists, e.g. \"$.balance\")"
+                    "description": "JsonPath expression to extract value from response (e.g. \"$.balance\", \"$.species.code\")"
                 },
                 "expectedValue": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Expected value for comparison conditions with type coercion (\"true\"/\"false\" for booleans, numeric strings for numbers)"
+                    "description": "Expected value for comparison conditions with type coercion"
                 },
                 "operator": {
                     "$ref": "#/$defs/ComparisonOperator",
@@ -3242,13 +3395,14 @@ public partial class ContractController
                     "items": {
                         "type": "integer"
                     },
-                    "description": "HTTP status codes for statusCodeIn condition"
+                    "description": "HTTP status codes for StatusCodeIn condition"
                 }
             }
         },
-        "ValidationConditionType": {
+        "TransformationConditionType": {
             "type": "string",
-            "description": "Type of validation condition",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationConditionType",
+            "description": "Types of conditions that can be evaluated against an API response",
             "enum": [
                 "StatusCodeIn",
                 "JsonPathEquals",
@@ -3262,6 +3416,7 @@ public partial class ContractController
         },
         "ComparisonOperator": {
             "type": "string",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.ComparisonOperator",
             "description": "Comparison operators for numeric conditions",
             "enum": [
                 "Eq",
@@ -3807,6 +3962,7 @@ public partial class ContractController
         },
         "PreboundApi": {
             "type": "object",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.PreboundApi",
             "description": "Pre-configured API call to execute on contract events",
             "additionalProperties": false,
             "required": [
@@ -3838,18 +3994,19 @@ public partial class ContractController
                             "$ref": "#/$defs/PreboundApiExecutionMode"
                         }
                     ],
-                    "default": "sync",
+                    "default": "Sync",
                     "description": "How to execute the API call"
                 },
-                "responseValidation": {
-                    "$ref": "#/$defs/ResponseValidation",
+                "responseTransformation": {
+                    "$ref": "#/$defs/ResponseTransformation",
                     "nullable": true,
-                    "description": "Optional validation rules for the response"
+                    "description": "Optional transformation rules for the API response"
                 }
             }
         },
         "PreboundApiExecutionMode": {
             "type": "string",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.PreboundApiExecutionMode",
             "description": "How to execute a prebound API call",
             "enum": [
                 "Sync",
@@ -3857,37 +4014,64 @@ public partial class ContractController
                 "FireAndForget"
             ]
         },
-        "ResponseValidation": {
+        "ResponseTransformation": {
             "type": "object",
-            "description": "Validation rules for API responses with three-outcome model (success, permanent failure, transient failure)",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.ResponseTransformation",
+            "description": "Transformation rules applied to a prebound API response. First matching rule produces the result.",
             "additionalProperties": false,
             "properties": {
-                "successConditions": {
+                "rules": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/ValidationCondition"
+                        "$ref": "#/$defs/TransformationRule"
                     },
-                    "description": "Conditions that must ALL pass for success; if any fail, checks permanent failure conditions"
-                },
-                "permanentFailureConditions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/ValidationCondition"
-                    },
-                    "description": "Conditions that indicate permanent failure (clause violated); checked when success conditions fail"
+                    "description": "Ordered list of transformation rules. First matching rule wins."
                 },
                 "transientFailureStatusCodes": {
                     "type": "array",
                     "items": {
                         "type": "integer"
                     },
-                    "description": "HTTP status codes indicating transient failure for retry (default 408, 429, 502, 503, 504)"
+                    "description": "HTTP status codes indicating transient failure (retryable). Default when null 408, 429, 502, 503, 504."
                 }
             }
         },
-        "ValidationCondition": {
+        "TransformationRule": {
             "type": "object",
-            "description": "A single condition to check against an API response",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationRule",
+            "description": "A single transformation rule with conditions and result payload",
+            "additionalProperties": false,
+            "required": [
+                "statusCode"
+            ],
+            "properties": {
+                "conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/TransformationCondition"
+                    },
+                    "description": "All conditions must match for this rule to fire (AND logic). Empty or null always matches."
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "description": "HTTP status code to return when this rule matches"
+                },
+                "payload": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JSON payload to return when matched. Null passes through raw response body."
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable description of what this rule does"
+                }
+            }
+        },
+        "TransformationCondition": {
+            "type": "object",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationCondition",
+            "description": "A single condition to evaluate against an API response",
             "additionalProperties": false,
             "required": [
                 "type"
@@ -3896,20 +4080,20 @@ public partial class ContractController
                 "type": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/ValidationConditionType"
+                            "$ref": "#/$defs/TransformationConditionType"
                         }
                     ],
-                    "description": "The type of validation condition to check"
+                    "description": "The type of condition to evaluate"
                 },
                 "jsonPath": {
                     "type": "string",
                     "nullable": true,
-                    "description": "JsonPath expression to extract value from response (required for jsonPathEquals/Exists/NotExists, e.g. \"$.balance\")"
+                    "description": "JsonPath expression to extract value from response (e.g. \"$.balance\", \"$.species.code\")"
                 },
                 "expectedValue": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Expected value for comparison conditions with type coercion (\"true\"/\"false\" for booleans, numeric strings for numbers)"
+                    "description": "Expected value for comparison conditions with type coercion"
                 },
                 "operator": {
                     "$ref": "#/$defs/ComparisonOperator",
@@ -3921,13 +4105,14 @@ public partial class ContractController
                     "items": {
                         "type": "integer"
                     },
-                    "description": "HTTP status codes for statusCodeIn condition"
+                    "description": "HTTP status codes for StatusCodeIn condition"
                 }
             }
         },
-        "ValidationConditionType": {
+        "TransformationConditionType": {
             "type": "string",
-            "description": "Type of validation condition",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.TransformationConditionType",
+            "description": "Types of conditions that can be evaluated against an API response",
             "enum": [
                 "StatusCodeIn",
                 "JsonPathEquals",
@@ -3941,6 +4126,7 @@ public partial class ContractController
         },
         "ComparisonOperator": {
             "type": "string",
+            "x-sdk-type": "BeyondImmersion.Bannou.Core.ComparisonOperator",
             "description": "Comparison operators for numeric conditions",
             "enum": [
                 "Eq",

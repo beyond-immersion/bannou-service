@@ -353,6 +353,15 @@ This document lists all events defined in Bannou's event schemas.
 | `GardenerScenarioCompletedEvent` | Custom | `gardener-scenario-completed` | Published when a scenario is completed with growth... |
 | `GardenerScenarioStartedEvent` | Custom | `gardener-scenario-started` | Published when a scenario instance is created |
 
+### Genesis
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `GenesisEntityBondCreatedEvent` | Lifecycle (Created) | `genesis-entity-bond.created` | Published when a bond is created on a genesis enti... |
+| `GenesisEntityBondDissolvedEvent` | Custom | `genesis-entity-bond-dissolved` | Published when a bond is dissolved on a genesis en... |
+| `GenesisEntityPhaseChangedEvent` | Custom | `genesis-entity-phase-changed` | Published when a genesis entity transitions to a n... |
+| `GenesisEntityTransitionFailedEvent` | Custom | `genesis-entity-transition-failed` | Published when ISeedEvolutionListener cannot compl... |
+
 ### Inventory
 
 | Event | Type | Likely Topic | Description |

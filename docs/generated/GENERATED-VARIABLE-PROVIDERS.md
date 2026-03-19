@@ -19,6 +19,7 @@ Variable providers supply entity data to behavior expressions via the
 | `${encounters.*}` | CharacterEncounter | Encounter history and sentiment for ABML expressions (${encounters.*}) |
 | `${environment.*}` | Environment | Weather, temperature, atmospheric conditions, and resource availability for ABML expressions (${environment.*}) |
 | `${faction.*}` | Faction | Faction membership and status data for ABML expressions (${faction.*}) |
+| `${genesis.*}` | Genesis | Genesis entity lifecycle data for ABML expressions (${genesis.*}) — template code, phase, cognitive stage, wallet balances, inventory state, capabilities, bond status |
 | `${heritage.*}` | CharacterLifecycle | Genetic heritage data — phenotype traits, aptitudes, bloodline membership, species, generation depth (${heritage.*}) |
 | `${inventory.*}` | Inventory | Item possession and container data for ABML expressions (${inventory.*}) |
 | `${lifecycle.*}` | CharacterLifecycle | Lifecycle state data — age, stage, fertility, health modifier, marriage status, child count, fulfillment (${lifecycle.*}) |
@@ -31,7 +32,7 @@ Variable providers supply entity data to behavior expressions via the
 | `${transit.*}` | Transit | Transit mode availability, journey state, and route data for ABML expressions (${transit.*}) |
 | `${world.*}` | Worldstate | Game time, calendar, and season data for ABML expressions (${world.*}) |
 
-**Total**: 19 providers
+**Total**: 20 providers
 
 ## How Providers Work
 

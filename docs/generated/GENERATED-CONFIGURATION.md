@@ -733,7 +733,9 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ESCROW_MAX_PENDING_PER_PARTY` | int | `100` | Maximum concurrent pending escrows per party |
 | `ESCROW_MAX_TIMEOUT` | string | `P30D` | Maximum allowed escrow duration (ISO 8601 duration) |
 | `ESCROW_TOKEN_LENGTH` | int | `32` | Token length in bytes (before encoding) |
+| `ESCROW_VALIDATION_BATCH_SIZE` | int | `50` | Maximum escrows to process per validation check cycle |
 | `ESCROW_VALIDATION_CHECK_INTERVAL` | string | `PT5M` | How often to validate held assets (ISO 8601 duration) |
+| `ESCROW_VALIDATION_STARTUP_DELAY_SECONDS` | int | `25` | Delay in seconds before the validation background service st... |
 
 ### Faction
 
@@ -825,6 +827,20 @@ This document lists all configuration options defined in Bannou's configuration 
 | `GARDENER_SCENARIO_TEMPLATE_QUERY_PAGE_SIZE` | int | `500` | Maximum number of scenario templates to load per orchestrato... |
 | `GARDENER_SCENARIO_TIMEOUT_MINUTES` | int | `60` | Maximum scenario duration before forced completion in minute... |
 | `GARDENER_SEED_TYPE_CODE` | string | `guardian` | Which seed type code this gardener manages for player spirit... |
+
+### Genesis
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `GENESIS_CAPABILITY_CACHE_TTL_MINUTES` | int | `5` | TTL in minutes for cached seed capability manifests in Redis |
+| `GENESIS_CLEANUP_BATCH_SIZE` | int | `100` | Number of entities to process per batch during realm cleanup |
+| `GENESIS_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for list queries when not specified by cal... |
+| `GENESIS_ENTITY_CACHE_TTL_MINUTES` | int | `5` | TTL in minutes for cached genesis entity records in Redis |
+| `GENESIS_ENTITY_LOCK_TIMEOUT_SECONDS` | int | `30` | Maximum time in seconds to wait for entity mutation distribu... |
+| `GENESIS_GROWTH_FLUSH_INTERVAL_SECONDS` | int | `5` | Interval in seconds between growth accumulator flush cycles |
+| `GENESIS_INCLUDE_BALANCES_DEFAULT` | bool | `false` | Default value for includeBalances when not specified by call... |
+| `GENESIS_STARTUP_DELAY_SECONDS` | int | `5` | Delay in seconds before background services start processing... |
+| `GENESIS_TRANSITION_LOCK_TIMEOUT_SECONDS` | int | `30` | Maximum time in seconds to wait for phase transition distrib... |
 
 ### Inventory
 
@@ -1477,9 +1493,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 1163
+- **Total properties**: 1174
 - **Required (no default)**: 67
-- **Optional (has default)**: 1096
+- **Optional (has default)**: 1107
 
 ## Environment Variable Naming Convention
 

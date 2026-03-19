@@ -164,7 +164,7 @@ public partial interface IServiceNavigator
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Prebound API execution result including substituted payload.</returns>
     Task<PreboundApiResult> ExecutePreboundApiAsync(
-        PreboundApiDefinition api,
+        PreboundApi api,
         IReadOnlyDictionary<string, object?> context,
         CancellationToken ct = default);
 
@@ -177,7 +177,7 @@ public partial interface IServiceNavigator
     /// <param name="ct">Cancellation token.</param>
     /// <returns>List of results for each API in order.</returns>
     Task<IReadOnlyList<PreboundApiResult>> ExecutePreboundApiBatchAsync(
-        IEnumerable<PreboundApiDefinition> apis,
+        IEnumerable<PreboundApi> apis,
         IReadOnlyDictionary<string, object?> context,
         BatchExecutionMode mode = BatchExecutionMode.Parallel,
         CancellationToken ct = default);

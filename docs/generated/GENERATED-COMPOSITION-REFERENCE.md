@@ -11,16 +11,16 @@ Bannou is not "a server you connect to." It is a runtime that can host your game
 
 #### Cloud Deployment (Traditional)
 
-The familiar model: Bannou runs as a containerized service (Docker Compose, Kubernetes, Portainer, Docker Swarm -- all supported via the Orchestrator's pluggable backend architecture). Game clients connect via WebSocket through the Connect gateway. Services scale horizontally via environment variables -- enable or disable any of the 76 plugins per node without code changes.
+The familiar model: Bannou runs as a containerized service (Docker Compose, Kubernetes, Portainer, Docker Swarm -- all supported via the Orchestrator's pluggable backend architecture). Game clients connect via WebSocket through the Connect gateway. Services scale horizontally via environment variables -- enable or disable any of the 78 plugins per node without code changes.
 
 ```
-Game Client ──WebSocket──▶ Connect Gateway ──mesh──▶ 76 Service Plugins
+Game Client ──WebSocket──▶ Connect Gateway ──mesh──▶ 78 Service Plugins
                                                       (distributed across nodes)
 ```
 
 #### Self-Hosted / Sidecar Deployment
 
-The Satisfactory/Valheim model: Bannou ships as a sidecar binary alongside the game client or dedicated server. Infrastructure backends swap to local alternatives (SQLite instead of MySQL, InMemory message bus instead of RabbitMQ, local mesh routing instead of YARP). A factory game can run on ~15 of the 76 plugins, with Workshop's lazy evaluation computing production retroactively from elapsed game-time on next query -- the server does not need to stay running between play sessions.
+The Satisfactory/Valheim model: Bannou ships as a sidecar binary alongside the game client or dedicated server. Infrastructure backends swap to local alternatives (SQLite instead of MySQL, InMemory message bus instead of RabbitMQ, local mesh routing instead of YARP). A factory game can run on ~15 of the 78 plugins, with Workshop's lazy evaluation computing production retroactively from elapsed game-time on next query -- the server does not need to stay running between play sessions.
 
 ```
 Game Client + Bannou Sidecar (same machine, localhost:5012)
@@ -45,7 +45,7 @@ Game Process
 
 ---
 
-### The 76-Plugin Composition Model
+### The 78-Plugin Composition Model
 
 Bannou's services are not a monolithic "game server framework." They are **composable primitives** -- small, orthogonal services that combine to create emergent game systems. No single service "is" the economy, or "is" combat, or "is" crafting. These are behaviors that emerge from primitives interacting.
 
@@ -53,7 +53,7 @@ Bannou's services are not a monolithic "game server framework." They are **compo
 
 ```
 L0: Infrastructure (4 plugins)     State, Messaging, Mesh, Telemetry
-L1: App Foundation (7 plugins)     Account, Auth, Chat, Connect, Permission, Contract, Resource
+L1: App Foundation (8 plugins)     Account, Auth, Chat, Connect, Localization, Permission, Contract, Resource
 L2: Game Foundation (17 plugins)   Character, Realm, Species, Location, Currency, Item, Inventory,
                                    Actor, Quest, Seed, Collection, Transit, Worldstate, and more
 L3: App Features (6 plugins)       Asset, Orchestrator, Documentation, Website, Voice, Broadcast
@@ -393,7 +393,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Currency | L2 | Multi-currency economy (wallets, transfers, exchange rates, holds, escrow integration) | 35 |
 | Game Service | L2 | Registry of available games/applications with stub-name lookup | 5 |
 | Game Session | L2 | Multiplayer session containers (lobby/matchmade) with reservation tokens and shortcut publishing | 11 |
-| Genesis | L2 | Template-driven entity awakening lifecycle — seed, economy, storage, and cognitive progression for entities that grow from inert objects into autonomous agents | — |
+| Genesis | L2 | Template-driven entity awakening lifecycle — seed, economy, storage, and cognitive progression for entities that grow from inert objects into autonomous agents | 19 |
 | Inventory | L2 | Container and item placement with constraint models (slot/weight/grid/volumetric/unlimited) | 16 |
 | Item | L2 | Dual-model items -- templates (definitions) and instances (occurrences) with quantity models and binding | 17 |
 | Location | L2 | Hierarchical location tree within realms (cities, regions, buildings, rooms) with depth tracking | 26 |
@@ -454,7 +454,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Utility | L4 | Infrastructure network topology, flow calculation, and coverage cascading (aqueducts, power grids) | — |
 | Workshop | L4 | Time-based automated production with lazy evaluation and background materialization | — |
 
-**78 services, 1115 endpoints**
+**78 services, 1134 endpoints**
 
 For full per-service details: `docs/generated/GENERATED-*-SERVICE-DETAILS.md`
 

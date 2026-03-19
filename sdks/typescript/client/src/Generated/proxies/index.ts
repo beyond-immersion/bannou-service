@@ -27,6 +27,7 @@ export { EnvironmentProxy } from './EnvironmentProxy.js';
 export { EscrowProxy } from './EscrowProxy.js';
 export { FactionProxy } from './FactionProxy.js';
 export { GardenerProxy } from './GardenerProxy.js';
+export { GenesisProxy } from './GenesisProxy.js';
 export { InventoryProxy } from './InventoryProxy.js';
 export { ItemProxy } from './ItemProxy.js';
 export { LeaderboardProxy } from './LeaderboardProxy.js';

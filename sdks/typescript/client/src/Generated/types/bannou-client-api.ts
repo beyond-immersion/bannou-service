@@ -6445,6 +6445,105 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/genesis/template/register': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Register a new genesis template
+     * @description Registers a template that defines the full lifecycle configuration for a genesis
+     *     entity type. Idempotent: returns existing template if templateCode already registered.
+     *     Validates seed structure, system realm existence, and species availability.
+     */
+    post: operations['genesis_registerTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/genesis/template/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Get a genesis template by code */
+    post: operations['genesis_getTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/genesis/template/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** List genesis templates for a game service */
+    post: operations['genesis_listTemplates'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/genesis/template/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update a genesis template
+     * @description Updates template configuration. Only affects new entities created after the update.
+     *     Existing entities retain the configuration snapshot from their creation time.
+     */
+    post: operations['genesis_updateTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/genesis/template/deprecate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Deprecate a genesis template
+     * @description Marks a template as deprecated. Idempotent: returns OK if already deprecated.
+     *     Deprecated templates cannot be used to create new entities. Existing entities
+     *     are unaffected. Category B deprecation per IMPLEMENTATION TENETS.
+     */
+    post: operations['genesis_deprecateTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/inventory/container/create': {
     parameters: {
       query?: never;
@@ -13987,6 +14086,11 @@ export interface components {
        */
       updatedAt?: string | null;
     } & components['schemas']['DeprecationFields'];
+    /**
+     * @description Maximum number of bonds a genesis entity template allows
+     * @enum {string}
+     */
+    BondCardinality: 'None' | 'OptionalOne' | 'RequiredOne' | 'Many';
     /** @description A participant in a seed bond. */
     BondParticipant: {
       /**
@@ -15692,6 +15796,11 @@ export interface components {
       /** @description Number of licenses cloned (item instances created) */
       licensesCloned: number;
     };
+    /**
+     * @description Cognitive progression stage of a genesis entity
+     * @enum {string}
+     */
+    CognitiveStage: 'Dormant' | 'EventBrain' | 'CharacterBrain';
     /** @description Request to collapse a delta chain into a full snapshot */
     CollapseDeltasRequest: {
       /** @description Game identifier for namespace isolation */
@@ -20338,7 +20447,8 @@ export interface components {
      *     - released: Assets went to designated recipients
      *     - refunded: Assets returned to depositors
      *     - split: Arbiter split assets between parties
-     *     - expired_refunded: Timed out, auto-refunded
+     *     - expired: Timed out with no deposits to refund
+     *     - expired_refunded: Timed out with deposits, auto-refunded
      *     - cancelled_refunded: Cancelled, deposits refunded
      *     - violation_refunded: Validation failure caused refund
      * @enum {string}
@@ -20347,6 +20457,7 @@ export interface components {
       | 'Released'
       | 'Refunded'
       | 'Split'
+      | 'Expired'
       | 'ExpiredRefunded'
       | 'CancelledRefunded'
       | 'ViolationRefunded';
@@ -21104,6 +21215,186 @@ export interface components {
       /** @description Analysis of the progression */
       analysis?: components['schemas']['ProgressionAnalysis'];
     };
+    /** @description Awakening configuration for CharacterBrain cognitive stage transition */
+    GenesisAwakeningConfig: {
+      /** @description System realm code where the character is created at awakening. Must be a valid system realm. */
+      systemRealmCode: string;
+      /** @description Species code for the character created at awakening. Must exist in the system realm. */
+      characterSpeciesCode: string;
+      /** @description Personality trait values to seed on the character at awakening. Null if no traits should be seeded. */
+      initialPersonalityTraits?: components['schemas']['GenesisPersonalityTraitSeed'][] | null;
+    };
+    /** @description Bond configuration within a genesis template */
+    GenesisBondConfig: {
+      /** @description Whether bonding is enabled for entities of this template */
+      enabled: boolean;
+      /** @description Maximum bond cardinality for entities of this template */
+      cardinality: components['schemas']['BondCardinality'];
+      /** @description Relationship type code used when creating Relationship at awakening. Required when enabled is true. */
+      relationshipTypeCode?: string | null;
+    };
+    /** @description Rule defining when a capability is unlocked based on growth domain depth */
+    GenesisCapabilityRule: {
+      /** @description Capability code that is unlocked when conditions are met */
+      capabilityCode: string;
+      /** @description Growth domain that must reach the threshold */
+      domain: string;
+      /**
+       * Format: float
+       * @description Minimum domain depth required to unlock this capability
+       */
+      threshold: number;
+    };
+    /** @description Economy configuration within a genesis template (wallets and growth mappings) */
+    GenesisEconomyConfig: {
+      /** @description Currency wallets provisioned for each entity created from this template */
+      wallets: components['schemas']['GenesisWalletConfig'][];
+      /** @description Mappings from wallet currency transactions to seed growth domains */
+      growthMappings: components['schemas']['GenesisGrowthMapping'][];
+    };
+    /** @description Maps a wallet currency transaction to seed growth in a specific domain */
+    GenesisGrowthMapping: {
+      /** @description Wallet code that triggers growth (must reference a wallet in the template) */
+      walletCode: string;
+      /** @description Seed growth domain to apply growth to (must reference a domain in the seed config) */
+      domain: string;
+      /**
+       * Format: double
+       * @description Multiplier applied to the currency transaction amount before recording as seed growth
+       */
+      ratio: number;
+      /** @description Which transaction direction triggers this mapping */
+      direction: components['schemas']['GrowthDirection'];
+    };
+    /** @description Inventory container configuration within a genesis template */
+    GenesisInventoryConfig: {
+      /** @description Unique inventory code within the template (used as key in inventoryIds map) */
+      inventoryCode: string;
+      /** @description Container constraint model (e.g., SlotOnly, WeightOnly, SlotAndWeight, Grid, Volumetric, Unlimited). Stored in template and passed through to Inventory at entity creation. */
+      constraintModel: string;
+      /** @description Container capacity (interpretation depends on constraintModel) */
+      capacity: number;
+      /** @description Allowed item categories for this container (null allows all categories). Passed through to Inventory at container creation. */
+      allowedCategories?: string[] | null;
+    };
+    /** @description A personality trait value to seed on a character at awakening */
+    GenesisPersonalityTraitSeed: {
+      /** @description Personality trait axis code to set */
+      traitCode: string;
+      /**
+       * Format: float
+       * @description Initial trait value on the bipolar axis (-1.0 to 1.0)
+       */
+      value: number;
+    };
+    /** @description Seed lifecycle configuration within a genesis template */
+    GenesisSeedConfig: {
+      /** @description Seed type code registered with the Seed service */
+      seedTypeCode: string;
+      /** @description Growth domains that this seed type tracks */
+      domains: components['schemas']['GenesisSeedDomain'][];
+      /** @description Ordered growth phases with thresholds and cognitive stage assignments */
+      phases: components['schemas']['GenesisSeedPhase'][];
+      /** @description Rules defining which capabilities unlock at which growth thresholds */
+      capabilityRules?: components['schemas']['GenesisCapabilityRule'][];
+    };
+    /** @description A growth domain tracked by the seed */
+    GenesisSeedDomain: {
+      /** @description Unique domain code within the seed type */
+      domainCode: string;
+      /** @description Human-readable domain name */
+      displayName: string;
+    };
+    /** @description A growth phase with threshold and cognitive stage assignment */
+    GenesisSeedPhase: {
+      /** @description Unique phase name within the seed type */
+      phaseName: string;
+      /**
+       * Format: float
+       * @description Total growth threshold required to enter this phase
+       */
+      threshold: number;
+      /** @description Cognitive stage assigned when entity enters this phase */
+      cognitiveStage: components['schemas']['CognitiveStage'];
+      /** @description ABML behavior document reference for actor spawning at this phase. Required when cognitiveStage is EventBrain or CharacterBrain. */
+      behaviorRef?: string | null;
+      /** @description Phase-specific capability rules (unlocked when this phase is reached) */
+      capabilityRules?: components['schemas']['GenesisCapabilityRule'][];
+    };
+    /** @description Storage configuration within a genesis template (inventory containers) */
+    GenesisStorageConfig: {
+      /** @description Inventory containers provisioned for each entity created from this template */
+      inventories: components['schemas']['GenesisInventoryConfig'][];
+    };
+    /** @description Full genesis template with all configuration and deprecation state */
+    GenesisTemplateResponse: {
+      /** @description Unique template identifier */
+      templateCode: string;
+      /**
+       * Format: uuid
+       * @description Game service this template is scoped to
+       */
+      gameServiceId: string;
+      /** @description Human-readable template name */
+      displayName: string;
+      /** @description Template description */
+      description: string;
+      /** @description Seed lifecycle configuration */
+      seed: components['schemas']['GenesisSeedConfig'];
+      /** @description Economy configuration */
+      economy: components['schemas']['GenesisEconomyConfig'];
+      /** @description Storage configuration */
+      storage: components['schemas']['GenesisStorageConfig'];
+      /** @description Awakening configuration */
+      awakening: components['schemas']['GenesisAwakeningConfig'];
+      /** @description Physical form type for entities of this template */
+      physicalFormType: components['schemas']['PhysicalFormType'];
+      /** @description Bond configuration */
+      bond: components['schemas']['GenesisBondConfig'];
+      /** @description Whether to archive the character via lib-resource compression before destroying the entity */
+      archiveOnDestruction: boolean;
+      /** @description Whether this template is deprecated */
+      isDeprecated: boolean;
+      /**
+       * Format: date-time
+       * @description When the template was deprecated (null if not deprecated)
+       */
+      deprecatedAt?: string | null;
+      /** @description Reason for deprecation (null if not deprecated) */
+      deprecationReason?: string | null;
+      /**
+       * Format: date-time
+       * @description When the template was registered
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description When the template was last updated
+       */
+      updatedAt: string;
+    };
+    /** @description Currency wallet configuration within a genesis template */
+    GenesisWalletConfig: {
+      /** @description Unique wallet code within the template (used as key in walletIds map) */
+      walletCode: string;
+      /** @description Currency code for this wallet (must be registered with Currency service) */
+      currencyCode: string;
+      /**
+       * @description Whether this wallet accumulates currency automatically over time
+       * @default false
+       */
+      autogainEnabled: boolean;
+      /**
+       * Format: double
+       * @description Base rate of automatic currency gain per tick. Required when autogainEnabled is true.
+       */
+      autogainBaseRate?: number | null;
+      /**
+       * Format: double
+       * @description Maximum balance for autogain accumulation. Required when autogainEnabled is true.
+       */
+      autogainCap?: number | null;
+    };
     /** @description Inherited allele pair for a single genetic trait */
     GenotypeEntry: {
       /** @description Game-configurable genetic trait identifier */
@@ -21270,13 +21561,13 @@ export interface components {
        */
       seedId: string;
     };
-    /** @description Request to get a bond by ID. */
+    /** @description Request to get bond information for a genesis entity */
     GetBondRequest: {
       /**
        * Format: uuid
-       * @description The bond to retrieve.
+       * @description Entity ID to get bond information for
        */
-      bondId: string;
+      entityId: string;
     };
     /** @description Request to get breach details */
     GetBreachRequest: {
@@ -22911,6 +23202,11 @@ export interface components {
      * @enum {string}
      */
     GroupRole: 'Frontline' | 'Support' | 'Flanker' | 'Leader' | 'Solo';
+    /**
+     * @description Which currency transaction direction drives growth for a mapping
+     * @enum {string}
+     */
+    GrowthDirection: 'Credit' | 'Debit' | 'Both';
     /** @description Defines a growth phase with its threshold. */
     GrowthPhaseDefinition: {
       /** @description Machine-readable phase identifier (e.g., "nascent", "awakening"). */
@@ -27377,6 +27673,11 @@ export interface components {
       /** @description Which dominance model produced this value */
       expressionRule: components['schemas']['DominanceModel'];
     };
+    /**
+     * @description Type of physical form a genesis entity can be bound to
+     * @enum {string}
+     */
+    PhysicalFormType: 'Item' | 'Location' | 'None';
     /** @description Request to pin a message in a room */
     PinMessageRequest: {
       /**
@@ -27678,11 +27979,11 @@ export interface components {
       description?: string | null;
       /**
        * @description How to execute the API call
-       * @default sync
+       * @default Sync
        */
       executionMode: components['schemas']['PreboundApiExecutionMode'];
-      /** @description Optional validation rules for the response */
-      responseValidation?: components['schemas']['ResponseValidation'];
+      /** @description Optional transformation rules for the API response */
+      responseTransformation?: components['schemas']['ResponseTransformation'];
     };
     /**
      * @description How to execute a prebound API call
@@ -29344,6 +29645,37 @@ export interface components {
        */
       stationId: string;
     };
+    /** @description Request to register a new genesis template */
+    RegisterTemplateRequest: {
+      /** @description Unique template identifier (primary key) */
+      templateCode: string;
+      /**
+       * Format: uuid
+       * @description Game service this template is scoped to
+       */
+      gameServiceId: string;
+      /** @description Human-readable template name */
+      displayName: string;
+      /** @description Template description */
+      description: string;
+      /** @description Seed lifecycle configuration */
+      seed: components['schemas']['GenesisSeedConfig'];
+      /** @description Economy configuration (wallets and growth mappings) */
+      economy: components['schemas']['GenesisEconomyConfig'];
+      /** @description Storage configuration (inventories) */
+      storage: components['schemas']['GenesisStorageConfig'];
+      /** @description Awakening configuration for CharacterBrain transition */
+      awakening: components['schemas']['GenesisAwakeningConfig'];
+      /** @description Type of physical form entities of this template can be bound to */
+      physicalFormType: components['schemas']['PhysicalFormType'];
+      /** @description Bond configuration */
+      bond: components['schemas']['GenesisBondConfig'];
+      /**
+       * @description Whether to archive the character via lib-resource compression before destroying the entity
+       * @default true
+       */
+      archiveOnDestruction: boolean;
+    };
     /** @description Paginated list of relationships with metadata for navigation */
     RelationshipListResponse: {
       /** @description List of relationships matching the query */
@@ -29898,13 +30230,11 @@ export interface components {
        */
       huntModifier: number;
     };
-    /** @description Validation rules for API responses with three-outcome model (success, permanent failure, transient failure) */
-    ResponseValidation: {
-      /** @description Conditions that must ALL pass for success; if any fail, checks permanent failure conditions */
-      successConditions?: components['schemas']['ValidationCondition'][];
-      /** @description Conditions that indicate permanent failure (clause violated); checked when success conditions fail */
-      permanentFailureConditions?: components['schemas']['ValidationCondition'][];
-      /** @description HTTP status codes indicating transient failure for retry (default 408, 429, 502, 503, 504) */
+    /** @description Transformation rules applied to a prebound API response. First matching rule produces the result. */
+    ResponseTransformation: {
+      /** @description Ordered list of transformation rules. First matching rule wins. */
+      rules?: components['schemas']['TransformationRule'][];
+      /** @description HTTP status codes indicating transient failure (retryable). Default when null 408, 429, 502, 503, 504. */
       transientFailureStatusCodes?: number[];
     };
     /** @description Request to restore documents from an archive */
@@ -33120,6 +33450,43 @@ export interface components {
       /** @description Scale relative to parent */
       scale: components['schemas']['Vector3'];
     };
+    /** @description A single condition to evaluate against an API response */
+    TransformationCondition: {
+      /** @description The type of condition to evaluate */
+      type: components['schemas']['TransformationConditionType'];
+      /** @description JsonPath expression to extract value from response (e.g. "$.balance", "$.species.code") */
+      jsonPath?: string | null;
+      /** @description Expected value for comparison conditions with type coercion */
+      expectedValue?: string | null;
+      /** @description Comparison operator for numeric comparisons */
+      operator?: components['schemas']['ComparisonOperator'];
+      /** @description HTTP status codes for StatusCodeIn condition */
+      statusCodes?: number[];
+    };
+    /**
+     * @description Types of conditions that can be evaluated against an API response
+     * @enum {string}
+     */
+    TransformationConditionType:
+      | 'StatusCodeIn'
+      | 'JsonPathEquals'
+      | 'JsonPathNotEquals'
+      | 'JsonPathExists'
+      | 'JsonPathNotExists'
+      | 'JsonPathGreaterThan'
+      | 'JsonPathLessThan'
+      | 'JsonPathContains';
+    /** @description A single transformation rule with conditions and result payload */
+    TransformationRule: {
+      /** @description All conditions must match for this rule to fire (AND logic). Empty or null always matches. */
+      conditions?: components['schemas']['TransformationCondition'][];
+      /** @description HTTP status code to return when this rule matches */
+      statusCode: number;
+      /** @description JSON payload to return when matched. Null passes through raw response body. */
+      payload?: string | null;
+      /** @description Human-readable description of what this rule does */
+      description?: string | null;
+    };
     /** @description A connection (edge) between two locations in the transit connectivity graph */
     TransitConnection: {
       /**
@@ -35214,32 +35581,6 @@ export interface components {
       /** @description Seconds until expiration */
       remainingTime: number;
     };
-    /** @description A single condition to check against an API response */
-    ValidationCondition: {
-      /** @description The type of validation condition to check */
-      type: components['schemas']['ValidationConditionType'];
-      /** @description JsonPath expression to extract value from response (required for jsonPathEquals/Exists/NotExists, e.g. "$.balance") */
-      jsonPath?: string | null;
-      /** @description Expected value for comparison conditions with type coercion ("true"/"false" for booleans, numeric strings for numbers) */
-      expectedValue?: string | null;
-      /** @description Comparison operator for numeric comparisons */
-      operator?: components['schemas']['ComparisonOperator'];
-      /** @description HTTP status codes for statusCodeIn condition */
-      statusCodes?: number[];
-    };
-    /**
-     * @description Type of validation condition
-     * @enum {string}
-     */
-    ValidationConditionType:
-      | 'StatusCodeIn'
-      | 'JsonPathEquals'
-      | 'JsonPathNotEquals'
-      | 'JsonPathExists'
-      | 'JsonPathNotExists'
-      | 'JsonPathGreaterThan'
-      | 'JsonPathLessThan'
-      | 'JsonPathContains';
     /** @description Detailed validation error with type, location, and message information */
     ValidationError: {
       /** @description Type of validation error */
@@ -45627,6 +45968,161 @@ export interface operations {
         };
       };
       /** @description Bond not found or participants not in garden */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  genesis_registerTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RegisterTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Template registered successfully (or already exists) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GenesisTemplateResponse'];
+        };
+      };
+      /** @description Invalid template structure, system realm not found, or species not found */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  genesis_getTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Template retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GenesisTemplateResponse'];
+        };
+      };
+      /** @description Template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  genesis_listTemplates: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListTemplatesRequest'];
+      };
+    };
+    responses: {
+      /** @description Templates retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListTemplatesResponse'];
+        };
+      };
+    };
+  };
+  genesis_updateTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Template updated successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GenesisTemplateResponse'];
+        };
+      };
+      /** @description Invalid template structure or validation failure */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  genesis_deprecateTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeprecateTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Template deprecated successfully (or already deprecated) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GenesisTemplateResponse'];
+        };
+      };
+      /** @description Template not found */
       404: {
         headers: {
           [name: string]: unknown;

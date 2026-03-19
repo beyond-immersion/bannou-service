@@ -109,10 +109,19 @@ public class GenesisServiceBondTests : ServiceTestBase<GenesisServiceConfigurati
     {
         return new GenesisEntityModel
         {
-            EntityId = entityId ?? Guid.NewGuid(), TemplateCode = "bonded_template", GameServiceId = Guid.NewGuid(),
-            RealmId = Guid.NewGuid(), SeedId = Guid.NewGuid(), WalletIds = new(), InventoryIds = new(),
-            CurrentPhase = "Dormant", CognitiveStage = CognitiveStage.Dormant, PhysicalFormType = PhysicalFormType.Item,
-            Status = GenesisEntityStatus.Active, CreatedAt = DateTimeOffset.UtcNow.AddHours(-1), UpdatedAt = DateTimeOffset.UtcNow.AddHours(-1)
+            EntityId = entityId ?? Guid.NewGuid(),
+            TemplateCode = "bonded_template",
+            GameServiceId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            SeedId = Guid.NewGuid(),
+            WalletIds = new(),
+            InventoryIds = new(),
+            CurrentPhase = "Dormant",
+            CognitiveStage = CognitiveStage.Dormant,
+            PhysicalFormType = PhysicalFormType.Item,
+            Status = GenesisEntityStatus.Active,
+            CreatedAt = DateTimeOffset.UtcNow.AddHours(-1),
+            UpdatedAt = DateTimeOffset.UtcNow.AddHours(-1)
         };
     }
 
@@ -120,13 +129,17 @@ public class GenesisServiceBondTests : ServiceTestBase<GenesisServiceConfigurati
     {
         return new GenesisTemplateModel
         {
-            TemplateCode = "bonded_template", GameServiceId = Guid.NewGuid(), DisplayName = "Bonded", Description = "Bonded",
+            TemplateCode = "bonded_template",
+            GameServiceId = Guid.NewGuid(),
+            DisplayName = "Bonded",
+            Description = "Bonded",
             Seed = new GenesisSeedConfig { SeedTypeCode = "s", Domains = new List<GenesisSeedDomain>(), Phases = new List<GenesisSeedPhase>() },
             Economy = new GenesisEconomyConfig { Wallets = new List<GenesisWalletConfig>(), GrowthMappings = new List<GenesisGrowthMapping>() },
             Storage = new GenesisStorageConfig { Inventories = new List<GenesisInventoryConfig>() },
             Awakening = new GenesisAwakeningConfig { SystemRealmCode = "R", CharacterSpeciesCode = "S" },
             Bond = new GenesisBondConfig { Enabled = enabled, Cardinality = cardinality, RelationshipTypeCode = "weapon_wielder" },
-            CreatedAt = DateTimeOffset.UtcNow.AddDays(-1), UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1)
         };
     }
 

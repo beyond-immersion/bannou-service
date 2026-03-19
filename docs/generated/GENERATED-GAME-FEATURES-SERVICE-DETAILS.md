@@ -109,7 +109,7 @@ Environmental state service (L4 GameFeatures) providing weather simulation, temp
 
 ## Escrow {#escrow}
 
-**Version**: 1.0.0 | **Schema**: `schemas/escrow-api.yaml` | **Endpoints**: 23 | **Deep Dive**: [docs/plugins/ESCROW.md](../plugins/ESCROW.md)
+**Version**: 1.0.0 | **Schema**: `schemas/escrow-api.yaml` | **Endpoints**: 23 | **Deep Dive**: [docs/plugins/ESCROW.md](../plugins/ESCROW.md) | **Map**: [docs/maps/ESCROW.md](../maps/ESCROW.md)
 
 Full-custody orchestration layer (L4 GameFeatures) for multi-party asset exchanges. Manages the complete escrow lifecycle from creation through deposit collection, consent gathering, condition verification, and final release or refund. Supports four escrow types (two-party, multi-party, conditional, auction) with three trust modes and a 13-state finite state machine. Handles currency, items, contracts, and extensible custom asset types — designed to call lib-currency and lib-inventory directly for asset movements (not yet implemented; see stub #5). Integrates with lib-contract for conditional releases where contract fulfillment triggers escrow completion. See Release Modes section below for configurable confirmation flows.
 

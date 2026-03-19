@@ -36,6 +36,7 @@ import { EnvironmentProxy } from './proxies/EnvironmentProxy.js';
 import { EscrowProxy } from './proxies/EscrowProxy.js';
 import { FactionProxy } from './proxies/FactionProxy.js';
 import { GardenerProxy } from './proxies/GardenerProxy.js';
+import { GenesisProxy } from './proxies/GenesisProxy.js';
 import { InventoryProxy } from './proxies/InventoryProxy.js';
 import { ItemProxy } from './proxies/ItemProxy.js';
 import { LeaderboardProxy } from './proxies/LeaderboardProxy.js';
@@ -92,6 +93,7 @@ interface ProxyCache {
   escrow?: EscrowProxy;
   faction?: FactionProxy;
   gardener?: GardenerProxy;
+  genesis?: GenesisProxy;
   inventory?: InventoryProxy;
   item?: ItemProxy;
   leaderboard?: LeaderboardProxy;
@@ -406,6 +408,18 @@ Object.defineProperty(BannouClient.prototype, 'gardener', {
   get(this: BannouClientWithCache): GardenerProxy {
     const cache = (this[PROXY_CACHE] ??= {});
     return (cache.gardener ??= new GardenerProxy(this));
+  },
+  configurable: true,
+  enumerable: true,
+});
+
+/**
+ * Add lazy-initialized genesis proxy property to BannouClient.
+ */
+Object.defineProperty(BannouClient.prototype, 'genesis', {
+  get(this: BannouClientWithCache): GenesisProxy {
+    const cache = (this[PROXY_CACHE] ??= {});
+    return (cache.genesis ??= new GenesisProxy(this));
   },
   configurable: true,
   enumerable: true,
@@ -822,6 +836,10 @@ declare module '../BannouClient.js' {
      * Typed proxy for Gardener API endpoints.
      */
     readonly gardener: GardenerProxy;
+    /**
+     * Typed proxy for Genesis API endpoints.
+     */
+    readonly genesis: GenesisProxy;
     /**
      * Typed proxy for Inventory API endpoints.
      */

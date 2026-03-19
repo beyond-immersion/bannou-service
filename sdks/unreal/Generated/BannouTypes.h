@@ -122,6 +122,7 @@ struct FBoardResponse;
 struct FBoardStateRequest;
 struct FBoardStateResponse;
 struct FBoardTemplateResponse;
+struct FBondCardinality;
 struct FBondParticipant;
 struct FBondPartnersResponse;
 struct FBondResponse;
@@ -234,6 +235,7 @@ struct FClimateBindingResponse;
 struct FClimateTemplateResponse;
 struct FCloneBoardRequest;
 struct FCloneBoardResponse;
+struct FCognitiveStage;
 struct FCollapseDeltasRequest;
 struct FCollectionDomainMapping;
 struct FCollectionGrowthMapping;
@@ -521,6 +523,19 @@ struct FGenerateMelodyRequest;
 struct FGenerateMelodyResponse;
 struct FGenerateProgressionRequest;
 struct FGenerateProgressionResponse;
+struct FGenesisAwakeningConfig;
+struct FGenesisBondConfig;
+struct FGenesisCapabilityRule;
+struct FGenesisEconomyConfig;
+struct FGenesisGrowthMapping;
+struct FGenesisInventoryConfig;
+struct FGenesisPersonalityTraitSeed;
+struct FGenesisSeedConfig;
+struct FGenesisSeedDomain;
+struct FGenesisSeedPhase;
+struct FGenesisStorageConfig;
+struct FGenesisTemplateResponse;
+struct FGenesisWalletConfig;
 struct FGenotypeEntry;
 struct FGetAchievementProgressRequest;
 struct FGetActiveScenariosRequest;
@@ -666,6 +681,7 @@ struct FGrantStatusRequest;
 struct FGrantStatusResponse;
 struct FGridPosition;
 struct FGroupRole;
+struct FGrowthDirection;
 struct FGrowthPhaseDefinition;
 struct FGrowthPhaseResponse;
 struct FGrowthResponse;
@@ -960,6 +976,7 @@ struct FPhaseMetricsResponse;
 struct FPhasePosition;
 struct FPhaseTargetState;
 struct FPhenotypeEntry;
+struct FPhysicalFormType;
 struct FPinMessageRequest;
 struct FPinVersionRequest;
 struct FPitch;
@@ -1072,6 +1089,7 @@ struct FRegisterSchemaRequest;
 struct FRegisterSeedTypeRequest;
 struct FRegisterStationRequest;
 struct FRegisterStationResponse;
+struct FRegisterTemplateRequest;
 struct FRelationshipListResponse;
 struct FRelationshipResponse;
 struct FRelationshipSnapshot;
@@ -1104,7 +1122,7 @@ struct FResolvedBundle;
 struct FResolvedReference;
 struct FResourceAvailabilityResponse;
 struct FResourceAvailabilitySeason;
-struct FResponseValidation;
+struct FResponseTransformation;
 struct FRestoreArchiveRequest;
 struct FRestoreArchiveResponse;
 struct FResumeJourneyRequest;
@@ -1310,6 +1328,9 @@ struct FTransferContractPartyRequest;
 struct FTransferContractPartyResponse;
 struct FTransferLocationToRealmRequest;
 struct FTransform;
+struct FTransformationCondition;
+struct FTransformationConditionType;
+struct FTransformationRule;
 struct FTransitConnection;
 struct FTransitInterruption;
 struct FTransitJourney;
@@ -1407,8 +1428,6 @@ struct FValidateMidiJsonRequest;
 struct FValidateMidiJsonResponse;
 struct FValidateSceneRequest;
 struct FValidateTokenResponse;
-struct FValidationCondition;
-struct FValidationConditionType;
 struct FValidationError;
 struct FValidationErrorType;
 struct FValidationFailure;
@@ -4215,6 +4234,16 @@ struct FBoardTemplateResponse
 };
 
 /**
+ * Maximum number of bonds a genesis entity template allows
+ */
+USTRUCT(BlueprintType)
+struct FBondCardinality
+{
+    GENERATED_BODY()
+
+};
+
+/**
  * A participant in a seed bond.
  */
 USTRUCT(BlueprintType)
@@ -6935,6 +6964,16 @@ struct FCloneBoardResponse
     /** Number of licenses cloned (item instances created) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     int32 LicensesCloned = 0;
+
+};
+
+/**
+ * Cognitive progression stage of a genesis entity
+ */
+USTRUCT(BlueprintType)
+struct FCognitiveStage
+{
+    GENERATED_BODY()
 
 };
 
@@ -15205,6 +15244,352 @@ struct FGenerateProgressionResponse
 };
 
 /**
+ * Awakening configuration for CharacterBrain cognitive stage transition
+ */
+USTRUCT(BlueprintType)
+struct FGenesisAwakeningConfig
+{
+    GENERATED_BODY()
+
+    /** System realm code where the character is created at awakening. Must be a valid system realm. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SystemRealmCode;
+
+    /** Species code for the character created at awakening. Must exist in the system realm. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString CharacterSpeciesCode;
+
+    /** Personality trait values to seed on the character at awakening. Null if no traits should be seeded. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FGenesisPersonalityTraitSeed> InitialPersonalityTraits;
+
+};
+
+/**
+ * Bond configuration within a genesis template
+ */
+USTRUCT(BlueprintType)
+struct FGenesisBondConfig
+{
+    GENERATED_BODY()
+
+    /** Whether bonding is enabled for entities of this template */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool Enabled = false;
+
+    /** Maximum bond cardinality for entities of this template */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FBondCardinality Cardinality;
+
+    /** Relationship type code used when creating Relationship at awakening. Required when enabled is true. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString RelationshipTypeCode;
+
+};
+
+/**
+ * Rule defining when a capability is unlocked based on growth domain depth
+ */
+USTRUCT(BlueprintType)
+struct FGenesisCapabilityRule
+{
+    GENERATED_BODY()
+
+    /** Capability code that is unlocked when conditions are met */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString CapabilityCode;
+
+    /** Growth domain that must reach the threshold */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Domain;
+
+    /** Minimum domain depth required to unlock this capability */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    float Threshold = 0.0f;
+
+};
+
+/**
+ * Economy configuration within a genesis template (wallets and growth mappings)
+ */
+USTRUCT(BlueprintType)
+struct FGenesisEconomyConfig
+{
+    GENERATED_BODY()
+
+    /** Currency wallets provisioned for each entity created from this template */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FGenesisWalletConfig> Wallets;
+
+    /** Mappings from wallet currency transactions to seed growth domains */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FGenesisGrowthMapping> GrowthMappings;
+
+};
+
+/**
+ * Maps a wallet currency transaction to seed growth in a specific domain
+ */
+USTRUCT(BlueprintType)
+struct FGenesisGrowthMapping
+{
+    GENERATED_BODY()
+
+    /** Wallet code that triggers growth (must reference a wallet in the template) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString WalletCode;
+
+    /** Seed growth domain to apply growth to (must reference a domain in the seed config) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Domain;
+
+    /** Multiplier applied to the currency transaction amount before recording as seed growth */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    double Ratio = 0.0;
+
+    /** Which transaction direction triggers this mapping */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGrowthDirection Direction;
+
+};
+
+/**
+ * Inventory container configuration within a genesis template
+ */
+USTRUCT(BlueprintType)
+struct FGenesisInventoryConfig
+{
+    GENERATED_BODY()
+
+    /** Unique inventory code within the template (used as key in inventoryIds map) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString InventoryCode;
+
+    /** Container constraint model (e.g., SlotOnly, WeightOnly, SlotAndWeight, Grid, Volumetric, Unlimited). Stored in template and passed through to Inventory at entity creation. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ConstraintModel;
+
+    /** Container capacity (interpretation depends on constraintModel) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 Capacity = 0;
+
+    /** Allowed item categories for this container (null allows all categories). Passed through to Inventory at container creation. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FString> AllowedCategories;
+
+};
+
+/**
+ * A personality trait value to seed on a character at awakening
+ */
+USTRUCT(BlueprintType)
+struct FGenesisPersonalityTraitSeed
+{
+    GENERATED_BODY()
+
+    /** Personality trait axis code to set */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString TraitCode;
+
+    /** Initial trait value on the bipolar axis (-1.0 to 1.0) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    float Value = 0.0f;
+
+};
+
+/**
+ * Seed lifecycle configuration within a genesis template
+ */
+USTRUCT(BlueprintType)
+struct FGenesisSeedConfig
+{
+    GENERATED_BODY()
+
+    /** Seed type code registered with the Seed service */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SeedTypeCode;
+
+    /** Growth domains that this seed type tracks */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FGenesisSeedDomain> Domains;
+
+    /** Ordered growth phases with thresholds and cognitive stage assignments */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FGenesisSeedPhase> Phases;
+
+    /** Rules defining which capabilities unlock at which growth thresholds */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FGenesisCapabilityRule> CapabilityRules;
+
+};
+
+/**
+ * A growth domain tracked by the seed
+ */
+USTRUCT(BlueprintType)
+struct FGenesisSeedDomain
+{
+    GENERATED_BODY()
+
+    /** Unique domain code within the seed type */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DomainCode;
+
+    /** Human-readable domain name */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DisplayName;
+
+};
+
+/**
+ * A growth phase with threshold and cognitive stage assignment
+ */
+USTRUCT(BlueprintType)
+struct FGenesisSeedPhase
+{
+    GENERATED_BODY()
+
+    /** Unique phase name within the seed type */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString PhaseName;
+
+    /** Total growth threshold required to enter this phase */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    float Threshold = 0.0f;
+
+    /** Cognitive stage assigned when entity enters this phase */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FCognitiveStage CognitiveStage;
+
+    /** ABML behavior document reference for actor spawning at this phase. Required when cognitiveStage is EventBrain or CharacterBrain. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString BehaviorRef;
+
+    /** Phase-specific capability rules (unlocked when this phase is reached) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FGenesisCapabilityRule> CapabilityRules;
+
+};
+
+/**
+ * Storage configuration within a genesis template (inventory containers)
+ */
+USTRUCT(BlueprintType)
+struct FGenesisStorageConfig
+{
+    GENERATED_BODY()
+
+    /** Inventory containers provisioned for each entity created from this template */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FGenesisInventoryConfig> Inventories;
+
+};
+
+/**
+ * Full genesis template with all configuration and deprecation state
+ */
+USTRUCT(BlueprintType)
+struct FGenesisTemplateResponse
+{
+    GENERATED_BODY()
+
+    /** Unique template identifier */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString TemplateCode;
+
+    /** Game service this template is scoped to */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Human-readable template name */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DisplayName;
+
+    /** Template description */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Description;
+
+    /** Seed lifecycle configuration */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGenesisSeedConfig Seed;
+
+    /** Economy configuration */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGenesisEconomyConfig Economy;
+
+    /** Storage configuration */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGenesisStorageConfig Storage;
+
+    /** Awakening configuration */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGenesisAwakeningConfig Awakening;
+
+    /** Physical form type for entities of this template */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FPhysicalFormType PhysicalFormType;
+
+    /** Bond configuration */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGenesisBondConfig Bond;
+
+    /** Whether to archive the character via lib-resource compression before destroying the entity */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool ArchiveOnDestruction = false;
+
+    /** Whether this template is deprecated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool IsDeprecated = false;
+
+    /** When the template was deprecated (null if not deprecated) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FDateTime> DeprecatedAt;
+
+    /** Reason for deprecation (null if not deprecated) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DeprecationReason;
+
+    /** When the template was registered */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FDateTime CreatedAt;
+
+    /** When the template was last updated */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FDateTime UpdatedAt;
+
+};
+
+/**
+ * Currency wallet configuration within a genesis template
+ */
+USTRUCT(BlueprintType)
+struct FGenesisWalletConfig
+{
+    GENERATED_BODY()
+
+    /** Unique wallet code within the template (used as key in walletIds map) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString WalletCode;
+
+    /** Currency code for this wallet (must be registered with Currency service) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString CurrencyCode;
+
+    /** Whether this wallet accumulates currency automatically over time */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool AutogainEnabled = false;
+
+    /** Base rate of automatic currency gain per tick. Required when autogainEnabled is true. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> AutogainBaseRate;
+
+    /** Maximum balance for autogain accumulation. Required when autogainEnabled is true. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<double> AutogainCap;
+
+};
+
+/**
  * Inherited allele pair for a single genetic trait
  */
 USTRUCT(BlueprintType)
@@ -15483,16 +15868,16 @@ struct FGetBondPartnersRequest
 };
 
 /**
- * Request to get a bond by ID.
+ * Request to get bond information for a genesis entity
  */
 USTRUCT(BlueprintType)
 struct FGetBondRequest
 {
     GENERATED_BODY()
 
-    /** The bond to retrieve. */
+    /** Entity ID to get bond information for */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FGuid BondId;
+    FGuid EntityId;
 
 };
 
@@ -18109,6 +18494,16 @@ struct FGridPosition
  */
 USTRUCT(BlueprintType)
 struct FGroupRole
+{
+    GENERATED_BODY()
+
+};
+
+/**
+ * Which currency transaction direction drives growth for a mapping
+ */
+USTRUCT(BlueprintType)
+struct FGrowthDirection
 {
     GENERATED_BODY()
 
@@ -25335,6 +25730,16 @@ struct FPhenotypeEntry
 };
 
 /**
+ * Type of physical form a genesis entity can be bound to
+ */
+USTRUCT(BlueprintType)
+struct FPhysicalFormType
+{
+    GENERATED_BODY()
+
+};
+
+/**
  * Request to pin a message in a room
  */
 USTRUCT(BlueprintType)
@@ -25842,9 +26247,9 @@ struct FPreboundApi
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> ExecutionMode;
 
-    /** Optional validation rules for the response */
+    /** Optional transformation rules for the API response */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FResponseValidation> ResponseValidation;
+    TOptional<FResponseTransformation> ResponseTransformation;
 
 };
 
@@ -28419,6 +28824,60 @@ struct FRegisterStationResponse
 };
 
 /**
+ * Request to register a new genesis template
+ */
+USTRUCT(BlueprintType)
+struct FRegisterTemplateRequest
+{
+    GENERATED_BODY()
+
+    /** Unique template identifier (primary key) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString TemplateCode;
+
+    /** Game service this template is scoped to */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Human-readable template name */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString DisplayName;
+
+    /** Template description */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Description;
+
+    /** Seed lifecycle configuration */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGenesisSeedConfig Seed;
+
+    /** Economy configuration (wallets and growth mappings) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGenesisEconomyConfig Economy;
+
+    /** Storage configuration (inventories) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGenesisStorageConfig Storage;
+
+    /** Awakening configuration for CharacterBrain transition */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGenesisAwakeningConfig Awakening;
+
+    /** Type of physical form entities of this template can be bound to */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FPhysicalFormType PhysicalFormType;
+
+    /** Bond configuration */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGenesisBondConfig Bond;
+
+    /** Whether to archive the character via lib-resource compression before destroying the entity */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool ArchiveOnDestruction = true;
+
+};
+
+/**
  * Paginated list of relationships with metadata for navigation
  */
 USTRUCT(BlueprintType)
@@ -29279,22 +29738,18 @@ struct FResourceAvailabilitySeason
 };
 
 /**
- * Validation rules for API responses with three-outcome model (success, permanent failure, transient failure)
+ * Transformation rules applied to a prebound API response. First matching rule produces the result.
  */
 USTRUCT(BlueprintType)
-struct FResponseValidation
+struct FResponseTransformation
 {
     GENERATED_BODY()
 
-    /** Conditions that must ALL pass for success; if any fail, checks permanent failure conditions */
+    /** Ordered list of transformation rules. First matching rule wins. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TArray<FValidationCondition> SuccessConditions;
+    TArray<FTransformationRule> Rules;
 
-    /** Conditions that indicate permanent failure (clause violated); checked when success conditions fail */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TArray<FValidationCondition> PermanentFailureConditions;
-
-    /** HTTP status codes indicating transient failure for retry (default 408, 429, 502, 503, 504) */
+    /** HTTP status codes indicating transient failure (retryable). Default when null 408, 429, 502, 503, 504. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TArray<int32> TransientFailureStatusCodes;
 
@@ -34435,6 +34890,72 @@ struct FTransform
 };
 
 /**
+ * A single condition to evaluate against an API response
+ */
+USTRUCT(BlueprintType)
+struct FTransformationCondition
+{
+    GENERATED_BODY()
+
+    /** The type of condition to evaluate */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TMap<FString, FString> Type;
+
+    /** JsonPath expression to extract value from response (e.g. "$.balance", "$.species.code") */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString JsonPath;
+
+    /** Expected value for comparison conditions with type coercion */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString ExpectedValue;
+
+    /** Comparison operator for numeric comparisons */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FComparisonOperator> Operator;
+
+    /** HTTP status codes for StatusCodeIn condition */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<int32> StatusCodes;
+
+};
+
+/**
+ * Types of conditions that can be evaluated against an API response
+ */
+USTRUCT(BlueprintType)
+struct FTransformationConditionType
+{
+    GENERATED_BODY()
+
+};
+
+/**
+ * A single transformation rule with conditions and result payload
+ */
+USTRUCT(BlueprintType)
+struct FTransformationRule
+{
+    GENERATED_BODY()
+
+    /** All conditions must match for this rule to fire (AND logic). Empty or null always matches. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TArray<FTransformationCondition> Conditions;
+
+    /** HTTP status code to return when this rule matches */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    int32 StatusCode = 0;
+
+    /** JSON payload to return when matched. Null passes through raw response body. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Payload;
+
+    /** Human-readable description of what this rule does */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Description;
+
+};
+
+/**
  * A connection (edge) between two locations in the transit connectivity graph
  */
 USTRUCT(BlueprintType)
@@ -37785,46 +38306,6 @@ struct FValidateTokenResponse
     /** Seconds until expiration */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     int32 RemainingTime = 0;
-
-};
-
-/**
- * A single condition to check against an API response
- */
-USTRUCT(BlueprintType)
-struct FValidationCondition
-{
-    GENERATED_BODY()
-
-    /** The type of validation condition to check */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TMap<FString, FString> Type;
-
-    /** JsonPath expression to extract value from response (required for jsonPathEquals/Exists/NotExists, e.g. "$.balance") */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString JsonPath;
-
-    /** Expected value for comparison conditions with type coercion ("true"/"false" for booleans, numeric strings for numbers) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString ExpectedValue;
-
-    /** Comparison operator for numeric comparisons */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FComparisonOperator> Operator;
-
-    /** HTTP status codes for statusCodeIn condition */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TArray<int32> StatusCodes;
-
-};
-
-/**
- * Type of validation condition
- */
-USTRUCT(BlueprintType)
-struct FValidationConditionType
-{
-    GENERATED_BODY()
 
 };
 

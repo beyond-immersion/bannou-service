@@ -183,7 +183,7 @@ Environmental state service (L4 GameFeatures) providing weather simulation, temp
 
 ## Escrow {#escrow}
 
-**Version**: 1.0.0 | **Schema**: `schemas/escrow-api.yaml` | **Endpoints**: 23 | **Deep Dive**: [docs/plugins/ESCROW.md](../plugins/ESCROW.md)
+**Version**: 1.0.0 | **Schema**: `schemas/escrow-api.yaml` | **Endpoints**: 23 | **Deep Dive**: [docs/plugins/ESCROW.md](../plugins/ESCROW.md) | **Map**: [docs/maps/ESCROW.md](../maps/ESCROW.md)
 
 Full-custody orchestration layer (L4 GameFeatures) for multi-party asset exchanges. Manages the complete escrow lifecycle from creation through deposit collection, consent gathering, condition verification, and final release or refund. Supports four escrow types (two-party, multi-party, conditional, auction) with three trust modes and a 13-state finite state machine. Handles currency, items, contracts, and extensible custom asset types — designed to call lib-currency and lib-inventory directly for asset movements (not yet implemented; see stub #5). Integrates with lib-contract for conditional releases where contract fulfillment triggers escrow completion. See Release Modes section below for configurable confirmation flows.
 
@@ -221,7 +221,7 @@ Player experience orchestration service (L4 GameFeatures) and the player-side co
 
 ## Genesis {#genesis}
 
-**Deep Dive**: [docs/plugins/GENESIS.md](../plugins/GENESIS.md)
+**Version**: 1.0.0 | **Schema**: `schemas/genesis-api.yaml` | **Endpoints**: 19 | **Deep Dive**: [docs/plugins/GENESIS.md](../plugins/GENESIS.md) | **Map**: [docs/maps/GENESIS.md](../maps/GENESIS.md)
 
 Template-driven entity awakening lifecycle service (L2 GameFoundation) for managing entities that progressively grow from inert objects into autonomous agents with personalities, memories, and the full cognitive stack. Encapsulates the Actor-Bound Entity pattern (previously a documentation pattern across VISION.md and ACTOR-BOUND-ENTITIES.md) as reusable infrastructure: a single `CreateEntity` call provisions the seed, currency wallets, inventories, and resource registrations from a template definition, then manages the Dormant → EventBrain → CharacterBrain cognitive progression automatically as currency accumulates. Seed growth is driven entirely by currency transactions via template-defined growth mappings — the seed is an internal implementation detail never exposed to callers. Domain-specific plugins (lib-dungeon, lib-divine) sit on top for their ceremony; simple entity types (treasure chests, living weapons, haunted buildings, sentient ships) need no additional plugin. Game-agnostic: entity types, growth domains, currencies, behaviors, and awakening configurations are all template-defined seed data. Internal-only, never internet-facing.
 
@@ -510,7 +510,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Total services**: 78
-- **Total endpoints**: 1115
+- **Total endpoints**: 1134
 
 ---
 

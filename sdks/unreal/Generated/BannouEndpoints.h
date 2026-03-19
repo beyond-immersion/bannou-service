@@ -949,6 +949,22 @@ namespace Bannou
         /** Get shared garden state for bonded players */
         constexpr const TCHAR* GardenerGetSharedGardenState = TEXT("POST:/gardener/bond/get-shared-garden");
 
+        // Genesis Service
+        /** Register a new genesis template */
+        constexpr const TCHAR* GenesisRegisterTemplate = TEXT("POST:/genesis/template/register");
+
+        /** Get a genesis template by code */
+        constexpr const TCHAR* GenesisGetTemplate = TEXT("POST:/genesis/template/get");
+
+        /** List genesis templates for a game service */
+        constexpr const TCHAR* GenesisListTemplates = TEXT("POST:/genesis/template/list");
+
+        /** Update a genesis template */
+        constexpr const TCHAR* GenesisUpdateTemplate = TEXT("POST:/genesis/template/update");
+
+        /** Deprecate a genesis template */
+        constexpr const TCHAR* GenesisDeprecateTemplate = TEXT("POST:/genesis/template/deprecate");
+
         // Inventory Service
         /** Create a new container */
         constexpr const TCHAR* InventoryCreateContainer = TEXT("POST:/inventory/container/create");
@@ -4281,6 +4297,46 @@ namespace Bannou
                 TEXT("FGetSharedGardenRequest"),
                 TEXT("FSharedGardenStateResponse"),
                 TEXT("Get shared garden state for bonded players")
+            });
+            Registry.Add(TEXT("GenesisRegisterTemplate"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/genesis/template/register"),
+                TEXT("genesis"),
+                TEXT("FRegisterTemplateRequest"),
+                TEXT("FGenesisTemplateResponse"),
+                TEXT("Register a new genesis template")
+            });
+            Registry.Add(TEXT("GenesisGetTemplate"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/genesis/template/get"),
+                TEXT("genesis"),
+                TEXT("FGetTemplateRequest"),
+                TEXT("FGenesisTemplateResponse"),
+                TEXT("Get a genesis template by code")
+            });
+            Registry.Add(TEXT("GenesisListTemplates"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/genesis/template/list"),
+                TEXT("genesis"),
+                TEXT("FListTemplatesRequest"),
+                TEXT("FListTemplatesResponse"),
+                TEXT("List genesis templates for a game service")
+            });
+            Registry.Add(TEXT("GenesisUpdateTemplate"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/genesis/template/update"),
+                TEXT("genesis"),
+                TEXT("FUpdateTemplateRequest"),
+                TEXT("FGenesisTemplateResponse"),
+                TEXT("Update a genesis template")
+            });
+            Registry.Add(TEXT("GenesisDeprecateTemplate"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/genesis/template/deprecate"),
+                TEXT("genesis"),
+                TEXT("FDeprecateTemplateRequest"),
+                TEXT("FGenesisTemplateResponse"),
+                TEXT("Deprecate a genesis template")
             });
             Registry.Add(TEXT("InventoryCreateContainer"), FEndpointInfo{
                 TEXT("POST"),

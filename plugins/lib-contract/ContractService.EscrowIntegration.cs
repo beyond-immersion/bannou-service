@@ -811,12 +811,12 @@ public partial class ContractService
                 });
             }
 
-            var apiDefinition = new PreboundApiDefinition
+            var apiDefinition = new PreboundApi
             {
                 ServiceName = handler.Service,
                 Endpoint = handler.Endpoint,
                 PayloadTemplate = payloadTemplate,
-                ExecutionMode = ExecutionMode.Sync
+                ExecutionMode = PreboundApiExecutionMode.Sync
             };
 
             var result = await _navigator.ExecutePreboundApiAsync(apiDefinition, context, ct);
@@ -893,12 +893,12 @@ public partial class ContractService
                 ["currency_code"] = currencyCode
             });
 
-            var apiDefinition = new PreboundApiDefinition
+            var apiDefinition = new PreboundApi
             {
                 ServiceName = "currency",
                 Endpoint = "/currency/balance/get",
                 PayloadTemplate = payloadTemplate,
-                ExecutionMode = ExecutionMode.Sync
+                ExecutionMode = PreboundApiExecutionMode.Sync
             };
 
             var result = await _navigator.ExecutePreboundApiAsync(apiDefinition, context, ct);
@@ -1358,12 +1358,12 @@ public partial class ContractService
             }
 
             // Execute via navigator
-            var apiDefinition = new PreboundApiDefinition
+            var apiDefinition = new PreboundApi
             {
                 ServiceName = handler.Service,
                 Endpoint = handler.Endpoint,
                 PayloadTemplate = payloadTemplate,
-                ExecutionMode = ExecutionMode.Sync
+                ExecutionMode = PreboundApiExecutionMode.Sync
             };
 
             var result = await _navigator.ExecutePreboundApiAsync(apiDefinition, context, ct);

@@ -1178,7 +1178,7 @@ public class ResourceServiceTests
 
         // Verify no callbacks were executed (blocked before execution)
         _mockNavigator.Verify(n => n.ExecutePreboundApiBatchAsync(
-            It.IsAny<IEnumerable<PreboundApiDefinition>>(),
+            It.IsAny<IEnumerable<PreboundApi>>(),
             It.IsAny<Dictionary<string, object?>>(),
             It.IsAny<BatchExecutionMode>(),
             It.IsAny<CancellationToken>()), Times.Never);
@@ -1248,7 +1248,7 @@ public class ResourceServiceTests
         // RESTRICT callbacks are not executed - verify no callbacks ran
         // (RESTRICT type is filtered out from executableCallbacks)
         _mockNavigator.Verify(n => n.ExecutePreboundApiBatchAsync(
-            It.IsAny<IEnumerable<PreboundApiDefinition>>(),
+            It.IsAny<IEnumerable<PreboundApi>>(),
             It.IsAny<Dictionary<string, object?>>(),
             It.IsAny<BatchExecutionMode>(),
             It.IsAny<CancellationToken>()), Times.Never);
@@ -1328,11 +1328,11 @@ public class ResourceServiceTests
         // Setup navigator to return successful batch results
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiBatchAsync(
-                It.IsAny<IEnumerable<PreboundApiDefinition>>(),
+                It.IsAny<IEnumerable<PreboundApi>>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<BatchExecutionMode>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IEnumerable<PreboundApiDefinition> apis, IReadOnlyDictionary<string, object?> ctx, BatchExecutionMode mode, CancellationToken ct) =>
+            .ReturnsAsync((IEnumerable<PreboundApi> apis, IReadOnlyDictionary<string, object?> ctx, BatchExecutionMode mode, CancellationToken ct) =>
             {
                 var results = new List<PreboundApiResult>();
                 foreach (var api in apis)
@@ -1369,7 +1369,7 @@ public class ResourceServiceTests
 
         // Verify only CASCADE and DETACH callbacks were executed (2 out of 3)
         _mockNavigator.Verify(n => n.ExecutePreboundApiBatchAsync(
-            It.Is<IEnumerable<PreboundApiDefinition>>(apis =>
+            It.Is<IEnumerable<PreboundApi>>(apis =>
                 apis.Count() == 2 &&
                 apis.Any(a => a.ServiceName == "actor") &&
                 apis.Any(a => a.ServiceName == "encounter") &&
@@ -1544,7 +1544,7 @@ public class ResourceServiceTests
 
         // Verify no actual API calls were made
         _mockNavigator.Verify(n => n.ExecutePreboundApiAsync(
-            It.IsAny<PreboundApiDefinition>(),
+            It.IsAny<PreboundApi>(),
             It.IsAny<IReadOnlyDictionary<string, object?>>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -1605,7 +1605,7 @@ public class ResourceServiceTests
         // Setup successful API calls
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PreboundApiResult
@@ -1672,7 +1672,7 @@ public class ResourceServiceTests
         var callCount = 0;
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(() =>
@@ -1738,7 +1738,7 @@ public class ResourceServiceTests
         var callCount = 0;
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(() =>
@@ -1808,10 +1808,10 @@ public class ResourceServiceTests
         // Mock navigator to capture execution order
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<PreboundApiDefinition, IReadOnlyDictionary<string, object?>, CancellationToken>((api, _, _) =>
+            .Callback<PreboundApi, IReadOnlyDictionary<string, object?>, CancellationToken>((api, _, _) =>
             {
                 executionOrder.Add(api.ServiceName);
             })
@@ -1869,7 +1869,7 @@ public class ResourceServiceTests
         // Setup successful API call
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PreboundApiResult
@@ -1917,7 +1917,7 @@ public class ResourceServiceTests
         // Setup successful API call
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PreboundApiResult
@@ -2266,7 +2266,7 @@ public class ResourceServiceTests
         // Verify navigator was NOT called (dry run doesn't execute callbacks)
         _mockNavigator.Verify(
             n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
@@ -2288,7 +2288,7 @@ public class ResourceServiceTests
         // Setup successful API call
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PreboundApiResult
@@ -2342,7 +2342,7 @@ public class ResourceServiceTests
         // Setup successful API call
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PreboundApiResult
@@ -2389,7 +2389,7 @@ public class ResourceServiceTests
         // Setup successful API call
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PreboundApiResult
@@ -2437,7 +2437,7 @@ public class ResourceServiceTests
         // Setup successful API calls
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PreboundApiResult
@@ -2500,7 +2500,7 @@ public class ResourceServiceTests
         // Setup successful API call
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PreboundApiResult
@@ -2549,7 +2549,7 @@ public class ResourceServiceTests
         var callCount = 0;
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(() =>
@@ -2609,7 +2609,7 @@ public class ResourceServiceTests
         var callCount = 0;
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(() =>
@@ -2673,7 +2673,7 @@ public class ResourceServiceTests
         // Setup all callbacks to fail
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PreboundApiResult
@@ -2798,7 +2798,7 @@ public class ResourceServiceTests
         // Setup successful API call
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PreboundApiResult
@@ -2915,7 +2915,7 @@ public class ResourceServiceTests
         // Setup successful API calls
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PreboundApiResult
@@ -2992,7 +2992,7 @@ public class ResourceServiceTests
         var callCount = 0;
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(() =>
@@ -3070,7 +3070,7 @@ public class ResourceServiceTests
 
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PreboundApiResult
@@ -3410,7 +3410,7 @@ public class ResourceServiceTests
         // Setup successful compress callback
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PreboundApiResult
@@ -3780,11 +3780,11 @@ public class ResourceServiceTests
         // Setup callback to FAIL
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiBatchAsync(
-                It.IsAny<IEnumerable<PreboundApiDefinition>>(),
+                It.IsAny<IEnumerable<PreboundApi>>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<BatchExecutionMode>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IEnumerable<PreboundApiDefinition> apis, IReadOnlyDictionary<string, object?> ctx, BatchExecutionMode mode, CancellationToken ct) =>
+            .ReturnsAsync((IEnumerable<PreboundApi> apis, IReadOnlyDictionary<string, object?> ctx, BatchExecutionMode mode, CancellationToken ct) =>
             {
                 return apis.Select(api => new PreboundApiResult
                 {
@@ -3875,18 +3875,18 @@ public class ResourceServiceTests
         SetupSuccessfulLock();
 
         // Setup navigator to return successful batch results and capture the callback invocation
-        var capturedBatchApis = new List<PreboundApiDefinition>();
+        var capturedBatchApis = new List<PreboundApi>();
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiBatchAsync(
-                It.IsAny<IEnumerable<PreboundApiDefinition>>(),
+                It.IsAny<IEnumerable<PreboundApi>>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<BatchExecutionMode>(),
                 It.IsAny<CancellationToken>()))
-            .Callback((IEnumerable<PreboundApiDefinition> apis, IReadOnlyDictionary<string, object?> ctx, BatchExecutionMode mode, CancellationToken ct) =>
+            .Callback((IEnumerable<PreboundApi> apis, IReadOnlyDictionary<string, object?> ctx, BatchExecutionMode mode, CancellationToken ct) =>
             {
                 capturedBatchApis.AddRange(apis);
             })
-            .ReturnsAsync((IEnumerable<PreboundApiDefinition> apis, IReadOnlyDictionary<string, object?> ctx, BatchExecutionMode mode, CancellationToken ct) =>
+            .ReturnsAsync((IEnumerable<PreboundApi> apis, IReadOnlyDictionary<string, object?> ctx, BatchExecutionMode mode, CancellationToken ct) =>
             {
                 return apis.Select(api => new PreboundApiResult
                 {
@@ -3971,11 +3971,11 @@ public class ResourceServiceTests
         // Setup callback to FAIL (500)
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiBatchAsync(
-                It.IsAny<IEnumerable<PreboundApiDefinition>>(),
+                It.IsAny<IEnumerable<PreboundApi>>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<BatchExecutionMode>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IEnumerable<PreboundApiDefinition> apis, IReadOnlyDictionary<string, object?> ctx, BatchExecutionMode mode, CancellationToken ct) =>
+            .ReturnsAsync((IEnumerable<PreboundApi> apis, IReadOnlyDictionary<string, object?> ctx, BatchExecutionMode mode, CancellationToken ct) =>
             {
                 return apis.Select(api => new PreboundApiResult
                 {
@@ -4079,11 +4079,11 @@ public class ResourceServiceTests
         // First callback succeeds, second fails
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiBatchAsync(
-                It.IsAny<IEnumerable<PreboundApiDefinition>>(),
+                It.IsAny<IEnumerable<PreboundApi>>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<BatchExecutionMode>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IEnumerable<PreboundApiDefinition> apis, IReadOnlyDictionary<string, object?> ctx, BatchExecutionMode mode, CancellationToken ct) =>
+            .ReturnsAsync((IEnumerable<PreboundApi> apis, IReadOnlyDictionary<string, object?> ctx, BatchExecutionMode mode, CancellationToken ct) =>
             {
                 var results = new List<PreboundApiResult>();
                 var apiList = apis.ToList();
@@ -4157,7 +4157,7 @@ public class ResourceServiceTests
         // Setup successful API call for compress
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PreboundApiResult
@@ -4314,7 +4314,7 @@ public class ResourceServiceTests
         // Setup callback to throw exception (simulating lock contention or transient failure)
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new TimeoutException("Connection timed out"));
@@ -4361,10 +4361,10 @@ public class ResourceServiceTests
         // Setup successful API calls with tracking
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<PreboundApiDefinition, IReadOnlyDictionary<string, object?>, CancellationToken>((api, _, _) =>
+            .Callback<PreboundApi, IReadOnlyDictionary<string, object?>, CancellationToken>((api, _, _) =>
             {
                 executedServices.Add(api.ServiceName);
             })
@@ -4474,7 +4474,7 @@ public class ResourceServiceTests
         // Return known JSON from the callback
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PreboundApiResult
@@ -4543,7 +4543,7 @@ public class ResourceServiceTests
         // Return empty JSON from the callback
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PreboundApiResult
@@ -4595,7 +4595,7 @@ public class ResourceServiceTests
 
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiAsync(
-                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<PreboundApi>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PreboundApiResult
@@ -4880,11 +4880,11 @@ public class ResourceServiceTests
         // BOTH callbacks fail
         _mockNavigator
             .Setup(n => n.ExecutePreboundApiBatchAsync(
-                It.IsAny<IEnumerable<PreboundApiDefinition>>(),
+                It.IsAny<IEnumerable<PreboundApi>>(),
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<BatchExecutionMode>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IEnumerable<PreboundApiDefinition> apis, IReadOnlyDictionary<string, object?> ctx, BatchExecutionMode mode, CancellationToken ct) =>
+            .ReturnsAsync((IEnumerable<PreboundApi> apis, IReadOnlyDictionary<string, object?> ctx, BatchExecutionMode mode, CancellationToken ct) =>
             {
                 return apis.Select(api => new PreboundApiResult
                 {

@@ -8221,6 +8221,133 @@ paths:
                 $ref: '#/components/schemas/SharedGardenStateResponse'
         '404':
           description: Bond not found or participants not in garden
+  /genesis/template/register:
+    post:
+      summary: Register a new genesis template
+      description: |
+        Registers a template that defines the full lifecycle configuration for a genesis
+        entity type. Idempotent: returns existing template if templateCode already registered.
+        Validates seed structure, system realm existence, and species availability.
+      operationId: genesis_registerTemplate
+      tags:
+      - Genesis Templates
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterTemplateRequest'
+      responses:
+        '200':
+          description: Template registered successfully (or already exists)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenesisTemplateResponse'
+        '400':
+          description: Invalid template structure, system realm not found, or 
+            species not found
+  /genesis/template/get:
+    post:
+      summary: Get a genesis template by code
+      operationId: genesis_getTemplate
+      tags:
+      - Genesis Templates
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetTemplateRequest'
+      responses:
+        '200':
+          description: Template retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenesisTemplateResponse'
+        '404':
+          description: Template not found
+  /genesis/template/list:
+    post:
+      summary: List genesis templates for a game service
+      operationId: genesis_listTemplates
+      tags:
+      - Genesis Templates
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListTemplatesRequest'
+      responses:
+        '200':
+          description: Templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListTemplatesResponse'
+  /genesis/template/update:
+    post:
+      summary: Update a genesis template
+      description: |
+        Updates template configuration. Only affects new entities created after the update.
+        Existing entities retain the configuration snapshot from their creation time.
+      operationId: genesis_updateTemplate
+      tags:
+      - Genesis Templates
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTemplateRequest'
+      responses:
+        '200':
+          description: Template updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenesisTemplateResponse'
+        '400':
+          description: Invalid template structure or validation failure
+        '404':
+          description: Template not found
+  /genesis/template/deprecate:
+    post:
+      summary: Deprecate a genesis template
+      description: |
+        Marks a template as deprecated. Idempotent: returns OK if already deprecated.
+        Deprecated templates cannot be used to create new entities. Existing entities
+        are unaffected. Category B deprecation per IMPLEMENTATION TENETS.
+      operationId: genesis_deprecateTemplate
+      tags:
+      - Genesis Templates
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateTemplateRequest'
+      responses:
+        '200':
+          description: Template deprecated successfully (or already deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenesisTemplateResponse'
+        '404':
+          description: Template not found
   /inventory/container/create:
     post:
       operationId: inventory_createContainer
@@ -18404,6 +18531,14 @@ components:
           format: date-time
           nullable: true
           description: When the template was last updated
+    BondCardinality:
+      type: string
+      description: Maximum number of bonds a genesis entity template allows
+      enum:
+      - None
+      - OptionalOne
+      - RequiredOne
+      - Many
     BondParticipant:
       type: object
       additionalProperties: false
@@ -21145,6 +21280,13 @@ components:
         licensesCloned:
           type: integer
           description: Number of licenses cloned (item instances created)
+    CognitiveStage:
+      type: string
+      description: Cognitive progression stage of a genesis entity
+      enum:
+      - Dormant
+      - EventBrain
+      - CharacterBrain
     CollapseDeltasRequest:
       type: object
       additionalProperties: false
@@ -21414,6 +21556,7 @@ components:
           description: Committed scene with updated metadata
     ComparisonOperator:
       type: string
+      x-sdk-type: BeyondImmersion.Bannou.Core.ComparisonOperator
       description: Comparison operators for numeric conditions
       enum:
       - Eq
@@ -28704,13 +28847,15 @@ components:
         - released: Assets went to designated recipients
         - refunded: Assets returned to depositors
         - split: Arbiter split assets between parties
-        - expired_refunded: Timed out, auto-refunded
+        - expired: Timed out with no deposits to refund
+        - expired_refunded: Timed out with deposits, auto-refunded
         - cancelled_refunded: Cancelled, deposits refunded
         - violation_refunded: Validation failure caused refund
       enum:
       - Released
       - Refunded
       - Split
+      - Expired
       - ExpiredRefunded
       - CancelledRefunded
       - ViolationRefunded
@@ -29963,6 +30108,399 @@ components:
           $ref: '#/components/schemas/ProgressionAnalysis'
           nullable: true
           description: Analysis of the progression
+    GenesisAwakeningConfig:
+      type: object
+      additionalProperties: false
+      description: Awakening configuration for CharacterBrain cognitive stage 
+        transition
+      required:
+      - systemRealmCode
+      - characterSpeciesCode
+      properties:
+        systemRealmCode:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: System realm code where the character is created at 
+            awakening. Must be a valid system realm.
+        characterSpeciesCode:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Species code for the character created at awakening. Must
+            exist in the system realm.
+        initialPersonalityTraits:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/GenesisPersonalityTraitSeed'
+          description: Personality trait values to seed on the character at 
+            awakening. Null if no traits should be seeded.
+    GenesisBondConfig:
+      type: object
+      additionalProperties: false
+      description: Bond configuration within a genesis template
+      required:
+      - enabled
+      - cardinality
+      properties:
+        enabled:
+          type: boolean
+          description: Whether bonding is enabled for entities of this template
+        cardinality:
+          $ref: '#/components/schemas/BondCardinality'
+          description: Maximum bond cardinality for entities of this template
+        relationshipTypeCode:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 100
+          description: Relationship type code used when creating Relationship at
+            awakening. Required when enabled is true.
+    GenesisCapabilityRule:
+      type: object
+      additionalProperties: false
+      description: Rule defining when a capability is unlocked based on growth 
+        domain depth
+      required:
+      - capabilityCode
+      - domain
+      - threshold
+      properties:
+        capabilityCode:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Capability code that is unlocked when conditions are met
+        domain:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Growth domain that must reach the threshold
+        threshold:
+          type: number
+          format: float
+          minimum: 0
+          description: Minimum domain depth required to unlock this capability
+    GenesisEconomyConfig:
+      type: object
+      additionalProperties: false
+      description: Economy configuration within a genesis template (wallets and 
+        growth mappings)
+      required:
+      - wallets
+      - growthMappings
+      properties:
+        wallets:
+          type: array
+          items:
+            $ref: '#/components/schemas/GenesisWalletConfig'
+          description: Currency wallets provisioned for each entity created from
+            this template
+        growthMappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/GenesisGrowthMapping'
+          description: Mappings from wallet currency transactions to seed growth
+            domains
+    GenesisGrowthMapping:
+      type: object
+      additionalProperties: false
+      description: Maps a wallet currency transaction to seed growth in a 
+        specific domain
+      required:
+      - walletCode
+      - domain
+      - ratio
+      - direction
+      properties:
+        walletCode:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Wallet code that triggers growth (must reference a wallet
+            in the template)
+        domain:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Seed growth domain to apply growth to (must reference a 
+            domain in the seed config)
+        ratio:
+          type: number
+          format: double
+          minimum: 0
+          description: Multiplier applied to the currency transaction amount 
+            before recording as seed growth
+        direction:
+          $ref: '#/components/schemas/GrowthDirection'
+          description: Which transaction direction triggers this mapping
+    GenesisInventoryConfig:
+      type: object
+      additionalProperties: false
+      description: Inventory container configuration within a genesis template
+      required:
+      - inventoryCode
+      - constraintModel
+      - capacity
+      properties:
+        inventoryCode:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Unique inventory code within the template (used as key in
+            inventoryIds map)
+        constraintModel:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Container constraint model (e.g., SlotOnly, WeightOnly, 
+            SlotAndWeight, Grid, Volumetric, Unlimited). Stored in template and 
+            passed through to Inventory at entity creation.
+        capacity:
+          type: integer
+          minimum: 0
+          description: Container capacity (interpretation depends on 
+            constraintModel)
+        allowedCategories:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Allowed item categories for this container (null allows 
+            all categories). Passed through to Inventory at container creation.
+    GenesisPersonalityTraitSeed:
+      type: object
+      additionalProperties: false
+      description: A personality trait value to seed on a character at awakening
+      required:
+      - traitCode
+      - value
+      properties:
+        traitCode:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Personality trait axis code to set
+        value:
+          type: number
+          format: float
+          minimum: -1.0
+          maximum: 1.0
+          description: Initial trait value on the bipolar axis (-1.0 to 1.0)
+    GenesisSeedConfig:
+      type: object
+      additionalProperties: false
+      description: Seed lifecycle configuration within a genesis template
+      required:
+      - seedTypeCode
+      - domains
+      - phases
+      properties:
+        seedTypeCode:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Seed type code registered with the Seed service
+        domains:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/GenesisSeedDomain'
+          description: Growth domains that this seed type tracks
+        phases:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/GenesisSeedPhase'
+          description: Ordered growth phases with thresholds and cognitive stage
+            assignments
+        capabilityRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/GenesisCapabilityRule'
+          description: Rules defining which capabilities unlock at which growth 
+            thresholds
+    GenesisSeedDomain:
+      type: object
+      additionalProperties: false
+      description: A growth domain tracked by the seed
+      required:
+      - domainCode
+      - displayName
+      properties:
+        domainCode:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Unique domain code within the seed type
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Human-readable domain name
+    GenesisSeedPhase:
+      type: object
+      additionalProperties: false
+      description: A growth phase with threshold and cognitive stage assignment
+      required:
+      - phaseName
+      - threshold
+      - cognitiveStage
+      properties:
+        phaseName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Unique phase name within the seed type
+        threshold:
+          type: number
+          format: float
+          minimum: 0
+          description: Total growth threshold required to enter this phase
+        cognitiveStage:
+          $ref: '#/components/schemas/CognitiveStage'
+          description: Cognitive stage assigned when entity enters this phase
+        behaviorRef:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: ABML behavior document reference for actor spawning at 
+            this phase. Required when cognitiveStage is EventBrain or 
+            CharacterBrain.
+        capabilityRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/GenesisCapabilityRule'
+          description: Phase-specific capability rules (unlocked when this phase
+            is reached)
+    GenesisStorageConfig:
+      type: object
+      additionalProperties: false
+      description: Storage configuration within a genesis template (inventory 
+        containers)
+      required:
+      - inventories
+      properties:
+        inventories:
+          type: array
+          items:
+            $ref: '#/components/schemas/GenesisInventoryConfig'
+          description: Inventory containers provisioned for each entity created 
+            from this template
+    GenesisTemplateResponse:
+      type: object
+      additionalProperties: false
+      description: Full genesis template with all configuration and deprecation 
+        state
+      required:
+      - templateCode
+      - gameServiceId
+      - displayName
+      - description
+      - seed
+      - economy
+      - storage
+      - awakening
+      - physicalFormType
+      - bond
+      - archiveOnDestruction
+      - isDeprecated
+      - createdAt
+      - updatedAt
+      properties:
+        templateCode:
+          type: string
+          description: Unique template identifier
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this template is scoped to
+        displayName:
+          type: string
+          description: Human-readable template name
+        description:
+          type: string
+          description: Template description
+        seed:
+          $ref: '#/components/schemas/GenesisSeedConfig'
+          description: Seed lifecycle configuration
+        economy:
+          $ref: '#/components/schemas/GenesisEconomyConfig'
+          description: Economy configuration
+        storage:
+          $ref: '#/components/schemas/GenesisStorageConfig'
+          description: Storage configuration
+        awakening:
+          $ref: '#/components/schemas/GenesisAwakeningConfig'
+          description: Awakening configuration
+        physicalFormType:
+          $ref: '#/components/schemas/PhysicalFormType'
+          description: Physical form type for entities of this template
+        bond:
+          $ref: '#/components/schemas/GenesisBondConfig'
+          description: Bond configuration
+        archiveOnDestruction:
+          type: boolean
+          description: Whether to archive the character via lib-resource 
+            compression before destroying the entity
+        isDeprecated:
+          type: boolean
+          description: Whether this template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Reason for deprecation (null if not deprecated)
+        createdAt:
+          type: string
+          format: date-time
+          description: When the template was registered
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the template was last updated
+    GenesisWalletConfig:
+      type: object
+      additionalProperties: false
+      description: Currency wallet configuration within a genesis template
+      required:
+      - walletCode
+      - currencyCode
+      properties:
+        walletCode:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Unique wallet code within the template (used as key in 
+            walletIds map)
+        currencyCode:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Currency code for this wallet (must be registered with 
+            Currency service)
+        autogainEnabled:
+          type: boolean
+          default: false
+          description: Whether this wallet accumulates currency automatically 
+            over time
+        autogainBaseRate:
+          type: number
+          format: double
+          nullable: true
+          description: Base rate of automatic currency gain per tick. Required 
+            when autogainEnabled is true.
+        autogainCap:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum balance for autogain accumulation. Required when 
+            autogainEnabled is true.
     GenotypeEntry:
       type: object
       additionalProperties: false
@@ -30217,14 +30755,14 @@ components:
     GetBondRequest:
       type: object
       additionalProperties: false
-      description: Request to get a bond by ID.
+      description: Request to get bond information for a genesis entity
       required:
-      - bondId
+      - entityId
       properties:
-        bondId:
+        entityId:
           type: string
           format: uuid
-          description: The bond to retrieve.
+          description: Entity ID to get bond information for
     GetBreachRequest:
       type: object
       description: Request to get breach details
@@ -32670,6 +33208,14 @@ components:
       - Flanker
       - Leader
       - Solo
+    GrowthDirection:
+      type: string
+      description: Which currency transaction direction drives growth for a 
+        mapping
+      enum:
+      - Credit
+      - Debit
+      - Both
     GrowthPhaseDefinition:
       type: object
       additionalProperties: false
@@ -39860,6 +40406,13 @@ components:
         expressionRule:
           $ref: '#/components/schemas/DominanceModel'
           description: Which dominance model produced this value
+    PhysicalFormType:
+      type: string
+      description: Type of physical form a genesis entity can be bound to
+      enum:
+      - Item
+      - Location
+      - None
     PinMessageRequest:
       type: object
       additionalProperties: false
@@ -40315,6 +40868,7 @@ components:
           description: POIs triggered by proximity to the new position
     PreboundApi:
       type: object
+      x-sdk-type: BeyondImmersion.Bannou.Core.PreboundApi
       description: Pre-configured API call to execute on contract events
       additionalProperties: false
       required:
@@ -40338,14 +40892,15 @@ components:
         executionMode:
           allOf:
           - $ref: '#/components/schemas/PreboundApiExecutionMode'
-          default: sync
+          default: Sync
           description: How to execute the API call
-        responseValidation:
-          $ref: '#/components/schemas/ResponseValidation'
+        responseTransformation:
+          $ref: '#/components/schemas/ResponseTransformation'
           nullable: true
-          description: Optional validation rules for the response
+          description: Optional transformation rules for the API response
     PreboundApiExecutionMode:
       type: string
+      x-sdk-type: BeyondImmersion.Bannou.Core.PreboundApiExecutionMode
       description: How to execute a prebound API call
       enum:
       - Sync
@@ -43097,6 +43652,66 @@ components:
           type: string
           format: uuid
           description: ID of the registered station
+    RegisterTemplateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to register a new genesis template
+      required:
+      - templateCode
+      - gameServiceId
+      - displayName
+      - description
+      - seed
+      - economy
+      - storage
+      - awakening
+      - physicalFormType
+      - bond
+      - archiveOnDestruction
+      properties:
+        templateCode:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Unique template identifier (primary key)
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this template is scoped to
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Human-readable template name
+        description:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: Template description
+        seed:
+          $ref: '#/components/schemas/GenesisSeedConfig'
+          description: Seed lifecycle configuration
+        economy:
+          $ref: '#/components/schemas/GenesisEconomyConfig'
+          description: Economy configuration (wallets and growth mappings)
+        storage:
+          $ref: '#/components/schemas/GenesisStorageConfig'
+          description: Storage configuration (inventories)
+        awakening:
+          $ref: '#/components/schemas/GenesisAwakeningConfig'
+          description: Awakening configuration for CharacterBrain transition
+        physicalFormType:
+          $ref: '#/components/schemas/PhysicalFormType'
+          description: Type of physical form entities of this template can be 
+            bound to
+        bond:
+          $ref: '#/components/schemas/GenesisBondConfig'
+          description: Bond configuration
+        archiveOnDestruction:
+          type: boolean
+          default: true
+          description: Whether to archive the character via lib-resource 
+            compression before destroying the entity
     RelationshipListResponse:
       description: Paginated list of relationships with metadata for navigation
       type: object
@@ -43967,30 +44582,25 @@ components:
           format: double
           minimum: 0
           description: Multiplier for wildlife activity
-    ResponseValidation:
+    ResponseTransformation:
       type: object
-      description: Validation rules for API responses with three-outcome model 
-        (success, permanent failure, transient failure)
+      x-sdk-type: BeyondImmersion.Bannou.Core.ResponseTransformation
+      description: Transformation rules applied to a prebound API response. 
+        First matching rule produces the result.
       additionalProperties: false
       properties:
-        successConditions:
+        rules:
           type: array
           items:
-            $ref: '#/components/schemas/ValidationCondition'
-          description: Conditions that must ALL pass for success; if any fail, 
-            checks permanent failure conditions
-        permanentFailureConditions:
-          type: array
-          items:
-            $ref: '#/components/schemas/ValidationCondition'
-          description: Conditions that indicate permanent failure (clause 
-            violated); checked when success conditions fail
+            $ref: '#/components/schemas/TransformationRule'
+          description: Ordered list of transformation rules. First matching rule
+            wins.
         transientFailureStatusCodes:
           type: array
           items:
             type: integer
-          description: HTTP status codes indicating transient failure for retry 
-            (default 408, 429, 502, 503, 504)
+          description: HTTP status codes indicating transient failure 
+            (retryable). Default when null 408, 429, 502, 503, 504.
     RestoreArchiveRequest:
       description: Request to restore documents from an archive
       type: object
@@ -49303,6 +49913,78 @@ components:
         scale:
           $ref: '#/components/schemas/Vector3'
           description: Scale relative to parent
+    TransformationCondition:
+      type: object
+      x-sdk-type: BeyondImmersion.Bannou.Core.TransformationCondition
+      description: A single condition to evaluate against an API response
+      additionalProperties: false
+      required:
+      - type
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TransformationConditionType'
+          description: The type of condition to evaluate
+        jsonPath:
+          type: string
+          nullable: true
+          description: JsonPath expression to extract value from response (e.g. 
+            "$.balance", "$.species.code")
+        expectedValue:
+          type: string
+          nullable: true
+          description: Expected value for comparison conditions with type 
+            coercion
+        operator:
+          $ref: '#/components/schemas/ComparisonOperator'
+          nullable: true
+          description: Comparison operator for numeric comparisons
+        statusCodes:
+          type: array
+          items:
+            type: integer
+          description: HTTP status codes for StatusCodeIn condition
+    TransformationConditionType:
+      type: string
+      x-sdk-type: BeyondImmersion.Bannou.Core.TransformationConditionType
+      description: Types of conditions that can be evaluated against an API 
+        response
+      enum:
+      - StatusCodeIn
+      - JsonPathEquals
+      - JsonPathNotEquals
+      - JsonPathExists
+      - JsonPathNotExists
+      - JsonPathGreaterThan
+      - JsonPathLessThan
+      - JsonPathContains
+    TransformationRule:
+      type: object
+      x-sdk-type: BeyondImmersion.Bannou.Core.TransformationRule
+      description: A single transformation rule with conditions and result 
+        payload
+      additionalProperties: false
+      required:
+      - statusCode
+      properties:
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransformationCondition'
+          description: All conditions must match for this rule to fire (AND 
+            logic). Empty or null always matches.
+        statusCode:
+          type: integer
+          description: HTTP status code to return when this rule matches
+        payload:
+          type: string
+          nullable: true
+          description: JSON payload to return when matched. Null passes through 
+            raw response body.
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of what this rule does
     TransitConnection:
       type: object
       additionalProperties: false
@@ -53004,48 +53686,6 @@ components:
         remainingTime:
           type: integer
           description: Seconds until expiration
-    ValidationCondition:
-      type: object
-      description: A single condition to check against an API response
-      additionalProperties: false
-      required:
-      - type
-      properties:
-        type:
-          allOf:
-          - $ref: '#/components/schemas/ValidationConditionType'
-          description: The type of validation condition to check
-        jsonPath:
-          type: string
-          nullable: true
-          description: JsonPath expression to extract value from response 
-            (required for jsonPathEquals/Exists/NotExists, e.g. "$.balance")
-        expectedValue:
-          type: string
-          nullable: true
-          description: Expected value for comparison conditions with type 
-            coercion ("true"/"false" for booleans, numeric strings for numbers)
-        operator:
-          $ref: '#/components/schemas/ComparisonOperator'
-          nullable: true
-          description: Comparison operator for numeric comparisons
-        statusCodes:
-          type: array
-          items:
-            type: integer
-          description: HTTP status codes for statusCodeIn condition
-    ValidationConditionType:
-      type: string
-      description: Type of validation condition
-      enum:
-      - StatusCodeIn
-      - JsonPathEquals
-      - JsonPathNotEquals
-      - JsonPathExists
-      - JsonPathNotExists
-      - JsonPathGreaterThan
-      - JsonPathLessThan
-      - JsonPathContains
     ValidationError:
       description: Detailed validation error with type, location, and message 
         information
@@ -54068,6 +54708,9 @@ tags:
 - name: Bannou Gardener
   description: Player experience orchestration service (L4 GameFeatures) for 
     garden navigation,
+- name: Bannou Genesis
+  description: Template-driven entity awakening lifecycle service (L2 
+    GameFoundation). Manages entities
 - name: Bannou Leaderboard
   description: Real-time leaderboard management using Redis Sorted Sets for 
     efficient ranking.

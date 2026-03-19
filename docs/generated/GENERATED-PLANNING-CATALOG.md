@@ -195,6 +195,14 @@ Normalizes high-frequency event publishing across Bannou by extending x-lifecycl
 
 Proposes a self-hosted Git server as a Bannou plugin (lib-git) using git.exe process execution for protocol handling, with a POST-only repository management API and WebSocket-based real-time synchronization via the Connect service. The estimated effort is 6-8 weeks covering core protocol, management API, real-time sync, and testing. No implementation exists yet; neither schemas nor plugin code have been created.
 
+### Resource Transactions: Durable Multi-Service Provisioning and Cleanup {#resource-transactions}
+
+**Type**: Implementation Plan | **Status**: Draft | **Last Updated**: 2026-03-19 | **North Stars**: #1, #3, #4 | [Full Document](../planning/RESOURCE-TRANSACTIONS.md)
+
+Extends lib-resource (L1) with transactional multi-service provisioning and cleanup coordination. When an orchestrating service (Genesis, Craft, Workshop) provisions resources across multiple services, Resource tracks the provisioning as a durable transaction with automatic compensation on failure and background recovery for crash scenarios. This eliminates the "best-effort" compensation pattern that currently produces silent orphaned resources with no recovery mechanism.
+
+The design composes with a complementary schema-level change: all Create endpoints accept an optional caller-specified GUID, enabling idempotent retry of provisioning sequences. Together, these two changes guarantee that every multi-service operation either fully completes or fully rolls back — no silent orphans, no fabricated reconciliation workers, no swallowed exceptions.
+
 ## Architectural Analysis
 
 ### Behavioral Gaps: What the Behavior System Must Become {#behavioral-gaps}
@@ -217,7 +225,7 @@ Records the results of a full cross-service architectural audit comparing VISION
 
 ## Summary
 
-- **Documents in catalog**: 33
+- **Documents in catalog**: 34
 
 ---
 

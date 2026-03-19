@@ -636,7 +636,7 @@ public partial class ResourceService : IResourceService
 
         if (executableCallbacks.Count > 0)
         {
-            var apiDefinitions = executableCallbacks.Select(c => new PreboundApiDefinition
+            var apiDefinitions = executableCallbacks.Select(c => new PreboundApi
             {
                 ServiceName = c.ServiceName,
                 Endpoint = c.CallbackEndpoint,
@@ -984,7 +984,7 @@ public partial class ResourceService : IResourceService
 
             try
             {
-                var apiDefinition = new PreboundApiDefinition
+                var apiDefinition = new PreboundApi
                 {
                     ServiceName = callback.ServiceName,
                     Endpoint = callback.CompressEndpoint,
@@ -1338,7 +1338,7 @@ public partial class ResourceService : IResourceService
                 // Add the compressed data to the context for template substitution
                 context["data"] = entry.Data;
 
-                var apiDefinition = new PreboundApiDefinition
+                var apiDefinition = new PreboundApi
                 {
                     ServiceName = callback.ServiceName,
                     Endpoint = callback.DecompressEndpoint,
@@ -1622,7 +1622,7 @@ public partial class ResourceService : IResourceService
             ["targetResourceId"] = body.TargetResourceId.ToString()
         };
 
-        var apiDefinitions = callbacks.Select(c => new PreboundApiDefinition
+        var apiDefinitions = callbacks.Select(c => new PreboundApi
         {
             ServiceName = c.ServiceName,
             Endpoint = c.MigrateEndpoint,
@@ -2194,7 +2194,7 @@ public partial class ResourceService : IResourceService
 
             try
             {
-                var apiDefinition = new PreboundApiDefinition
+                var apiDefinition = new PreboundApi
                 {
                     ServiceName = callback.ServiceName,
                     Endpoint = callback.CompressEndpoint,

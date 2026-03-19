@@ -60,6 +60,10 @@ public static class VariableProviderDefinitions
     /// <summary>Faction membership and status data for ABML expressions (${faction.*})</summary>
     public const string Faction = "faction";
 
+    // Genesis Service
+    /// <summary>Genesis entity lifecycle data for ABML expressions (${genesis.*}) — template code, phase, cognitive stage, wallet balances, inventory state, capabilities, bond status</summary>
+    public const string Genesis = "genesis";
+
     // Inventory Service
     /// <summary>Item possession and container data for ABML expressions (${inventory.*})</summary>
     public const string Inventory = "inventory";
@@ -110,6 +114,7 @@ public static class VariableProviderDefinitions
             [Encounters] = new ProviderMetadata("CharacterEncounter", "Encounter history and sentiment for ABML expressions (${encounters.*})"),
             [Environment] = new ProviderMetadata("Environment", "Weather, temperature, atmospheric conditions, and resource availability for ABML expressions (${environment.*})"),
             [Faction] = new ProviderMetadata("Faction", "Faction membership and status data for ABML expressions (${faction.*})"),
+            [Genesis] = new ProviderMetadata("Genesis", "Genesis entity lifecycle data for ABML expressions (${genesis.*}) — template code, phase, cognitive stage, wallet balances, inventory state, capabilities, bond status"),
             [Heritage] = new ProviderMetadata("CharacterLifecycle", "Genetic heritage data — phenotype traits, aptitudes, bloodline membership, species, generation depth (${heritage.*})"),
             [Inventory] = new ProviderMetadata("Inventory", "Item possession and container data for ABML expressions (${inventory.*})"),
             [Lifecycle] = new ProviderMetadata("CharacterLifecycle", "Lifecycle state data — age, stage, fertility, health modifier, marriage status, child count, fulfillment (${lifecycle.*})"),

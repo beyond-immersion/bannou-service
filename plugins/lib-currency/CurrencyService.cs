@@ -608,10 +608,6 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
         if (wallet is null) return (StatusCodes.NotFound, null);
         if (wallet.Status == WalletStatus.Closed) return (StatusCodes.BadRequest, null);
 
-        var destKey = $"{WALLET_PREFIX}{body.TransferRemainingTo}";
-        var destWallet = await _walletStore.GetAsync(destKey, cancellationToken);
-        if (destWallet is null) return (StatusCodes.NotFound, null);
-
         // Acquire wallet lock to prevent concurrent close/transfer operations
         await using var walletLock = await _lockProvider.LockAsync(
             StateStoreDefinitions.CurrencyLock, body.WalletId.ToString(), Guid.NewGuid().ToString(), _configuration.WalletLockTimeoutSeconds, cancellationToken);
@@ -634,21 +630,28 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
             }
         }
 
-        // Transfer remaining balances
+        // Transfer remaining balances to destination wallet if provided
         var transferredBalances = new List<TransferredBalance>();
-        foreach (var balance in balances)
+        if (body.TransferRemainingTo is { } destinationWalletId)
         {
-            if (balance.Amount > 0)
-            {
-                await InternalCreditAsync(body.TransferRemainingTo, balance.CurrencyDefinitionId,
-                    balance.Amount, TransactionType.Transfer, "wallet_close", body.WalletId,
-                    $"close-{body.WalletId}-{balance.CurrencyDefinitionId}", cancellationToken);
+            var destKey = $"{WALLET_PREFIX}{destinationWalletId}";
+            var destWallet = await _walletStore.GetAsync(destKey, cancellationToken);
+            if (destWallet is null) return (StatusCodes.NotFound, null);
 
-                transferredBalances.Add(new TransferredBalance
+            foreach (var balance in balances)
+            {
+                if (balance.Amount > 0)
                 {
-                    CurrencyDefinitionId = balance.CurrencyDefinitionId,
-                    Amount = balance.Amount
-                });
+                    await InternalCreditAsync(destinationWalletId, balance.CurrencyDefinitionId,
+                        balance.Amount, TransactionType.Transfer, "wallet_close", body.WalletId,
+                        $"close-{body.WalletId}-{balance.CurrencyDefinitionId}", cancellationToken);
+
+                    transferredBalances.Add(new TransferredBalance
+                    {
+                        CurrencyDefinitionId = balance.CurrencyDefinitionId,
+                        Amount = balance.Amount
+                    });
+                }
             }
         }
 

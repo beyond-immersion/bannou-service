@@ -513,10 +513,11 @@ paths:
         \            \"AssetExpired\",\n                \"BalanceMismatch\"\n            ]\n        },\n        \"EscrowResolution\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"How the escrow was resolved.\\n- released:
         Assets went to designated recipients\\n- refunded: Assets returned to depositors\\n- split: Arbiter split assets between
-        parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
-        Validation failure caused refund\\n\",\n            \"enum\": [\n                \"Released\",\n                \"\
-        Refunded\",\n                \"Split\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\"\
-        ,\n                \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        parties\\n- expired: Timed out with no deposits to refund\\n- expired_refunded: Timed out with deposits, auto-refunded\\
+        n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded: Validation failure caused refund\\n\"\
+        ,\n            \"enum\": [\n                \"Released\",\n                \"Refunded\",\n                \"Split\"\
+        ,\n                \"Expired\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\",\n  \
+        \              \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
         \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
         (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
@@ -861,10 +862,11 @@ paths:
         \            \"AssetExpired\",\n                \"BalanceMismatch\"\n            ]\n        },\n        \"EscrowResolution\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"How the escrow was resolved.\\n- released:
         Assets went to designated recipients\\n- refunded: Assets returned to depositors\\n- split: Arbiter split assets between
-        parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
-        Validation failure caused refund\\n\",\n            \"enum\": [\n                \"Released\",\n                \"\
-        Refunded\",\n                \"Split\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\"\
-        ,\n                \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        parties\\n- expired: Timed out with no deposits to refund\\n- expired_refunded: Timed out with deposits, auto-refunded\\
+        n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded: Validation failure caused refund\\n\"\
+        ,\n            \"enum\": [\n                \"Released\",\n                \"Refunded\",\n                \"Split\"\
+        ,\n                \"Expired\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\",\n  \
+        \              \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
         \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
         (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
@@ -1230,10 +1232,11 @@ paths:
         \            \"AssetExpired\",\n                \"BalanceMismatch\"\n            ]\n        },\n        \"EscrowResolution\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"How the escrow was resolved.\\n- released:
         Assets went to designated recipients\\n- refunded: Assets returned to depositors\\n- split: Arbiter split assets between
-        parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
-        Validation failure caused refund\\n\",\n            \"enum\": [\n                \"Released\",\n                \"\
-        Refunded\",\n                \"Split\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\"\
-        ,\n                \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        parties\\n- expired: Timed out with no deposits to refund\\n- expired_refunded: Timed out with deposits, auto-refunded\\
+        n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded: Validation failure caused refund\\n\"\
+        ,\n            \"enum\": [\n                \"Released\",\n                \"Refunded\",\n                \"Split\"\
+        ,\n                \"Expired\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\",\n  \
+        \              \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
         \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
         (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
@@ -1693,10 +1696,11 @@ paths:
         \            \"AssetExpired\",\n                \"BalanceMismatch\"\n            ]\n        },\n        \"EscrowResolution\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"How the escrow was resolved.\\n- released:
         Assets went to designated recipients\\n- refunded: Assets returned to depositors\\n- split: Arbiter split assets between
-        parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
-        Validation failure caused refund\\n\",\n            \"enum\": [\n                \"Released\",\n                \"\
-        Refunded\",\n                \"Split\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\"\
-        ,\n                \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        parties\\n- expired: Timed out with no deposits to refund\\n- expired_refunded: Timed out with deposits, auto-refunded\\
+        n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded: Validation failure caused refund\\n\"\
+        ,\n            \"enum\": [\n                \"Released\",\n                \"Refunded\",\n                \"Split\"\
+        ,\n                \"Expired\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\",\n  \
+        \              \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
         \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
         (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
@@ -2256,10 +2260,11 @@ paths:
         \            \"AssetExpired\",\n                \"BalanceMismatch\"\n            ]\n        },\n        \"EscrowResolution\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"How the escrow was resolved.\\n- released:
         Assets went to designated recipients\\n- refunded: Assets returned to depositors\\n- split: Arbiter split assets between
-        parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
-        Validation failure caused refund\\n\",\n            \"enum\": [\n                \"Released\",\n                \"\
-        Refunded\",\n                \"Split\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\"\
-        ,\n                \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        parties\\n- expired: Timed out with no deposits to refund\\n- expired_refunded: Timed out with deposits, auto-refunded\\
+        n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded: Validation failure caused refund\\n\"\
+        ,\n            \"enum\": [\n                \"Released\",\n                \"Refunded\",\n                \"Split\"\
+        ,\n                \"Expired\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\",\n  \
+        \              \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
         \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
         (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
@@ -2671,10 +2676,11 @@ paths:
         \            \"AssetExpired\",\n                \"BalanceMismatch\"\n            ]\n        },\n        \"EscrowResolution\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"How the escrow was resolved.\\n- released:
         Assets went to designated recipients\\n- refunded: Assets returned to depositors\\n- split: Arbiter split assets between
-        parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
-        Validation failure caused refund\\n\",\n            \"enum\": [\n                \"Released\",\n                \"\
-        Refunded\",\n                \"Split\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\"\
-        ,\n                \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        parties\\n- expired: Timed out with no deposits to refund\\n- expired_refunded: Timed out with deposits, auto-refunded\\
+        n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded: Validation failure caused refund\\n\"\
+        ,\n            \"enum\": [\n                \"Released\",\n                \"Refunded\",\n                \"Split\"\
+        ,\n                \"Expired\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\",\n  \
+        \              \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
         \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
         (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
@@ -3034,10 +3040,11 @@ paths:
         \            \"AssetExpired\",\n                \"BalanceMismatch\"\n            ]\n        },\n        \"EscrowResolution\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"How the escrow was resolved.\\n- released:
         Assets went to designated recipients\\n- refunded: Assets returned to depositors\\n- split: Arbiter split assets between
-        parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
-        Validation failure caused refund\\n\",\n            \"enum\": [\n                \"Released\",\n                \"\
-        Refunded\",\n                \"Split\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\"\
-        ,\n                \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        parties\\n- expired: Timed out with no deposits to refund\\n- expired_refunded: Timed out with deposits, auto-refunded\\
+        n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded: Validation failure caused refund\\n\"\
+        ,\n            \"enum\": [\n                \"Released\",\n                \"Refunded\",\n                \"Split\"\
+        ,\n                \"Expired\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\",\n  \
+        \              \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
         \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
         (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
@@ -3388,10 +3395,11 @@ paths:
         \            \"AssetExpired\",\n                \"BalanceMismatch\"\n            ]\n        },\n        \"EscrowResolution\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"How the escrow was resolved.\\n- released:
         Assets went to designated recipients\\n- refunded: Assets returned to depositors\\n- split: Arbiter split assets between
-        parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
-        Validation failure caused refund\\n\",\n            \"enum\": [\n                \"Released\",\n                \"\
-        Refunded\",\n                \"Split\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\"\
-        ,\n                \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        parties\\n- expired: Timed out with no deposits to refund\\n- expired_refunded: Timed out with deposits, auto-refunded\\
+        n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded: Validation failure caused refund\\n\"\
+        ,\n            \"enum\": [\n                \"Released\",\n                \"Refunded\",\n                \"Split\"\
+        ,\n                \"Expired\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\",\n  \
+        \              \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
         \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
         (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
@@ -3745,10 +3753,11 @@ paths:
         \            \"AssetExpired\",\n                \"BalanceMismatch\"\n            ]\n        },\n        \"EscrowResolution\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"How the escrow was resolved.\\n- released:
         Assets went to designated recipients\\n- refunded: Assets returned to depositors\\n- split: Arbiter split assets between
-        parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
-        Validation failure caused refund\\n\",\n            \"enum\": [\n                \"Released\",\n                \"\
-        Refunded\",\n                \"Split\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\"\
-        ,\n                \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        parties\\n- expired: Timed out with no deposits to refund\\n- expired_refunded: Timed out with deposits, auto-refunded\\
+        n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded: Validation failure caused refund\\n\"\
+        ,\n            \"enum\": [\n                \"Released\",\n                \"Refunded\",\n                \"Split\"\
+        ,\n                \"Expired\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\",\n  \
+        \              \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
         \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
         (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
@@ -3942,60 +3951,60 @@ paths:
         \     \"idempotencyKey\": {\n                    \"type\": \"string\",\n                    \"description\": \"Idempotency
         key\"\n                }\n            }\n        },\n        \"EscrowResolution\": {\n            \"type\": \"string\"\
         ,\n            \"description\": \"How the escrow was resolved.\\n- released: Assets went to designated recipients\\
-        n- refunded: Assets returned to depositors\\n- split: Arbiter split assets between parties\\n- expired_refunded: Timed
-        out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded: Validation failure
-        caused refund\\n\",\n            \"enum\": [\n                \"Released\",\n                \"Refunded\",\n     \
-        \           \"Split\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\",\n           \
-        \     \"ViolationRefunded\"\n            ]\n        },\n        \"SplitAllocation\": {\n            \"type\": \"object\"\
-        ,\n            \"additionalProperties\": false,\n            \"description\": \"Allocation of assets to a party in
-        a split resolution\",\n            \"required\": [\n                \"partyId\",\n                \"partyType\",\n\
-        \                \"assets\"\n            ],\n            \"properties\": {\n                \"partyId\": {\n     \
-        \               \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Party ID\"\n                },\n                \"partyType\": {\n                    \"description\": \"Type
-        of entity (Account, Character, etc.)\",\n                    \"type\": \"object\"\n                },\n          \
-        \      \"assets\": {\n                    \"type\": \"array\",\n                    \"items\": {\n               \
-        \         \"$ref\": \"#/$defs/EscrowAssetInput\"\n                    },\n                    \"description\": \"\
-        Assets allocated to this party\"\n                }\n            }\n        },\n        \"EscrowAssetInput\": {\n\
-        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
-        Input for specifying an asset in escrow operations\",\n            \"required\": [\n                \"assetType\"\n\
-        \            ],\n            \"properties\": {\n                \"assetType\": {\n                    \"$ref\": \"\
-        #/$defs/AssetType\",\n                    \"description\": \"Type of asset to deposit\"\n                },\n    \
-        \            \"currencyDefinitionId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Currency definition ID\"\
-        \n                },\n                \"currencyCode\": {\n                    \"type\": \"string\",\n           \
-        \         \"nullable\": true,\n                    \"description\": \"Currency code\"\n                },\n      \
-        \          \"currencyAmount\": {\n                    \"type\": \"number\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Currency amount\"\n                },\n                \"itemInstanceId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Item instance ID\"\n                },\n               \
-        \ \"itemName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n          \
-        \          \"description\": \"Item name\"\n                },\n                \"itemTemplateId\": {\n           \
-        \         \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Item template ID (for stacks)\"\n                },\n                \"itemTemplateName\"\
+        n- refunded: Assets returned to depositors\\n- split: Arbiter split assets between parties\\n- expired: Timed out
+        with no deposits to refund\\n- expired_refunded: Timed out with deposits, auto-refunded\\n- cancelled_refunded: Cancelled,
+        deposits refunded\\n- violation_refunded: Validation failure caused refund\\n\",\n            \"enum\": [\n      \
+        \          \"Released\",\n                \"Refunded\",\n                \"Split\",\n                \"Expired\",\n\
+        \                \"ExpiredRefunded\",\n                \"CancelledRefunded\",\n                \"ViolationRefunded\"\
+        \n            ]\n        },\n        \"SplitAllocation\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Allocation of assets to a party in a split resolution\",\n            \"\
+        required\": [\n                \"partyId\",\n                \"partyType\",\n                \"assets\"\n        \
+        \    ],\n            \"properties\": {\n                \"partyId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"description\": \"Party ID\"\n                },\n\
+        \                \"partyType\": {\n                    \"description\": \"Type of entity (Account, Character, etc.)\"\
+        ,\n                    \"type\": \"object\"\n                },\n                \"assets\": {\n                 \
+        \   \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EscrowAssetInput\"\
+        \n                    },\n                    \"description\": \"Assets allocated to this party\"\n              \
+        \  }\n            }\n        },\n        \"EscrowAssetInput\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Input for specifying an asset in escrow operations\"\
+        ,\n            \"required\": [\n                \"assetType\"\n            ],\n            \"properties\": {\n   \
+        \             \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\",\n                    \"description\"\
+        : \"Type of asset to deposit\"\n                },\n                \"currencyDefinitionId\": {\n                \
+        \    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Currency definition ID\"\n                },\n                \"currencyCode\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Item template name\"\n                },\n                \"itemQuantity\": {\n                    \"type\": \"\
-        integer\",\n                    \"nullable\": true,\n                    \"description\": \"Item quantity (for stacks)\"\
-        \n                },\n                \"contractInstanceId\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Contract instance ID\"\n                },\n                \"contractTemplateCode\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Contract template
-        code\"\n                },\n                \"contractDescription\": {\n                    \"type\": \"string\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Contract description\"\n        \
-        \        },\n                \"contractPartyRole\": {\n                    \"type\": \"string\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Contract party role being escrowed\"\n         \
-        \       },\n                \"customAssetType\": {\n                    \"type\": \"string\",\n                  \
-        \  \"nullable\": true,\n                    \"description\": \"Custom asset type\"\n                },\n         \
-        \       \"customAssetId\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Custom asset ID\"\n                },\n                \"customAssetData\"\
-        : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\"\
-        : true,\n                    \"description\": \"Custom asset handler-specific data. No Bannou plugin reads specific
-        keys from this field by convention.\"\n                }\n            }\n        },\n        \"AssetType\": {\n  \
-        \          \"type\": \"string\",\n            \"description\": \"Type of asset held in escrow.\\n- currency: Currency
-        amount held in escrow wallet\\n- item: Item instance held in escrow container\\n- item_stack: Stackable items (quantity)
-        held in escrow container\\n- contract: Contract instance locked under escrow guardianship\\n- custom: Custom asset
-        type via registered handler\\n\",\n            \"enum\": [\n                \"Currency\",\n                \"Item\"\
-        ,\n                \"ItemStack\",\n                \"Contract\",\n                \"Custom\"\n            ]\n    \
-        \    }\n    }\n}"
+        : \"Currency code\"\n                },\n                \"currencyAmount\": {\n                    \"type\": \"number\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Currency amount\"\n           \
+        \     },\n                \"itemInstanceId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Item instance
+        ID\"\n                },\n                \"itemName\": {\n                    \"type\": \"string\",\n           \
+        \         \"nullable\": true,\n                    \"description\": \"Item name\"\n                },\n          \
+        \      \"itemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Item template ID (for stacks)\"\
+        \n                },\n                \"itemTemplateName\": {\n                    \"type\": \"string\",\n       \
+        \             \"nullable\": true,\n                    \"description\": \"Item template name\"\n                },\n\
+        \                \"itemQuantity\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Item quantity (for stacks)\"\n                },\n               \
+        \ \"contractInstanceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Contract instance ID\"\n        \
+        \        },\n                \"contractTemplateCode\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Contract template code\"\n                },\n\
+        \                \"contractDescription\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Contract description\"\n                },\n                \"contractPartyRole\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Contract party role being escrowed\"\n                },\n                \"customAssetType\": {\n           \
+        \         \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Custom asset type\"\n                },\n                \"customAssetId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Custom asset ID\"\n           \
+        \     },\n                \"customAssetData\": {\n                    \"type\": \"object\",\n                    \"\
+        nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\": \"Custom
+        asset handler-specific data. No Bannou plugin reads specific keys from this field by convention.\"\n             \
+        \   }\n            }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type of asset held in escrow.\\n- currency: Currency amount held in escrow wallet\\n- item: Item instance held
+        in escrow container\\n- item_stack: Stackable items (quantity) held in escrow container\\n- contract: Contract instance
+        locked under escrow guardianship\\n- custom: Custom asset type via registered handler\\n\",\n            \"enum\"\
+        : [\n                \"Currency\",\n                \"Item\",\n                \"ItemStack\",\n                \"\
+        Contract\",\n                \"Custom\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ResolveResponse\"\
         ,\n    \"$defs\": {\n        \"ResolveResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response from arbiter resolving a disputed escrow\",\n            \"required\"\
@@ -4288,10 +4297,11 @@ paths:
         \            \"AssetExpired\",\n                \"BalanceMismatch\"\n            ]\n        },\n        \"EscrowResolution\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"How the escrow was resolved.\\n- released:
         Assets went to designated recipients\\n- refunded: Assets returned to depositors\\n- split: Arbiter split assets between
-        parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
-        Validation failure caused refund\\n\",\n            \"enum\": [\n                \"Released\",\n                \"\
-        Refunded\",\n                \"Split\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\"\
-        ,\n                \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        parties\\n- expired: Timed out with no deposits to refund\\n- expired_refunded: Timed out with deposits, auto-refunded\\
+        n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded: Validation failure caused refund\\n\"\
+        ,\n            \"enum\": [\n                \"Released\",\n                \"Refunded\",\n                \"Split\"\
+        ,\n                \"Expired\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\",\n  \
+        \              \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
         \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
         (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
@@ -4650,10 +4660,11 @@ paths:
         \            \"AssetExpired\",\n                \"BalanceMismatch\"\n            ]\n        },\n        \"EscrowResolution\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"How the escrow was resolved.\\n- released:
         Assets went to designated recipients\\n- refunded: Assets returned to depositors\\n- split: Arbiter split assets between
-        parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
-        Validation failure caused refund\\n\",\n            \"enum\": [\n                \"Released\",\n                \"\
-        Refunded\",\n                \"Split\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\"\
-        ,\n                \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        parties\\n- expired: Timed out with no deposits to refund\\n- expired_refunded: Timed out with deposits, auto-refunded\\
+        n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded: Validation failure caused refund\\n\"\
+        ,\n            \"enum\": [\n                \"Released\",\n                \"Refunded\",\n                \"Split\"\
+        ,\n                \"Expired\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\",\n  \
+        \              \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
         \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
         (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
@@ -4990,22 +5001,23 @@ paths:
         \ \"Refunded\",\n                \"Disputed\",\n                \"Expired\",\n                \"Cancelled\",\n   \
         \             \"ValidationFailed\"\n            ]\n        },\n        \"EscrowResolution\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"How the escrow was resolved.\\n- released: Assets went to designated
-        recipients\\n- refunded: Assets returned to depositors\\n- split: Arbiter split assets between parties\\n- expired_refunded:
-        Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded: Validation failure
-        caused refund\\n\",\n            \"enum\": [\n                \"Released\",\n                \"Refunded\",\n     \
-        \           \"Split\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\",\n           \
-        \     \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing \\u2192
-        Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC
-        vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n  If downstream
-        services fail, manual intervention may be required.\\n- service_only: Wait for downstream services (currency, inventory)
-        to confirm transfers complete.\\n- party_required: Wait for all parties to call /confirm-release.\\n- service_and_party:
-        Wait for both service completion AND party confirmation.\\n\",\n            \"enum\": [\n                \"Immediate\"\
-        ,\n                \"ServiceOnly\",\n                \"PartyRequired\",\n                \"ServiceAndParty\"\n   \
-        \         ]\n        },\n        \"RefundMode\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Controls how refund confirmation is handled. Same semantics as ReleaseMode.\\nRefunds typically use 'immediate'
-        since parties get their own assets back.\\n\",\n            \"enum\": [\n                \"Immediate\",\n        \
-        \        \"ServiceOnly\",\n                \"PartyRequired\"\n            ]\n        }\n    }\n}"
+        recipients\\n- refunded: Assets returned to depositors\\n- split: Arbiter split assets between parties\\n- expired:
+        Timed out with no deposits to refund\\n- expired_refunded: Timed out with deposits, auto-refunded\\n- cancelled_refunded:
+        Cancelled, deposits refunded\\n- violation_refunded: Validation failure caused refund\\n\",\n            \"enum\"\
+        : [\n                \"Released\",\n                \"Refunded\",\n                \"Split\",\n                \"\
+        Expired\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\",\n                \"ViolationRefunded\"\
+        \n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Controls how release confirmation is handled:\\n- immediate: Finalizing \\u2192 Released (skip Releasing state
+        entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\\n\
+        \  Assets are marked as released BEFORE downstream services confirm transfers.\\n  If downstream services fail, manual
+        intervention may be required.\\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers
+        complete.\\n- party_required: Wait for all parties to call /confirm-release.\\n- service_and_party: Wait for both
+        service completion AND party confirmation.\\n\",\n            \"enum\": [\n                \"Immediate\",\n      \
+        \          \"ServiceOnly\",\n                \"PartyRequired\",\n                \"ServiceAndParty\"\n           \
+        \ ]\n        },\n        \"RefundMode\": {\n            \"type\": \"string\",\n            \"description\": \"Controls
+        how refund confirmation is handled. Same semantics as ReleaseMode.\\nRefunds typically use 'immediate' since parties
+        get their own assets back.\\n\",\n            \"enum\": [\n                \"Immediate\",\n                \"ServiceOnly\"\
+        ,\n                \"PartyRequired\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Manually trigger validation\",\n    \"description\": \"Manually trigger
         validation on an active escrow.\",\n    \"tags\": [\n        \"Validation\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"validateEscrow\"\n}"
@@ -5337,10 +5349,11 @@ paths:
         \            \"AssetExpired\",\n                \"BalanceMismatch\"\n            ]\n        },\n        \"EscrowResolution\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"How the escrow was resolved.\\n- released:
         Assets went to designated recipients\\n- refunded: Assets returned to depositors\\n- split: Arbiter split assets between
-        parties\\n- expired_refunded: Timed out, auto-refunded\\n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded:
-        Validation failure caused refund\\n\",\n            \"enum\": [\n                \"Released\",\n                \"\
-        Refunded\",\n                \"Split\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\"\
-        ,\n                \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
+        parties\\n- expired: Timed out with no deposits to refund\\n- expired_refunded: Timed out with deposits, auto-refunded\\
+        n- cancelled_refunded: Cancelled, deposits refunded\\n- violation_refunded: Validation failure caused refund\\n\"\
+        ,\n            \"enum\": [\n                \"Released\",\n                \"Refunded\",\n                \"Split\"\
+        ,\n                \"Expired\",\n                \"ExpiredRefunded\",\n                \"CancelledRefunded\",\n  \
+        \              \"ViolationRefunded\"\n            ]\n        },\n        \"ReleaseMode\": {\n            \"type\"\
         : \"string\",\n            \"description\": \"Controls how release confirmation is handled:\\n- immediate: Finalizing
         \\u2192 Released (skip Releasing state entirely).\\n  \\u26a0\\ufe0f WARNING: Use only for trusted/low-value scenarios
         (NPC vendors, system rewards).\\n  Assets are marked as released BEFORE downstream services confirm transfers.\\n\
@@ -5625,13 +5638,15 @@ components:
         - released: Assets went to designated recipients
         - refunded: Assets returned to depositors
         - split: Arbiter split assets between parties
-        - expired_refunded: Timed out, auto-refunded
+        - expired: Timed out with no deposits to refund
+        - expired_refunded: Timed out with deposits, auto-refunded
         - cancelled_refunded: Cancelled, deposits refunded
         - violation_refunded: Validation failure caused refund
       enum:
       - Released
       - Refunded
       - Split
+      - Expired
       - ExpiredRefunded
       - CancelledRefunded
       - ViolationRefunded
@@ -6273,6 +6288,138 @@ components:
         validateEndpoint:
           type: string
           description: Endpoint for validation
+    CustomHandlerValidateRequest:
+      type: object
+      additionalProperties: false
+      description: Request sent to a custom handler's validate endpoint during periodic validation
+      required:
+      - escrowId
+      - customAssetType
+      - customAssetId
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow agreement being validated
+        customAssetType:
+          type: string
+          description: The registered custom asset type
+        customAssetId:
+          type: string
+          nullable: true
+          description: The specific asset identifier
+        customAssetData:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Opaque asset data from the original deposit. Client-only metadata. No Bannou plugin reads 
+            specific keys from this field by convention.
+    CustomHandlerValidateResponse:
+      type: object
+      additionalProperties: false
+      description: Response from a custom handler's validate endpoint
+      required:
+      - valid
+      properties:
+        valid:
+          type: boolean
+          description: Whether the custom asset is still present and valid
+        failureType:
+          $ref: '#/components/schemas/ValidationFailureType'
+          nullable: true
+          description: Type of validation failure if not valid
+        details:
+          type: string
+          nullable: true
+          description: Human-readable failure description
+    CustomHandlerReleaseRequest:
+      type: object
+      additionalProperties: false
+      description: Request sent to a custom handler's release endpoint when escrow releases assets to recipients
+      required:
+      - escrowId
+      - customAssetType
+      - recipientPartyId
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow agreement releasing assets
+        customAssetType:
+          type: string
+          description: The registered custom asset type
+        customAssetId:
+          type: string
+          nullable: true
+          description: The specific asset identifier
+        customAssetData:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Opaque asset data from the original deposit. Client-only metadata. No Bannou plugin reads 
+            specific keys from this field by convention.
+        recipientPartyId:
+          type: string
+          format: uuid
+          description: The party receiving the released assets
+    CustomHandlerReleaseResponse:
+      type: object
+      additionalProperties: false
+      description: Response from a custom handler's release endpoint
+      required:
+      - success
+      properties:
+        success:
+          type: boolean
+          description: Whether the release was executed successfully
+        details:
+          type: string
+          nullable: true
+          description: Human-readable result description
+    CustomHandlerRefundRequest:
+      type: object
+      additionalProperties: false
+      description: Request sent to a custom handler's refund endpoint when escrow refunds assets to depositors
+      required:
+      - escrowId
+      - customAssetType
+      - depositorPartyId
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow agreement refunding assets
+        customAssetType:
+          type: string
+          description: The registered custom asset type
+        customAssetId:
+          type: string
+          nullable: true
+          description: The specific asset identifier
+        customAssetData:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Opaque asset data from the original deposit. Client-only metadata. No Bannou plugin reads 
+            specific keys from this field by convention.
+        depositorPartyId:
+          type: string
+          format: uuid
+          description: The party receiving the refunded assets
+    CustomHandlerRefundResponse:
+      type: object
+      additionalProperties: false
+      description: Response from a custom handler's refund endpoint
+      required:
+      - success
+      properties:
+        success:
+          type: boolean
+          description: Whether the refund was executed successfully
+        details:
+          type: string
+          nullable: true
+          description: Human-readable result description
     CreateEscrowRequest:
       type: object
       additionalProperties: false

@@ -177,6 +177,16 @@ enum class EBindingStatus : uint8
     Disabled UMETA(DisplayName = "Disabled"),
 };
 
+/** Maximum number of bonds a genesis entity template allows */
+UENUM(BlueprintType)
+enum class EBondCardinality : uint8
+{
+    None UMETA(DisplayName = "None"),
+    OptionalOne UMETA(DisplayName = "OptionalOne"),
+    RequiredOne UMETA(DisplayName = "RequiredOne"),
+    Many UMETA(DisplayName = "Many"),
+};
+
 /** Lifecycle status of a seed bond. */
 UENUM(BlueprintType)
 enum class EBondStatus : uint8
@@ -414,6 +424,15 @@ enum class EClauseCategory : uint8
     Validation UMETA(DisplayName = "Validation"),
     Execution UMETA(DisplayName = "Execution"),
     Both UMETA(DisplayName = "Both"),
+};
+
+/** Cognitive progression stage of a genesis entity */
+UENUM(BlueprintType)
+enum class ECognitiveStage : uint8
+{
+    Dormant UMETA(DisplayName = "Dormant"),
+    EventBrain UMETA(DisplayName = "EventBrain"),
+    CharacterBrain UMETA(DisplayName = "CharacterBrain"),
 };
 
 /** Overall approach to combat situations. Affects target selection,
@@ -816,7 +835,8 @@ enum class EEscrowPartyRole : uint8
 - released: Assets went to designated recipients
 - refunded: Assets returned to depositors
 - split: Arbiter split assets between parties
-- expired_refunded: Timed out, auto-refunded
+- expired: Timed out with no deposits to refund
+- expired_refunded: Timed out with deposits, auto-refunded
 - cancelled_refunded: Cancelled, deposits refunded
 - violation_refunded: Validation failure caused refund
  */
@@ -826,6 +846,7 @@ enum class EEscrowResolution : uint8
     Released UMETA(DisplayName = "Released"),
     Refunded UMETA(DisplayName = "Refunded"),
     Split UMETA(DisplayName = "Split"),
+    Expired UMETA(DisplayName = "Expired"),
     ExpiredRefunded UMETA(DisplayName = "ExpiredRefunded"),
     CancelledRefunded UMETA(DisplayName = "CancelledRefunded"),
     ViolationRefunded UMETA(DisplayName = "ViolationRefunded"),
@@ -957,6 +978,15 @@ enum class EGroupRole : uint8
     Flanker UMETA(DisplayName = "Flanker"),
     Leader UMETA(DisplayName = "Leader"),
     Solo UMETA(DisplayName = "Solo"),
+};
+
+/** Which currency transaction direction drives growth for a mapping */
+UENUM(BlueprintType)
+enum class EGrowthDirection : uint8
+{
+    Credit UMETA(DisplayName = "Credit"),
+    Debit UMETA(DisplayName = "Debit"),
+    Both UMETA(DisplayName = "Both"),
 };
 
 /** HTTP method for endpoint invocation */
@@ -1364,6 +1394,15 @@ enum class EPersistenceMode : uint8
 {
     Ephemeral UMETA(DisplayName = "Ephemeral"),
     Persistent UMETA(DisplayName = "Persistent"),
+};
+
+/** Type of physical form a genesis entity can be bound to */
+UENUM(BlueprintType)
+enum class EPhysicalFormType : uint8
+{
+    Item UMETA(DisplayName = "Item"),
+    Location UMETA(DisplayName = "Location"),
+    None UMETA(DisplayName = "None"),
 };
 
 /** A pitch class (note name without octave) */
@@ -2093,6 +2132,20 @@ enum class ETransactionType : uint8
     EscrowRefund UMETA(DisplayName = "EscrowRefund"),
 };
 
+/** Types of conditions that can be evaluated against an API response */
+UENUM(BlueprintType)
+enum class ETransformationConditionType : uint8
+{
+    StatusCodeIn UMETA(DisplayName = "StatusCodeIn"),
+    JsonPathEquals UMETA(DisplayName = "JsonPathEquals"),
+    JsonPathNotEquals UMETA(DisplayName = "JsonPathNotEquals"),
+    JsonPathExists UMETA(DisplayName = "JsonPathExists"),
+    JsonPathNotExists UMETA(DisplayName = "JsonPathNotExists"),
+    JsonPathGreaterThan UMETA(DisplayName = "JsonPathGreaterThan"),
+    JsonPathLessThan UMETA(DisplayName = "JsonPathLessThan"),
+    JsonPathContains UMETA(DisplayName = "JsonPathContains"),
+};
+
 /** Types of trigger conditions for scenario activation.
 TraitRange: Character trait within value range
 BackstoryElement: Character has specific backstory element
@@ -2146,20 +2199,6 @@ enum class EUpdateMode : uint8
     Increment UMETA(DisplayName = "Increment"),
     Max UMETA(DisplayName = "Max"),
     Min UMETA(DisplayName = "Min"),
-};
-
-/** Type of validation condition */
-UENUM(BlueprintType)
-enum class EValidationConditionType : uint8
-{
-    StatusCodeIn UMETA(DisplayName = "StatusCodeIn"),
-    JsonPathEquals UMETA(DisplayName = "JsonPathEquals"),
-    JsonPathNotEquals UMETA(DisplayName = "JsonPathNotEquals"),
-    JsonPathExists UMETA(DisplayName = "JsonPathExists"),
-    JsonPathNotExists UMETA(DisplayName = "JsonPathNotExists"),
-    JsonPathGreaterThan UMETA(DisplayName = "JsonPathGreaterThan"),
-    JsonPathLessThan UMETA(DisplayName = "JsonPathLessThan"),
-    JsonPathContains UMETA(DisplayName = "JsonPathContains"),
 };
 
 /** Type of ABML validation error */

@@ -9,8 +9,8 @@ need deprecation marker interfaces, and the current state of Category B complian
 
 ## Summary
 
-- **Total deprecatable entities**: 27
-- **With `instanceEntity` declared**: 17
+- **Total deprecatable entities**: 28
+- **With `instanceEntity` declared**: 18
 - **Missing `instanceEntity`**: 10
 
 ## All Deprecatable Entities
@@ -32,6 +32,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 | Environment | `ClimateTemplate` | — | Missing |
 | Faction | `Faction` | — | Missing |
 | Gardener | `ScenarioTemplate` | `ScenarioInstance` | OK |
+| Genesis | `Template` | `Entity` | OK |
 | Item | `ItemTemplate` | `ItemInstance` | OK |
 | Leaderboard | `LeaderboardDefinition` | `LeaderboardEntry` | OK |
 | License | `LicenseBoardTemplate` | `LicenseBoard` | OK |
@@ -166,6 +167,14 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Topic prefix**: `*(none — Pattern A)*`
 - **Instance entity**: `ScenarioInstance`
 - **Model fields**: `scenarioTemplateId`, `code`, `displayName`, `description`, `category`, `connectivityMode`, `status`
+
+### Genesis: Template
+
+- **Service**: `genesis`
+- **Schema**: `schemas/genesis-service-events.yaml`
+- **Topic prefix**: `genesis`
+- **Instance entity**: `Entity`
+- **Model fields**: `templateCode`, `gameServiceId`, `displayName`, `description`, `physicalFormType`
 
 ### Item: ItemTemplate
 

@@ -3307,8 +3307,7 @@ public partial class CurrencyController
             "description": "Request to close a wallet and transfer remaining balances",
             "additionalProperties": false,
             "required": [
-                "walletId",
-                "transferRemainingTo"
+                "walletId"
             ],
             "properties": {
                 "walletId": {
@@ -3319,7 +3318,8 @@ public partial class CurrencyController
                 "transferRemainingTo": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Destination wallet for remaining balances"
+                    "nullable": true,
+                    "description": "Destination wallet for remaining balances. Null to discard any remaining balances (e.g., compensation cleanup of empty wallets)."
                 }
             }
         }

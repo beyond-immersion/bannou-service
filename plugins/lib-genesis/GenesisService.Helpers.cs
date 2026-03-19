@@ -42,14 +42,22 @@ public partial class GenesisService
     /// </summary>
     private static GenesisTemplateResponse MapTemplateToResponse(GenesisTemplateModel model) => new()
     {
-        TemplateCode = model.TemplateCode, GameServiceId = model.GameServiceId,
-        DisplayName = model.DisplayName, Description = model.Description,
-        Seed = model.Seed, Economy = model.Economy, Storage = model.Storage,
-        Awakening = model.Awakening, PhysicalFormType = model.PhysicalFormType,
-        Bond = model.Bond, ArchiveOnDestruction = model.ArchiveOnDestruction,
-        IsDeprecated = model.IsDeprecated, DeprecatedAt = model.DeprecatedAt,
+        TemplateCode = model.TemplateCode,
+        GameServiceId = model.GameServiceId,
+        DisplayName = model.DisplayName,
+        Description = model.Description,
+        Seed = model.Seed,
+        Economy = model.Economy,
+        Storage = model.Storage,
+        Awakening = model.Awakening,
+        PhysicalFormType = model.PhysicalFormType,
+        Bond = model.Bond,
+        ArchiveOnDestruction = model.ArchiveOnDestruction,
+        IsDeprecated = model.IsDeprecated,
+        DeprecatedAt = model.DeprecatedAt,
         DeprecationReason = model.DeprecationReason,
-        CreatedAt = model.CreatedAt, UpdatedAt = model.UpdatedAt,
+        CreatedAt = model.CreatedAt,
+        UpdatedAt = model.UpdatedAt,
     };
 
     /// <summary>
@@ -57,36 +65,56 @@ public partial class GenesisService
     /// </summary>
     private static GenesisEntityResponse MapEntityToResponse(
         GenesisEntityModel model, Dictionary<string, double>? walletBalances) => new()
-    {
-        EntityId = model.EntityId, TemplateCode = model.TemplateCode,
-        GameServiceId = model.GameServiceId, RealmId = model.RealmId,
-        Code = model.Code, DisplayName = model.DisplayName,
-        WalletIds = model.WalletIds, WalletBalances = walletBalances,
-        InventoryIds = model.InventoryIds,
-        CurrentPhase = model.CurrentPhase, CognitiveStage = model.CognitiveStage,
-        ActorId = model.ActorId, CharacterId = model.CharacterId,
-        PhysicalFormType = model.PhysicalFormType, PhysicalFormId = model.PhysicalFormId,
-        BondTargetEntityType = model.BondTargetEntityType,
-        BondTargetEntityId = model.BondTargetEntityId, BondId = model.BondId,
-        Status = model.Status, CreatedAt = model.CreatedAt, UpdatedAt = model.UpdatedAt,
-    };
+        {
+            EntityId = model.EntityId,
+            TemplateCode = model.TemplateCode,
+            GameServiceId = model.GameServiceId,
+            RealmId = model.RealmId,
+            Code = model.Code,
+            DisplayName = model.DisplayName,
+            WalletIds = model.WalletIds,
+            WalletBalances = walletBalances,
+            InventoryIds = model.InventoryIds,
+            CurrentPhase = model.CurrentPhase,
+            CognitiveStage = model.CognitiveStage,
+            ActorId = model.ActorId,
+            CharacterId = model.CharacterId,
+            PhysicalFormType = model.PhysicalFormType,
+            PhysicalFormId = model.PhysicalFormId,
+            BondTargetEntityType = model.BondTargetEntityType,
+            BondTargetEntityId = model.BondTargetEntityId,
+            BondId = model.BondId,
+            Status = model.Status,
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = model.UpdatedAt,
+        };
 
     /// <summary>
     /// Maps an entity model to its cached representation.
     /// </summary>
     private static CachedGenesisEntity MapEntityToCache(GenesisEntityModel model) => new()
     {
-        EntityId = model.EntityId, TemplateCode = model.TemplateCode,
-        GameServiceId = model.GameServiceId, RealmId = model.RealmId,
-        Code = model.Code, DisplayName = model.DisplayName, SeedId = model.SeedId,
+        EntityId = model.EntityId,
+        TemplateCode = model.TemplateCode,
+        GameServiceId = model.GameServiceId,
+        RealmId = model.RealmId,
+        Code = model.Code,
+        DisplayName = model.DisplayName,
+        SeedId = model.SeedId,
         WalletIds = new Dictionary<string, Guid>(model.WalletIds),
         InventoryIds = new Dictionary<string, Guid>(model.InventoryIds),
-        CurrentPhase = model.CurrentPhase, CognitiveStage = model.CognitiveStage,
-        ActorId = model.ActorId, CharacterId = model.CharacterId,
-        PhysicalFormType = model.PhysicalFormType, PhysicalFormId = model.PhysicalFormId,
+        CurrentPhase = model.CurrentPhase,
+        CognitiveStage = model.CognitiveStage,
+        ActorId = model.ActorId,
+        CharacterId = model.CharacterId,
+        PhysicalFormType = model.PhysicalFormType,
+        PhysicalFormId = model.PhysicalFormId,
         BondTargetEntityType = model.BondTargetEntityType,
-        BondTargetEntityId = model.BondTargetEntityId, BondId = model.BondId,
-        Status = model.Status, CreatedAt = model.CreatedAt, UpdatedAt = model.UpdatedAt,
+        BondTargetEntityId = model.BondTargetEntityId,
+        BondId = model.BondId,
+        Status = model.Status,
+        CreatedAt = model.CreatedAt,
+        UpdatedAt = model.UpdatedAt,
     };
 
     /// <summary>
@@ -94,17 +122,27 @@ public partial class GenesisService
     /// </summary>
     private static GenesisEntityModel MapCachedToEntity(CachedGenesisEntity cached) => new()
     {
-        EntityId = cached.EntityId, TemplateCode = cached.TemplateCode,
-        GameServiceId = cached.GameServiceId, RealmId = cached.RealmId,
-        Code = cached.Code, DisplayName = cached.DisplayName, SeedId = cached.SeedId,
+        EntityId = cached.EntityId,
+        TemplateCode = cached.TemplateCode,
+        GameServiceId = cached.GameServiceId,
+        RealmId = cached.RealmId,
+        Code = cached.Code,
+        DisplayName = cached.DisplayName,
+        SeedId = cached.SeedId,
         WalletIds = new Dictionary<string, Guid>(cached.WalletIds),
         InventoryIds = new Dictionary<string, Guid>(cached.InventoryIds),
-        CurrentPhase = cached.CurrentPhase, CognitiveStage = cached.CognitiveStage,
-        ActorId = cached.ActorId, CharacterId = cached.CharacterId,
-        PhysicalFormType = cached.PhysicalFormType, PhysicalFormId = cached.PhysicalFormId,
+        CurrentPhase = cached.CurrentPhase,
+        CognitiveStage = cached.CognitiveStage,
+        ActorId = cached.ActorId,
+        CharacterId = cached.CharacterId,
+        PhysicalFormType = cached.PhysicalFormType,
+        PhysicalFormId = cached.PhysicalFormId,
         BondTargetEntityType = cached.BondTargetEntityType,
-        BondTargetEntityId = cached.BondTargetEntityId, BondId = cached.BondId,
-        Status = cached.Status, CreatedAt = cached.CreatedAt, UpdatedAt = cached.UpdatedAt,
+        BondTargetEntityId = cached.BondTargetEntityId,
+        BondId = cached.BondId,
+        Status = cached.Status,
+        CreatedAt = cached.CreatedAt,
+        UpdatedAt = cached.UpdatedAt,
     };
 
     /// <summary>
@@ -112,14 +150,23 @@ public partial class GenesisService
     /// </summary>
     private static EntityDeletedEvent BuildEntityDeletedEvent(GenesisEntityModel entity) => new()
     {
-        EntityId = entity.EntityId, TemplateCode = entity.TemplateCode,
-        GameServiceId = entity.GameServiceId, RealmId = entity.RealmId,
-        Code = entity.Code, DisplayName = entity.DisplayName,
-        WalletIds = entity.WalletIds, InventoryIds = entity.InventoryIds,
-        CurrentPhase = entity.CurrentPhase, CognitiveStage = entity.CognitiveStage,
-        ActorId = entity.ActorId, CharacterId = entity.CharacterId,
-        PhysicalFormType = entity.PhysicalFormType, PhysicalFormId = entity.PhysicalFormId,
-        Status = entity.Status, CreatedAt = entity.CreatedAt, UpdatedAt = entity.UpdatedAt,
+        EntityId = entity.EntityId,
+        TemplateCode = entity.TemplateCode,
+        GameServiceId = entity.GameServiceId,
+        RealmId = entity.RealmId,
+        Code = entity.Code,
+        DisplayName = entity.DisplayName,
+        WalletIds = entity.WalletIds,
+        InventoryIds = entity.InventoryIds,
+        CurrentPhase = entity.CurrentPhase,
+        CognitiveStage = entity.CognitiveStage,
+        ActorId = entity.ActorId,
+        CharacterId = entity.CharacterId,
+        PhysicalFormType = entity.PhysicalFormType,
+        PhysicalFormId = entity.PhysicalFormId,
+        Status = entity.Status,
+        CreatedAt = entity.CreatedAt,
+        UpdatedAt = entity.UpdatedAt,
     };
 
     /// <summary>

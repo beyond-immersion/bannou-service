@@ -29,10 +29,10 @@ Compliant properties include one of these phrases in their description:
 
 | Metric | Count |
 |--------|-------|
-| Total metadata bag properties | 173 |
-| Compliant (has marker) | 153 |
+| Total metadata bag properties | 176 |
+| Compliant (has marker) | 156 |
 | Non-compliant (missing marker) | 20 |
-| Compliance rate | 88% |
+| Compliance rate | 89% |
 
 ## Properties by Service
 
@@ -295,6 +295,9 @@ Compliant properties include one of these phrases in their description:
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
 | `CreateEscrowRequest` | `metadata` | `escrow-api.yaml` | Y | Client-provided application-specific metadata. No Bannou plugin reads specifi... |
+| `CustomHandlerRefundRequest` | `customAssetData` | `escrow-api.yaml` | Y | Opaque asset data from the original deposit. Client-only metadata. No Bannou ... |
+| `CustomHandlerReleaseRequest` | `customAssetData` | `escrow-api.yaml` | Y | Opaque asset data from the original deposit. Client-only metadata. No Bannou ... |
+| `CustomHandlerValidateRequest` | `customAssetData` | `escrow-api.yaml` | Y | Opaque asset data from the original deposit. Client-only metadata. No Bannou ... |
 | `EscrowAgreement` | `metadata` | `escrow-api.yaml` | Y | Client-provided application-specific metadata. No Bannou plugin reads specifi... |
 | `EscrowAsset` | `customAssetData` | `escrow-api.yaml` | Y | Custom asset handler-specific data. No Bannou plugin reads specific keys from... |
 | `EscrowAssetInput` | `customAssetData` | `escrow-api.yaml` | Y | Custom asset handler-specific data. No Bannou plugin reads specific keys from... |

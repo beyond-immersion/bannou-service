@@ -18,8 +18,8 @@ using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Xunit;
 using System.Linq.Expressions;
+using Xunit;
 
 namespace BeyondImmersion.BannouService.Genesis.Tests;
 
@@ -111,12 +111,20 @@ public class GenesisServiceCleanupTests : ServiceTestBase<GenesisServiceConfigur
     {
         return new GenesisEntityModel
         {
-            EntityId = entityId ?? Guid.NewGuid(), TemplateCode = "test_template", GameServiceId = Guid.NewGuid(),
-            RealmId = Guid.NewGuid(), SeedId = Guid.NewGuid(), CharacterId = characterId,
+            EntityId = entityId ?? Guid.NewGuid(),
+            TemplateCode = "test_template",
+            GameServiceId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            SeedId = Guid.NewGuid(),
+            CharacterId = characterId,
             WalletIds = new Dictionary<string, Guid> { ["mana"] = Guid.NewGuid() },
             InventoryIds = new Dictionary<string, Guid> { ["loot"] = Guid.NewGuid() },
-            CurrentPhase = "Dormant", CognitiveStage = CognitiveStage.Dormant, PhysicalFormType = PhysicalFormType.Item,
-            Status = GenesisEntityStatus.Active, CreatedAt = DateTimeOffset.UtcNow.AddHours(-1), UpdatedAt = DateTimeOffset.UtcNow.AddHours(-1)
+            CurrentPhase = "Dormant",
+            CognitiveStage = CognitiveStage.Dormant,
+            PhysicalFormType = PhysicalFormType.Item,
+            Status = GenesisEntityStatus.Active,
+            CreatedAt = DateTimeOffset.UtcNow.AddHours(-1),
+            UpdatedAt = DateTimeOffset.UtcNow.AddHours(-1)
         };
     }
 
@@ -168,7 +176,8 @@ public class GenesisServiceCleanupTests : ServiceTestBase<GenesisServiceConfigur
 
         var template = new GenesisTemplateModel
         {
-            TemplateCode = entity.TemplateCode, ArchiveOnDestruction = true,
+            TemplateCode = entity.TemplateCode,
+            ArchiveOnDestruction = true,
             Seed = new GenesisSeedConfig { SeedTypeCode = "s", Domains = new List<GenesisSeedDomain>(), Phases = new List<GenesisSeedPhase>() },
             Economy = new GenesisEconomyConfig { Wallets = new List<GenesisWalletConfig>(), GrowthMappings = new List<GenesisGrowthMapping>() },
             Storage = new GenesisStorageConfig { Inventories = new List<GenesisInventoryConfig>() },
@@ -231,7 +240,10 @@ public class GenesisServiceCleanupTests : ServiceTestBase<GenesisServiceConfigur
 
         var template = new GenesisTemplateModel
         {
-            TemplateCode = "test_template", GameServiceId = Guid.NewGuid(), DisplayName = "T", Description = "T",
+            TemplateCode = "test_template",
+            GameServiceId = Guid.NewGuid(),
+            DisplayName = "T",
+            Description = "T",
             Seed = new GenesisSeedConfig
             {
                 SeedTypeCode = "test_seed",

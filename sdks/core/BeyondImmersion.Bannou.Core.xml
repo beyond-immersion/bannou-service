@@ -457,7 +457,7 @@
             Null when no specific reason was provided.
             </summary>
         </member>
-        <member name="T:BeyondImmersion.Bannou.Core.PreboundApiDefinition">
+        <member name="T:BeyondImmersion.Bannou.Core.PreboundApi">
             <summary>
             Definition of a prebound API call.
             Decoupled from generated contract models for use across services.
@@ -467,45 +467,325 @@
             what service/endpoint to call and what payload template to use.
             </remarks>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Core.PreboundApiDefinition.ServiceName">
+        <member name="P:BeyondImmersion.Bannou.Core.PreboundApi.ServiceName">
             <summary>
             Target service name (e.g., "currency", "inventory", "character").
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Core.PreboundApiDefinition.Endpoint">
+        <member name="P:BeyondImmersion.Bannou.Core.PreboundApi.Endpoint">
             <summary>
             Target endpoint path (e.g., "/currency/transfer", "/inventory/add").
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Core.PreboundApiDefinition.PayloadTemplate">
+        <member name="P:BeyondImmersion.Bannou.Core.PreboundApi.PayloadTemplate">
             <summary>
             JSON payload template with {{variable}} placeholders.
             Variables are substituted from the context dictionary at execution time.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Core.PreboundApiDefinition.Description">
+        <member name="P:BeyondImmersion.Bannou.Core.PreboundApi.Description">
             <summary>
             Human-readable description of what this API call does.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.Core.PreboundApiDefinition.ExecutionMode">
+        <member name="P:BeyondImmersion.Bannou.Core.PreboundApi.ExecutionMode">
             <summary>
             How to execute this API call.
             </summary>
         </member>
-        <member name="T:BeyondImmersion.Bannou.Core.ExecutionMode">
+        <member name="P:BeyondImmersion.Bannou.Core.PreboundApi.ResponseTransformation">
+            <summary>
+            Optional transformation rules for the API response.
+            When set, the raw response is evaluated against these rules to produce
+            a transformed result (potentially different status code and payload).
+            When null, the raw response passes through unchanged.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Core.PreboundApiExecutionMode">
             <summary>
             How a prebound API should be executed.
             </summary>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Core.ExecutionMode.Sync">
+        <member name="F:BeyondImmersion.Bannou.Core.PreboundApiExecutionMode.Sync">
             <summary>Execute synchronously and wait for response.</summary>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Core.ExecutionMode.Async">
+        <member name="F:BeyondImmersion.Bannou.Core.PreboundApiExecutionMode.Async">
             <summary>Execute asynchronously but still track completion.</summary>
         </member>
-        <member name="F:BeyondImmersion.Bannou.Core.ExecutionMode.FireAndForget">
+        <member name="F:BeyondImmersion.Bannou.Core.PreboundApiExecutionMode.FireAndForget">
             <summary>Execute and don't wait or track - fire and forget.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Core.ResponseTransformation">
+            <summary>
+            Transformation rules applied to a prebound API response.
+            The transformer evaluates rules in order; the first matching rule produces
+            the result (status code + payload). If no rules match, the raw response
+            passes through unchanged.
+            </summary>
+            <remarks>
+            <para>
+            This replaces simple pass/fail validation with a conditional transformer model:
+            the prebound API creator defines what "success" and "failure" mean in their context,
+            and can produce entirely different payloads based on what the response contains.
+            </para>
+            <para>
+            Transient failure detection (transport-level retryable errors) runs before any rules.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.ResponseTransformation.Rules">
+            <summary>
+            Ordered list of transformation rules. First matching rule wins.
+            Each rule specifies conditions (AND logic) and the result to produce when matched.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.ResponseTransformation.TransientFailureStatusCodes">
+            <summary>
+            HTTP status codes indicating transient failure (retryable at transport level).
+            Checked before any rules are evaluated.
+            Default when null or empty: 408, 429, 502, 503, 504.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Core.TransformationRule">
+            <summary>
+            A single transformation rule: when all conditions match, produce this result.
+            </summary>
+            <remarks>
+            The payload field allows the prebound API creator to specify exactly what
+            the consuming system receives. For example, a species check might return
+            different modifier payloads depending on which species the response contains,
+            without the consumer needing to understand species mechanics.
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.TransformationRule.Conditions">
+            <summary>
+            All conditions must match for this rule to fire (AND logic).
+            An empty or null conditions list always matches (unconditional rule).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.TransformationRule.StatusCode">
+            <summary>
+            HTTP status code to return when this rule matches.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.TransformationRule.Payload">
+            <summary>
+            JSON payload to return when this rule matches.
+            Null means pass through the raw response body unchanged.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.TransformationRule.Description">
+            <summary>
+            Human-readable description of what this rule does (for diagnostics/logging).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Core.TransformationCondition">
+            <summary>
+            A single condition to evaluate against an API response.
+            Used within transformation rules to match on status codes, JSON paths, and values.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.TransformationCondition.Type">
+            <summary>
+            The type of condition to evaluate.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.TransformationCondition.JsonPath">
+            <summary>
+            JsonPath expression to extract a value from the response body.
+            Required for all JsonPath* condition types. Uses simplified dot notation
+            (e.g., "$.balance", "$.species.code", "$.items[0].name").
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.TransformationCondition.ExpectedValue">
+            <summary>
+            Expected value for comparison conditions.
+            Type coercion applied: "true"/"false" for booleans, numeric strings for numbers.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.TransformationCondition.Operator">
+            <summary>
+            Comparison operator for numeric comparisons (JsonPathGreaterThan/LessThan).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.TransformationCondition.StatusCodes">
+            <summary>
+            HTTP status codes for the StatusCodeIn condition type.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Core.TransformationConditionType">
+            <summary>
+            Types of conditions that can be evaluated against an API response.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.TransformationConditionType.StatusCodeIn">
+            <summary>Response status code is in the specified list.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.TransformationConditionType.JsonPathEquals">
+            <summary>JSON path value equals the expected value (case-insensitive).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.TransformationConditionType.JsonPathNotEquals">
+            <summary>JSON path value does not equal the expected value (case-insensitive).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.TransformationConditionType.JsonPathExists">
+            <summary>JSON path exists in the response body.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.TransformationConditionType.JsonPathNotExists">
+            <summary>JSON path does not exist in the response body.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.TransformationConditionType.JsonPathGreaterThan">
+            <summary>JSON path numeric value is greater than the expected value.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.TransformationConditionType.JsonPathLessThan">
+            <summary>JSON path numeric value is less than the expected value.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.TransformationConditionType.JsonPathContains">
+            <summary>JSON path string value contains the expected value (case-insensitive).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Core.ComparisonOperator">
+            <summary>
+            Comparison operators for numeric conditions.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.ComparisonOperator.Eq">
+            <summary>Equal to.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.ComparisonOperator.Ne">
+            <summary>Not equal to.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.ComparisonOperator.Gt">
+            <summary>Greater than.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.ComparisonOperator.Gte">
+            <summary>Greater than or equal to.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.ComparisonOperator.Lt">
+            <summary>Less than.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.ComparisonOperator.Lte">
+            <summary>Less than or equal to.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Core.TransformationOutcome">
+            <summary>
+            What happened during response transformation.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.TransformationOutcome.PassThrough">
+            <summary>
+            No transformation rules configured, or no rules matched.
+            StatusCode and Payload are from the raw API response.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.TransformationOutcome.Transformed">
+            <summary>
+            A transformation rule matched. StatusCode and Payload are from the rule.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.TransformationOutcome.TransientFailure">
+            <summary>
+            The raw response status code was in the transient failure set.
+            The caller should retry. Payload is null.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Core.TransformationResult">
+            <summary>
+            Result of applying response transformation rules to a raw API response.
+            Always contains a final StatusCode. Payload may be the raw response,
+            a rule-defined payload, or null (transient failure).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.TransformationResult.StatusCode">
+            <summary>
+            The final HTTP status code (from the raw response or the matched rule).
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.TransformationResult.Payload">
+            <summary>
+            The final payload. May be:
+            - The raw response body (pass-through or rule with null payload)
+            - A rule-defined payload (transformed)
+            - Null (transient failure or empty raw response)
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.TransformationResult.Outcome">
+            <summary>
+            What happened during transformation.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.TransformationResult.MatchedRuleDescription">
+            <summary>
+            Description of the matched rule, if any. For diagnostics/logging.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.TransformationResult.IsSuccess">
+            <summary>
+            Whether the final status code indicates success (2xx).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.Core.ResponseTransformer">
+            <summary>
+            Pure-computation engine that transforms a raw API response into a final result
+            based on declarative transformation rules.
+            </summary>
+            <remarks>
+            <para>
+            No dependencies, no state, no DI — this is a static utility that takes inputs
+            and produces outputs. The transformation rules are defined by the prebound API
+            creator who knows both what the API returns and what the consumer needs.
+            </para>
+            <para>
+            Evaluation order:
+            1. Check transient failure status codes (transport-level, before rules)
+            2. Evaluate rules in order (first match wins)
+            3. If no rules match, pass through the raw response
+            </para>
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.ResponseTransformer.DefaultTransientStatusCodes">
+            <summary>
+            Default HTTP status codes treated as transient (retryable) failures.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.ResponseTransformer.Transform(System.Int32,System.String,BeyondImmersion.Bannou.Core.ResponseTransformation)">
+            <summary>
+            Transforms a raw API response using the given transformation rules.
+            </summary>
+            <param name="statusCode">HTTP status code from the raw API response.</param>
+            <param name="responseBody">Response body from the raw API response (may be null).</param>
+            <param name="transformation">Transformation rules to apply. Null = pass through.</param>
+            <returns>The transformation result with final status code, payload, and outcome.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.ResponseTransformer.AllConditionsMatch(System.Int32,System.Text.Json.JsonDocument,System.Collections.Generic.List{BeyondImmersion.Bannou.Core.TransformationCondition})">
+            <summary>
+            Evaluates whether all conditions in a rule match the given response.
+            An empty or null conditions list always matches (unconditional rule).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.ResponseTransformer.EvaluateCondition(System.Int32,System.Text.Json.JsonDocument,BeyondImmersion.Bannou.Core.TransformationCondition)">
+            <summary>
+            Evaluates a single condition against the response.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.ResponseTransformer.GetJsonPathValue(System.Text.Json.JsonElement,System.String)">
+            <summary>
+            Gets a value from a JSON document using simplified path notation.
+            Supports: $.property, $.nested.property, $.array[0], $.array[0].property.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.ResponseTransformer.ParsePathSegments(System.String)">
+            <summary>
+            Parses a path string into segments, handling dots and bracket notation.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.ResponseTransformer.GetElementStringValue(System.Text.Json.JsonElement)">
+            <summary>
+            Gets the string representation of a JSON element value.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.ResponseTransformer.TryGetNumericValue(System.Text.Json.JsonElement,System.Decimal@)">
+            <summary>
+            Tries to extract a numeric value from a JSON element.
+            </summary>
         </member>
     </members>
 </doc>

@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Contract;
@@ -116,7 +117,7 @@ internal class PreboundApiModel
     public string PayloadTemplate { get; set; } = string.Empty;
     public string? Description { get; set; }
     public PreboundApiExecutionMode ExecutionMode { get; set; } = PreboundApiExecutionMode.Sync;
-    public ResponseValidation? ResponseValidation { get; set; }
+    public ResponseTransformation? ResponseTransformation { get; set; }
 }
 
 /// <summary>

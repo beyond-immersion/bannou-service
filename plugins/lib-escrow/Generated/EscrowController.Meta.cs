@@ -1192,11 +1192,12 @@ public partial class EscrowController
         },
         "EscrowResolution": {
             "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired: Timed out with no deposits to refund\n- expired_refunded: Timed out with deposits, auto-refunded\ n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
                 "Released",
                 "Refunded",
                 "Split",
+                "Expired",
                 "ExpiredRefunded",
                 "CancelledRefunded",
                 "ViolationRefunded"
@@ -2088,11 +2089,12 @@ public partial class EscrowController
         },
         "EscrowResolution": {
             "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired: Timed out with no deposits to refund\n- expired_refunded: Timed out with deposits, auto-refunded\ n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
                 "Released",
                 "Refunded",
                 "Split",
+                "Expired",
                 "ExpiredRefunded",
                 "CancelledRefunded",
                 "ViolationRefunded"
@@ -3035,11 +3037,12 @@ public partial class EscrowController
         },
         "EscrowResolution": {
             "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired: Timed out with no deposits to refund\n- expired_refunded: Timed out with deposits, auto-refunded\ n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
                 "Released",
                 "Refunded",
                 "Split",
+                "Expired",
                 "ExpiredRefunded",
                 "CancelledRefunded",
                 "ViolationRefunded"
@@ -4220,11 +4223,12 @@ public partial class EscrowController
         },
         "EscrowResolution": {
             "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired: Timed out with no deposits to refund\n- expired_refunded: Timed out with deposits, auto-refunded\ n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
                 "Released",
                 "Refunded",
                 "Split",
+                "Expired",
                 "ExpiredRefunded",
                 "CancelledRefunded",
                 "ViolationRefunded"
@@ -5697,11 +5701,12 @@ public partial class EscrowController
         },
         "EscrowResolution": {
             "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired: Timed out with no deposits to refund\n- expired_refunded: Timed out with deposits, auto-refunded\ n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
                 "Released",
                 "Refunded",
                 "Split",
+                "Expired",
                 "ExpiredRefunded",
                 "CancelledRefunded",
                 "ViolationRefunded"
@@ -6776,11 +6781,12 @@ public partial class EscrowController
         },
         "EscrowResolution": {
             "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired: Timed out with no deposits to refund\n- expired_refunded: Timed out with deposits, auto-refunded\ n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
                 "Released",
                 "Refunded",
                 "Split",
+                "Expired",
                 "ExpiredRefunded",
                 "CancelledRefunded",
                 "ViolationRefunded"
@@ -7724,11 +7730,12 @@ public partial class EscrowController
         },
         "EscrowResolution": {
             "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired: Timed out with no deposits to refund\n- expired_refunded: Timed out with deposits, auto-refunded\ n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
                 "Released",
                 "Refunded",
                 "Split",
+                "Expired",
                 "ExpiredRefunded",
                 "CancelledRefunded",
                 "ViolationRefunded"
@@ -8643,11 +8650,12 @@ public partial class EscrowController
         },
         "EscrowResolution": {
             "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired: Timed out with no deposits to refund\n- expired_refunded: Timed out with deposits, auto-refunded\ n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
                 "Released",
                 "Refunded",
                 "Split",
+                "Expired",
                 "ExpiredRefunded",
                 "CancelledRefunded",
                 "ViolationRefunded"
@@ -9570,11 +9578,12 @@ public partial class EscrowController
         },
         "EscrowResolution": {
             "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired: Timed out with no deposits to refund\n- expired_refunded: Timed out with deposits, auto-refunded\ n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
                 "Released",
                 "Refunded",
                 "Split",
+                "Expired",
                 "ExpiredRefunded",
                 "CancelledRefunded",
                 "ViolationRefunded"
@@ -10020,11 +10029,12 @@ public partial class EscrowController
         },
         "EscrowResolution": {
             "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\ n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\ n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired: Timed out with no deposits to refund\n- expired_refunded: Timed out with deposits, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
                 "Released",
                 "Refunded",
                 "Split",
+                "Expired",
                 "ExpiredRefunded",
                 "CancelledRefunded",
                 "ViolationRefunded"
@@ -10933,11 +10943,12 @@ public partial class EscrowController
         },
         "EscrowResolution": {
             "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired: Timed out with no deposits to refund\n- expired_refunded: Timed out with deposits, auto-refunded\ n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
                 "Released",
                 "Refunded",
                 "Split",
+                "Expired",
                 "ExpiredRefunded",
                 "CancelledRefunded",
                 "ViolationRefunded"
@@ -11866,11 +11877,12 @@ public partial class EscrowController
         },
         "EscrowResolution": {
             "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired: Timed out with no deposits to refund\n- expired_refunded: Timed out with deposits, auto-refunded\ n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
                 "Released",
                 "Refunded",
                 "Split",
+                "Expired",
                 "ExpiredRefunded",
                 "CancelledRefunded",
                 "ViolationRefunded"
@@ -12750,11 +12762,12 @@ public partial class EscrowController
         },
         "EscrowResolution": {
             "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired: Timed out with no deposits to refund\n- expired_refunded: Timed out with deposits, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
                 "Released",
                 "Refunded",
                 "Split",
+                "Expired",
                 "ExpiredRefunded",
                 "CancelledRefunded",
                 "ViolationRefunded"
@@ -13647,11 +13660,12 @@ public partial class EscrowController
         },
         "EscrowResolution": {
             "type": "string",
-            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired_refunded: Timed out, auto-refunded\n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
+            "description": "How the escrow was resolved.\n- released: Assets went to designated recipients\n- refunded: Assets returned to depositors\n- split: Arbiter split assets between parties\n- expired: Timed out with no deposits to refund\n- expired_refunded: Timed out with deposits, auto-refunded\ n- cancelled_refunded: Cancelled, deposits refunded\n- violation_refunded: Validation failure caused refund\n",
             "enum": [
                 "Released",
                 "Refunded",
                 "Split",
+                "Expired",
                 "ExpiredRefunded",
                 "CancelledRefunded",
                 "ViolationRefunded"

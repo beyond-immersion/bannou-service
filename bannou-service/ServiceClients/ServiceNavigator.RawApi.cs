@@ -174,7 +174,7 @@ public partial class ServiceNavigator
 
     /// <inheritdoc />
     public async Task<PreboundApiResult> ExecutePreboundApiAsync(
-        PreboundApiDefinition api,
+        PreboundApi api,
         IReadOnlyDictionary<string, object?> context,
         CancellationToken ct = default)
     {
@@ -209,7 +209,7 @@ public partial class ServiceNavigator
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<PreboundApiResult>> ExecutePreboundApiBatchAsync(
-        IEnumerable<PreboundApiDefinition> apis,
+        IEnumerable<PreboundApi> apis,
         IReadOnlyDictionary<string, object?> context,
         BatchExecutionMode mode = BatchExecutionMode.Parallel,
         CancellationToken ct = default)
@@ -236,7 +236,7 @@ public partial class ServiceNavigator
     /// Executes APIs in parallel.
     /// </summary>
     private async Task<IReadOnlyList<PreboundApiResult>> ExecuteBatchParallelAsync(
-        List<PreboundApiDefinition> apis,
+        List<PreboundApi> apis,
         IReadOnlyDictionary<string, object?> context,
         CancellationToken ct)
     {
@@ -249,7 +249,7 @@ public partial class ServiceNavigator
     /// Executes APIs sequentially.
     /// </summary>
     private async Task<IReadOnlyList<PreboundApiResult>> ExecuteBatchSequentialAsync(
-        List<PreboundApiDefinition> apis,
+        List<PreboundApi> apis,
         IReadOnlyDictionary<string, object?> context,
         bool stopOnFailure,
         CancellationToken ct)

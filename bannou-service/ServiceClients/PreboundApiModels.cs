@@ -155,7 +155,7 @@ public class PreboundApiResult
     /// <summary>
     /// The API definition that was executed.
     /// </summary>
-    public PreboundApiDefinition Api { get; init; } = default!;
+    public PreboundApi Api { get; init; } = default!;
 
     /// <summary>
     /// The JSON payload after variable substitution.
@@ -188,7 +188,7 @@ public class PreboundApiResult
     /// Creates a result for successful substitution and execution.
     /// </summary>
     public static PreboundApiResult Success(
-        PreboundApiDefinition api,
+        PreboundApi api,
         string substitutedPayload,
         RawApiResult result)
     {
@@ -205,7 +205,7 @@ public class PreboundApiResult
     /// Creates a result for substitution failure (API was not called).
     /// </summary>
     public static PreboundApiResult SubstitutionFailed(
-        PreboundApiDefinition api,
+        PreboundApi api,
         string error)
     {
         return new PreboundApiResult

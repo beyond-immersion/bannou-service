@@ -111,7 +111,10 @@ public class GenesisServiceEntityTests : ServiceTestBase<GenesisServiceConfigura
     {
         return new GenesisTemplateModel
         {
-            TemplateCode = templateCode, GameServiceId = Guid.NewGuid(), DisplayName = "Test", Description = "Test",
+            TemplateCode = templateCode,
+            GameServiceId = Guid.NewGuid(),
+            DisplayName = "Test",
+            Description = "Test",
             Seed = new GenesisSeedConfig
             {
                 SeedTypeCode = "test_seed",
@@ -127,7 +130,9 @@ public class GenesisServiceEntityTests : ServiceTestBase<GenesisServiceConfigura
             Awakening = new GenesisAwakeningConfig { SystemRealmCode = "SYSTEM", CharacterSpeciesCode = "spirit" },
             PhysicalFormType = PhysicalFormType.Item,
             Bond = new GenesisBondConfig { Enabled = false, Cardinality = BondCardinality.None },
-            ArchiveOnDestruction = true, CreatedAt = DateTimeOffset.UtcNow.AddDays(-1), UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+            ArchiveOnDestruction = true,
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1)
         };
     }
 
@@ -135,12 +140,21 @@ public class GenesisServiceEntityTests : ServiceTestBase<GenesisServiceConfigura
     {
         return new GenesisEntityModel
         {
-            EntityId = entityId ?? Guid.NewGuid(), TemplateCode = templateCode, GameServiceId = Guid.NewGuid(),
-            RealmId = Guid.NewGuid(), Code = "test_entity", DisplayName = "Test Entity", SeedId = Guid.NewGuid(),
+            EntityId = entityId ?? Guid.NewGuid(),
+            TemplateCode = templateCode,
+            GameServiceId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Code = "test_entity",
+            DisplayName = "Test Entity",
+            SeedId = Guid.NewGuid(),
             WalletIds = new Dictionary<string, Guid> { ["mana"] = Guid.NewGuid() },
             InventoryIds = new Dictionary<string, Guid> { ["loot"] = Guid.NewGuid() },
-            CurrentPhase = "Dormant", CognitiveStage = CognitiveStage.Dormant, PhysicalFormType = PhysicalFormType.Item,
-            Status = GenesisEntityStatus.Active, CreatedAt = DateTimeOffset.UtcNow.AddHours(-1), UpdatedAt = DateTimeOffset.UtcNow.AddHours(-1)
+            CurrentPhase = "Dormant",
+            CognitiveStage = CognitiveStage.Dormant,
+            PhysicalFormType = PhysicalFormType.Item,
+            Status = GenesisEntityStatus.Active,
+            CreatedAt = DateTimeOffset.UtcNow.AddHours(-1),
+            UpdatedAt = DateTimeOffset.UtcNow.AddHours(-1)
         };
     }
 
@@ -242,10 +256,19 @@ public class GenesisServiceEntityTests : ServiceTestBase<GenesisServiceConfigura
         var entityId = Guid.NewGuid();
         var cached = new CachedGenesisEntity
         {
-            EntityId = entityId, TemplateCode = "t", GameServiceId = Guid.NewGuid(), RealmId = Guid.NewGuid(),
-            SeedId = Guid.NewGuid(), WalletIds = new(), InventoryIds = new(), CurrentPhase = "Dormant",
-            CognitiveStage = CognitiveStage.Dormant, PhysicalFormType = PhysicalFormType.None,
-            Status = GenesisEntityStatus.Active, CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow
+            EntityId = entityId,
+            TemplateCode = "t",
+            GameServiceId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            SeedId = Guid.NewGuid(),
+            WalletIds = new(),
+            InventoryIds = new(),
+            CurrentPhase = "Dormant",
+            CognitiveStage = CognitiveStage.Dormant,
+            PhysicalFormType = PhysicalFormType.None,
+            Status = GenesisEntityStatus.Active,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         };
         _mockEntityCacheStore.Setup(s => s.GetAsync(GenesisService.BuildEntityCacheKey(entityId), It.IsAny<CancellationToken>())).ReturnsAsync(cached);
 

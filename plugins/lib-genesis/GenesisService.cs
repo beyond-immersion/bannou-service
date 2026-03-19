@@ -351,12 +351,17 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
 
         await _messageBus.PublishTemplateUpdatedAsync(new TemplateUpdatedEvent
         {
-            TemplateCode = template.TemplateCode, GameServiceId = template.GameServiceId,
-            DisplayName = template.DisplayName, Description = template.Description,
+            TemplateCode = template.TemplateCode,
+            GameServiceId = template.GameServiceId,
+            DisplayName = template.DisplayName,
+            Description = template.Description,
             PhysicalFormType = template.PhysicalFormType,
-            CreatedAt = template.CreatedAt, UpdatedAt = template.UpdatedAt,
-            IsDeprecated = template.IsDeprecated, DeprecatedAt = template.DeprecatedAt,
-            DeprecationReason = template.DeprecationReason, ChangedFields = changedFields,
+            CreatedAt = template.CreatedAt,
+            UpdatedAt = template.UpdatedAt,
+            IsDeprecated = template.IsDeprecated,
+            DeprecatedAt = template.DeprecatedAt,
+            DeprecationReason = template.DeprecationReason,
+            ChangedFields = changedFields,
         }, cancellationToken);
 
         return (StatusCodes.OK, MapTemplateToResponse(template));
@@ -381,11 +386,15 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
 
         await _messageBus.PublishTemplateUpdatedAsync(new TemplateUpdatedEvent
         {
-            TemplateCode = template.TemplateCode, GameServiceId = template.GameServiceId,
-            DisplayName = template.DisplayName, Description = template.Description,
+            TemplateCode = template.TemplateCode,
+            GameServiceId = template.GameServiceId,
+            DisplayName = template.DisplayName,
+            Description = template.Description,
             PhysicalFormType = template.PhysicalFormType,
-            CreatedAt = template.CreatedAt, UpdatedAt = template.UpdatedAt,
-            IsDeprecated = template.IsDeprecated, DeprecatedAt = template.DeprecatedAt,
+            CreatedAt = template.CreatedAt,
+            UpdatedAt = template.UpdatedAt,
+            IsDeprecated = template.IsDeprecated,
+            DeprecatedAt = template.DeprecatedAt,
             DeprecationReason = template.DeprecationReason,
             ChangedFields = new List<string> { "IsDeprecated", "DeprecatedAt", "DeprecationReason" },
         }, cancellationToken);
@@ -426,8 +435,10 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
 
         return (StatusCodes.OK, new CleanDeprecatedStringKeyResponse
         {
-            Cleaned = result.Cleaned, Remaining = result.Remaining,
-            Errors = result.Errors, CleanedIds = result.CleanedIds.ToList(),
+            Cleaned = result.Cleaned,
+            Remaining = result.Remaining,
+            Errors = result.Errors,
+            CleanedIds = result.CleanedIds.ToList(),
         });
     }
 
@@ -491,8 +502,10 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             var seedResponse = await _seedClient.CreateSeedAsync(
                 new CreateSeedRequest
                 {
-                    OwnerType = EntityType.Other, OwnerId = entityId,
-                    SeedTypeCode = template.Seed.SeedTypeCode, GameServiceId = body.GameServiceId,
+                    OwnerType = EntityType.Other,
+                    OwnerId = entityId,
+                    SeedTypeCode = template.Seed.SeedTypeCode,
+                    GameServiceId = body.GameServiceId,
                 }, cancellationToken);
             provisionedSeedId = seedResponse.SeedId;
 
@@ -502,7 +515,9 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
                 var wResponse = await _currencyClient.CreateWalletAsync(
                     new CreateWalletRequest
                     {
-                        OwnerId = entityId, OwnerType = EntityType.Other, RealmId = body.RealmId,
+                        OwnerId = entityId,
+                        OwnerType = EntityType.Other,
+                        RealmId = body.RealmId,
                     }, cancellationToken);
                 provisionedWalletIds[wallet.WalletCode] = wResponse.WalletId;
             }
@@ -513,7 +528,8 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
                 var iResponse = await _inventoryClient.CreateContainerAsync(
                     new CreateContainerRequest
                     {
-                        OwnerId = entityId, OwnerType = ContainerOwnerType.Other,
+                        OwnerId = entityId,
+                        OwnerType = ContainerOwnerType.Other,
                         ContainerType = inv.InventoryCode,
                         ConstraintModel = inv.ConstraintModel.MapByName<ContainerConstraintModel>(),
                         MaxSlots = inv.Capacity,
@@ -563,13 +579,20 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
 
         await _messageBus.PublishEntityCreatedAsync(new EntityCreatedEvent
         {
-            EntityId = entityId, TemplateCode = body.TemplateCode,
-            GameServiceId = body.GameServiceId, RealmId = body.RealmId,
-            Code = body.Code, DisplayName = body.DisplayName,
-            WalletIds = entity.WalletIds, InventoryIds = entity.InventoryIds,
-            CurrentPhase = entity.CurrentPhase, CognitiveStage = entity.CognitiveStage,
-            PhysicalFormType = entity.PhysicalFormType, Status = entity.Status,
-            CreatedAt = entity.CreatedAt, UpdatedAt = entity.UpdatedAt,
+            EntityId = entityId,
+            TemplateCode = body.TemplateCode,
+            GameServiceId = body.GameServiceId,
+            RealmId = body.RealmId,
+            Code = body.Code,
+            DisplayName = body.DisplayName,
+            WalletIds = entity.WalletIds,
+            InventoryIds = entity.InventoryIds,
+            CurrentPhase = entity.CurrentPhase,
+            CognitiveStage = entity.CognitiveStage,
+            PhysicalFormType = entity.PhysicalFormType,
+            Status = entity.Status,
+            CreatedAt = entity.CreatedAt,
+            UpdatedAt = entity.UpdatedAt,
         }, cancellationToken);
 
         _logger.LogInformation("Created entity {EntityId} from template {TemplateCode}", entityId, body.TemplateCode);
@@ -618,8 +641,10 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         {
             return (StatusCodes.OK, new ListEntitiesResponse
             {
-                Entities = new List<GenesisEntityResponse>(), TotalCount = 0,
-                Page = body.Page, PageSize = pageSize
+                Entities = new List<GenesisEntityResponse>(),
+                TotalCount = 0,
+                Page = body.Page,
+                PageSize = pageSize
             });
         }
 
@@ -643,8 +668,10 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
 
         return (StatusCodes.OK, new ListEntitiesResponse
         {
-            Entities = paged, TotalCount = totalCount,
-            Page = body.Page, PageSize = pageSize
+            Entities = paged,
+            TotalCount = totalCount,
+            Page = body.Page,
+            PageSize = pageSize
         });
     }
 
@@ -660,7 +687,9 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         {
             return (StatusCodes.OK, new GetCapabilitiesResponse
             {
-                EntityId = body.EntityId, Capabilities = cached.Capabilities, Version = cached.Version,
+                EntityId = body.EntityId,
+                Capabilities = cached.Capabilities,
+                Version = cached.Version,
             });
         }
 
@@ -672,7 +701,8 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
                 new GetCapabilityManifestRequest { SeedId = entity.SeedId }, cancellationToken);
             capabilities = capResponse.Capabilities.Select(c => new GenesisCapability
             {
-                CapabilityCode = c.CapabilityCode, IsUnlocked = c.Unlocked,
+                CapabilityCode = c.CapabilityCode,
+                IsUnlocked = c.Unlocked,
             }).ToList();
             version = capResponse.Version;
         }
@@ -684,12 +714,16 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
 
         await _capsCacheStore.SaveAsync(BuildCapsCacheKey(body.EntityId), new CachedCapabilityManifest
         {
-            EntityId = body.EntityId, Capabilities = capabilities, Version = version,
+            EntityId = body.EntityId,
+            Capabilities = capabilities,
+            Version = version,
         }, new StateOptions { Ttl = _configuration.CapabilityCacheTtlMinutes * 60 }, cancellationToken);
 
         return (StatusCodes.OK, new GetCapabilitiesResponse
         {
-            EntityId = body.EntityId, Capabilities = capabilities, Version = version,
+            EntityId = body.EntityId,
+            Capabilities = capabilities,
+            Version = version,
         });
     }
 
@@ -745,14 +779,23 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
 
         await _messageBus.PublishEntityUpdatedAsync(new EntityUpdatedEvent
         {
-            EntityId = entity.EntityId, TemplateCode = entity.TemplateCode,
-            GameServiceId = entity.GameServiceId, RealmId = entity.RealmId,
-            Code = entity.Code, DisplayName = entity.DisplayName,
-            WalletIds = entity.WalletIds, InventoryIds = entity.InventoryIds,
-            CurrentPhase = entity.CurrentPhase, CognitiveStage = entity.CognitiveStage,
-            ActorId = entity.ActorId, CharacterId = entity.CharacterId,
-            PhysicalFormType = entity.PhysicalFormType, PhysicalFormId = entity.PhysicalFormId,
-            Status = entity.Status, CreatedAt = entity.CreatedAt, UpdatedAt = entity.UpdatedAt,
+            EntityId = entity.EntityId,
+            TemplateCode = entity.TemplateCode,
+            GameServiceId = entity.GameServiceId,
+            RealmId = entity.RealmId,
+            Code = entity.Code,
+            DisplayName = entity.DisplayName,
+            WalletIds = entity.WalletIds,
+            InventoryIds = entity.InventoryIds,
+            CurrentPhase = entity.CurrentPhase,
+            CognitiveStage = entity.CognitiveStage,
+            ActorId = entity.ActorId,
+            CharacterId = entity.CharacterId,
+            PhysicalFormType = entity.PhysicalFormType,
+            PhysicalFormId = entity.PhysicalFormId,
+            Status = entity.Status,
+            CreatedAt = entity.CreatedAt,
+            UpdatedAt = entity.UpdatedAt,
             ChangedFields = new List<string> { "PhysicalFormType", "PhysicalFormId" },
         }, cancellationToken);
 
@@ -772,7 +815,7 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         if (!template.Bond.Enabled) return (StatusCodes.BadRequest, null);
         if (template.Bond.Cardinality == BondCardinality.None) return (StatusCodes.BadRequest, null);
         if ((template.Bond.Cardinality == BondCardinality.OptionalOne ||
-             template.Bond.Cardinality == BondCardinality.RequiredOne) &&
+            template.Bond.Cardinality == BondCardinality.RequiredOne) &&
             entity.BondTargetEntityId != null)
             return (StatusCodes.Conflict, null);
 
@@ -794,9 +837,12 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
                 var relResponse = await _relationshipClient.CreateRelationshipAsync(
                     new CreateRelationshipRequest
                     {
-                        Entity1Id = entity.CharacterId.Value, Entity1Type = EntityType.Character,
-                        Entity2Id = body.TargetEntityId, Entity2Type = body.TargetEntityType,
-                        RelationshipTypeId = relType.RelationshipTypeId, StartedAt = DateTimeOffset.UtcNow,
+                        Entity1Id = entity.CharacterId.Value,
+                        Entity1Type = EntityType.Character,
+                        Entity2Id = body.TargetEntityId,
+                        Entity2Type = body.TargetEntityType,
+                        RelationshipTypeId = relType.RelationshipTypeId,
+                        StartedAt = DateTimeOffset.UtcNow,
                     }, cancellationToken);
                 entity.BondId = relResponse.RelationshipId;
             }
@@ -812,8 +858,10 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
 
         await _messageBus.PublishGenesisEntityBondCreatedAsync(new GenesisEntityBondCreatedEvent
         {
-            EntityId = entity.EntityId, TargetEntityType = body.TargetEntityType,
-            TargetEntityId = body.TargetEntityId, BondId = entity.BondId,
+            EntityId = entity.EntityId,
+            TargetEntityType = body.TargetEntityType,
+            TargetEntityId = body.TargetEntityId,
+            BondId = entity.BondId,
         }, cancellationToken);
 
         return (StatusCodes.OK, MapEntityToResponse(entity, null));
@@ -976,11 +1024,15 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             var walletBalances = await FetchWalletBalancesAsync(entity, cancellationToken);
             archivedEntities.Add(new GenesisArchivedEntity
             {
-                EntityId = entity.EntityId, TemplateCode = entity.TemplateCode,
-                GameServiceId = entity.GameServiceId, RealmId = entity.RealmId,
-                Code = entity.Code, DisplayName = entity.DisplayName,
+                EntityId = entity.EntityId,
+                TemplateCode = entity.TemplateCode,
+                GameServiceId = entity.GameServiceId,
+                RealmId = entity.RealmId,
+                Code = entity.Code,
+                DisplayName = entity.DisplayName,
                 WalletBalances = walletBalances ?? new Dictionary<string, double>(),
-                CurrentPhase = entity.CurrentPhase, CognitiveStage = entity.CognitiveStage,
+                CurrentPhase = entity.CurrentPhase,
+                CognitiveStage = entity.CognitiveStage,
                 CreatedAt = entity.CreatedAt,
             });
         }
@@ -1008,8 +1060,10 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
                 var seedResponse = await _seedClient.CreateSeedAsync(
                     new CreateSeedRequest
                     {
-                        OwnerType = EntityType.Other, OwnerId = archived.EntityId,
-                        SeedTypeCode = template.Seed.SeedTypeCode, GameServiceId = archived.GameServiceId,
+                        OwnerType = EntityType.Other,
+                        OwnerId = archived.EntityId,
+                        SeedTypeCode = template.Seed.SeedTypeCode,
+                        GameServiceId = archived.GameServiceId,
                     }, cancellationToken);
                 provisionedSeedId = seedResponse.SeedId;
 
@@ -1047,7 +1101,8 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
                     var iResponse = await _inventoryClient.CreateContainerAsync(
                         new CreateContainerRequest
                         {
-                            OwnerId = archived.EntityId, OwnerType = ContainerOwnerType.Other,
+                            OwnerId = archived.EntityId,
+                            OwnerType = ContainerOwnerType.Other,
                             ContainerType = inv.InventoryCode,
                             ConstraintModel = inv.ConstraintModel.MapByName<ContainerConstraintModel>(),
                             MaxSlots = inv.Capacity,
@@ -1064,13 +1119,21 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             var now = DateTimeOffset.UtcNow;
             var entity = new GenesisEntityModel
             {
-                EntityId = archived.EntityId, TemplateCode = archived.TemplateCode,
-                GameServiceId = archived.GameServiceId, RealmId = archived.RealmId,
-                Code = archived.Code, DisplayName = archived.DisplayName,
-                SeedId = provisionedSeedId, WalletIds = provisionedWalletIds,
-                InventoryIds = provisionedInventoryIds, CurrentPhase = archived.CurrentPhase,
-                CognitiveStage = CognitiveStage.Dormant, PhysicalFormType = template.PhysicalFormType,
-                Status = GenesisEntityStatus.Active, CreatedAt = archived.CreatedAt, UpdatedAt = now,
+                EntityId = archived.EntityId,
+                TemplateCode = archived.TemplateCode,
+                GameServiceId = archived.GameServiceId,
+                RealmId = archived.RealmId,
+                Code = archived.Code,
+                DisplayName = archived.DisplayName,
+                SeedId = provisionedSeedId,
+                WalletIds = provisionedWalletIds,
+                InventoryIds = provisionedInventoryIds,
+                CurrentPhase = archived.CurrentPhase,
+                CognitiveStage = CognitiveStage.Dormant,
+                PhysicalFormType = template.PhysicalFormType,
+                Status = GenesisEntityStatus.Active,
+                CreatedAt = archived.CreatedAt,
+                UpdatedAt = now,
             };
 
             await _entityStore.SaveAsync(BuildEntityKey(archived.EntityId), entity, cancellationToken: cancellationToken);
@@ -1084,13 +1147,20 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
 
             await _messageBus.PublishEntityCreatedAsync(new EntityCreatedEvent
             {
-                EntityId = archived.EntityId, TemplateCode = archived.TemplateCode,
-                GameServiceId = archived.GameServiceId, RealmId = archived.RealmId,
-                Code = archived.Code, DisplayName = archived.DisplayName,
-                WalletIds = provisionedWalletIds, InventoryIds = provisionedInventoryIds,
-                CurrentPhase = entity.CurrentPhase, CognitiveStage = entity.CognitiveStage,
-                PhysicalFormType = entity.PhysicalFormType, Status = entity.Status,
-                CreatedAt = entity.CreatedAt, UpdatedAt = entity.UpdatedAt,
+                EntityId = archived.EntityId,
+                TemplateCode = archived.TemplateCode,
+                GameServiceId = archived.GameServiceId,
+                RealmId = archived.RealmId,
+                Code = archived.Code,
+                DisplayName = archived.DisplayName,
+                WalletIds = provisionedWalletIds,
+                InventoryIds = provisionedInventoryIds,
+                CurrentPhase = entity.CurrentPhase,
+                CognitiveStage = entity.CognitiveStage,
+                PhysicalFormType = entity.PhysicalFormType,
+                Status = entity.Status,
+                CreatedAt = entity.CreatedAt,
+                UpdatedAt = entity.UpdatedAt,
             }, cancellationToken);
 
             restoredCount++;

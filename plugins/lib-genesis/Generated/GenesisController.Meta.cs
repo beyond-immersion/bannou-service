@@ -407,8 +407,7 @@ public partial class GenesisController
             "description": "Awakening configuration for CharacterBrain cognitive stage transition",
             "required": [
                 "systemRealmCode",
-                "characterSpeciesCode",
-                "archiveOnDestruction"
+                "characterSpeciesCode"
             ],
             "properties": {
                 "systemRealmCode": {
@@ -917,8 +916,7 @@ public partial class GenesisController
             "description": "Awakening configuration for CharacterBrain cognitive stage transition",
             "required": [
                 "systemRealmCode",
-                "characterSpeciesCode",
-                "archiveOnDestruction"
+                "characterSpeciesCode"
             ],
             "properties": {
                 "systemRealmCode": {
@@ -1508,8 +1506,7 @@ public partial class GenesisController
             "description": "Awakening configuration for CharacterBrain cognitive stage transition",
             "required": [
                 "systemRealmCode",
-                "characterSpeciesCode",
-                "archiveOnDestruction"
+                "characterSpeciesCode"
             ],
             "properties": {
                 "systemRealmCode": {
@@ -2151,8 +2148,7 @@ public partial class GenesisController
             "description": "Awakening configuration for CharacterBrain cognitive stage transition",
             "required": [
                 "systemRealmCode",
-                "characterSpeciesCode",
-                "archiveOnDestruction"
+                "characterSpeciesCode"
             ],
             "properties": {
                 "systemRealmCode": {
@@ -2679,8 +2675,7 @@ public partial class GenesisController
             "description": "Awakening configuration for CharacterBrain cognitive stage transition",
             "required": [
                 "systemRealmCode",
-                "characterSpeciesCode",
-                "archiveOnDestruction"
+                "characterSpeciesCode"
             ],
             "properties": {
                 "systemRealmCode": {
@@ -3180,8 +3175,7 @@ public partial class GenesisController
             "description": "Awakening configuration for CharacterBrain cognitive stage transition",
             "required": [
                 "systemRealmCode",
-                "characterSpeciesCode",
-                "archiveOnDestruction"
+                "characterSpeciesCode"
             ],
             "properties": {
                 "systemRealmCode": {
@@ -3777,8 +3771,7 @@ public partial class GenesisController
             "description": "Awakening configuration for CharacterBrain cognitive stage transition",
             "required": [
                 "systemRealmCode",
-                "characterSpeciesCode",
-                "archiveOnDestruction"
+                "characterSpeciesCode"
             ],
             "properties": {
                 "systemRealmCode": {

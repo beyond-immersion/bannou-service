@@ -1282,12 +1282,13 @@ paths:
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CloseWalletRequest\"\
         ,\n    \"$defs\": {\n        \"CloseWalletRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to close a wallet and transfer remaining balances\",\n            \"additionalProperties\": false,\n \
-        \           \"required\": [\n                \"walletId\",\n                \"transferRemainingTo\"\n            ],\n\
-        \            \"properties\": {\n                \"walletId\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"uuid\",\n                    \"description\": \"Wallet ID to close\"\n             \
-        \   },\n                \"transferRemainingTo\": {\n                    \"type\": \"string\",\n                  \
-        \  \"format\": \"uuid\",\n                    \"description\": \"Destination wallet for remaining balances\"\n   \
-        \             }\n            }\n        }\n    }\n}"
+        \           \"required\": [\n                \"walletId\"\n            ],\n            \"properties\": {\n       \
+        \         \"walletId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"Wallet ID to close\"\n                },\n                \"transferRemainingTo\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Destination wallet for remaining balances. Null to discard
+        any remaining balances (e.g., compensation cleanup of empty wallets).\"\n                }\n            }\n      \
+        \  }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CloseWalletResponse\"\
         ,\n    \"$defs\": {\n        \"CloseWalletResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of wallet close operation\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -4315,7 +4316,6 @@ components:
       additionalProperties: false
       required:
       - walletId
-      - transferRemainingTo
       properties:
         walletId:
           type: string
@@ -4324,7 +4324,9 @@ components:
         transferRemainingTo:
           type: string
           format: uuid
-          description: Destination wallet for remaining balances
+          nullable: true
+          description: Destination wallet for remaining balances. Null to discard any remaining balances (e.g., 
+            compensation cleanup of empty wallets).
     WalletResponse:
       type: object
       description: Wallet details

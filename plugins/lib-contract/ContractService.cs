@@ -2114,7 +2114,7 @@ public partial class ContractService : IContractService, ICleanDeprecatedEntity
             PayloadTemplate = api.PayloadTemplate,
             Description = api.Description,
             ExecutionMode = api.ExecutionMode,
-            ResponseValidation = api.ResponseValidation
+            ResponseTransformation = api.ResponseTransformation
         };
     }
 
@@ -2164,14 +2164,14 @@ public partial class ContractService : IContractService, ICleanDeprecatedEntity
             // Build context dictionary for template substitution
             var context = BuildContractContext(contract);
 
-            // Convert to PreboundApiDefinition for ServiceNavigator
-            var apiDefinition = new PreboundApiDefinition
+            // Build PreboundApi for ServiceNavigator
+            var apiDefinition = new PreboundApi
             {
                 ServiceName = api.ServiceName,
                 Endpoint = api.Endpoint,
                 PayloadTemplate = api.PayloadTemplate,
                 Description = api.Description,
-                ExecutionMode = ConvertExecutionMode(api.ExecutionMode)
+                ExecutionMode = api.ExecutionMode
             };
 
             // Execute via ServiceNavigator with configured timeout
@@ -2196,18 +2196,18 @@ public partial class ContractService : IContractService, ICleanDeprecatedEntity
                 return;
             }
 
-            // Validate response if validation rules are configured
-            if (api.ResponseValidation != null && result.Result != null)
+            // Transform response if transformation rules are configured
+            if (api.ResponseTransformation != null && result.Result != null)
             {
-                var validationResult = Utilities.ResponseValidator.Validate(
+                var transformResult = ResponseTransformer.Transform(
                     result.Result.StatusCode,
                     result.Result.ResponseBody,
-                    api.ResponseValidation);
+                    api.ResponseTransformation);
 
-                if (validationResult.Outcome != Utilities.ValidationOutcome.Success)
+                if (!transformResult.IsSuccess)
                 {
-                    _logger.LogWarning("Prebound API response validation failed for {Service}{Endpoint}: {Outcome} - {Reason}",
-                        api.ServiceName, api.Endpoint, validationResult.Outcome, validationResult.FailureReason);
+                    _logger.LogWarning("Prebound API response transformation indicates failure for {Service}{Endpoint}: {Outcome} - {Description}",
+                        api.ServiceName, api.Endpoint, transformResult.Outcome, transformResult.MatchedRuleDescription);
 
                     await _messageBus.PublishContractPreboundApiValidationFailedAsync(new ContractPreboundApiValidationFailedEvent
                     {
@@ -2217,11 +2217,11 @@ public partial class ContractService : IContractService, ICleanDeprecatedEntity
                         Trigger = trigger,
                         ServiceName = api.ServiceName,
                         Endpoint = api.Endpoint,
-                        StatusCode = result.Result.StatusCode,
-                        ValidationOutcome = validationResult.Outcome == Utilities.ValidationOutcome.PermanentFailure
-                            ? ValidationOutcome.PermanentFailure
-                            : ValidationOutcome.TransientFailure,
-                        FailureReason = validationResult.FailureReason
+                        StatusCode = transformResult.StatusCode,
+                        ValidationOutcome = transformResult.Outcome == TransformationOutcome.TransientFailure
+                            ? ValidationOutcome.TransientFailure
+                            : ValidationOutcome.PermanentFailure,
+                        FailureReason = transformResult.MatchedRuleDescription
                     });
                     return;
                 }
@@ -2342,19 +2342,6 @@ public partial class ContractService : IContractService, ICleanDeprecatedEntity
         return context;
     }
 
-    /// <summary>
-    /// Converts PreboundApiExecutionMode to ExecutionMode.
-    /// </summary>
-    private static ExecutionMode ConvertExecutionMode(PreboundApiExecutionMode mode)
-    {
-        return mode switch
-        {
-            PreboundApiExecutionMode.Sync => ExecutionMode.Sync,
-            PreboundApiExecutionMode.Async => ExecutionMode.Async,
-            PreboundApiExecutionMode.FireAndForget => ExecutionMode.FireAndForget,
-            _ => ExecutionMode.Sync
-        };
-    }
 
     /// <summary>
     /// Processes an overdue milestone with lazy deadline enforcement.
@@ -2664,7 +2651,7 @@ public partial class ContractService : IContractService, ICleanDeprecatedEntity
             PayloadTemplate = model.PayloadTemplate,
             Description = model.Description,
             ExecutionMode = model.ExecutionMode,
-            ResponseValidation = model.ResponseValidation
+            ResponseTransformation = model.ResponseTransformation
         };
     }
 

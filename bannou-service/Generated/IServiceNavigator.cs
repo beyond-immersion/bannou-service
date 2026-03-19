@@ -34,6 +34,7 @@ using BeyondImmersion.BannouService.Faction;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Gardener;
+using BeyondImmersion.BannouService.Genesis;
 using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Leaderboard;
@@ -219,6 +220,11 @@ public partial interface IServiceNavigator
     /// Gets the Gardener service client.
     /// </summary>
     IGardenerClient Gardener { get; }
+
+    /// <summary>
+    /// Gets the Genesis service client.
+    /// </summary>
+    IGenesisClient Genesis { get; }
 
     /// <summary>
     /// Gets the Inventory service client.

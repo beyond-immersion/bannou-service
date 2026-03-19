@@ -223,17 +223,17 @@ paths:
         all categories). Passed through to Inventory at container creation.\"\n                }\n            }\n        },\n\
         \        \"GenesisAwakeningConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
         \            \"description\": \"Awakening configuration for CharacterBrain cognitive stage transition\",\n       \
-        \     \"required\": [\n                \"systemRealmCode\",\n                \"characterSpeciesCode\",\n         \
-        \       \"archiveOnDestruction\"\n            ],\n            \"properties\": {\n                \"systemRealmCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 100,\n                    \"description\": \"System realm code where the character is created at awakening. Must
-        be a valid system realm.\"\n                },\n                \"characterSpeciesCode\": {\n                    \"\
-        type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n            \
-        \        \"description\": \"Species code for the character created at awakening. Must exist in the system realm.\"\
-        \n                },\n                \"initialPersonalityTraits\": {\n                    \"type\": \"array\",\n\
-        \                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GenesisPersonalityTraitSeed\"\
-        \n                    },\n                    \"description\": \"Personality trait values to seed on the character
-        at awakening. Null if no traits should be seeded.\"\n                }\n            }\n        },\n        \"GenesisPersonalityTraitSeed\"\
+        \     \"required\": [\n                \"systemRealmCode\",\n                \"characterSpeciesCode\"\n          \
+        \  ],\n            \"properties\": {\n                \"systemRealmCode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"System realm code where the character is created at awakening. Must be a valid system realm.\"\n             \
+        \   },\n                \"characterSpeciesCode\": {\n                    \"type\": \"string\",\n                 \
+        \   \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\": \"Species code
+        for the character created at awakening. Must exist in the system realm.\"\n                },\n                \"\
+        initialPersonalityTraits\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/GenesisPersonalityTraitSeed\"\n   \
+        \                 },\n                    \"description\": \"Personality trait values to seed on the character at
+        awakening. Null if no traits should be seeded.\"\n                }\n            }\n        },\n        \"GenesisPersonalityTraitSeed\"\
         : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
         : \"A personality trait value to seed on a character at awakening\",\n            \"required\": [\n              \
         \  \"traitCode\",\n                \"value\"\n            ],\n            \"properties\": {\n                \"traitCode\"\
@@ -410,17 +410,17 @@ paths:
         all categories). Passed through to Inventory at container creation.\"\n                }\n            }\n        },\n\
         \        \"GenesisAwakeningConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
         \            \"description\": \"Awakening configuration for CharacterBrain cognitive stage transition\",\n       \
-        \     \"required\": [\n                \"systemRealmCode\",\n                \"characterSpeciesCode\",\n         \
-        \       \"archiveOnDestruction\"\n            ],\n            \"properties\": {\n                \"systemRealmCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 100,\n                    \"description\": \"System realm code where the character is created at awakening. Must
-        be a valid system realm.\"\n                },\n                \"characterSpeciesCode\": {\n                    \"\
-        type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n            \
-        \        \"description\": \"Species code for the character created at awakening. Must exist in the system realm.\"\
-        \n                },\n                \"initialPersonalityTraits\": {\n                    \"type\": \"array\",\n\
-        \                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GenesisPersonalityTraitSeed\"\
-        \n                    },\n                    \"description\": \"Personality trait values to seed on the character
-        at awakening. Null if no traits should be seeded.\"\n                }\n            }\n        },\n        \"GenesisPersonalityTraitSeed\"\
+        \     \"required\": [\n                \"systemRealmCode\",\n                \"characterSpeciesCode\"\n          \
+        \  ],\n            \"properties\": {\n                \"systemRealmCode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"System realm code where the character is created at awakening. Must be a valid system realm.\"\n             \
+        \   },\n                \"characterSpeciesCode\": {\n                    \"type\": \"string\",\n                 \
+        \   \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\": \"Species code
+        for the character created at awakening. Must exist in the system realm.\"\n                },\n                \"\
+        initialPersonalityTraits\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/GenesisPersonalityTraitSeed\"\n   \
+        \                 },\n                    \"description\": \"Personality trait values to seed on the character at
+        awakening. Null if no traits should be seeded.\"\n                }\n            }\n        },\n        \"GenesisPersonalityTraitSeed\"\
         : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
         : \"A personality trait value to seed on a character at awakening\",\n            \"required\": [\n              \
         \  \"traitCode\",\n                \"value\"\n            ],\n            \"properties\": {\n                \"traitCode\"\
@@ -632,17 +632,17 @@ paths:
         all categories). Passed through to Inventory at container creation.\"\n                }\n            }\n        },\n\
         \        \"GenesisAwakeningConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
         \            \"description\": \"Awakening configuration for CharacterBrain cognitive stage transition\",\n       \
-        \     \"required\": [\n                \"systemRealmCode\",\n                \"characterSpeciesCode\",\n         \
-        \       \"archiveOnDestruction\"\n            ],\n            \"properties\": {\n                \"systemRealmCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 100,\n                    \"description\": \"System realm code where the character is created at awakening. Must
-        be a valid system realm.\"\n                },\n                \"characterSpeciesCode\": {\n                    \"\
-        type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n            \
-        \        \"description\": \"Species code for the character created at awakening. Must exist in the system realm.\"\
-        \n                },\n                \"initialPersonalityTraits\": {\n                    \"type\": \"array\",\n\
-        \                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GenesisPersonalityTraitSeed\"\
-        \n                    },\n                    \"description\": \"Personality trait values to seed on the character
-        at awakening. Null if no traits should be seeded.\"\n                }\n            }\n        },\n        \"GenesisPersonalityTraitSeed\"\
+        \     \"required\": [\n                \"systemRealmCode\",\n                \"characterSpeciesCode\"\n          \
+        \  ],\n            \"properties\": {\n                \"systemRealmCode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"System realm code where the character is created at awakening. Must be a valid system realm.\"\n             \
+        \   },\n                \"characterSpeciesCode\": {\n                    \"type\": \"string\",\n                 \
+        \   \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\": \"Species code
+        for the character created at awakening. Must exist in the system realm.\"\n                },\n                \"\
+        initialPersonalityTraits\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/GenesisPersonalityTraitSeed\"\n   \
+        \                 },\n                    \"description\": \"Personality trait values to seed on the character at
+        awakening. Null if no traits should be seeded.\"\n                }\n            }\n        },\n        \"GenesisPersonalityTraitSeed\"\
         : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
         : \"A personality trait value to seed on a character at awakening\",\n            \"required\": [\n              \
         \  \"traitCode\",\n                \"value\"\n            ],\n            \"properties\": {\n                \"traitCode\"\
@@ -867,17 +867,17 @@ paths:
         all categories). Passed through to Inventory at container creation.\"\n                }\n            }\n        },\n\
         \        \"GenesisAwakeningConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
         \            \"description\": \"Awakening configuration for CharacterBrain cognitive stage transition\",\n       \
-        \     \"required\": [\n                \"systemRealmCode\",\n                \"characterSpeciesCode\",\n         \
-        \       \"archiveOnDestruction\"\n            ],\n            \"properties\": {\n                \"systemRealmCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 100,\n                    \"description\": \"System realm code where the character is created at awakening. Must
-        be a valid system realm.\"\n                },\n                \"characterSpeciesCode\": {\n                    \"\
-        type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n            \
-        \        \"description\": \"Species code for the character created at awakening. Must exist in the system realm.\"\
-        \n                },\n                \"initialPersonalityTraits\": {\n                    \"type\": \"array\",\n\
-        \                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GenesisPersonalityTraitSeed\"\
-        \n                    },\n                    \"description\": \"Personality trait values to seed on the character
-        at awakening. Null if no traits should be seeded.\"\n                }\n            }\n        },\n        \"GenesisPersonalityTraitSeed\"\
+        \     \"required\": [\n                \"systemRealmCode\",\n                \"characterSpeciesCode\"\n          \
+        \  ],\n            \"properties\": {\n                \"systemRealmCode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"System realm code where the character is created at awakening. Must be a valid system realm.\"\n             \
+        \   },\n                \"characterSpeciesCode\": {\n                    \"type\": \"string\",\n                 \
+        \   \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\": \"Species code
+        for the character created at awakening. Must exist in the system realm.\"\n                },\n                \"\
+        initialPersonalityTraits\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/GenesisPersonalityTraitSeed\"\n   \
+        \                 },\n                    \"description\": \"Personality trait values to seed on the character at
+        awakening. Null if no traits should be seeded.\"\n                }\n            }\n        },\n        \"GenesisPersonalityTraitSeed\"\
         : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
         : \"A personality trait value to seed on a character at awakening\",\n            \"required\": [\n              \
         \  \"traitCode\",\n                \"value\"\n            ],\n            \"properties\": {\n                \"traitCode\"\
@@ -1071,17 +1071,17 @@ paths:
         all categories). Passed through to Inventory at container creation.\"\n                }\n            }\n        },\n\
         \        \"GenesisAwakeningConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
         \            \"description\": \"Awakening configuration for CharacterBrain cognitive stage transition\",\n       \
-        \     \"required\": [\n                \"systemRealmCode\",\n                \"characterSpeciesCode\",\n         \
-        \       \"archiveOnDestruction\"\n            ],\n            \"properties\": {\n                \"systemRealmCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 100,\n                    \"description\": \"System realm code where the character is created at awakening. Must
-        be a valid system realm.\"\n                },\n                \"characterSpeciesCode\": {\n                    \"\
-        type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n            \
-        \        \"description\": \"Species code for the character created at awakening. Must exist in the system realm.\"\
-        \n                },\n                \"initialPersonalityTraits\": {\n                    \"type\": \"array\",\n\
-        \                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GenesisPersonalityTraitSeed\"\
-        \n                    },\n                    \"description\": \"Personality trait values to seed on the character
-        at awakening. Null if no traits should be seeded.\"\n                }\n            }\n        },\n        \"GenesisPersonalityTraitSeed\"\
+        \     \"required\": [\n                \"systemRealmCode\",\n                \"characterSpeciesCode\"\n          \
+        \  ],\n            \"properties\": {\n                \"systemRealmCode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"System realm code where the character is created at awakening. Must be a valid system realm.\"\n             \
+        \   },\n                \"characterSpeciesCode\": {\n                    \"type\": \"string\",\n                 \
+        \   \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\": \"Species code
+        for the character created at awakening. Must exist in the system realm.\"\n                },\n                \"\
+        initialPersonalityTraits\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/GenesisPersonalityTraitSeed\"\n   \
+        \                 },\n                    \"description\": \"Personality trait values to seed on the character at
+        awakening. Null if no traits should be seeded.\"\n                }\n            }\n        },\n        \"GenesisPersonalityTraitSeed\"\
         : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
         : \"A personality trait value to seed on a character at awakening\",\n            \"required\": [\n              \
         \  \"traitCode\",\n                \"value\"\n            ],\n            \"properties\": {\n                \"traitCode\"\
@@ -1255,17 +1255,17 @@ paths:
         all categories). Passed through to Inventory at container creation.\"\n                }\n            }\n        },\n\
         \        \"GenesisAwakeningConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
         \            \"description\": \"Awakening configuration for CharacterBrain cognitive stage transition\",\n       \
-        \     \"required\": [\n                \"systemRealmCode\",\n                \"characterSpeciesCode\",\n         \
-        \       \"archiveOnDestruction\"\n            ],\n            \"properties\": {\n                \"systemRealmCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 100,\n                    \"description\": \"System realm code where the character is created at awakening. Must
-        be a valid system realm.\"\n                },\n                \"characterSpeciesCode\": {\n                    \"\
-        type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n            \
-        \        \"description\": \"Species code for the character created at awakening. Must exist in the system realm.\"\
-        \n                },\n                \"initialPersonalityTraits\": {\n                    \"type\": \"array\",\n\
-        \                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GenesisPersonalityTraitSeed\"\
-        \n                    },\n                    \"description\": \"Personality trait values to seed on the character
-        at awakening. Null if no traits should be seeded.\"\n                }\n            }\n        },\n        \"GenesisPersonalityTraitSeed\"\
+        \     \"required\": [\n                \"systemRealmCode\",\n                \"characterSpeciesCode\"\n          \
+        \  ],\n            \"properties\": {\n                \"systemRealmCode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"System realm code where the character is created at awakening. Must be a valid system realm.\"\n             \
+        \   },\n                \"characterSpeciesCode\": {\n                    \"type\": \"string\",\n                 \
+        \   \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\": \"Species code
+        for the character created at awakening. Must exist in the system realm.\"\n                },\n                \"\
+        initialPersonalityTraits\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/GenesisPersonalityTraitSeed\"\n   \
+        \                 },\n                    \"description\": \"Personality trait values to seed on the character at
+        awakening. Null if no traits should be seeded.\"\n                }\n            }\n        },\n        \"GenesisPersonalityTraitSeed\"\
         : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
         : \"A personality trait value to seed on a character at awakening\",\n            \"required\": [\n              \
         \  \"traitCode\",\n                \"value\"\n            ],\n            \"properties\": {\n                \"traitCode\"\
@@ -1482,17 +1482,17 @@ paths:
         all categories). Passed through to Inventory at container creation.\"\n                }\n            }\n        },\n\
         \        \"GenesisAwakeningConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
         \            \"description\": \"Awakening configuration for CharacterBrain cognitive stage transition\",\n       \
-        \     \"required\": [\n                \"systemRealmCode\",\n                \"characterSpeciesCode\",\n         \
-        \       \"archiveOnDestruction\"\n            ],\n            \"properties\": {\n                \"systemRealmCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 100,\n                    \"description\": \"System realm code where the character is created at awakening. Must
-        be a valid system realm.\"\n                },\n                \"characterSpeciesCode\": {\n                    \"\
-        type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n            \
-        \        \"description\": \"Species code for the character created at awakening. Must exist in the system realm.\"\
-        \n                },\n                \"initialPersonalityTraits\": {\n                    \"type\": \"array\",\n\
-        \                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GenesisPersonalityTraitSeed\"\
-        \n                    },\n                    \"description\": \"Personality trait values to seed on the character
-        at awakening. Null if no traits should be seeded.\"\n                }\n            }\n        },\n        \"GenesisPersonalityTraitSeed\"\
+        \     \"required\": [\n                \"systemRealmCode\",\n                \"characterSpeciesCode\"\n          \
+        \  ],\n            \"properties\": {\n                \"systemRealmCode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"System realm code where the character is created at awakening. Must be a valid system realm.\"\n             \
+        \   },\n                \"characterSpeciesCode\": {\n                    \"type\": \"string\",\n                 \
+        \   \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\": \"Species code
+        for the character created at awakening. Must exist in the system realm.\"\n                },\n                \"\
+        initialPersonalityTraits\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/GenesisPersonalityTraitSeed\"\n   \
+        \                 },\n                    \"description\": \"Personality trait values to seed on the character at
+        awakening. Null if no traits should be seeded.\"\n                }\n            }\n        },\n        \"GenesisPersonalityTraitSeed\"\
         : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
         : \"A personality trait value to seed on a character at awakening\",\n            \"required\": [\n              \
         \  \"traitCode\",\n                \"value\"\n            ],\n            \"properties\": {\n                \"traitCode\"\
@@ -2744,7 +2744,6 @@ components:
       required:
       - systemRealmCode
       - characterSpeciesCode
-      - archiveOnDestruction
       properties:
         systemRealmCode:
           type: string
