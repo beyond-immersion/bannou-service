@@ -46,6 +46,7 @@
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
 | `analytics-rating:{gameServiceId}:{ratingType}:{entityType}:{entityId}` | `SkillRatingData` | Glicko-2 skill rating data per entity per rating type |
+| `account-rating-index:{accountId}` | `string` (JSON string list) | Reverse index: account → list of rating keys. Maintained on write for Account-typed entities; consumed during account.deleted cleanup |
 
 **Store**: `analytics-history-data` (Backend: MySQL)
 
@@ -93,7 +94,7 @@
 | `game-session.action.performed` | `HandleGameActionPerformedAsync` | Resolves session→gameService, buffers event as EntityType.Other with Value=1 |
 | `game-session.created` | `HandleGameSessionCreatedAsync` | Resolves gameType→gameService, saves session mapping, buffers "session.created" event |
 | `game-session.deleted` | `HandleGameSessionDeletedAsync` | Removes session mapping, resolves gameType→gameService, buffers "session.deleted" event |
-| `character-history.participation.recorded` | `HandleCharacterParticipationRecordedAsync` | Resolves character→realm→gameService (two-hop, cached), buffers event with Value=1 |
+| `character-history.participation.batch-created` | `HandleCharacterParticipationBatchCreatedAsync` | Processes batch entries with per-item error isolation: for each entry, resolves character→realm→gameService (two-hop, cached), buffers event with Value=1 |
 | `character-history.backstory.created` | `HandleCharacterBackstoryCreatedAsync` | Resolves character→realm→gameService, buffers event with Value=ElementCount |
 | `character-history.backstory.updated` | `HandleCharacterBackstoryUpdatedAsync` | Resolves character→realm→gameService, buffers event with Value=ElementCount |
 | `realm-history.participation.recorded` | `HandleRealmParticipationRecordedAsync` | Resolves realm→gameService (one-hop, cached), buffers event with Value=1 |
@@ -101,7 +102,7 @@
 | `realm-history.lore.updated` | `HandleRealmLoreUpdatedAsync` | Resolves realm→gameService, buffers event with Value=ElementCount |
 | `character.updated` | `HandleCharacterUpdatedForCacheInvalidationAsync` | Deletes character-to-realm cache entry (best-effort, exceptions swallowed) |
 | `realm.updated` | `HandleRealmUpdatedForCacheInvalidationAsync` | Deletes realm-to-gameService cache entry (best-effort, exceptions swallowed) |
-| `account.deleted` | `HandleAccountDeletedAsync` | Deletes controller history records for the account (query by $.AccountId), deletes entity summaries where entityType=Account. Redis skill ratings explicitly skipped (no partial-key query available; account-typed ratings are rare and harmless if orphaned). Per-item error isolation, telemetry span, error event publishing. |
+| `account.deleted` | `HandleAccountDeletedAsync` | Deletes controller history records (MySQL query by $.AccountId), entity summaries where entityType=Account (MySQL query), and skill ratings for Account entities (via reverse index `account-rating-index:{accountId}`). Per-item error isolation, telemetry span, error event publishing. |
 
 All history event handlers follow fail-fast: if game service resolution fails, the event is dropped permanently with error event publication. Incorrect GameServiceId is considered worse than missing data.
 
@@ -237,6 +238,9 @@ LOCK analytics-rating:"rating-update:{gameServiceId}:{ratingType}"
   // Pass 3: save all updated ratings
   FOREACH calculated result
     WRITE rating:analytics-rating:{gameServiceId}:{ratingType}:{entityType}:{entityId} <- updated SkillRatingData
+    IF entityType == Account
+      // Maintain reverse index for account.deleted cleanup
+      AddToStringList rating-index:account-rating-index:{entityId} <- ratingKey
 
   // Pass 4: publish events (still under lock)
   FOREACH calculated result

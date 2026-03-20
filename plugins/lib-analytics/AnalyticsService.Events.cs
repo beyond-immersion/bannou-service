@@ -762,15 +762,49 @@ public partial class AnalyticsService
                 accountId, summaryDeletedCount, summaryFailedCount);
         }
 
-        // 3. Delete skill ratings where entityType=Account
-        // Ratings are in Redis — no JSON query available, but key pattern includes entityType
-        // Key pattern: {RATING_KEY_PREFIX}{gameServiceId}:{ratingType}:{entityType}:{entityId}
-        // Since we can't query Redis by partial key pattern directly through IStateStore,
-        // and ratings for entityType=Account are expected to be rare (accounts don't typically
-        // have skill ratings — characters do), we skip Redis rating cleanup.
-        // The data is observational and harmless if orphaned.
+        // 3. Delete skill ratings where entityType=Account via reverse index
+        var ratingDeletedCount = 0;
+        var ratingFailedCount = 0;
+        var ratingIndexKey = BuildAccountRatingIndexKey(accountId);
+        var ratingIndex = await _ratingIndexStore.GetAsync(ratingIndexKey, CancellationToken.None);
+        if (ratingIndex != null)
+        {
+            List<string> ratingKeys;
+            try
+            {
+                ratingKeys = BannouJson.Deserialize<List<string>>(ratingIndex) ?? new List<string>();
+            }
+            catch
+            {
+                ratingKeys = new List<string>();
+            }
 
-        if (historyDeletedCount == 0 && summaryDeletedCount == 0)
+            foreach (var ratingKey in ratingKeys)
+            {
+                try
+                {
+                    await _ratingStore.DeleteAsync(ratingKey, CancellationToken.None);
+                    ratingDeletedCount++;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to delete skill rating {Key} for account {AccountId}", ratingKey, accountId);
+                    ratingFailedCount++;
+                }
+            }
+
+            // Clean up the index key itself
+            await _ratingIndexStore.DeleteAsync(ratingIndexKey, CancellationToken.None);
+        }
+
+        if (ratingDeletedCount > 0 || ratingFailedCount > 0)
+        {
+            _logger.LogInformation(
+                "Skill rating cleanup for account {AccountId}: {Deleted} deleted, {Failed} failed",
+                accountId, ratingDeletedCount, ratingFailedCount);
+        }
+
+        if (historyDeletedCount == 0 && summaryDeletedCount == 0 && ratingDeletedCount == 0)
         {
             _logger.LogDebug("No analytics data found for account {AccountId}", accountId);
         }

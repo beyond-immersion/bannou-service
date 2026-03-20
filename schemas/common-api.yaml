@@ -77,6 +77,13 @@ components:
         - Bored
         - Hostile
 
+    TimeSource:
+      type: string
+      description: Whether time-based calculations use real-world elapsed time or game-world elapsed time via Worldstate. Used by Currency autogain, Seed decay, and Character-Encounter memory decay.
+      enum:
+        - RealTime
+        - GameTime
+
     OAuthProvider:
       type: string
       description: OAuth provider types (excludes email). Subset of AuthProvider.

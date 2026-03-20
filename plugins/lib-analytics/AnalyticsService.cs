@@ -84,6 +84,9 @@ public partial class AnalyticsService : IAnalyticsService
     /// <summary>Cacheable event buffer index store (Redis) for sorted set buffer index.</summary>
     private readonly ICacheableStateStore<object> _eventBufferIndexStore;
 
+    /// <summary>String store on analytics-rating (Redis) for account→rating-key reverse indexes.</summary>
+    private readonly IStateStore<string> _ratingIndexStore;
+
     /// <summary>Whether the analytics summary store backend is Redis (required for buffered ingestion).</summary>
     private readonly bool _summaryStoreIsRedis;
 
@@ -98,6 +101,7 @@ public partial class AnalyticsService : IAnalyticsService
     private const string REALM_GAME_SERVICE_CACHE_PREFIX = "analytics-realm-game-service-cache";
     private const string CHARACTER_REALM_CACHE_PREFIX = "analytics-character-realm-cache";
     private const string BUFFER_LOCK_RESOURCE = "analytics-event-buffer-flush";
+    private const string ACCOUNT_RATING_INDEX_PREFIX = "account-rating-index:";
 
     // Glicko-2 scale conversion constant
     private const double GlickoScale = 173.7178;
@@ -144,6 +148,7 @@ public partial class AnalyticsService : IAnalyticsService
         _characterRealmCacheStore = stateStoreFactory.GetStore<CharacterRealmCacheEntry>(StateStoreDefinitions.AnalyticsSummary);
         _eventBufferStore = stateStoreFactory.GetCacheableStore<BufferedAnalyticsEvent>(StateStoreDefinitions.AnalyticsSummary);
         _eventBufferIndexStore = stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.AnalyticsSummary);
+        _ratingIndexStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.AnalyticsRating);
         _summaryStoreIsRedis = stateStoreFactory.GetBackendType(StateStoreDefinitions.AnalyticsSummary) == StateBackend.Redis;
 
         // Parse milestone thresholds from configuration array
@@ -586,6 +591,17 @@ public partial class AnalyticsService : IAnalyticsService
             playerRating.LastMatchAt = now;
 
             await _ratingStore.SaveAsync(key, playerRating, cancellationToken: cancellationToken);
+
+            // Maintain reverse index for account.deleted cleanup per FOUNDATION TENETS
+            if (result.EntityType == EntityType.Account)
+            {
+                await _ratingIndexStore.AddToStringListAsync(
+                    BuildAccountRatingIndexKey(result.EntityId),
+                    key,
+                    _configuration.RatingIndexMaxRetries,
+                    _logger,
+                    cancellationToken);
+            }
 
             var ratingChange = newRating - previousRating;
             updatedRatings.Add(new SkillRatingChange
@@ -1048,6 +1064,13 @@ public partial class AnalyticsService : IAnalyticsService
     /// </summary>
     internal static string BuildCharacterRealmCacheKey(Guid characterId)
         => $"{CHARACTER_REALM_CACHE_PREFIX}:{characterId}";
+
+    /// <summary>
+    /// Builds the reverse index key for an account's skill ratings.
+    /// Used to look up all rating keys for cleanup on account.deleted.
+    /// </summary>
+    internal static string BuildAccountRatingIndexKey(Guid accountId)
+        => $"{ACCOUNT_RATING_INDEX_PREFIX}{accountId}";
 
     private StateOptions? BuildResolutionCacheOptions()
     {

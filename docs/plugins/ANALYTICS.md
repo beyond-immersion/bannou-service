@@ -52,6 +52,7 @@ The Analytics plugin (L4 GameFeatures) is the central event aggregation point fo
 | `Glicko2VolatilityConvergenceTolerance` | `ANALYTICS_GLICKO2_VOLATILITY_CONVERGENCE_TOLERANCE` | 1e-06 | Convergence tolerance for volatility iteration |
 | `ResolutionCacheTtlSeconds` | `ANALYTICS_RESOLUTION_CACHE_TTL_SECONDS` | 300 | TTL for resolution caches (game service, realm, character lookups) |
 | `SessionMappingTtlSeconds` | `ANALYTICS_SESSION_MAPPING_TTL_SECONDS` | 3600 | TTL for game session mappings (should exceed typical session duration) |
+| `RatingIndexMaxRetries` | `ANALYTICS_RATING_INDEX_MAX_RETRIES` | 3 | Max optimistic concurrency retries for rating reverse index operations |
 | `MilestoneThresholds` | `ANALYTICS_MILESTONE_THRESHOLDS` | [10,25,50,...] | Score thresholds that trigger milestone events (integer array, comma-separated in env var) |
 | `EventBufferLockExpiryBaseSeconds` | `ANALYTICS_EVENT_BUFFER_LOCK_EXPIRY_BASE_SECONDS` | 10 | Base distributed lock expiry (actual = max(this, 2x flush interval)) |
 | `RatingUpdateLockExpirySeconds` | `ANALYTICS_RATING_UPDATE_LOCK_EXPIRY_SECONDS` | 30 | Distributed lock expiry for skill rating update operations |
@@ -132,7 +133,7 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 
 ### Bugs (Fix Immediately)
 
-1. **Incomplete `account.deleted` cleanup — Redis skill ratings orphaned**: The `HandleAccountDeletedAsync` handler correctly cleans controller history (MySQL) and entity summaries where entityType=Account (MySQL), but explicitly skips skill ratings in Redis because `IStateStore<T>` does not support partial-key queries. Ratings keyed as `analytics-rating:{gameServiceId}:{ratingType}:Account:{accountId}` are orphaned permanently. Per Foundation Tenets (Account Deletion Cleanup Obligation), every service storing account-owned data MUST delete ALL data for that account. "Rare and harmless" is not an exception the tenet defines. Fix requires either: (a) maintaining a reverse index of `account:{accountId}` → rating keys, or (b) using `IRedisOperations` SCAN to find matching keys. Either approach is non-trivial (schema/code changes beyond 3 lines) — deferred to `/audit-plugin`.
+1. ~~**Incomplete `account.deleted` cleanup — Redis skill ratings orphaned**~~: **FIXED** (2026-03-20) - Added reverse index `account-rating-index:{accountId}` on `analytics-rating` (Redis) maintained via `AddToStringListAsync` in `UpdateSkillRatingAsync` for Account-typed entities. `CleanupDataForAccountAsync` now reads the index, deletes each rating key, then deletes the index itself. Per-item error isolation on rating deletions. Added `RatingIndexMaxRetries` configuration property (default: 3).
 
 2. ~~**Inline key interpolation bypasses Build\*Key() methods in cache handlers**~~: **FIXED** (2026-03-20) - Fixed 6 inline `$"{PREFIX}:{id}"` interpolation sites in `AnalyticsService.cs` (4 sites in `ResolveGameServiceIdForRealmAsync` and `ResolveGameServiceIdForCharacterAsync`) and `AnalyticsService.Events.cs` (2 sites in cache invalidation handlers) to use the existing `BuildRealmGameServiceCacheKey()` and `BuildCharacterRealmCacheKey()` methods. Per Foundation Tenets (key builders must be used at all call sites).
 

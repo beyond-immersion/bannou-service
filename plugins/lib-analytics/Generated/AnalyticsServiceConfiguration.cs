@@ -192,6 +192,13 @@ public class AnalyticsServiceConfiguration : BaseServiceConfiguration
     public int ControllerHistoryCleanupIntervalSeconds { get; set; } = 3600;
 
     /// <summary>
+    /// Maximum optimistic concurrency retry attempts for rating reverse index operations
+    /// Environment variable: ANALYTICS_RATING_INDEX_MAX_RETRIES
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10)]
+    public int RatingIndexMaxRetries { get; set; } = 3;
+
+    /// <summary>
     /// Score thresholds that trigger milestone events (comma-separated in env var)
     /// Environment variable: ANALYTICS_MILESTONE_THRESHOLDS
     /// </summary>

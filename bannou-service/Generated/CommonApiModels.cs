@@ -178,6 +178,23 @@ public enum SentimentCategory
 #pragma warning restore CS1591
 
 /// <summary>
+/// Whether time-based calculations use real-world elapsed time or game-world elapsed time via Worldstate. Used by Currency autogain, Seed decay, and Character-Encounter memory decay.
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum TimeSource
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"RealTime")]
+    RealTime = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"GameTime")]
+    GameTime = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// OAuth provider types (excludes email). Subset of AuthProvider.
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
