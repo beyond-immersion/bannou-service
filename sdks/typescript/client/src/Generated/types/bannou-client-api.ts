@@ -18308,6 +18308,11 @@ export interface components {
        * @description Game service this seed is scoped to. Null for cross-game seed types that are not scoped to any single game service.
        */
       gameServiceId?: string | null;
+      /**
+       * Format: uuid
+       * @description Realm this seed is associated with for game-time decay calculations. If null and AutoAssociateRealm config is true, resolved from owner type on creation (character → character's realm, realm → self, account → null). Fixed at creation — does not auto-follow owner realm changes.
+       */
+      realmId?: string | null;
       /** @description Human-readable name. Auto-generated if omitted. */
       displayName?: string | null;
       /** @description Client-provided seed-type-specific initial data. No Bannou plugin reads specific keys from this field by convention. */
@@ -18590,6 +18595,8 @@ export interface components {
        * @description Autogain balance cap
        */
       autogainCap?: number | null;
+      /** @description Per-definition override for autogain time source. True = game-time, false = real-time, null = use global config. */
+      autogainUseGameTime?: boolean | null;
       /** @description Whether currency can expire */
       expires: boolean;
       /** @description Expiration policy */
@@ -31646,6 +31653,11 @@ export interface components {
        */
       gameServiceId?: string | null;
       /**
+       * Format: uuid
+       * @description Realm this seed is associated with for game-time decay. Null if no realm association (e.g., account-owned guardian seeds).
+       */
+      realmId?: string | null;
+      /**
        * Format: date-time
        * @description When the seed was created.
        */
@@ -34493,6 +34505,8 @@ export interface components {
        * @description New autogain cap
        */
       autogainCap?: number | null;
+      /** @description Per-definition override for autogain time source. True = game-time, false = real-time, null = use global config. */
+      autogainUseGameTime?: boolean | null;
       /**
        * Format: double
        * @description New exchange rate to base

@@ -52,22 +52,27 @@ components:
           format: uuid
           nullable: true
           description: "Game service this seed is scoped to. Null for cross-game seed types."
-        growthPhase: &id006
+        realmId: &id006
+          type: string
+          format: uuid
+          nullable: true
+          description: "Realm associated with this seed for game-time decay. Null if no realm association."
+        growthPhase: &id007
           type: string
           minLength: 1
           description: "Current computed growth phase code"
-        totalGrowth: &id007
+        totalGrowth: &id008
           type: number
           format: float
           description: "Aggregate growth across all domains"
-        displayName: &id008
+        displayName: &id009
           type: string
           minLength: 1
           description: "Human-readable seed name"
-        status: &id009
+        status: &id010
           $ref: ../seed-api.yaml#/components/schemas/SeedStatus
           description: "Current lifecycle status"
-        bondId: &id010
+        bondId: &id011
           type: string
           format: uuid
           nullable: true
@@ -111,11 +116,12 @@ components:
         ownerType: *id003
         seedTypeCode: *id004
         gameServiceId: *id005
-        growthPhase: *id006
-        totalGrowth: *id007
-        displayName: *id008
-        status: *id009
-        bondId: *id010
+        realmId: *id006
+        growthPhase: *id007
+        totalGrowth: *id008
+        displayName: *id009
+        status: *id010
+        bondId: *id011
         createdAt:
           type: string
           format: date-time
@@ -159,11 +165,12 @@ components:
         ownerType: *id003
         seedTypeCode: *id004
         gameServiceId: *id005
-        growthPhase: *id006
-        totalGrowth: *id007
-        displayName: *id008
-        status: *id009
-        bondId: *id010
+        realmId: *id006
+        growthPhase: *id007
+        totalGrowth: *id008
+        displayName: *id009
+        status: *id010
+        bondId: *id011
         createdAt:
           type: string
           format: date-time
@@ -201,33 +208,33 @@ components:
           type: string
           default: seed.type.created
           description: 'Event type identifier: seed.type.created'
-        seedTypeCode: &id011
+        seedTypeCode: &id012
           type: string
           minLength: 1
           description: "Unique seed type code"
-        gameServiceId: &id012
+        gameServiceId: &id013
           type: string
           format: uuid
           nullable: true
           description: "Game service this type is scoped to. Null for cross-game seed types."
-        displayName: &id013
+        displayName: &id014
           type: string
           minLength: 1
           description: "Human-readable name"
-        description: &id014
+        description: &id015
           type: string
           minLength: 1
           description: "Description of what this seed type represents"
-        maxPerOwner: &id015
+        maxPerOwner: &id016
           type: integer
           description: "Maximum seeds of this type per owner"
-        bondCardinality: &id016
+        bondCardinality: &id017
           type: integer
           description: "Max bond participants (0 = no bonding)"
-        bondPermanent: &id017
+        bondPermanent: &id018
           type: boolean
           description: "Whether bonds of this type are permanent"
-        sameOwnerGrowthMultiplier: &id018
+        sameOwnerGrowthMultiplier: &id019
           type: number
           format: float
           description: "Cross-pollination multiplier"
@@ -278,14 +285,14 @@ components:
           type: string
           default: seed.type.updated
           description: 'Event type identifier: seed.type.updated'
-        seedTypeCode: *id011
-        gameServiceId: *id012
-        displayName: *id013
-        description: *id014
-        maxPerOwner: *id015
-        bondCardinality: *id016
-        bondPermanent: *id017
-        sameOwnerGrowthMultiplier: *id018
+        seedTypeCode: *id012
+        gameServiceId: *id013
+        displayName: *id014
+        description: *id015
+        maxPerOwner: *id016
+        bondCardinality: *id017
+        bondPermanent: *id018
+        sameOwnerGrowthMultiplier: *id019
         createdAt:
           type: string
           format: date-time
@@ -337,14 +344,14 @@ components:
           type: string
           default: seed.type.deleted
           description: 'Event type identifier: seed.type.deleted'
-        seedTypeCode: *id011
-        gameServiceId: *id012
-        displayName: *id013
-        description: *id014
-        maxPerOwner: *id015
-        bondCardinality: *id016
-        bondPermanent: *id017
-        sameOwnerGrowthMultiplier: *id018
+        seedTypeCode: *id012
+        gameServiceId: *id013
+        displayName: *id014
+        description: *id015
+        maxPerOwner: *id016
+        bondCardinality: *id017
+        bondPermanent: *id018
+        sameOwnerGrowthMultiplier: *id019
         createdAt:
           type: string
           format: date-time

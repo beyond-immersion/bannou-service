@@ -10794,6 +10794,10 @@ struct FCreateSeedRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FGuid> GameServiceId;
 
+    /** Realm this seed is associated with for game-time decay calculations. If null and AutoAssociateRealm config is true, resolved from owner type on creation (character → character's realm, realm → self, account → null). Fixed at creation — does not auto-follow owner realm changes. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FGuid> RealmId;
+
     /** Human-readable name. Auto-generated if omitted. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString DisplayName;
@@ -11201,6 +11205,10 @@ struct FCurrencyDefinitionResponse
     /** Autogain balance cap */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<double> AutogainCap;
+
+    /** Per-definition override for autogain time source. True = game-time, false = real-time, null = use global config. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool AutogainUseGameTime = false;
 
     /** Whether currency can expire */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -32148,6 +32156,10 @@ struct FSeedResponse
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FGuid> GameServiceId;
 
+    /** Realm this seed is associated with for game-time decay. Null if no realm association (e.g., account-owned guardian seeds). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    TOptional<FGuid> RealmId;
+
     /** When the seed was created. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FDateTime CreatedAt;
@@ -36489,6 +36501,10 @@ struct FUpdateCurrencyDefinitionRequest
     /** New autogain cap */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<double> AutogainCap;
+
+    /** Per-definition override for autogain time source. True = game-time, false = real-time, null = use global config. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    bool AutogainUseGameTime = false;
 
     /** New exchange rate to base */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")

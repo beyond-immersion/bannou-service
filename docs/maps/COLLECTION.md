@@ -15,10 +15,10 @@
 | Layer | L2 GameFoundation |
 | Endpoints | 23 |
 | State Stores | collection-entry-templates (MySQL), collection-instances (MySQL), collection-area-content-configs (MySQL), collection-cache (Redis), collection-lock (Redis) |
-| Events Published | 12 (entry-template.created/updated/deleted, created, deleted, area-content-config.created/updated/deleted, entry-unlocked, entry-grant-failed, milestone-reached, discovery-advanced) |
+| Events Published | 12 (entry-template.created/updated/deleted, batch-created, batch-destroyed, area-content-config.created/updated/deleted, entry-unlocked, entry-grant-failed, milestone-reached, discovery-advanced) |
 | Events Consumed | 1 (account.deleted) |
 | Client Events | 3 (entry.unlocked, milestone-reached, discovery.advanced) |
-| Background Services | 0 |
+| Background Services | 1 (CollectionInstanceEventBatcher via EventBatcherWorker) |
 
 ---
 
@@ -86,8 +86,8 @@ Used for distributed locks on mutation operations. Lock keys use `tpl:{id}` for 
 | `collection.entry-template.created` | `CollectionEntryTemplateCreatedEvent` | CreateEntryTemplate, SeedEntryTemplates |
 | `collection.entry-template.updated` | `CollectionEntryTemplateUpdatedEvent` | UpdateEntryTemplate (only if fields changed), DeprecateEntryTemplate |
 | `collection.entry-template.deleted` | `CollectionEntryTemplateDeletedEvent` | CleanDeprecatedEntryTemplates (via DeprecationCleanupHelper) |
-| `collection.created` | `CollectionCreatedEvent` | CreateCollection, GrantEntry (auto-create) |
-| `collection.deleted` | `CollectionDeletedEvent` | DeleteCollection, CleanupByCharacter, HandleAccountDeleted |
+| `collection.batch-created` | `CollectionBatchCreatedEvent` | Batched from CreateCollection, GrantEntry (auto-create) — flushed by EventBatcherWorker |
+| `collection.batch-destroyed` | `CollectionBatchDestroyedEvent` | Batched from DeleteCollection, CleanupByCharacter, HandleAccountDeleted — flushed by EventBatcherWorker |
 | `collection.area-content-config.created` | `CollectionAreaContentConfigCreatedEvent` | SetAreaContentConfig (new config) |
 | `collection.area-content-config.updated` | `CollectionAreaContentConfigUpdatedEvent` | SetAreaContentConfig (existing config) |
 | `collection.area-content-config.deleted` | `CollectionAreaContentConfigDeletedEvent` | DeleteAreaContentConfig |
@@ -126,6 +126,7 @@ Note: `collection.entry-template.deleted` is published by `CleanDeprecatedEntryT
 | `IGameServiceClient` | Game service existence validation |
 | `IResourceClient` | Character reference tracking and cleanup callback registration |
 | `IEntitySessionRegistry` | Client event push to owner WebSocket sessions |
+| `CollectionInstanceEventBatcher` | Singleton batcher for collection instance lifecycle events (created/destroyed) |
 
 #### Collection-Injected Providers
 
@@ -151,11 +152,11 @@ Note: `collection.entry-template.deleted` is published by `CleanDeprecatedEntryT
 | UpdateEntryTemplate | POST /collection/entry-template/update | generated | developer | template (id + code keys) | entry-template.updated |
 | DeprecateEntryTemplate | POST /collection/entry-template/deprecate | generated | developer | template (id + code keys) | entry-template.updated |
 | SeedEntryTemplates | POST /collection/entry-template/seed | generated | developer | template (id + code keys) | entry-template.created |
-| CreateCollection | POST /collection/create | generated | developer | collection (id + owner keys), container | created |
+| CreateCollection | POST /collection/create | generated | developer | collection (id + owner keys), container | batch-created (via batcher) |
 | GetCollection | POST /collection/get | generated | user | cache (rebuild on miss) | - |
 | ListCollections | POST /collection/list | generated | user | - | - |
-| DeleteCollection | POST /collection/delete | generated | developer | collection (id + owner keys), cache, container, reverse-index | deleted |
-| GrantEntry | POST /collection/grant | generated | user | collection (auto-create), cache, item, global-unlocks set, reverse-index | entry-unlocked, entry-grant-failed, milestone-reached, created |
+| DeleteCollection | POST /collection/delete | generated | developer | collection (id + owner keys), cache, container, reverse-index | batch-destroyed (via batcher) |
+| GrantEntry | POST /collection/grant | generated | user | collection (auto-create), cache, item, global-unlocks set, reverse-index | entry-unlocked, entry-grant-failed, milestone-reached, batch-created (via batcher) |
 | HasEntry | POST /collection/has | generated | user | cache (rebuild on miss) | - |
 | QueryEntries | POST /collection/query | generated | user | cache (rebuild on miss) | - |
 | UpdateEntryMetadata | POST /collection/update-metadata | generated | user | cache | - |
@@ -166,7 +167,7 @@ Note: `collection.entry-template.deleted` is published by `CleanDeprecatedEntryT
 | ListAreaContentConfigs | POST /collection/content/area-config/list | generated | developer | - | - |
 | DeleteAreaContentConfig | POST /collection/content/area-config/delete | generated | developer | area-config (id + code keys) | area-content-config.deleted |
 | AdvanceDiscovery | POST /collection/discovery/advance | generated | user | cache | discovery-advanced |
-| CleanupByCharacter | POST /collection/cleanup-by-character | generated | [] | collection (id + owner keys), cache, container, reverse-index | deleted |
+| CleanupByCharacter | POST /collection/cleanup-by-character | generated | [] | collection (id + owner keys), cache, container, reverse-index | batch-destroyed (via batcher) |
 | CleanDeprecatedEntryTemplates | POST /collection/entry-template/clean-deprecated | generated | admin | template (id + code keys), reverse-index | entry-template.deleted |
 
 ---
@@ -287,7 +288,7 @@ IF count >= config.MaxCollectionsPerOwner -> 409
  WRITE CollectionStore:"col:{ownerId}:{ownerType}:{gameServiceId}:{collectionType}" <- same model
  IF ownerType == Character
  CALL _resourceClient.RegisterReferenceAsync(...)
- PUBLISH collection.created { collectionId, ownerId, ownerType, collectionType, gameServiceId, containerId }
+ BATCHER-ADD _instanceEventBatcher.AddCreated(CollectionBatchEntry { collectionId, ownerId, ownerType, collectionType, gameServiceId, containerId })
 RETURN (200, CollectionResponse { entryCount: 0 })
 ```
 
@@ -338,7 +339,7 @@ LOCK CollectionLock:"col:{body.CollectionId}" -> 409 if fails
  DELETE CollectionStore:"col:{ownerId}:{ownerType}:{gameServiceId}:{collectionType}"
  IF ownerType == Character
    CALL _resourceClient.UnregisterReferenceAsync(...)
- PUBLISH collection.deleted { collectionId, ownerId, ownerType, collectionType, gameServiceId, containerId }
+ BATCHER-ADD _instanceEventBatcher.AddDestroyed(CollectionBatchDestroyedEntry { collectionId, ownerId, ownerType, collectionType, gameServiceId, containerId, deletedReason })
  RETURN (200, CollectionResponse { entryCount: 0 })
 ```
 
@@ -600,7 +601,7 @@ FOREACH collection in results
  DELETE CollectionCache:"cache:{collection.CollectionId}"
  DELETE CollectionStore:"col:{collection.CollectionId}"
  DELETE CollectionStore:"col:{ownerId}:{ownerType}:{gameServiceId}:{collectionType}"
- PUBLISH collection.deleted { collectionId, ..., deletedReason: "Owner Character deleted" }
+ BATCHER-ADD _instanceEventBatcher.AddDestroyed(CollectionBatchDestroyedEntry { collectionId, ..., deletedReason: "Owner Character deleted" })
 // Does NOT call UnregisterCharacterReferenceAsync (lib-resource already knows character is gone)
 RETURN (200, CleanupByCharacterResponse { deletedCount })
 ```
@@ -609,7 +610,27 @@ RETURN (200, CleanupByCharacterResponse { deletedCount })
 
 ## Background Services
 
-No background services.
+### CollectionInstanceEventBatcher (via EventBatcherWorker)
+
+Manages batch event publishing for collection instance lifecycle events. Two Mode 1 (accumulating) batchers: created and destroyed. Collections are immutable after creation (no modified batcher needed). A single `EventBatcherWorker` flushes both batchers per cycle.
+
+```
+EVERY config.InstanceEventBatchIntervalSeconds:
+  FOREACH batcher in [created, destroyed]:
+    IF batcher.IsEmpty -> skip
+    ATOMIC-SWAP entries from batcher
+    SORT entries by CreatedAt (chronological)
+    PUBLISH CollectionBatchCreatedEvent/CollectionBatchDestroyedEvent { entries, count, windowStartedAt }
+ON SHUTDOWN:
+  BEST-EFFORT final flush of all batchers
+```
+
+**Configuration**:
+- `InstanceEventBatchIntervalSeconds` (default 5) — flush cycle interval
+- `InstanceEventBatchStartupDelaySeconds` (default 10) — delay before first cycle
+- `InstanceEventBatchMaxSize` (default 500) — max entries per batch event
+
+**Registration**: Singleton `CollectionInstanceEventBatcher` + Singleton `IHostedService` `EventBatcherWorker` registered in `CollectionServicePlugin.ConfigureServices`.
 
 ---
 
@@ -629,7 +650,7 @@ FOREACH collection in results
  DELETE CollectionCache:"cache:{collection.CollectionId}"
  DELETE CollectionStore:"col:{collection.CollectionId}"
  DELETE CollectionStore:"col:{ownerId}:{ownerType}:{gameServiceId}:{collectionType}"
- PUBLISH collection.deleted { collectionId, ..., deletedReason: "Owner Account deleted" }
+ BATCHER-ADD _instanceEventBatcher.AddDestroyed(CollectionBatchDestroyedEntry { collectionId, ..., deletedReason: "Owner Account deleted" })
 ```
 
 Account cleanup uses event subscription (Account Deletion Cleanup Obligation). Character cleanup uses lib-resource cascade callback.

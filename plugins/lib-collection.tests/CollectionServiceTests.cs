@@ -196,7 +196,10 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         _mockResourceClient.Object,
         _mockTelemetryProvider.Object,
         _mockEntitySessionRegistry.Object,
-        Enumerable.Empty<ICollectionUnlockListener>());
+        Enumerable.Empty<ICollectionUnlockListener>(),
+        new CollectionInstanceEventBatcher(
+            Mock.Of<IServiceProvider>(),
+            Mock.Of<ILogger<CollectionInstanceEventBatcher>>()));
 
     private static EntryTemplateModel CreateTestTemplate(
         Guid? entryTemplateId = null,
@@ -843,9 +846,11 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CollectionInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
             Times.Exactly(2));
 
+        // collection.created is now a batch event — individual publish calls are replaced by batcher.AddCreated
+        // The batcher is tested via its flush mechanism; here we verify no inline publish happened
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync("collection.created", It.IsAny<CollectionCreatedEvent>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+            m => m.TryPublishAsync("collection.created", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
@@ -1036,9 +1041,10 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             s => s.DeleteAsync($"col:{TestOwnerId}:character:{TestGameServiceId}:{"bestiary"}", It.IsAny<CancellationToken>()),
             Times.Once);
 
+        // collection.deleted is now a batch event — individual publish calls are replaced by batcher.AddDestroyed
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync("collection.deleted", It.IsAny<CollectionDeletedEvent>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+            m => m.TryPublishAsync("collection.deleted", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
@@ -1367,9 +1373,11 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             Times.Once);
 
         // Verify collection.created event published (from auto-create)
+        // collection.created is now a batch event — individual publish calls are replaced by batcher.AddCreated
+        // The batcher is tested via its flush mechanism; here we verify no inline publish happened
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync("collection.created", It.IsAny<CollectionCreatedEvent>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+            m => m.TryPublishAsync("collection.created", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
@@ -2834,7 +2842,10 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             _mockResourceClient.Object,
             _mockTelemetryProvider.Object,
             _mockEntitySessionRegistry.Object,
-            new[] { listener1.Object, listener2.Object });
+            new[] { listener1.Object, listener2.Object },
+            new CollectionInstanceEventBatcher(
+                Mock.Of<IServiceProvider>(),
+                Mock.Of<ILogger<CollectionInstanceEventBatcher>>()));
 
         // Act
         var (status, _) = await service.GrantEntryAsync(
@@ -2891,7 +2902,10 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             _mockResourceClient.Object,
             _mockTelemetryProvider.Object,
             _mockEntitySessionRegistry.Object,
-            new[] { failingListener.Object, successListener.Object });
+            new[] { failingListener.Object, successListener.Object },
+            new CollectionInstanceEventBatcher(
+                Mock.Of<IServiceProvider>(),
+                Mock.Of<ILogger<CollectionInstanceEventBatcher>>()));
 
         // Act
         var (status, response) = await service.GrantEntryAsync(

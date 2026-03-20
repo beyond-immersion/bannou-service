@@ -141,6 +141,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ANALYTICS_GLICKO2_SYSTEM_CONSTANT` | double | `0.5` | Glicko-2 system constant (tau) - controls volatility change ... |
 | `ANALYTICS_GLICKO2_VOLATILITY_CONVERGENCE_TOLERANCE` | double | `1e-06` | Convergence tolerance for Glicko-2 volatility iteration (sma... |
 | `ANALYTICS_MILESTONE_THRESHOLDS` | string[] | `[10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000]` | Score thresholds that trigger milestone events (comma-separa... |
+| `ANALYTICS_RATING_INDEX_MAX_RETRIES` | int | `3` | Maximum optimistic concurrency retry attempts for rating rev... |
 | `ANALYTICS_RATING_UPDATE_LOCK_EXPIRY_SECONDS` | int | `30` | Lock expiry time in seconds for skill rating update operatio... |
 | `ANALYTICS_RESOLUTION_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for resolution caches (game service, realm, c... |
 | `ANALYTICS_SESSION_MAPPING_TTL_SECONDS` | int | `3600` | TTL in seconds for game session mappings (should exceed typi... |
@@ -400,6 +401,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CHARACTER_ENCOUNTER_ALLY_SENTIMENT_THRESHOLD` | double | `0.5` | Sentiment threshold above which characters are considered al... |
 | `CHARACTER_ENCOUNTER_CACHE_MAX_RESULTS_PER_QUERY` | int | `50` | Maximum encounter results loaded per cache query for Actor b... |
 | `CHARACTER_ENCOUNTER_CACHE_TTL_MINUTES` | int | `5` | TTL in minutes for the in-memory encounter data cache used b... |
+| `CHARACTER_ENCOUNTER_DECAY_TIME_SOURCE` | string | `GameTime` | Whether memory decay elapsed time uses real-world time or ga... |
 | `CHARACTER_ENCOUNTER_DEFAULT_MEMORY_STRENGTH` | double | `1.0` | Default initial memory strength for new perspectives (0.0-1.... |
 | `CHARACTER_ENCOUNTER_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for query results |
 | `CHARACTER_ENCOUNTER_DUPLICATE_TIMESTAMP_TOLERANCE_MINUTES` | int | `5` | Time window in minutes for duplicate encounter detection. En... |
@@ -523,6 +525,9 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `COLLECTION_CACHE_TTL_SECONDS` | int | `300` | Redis TTL for collection state cache in seconds |
 | `COLLECTION_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for paginated queries |
+| `COLLECTION_INSTANCE_EVENT_BATCH_INTERVAL_SECONDS` | int | `5` | Interval in seconds between collection instance lifecycle ba... |
+| `COLLECTION_INSTANCE_EVENT_BATCH_MAX_SIZE` | int | `500` | Maximum entries per batch event before forced flush |
+| `COLLECTION_INSTANCE_EVENT_BATCH_STARTUP_DELAY_SECONDS` | int | `10` | Startup delay before collection instance lifecycle batch eve... |
 | `COLLECTION_LOCK_TIMEOUT_SECONDS` | int | `30` | Distributed lock TTL for collection mutations in seconds |
 | `COLLECTION_MAX_COLLECTIONS_PER_OWNER` | int | `20` | Maximum number of collections a single owner entity can have |
 | `COLLECTION_MAX_CONCURRENCY_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency conflicts |
@@ -609,6 +614,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CURRENCY_AUTOGAIN_PROCESSING_MODE` | string | `lazy` | How autogain is calculated (lazy = on-demand at query time, ... |
 | `CURRENCY_AUTOGAIN_TASK_INTERVAL_SECONDS` | int | `60` | For task mode - how often to process autogain in seconds |
 | `CURRENCY_AUTOGAIN_TASK_STARTUP_DELAY_SECONDS` | int | `15` | Delay in seconds before first autogain task cycle (allows se... |
+| `CURRENCY_AUTOGAIN_TIME_SOURCE` | string | `GameTime` | Whether autogain elapsed time uses real-world time or game-w... |
 | `CURRENCY_BALANCE_CACHE_TTL_SECONDS` | int | `60` | TTL in seconds for balance cache entries |
 | `CURRENCY_BALANCE_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for balance-level distributed locks |
 | `CURRENCY_CONVERSION_ROUNDING_PRECISION` | int | `8` | Number of decimal places for currency conversion rounding |
@@ -839,6 +845,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `GENESIS_ENTITY_LOCK_TIMEOUT_SECONDS` | int | `30` | Maximum time in seconds to wait for entity mutation distribu... |
 | `GENESIS_GROWTH_FLUSH_INTERVAL_SECONDS` | int | `5` | Interval in seconds between growth accumulator flush cycles |
 | `GENESIS_INCLUDE_BALANCES_DEFAULT` | bool | `false` | Default value for includeBalances when not specified by call... |
+| `GENESIS_LIST_OPERATION_MAX_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency on string ... |
 | `GENESIS_STARTUP_DELAY_SECONDS` | int | `5` | Delay in seconds before background services start processing... |
 | `GENESIS_TRANSITION_LOCK_TIMEOUT_SECONDS` | int | `30` | Maximum time in seconds to wait for phase transition distrib... |
 
@@ -1327,10 +1334,12 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `SEED_AUTO_ASSOCIATE_REALM` | bool | `true` | Whether to auto-resolve realmId from owner type on seed crea... |
 | `SEED_BOND_SHARED_GROWTH_MULTIPLIER` | double | `1.5` | Growth multiplier applied when bonded seeds grow together in... |
 | `SEED_BOND_STRENGTH_GROWTH_RATE` | double | `0.1` | Rate at which bond strength increases per unit of shared gro... |
 | `SEED_CAPABILITY_RECOMPUTE_DEBOUNCE_MS` | int | `5000` | Debounce interval in milliseconds before recomputing capabil... |
 | `SEED_CROSS_POLLINATION_LOCK_TIMEOUT_SECONDS` | int | `3` | Timeout in seconds for cross-pollination try-lock on sibling... |
+| `SEED_DECAY_TIME_SOURCE` | string | `GameTime` | Whether decay elapsed time uses real-world time or game-worl... |
 | `SEED_DECAY_WORKER_INTERVAL_SECONDS` | int | `900` | Interval in seconds between growth decay worker cycles (defa... |
 | `SEED_DECAY_WORKER_STARTUP_DELAY_SECONDS` | int | `30` | Delay in seconds before the decay worker starts its first cy... |
 | `SEED_DEFAULT_MAX_SEEDS_PER_OWNER` | int | `3` | Default maximum seeds of any single type per owner when not ... |
@@ -1506,9 +1515,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 1187
+- **Total properties**: 1196
 - **Required (no default)**: 67
-- **Optional (has default)**: 1120
+- **Optional (has default)**: 1129
 
 ## Environment Variable Naming Convention
 

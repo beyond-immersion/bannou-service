@@ -1803,8 +1803,8 @@ paths:
       description: |
         Called by lib-resource cleanup coordination when a character is deleted.
         Removes all collections owned by the specified characterId, including
-        their inventory containers, cache entries, and publishes collection.deleted
-        lifecycle events.
+        their inventory containers, cache entries, and batches collection destroyed
+        lifecycle events via the instance event batcher.
         This endpoint is designed for internal service-to-service calls during
         cascading resource cleanup.
       x-permissions: []
@@ -1837,10 +1837,10 @@ paths:
         }"
       x-endpoint-info-json: "{\n    \"summary\": \"Cleanup all collections for a deleted character\",\n    \"description\"\
         : \"Called by lib-resource cleanup coordination when a character is deleted.\\nRemoves all collections owned by the
-        specified characterId, including\\ntheir inventory containers, cache entries, and publishes collection.deleted\\nlifecycle
-        events.\\nThis endpoint is designed for internal service-to-service calls during\\ncascading resource cleanup.\\n\"\
-        ,\n    \"tags\": [\n        \"Resource Cleanup\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"cleanupByCharacter\"\
-        \n}"
+        specified characterId, including\\ntheir inventory containers, cache entries, and batches collection destroyed\\nlifecycle
+        events via the instance event batcher.\\nThis endpoint is designed for internal service-to-service calls during\\\
+        ncascading resource cleanup.\\n\",\n    \"tags\": [\n        \"Resource Cleanup\"\n    ],\n    \"deprecated\": false,\n\
+        \    \"operationId\": \"cleanupByCharacter\"\n}"
 components:
   schemas:
     CollectionType:

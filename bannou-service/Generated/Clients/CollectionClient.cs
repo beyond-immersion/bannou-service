@@ -329,8 +329,8 @@ public partial interface ICollectionClient
     /// <remarks>
     /// Called by lib-resource cleanup coordination when a character is deleted.
     /// <br/>Removes all collections owned by the specified characterId, including
-    /// <br/>their inventory containers, cache entries, and publishes collection.deleted
-    /// <br/>lifecycle events.
+    /// <br/>their inventory containers, cache entries, and batches collection destroyed
+    /// <br/>lifecycle events via the instance event batcher.
     /// <br/>This endpoint is designed for internal service-to-service calls during
     /// <br/>cascading resource cleanup.
     /// </remarks>
@@ -2648,8 +2648,8 @@ public partial class CollectionClient : ICollectionClient, BeyondImmersion.Banno
     /// <remarks>
     /// Called by lib-resource cleanup coordination when a character is deleted.
     /// <br/>Removes all collections owned by the specified characterId, including
-    /// <br/>their inventory containers, cache entries, and publishes collection.deleted
-    /// <br/>lifecycle events.
+    /// <br/>their inventory containers, cache entries, and batches collection destroyed
+    /// <br/>lifecycle events via the instance event batcher.
     /// <br/>This endpoint is designed for internal service-to-service calls during
     /// <br/>cascading resource cleanup.
     /// </remarks>
@@ -2865,7 +2865,7 @@ public partial class CollectionClient : ICollectionClient, BeyondImmersion.Banno
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -2877,7 +2877,7 @@ public partial class CollectionClient : ICollectionClient, BeyondImmersion.Banno
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool) 
+        else if (value is bool)
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }

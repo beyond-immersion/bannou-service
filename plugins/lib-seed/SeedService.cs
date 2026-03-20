@@ -1,13 +1,13 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Worldstate;
 using Microsoft.Extensions.DependencyInjection;

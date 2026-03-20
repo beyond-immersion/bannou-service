@@ -109,48 +109,52 @@ paths:
         between autogain applications (e.g. PT5M, PT1H)\"\n                },\n                \"autogainCap\": {\n      \
         \              \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Stop autogain when balance reaches this amount (null for no cap)\"\
-        \n                },\n                \"expires\": {\n                    \"type\": \"boolean\",\n               \
-        \     \"default\": false,\n                    \"description\": \"Whether this currency can expire\"\n           \
-        \     },\n                \"expirationPolicy\": {\n                    \"$ref\": \"#/$defs/ExpirationPolicy\",\n \
-        \                   \"nullable\": true,\n                    \"description\": \"How expiration is determined\"\n \
-        \               },\n                \"expirationDate\": {\n                    \"type\": \"string\",\n           \
-        \         \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Fixed expiration date (for fixed_date policy)\"\n                },\n                \"expirationDuration\": {\n\
-        \                    \"type\": \"string\",\n                    \"maxLength\": 50,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Duration until expiration after earning (for duration_from_earn policy)\"\
-        \n                },\n                \"seasonId\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Season
-        ID for end_of_season expiration policy\"\n                },\n                \"linkedToItem\": {\n              \
-        \      \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether
-        this currency is linked to an item template for cross-entity reference. When true, linkedItemTemplateId must be set
-        and is validated against lib-item at creation time. Display semantics (icon, rendering mode) are game-specific and
-        belong in client metadata.\"\n                },\n                \"linkedItemTemplateId\": {\n                  \
-        \  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n   \
-        \                 \"description\": \"Item template ID this currency is linked to. Validated at creation time. Null
-        when linkedToItem is false.\"\n                },\n                \"isBaseCurrency\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether this is the
-        base currency for its scope\"\n                },\n                \"exchangeRateToBase\": {\n                   \
-        \ \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n  \
-        \                  \"description\": \"Exchange rate relative to base currency (null for base itself)\"\n         \
-        \       },\n                \"iconAssetId\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Asset ID for
-        currency icon\"\n                },\n                \"displayFormat\": {\n                    \"type\": \"string\"\
-        ,\n                    \"maxLength\": 200,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Format string for display (e.g. '{amount} gold', '${amount}')\"\n                }\n            }\n        },\n\
-        \        \"CurrencyScope\": {\n            \"type\": \"string\",\n            \"description\": \"Scope of currency
-        availability across realms\",\n            \"enum\": [\n                \"Global\",\n                \"RealmSpecific\"\
-        ,\n                \"MultiRealm\"\n            ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"How the currency handles decimal values (immutable after creation)\"\
-        ,\n            \"enum\": [\n                \"Integer\",\n                \"Decimal2\",\n                \"Decimal4\"\
-        ,\n                \"Decimal8\",\n                \"DecimalFull\",\n                \"BigInteger\"\n            ]\n\
-        \        },\n        \"CapOverflowBehavior\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        What happens when a credit would exceed the wallet cap\",\n            \"enum\": [\n                \"Reject\",\n\
-        \                \"CapAndLose\",\n                \"CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"How autogain (energy/interest) is calculated\"\
-        ,\n            \"enum\": [\n                \"Simple\",\n                \"Compound\"\n            ]\n        },\n\
-        \        \"ExpirationPolicy\": {\n            \"type\": \"string\",\n            \"description\": \"How currency expiration
-        is determined\",\n            \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n\
-        \                \"EndOfSeason\"\n            ]\n        }\n    }\n}"
+        \n                },\n                \"autogainUseGameTime\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Per-definition override for autogain
+        time source. True = game-time, false = real-time, null = use global AutogainTimeSource config. Allows fine-grained
+        control (e.g., premium currencies use real-time).\"\n                },\n                \"expires\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
+        : \"Whether this currency can expire\"\n                },\n                \"expirationPolicy\": {\n            \
+        \        \"$ref\": \"#/$defs/ExpirationPolicy\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"How expiration is determined\"\n                },\n                \"expirationDate\": {\n     \
+        \               \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Fixed expiration date (for fixed_date policy)\"\n                },\n\
+        \                \"expirationDuration\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
+        : 50,\n                    \"nullable\": true,\n                    \"description\": \"Duration until expiration after
+        earning (for duration_from_earn policy)\"\n                },\n                \"seasonId\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n  \
+        \                  \"description\": \"Season ID for end_of_season expiration policy\"\n                },\n      \
+        \          \"linkedToItem\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
+        \                    \"description\": \"Whether this currency is linked to an item template for cross-entity reference.
+        When true, linkedItemTemplateId must be set and is validated against lib-item at creation time. Display semantics
+        (icon, rendering mode) are game-specific and belong in client metadata.\"\n                },\n                \"\
+        linkedItemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Item template ID this currency is
+        linked to. Validated at creation time. Null when linkedToItem is false.\"\n                },\n                \"\
+        isBaseCurrency\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n       \
+        \             \"description\": \"Whether this is the base currency for its scope\"\n                },\n         \
+        \       \"exchangeRateToBase\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Exchange rate relative to base
+        currency (null for base itself)\"\n                },\n                \"iconAssetId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n        \
+        \            \"description\": \"Asset ID for currency icon\"\n                },\n                \"displayFormat\"\
+        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 200,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Format string for display (e.g. '{amount} gold', '${amount}')\"\n\
+        \                }\n            }\n        },\n        \"CurrencyScope\": {\n            \"type\": \"string\",\n \
+        \           \"description\": \"Scope of currency availability across realms\",\n            \"enum\": [\n        \
+        \        \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\n            ]\n        },\n\
+        \        \"CurrencyPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"How the currency
+        handles decimal values (immutable after creation)\",\n            \"enum\": [\n                \"Integer\",\n    \
+        \            \"Decimal2\",\n                \"Decimal4\",\n                \"Decimal8\",\n                \"DecimalFull\"\
+        ,\n                \"BigInteger\"\n            ]\n        },\n        \"CapOverflowBehavior\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"What happens when a credit would exceed the wallet cap\",\n        \
+        \    \"enum\": [\n                \"Reject\",\n                \"CapAndLose\",\n                \"CapAndReturn\"\n\
+        \            ]\n        },\n        \"AutogainMode\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How autogain (energy/interest) is calculated\",\n            \"enum\": [\n                \"Simple\",\n      \
+        \          \"Compound\"\n            ]\n        },\n        \"ExpirationPolicy\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"How currency expiration is determined\",\n            \"enum\": [\n            \
+        \    \"FixedDate\",\n                \"DurationFromEarn\",\n                \"EndOfSeason\"\n            ]\n     \
+        \   }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CurrencyDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"CurrencyDefinitionResponse\": {\n            \"allOf\": [\n                {\n    \
         \                \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n    \
@@ -199,21 +203,24 @@ paths:
         : true,\n                    \"description\": \"Autogain interval duration\"\n                },\n               \
         \ \"autogainCap\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n   \
         \                 \"nullable\": true,\n                    \"description\": \"Autogain balance cap\"\n           \
-        \     },\n                \"expires\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether currency can expire\"\n                },\n                \"expirationPolicy\": {\n                 \
-        \   \"$ref\": \"#/$defs/ExpirationPolicy\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Expiration policy\"\n                },\n                \"expirationDate\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n           \
-        \         \"description\": \"Fixed expiration date\"\n                },\n                \"expirationDuration\":
-        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Expiration duration\"\n                },\n                \"seasonId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Season ID for expiration\"\n                },\n                \"linkedToItem\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether linked to an item template\"\n                },\n\
-        \                \"linkedItemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Linked item template
-        ID\"\n                },\n                \"isBaseCurrency\": {\n                    \"type\": \"boolean\",\n    \
-        \                \"description\": \"Whether this is the base currency\"\n                },\n                \"exchangeRateToBase\"\
+        \     },\n                \"autogainUseGameTime\": {\n                    \"type\": \"boolean\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Per-definition override for autogain time source.
+        True = game-time, false = real-time, null = use global config.\"\n                },\n                \"expires\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether currency can expire\"\
+        \n                },\n                \"expirationPolicy\": {\n                    \"$ref\": \"#/$defs/ExpirationPolicy\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Expiration policy\"\n         \
+        \       },\n                \"expirationDate\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Fixed
+        expiration date\"\n                },\n                \"expirationDuration\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Expiration duration\"\n\
+        \                },\n                \"seasonId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Season
+        ID for expiration\"\n                },\n                \"linkedToItem\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether linked to an item template\"\n                },\n             \
+        \   \"linkedItemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Linked item template ID\"\n   \
+        \             },\n                \"isBaseCurrency\": {\n                    \"type\": \"boolean\",\n            \
+        \        \"description\": \"Whether this is the base currency\"\n                },\n                \"exchangeRateToBase\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
         nullable\": true,\n                    \"description\": \"Exchange rate to base currency\"\n                },\n \
         \               \"exchangeRateUpdatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
@@ -330,21 +337,24 @@ paths:
         : true,\n                    \"description\": \"Autogain interval duration\"\n                },\n               \
         \ \"autogainCap\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n   \
         \                 \"nullable\": true,\n                    \"description\": \"Autogain balance cap\"\n           \
-        \     },\n                \"expires\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether currency can expire\"\n                },\n                \"expirationPolicy\": {\n                 \
-        \   \"$ref\": \"#/$defs/ExpirationPolicy\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Expiration policy\"\n                },\n                \"expirationDate\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n           \
-        \         \"description\": \"Fixed expiration date\"\n                },\n                \"expirationDuration\":
-        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Expiration duration\"\n                },\n                \"seasonId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Season ID for expiration\"\n                },\n                \"linkedToItem\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether linked to an item template\"\n                },\n\
-        \                \"linkedItemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Linked item template
-        ID\"\n                },\n                \"isBaseCurrency\": {\n                    \"type\": \"boolean\",\n    \
-        \                \"description\": \"Whether this is the base currency\"\n                },\n                \"exchangeRateToBase\"\
+        \     },\n                \"autogainUseGameTime\": {\n                    \"type\": \"boolean\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Per-definition override for autogain time source.
+        True = game-time, false = real-time, null = use global config.\"\n                },\n                \"expires\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether currency can expire\"\
+        \n                },\n                \"expirationPolicy\": {\n                    \"$ref\": \"#/$defs/ExpirationPolicy\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Expiration policy\"\n         \
+        \       },\n                \"expirationDate\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Fixed
+        expiration date\"\n                },\n                \"expirationDuration\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Expiration duration\"\n\
+        \                },\n                \"seasonId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Season
+        ID for expiration\"\n                },\n                \"linkedToItem\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether linked to an item template\"\n                },\n             \
+        \   \"linkedItemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Linked item template ID\"\n   \
+        \             },\n                \"isBaseCurrency\": {\n                    \"type\": \"boolean\",\n            \
+        \        \"description\": \"Whether this is the base currency\"\n                },\n                \"exchangeRateToBase\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
         nullable\": true,\n                    \"description\": \"Exchange rate to base currency\"\n                },\n \
         \               \"exchangeRateUpdatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
@@ -470,50 +480,52 @@ paths:
         type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Autogain interval
         duration\"\n                },\n                \"autogainCap\": {\n                    \"type\": \"number\",\n  \
         \                  \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Autogain balance cap\"\n                },\n                \"expires\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether currency can expire\"\n                },\n                \"expirationPolicy\"\
-        : {\n                    \"$ref\": \"#/$defs/ExpirationPolicy\",\n                    \"nullable\": true,\n      \
-        \              \"description\": \"Expiration policy\"\n                },\n                \"expirationDate\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Fixed expiration date\"\n                },\n          \
-        \      \"expirationDuration\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Expiration duration\"\n                },\n                \"seasonId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Season ID for expiration\"\n                },\n                \"\
-        linkedToItem\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether linked
-        to an item template\"\n                },\n                \"linkedItemTemplateId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Linked item template ID\"\n                },\n                \"isBaseCurrency\": {\n \
-        \                   \"type\": \"boolean\",\n                    \"description\": \"Whether this is the base currency\"\
-        \n                },\n                \"exchangeRateToBase\": {\n                    \"type\": \"number\",\n     \
-        \               \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Exchange rate to base currency\"\n                },\n                \"exchangeRateUpdatedAt\": {\n         \
-        \           \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"When exchange rate was last updated\"\n                },\n      \
-        \          \"iconAssetId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Icon asset ID\"\n             \
-        \   },\n                \"displayFormat\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Display format string\"\n                },\n                \"isActive\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether definition is active\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
-        \                \"modifiedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification timestamp\"\
-        \n                }\n            }\n        },\n        \"CurrencyScope\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Scope of currency availability across realms\",\n            \"enum\": [\n       \
-        \         \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\n            ]\n       \
-        \ },\n        \"CurrencyPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"How the
-        currency handles decimal values (immutable after creation)\",\n            \"enum\": [\n                \"Integer\"\
-        ,\n                \"Decimal2\",\n                \"Decimal4\",\n                \"Decimal8\",\n                \"\
-        DecimalFull\",\n                \"BigInteger\"\n            ]\n        },\n        \"CapOverflowBehavior\": {\n  \
-        \          \"type\": \"string\",\n            \"description\": \"What happens when a credit would exceed the wallet
-        cap\",\n            \"enum\": [\n                \"Reject\",\n                \"CapAndLose\",\n                \"\
-        CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\": {\n            \"type\": \"string\",\n      \
-        \      \"description\": \"How autogain (energy/interest) is calculated\",\n            \"enum\": [\n             \
-        \   \"Simple\",\n                \"Compound\"\n            ]\n        },\n        \"ExpirationPolicy\": {\n      \
-        \      \"type\": \"string\",\n            \"description\": \"How currency expiration is determined\",\n          \
-        \  \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n                \"EndOfSeason\"\
-        \n            ]\n        }\n    }\n}"
+        : \"Autogain balance cap\"\n                },\n                \"autogainUseGameTime\": {\n                    \"\
+        type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"Per-definition
+        override for autogain time source. True = game-time, false = real-time, null = use global config.\"\n            \
+        \    },\n                \"expires\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether currency can expire\"\n                },\n                \"expirationPolicy\": {\n                 \
+        \   \"$ref\": \"#/$defs/ExpirationPolicy\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Expiration policy\"\n                },\n                \"expirationDate\": {\n                    \"type\":
+        \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Fixed expiration date\"\n                },\n                \"expirationDuration\":
+        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Expiration duration\"\n                },\n                \"seasonId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Season ID for expiration\"\n                },\n                \"linkedToItem\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"Whether linked to an item template\"\n                },\n\
+        \                \"linkedItemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Linked item template
+        ID\"\n                },\n                \"isBaseCurrency\": {\n                    \"type\": \"boolean\",\n    \
+        \                \"description\": \"Whether this is the base currency\"\n                },\n                \"exchangeRateToBase\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Exchange rate to base currency\"\n                },\n \
+        \               \"exchangeRateUpdatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When exchange rate
+        was last updated\"\n                },\n                \"iconAssetId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Icon asset ID\"\n                },\n                \"displayFormat\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Display format string\"\n     \
+        \           },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
+        description\": \"Whether definition is active\"\n                },\n                \"createdAt\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Creation timestamp\"\n                },\n                \"modifiedAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Last modification timestamp\"\n                }\n            }\n        },\n        \"\
+        CurrencyScope\": {\n            \"type\": \"string\",\n            \"description\": \"Scope of currency availability
+        across realms\",\n            \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n     \
+        \           \"MultiRealm\"\n            ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"How the currency handles decimal values (immutable after creation)\",\n\
+        \            \"enum\": [\n                \"Integer\",\n                \"Decimal2\",\n                \"Decimal4\"\
+        ,\n                \"Decimal8\",\n                \"DecimalFull\",\n                \"BigInteger\"\n            ]\n\
+        \        },\n        \"CapOverflowBehavior\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        What happens when a credit would exceed the wallet cap\",\n            \"enum\": [\n                \"Reject\",\n\
+        \                \"CapAndLose\",\n                \"CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How autogain (energy/interest) is calculated\"\
+        ,\n            \"enum\": [\n                \"Simple\",\n                \"Compound\"\n            ]\n        },\n\
+        \        \"ExpirationPolicy\": {\n            \"type\": \"string\",\n            \"description\": \"How currency expiration
+        is determined\",\n            \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n\
+        \                \"EndOfSeason\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List currency definitions with filters\",\n    \"description\": \"Lists
         currency definitions with optional filtering by realm, scope,\\nactive status, and base currency flag.\\n\",\n   \
         \ \"tags\": [\n        \"Currency Definition\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listCurrencyDefinitions\"\
@@ -582,21 +594,23 @@ paths:
         \            \"maxLength\": 50,\n                    \"nullable\": true,\n                    \"description\": \"\
         New autogain interval\"\n                },\n                \"autogainCap\": {\n                    \"type\": \"\
         number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n                \
-        \    \"description\": \"New autogain cap\"\n                },\n                \"exchangeRateToBase\": {\n      \
-        \              \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"New exchange rate to base\"\n                },\n                \"\
-        iconAssetId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n         \
-        \           \"nullable\": true,\n                    \"description\": \"New icon asset ID\"\n                },\n\
-        \                \"displayFormat\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
-        : 200,\n                    \"nullable\": true,\n                    \"description\": \"New display format\"\n   \
-        \             },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                  \
-        \  \"nullable\": true,\n                    \"description\": \"Active status\"\n                }\n            }\n\
-        \        },\n        \"CapOverflowBehavior\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        What happens when a credit would exceed the wallet cap\",\n            \"enum\": [\n                \"Reject\",\n\
-        \                \"CapAndLose\",\n                \"CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"How autogain (energy/interest) is calculated\"\
-        ,\n            \"enum\": [\n                \"Simple\",\n                \"Compound\"\n            ]\n        }\n\
-        \    }\n}"
+        \    \"description\": \"New autogain cap\"\n                },\n                \"autogainUseGameTime\": {\n     \
+        \               \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Per-definition override for autogain time source. True = game-time, false = real-time, null = use global config.\"\
+        \n                },\n                \"exchangeRateToBase\": {\n                    \"type\": \"number\",\n     \
+        \               \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"New exchange rate to base\"\n                },\n                \"iconAssetId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"New icon asset ID\"\n                },\n                \"displayFormat\": {\n        \
+        \            \"type\": \"string\",\n                    \"maxLength\": 200,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"New display format\"\n                },\n                \"isActive\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Active status\"\n                }\n            }\n        },\n        \"CapOverflowBehavior\": {\n          \
+        \  \"type\": \"string\",\n            \"description\": \"What happens when a credit would exceed the wallet cap\"\
+        ,\n            \"enum\": [\n                \"Reject\",\n                \"CapAndLose\",\n                \"CapAndReturn\"\
+        \n            ]\n        },\n        \"AutogainMode\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How autogain (energy/interest) is calculated\",\n            \"enum\": [\n                \"Simple\",\n      \
+        \          \"Compound\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CurrencyDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"CurrencyDefinitionResponse\": {\n            \"allOf\": [\n                {\n    \
         \                \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n    \
@@ -645,21 +659,24 @@ paths:
         : true,\n                    \"description\": \"Autogain interval duration\"\n                },\n               \
         \ \"autogainCap\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n   \
         \                 \"nullable\": true,\n                    \"description\": \"Autogain balance cap\"\n           \
-        \     },\n                \"expires\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether currency can expire\"\n                },\n                \"expirationPolicy\": {\n                 \
-        \   \"$ref\": \"#/$defs/ExpirationPolicy\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Expiration policy\"\n                },\n                \"expirationDate\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n           \
-        \         \"description\": \"Fixed expiration date\"\n                },\n                \"expirationDuration\":
-        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Expiration duration\"\n                },\n                \"seasonId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Season ID for expiration\"\n                },\n                \"linkedToItem\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether linked to an item template\"\n                },\n\
-        \                \"linkedItemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Linked item template
-        ID\"\n                },\n                \"isBaseCurrency\": {\n                    \"type\": \"boolean\",\n    \
-        \                \"description\": \"Whether this is the base currency\"\n                },\n                \"exchangeRateToBase\"\
+        \     },\n                \"autogainUseGameTime\": {\n                    \"type\": \"boolean\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Per-definition override for autogain time source.
+        True = game-time, false = real-time, null = use global config.\"\n                },\n                \"expires\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether currency can expire\"\
+        \n                },\n                \"expirationPolicy\": {\n                    \"$ref\": \"#/$defs/ExpirationPolicy\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Expiration policy\"\n         \
+        \       },\n                \"expirationDate\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Fixed
+        expiration date\"\n                },\n                \"expirationDuration\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Expiration duration\"\n\
+        \                },\n                \"seasonId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Season
+        ID for expiration\"\n                },\n                \"linkedToItem\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether linked to an item template\"\n                },\n             \
+        \   \"linkedItemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Linked item template ID\"\n   \
+        \             },\n                \"isBaseCurrency\": {\n                    \"type\": \"boolean\",\n            \
+        \        \"description\": \"Whether this is the base currency\"\n                },\n                \"exchangeRateToBase\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
         nullable\": true,\n                    \"description\": \"Exchange rate to base currency\"\n                },\n \
         \               \"exchangeRateUpdatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
@@ -777,21 +794,24 @@ paths:
         : true,\n                    \"description\": \"Autogain interval duration\"\n                },\n               \
         \ \"autogainCap\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n   \
         \                 \"nullable\": true,\n                    \"description\": \"Autogain balance cap\"\n           \
-        \     },\n                \"expires\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether currency can expire\"\n                },\n                \"expirationPolicy\": {\n                 \
-        \   \"$ref\": \"#/$defs/ExpirationPolicy\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Expiration policy\"\n                },\n                \"expirationDate\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n           \
-        \         \"description\": \"Fixed expiration date\"\n                },\n                \"expirationDuration\":
-        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Expiration duration\"\n                },\n                \"seasonId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Season ID for expiration\"\n                },\n                \"linkedToItem\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether linked to an item template\"\n                },\n\
-        \                \"linkedItemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Linked item template
-        ID\"\n                },\n                \"isBaseCurrency\": {\n                    \"type\": \"boolean\",\n    \
-        \                \"description\": \"Whether this is the base currency\"\n                },\n                \"exchangeRateToBase\"\
+        \     },\n                \"autogainUseGameTime\": {\n                    \"type\": \"boolean\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Per-definition override for autogain time source.
+        True = game-time, false = real-time, null = use global config.\"\n                },\n                \"expires\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether currency can expire\"\
+        \n                },\n                \"expirationPolicy\": {\n                    \"$ref\": \"#/$defs/ExpirationPolicy\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Expiration policy\"\n         \
+        \       },\n                \"expirationDate\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Fixed
+        expiration date\"\n                },\n                \"expirationDuration\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Expiration duration\"\n\
+        \                },\n                \"seasonId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Season
+        ID for expiration\"\n                },\n                \"linkedToItem\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether linked to an item template\"\n                },\n             \
+        \   \"linkedItemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Linked item template ID\"\n   \
+        \             },\n                \"isBaseCurrency\": {\n                    \"type\": \"boolean\",\n            \
+        \        \"description\": \"Whether this is the base currency\"\n                },\n                \"exchangeRateToBase\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
         nullable\": true,\n                    \"description\": \"Exchange rate to base currency\"\n                },\n \
         \               \"exchangeRateUpdatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
@@ -2440,50 +2460,52 @@ paths:
         type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Autogain interval
         duration\"\n                },\n                \"autogainCap\": {\n                    \"type\": \"number\",\n  \
         \                  \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Autogain balance cap\"\n                },\n                \"expires\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether currency can expire\"\n                },\n                \"expirationPolicy\"\
-        : {\n                    \"$ref\": \"#/$defs/ExpirationPolicy\",\n                    \"nullable\": true,\n      \
-        \              \"description\": \"Expiration policy\"\n                },\n                \"expirationDate\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Fixed expiration date\"\n                },\n          \
-        \      \"expirationDuration\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Expiration duration\"\n                },\n                \"seasonId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Season ID for expiration\"\n                },\n                \"\
-        linkedToItem\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether linked
-        to an item template\"\n                },\n                \"linkedItemTemplateId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Linked item template ID\"\n                },\n                \"isBaseCurrency\": {\n \
-        \                   \"type\": \"boolean\",\n                    \"description\": \"Whether this is the base currency\"\
-        \n                },\n                \"exchangeRateToBase\": {\n                    \"type\": \"number\",\n     \
-        \               \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Exchange rate to base currency\"\n                },\n                \"exchangeRateUpdatedAt\": {\n         \
-        \           \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"When exchange rate was last updated\"\n                },\n      \
-        \          \"iconAssetId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Icon asset ID\"\n             \
-        \   },\n                \"displayFormat\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Display format string\"\n                },\n                \"isActive\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether definition is active\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
-        \                \"modifiedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification timestamp\"\
-        \n                }\n            }\n        },\n        \"CurrencyScope\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Scope of currency availability across realms\",\n            \"enum\": [\n       \
-        \         \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\n            ]\n       \
-        \ },\n        \"CurrencyPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"How the
-        currency handles decimal values (immutable after creation)\",\n            \"enum\": [\n                \"Integer\"\
-        ,\n                \"Decimal2\",\n                \"Decimal4\",\n                \"Decimal8\",\n                \"\
-        DecimalFull\",\n                \"BigInteger\"\n            ]\n        },\n        \"CapOverflowBehavior\": {\n  \
-        \          \"type\": \"string\",\n            \"description\": \"What happens when a credit would exceed the wallet
-        cap\",\n            \"enum\": [\n                \"Reject\",\n                \"CapAndLose\",\n                \"\
-        CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\": {\n            \"type\": \"string\",\n      \
-        \      \"description\": \"How autogain (energy/interest) is calculated\",\n            \"enum\": [\n             \
-        \   \"Simple\",\n                \"Compound\"\n            ]\n        },\n        \"ExpirationPolicy\": {\n      \
-        \      \"type\": \"string\",\n            \"description\": \"How currency expiration is determined\",\n          \
-        \  \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n                \"EndOfSeason\"\
-        \n            ]\n        }\n    }\n}"
+        : \"Autogain balance cap\"\n                },\n                \"autogainUseGameTime\": {\n                    \"\
+        type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"Per-definition
+        override for autogain time source. True = game-time, false = real-time, null = use global config.\"\n            \
+        \    },\n                \"expires\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether currency can expire\"\n                },\n                \"expirationPolicy\": {\n                 \
+        \   \"$ref\": \"#/$defs/ExpirationPolicy\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Expiration policy\"\n                },\n                \"expirationDate\": {\n                    \"type\":
+        \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Fixed expiration date\"\n                },\n                \"expirationDuration\":
+        {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Expiration duration\"\n                },\n                \"seasonId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Season ID for expiration\"\n                },\n                \"linkedToItem\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"Whether linked to an item template\"\n                },\n\
+        \                \"linkedItemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Linked item template
+        ID\"\n                },\n                \"isBaseCurrency\": {\n                    \"type\": \"boolean\",\n    \
+        \                \"description\": \"Whether this is the base currency\"\n                },\n                \"exchangeRateToBase\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Exchange rate to base currency\"\n                },\n \
+        \               \"exchangeRateUpdatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When exchange rate
+        was last updated\"\n                },\n                \"iconAssetId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Icon asset ID\"\n                },\n                \"displayFormat\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Display format string\"\n     \
+        \           },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
+        description\": \"Whether definition is active\"\n                },\n                \"createdAt\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Creation timestamp\"\n                },\n                \"modifiedAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Last modification timestamp\"\n                }\n            }\n        },\n        \"\
+        CurrencyScope\": {\n            \"type\": \"string\",\n            \"description\": \"Scope of currency availability
+        across realms\",\n            \"enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n     \
+        \           \"MultiRealm\"\n            ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"How the currency handles decimal values (immutable after creation)\",\n\
+        \            \"enum\": [\n                \"Integer\",\n                \"Decimal2\",\n                \"Decimal4\"\
+        ,\n                \"Decimal8\",\n                \"DecimalFull\",\n                \"BigInteger\"\n            ]\n\
+        \        },\n        \"CapOverflowBehavior\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        What happens when a credit would exceed the wallet cap\",\n            \"enum\": [\n                \"Reject\",\n\
+        \                \"CapAndLose\",\n                \"CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How autogain (energy/interest) is calculated\"\
+        ,\n            \"enum\": [\n                \"Simple\",\n                \"Compound\"\n            ]\n        },\n\
+        \        \"ExpirationPolicy\": {\n            \"type\": \"string\",\n            \"description\": \"How currency expiration
+        is determined\",\n            \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n\
+        \                \"EndOfSeason\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update a currency's exchange rate to base\",\n    \"description\": \"Updates
         the exchange rate of a currency relative to the base currency.\\nCannot set rate on the base currency itself.\\n\"\
         ,\n    \"tags\": [\n        \"Conversion\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateExchangeRate\"\
@@ -3784,6 +3806,11 @@ components:
           format: double
           nullable: true
           description: Stop autogain when balance reaches this amount (null for no cap)
+        autogainUseGameTime:
+          type: boolean
+          nullable: true
+          description: Per-definition override for autogain time source. True = game-time, false = real-time, null = use
+            global AutogainTimeSource config. Allows fine-grained control (e.g., premium currencies use real-time).
         expires:
           type: boolean
           default: false
@@ -3959,6 +3986,11 @@ components:
           format: double
           nullable: true
           description: New autogain cap
+        autogainUseGameTime:
+          type: boolean
+          nullable: true
+          description: Per-definition override for autogain time source. True = game-time, false = real-time, null = use
+            global config.
         exchangeRateToBase:
           type: number
           format: double
@@ -4101,6 +4133,11 @@ components:
           format: double
           nullable: true
           description: Autogain balance cap
+        autogainUseGameTime:
+          type: boolean
+          nullable: true
+          description: Per-definition override for autogain time source. True = game-time, false = real-time, null = use
+            global config.
         expires:
           type: boolean
           description: Whether currency can expire

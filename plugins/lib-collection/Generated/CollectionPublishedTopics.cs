@@ -26,11 +26,11 @@ public static class CollectionPublishedTopics
     /// <summary>Published when an entry template is deleted.</summary>
     public const string CollectionEntryTemplateDeleted = "collection.entry-template.deleted";
 
-    /// <summary>Published when a collection instance is created for an owner.</summary>
-    public const string CollectionCreated = "collection.created";
+    /// <summary>Batch event containing accumulated collection instance creations.</summary>
+    public const string CollectionBatchCreated = "collection.batch-created";
 
-    /// <summary>Published when a collection instance is deleted.</summary>
-    public const string CollectionDeleted = "collection.deleted";
+    /// <summary>Batch event containing accumulated collection instance destructions.</summary>
+    public const string CollectionBatchDestroyed = "collection.batch-destroyed";
 
     /// <summary>Published when an area content config is created.</summary>
     public const string CollectionAreaContentConfigCreated = "collection.area-content-config.created";

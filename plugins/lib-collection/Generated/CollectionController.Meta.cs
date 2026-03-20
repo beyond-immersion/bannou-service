@@ -4449,7 +4449,7 @@ public partial class CollectionController
     private static readonly string _CleanupByCharacter_Info = """
 {
     "summary": "Cleanup all collections for a deleted character",
-    "description": "Called by lib-resource cleanup coordination when a character is deleted.\nRemoves all collections owned by the specified characterId, including\ntheir inventory containers, cache entries, and publishes collection.deleted\nlifecycle events.\nThis endpoint is designed for internal service-to-service calls during\ncascading resource cleanup.\n",
+    "description": "Called by lib-resource cleanup coordination when a character is deleted.\nRemoves all collections owned by the specified characterId, including\ntheir inventory containers, cache entries, and batches collection destroyed\nlifecycle events via the instance event batcher.\nThis endpoint is designed for internal service-to-service calls during\ncascading resource cleanup.\n",
     "tags": [
         "Resource Cleanup"
     ],

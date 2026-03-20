@@ -658,8 +658,8 @@ paths:
       description: |
         Called by lib-resource cleanup coordination when a character is deleted.
         Removes all collections owned by the specified characterId, including
-        their inventory containers, cache entries, and publishes collection.deleted
-        lifecycle events.
+        their inventory containers, cache entries, and batches collection destroyed
+        lifecycle events via the instance event batcher.
         This endpoint is designed for internal service-to-service calls during
         cascading resource cleanup.
       x-permissions: []

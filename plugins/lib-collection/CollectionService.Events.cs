@@ -111,20 +111,19 @@ public partial class CollectionService
                     BuildCollectionByOwnerKey(collection.OwnerId, collection.OwnerType, collection.GameServiceId, collection.CollectionType),
                     cancellationToken);
 
-                // Publish collection.deleted lifecycle event per FOUNDATION TENETS
-                await _messageBus.PublishCollectionDeletedAsync(
-                    new CollectionDeletedEvent
-                    {
-                        CollectionId = collection.CollectionId,
-                        OwnerId = collection.OwnerId,
-                        OwnerType = collection.OwnerType,
-                        CollectionType = collection.CollectionType,
-                        GameServiceId = collection.GameServiceId,
-                        ContainerId = collection.ContainerId,
-                        CreatedAt = collection.CreatedAt,
-                        DeletedReason = $"Owner {ownerType} deleted"
-                    },
-                    cancellationToken);
+                // Batch collection destroyed event per IMPLEMENTATION TENETS (batch: true lifecycle)
+                _instanceEventBatcher.AddDestroyed(new CollectionBatchDestroyedEntry
+                {
+                    CollectionId = collection.CollectionId,
+                    OwnerId = collection.OwnerId,
+                    OwnerType = collection.OwnerType,
+                    CollectionType = collection.CollectionType,
+                    GameServiceId = collection.GameServiceId,
+                    ContainerId = collection.ContainerId,
+                    CreatedAt = collection.CreatedAt,
+                    UpdatedAt = collection.CreatedAt,
+                    DeletedReason = $"Owner {ownerType} deleted"
+                });
 
                 deletedCount++;
             }

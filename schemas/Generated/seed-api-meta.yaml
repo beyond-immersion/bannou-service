@@ -59,12 +59,17 @@ paths:
         seed type code (e.g., \\\"guardian\\\", \\\"dungeon_core\\\").\"\n                },\n                \"gameServiceId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         nullable\": true,\n                    \"description\": \"Game service this seed is scoped to. Null for cross-game
-        seed types that are not scoped to any single game service.\"\n                },\n                \"displayName\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Human-readable name. Auto-generated if omitted.\"\n                },\n                \"metadata\": {\n     \
-        \               \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"\
-        nullable\": true,\n                    \"description\": \"Client-provided seed-type-specific initial data. No Bannou
-        plugin reads specific keys from this field by convention.\"\n                }\n            }\n        }\n    }\n}"
+        seed types that are not scoped to any single game service.\"\n                },\n                \"realmId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Realm this seed is associated with for game-time decay calculations.
+        If null and AutoAssociateRealm config is true, resolved from owner type on creation (character \\u2192 character's
+        realm, realm \\u2192 self, account \\u2192 null). Fixed at creation \\u2014 does not auto-follow owner realm changes.\"\
+        \n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Human-readable name. Auto-generated if omitted.\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Client-provided seed-type-specific initial data. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedResponse\"\
         ,\n    \"$defs\": {\n        \"SeedResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Full seed entity response.\",\n            \"required\": [\n            \
@@ -80,9 +85,12 @@ paths:
         \       \"minLength\": 1,\n                    \"description\": \"Registered seed type code.\"\n                },\n\
         \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
         \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Game service this seed
-        is scoped to. Null for cross-game seed types.\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the seed was created.\"\n                },\n                \"growthPhase\": {\n                    \"type\"\
+        is scoped to. Null for cross-game seed types.\"\n                },\n                \"realmId\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Realm this seed is associated with for game-time decay. Null if no realm association
+        (e.g., account-owned guardian seeds).\"\n                },\n                \"createdAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        When the seed was created.\"\n                },\n                \"growthPhase\": {\n                    \"type\"\
         : \"string\",\n                    \"minLength\": 1,\n                    \"description\": \"Current computed growth
         phase code.\"\n                },\n                \"totalGrowth\": {\n                    \"type\": \"number\",\n\
         \                    \"format\": \"float\",\n                    \"description\": \"Aggregate growth across all domains.\"\
@@ -140,9 +148,12 @@ paths:
         \       \"minLength\": 1,\n                    \"description\": \"Registered seed type code.\"\n                },\n\
         \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
         \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Game service this seed
-        is scoped to. Null for cross-game seed types.\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the seed was created.\"\n                },\n                \"growthPhase\": {\n                    \"type\"\
+        is scoped to. Null for cross-game seed types.\"\n                },\n                \"realmId\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Realm this seed is associated with for game-time decay. Null if no realm association
+        (e.g., account-owned guardian seeds).\"\n                },\n                \"createdAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        When the seed was created.\"\n                },\n                \"growthPhase\": {\n                    \"type\"\
         : \"string\",\n                    \"minLength\": 1,\n                    \"description\": \"Current computed growth
         phase code.\"\n                },\n                \"totalGrowth\": {\n                    \"type\": \"number\",\n\
         \                    \"format\": \"float\",\n                    \"description\": \"Aggregate growth across all domains.\"\
@@ -214,9 +225,12 @@ paths:
         \         \"minLength\": 1,\n                    \"description\": \"Registered seed type code.\"\n               \
         \ },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Game service this seed
-        is scoped to. Null for cross-game seed types.\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the seed was created.\"\n                },\n                \"growthPhase\": {\n                    \"type\"\
+        is scoped to. Null for cross-game seed types.\"\n                },\n                \"realmId\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Realm this seed is associated with for game-time decay. Null if no realm association
+        (e.g., account-owned guardian seeds).\"\n                },\n                \"createdAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        When the seed was created.\"\n                },\n                \"growthPhase\": {\n                    \"type\"\
         : \"string\",\n                    \"minLength\": 1,\n                    \"description\": \"Current computed growth
         phase code.\"\n                },\n                \"totalGrowth\": {\n                    \"type\": \"number\",\n\
         \                    \"format\": \"float\",\n                    \"description\": \"Aggregate growth across all domains.\"\
@@ -298,9 +312,12 @@ paths:
         \         \"minLength\": 1,\n                    \"description\": \"Registered seed type code.\"\n               \
         \ },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Game service this seed
-        is scoped to. Null for cross-game seed types.\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the seed was created.\"\n                },\n                \"growthPhase\": {\n                    \"type\"\
+        is scoped to. Null for cross-game seed types.\"\n                },\n                \"realmId\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Realm this seed is associated with for game-time decay. Null if no realm association
+        (e.g., account-owned guardian seeds).\"\n                },\n                \"createdAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        When the seed was created.\"\n                },\n                \"growthPhase\": {\n                    \"type\"\
         : \"string\",\n                    \"minLength\": 1,\n                    \"description\": \"Current computed growth
         phase code.\"\n                },\n                \"totalGrowth\": {\n                    \"type\": \"number\",\n\
         \                    \"format\": \"float\",\n                    \"description\": \"Aggregate growth across all domains.\"\
@@ -362,9 +379,12 @@ paths:
         \       \"minLength\": 1,\n                    \"description\": \"Registered seed type code.\"\n                },\n\
         \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
         \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Game service this seed
-        is scoped to. Null for cross-game seed types.\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the seed was created.\"\n                },\n                \"growthPhase\": {\n                    \"type\"\
+        is scoped to. Null for cross-game seed types.\"\n                },\n                \"realmId\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Realm this seed is associated with for game-time decay. Null if no realm association
+        (e.g., account-owned guardian seeds).\"\n                },\n                \"createdAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        When the seed was created.\"\n                },\n                \"growthPhase\": {\n                    \"type\"\
         : \"string\",\n                    \"minLength\": 1,\n                    \"description\": \"Current computed growth
         phase code.\"\n                },\n                \"totalGrowth\": {\n                    \"type\": \"number\",\n\
         \                    \"format\": \"float\",\n                    \"description\": \"Aggregate growth across all domains.\"\
@@ -424,9 +444,12 @@ paths:
         \       \"minLength\": 1,\n                    \"description\": \"Registered seed type code.\"\n                },\n\
         \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
         \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Game service this seed
-        is scoped to. Null for cross-game seed types.\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the seed was created.\"\n                },\n                \"growthPhase\": {\n                    \"type\"\
+        is scoped to. Null for cross-game seed types.\"\n                },\n                \"realmId\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Realm this seed is associated with for game-time decay. Null if no realm association
+        (e.g., account-owned guardian seeds).\"\n                },\n                \"createdAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        When the seed was created.\"\n                },\n                \"growthPhase\": {\n                    \"type\"\
         : \"string\",\n                    \"minLength\": 1,\n                    \"description\": \"Current computed growth
         phase code.\"\n                },\n                \"totalGrowth\": {\n                    \"type\": \"number\",\n\
         \                    \"format\": \"float\",\n                    \"description\": \"Aggregate growth across all domains.\"\
@@ -486,9 +509,12 @@ paths:
         \       \"minLength\": 1,\n                    \"description\": \"Registered seed type code.\"\n                },\n\
         \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
         \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Game service this seed
-        is scoped to. Null for cross-game seed types.\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the seed was created.\"\n                },\n                \"growthPhase\": {\n                    \"type\"\
+        is scoped to. Null for cross-game seed types.\"\n                },\n                \"realmId\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Realm this seed is associated with for game-time decay. Null if no realm association
+        (e.g., account-owned guardian seeds).\"\n                },\n                \"createdAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        When the seed was created.\"\n                },\n                \"growthPhase\": {\n                    \"type\"\
         : \"string\",\n                    \"minLength\": 1,\n                    \"description\": \"Current computed growth
         phase code.\"\n                },\n                \"totalGrowth\": {\n                    \"type\": \"number\",\n\
         \                    \"format\": \"float\",\n                    \"description\": \"Aggregate growth across all domains.\"\
@@ -564,9 +590,12 @@ paths:
         \       \"minLength\": 1,\n                    \"description\": \"Registered seed type code.\"\n                },\n\
         \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
         \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Game service this seed
-        is scoped to. Null for cross-game seed types.\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the seed was created.\"\n                },\n                \"growthPhase\": {\n                    \"type\"\
+        is scoped to. Null for cross-game seed types.\"\n                },\n                \"realmId\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Realm this seed is associated with for game-time decay. Null if no realm association
+        (e.g., account-owned guardian seeds).\"\n                },\n                \"createdAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        When the seed was created.\"\n                },\n                \"growthPhase\": {\n                    \"type\"\
         : \"string\",\n                    \"minLength\": 1,\n                    \"description\": \"Current computed growth
         phase code.\"\n                },\n                \"totalGrowth\": {\n                    \"type\": \"number\",\n\
         \                    \"format\": \"float\",\n                    \"description\": \"Aggregate growth across all domains.\"\
@@ -2176,6 +2205,15 @@ components:
           description: >-
             Game service this seed is scoped to. Null for cross-game seed types
             that are not scoped to any single game service.
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            Realm this seed is associated with for game-time decay calculations.
+            If null and AutoAssociateRealm config is true, resolved from owner type
+            on creation (character → character's realm, realm → self, account → null).
+            Fixed at creation — does not auto-follow owner realm changes.
         displayName:
           type: string
           nullable: true
@@ -2789,6 +2827,12 @@ components:
           nullable: true
           description: >-
             Game service this seed is scoped to. Null for cross-game seed types.
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm this seed is associated with for game-time decay. Null if no realm association (e.g., 
+            account-owned guardian seeds).
         createdAt:
           type: string
           format: date-time

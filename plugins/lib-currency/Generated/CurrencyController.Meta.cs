@@ -145,6 +145,11 @@ public partial class CurrencyController
                     "nullable": true,
                     "description": "Stop autogain when balance reaches this amount (null for no cap)"
                 },
+                "autogainUseGameTime": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Per-definition override for autogain time source. True = game-time, false = real-time, null = use global AutogainTimeSource config. Allows fine-grained control (e.g., premium currencies use real-time)."
+                },
                 "expires": {
                     "type": "boolean",
                     "default": false,
@@ -397,6 +402,11 @@ public partial class CurrencyController
                     "format": "double",
                     "nullable": true,
                     "description": "Autogain balance cap"
+                },
+                "autogainUseGameTime": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Per-definition override for autogain time source. True = game-time, false = real-time, null = use global config."
                 },
                 "expires": {
                     "type": "boolean",
@@ -750,6 +760,11 @@ public partial class CurrencyController
                     "format": "double",
                     "nullable": true,
                     "description": "Autogain balance cap"
+                },
+                "autogainUseGameTime": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Per-definition override for autogain time source. True = game-time, false = real-time, null = use global config."
                 },
                 "expires": {
                     "type": "boolean",
@@ -1144,6 +1159,11 @@ public partial class CurrencyController
                     "nullable": true,
                     "description": "Autogain balance cap"
                 },
+                "autogainUseGameTime": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Per-definition override for autogain time source. True = game-time, false = real-time, null = use global config."
+                },
                 "expires": {
                     "type": "boolean",
                     "description": "Whether currency can expire"
@@ -1433,6 +1453,11 @@ public partial class CurrencyController
                     "nullable": true,
                     "description": "New autogain cap"
                 },
+                "autogainUseGameTime": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Per-definition override for autogain time source. True = game-time, false = real-time, null = use global config."
+                },
                 "exchangeRateToBase": {
                     "type": "number",
                     "format": "double",
@@ -1616,6 +1641,11 @@ public partial class CurrencyController
                     "format": "double",
                     "nullable": true,
                     "description": "Autogain balance cap"
+                },
+                "autogainUseGameTime": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Per-definition override for autogain time source. True = game-time, false = real-time, null = use global config."
                 },
                 "expires": {
                     "type": "boolean",
@@ -1971,6 +2001,11 @@ public partial class CurrencyController
                     "format": "double",
                     "nullable": true,
                     "description": "Autogain balance cap"
+                },
+                "autogainUseGameTime": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Per-definition override for autogain time source. True = game-time, false = real-time, null = use global config."
                 },
                 "expires": {
                     "type": "boolean",
@@ -6382,6 +6417,11 @@ public partial class CurrencyController
                     "format": "double",
                     "nullable": true,
                     "description": "Autogain balance cap"
+                },
+                "autogainUseGameTime": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Per-definition override for autogain time source. True = game-time, false = real-time, null = use global config."
                 },
                 "expires": {
                     "type": "boolean",

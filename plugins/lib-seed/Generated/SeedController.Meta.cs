@@ -52,6 +52,12 @@ public partial class SeedController
                     "nullable": true,
                     "description": "Game service this seed is scoped to. Null for cross-game seed types that are not scoped to any single game service."
                 },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm this seed is associated with for game-time decay calculations. If null and AutoAssociateRealm config is true, resolved from owner type on creation (character \u2192 character's realm, realm \u2192 self, account \u2192 null). Fixed at creation \u2014 does not auto-follow owner realm changes."
+                },
                 "displayName": {
                     "type": "string",
                     "nullable": true,
@@ -114,6 +120,12 @@ public partial class SeedController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Game service this seed is scoped to. Null for cross-game seed types."
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm this seed is associated with for game-time decay. Null if no realm association (e.g., account-owned guardian seeds)."
                 },
                 "createdAt": {
                     "type": "string",
@@ -283,6 +295,12 @@ public partial class SeedController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Game service this seed is scoped to. Null for cross-game seed types."
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm this seed is associated with for game-time decay. Null if no realm association (e.g., account-owned guardian seeds)."
                 },
                 "createdAt": {
                     "type": "string",
@@ -490,6 +508,12 @@ public partial class SeedController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Game service this seed is scoped to. Null for cross-game seed types."
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm this seed is associated with for game-time decay. Null if no realm association (e.g., account-owned guardian seeds)."
                 },
                 "createdAt": {
                     "type": "string",
@@ -731,6 +755,12 @@ public partial class SeedController
                     "nullable": true,
                     "description": "Game service this seed is scoped to. Null for cross-game seed types."
                 },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm this seed is associated with for game-time decay. Null if no realm association (e.g., account-owned guardian seeds)."
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -911,6 +941,12 @@ public partial class SeedController
                     "nullable": true,
                     "description": "Game service this seed is scoped to. Null for cross-game seed types."
                 },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm this seed is associated with for game-time decay. Null if no realm association (e.g., account-owned guardian seeds)."
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -1080,6 +1116,12 @@ public partial class SeedController
                     "nullable": true,
                     "description": "Game service this seed is scoped to. Null for cross-game seed types."
                 },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm this seed is associated with for game-time decay. Null if no realm association (e.g., account-owned guardian seeds)."
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -1248,6 +1290,12 @@ public partial class SeedController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Game service this seed is scoped to. Null for cross-game seed types."
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm this seed is associated with for game-time decay. Null if no realm association (e.g., account-owned guardian seeds)."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1428,6 +1476,12 @@ public partial class SeedController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Game service this seed is scoped to. Null for cross-game seed types."
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm this seed is associated with for game-time decay. Null if no realm association (e.g., account-owned guardian seeds)."
                 },
                 "createdAt": {
                     "type": "string",

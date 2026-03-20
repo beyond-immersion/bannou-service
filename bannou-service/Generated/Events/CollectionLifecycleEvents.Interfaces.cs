@@ -21,6 +21,6 @@ public partial class CollectionAreaContentConfigCreatedEvent : ILifecycleCreated
 public partial class CollectionAreaContentConfigUpdatedEvent : ILifecycleUpdatedEvent { }
 public partial class CollectionAreaContentConfigDeletedEvent : ILifecycleDeletedEvent { }
 
-public partial class CollectionCreatedEvent : ILifecycleCreatedEvent { }
-public partial class CollectionUpdatedEvent : ILifecycleUpdatedEvent { }
-public partial class CollectionDeletedEvent : ILifecycleDeletedEvent { }
+public partial class CollectionBatchEntry : ILifecycleCreatedEvent { }
+public partial class CollectionBatchModifiedEntry : ILifecycleUpdatedEvent { }
+public partial class CollectionBatchDestroyedEntry : ILifecycleDeletedEvent { }

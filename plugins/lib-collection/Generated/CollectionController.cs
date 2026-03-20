@@ -386,8 +386,8 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
     /// <remarks>
     /// Called by lib-resource cleanup coordination when a character is deleted.
     /// <br/>Removes all collections owned by the specified characterId, including
-    /// <br/>their inventory containers, cache entries, and publishes collection.deleted
-    /// <br/>lifecycle events.
+    /// <br/>their inventory containers, cache entries, and batches collection destroyed
+    /// <br/>lifecycle events via the instance event batcher.
     /// <br/>This endpoint is designed for internal service-to-service calls during
     /// <br/>cascading resource cleanup.
     /// </remarks>
@@ -1530,8 +1530,8 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     /// <remarks>
     /// Called by lib-resource cleanup coordination when a character is deleted.
     /// <br/>Removes all collections owned by the specified characterId, including
-    /// <br/>their inventory containers, cache entries, and publishes collection.deleted
-    /// <br/>lifecycle events.
+    /// <br/>their inventory containers, cache entries, and batches collection destroyed
+    /// <br/>lifecycle events via the instance event batcher.
     /// <br/>This endpoint is designed for internal service-to-service calls during
     /// <br/>cascading resource cleanup.
     /// </remarks>

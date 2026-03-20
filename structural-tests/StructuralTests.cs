@@ -1423,8 +1423,8 @@ public class StructuralTests
 
         var missing = pluginDirs
             .Where(d => !csprojContent.Contains($"{d}{Path.DirectorySeparatorChar}{d}.csproj", StringComparison.Ordinal)
-                     && !csprojContent.Contains($"{d}/{d}.csproj", StringComparison.Ordinal)
-                     && !csprojContent.Contains($"{d}\\{d}.csproj", StringComparison.Ordinal))
+                    && !csprojContent.Contains($"{d}/{d}.csproj", StringComparison.Ordinal)
+                    && !csprojContent.Contains($"{d}\\{d}.csproj", StringComparison.Ordinal))
             .ToList();
 
         Assert.True(

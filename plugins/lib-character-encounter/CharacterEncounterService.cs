@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.History;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Worldstate;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -38,6 +39,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService, ICl
     private readonly IEncounterDataCache _encounterDataCache;
     private readonly IResourceClient _resourceClient;
     private readonly ITelemetryProvider _telemetryProvider;
+    private readonly IWorldstateClient _worldstateClient;
 
     /// <summary>Store for encounter type definitions (built-in and custom).</summary>
     private readonly IStateStore<EncounterTypeData> _encounterTypeStore;
@@ -110,7 +112,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService, ICl
         ICharacterClient characterClient,
         IEncounterDataCache encounterDataCache,
         IResourceClient resourceClient,
-        ITelemetryProvider telemetryProvider)
+        ITelemetryProvider telemetryProvider,
+        IWorldstateClient worldstateClient)
     {
         _messageBus = messageBus;
         _logger = logger;
@@ -120,6 +123,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService, ICl
         _resourceClient = resourceClient;
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
+        _worldstateClient = worldstateClient;
 
         // Constructor-cache all state store references per FOUNDATION TENETS
         _encounterTypeStore = stateStoreFactory.GetStore<EncounterTypeData>(StateStoreDefinitions.CharacterEncounter);
@@ -1387,17 +1391,61 @@ public partial class CharacterEncounterService : ICharacterEncounterService, ICl
                 var (perspective, pEtag) = await perspectiveStore.GetWithETagAsync(perspectiveKey, cancellationToken);
                 if (perspective == null) continue;
 
-                var (decayed, faded) = CalculateDecay(perspective);
+                // Resolve decay amount based on time source
+                bool decayed;
+                bool faded;
+                double decayAmount;
+
+                if (_configuration.DecayTimeSource == TimeSource.GameTime)
+                {
+                    var encounter = await _encounterStore.GetAsync($"{ENCOUNTER_KEY_PREFIX}{perspective.EncounterId}", cancellationToken);
+                    if (encounter is null) continue;
+
+                    try
+                    {
+                        var fromTime = perspective.LastDecayedAtUnix.HasValue
+                            ? DateTimeOffset.FromUnixTimeSeconds(perspective.LastDecayedAtUnix.Value)
+                            : DateTimeOffset.FromUnixTimeSeconds(perspective.CreatedAtUnix);
+                        var elapsedResponse = await _worldstateClient.GetElapsedGameTimeAsync(
+                            new GetElapsedGameTimeRequest
+                            {
+                                RealmId = encounter.RealmId,
+                                FromRealTime = fromTime,
+                                ToRealTime = DateTimeOffset.UtcNow
+                            }, cancellationToken);
+
+                        var gameHours = elapsedResponse.TotalGameSeconds / 3600.0;
+                        var intervals = gameHours / _configuration.MemoryDecayIntervalHours;
+                        if (intervals < 1) continue;
+
+                        decayAmount = intervals * _configuration.MemoryDecayRate;
+                        decayed = true;
+                        var previewStrength = perspective.MemoryStrength - decayAmount;
+                        faded = perspective.MemoryStrength >= _configuration.MemoryFadeThreshold &&
+                                previewStrength < _configuration.MemoryFadeThreshold;
+                    }
+                    catch (ApiException ex)
+                    {
+                        _logger.LogWarning(ex, "Worldstate unavailable for realm {RealmId} during decay, skipping perspective {PerspectiveId}",
+                            encounter.RealmId, perspectiveId);
+                        continue;
+                    }
+                }
+                else
+                {
+                    (decayed, faded) = CalculateRealTimeDecay(perspective);
+                    if (!decayed) continue;
+                    decayAmount = GetRealTimeDecayAmount(perspective);
+                }
 
                 if (decayed)
                 {
                     perspectivesProcessed++;
-                    var decayAmount = GetDecayAmount(perspective);
                     var previousStrength = perspective.MemoryStrength;
 
                     if (!dryRun)
                     {
-                        perspective.MemoryStrength = Math.Max(0, previousStrength - decayAmount);
+                        perspective.MemoryStrength = Math.Max(0, previousStrength - (float)decayAmount);
                         perspective.LastDecayedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                         var decayResult = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, pEtag ?? string.Empty, cancellationToken: cancellationToken);
                         if (decayResult == null)
@@ -2462,32 +2510,38 @@ public partial class CharacterEncounterService : ICharacterEncounterService, ICl
             return bulkResult.Values.Where(p => p != null).Cast<PerspectiveData>().ToList();
         }
 
-        // Separate perspectives needing decay from those that don't
-        var needsDecay = new List<PerspectiveData>();
-        var noDecayNeeded = new List<PerspectiveData>();
+        // When using game-time, we cannot cheaply pre-filter (need encounter realmId per perspective).
+        // When using real-time, we can pre-filter with the lightweight CalculateRealTimeDecay check.
+        // ApplyLazyDecayAsync handles both modes and short-circuits internally when no decay is needed.
+        var allPerspectives = bulkResult.Values.Where(p => p != null).Cast<PerspectiveData>().ToList();
 
-        foreach (var (_, perspective) in bulkResult)
+        if (_configuration.DecayTimeSource == TimeSource.RealTime)
         {
-            if (perspective == null) continue;
+            // Real-time: pre-filter to avoid unnecessary re-fetches for perspectives that don't need decay
+            var needsDecay = new List<PerspectiveData>();
+            var noDecayNeeded = new List<PerspectiveData>();
 
-            var (shouldDecay, _) = CalculateDecay(perspective);
-            if (shouldDecay)
-                needsDecay.Add(perspective);
-            else
-                noDecayNeeded.Add(perspective);
+            foreach (var perspective in allPerspectives)
+            {
+                var (shouldDecay, _) = CalculateRealTimeDecay(perspective);
+                if (shouldDecay)
+                    needsDecay.Add(perspective);
+                else
+                    noDecayNeeded.Add(perspective);
+            }
+
+            if (needsDecay.Count == 0)
+                return noDecayNeeded;
+
+            var decayTasks = needsDecay.Select(p => ApplyLazyDecayAsync(perspectiveStore, p, cancellationToken));
+            var decayedPerspectives = await Task.WhenAll(decayTasks);
+            return noDecayNeeded.Concat(decayedPerspectives).ToList();
         }
 
-        if (needsDecay.Count == 0)
-        {
-            return noDecayNeeded;
-        }
-
-        // Apply decay in parallel
-        var decayTasks = needsDecay.Select(p => ApplyLazyDecayAsync(perspectiveStore, p, cancellationToken));
-        var decayedPerspectives = await Task.WhenAll(decayTasks);
-
-        // Combine results
-        return noDecayNeeded.Concat(decayedPerspectives).ToList();
+        // Game-time: pass all perspectives through ApplyLazyDecayAsync (handles encounter loading and Worldstate calls)
+        var gameTimeDecayTasks = allPerspectives.Select(p => ApplyLazyDecayAsync(perspectiveStore, p, cancellationToken));
+        var gameTimeResults = await Task.WhenAll(gameTimeDecayTasks);
+        return gameTimeResults.ToList();
     }
 
     /// <summary>
@@ -2767,8 +2821,48 @@ public partial class CharacterEncounterService : ICharacterEncounterService, ICl
         if (!_configuration.MemoryDecayEnabled || _configuration.MemoryDecayMode != MemoryDecayMode.Lazy)
             return perspective;
 
-        var (needsDecay, _) = CalculateDecay(perspective);
-        if (!needsDecay) return perspective;
+        // Determine decay amount based on time source
+        double decayAmount;
+        if (_configuration.DecayTimeSource == TimeSource.GameTime)
+        {
+            // Load encounter for realmId
+            var encounter = await _encounterStore.GetAsync($"{ENCOUNTER_KEY_PREFIX}{perspective.EncounterId}", cancellationToken);
+            if (encounter is null)
+                return perspective; // Orphaned perspective — skip
+
+            try
+            {
+                var fromTime = perspective.LastDecayedAtUnix.HasValue
+                    ? DateTimeOffset.FromUnixTimeSeconds(perspective.LastDecayedAtUnix.Value)
+                    : DateTimeOffset.FromUnixTimeSeconds(perspective.CreatedAtUnix);
+                var elapsedResponse = await _worldstateClient.GetElapsedGameTimeAsync(
+                    new GetElapsedGameTimeRequest
+                    {
+                        RealmId = encounter.RealmId,
+                        FromRealTime = fromTime,
+                        ToRealTime = DateTimeOffset.UtcNow
+                    }, cancellationToken);
+
+                var gameHours = elapsedResponse.TotalGameSeconds / 3600.0;
+                var intervals = gameHours / _configuration.MemoryDecayIntervalHours;
+                if (intervals < 1)
+                    return perspective;
+
+                decayAmount = intervals * _configuration.MemoryDecayRate;
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Worldstate unavailable for realm {RealmId} during lazy decay, skipping perspective {PerspectiveId}",
+                    encounter.RealmId, perspective.PerspectiveId);
+                return perspective;
+            }
+        }
+        else
+        {
+            var (needsDecay, _) = CalculateRealTimeDecay(perspective);
+            if (!needsDecay) return perspective;
+            decayAmount = GetRealTimeDecayAmount(perspective);
+        }
 
         // Re-fetch with ETag for optimistic concurrency (prevents double-decay from concurrent reads)
         var perspectiveKey = $"{PERSPECTIVE_KEY_PREFIX}{perspective.PerspectiveId}";
@@ -2776,12 +2870,15 @@ public partial class CharacterEncounterService : ICharacterEncounterService, ICl
         if (freshPerspective == null) return perspective;
 
         // Recalculate on fresh data in case another instance already decayed
-        var (stillNeedsDecay, _) = CalculateDecay(freshPerspective);
-        if (!stillNeedsDecay) return freshPerspective;
+        if (_configuration.DecayTimeSource == TimeSource.RealTime)
+        {
+            var (stillNeedsDecay, _) = CalculateRealTimeDecay(freshPerspective);
+            if (!stillNeedsDecay) return freshPerspective;
+            decayAmount = GetRealTimeDecayAmount(freshPerspective);
+        }
 
-        var decayAmount = GetDecayAmount(freshPerspective);
         var previousStrength = freshPerspective.MemoryStrength;
-        freshPerspective.MemoryStrength = Math.Max(0, freshPerspective.MemoryStrength - decayAmount);
+        freshPerspective.MemoryStrength = Math.Max(0, freshPerspective.MemoryStrength - (float)decayAmount);
         freshPerspective.LastDecayedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
         // GetWithETagAsync returns non-null etag for existing records;
@@ -2813,7 +2910,11 @@ public partial class CharacterEncounterService : ICharacterEncounterService, ICl
         return freshPerspective;
     }
 
-    private (bool needsDecay, bool willFade) CalculateDecay(PerspectiveData perspective)
+    /// <summary>
+    /// Calculates whether a perspective needs real-time decay and if it will fade below threshold.
+    /// Used when DecayTimeSource is RealTime.
+    /// </summary>
+    private (bool needsDecay, bool willFade) CalculateRealTimeDecay(PerspectiveData perspective)
     {
         if (perspective.MemoryStrength <= 0) return (false, false);
 
@@ -2826,15 +2927,19 @@ public partial class CharacterEncounterService : ICharacterEncounterService, ICl
 
         if (intervalsElapsed < 1) return (false, false);
 
-        var decayAmount = GetDecayAmount(perspective);
-        var newStrength = perspective.MemoryStrength - decayAmount;
+        var decayAmt = GetRealTimeDecayAmount(perspective);
+        var newStrength = perspective.MemoryStrength - decayAmt;
         var willFade = perspective.MemoryStrength >= _configuration.MemoryFadeThreshold &&
                         newStrength < _configuration.MemoryFadeThreshold;
 
         return (true, willFade);
     }
 
-    private float GetDecayAmount(PerspectiveData perspective)
+    /// <summary>
+    /// Calculates real-time decay amount for a perspective based on wall-clock time elapsed.
+    /// Used when DecayTimeSource is RealTime.
+    /// </summary>
+    private float GetRealTimeDecayAmount(PerspectiveData perspective)
     {
         var lastDecayed = perspective.LastDecayedAtUnix.HasValue
             ? DateTimeOffset.FromUnixTimeSeconds(perspective.LastDecayedAtUnix.Value)

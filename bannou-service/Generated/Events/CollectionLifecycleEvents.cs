@@ -615,19 +615,11 @@ public partial class CollectionAreaContentConfigDeletedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to collection.created when a collection is created
+/// Single collection creation record within a batch event
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CollectionCreatedEvent : BaseServiceEvent
+public partial class CollectionBatchEntry
 {
-
-    /// <summary>
-    /// Event type identifier: collection.created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "collection.created";
 
     /// <summary>
     /// Unique collection instance identifier
@@ -687,7 +679,7 @@ public partial class CollectionCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the collection was last updated (set to createdAt on creation)
+    /// Timestamp when the collection was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -697,19 +689,11 @@ public partial class CollectionCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to collection.updated when a collection is updated
+/// Single collection modification record within a batch event
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CollectionUpdatedEvent : BaseServiceEvent
+public partial class CollectionBatchModifiedEntry
 {
-
-    /// <summary>
-    /// Event type identifier: collection.updated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "collection.updated";
 
     /// <summary>
     /// Unique collection instance identifier
@@ -769,7 +753,7 @@ public partial class CollectionUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the collection was last updated (set to createdAt on creation)
+    /// Timestamp when the collection was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -787,19 +771,11 @@ public partial class CollectionUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to collection.deleted when a collection is deleted
+/// Single collection destruction record within a batch event
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CollectionDeletedEvent : BaseServiceEvent
+public partial class CollectionBatchDestroyedEntry
 {
-
-    /// <summary>
-    /// Event type identifier: collection.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "collection.deleted";
 
     /// <summary>
     /// Unique collection instance identifier
@@ -859,7 +835,7 @@ public partial class CollectionDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the collection was last updated (set to createdAt on creation)
+    /// Timestamp when the collection was last updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -867,10 +843,127 @@ public partial class CollectionDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// Optional reason for destruction
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
     public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Batch event containing accumulated collection created records
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CollectionBatchCreatedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: collection.batch-created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "collection.batch-created";
+
+    /// <summary>
+    /// Individual created records in this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entries")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<CollectionBatchEntry> Entries { get; set; } = new System.Collections.ObjectModel.Collection<CollectionBatchEntry>();
+
+    /// <summary>
+    /// Number of entries in this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("count")]
+    public int Count { get; set; } = default!;
+
+    /// <summary>
+    /// When the accumulation window started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("windowStartedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset WindowStartedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Batch event containing accumulated collection modified records
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CollectionBatchModifiedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: collection.batch-modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "collection.batch-modified";
+
+    /// <summary>
+    /// Individual modified records in this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entries")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<CollectionBatchModifiedEntry> Entries { get; set; } = new System.Collections.ObjectModel.Collection<CollectionBatchModifiedEntry>();
+
+    /// <summary>
+    /// Number of entries in this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("count")]
+    public int Count { get; set; } = default!;
+
+    /// <summary>
+    /// When the accumulation window started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("windowStartedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset WindowStartedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Batch event containing accumulated collection destroyed records
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CollectionBatchDestroyedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: collection.batch-destroyed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "collection.batch-destroyed";
+
+    /// <summary>
+    /// Individual destroyed records in this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entries")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<CollectionBatchDestroyedEntry> Entries { get; set; } = new System.Collections.ObjectModel.Collection<CollectionBatchDestroyedEntry>();
+
+    /// <summary>
+    /// Number of entries in this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("count")]
+    public int Count { get; set; } = default!;
+
+    /// <summary>
+    /// When the accumulation window started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("windowStartedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset WindowStartedAt { get; set; } = default!;
 
 }
 

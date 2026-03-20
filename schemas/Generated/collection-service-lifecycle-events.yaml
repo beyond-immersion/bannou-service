@@ -326,16 +326,11 @@ components:
           type: string
           nullable: true
           description: Optional reason for deletion (e.g., "Merged into {targetId}")
-    CollectionCreatedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+    CollectionBatchEntry:
       type: object
+      description: Single collection creation record within a batch event
       additionalProperties: false
-      description: Published to collection.created when a collection is created
-      required:
-      - eventName
-      - eventId
-      - timestamp
+      required: &id022
       - collectionId
       - ownerId
       - ownerType
@@ -345,10 +340,6 @@ components:
       - createdAt
       - updatedAt
       properties:
-        eventName:
-          type: string
-          default: collection.created
-          description: 'Event type identifier: collection.created'
         collectionId: &id014
           type: string
           format: uuid
@@ -371,24 +362,19 @@ components:
           type: string
           format: uuid
           description: "Inventory container holding unlocked entry items"
-        createdAt:
+        createdAt: &id020
           type: string
           format: date-time
           description: Timestamp when the collection was created
-        updatedAt:
+        updatedAt: &id021
           type: string
           format: date-time
-          description: Timestamp when the collection was last updated (set to createdAt on creation)
-    CollectionUpdatedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+          description: Timestamp when the collection was last updated
+    CollectionBatchModifiedEntry:
       type: object
+      description: Single collection modification record within a batch event
       additionalProperties: false
-      description: Published to collection.updated when a collection is updated
       required:
-      - eventName
-      - eventId
-      - timestamp
       - collectionId
       - ownerId
       - ownerType
@@ -399,67 +385,124 @@ components:
       - updatedAt
       - changedFields
       properties:
-        eventName:
-          type: string
-          default: collection.updated
-          description: 'Event type identifier: collection.updated'
         collectionId: *id014
         ownerId: *id015
         ownerType: *id016
         collectionType: *id017
         gameServiceId: *id018
         containerId: *id019
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the collection was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the collection was last updated (set to createdAt on creation)
+        createdAt: *id020
+        updatedAt: *id021
         changedFields:
           type: array
           items:
             type: string
           description: List of field names that were modified
-    CollectionDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+    CollectionBatchDestroyedEntry:
       type: object
+      description: Single collection destruction record within a batch event
       additionalProperties: false
-      description: Published to collection.deleted when a collection is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - collectionId
-      - ownerId
-      - ownerType
-      - collectionType
-      - gameServiceId
-      - containerId
-      - createdAt
-      - updatedAt
+      required: *id022
       properties:
-        eventName:
-          type: string
-          default: collection.deleted
-          description: 'Event type identifier: collection.deleted'
         collectionId: *id014
         ownerId: *id015
         ownerType: *id016
         collectionType: *id017
         gameServiceId: *id018
         containerId: *id019
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the collection was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the collection was last updated (set to createdAt on creation)
+        createdAt: *id020
+        updatedAt: *id021
         deletedReason:
           type: string
           nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+          description: Optional reason for destruction
+    CollectionBatchCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Batch event containing accumulated collection created records
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entries
+      - count
+      - windowStartedAt
+      properties:
+        eventName:
+          type: string
+          default: collection.batch-created
+          description: 'Event type identifier: collection.batch-created'
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/CollectionBatchEntry'
+          description: Individual created records in this batch
+        count:
+          type: integer
+          description: Number of entries in this batch
+        windowStartedAt:
+          type: string
+          format: date-time
+          description: When the accumulation window started
+    CollectionBatchModifiedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Batch event containing accumulated collection modified records
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entries
+      - count
+      - windowStartedAt
+      properties:
+        eventName:
+          type: string
+          default: collection.batch-modified
+          description: 'Event type identifier: collection.batch-modified'
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/CollectionBatchModifiedEntry'
+          description: Individual modified records in this batch
+        count:
+          type: integer
+          description: Number of entries in this batch
+        windowStartedAt:
+          type: string
+          format: date-time
+          description: When the accumulation window started
+    CollectionBatchDestroyedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Batch event containing accumulated collection destroyed records
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entries
+      - count
+      - windowStartedAt
+      properties:
+        eventName:
+          type: string
+          default: collection.batch-destroyed
+          description: 'Event type identifier: collection.batch-destroyed'
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/CollectionBatchDestroyedEntry'
+          description: Individual destroyed records in this batch
+        count:
+          type: integer
+          description: Number of entries in this batch
+        windowStartedAt:
+          type: string
+          format: date-time
+          description: When the accumulation window started

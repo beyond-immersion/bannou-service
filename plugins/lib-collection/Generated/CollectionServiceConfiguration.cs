@@ -93,4 +93,25 @@ public class CollectionServiceConfiguration : BaseServiceConfiguration
     [ConfigRange(Minimum = 0)]
     public int MaxConcurrencyRetries { get; set; } = 3;
 
+    /// <summary>
+    /// Interval in seconds between collection instance lifecycle batch event flushes
+    /// Environment variable: COLLECTION_INSTANCE_EVENT_BATCH_INTERVAL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
+    public int InstanceEventBatchIntervalSeconds { get; set; } = 5;
+
+    /// <summary>
+    /// Startup delay before collection instance lifecycle batch event publishing begins
+    /// Environment variable: COLLECTION_INSTANCE_EVENT_BATCH_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 300)]
+    public int InstanceEventBatchStartupDelaySeconds { get; set; } = 10;
+
+    /// <summary>
+    /// Maximum entries per batch event before forced flush
+    /// Environment variable: COLLECTION_INSTANCE_EVENT_BATCH_MAX_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 10000)]
+    public int InstanceEventBatchMaxSize { get; set; } = 500;
+
 }

@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
 using BeyondImmersion.BannouService.TestUtilities;
+using BeyondImmersion.BannouService.Worldstate;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -38,6 +39,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
     private readonly Mock<IEncounterDataCache> _mockEncounterDataCache;
     private readonly Mock<IResourceClient> _mockResourceClient;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IWorldstateClient> _mockWorldstateClient;
 
     private const string STATE_STORE = "character-encounter-statestore";
 
@@ -60,6 +62,10 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         _mockEncounterDataCache = new Mock<IEncounterDataCache>();
         _mockResourceClient = new Mock<IResourceClient>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockWorldstateClient = new Mock<IWorldstateClient>();
+
+        // Existing tests use real-time decay; game-time tests are separate
+        Configuration.DecayTimeSource = TimeSource.RealTime;
 
         // Setup default factory returns
         _mockStateStoreFactory
@@ -136,7 +142,8 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             _mockCharacterClient.Object,
             _mockEncounterDataCache.Object,
             _mockResourceClient.Object,
-            _mockTelemetryProvider.Object);
+            _mockTelemetryProvider.Object,
+            _mockWorldstateClient.Object);
     }
 
     /// <summary>

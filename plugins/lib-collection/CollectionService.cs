@@ -65,6 +65,7 @@ public partial class CollectionService : ICollectionService, ICleanDeprecatedEnt
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly IEntitySessionRegistry _entitySessionRegistry;
     private readonly IReadOnlyList<ICollectionUnlockListener> _unlockListeners;
+    private readonly CollectionInstanceEventBatcher _instanceEventBatcher;
 
     /// <summary>Queryable state store for collection entry templates (MySQL-backed).</summary>
     private readonly IQueryableStateStore<EntryTemplateModel> _entryTemplateStore;
@@ -195,6 +196,7 @@ public partial class CollectionService : ICollectionService, ICleanDeprecatedEnt
     /// <param name="resourceClient">Resource client for reference tracking (L1 hard dependency).</param>
     /// <param name="telemetryProvider">Telemetry provider for distributed tracing (L0 hard dependency).</param>
     /// <param name="unlockListeners">DI-discovered listeners for entry unlock notifications (e.g., Seed growth pipeline).</param>
+    /// <param name="instanceEventBatcher">Singleton batcher for collection instance lifecycle events (created/destroyed).</param>
     public CollectionService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -208,7 +210,8 @@ public partial class CollectionService : ICollectionService, ICleanDeprecatedEnt
         IResourceClient resourceClient,
         ITelemetryProvider telemetryProvider,
         IEntitySessionRegistry entitySessionRegistry,
-        IEnumerable<ICollectionUnlockListener> unlockListeners)
+        IEnumerable<ICollectionUnlockListener> unlockListeners,
+        CollectionInstanceEventBatcher instanceEventBatcher)
     {
         _messageBus = messageBus;
         _logger = logger;
@@ -221,6 +224,7 @@ public partial class CollectionService : ICollectionService, ICleanDeprecatedEnt
         _telemetryProvider = telemetryProvider;
         _entitySessionRegistry = entitySessionRegistry;
         _unlockListeners = unlockListeners.ToList();
+        _instanceEventBatcher = instanceEventBatcher;
 
         _entryTemplateStore = stateStoreFactory.GetQueryableStore<EntryTemplateModel>(StateStoreDefinitions.CollectionEntryTemplates);
         _entryTemplateStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CollectionEntryTemplates);
@@ -495,18 +499,17 @@ public partial class CollectionService : ICollectionService, ICleanDeprecatedEnt
             instance,
             cancellationToken: cancellationToken);
 
-        await _messageBus.PublishCollectionCreatedAsync(
-            new CollectionCreatedEvent
-            {
-                CollectionId = instance.CollectionId,
-                OwnerId = instance.OwnerId,
-                OwnerType = instance.OwnerType,
-                CollectionType = instance.CollectionType,
-                GameServiceId = instance.GameServiceId,
-                ContainerId = instance.ContainerId,
-                CreatedAt = instance.CreatedAt
-            },
-            cancellationToken);
+        _instanceEventBatcher.AddCreated(new CollectionBatchEntry
+        {
+            CollectionId = instance.CollectionId,
+            OwnerId = instance.OwnerId,
+            OwnerType = instance.OwnerType,
+            CollectionType = instance.CollectionType,
+            GameServiceId = instance.GameServiceId,
+            ContainerId = instance.ContainerId,
+            CreatedAt = instance.CreatedAt,
+            UpdatedAt = instance.CreatedAt
+        });
 
         // Register reference with lib-resource for character-owned collections per FOUNDATION TENETS
         if (ownerType == EntityType.Character)
@@ -1253,18 +1256,17 @@ public partial class CollectionService : ICollectionService, ICleanDeprecatedEnt
             BuildCollectionByOwnerKey(collection.OwnerId, collection.OwnerType, collection.GameServiceId, collection.CollectionType),
             cancellationToken);
 
-        await _messageBus.PublishCollectionDeletedAsync(
-            new CollectionDeletedEvent
-            {
-                CollectionId = collection.CollectionId,
-                OwnerId = collection.OwnerId,
-                OwnerType = collection.OwnerType,
-                CollectionType = collection.CollectionType,
-                GameServiceId = collection.GameServiceId,
-                ContainerId = collection.ContainerId,
-                CreatedAt = collection.CreatedAt
-            },
-            cancellationToken);
+        _instanceEventBatcher.AddDestroyed(new CollectionBatchDestroyedEntry
+        {
+            CollectionId = collection.CollectionId,
+            OwnerId = collection.OwnerId,
+            OwnerType = collection.OwnerType,
+            CollectionType = collection.CollectionType,
+            GameServiceId = collection.GameServiceId,
+            ContainerId = collection.ContainerId,
+            CreatedAt = collection.CreatedAt,
+            UpdatedAt = collection.CreatedAt
+        });
 
         // Unregister reference with lib-resource for character-owned collections per FOUNDATION TENETS
         if (collection.OwnerType == EntityType.Character)

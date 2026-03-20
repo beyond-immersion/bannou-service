@@ -42,13 +42,13 @@ info:
       event: CollectionEntryTemplateDeletedEvent
       description: Published when an entry template is deleted
 
-    # Collection instance lifecycle events (auto-generated from x-lifecycle)
-    - topic: collection.created
-      event: CollectionCreatedEvent
-      description: Published when a collection instance is created for an owner
-    - topic: collection.deleted
-      event: CollectionDeletedEvent
-      description: Published when a collection instance is deleted
+    # Collection instance batch lifecycle events (auto-generated from x-lifecycle batch: true)
+    - topic: collection.batch-created
+      event: CollectionBatchCreatedEvent
+      description: Batch event containing accumulated collection instance creations
+    - topic: collection.batch-destroyed
+      event: CollectionBatchDestroyedEvent
+      description: Batch event containing accumulated collection instance destructions
 
     # Area content config lifecycle events (auto-generated from x-lifecycle)
     - topic: collection.area-content-config.created
@@ -103,6 +103,7 @@ x-lifecycle:
     sensitive: []
 
   Collection:
+    batch: true
     model:
       collectionId: { type: string, format: uuid, primary: true, required: true, description: "Unique collection instance identifier" }
       ownerId: { type: string, format: uuid, required: true, description: "Entity that owns this collection" }

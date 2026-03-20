@@ -1,17 +1,48 @@
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Resource;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Collection;
 
 /// <summary>
 /// Plugin wrapper for Collection service enabling plugin-based discovery and lifecycle management.
+/// Registers CollectionInstanceEventBatcher and its flush worker for batch lifecycle event publishing.
 /// </summary>
 public class CollectionServicePlugin : StandardServicePlugin<ICollectionService>
 {
     public override string PluginName => "collection";
     public override string DisplayName => "Collection Service";
+
+    /// <summary>
+    /// Registers Collection-specific DI services: instance lifecycle event batcher and its worker.
+    /// </summary>
+    public override void ConfigureServices(IServiceCollection services)
+    {
+        base.ConfigureServices(services);
+
+        // Register instance lifecycle event batcher as Singleton.
+        // CollectionService (Scoped) injects it to call Add* synchronously.
+        services.AddSingleton<CollectionInstanceEventBatcher>();
+
+        // Single worker flushes both batchers (created, destroyed) per cycle.
+        services.AddSingleton<IHostedService>(sp =>
+        {
+            var batcher = sp.GetRequiredService<CollectionInstanceEventBatcher>();
+            var config = sp.GetRequiredService<CollectionServiceConfiguration>();
+            return new EventBatcherWorker(
+                batcher.AllFlushables,
+                sp,
+                sp.GetRequiredService<ILogger<EventBatcherWorker>>(),
+                sp.GetRequiredService<ITelemetryProvider>(),
+                config.InstanceEventBatchIntervalSeconds,
+                config.InstanceEventBatchStartupDelaySeconds,
+                "collection",
+                "InstanceEventBatcher");
+        });
+    }
 
     /// <summary>
     /// Registers resource cleanup callbacks with lib-resource after the service is running.

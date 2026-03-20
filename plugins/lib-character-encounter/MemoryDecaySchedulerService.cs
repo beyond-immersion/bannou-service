@@ -73,7 +73,9 @@ public class MemoryDecaySchedulerService : BackgroundService
     /// <param name="stoppingToken">Cancellation token for graceful shutdown.</param>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "MemoryDecaySchedulerService.ExecuteAsync");
+        // No StartActivity here — per FOUNDATION TENETS, ExecuteAsync spans cover process lifetime
+        // and produce no useful telemetry. Per-cycle spans are in ProcessScheduledDecayAsync.
+
         // Skip startup entirely if not in scheduled mode
         if (!_configuration.MemoryDecayEnabled || _configuration.MemoryDecayMode != MemoryDecayMode.Scheduled)
         {

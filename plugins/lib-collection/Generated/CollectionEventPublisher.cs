@@ -41,19 +41,19 @@ public static class CollectionEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(CollectionPublishedTopics.CollectionEntryTemplateDeleted, eventData, cancellationToken);
 
-    /// <summary>Published when a collection instance is created for an owner.</summary>
-    public static Task<bool> PublishCollectionCreatedAsync(
+    /// <summary>Batch event containing accumulated collection instance creations.</summary>
+    public static Task<bool> PublishCollectionBatchCreatedAsync(
         this IMessageBus messageBus,
-        CollectionCreatedEvent eventData,
+        CollectionBatchCreatedEvent eventData,
         CancellationToken cancellationToken = default)
-        => messageBus.TryPublishAsync(CollectionPublishedTopics.CollectionCreated, eventData, cancellationToken);
+        => messageBus.TryPublishAsync(CollectionPublishedTopics.CollectionBatchCreated, eventData, cancellationToken);
 
-    /// <summary>Published when a collection instance is deleted.</summary>
-    public static Task<bool> PublishCollectionDeletedAsync(
+    /// <summary>Batch event containing accumulated collection instance destructions.</summary>
+    public static Task<bool> PublishCollectionBatchDestroyedAsync(
         this IMessageBus messageBus,
-        CollectionDeletedEvent eventData,
+        CollectionBatchDestroyedEvent eventData,
         CancellationToken cancellationToken = default)
-        => messageBus.TryPublishAsync(CollectionPublishedTopics.CollectionDeleted, eventData, cancellationToken);
+        => messageBus.TryPublishAsync(CollectionPublishedTopics.CollectionBatchDestroyed, eventData, cancellationToken);
 
     /// <summary>Published when an area content config is created.</summary>
     public static Task<bool> PublishCollectionAreaContentConfigCreatedAsync(

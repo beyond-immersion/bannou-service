@@ -42,6 +42,9 @@ The Collection service (L2 GameFoundation) manages universal content unlock and 
 | `CollectionCacheTtlSeconds` | `COLLECTION_CACHE_TTL_SECONDS` | 300 | Redis TTL for collection state cache (5 minutes) |
 | `DefaultPageSize` | `COLLECTION_DEFAULT_PAGE_SIZE` | 20 | Default page size for paginated queries |
 | `MaxConcurrencyRetries` | `COLLECTION_MAX_CONCURRENCY_RETRIES` | 3 | Max retry attempts for ETag-based optimistic concurrency conflicts |
+| `InstanceEventBatchIntervalSeconds` | `COLLECTION_INSTANCE_EVENT_BATCH_INTERVAL_SECONDS` | 5 | Interval between collection instance lifecycle batch event flushes |
+| `InstanceEventBatchStartupDelaySeconds` | `COLLECTION_INSTANCE_EVENT_BATCH_STARTUP_DELAY_SECONDS` | 10 | Startup delay before instance lifecycle batch event publishing begins |
+| `InstanceEventBatchMaxSize` | `COLLECTION_INSTANCE_EVENT_BATCH_MAX_SIZE` | 500 | Maximum entries per batch event before forced flush |
 
 ## Visual Aid
 
@@ -136,5 +139,4 @@ No known bugs at this time.
 
 ## Work Tracking
 
-### Active
-- **Batch lifecycle events** (2026-03-15): Switch to batch: true for high-frequency instance lifecycle events. Tracked via [#654](https://github.com/beyond-immersion/bannou-service/issues/654).
+No active work items.
