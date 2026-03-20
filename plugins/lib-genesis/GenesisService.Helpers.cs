@@ -226,6 +226,14 @@ public partial class GenesisService
         foreach (var walletId in entity.WalletIds.Values)
             await _entityIndexStore.DeleteAsync(BuildEntityWalletKey(walletId), cancellationToken);
 
+        // Remove from template→entity reverse index for clean-deprecated instance checks
+        await _entityIndexStore.RemoveFromStringListAsync(
+            BuildEntityTemplateInstancesKey(entity.TemplateCode),
+            entity.EntityId.ToString(),
+            _configuration.ListOperationMaxRetries,
+            _logger,
+            cancellationToken);
+
         // Cache entries
         await _entityCacheStore.DeleteAsync(BuildEntityCacheKey(entity.EntityId), cancellationToken);
         await _capsCacheStore.DeleteAsync(BuildCapsCacheKey(entity.EntityId), cancellationToken);

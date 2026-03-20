@@ -93,6 +93,13 @@ public class GenesisServiceConfiguration : BaseServiceConfiguration
     public int CleanupBatchSize { get; set; } = 100;
 
     /// <summary>
+    /// Maximum retry attempts for optimistic concurrency on string list index operations (reverse indexes for clean-deprecated)
+    /// Environment variable: GENESIS_LIST_OPERATION_MAX_RETRIES
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10)]
+    public int ListOperationMaxRetries { get; set; } = 3;
+
+    /// <summary>
     /// Maximum time in seconds to wait for phase transition distributed lock acquisition (actor spawn, character create)
     /// Environment variable: GENESIS_TRANSITION_LOCK_TIMEOUT_SECONDS
     /// </summary>

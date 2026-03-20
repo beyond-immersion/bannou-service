@@ -23,6 +23,9 @@
 
     <!-- All service plugins — auto-discovered via [BannouService] attribute -->
     <ProjectReference Include="..\plugins\lib-account\lib-account.csproj" />
+    <ProjectReference Include="..\plugins\lib-affix\lib-affix.csproj" />
+    <ProjectReference Include="..\plugins\lib-arbitration\lib-arbitration.csproj" />
+    <ProjectReference Include="..\plugins\lib-broadcast\lib-broadcast.csproj" />
     <ProjectReference Include="..\plugins\lib-achievement\lib-achievement.csproj" />
     <ProjectReference Include="..\plugins\lib-actor\lib-actor.csproj" />
     <ProjectReference Include="..\plugins\lib-analytics\lib-analytics.csproj" />
@@ -30,6 +33,7 @@
     <ProjectReference Include="..\plugins\lib-auth\lib-auth.csproj" />
     <ProjectReference Include="..\plugins\lib-behavior\lib-behavior.csproj" />
     <ProjectReference Include="..\plugins\lib-character\lib-character.csproj" />
+    <ProjectReference Include="..\plugins\lib-character-lifecycle\lib-character-lifecycle.csproj" />
     <ProjectReference Include="..\plugins\lib-character-encounter\lib-character-encounter.csproj" />
     <ProjectReference Include="..\plugins\lib-character-history\lib-character-history.csproj" />
     <ProjectReference Include="..\plugins\lib-character-personality\lib-character-personality.csproj" />
@@ -37,17 +41,21 @@
     <ProjectReference Include="..\plugins\lib-collection\lib-collection.csproj" />
     <ProjectReference Include="..\plugins\lib-connect\lib-connect.csproj" />
     <ProjectReference Include="..\plugins\lib-contract\lib-contract.csproj" />
+    <ProjectReference Include="..\plugins\lib-craft\lib-craft.csproj" />
     <ProjectReference Include="..\plugins\lib-currency\lib-currency.csproj" />
     <ProjectReference Include="..\plugins\lib-divine\lib-divine.csproj" />
     <ProjectReference Include="..\plugins\lib-documentation\lib-documentation.csproj" />
+    <ProjectReference Include="..\plugins\lib-environment\lib-environment.csproj" />
     <ProjectReference Include="..\plugins\lib-escrow\lib-escrow.csproj" />
     <ProjectReference Include="..\plugins\lib-faction\lib-faction.csproj" />
     <ProjectReference Include="..\plugins\lib-game-service\lib-game-service.csproj" />
+    <ProjectReference Include="..\plugins\lib-genesis\lib-genesis.csproj" />
     <ProjectReference Include="..\plugins\lib-game-session\lib-game-session.csproj" />
     <ProjectReference Include="..\plugins\lib-gardener\lib-gardener.csproj" />
     <ProjectReference Include="..\plugins\lib-inventory\lib-inventory.csproj" />
     <ProjectReference Include="..\plugins\lib-item\lib-item.csproj" />
     <ProjectReference Include="..\plugins\lib-leaderboard\lib-leaderboard.csproj" />
+    <ProjectReference Include="..\plugins\lib-localization\lib-localization.csproj" />
     <ProjectReference Include="..\plugins\lib-license\lib-license.csproj" />
     <ProjectReference Include="..\plugins\lib-location\lib-location.csproj" />
     <ProjectReference Include="..\plugins\lib-mapping\lib-mapping.csproj" />

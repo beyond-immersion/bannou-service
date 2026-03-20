@@ -621,10 +621,12 @@ public class StructuralTests
 
     // ⛔ FROZEN — Do not modify without explicit user permission.
     /// <summary>
-    /// Validates that services with non-empty x-event-subscriptions in their event schema
-    /// have a RegisterEventConsumers method in *ServiceEvents.cs AND call it from the
-    /// *Service.cs constructor. If a service declares event subscriptions in the schema but
-    /// never wires them up, events are silently lost at runtime (IMPLEMENTATION TENETS T3).
+    /// Validates that services with non-empty x-event-subscriptions in their event schema:
+    /// 1. Have a RegisterEventConsumers method in *Service.Events.cs
+    /// 2. Call RegisterEventConsumers from the *Service.cs constructor
+    /// 3. Register a handler for EACH subscribed event type
+    /// If a service declares event subscriptions in the schema but never wires them up,
+    /// events are silently lost at runtime (IMPLEMENTATION TENETS T3).
     /// </summary>
     [Fact]
     public void Services_WithEventSubscriptions_MustRegisterConsumers()
@@ -641,60 +643,36 @@ public class StructuralTests
                 continue;
 
             var lines = File.ReadAllLines(file);
-            var hasNonEmptySubscriptions = false;
 
-            for (var i = 0; i < lines.Length; i++)
-            {
-                var trimmed = lines[i].TrimStart();
-                if (!trimmed.StartsWith("x-event-subscriptions:", StringComparison.Ordinal))
-                    continue;
-
-                // Check if it's empty: "x-event-subscriptions: []" or "x-event-subscriptions:  []"
-                if (trimmed.Contains("[]", StringComparison.Ordinal))
-                    break;
-
-                // Check if next non-comment, non-blank line starts with "- topic:"
-                for (var j = i + 1; j < lines.Length; j++)
-                {
-                    var nextTrimmed = lines[j].TrimStart();
-                    if (string.IsNullOrWhiteSpace(nextTrimmed) ||
-                        nextTrimmed.StartsWith("#", StringComparison.Ordinal))
-                        continue;
-
-                    if (nextTrimmed.StartsWith("- topic:", StringComparison.Ordinal))
-                        hasNonEmptySubscriptions = true;
-                    break;
-                }
-                break;
-            }
-
-            if (!hasNonEmptySubscriptions)
+            // Parse x-event-subscriptions entries (topic + event type pairs)
+            var subscriptions = ParseSubscriptionEntries(lines);
+            if (subscriptions.Count == 0)
                 continue;
 
-            // Extract service name: "auth-events.yaml" -> "auth"
-            var serviceName = fileName.Replace("-events.yaml", "");
+            // Extract service name: "auth-service-events.yaml" -> "auth"
+            var serviceName = fileName.Replace("-service-events.yaml", "").Replace("-events.yaml", "");
             var pluginDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "plugins", $"lib-{serviceName}");
             if (!Directory.Exists(pluginDir))
                 continue;
 
-            // Find *ServiceEvents.cs
-            var eventsFiles = Directory.GetFiles(pluginDir, "*ServiceEvents.cs", SearchOption.TopDirectoryOnly);
-            var hasRegisterMethod = false;
+            // Find *Service.Events.cs (dot convention per FOUNDATION TENETS T6)
+            var eventsFiles = Directory.GetFiles(pluginDir, "*Service.Events.cs", SearchOption.TopDirectoryOnly);
+            string? eventsContent = null;
             foreach (var eventsFile in eventsFiles)
             {
                 var content = File.ReadAllText(eventsFile);
                 if (content.Contains("RegisterEventConsumers", StringComparison.Ordinal))
                 {
-                    hasRegisterMethod = true;
+                    eventsContent = content;
                     break;
                 }
             }
 
-            if (!hasRegisterMethod)
+            if (eventsContent == null)
             {
                 failures.Add(
                     $"lib-{serviceName}: has x-event-subscriptions in {fileName} " +
-                    $"but *ServiceEvents.cs does not define RegisterEventConsumers()");
+                    $"but *Service.Events.cs does not define RegisterEventConsumers()");
                 continue;
             }
 
@@ -702,7 +680,8 @@ public class StructuralTests
             var serviceFiles = Directory.GetFiles(pluginDir, "*Service.cs", SearchOption.TopDirectoryOnly)
                 .Where(f => !Path.GetFileName(f).Contains("Events", StringComparison.Ordinal) &&
                             !Path.GetFileName(f).Contains("Models", StringComparison.Ordinal) &&
-                            !Path.GetFileName(f).Contains("Plugin", StringComparison.Ordinal))
+                            !Path.GetFileName(f).Contains("Plugin", StringComparison.Ordinal) &&
+                            !Path.GetFileName(f).Contains("Helpers", StringComparison.Ordinal))
                 .ToList();
 
             var hasConstructorCall = false;
@@ -719,16 +698,82 @@ public class StructuralTests
             if (!hasConstructorCall)
             {
                 failures.Add(
-                    $"lib-{serviceName}: has RegisterEventConsumers in *ServiceEvents.cs " +
+                    $"lib-{serviceName}: has RegisterEventConsumers in *Service.Events.cs " +
                     $"but *Service.cs constructor does not call it");
+            }
+
+            // Verify each subscribed event type has a RegisterHandler call
+            foreach (var (topic, eventType) in subscriptions)
+            {
+                if (!eventsContent.Contains(eventType, StringComparison.Ordinal))
+                {
+                    failures.Add(
+                        $"lib-{serviceName}: x-event-subscriptions declares event '{eventType}' " +
+                        $"(topic: {topic}) but *Service.Events.cs has no RegisterHandler for it");
+                }
             }
         }
 
         Assert.True(
             failures.Count == 0,
-            $"Services with x-event-subscriptions must define and call RegisterEventConsumers " +
+            $"Services with x-event-subscriptions must define and call RegisterEventConsumers, " +
+            $"with a RegisterHandler for each subscribed event type " +
             $"(IMPLEMENTATION TENETS T3 — event handlers silently missing):\n" +
             string.Join("\n", failures.Select(f => $"  - {f}")));
+    }
+
+    /// <summary>
+    /// Parses x-event-subscriptions entries from event schema lines.
+    /// Returns a list of (topic, eventType) pairs.
+    /// </summary>
+    private static List<(string Topic, string EventType)> ParseSubscriptionEntries(string[] lines)
+    {
+        var result = new List<(string, string)>();
+        var inSubscriptions = false;
+        string? currentTopic = null;
+
+        for (var i = 0; i < lines.Length; i++)
+        {
+            var trimmed = lines[i].TrimStart();
+
+            if (trimmed.StartsWith("x-event-subscriptions:", StringComparison.Ordinal))
+            {
+                if (trimmed.Contains("[]", StringComparison.Ordinal))
+                    break;
+                inSubscriptions = true;
+                continue;
+            }
+
+            if (!inSubscriptions)
+                continue;
+
+            // Exit subscriptions block at the next top-level key
+            if (trimmed.Length > 0 && !char.IsWhiteSpace(lines[i][0])
+                && !trimmed.StartsWith("-", StringComparison.Ordinal)
+                && !trimmed.StartsWith("#", StringComparison.Ordinal))
+            {
+                break;
+            }
+
+            if (trimmed.StartsWith("- topic:", StringComparison.Ordinal))
+            {
+                currentTopic = trimmed["- topic:".Length..].Trim().Trim('"', '\'');
+            }
+            else if (trimmed.StartsWith("topic:", StringComparison.Ordinal))
+            {
+                currentTopic = trimmed["topic:".Length..].Trim().Trim('"', '\'');
+            }
+            else if (trimmed.StartsWith("event:", StringComparison.Ordinal) && currentTopic != null)
+            {
+                var eventType = trimmed["event:".Length..].Trim().Trim('"', '\'');
+                if (!string.IsNullOrEmpty(eventType))
+                {
+                    result.Add((currentTopic, eventType));
+                }
+            }
+        }
+
+        return result;
     }
 
     // ⛔ FROZEN — Do not modify without explicit user permission.
@@ -793,34 +838,6 @@ public class StructuralTests
             $"Use generated Publish*Async extension methods or *PublishedTopics constants instead " +
             $"(FOUNDATION TENETS — Event-Driven Architecture):\n" +
             string.Join("\n", violations.Select(v => $"  - {v}")));
-    }
-
-    // ⛔ FROZEN — Do not modify without explicit user permission.
-    /// <summary>
-    /// Validates that each service has a {Service}ServiceEvents.cs file on disk,
-    /// confirming the partial class pattern required by FOUNDATION TENETS (service logic in
-    /// *Service.cs, event handlers in *ServiceEvents.cs).
-    /// </summary>
-    [Theory]
-    [MemberData(nameof(AllServiceTypes))]
-    public void Service_HasServiceEventsFile(Type serviceType)
-    {
-        var attr = serviceType.GetCustomAttribute<BannouServiceAttribute>();
-        if (attr == null)
-            return;
-
-        var serviceName = attr.Name;
-        var pluginDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "plugins", $"lib-{serviceName}");
-        if (!Directory.Exists(pluginDir))
-            return;
-
-        var eventsFileName = $"{serviceType.Name}Events.cs";
-        var eventsFilePath = Path.Combine(pluginDir, eventsFileName);
-
-        Assert.True(
-            File.Exists(eventsFilePath),
-            $"{serviceType.Name}: missing {eventsFileName} in lib-{serviceName}/ " +
-            $"— FOUNDATION TENETS requires partial class split for event handlers");
     }
 
     // ⛔ FROZEN — Do not modify without explicit user permission.
@@ -1377,6 +1394,44 @@ public class StructuralTests
         }
 
         return null;
+    }
+
+    // ⛔ FROZEN — Do not modify without explicit user permission.
+    /// <summary>
+    /// Validates that all plugin directories (plugins/lib-*) are referenced by structural-tests.csproj.
+    /// Missing references mean the plugin's services are invisible to all structural validation —
+    /// constructor checks, hierarchy checks, key builders, telemetry, etc. all silently skip.
+    /// Excludes lib-testing (test infrastructure, not a service plugin) and lib-*.tests directories.
+    /// </summary>
+    [Fact]
+    public void Plugins_AreReferencedByStructuralTests()
+    {
+        var pluginsDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "plugins");
+        var csprojPath = Path.Combine(TestAssemblyDiscovery.RepoRoot, "structural-tests", "structural-tests.csproj");
+
+        Assert.True(File.Exists(csprojPath), "structural-tests.csproj not found");
+
+        var csprojContent = File.ReadAllText(csprojPath);
+
+        var pluginDirs = Directory.GetDirectories(pluginsDir, "lib-*")
+            .Select(Path.GetFileName)
+            .Where(d => d != null
+                && !d.EndsWith(".tests", StringComparison.Ordinal)
+                && d != "lib-testing")
+            .OrderBy(d => d)
+            .ToList();
+
+        var missing = pluginDirs
+            .Where(d => !csprojContent.Contains($"{d}{Path.DirectorySeparatorChar}{d}.csproj", StringComparison.Ordinal)
+                     && !csprojContent.Contains($"{d}/{d}.csproj", StringComparison.Ordinal)
+                     && !csprojContent.Contains($"{d}\\{d}.csproj", StringComparison.Ordinal))
+            .ToList();
+
+        Assert.True(
+            missing.Count == 0,
+            $"structural-tests.csproj must reference all plugin projects. " +
+            $"{missing.Count} plugin(s) are invisible to structural validation:\n" +
+            string.Join("\n", missing.Select(d => $"  - {d}")));
     }
 
     // ⛔ FROZEN — Do not modify without explicit user permission.

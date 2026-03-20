@@ -385,6 +385,7 @@ Chest opened (game engine):
 | `TransitionLockTimeoutSeconds` | `GENESIS_TRANSITION_LOCK_TIMEOUT_SECONDS` | `30` | Timeout for phase transition distributed locks (range: 5-120) |
 | `EntityLockTimeoutSeconds` | `GENESIS_ENTITY_LOCK_TIMEOUT_SECONDS` | `30` | Timeout for entity mutation distributed locks (range: 5-120) |
 | `DefaultPageSize` | `GENESIS_DEFAULT_PAGE_SIZE` | `20` | Default page size for paginated queries (range: 1-100) |
+| `ListOperationMaxRetries` | `GENESIS_LIST_OPERATION_MAX_RETRIES` | `3` | Maximum retry attempts for optimistic concurrency on string list index operations (range: 1-10) |
 | `CleanupBatchSize` | `GENESIS_CLEANUP_BATCH_SIZE` | `100` | Number of entities to process per batch during cleanup (range: 10-1000) |
 | `GrowthFlushIntervalSeconds` | `GENESIS_GROWTH_FLUSH_INTERVAL_SECONDS` | `5` | Interval between growth accumulator flush cycles. Lower = more responsive phase transitions but more Seed lock acquisitions. Higher = more efficient batching but more growth latency. At 5s default, entities growing over game-hours/days see no perceptible delay. (range: 1-60) |
 | `StartupDelaySeconds` | `GENESIS_STARTUP_DELAY_SECONDS` | `5` | Delay before background services start processing after plugin startup (range: 0-120) |
@@ -520,7 +521,7 @@ Chest opened (game engine):
 
 ### Design Considerations (Requires Planning)
 
-- **Clean-deprecated `hasInstancesAsync` uses QueryAsync scan instead of reverse index**: The `hasInstancesAsync` delegate in `CleanDeprecatedAsync` performs `_entityQueryStore.QueryAsync(e => e.TemplateCode == t.TemplateCode, ct)` — a full MySQL query scan per deprecated template per sweep invocation. HELPERS-AND-COMMON-PATTERNS.md recommends maintaining a reverse index (template→entity list via `AddToStringListAsync`/`RemoveFromStringListAsync`) and using `HasStringListEntriesAsync` for O(1) instance existence checks. At scale with many deprecated templates and thousands of entities, the current pattern compounds: each sweep iteration does a full table scan per deprecated template. Consider migrating to the standard reverse index pattern used by lib-item, lib-currency, and lib-contract for their clean-deprecated sweeps.
+- ~~**Clean-deprecated `hasInstancesAsync` uses QueryAsync scan instead of reverse index**~~: **FIXED** (2026-03-20) — Migrated to standard reverse index pattern. Template→entity list maintained via `AddToStringListAsync` on entity create/restore and `RemoveFromStringListAsync` on entity deletion. `hasInstancesAsync` delegate now uses `HasStringListEntriesAsync` for O(1) checks. Added `ListOperationMaxRetries` config property (default: 3) for optimistic concurrency retries.
 
 - ~~**ICurrencyTransactionListener interface scope**~~: **RESOLVED** — Genesis uses an in-memory `ConcurrentDictionary<walletId, WalletMapping>` for O(1) filtering (~microseconds, no network I/O), populated from MySQL at startup and invalidated via self-subscription events. Non-genesis wallets are discarded in microseconds. Matched credits are buffered in a growth accumulator, flushed periodically by `GenesisGrowthFlushWorkerService` which calls `Seed.RecordGrowthBatch` once per entity per flush interval. This eliminates both the filtering overhead concern (in-memory vs Redis) and the processing volume concern (batched vs per-transaction). At 100K wallets, the listener adds ~30ms of ConcurrentDictionary lookups per autogain tick (vs ~9 seconds with Redis lookups). The batched flush reduces Seed lock acquisitions from one-per-wallet-credit to one-per-entity-per-flush-interval, a 10-20x reduction in state store operations. See § Core Mechanics for the full design.
 
@@ -530,6 +531,4 @@ Chest opened (game engine):
 
 ## Work Tracking
 
-- **Bug #1 (B22 violation)**: Clean-deprecated sweep needs `PublishTemplateDeletedAsync` call in `deleteAndPublishAsync` delegate. Straightforward fix — construct `TemplateDeletedEvent` and publish.
-- **Bug #2 (T21 dead config)**: Either implement batched processing in `CleanupByRealmAsync` using `CleanupBatchSize` config, or remove `CleanupBatchSize` from the configuration schema.
-- **DC-1 (reverse index)**: Migrate `hasInstancesAsync` from QueryAsync scan to maintained reverse index pattern for O(1) instance checks at scale.
+*(All items from 2026-03-20 maintenance resolved — no active work.)*

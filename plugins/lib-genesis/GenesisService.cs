@@ -415,13 +415,9 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             deprecatedTemplates,
             getEntityId: t => t.TemplateCode,
             getDeprecatedAt: t => t.DeprecatedAt,
-            hasInstancesAsync: async (t, ct) =>
-            {
-                // QueryAsync on entity store is now clean — no duplicate index rows
-                var entities = await _entityQueryStore.QueryAsync(
-                    e => e.TemplateCode == t.TemplateCode, ct);
-                return entities.Count > 0;
-            },
+            hasInstancesAsync: (t, ct) =>
+                _entityIndexStore.HasStringListEntriesAsync(
+                    BuildEntityTemplateInstancesKey(t.TemplateCode), ct),
             deleteAndPublishAsync: async (t, ct) =>
             {
                 await _templateStore.DeleteAsync(BuildTemplateKey(t.TemplateCode), ct);
@@ -592,6 +588,14 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         foreach (var walletId in entity.WalletIds.Values)
             await _entityIndexStore.SaveAsync(
                 BuildEntityWalletKey(walletId), entityId.ToString(), cancellationToken: cancellationToken);
+
+        // Maintain template→entity reverse index for clean-deprecated instance checks
+        await _entityIndexStore.AddToStringListAsync(
+            BuildEntityTemplateInstancesKey(body.TemplateCode),
+            entityId.ToString(),
+            _configuration.ListOperationMaxRetries,
+            _logger,
+            cancellationToken);
 
         await _messageBus.PublishEntityCreatedAsync(new EntityCreatedEvent
         {
@@ -1173,6 +1177,14 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             await AddToEntityTemplateIndexAsync(archived.TemplateCode, archived.RealmId, archived.EntityId, cancellationToken);
             foreach (var walletId in provisionedWalletIds.Values)
                 await _entityIndexStore.SaveAsync(BuildEntityWalletKey(walletId), archived.EntityId.ToString(), cancellationToken: cancellationToken);
+
+            // Maintain template→entity reverse index for clean-deprecated instance checks
+            await _entityIndexStore.AddToStringListAsync(
+                BuildEntityTemplateInstancesKey(archived.TemplateCode),
+                archived.EntityId.ToString(),
+                _configuration.ListOperationMaxRetries,
+                _logger,
+                cancellationToken);
 
             await _messageBus.PublishEntityCreatedAsync(new EntityCreatedEvent
             {

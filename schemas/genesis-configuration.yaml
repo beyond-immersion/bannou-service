@@ -65,6 +65,15 @@ x-service-configuration:
       minimum: 10
       maximum: 1000
 
+    # Optimistic Concurrency
+    ListOperationMaxRetries:
+      type: integer
+      description: Maximum retry attempts for optimistic concurrency on string list index operations (reverse indexes for clean-deprecated)
+      env: GENESIS_LIST_OPERATION_MAX_RETRIES
+      default: 3
+      minimum: 1
+      maximum: 10
+
     # Distributed Locking
     TransitionLockTimeoutSeconds:
       type: integer
