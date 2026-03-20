@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
@@ -5,6 +6,7 @@ using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Worldstate;
 
 namespace BeyondImmersion.BannouService.Seed.Tests;
 
@@ -558,6 +560,233 @@ public class SeedDecayWorkerServiceTests
         // seed1 was never saved (neither seed nor growth) because lock failed
         _mockSeedStore.Verify(s => s.GetAsync(
             $"seed:{seed1Id}", It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
+    #region Game-Time Decay Tests
+
+    [Fact]
+    public async Task Worker_GameTimeSource_CallsWorldstateForElapsedTime()
+    {
+        // Arrange: GameTime mode with seed that has realmId
+        _configuration.GrowthDecayEnabled = true;
+        _configuration.GrowthDecayRatePerDay = 0.1f;
+        _configuration.DecayTimeSource = TimeSource.GameTime;
+
+        var realmId = Guid.NewGuid();
+        var seedType = CreateTestType(decayEnabled: null, decayRate: null);
+        SetupTypeQuery(new List<SeedTypeDefinitionModel> { seedType });
+
+        var seedId = Guid.NewGuid();
+        var seed = new SeedModel
+        {
+            SeedId = seedId,
+            GameServiceId = _testGameServiceId,
+            SeedTypeCode = "guardian",
+            GrowthPhase = "nascent",
+            TotalGrowth = 10f,
+            Status = SeedStatus.Active,
+            RealmId = realmId,
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-30)
+        };
+
+        SetupSeedQuery(new List<SeedModel> { seed }, 1);
+        _mockSeedStore.Setup(s => s.GetAsync($"seed:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seed);
+
+        var growth = new SeedGrowthModel
+        {
+            SeedId = seedId,
+            LastDecayedAt = null,
+            Domains = new Dictionary<string, DomainGrowthEntry>
+            {
+                { "combat.melee", new DomainGrowthEntry { Depth = 10f, LastActivityAt = DateTimeOffset.UtcNow.AddDays(-1), PeakDepth = 10f } }
+            }
+        };
+        _mockGrowthStore.Setup(s => s.GetAsync($"growth:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(growth);
+
+        // Mock IWorldstateClient in scope: return 48 game hours (24:1 ratio over 2 real hours... but for decay, 2 game days)
+        var mockWorldstateClient = new Mock<IWorldstateClient>();
+        mockWorldstateClient
+            .Setup(c => c.GetElapsedGameTimeAsync(
+                It.Is<GetElapsedGameTimeRequest>(r => r.RealmId == realmId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetElapsedGameTimeResponse
+            {
+                TotalGameSeconds = 2 * 86400, // 2 game days
+                GameDays = 2,
+                GameHours = 0,
+                GameMinutes = 0
+            });
+
+        // Override the scoped provider to return our configured mock
+        var mockScope = new Mock<IServiceScope>();
+        var mockScopedProvider = new Mock<IServiceProvider>();
+        mockScopedProvider.Setup(p => p.GetService(typeof(IStateStoreFactory))).Returns(_mockStateStoreFactory.Object);
+        mockScopedProvider.Setup(p => p.GetService(typeof(IDistributedLockProvider))).Returns(_mockLockProvider.Object);
+        mockScopedProvider.Setup(p => p.GetService(typeof(IMessageBus))).Returns(_mockMessageBus.Object);
+        mockScopedProvider.Setup(p => p.GetService(typeof(IWorldstateClient))).Returns(mockWorldstateClient.Object);
+        mockScope.Setup(s => s.ServiceProvider).Returns(mockScopedProvider.Object);
+
+        var mockScopeFactory = new Mock<IServiceScopeFactory>();
+        mockScopeFactory.Setup(f => f.CreateScope()).Returns(mockScope.Object);
+
+        var mockServiceProvider = new Mock<IServiceProvider>();
+        mockServiceProvider.Setup(p => p.GetService(typeof(IServiceScopeFactory))).Returns(mockScopeFactory.Object);
+
+        SeedGrowthModel? savedGrowth = null;
+        _mockGrowthStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedGrowthModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, SeedGrowthModel, StateOptions?, CancellationToken>((_, m, _, _) => savedGrowth = m)
+            .ReturnsAsync("etag");
+        _mockSeedStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SeedModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        using var worker = new SeedDecayWorkerService(
+            mockServiceProvider.Object, new NullTelemetryProvider(), _mockLogger.Object, _configuration,
+            Enumerable.Empty<ISeedEvolutionListener>());
+
+        // Act
+        await RunOneCycleAsync(worker);
+
+        // Assert: Worldstate was called
+        mockWorldstateClient.Verify(c => c.GetElapsedGameTimeAsync(
+            It.Is<GetElapsedGameTimeRequest>(r => r.RealmId == realmId),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Assert: decay applied using game-time (2 game days of 10% decay)
+        Assert.NotNull(savedGrowth);
+        var entry = savedGrowth.Domains["combat.melee"];
+        // Expected: 10 * (1 - 0.1)^2 = 10 * 0.81 = 8.1
+        Assert.True(entry.Depth > 7.5f && entry.Depth < 8.5f,
+            $"Expected depth ~8.1 after 2 game-days of 10% decay, got {entry.Depth}");
+    }
+
+    [Fact]
+    public async Task Worker_GameTimeSource_SeedWithoutRealmId_SkipsSeed()
+    {
+        // Arrange: GameTime mode but seed has no realmId
+        _configuration.GrowthDecayEnabled = true;
+        _configuration.GrowthDecayRatePerDay = 0.1f;
+        _configuration.DecayTimeSource = TimeSource.GameTime;
+
+        var seedType = CreateTestType(decayEnabled: null, decayRate: null);
+        SetupTypeQuery(new List<SeedTypeDefinitionModel> { seedType });
+
+        var seedId = Guid.NewGuid();
+        var seed = new SeedModel
+        {
+            SeedId = seedId,
+            GameServiceId = _testGameServiceId,
+            SeedTypeCode = "guardian",
+            GrowthPhase = "nascent",
+            TotalGrowth = 10f,
+            Status = SeedStatus.Active,
+            RealmId = null, // No realm — should be skipped
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-30)
+        };
+
+        SetupSeedQuery(new List<SeedModel> { seed }, 1);
+        _mockSeedStore.Setup(s => s.GetAsync($"seed:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seed);
+
+        var growth = new SeedGrowthModel
+        {
+            SeedId = seedId,
+            LastDecayedAt = null,
+            Domains = new Dictionary<string, DomainGrowthEntry>
+            {
+                { "combat.melee", new DomainGrowthEntry { Depth = 10f, LastActivityAt = DateTimeOffset.UtcNow.AddDays(-5), PeakDepth = 10f } }
+            }
+        };
+        _mockGrowthStore.Setup(s => s.GetAsync($"growth:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(growth);
+
+        using var worker = CreateWorker();
+
+        // Act
+        await RunOneCycleAsync(worker);
+
+        // Assert: growth was NOT modified (seed skipped — no realmId in GameTime mode)
+        _mockGrowthStore.Verify(s => s.SaveAsync(
+            It.IsAny<string>(), It.IsAny<SeedGrowthModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Worker_GameTimeSource_WorldstateUnavailable_SkipsSeed()
+    {
+        // Arrange: GameTime mode, Worldstate throws
+        _configuration.GrowthDecayEnabled = true;
+        _configuration.GrowthDecayRatePerDay = 0.1f;
+        _configuration.DecayTimeSource = TimeSource.GameTime;
+
+        var realmId = Guid.NewGuid();
+        var seedType = CreateTestType(decayEnabled: null, decayRate: null);
+        SetupTypeQuery(new List<SeedTypeDefinitionModel> { seedType });
+
+        var seedId = Guid.NewGuid();
+        var seed = new SeedModel
+        {
+            SeedId = seedId,
+            GameServiceId = _testGameServiceId,
+            SeedTypeCode = "guardian",
+            GrowthPhase = "nascent",
+            TotalGrowth = 10f,
+            Status = SeedStatus.Active,
+            RealmId = realmId,
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-30)
+        };
+
+        SetupSeedQuery(new List<SeedModel> { seed }, 1);
+        _mockSeedStore.Setup(s => s.GetAsync($"seed:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(seed);
+
+        var growth = new SeedGrowthModel
+        {
+            SeedId = seedId,
+            LastDecayedAt = null,
+            Domains = new Dictionary<string, DomainGrowthEntry>
+            {
+                { "combat.melee", new DomainGrowthEntry { Depth = 10f, LastActivityAt = DateTimeOffset.UtcNow.AddDays(-5), PeakDepth = 10f } }
+            }
+        };
+        _mockGrowthStore.Setup(s => s.GetAsync($"growth:{seedId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(growth);
+
+        // Mock IWorldstateClient that throws
+        var mockWorldstateClient = new Mock<IWorldstateClient>();
+        mockWorldstateClient
+            .Setup(c => c.GetElapsedGameTimeAsync(It.IsAny<GetElapsedGameTimeRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Worldstate unavailable", 503, null, null, null));
+
+        var mockScope = new Mock<IServiceScope>();
+        var mockScopedProvider = new Mock<IServiceProvider>();
+        mockScopedProvider.Setup(p => p.GetService(typeof(IStateStoreFactory))).Returns(_mockStateStoreFactory.Object);
+        mockScopedProvider.Setup(p => p.GetService(typeof(IDistributedLockProvider))).Returns(_mockLockProvider.Object);
+        mockScopedProvider.Setup(p => p.GetService(typeof(IMessageBus))).Returns(_mockMessageBus.Object);
+        mockScopedProvider.Setup(p => p.GetService(typeof(IWorldstateClient))).Returns(mockWorldstateClient.Object);
+        mockScope.Setup(s => s.ServiceProvider).Returns(mockScopedProvider.Object);
+
+        var mockScopeFactory = new Mock<IServiceScopeFactory>();
+        mockScopeFactory.Setup(f => f.CreateScope()).Returns(mockScope.Object);
+        var mockServiceProvider = new Mock<IServiceProvider>();
+        mockServiceProvider.Setup(p => p.GetService(typeof(IServiceScopeFactory))).Returns(mockScopeFactory.Object);
+
+        using var worker = new SeedDecayWorkerService(
+            mockServiceProvider.Object, new NullTelemetryProvider(), _mockLogger.Object, _configuration,
+            Enumerable.Empty<ISeedEvolutionListener>());
+
+        // Act
+        await RunOneCycleAsync(worker);
+
+        // Assert: growth was NOT modified (Worldstate unavailable)
+        _mockGrowthStore.Verify(s => s.SaveAsync(
+            It.IsAny<string>(), It.IsAny<SeedGrowthModel>(),
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion

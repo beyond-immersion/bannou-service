@@ -24,6 +24,7 @@ Character encounter tracking service (L4 GameFeatures) for memorable interaction
 | lib-messaging (`IMessageBus`) | Publishing encounter lifecycle events; error event publishing |
 | lib-character (`ICharacterClient`) | Validating participant character IDs exist on RecordEncounter |
 | lib-resource (`IResourceClient`) | Registering cleanup and compression callbacks on startup |
+| lib-worldstate (`IWorldstateClient`, L2) | `GetElapsedGameTimeAsync(realmId, from, to)` for game-time memory decay when `DecayTimeSource == GameTime`. Uses encounter's `realmId`. |
 
 ---
 
@@ -93,6 +94,7 @@ None. Character deletion cleanup is handled via lib-resource cleanup callbacks (
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
+| `DecayTimeSource` | `CHARACTER_ENCOUNTER_DECAY_TIME_SOURCE` | `GameTime` | Whether memory decay elapsed time uses real-world time or game-world time via Worldstate (`$ref: TimeSource`). Uses encounter's realmId for game-time queries. |
 | `MemoryDecayEnabled` | `CHARACTER_ENCOUNTER_MEMORY_DECAY_ENABLED` | `true` | Enable/disable memory decay system |
 | `MemoryDecayMode` | `CHARACTER_ENCOUNTER_MEMORY_DECAY_MODE` | `lazy` | Decay mode: 'lazy' (on access) or 'scheduled' |
 | `ScheduledDecayCheckIntervalMinutes` | `CHARACTER_ENCOUNTER_SCHEDULED_DECAY_CHECK_INTERVAL_MINUTES` | `60` | Minutes between scheduled decay checks (only when mode is 'scheduled') |
@@ -408,7 +410,7 @@ None. All stubs have been implemented.
 
 ### Resolved Design Considerations
 
-- ~~**Memory decay uses real-time, should use game-time**~~ ([#544](https://github.com/beyond-immersion/bannou-service/issues/544)/[#545](https://github.com/beyond-immersion/bannou-service/issues/545), resolved 2026-03-19): `MemoryDecaySchedulerService` will transition to game-time via `GetElapsedGameTime`. Add `DecayTimeSource` config property (`$ref: TimeSource` from `common-api.yaml`, default: `GameTime`). `TimeSource` enum is shared across Currency autogain, Seed decay, and Character-Encounter memory decay. Uses encounter's `realmId` for `GetElapsedGameTime`. `IWorldstateClient` (L2) is a valid hard dependency for L4. Also: add optional `gameTimeSnapshot` companion field to encounter records for narrative game-time context alongside existing DateTimeOffset `timestamp`.
+- ~~**Memory decay uses real-time, should use game-time**~~ ([#544](https://github.com/beyond-immersion/bannou-service/issues/544)/[#545](https://github.com/beyond-immersion/bannou-service/issues/545), **IMPLEMENTED** 2026-03-20): `DecayTimeSource` config property (`$ref: TimeSource`, default: `GameTime`). `MemoryDecaySchedulerService` and lazy decay both call `IWorldstateClient.GetElapsedGameTimeAsync` using the encounter's `realmId` when `GameTime`. `IWorldstateClient` (L2) is a valid hard dependency for L4.
 
 ---
 

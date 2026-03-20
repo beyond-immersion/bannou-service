@@ -14,6 +14,11 @@ info:
 paths: {}
 x-service-configuration:
   properties:
+    DecayTimeSource:
+      $ref: 'common-api.yaml#/components/schemas/TimeSource'
+      env: CHARACTER_ENCOUNTER_DECAY_TIME_SOURCE
+      default: GameTime
+      description: Whether memory decay elapsed time uses real-world time or game-world time via Worldstate. Uses encounter realmId for game-time queries.
     MemoryDecayEnabled:
       type: boolean
       description: Enable time-based memory decay for encounter perspectives

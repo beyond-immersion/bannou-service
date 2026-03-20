@@ -1,5 +1,7 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Worldstate;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -153,6 +155,8 @@ public class MemoryDecaySchedulerService : BackgroundService
 
         var perspectiveStore = stateStoreFactory.GetStore<PerspectiveData>(StateStoreDefinitions.CharacterEncounter);
         var indexStore = stateStoreFactory.GetStore<CharacterIndexData>(StateStoreDefinitions.CharacterEncounter);
+        var encounterStore = stateStoreFactory.GetStore<EncounterData>(StateStoreDefinitions.CharacterEncounter);
+        var worldstateClient = scope.ServiceProvider.GetRequiredService<IWorldstateClient>();
 
         var totalProcessed = 0;
         var totalFaded = 0;
@@ -169,6 +173,8 @@ public class MemoryDecaySchedulerService : BackgroundService
                     characterId,
                     indexStore,
                     perspectiveStore,
+                    encounterStore,
+                    worldstateClient,
                     messageBus,
                     cancellationToken);
 
@@ -197,6 +203,8 @@ public class MemoryDecaySchedulerService : BackgroundService
         Guid characterId,
         IStateStore<CharacterIndexData> indexStore,
         IStateStore<PerspectiveData> perspectiveStore,
+        IStateStore<EncounterData> encounterStore,
+        IWorldstateClient worldstateClient,
         IMessageBus messageBus,
         CancellationToken cancellationToken)
     {
@@ -218,12 +226,60 @@ public class MemoryDecaySchedulerService : BackgroundService
             if (perspective == null)
                 continue;
 
-            var (needsDecay, willFade) = CalculateDecay(perspective);
-            if (!needsDecay)
-                continue;
+            // Resolve decay amount based on time source
+            double decayAmount;
+            bool needsDecay;
+            bool willFade;
+
+            if (_configuration.DecayTimeSource == TimeSource.GameTime)
+            {
+                // Load encounter to get realmId for game-time query
+                var encounter = await encounterStore.GetAsync($"enc-{perspective.EncounterId}", cancellationToken);
+                if (encounter is null)
+                {
+                    continue; // Orphaned perspective — skip
+                }
+
+                try
+                {
+                    var fromTime = perspective.LastDecayedAtUnix.HasValue
+                        ? DateTimeOffset.FromUnixTimeSeconds(perspective.LastDecayedAtUnix.Value)
+                        : DateTimeOffset.FromUnixTimeSeconds(perspective.CreatedAtUnix);
+                    var elapsedResponse = await worldstateClient.GetElapsedGameTimeAsync(
+                        new GetElapsedGameTimeRequest
+                        {
+                            RealmId = encounter.RealmId,
+                            FromRealTime = fromTime,
+                            ToRealTime = DateTimeOffset.UtcNow
+                        }, cancellationToken);
+
+                    var gameHours = elapsedResponse.TotalGameSeconds / 3600.0;
+                    var intervals = gameHours / _configuration.MemoryDecayIntervalHours;
+                    if (intervals < 1)
+                        continue;
+
+                    decayAmount = intervals * _configuration.MemoryDecayRate;
+                    needsDecay = true;
+                    var newStrengthPreview = perspective.MemoryStrength - decayAmount;
+                    var wasBelowThreshold = perspective.MemoryStrength <= _configuration.MemoryFadeThreshold;
+                    willFade = !wasBelowThreshold && newStrengthPreview <= _configuration.MemoryFadeThreshold;
+                }
+                catch (ApiException ex)
+                {
+                    _logger.LogWarning(ex, "Worldstate unavailable for realm {RealmId} during scheduled memory decay, skipping perspective {PerspectiveId}",
+                        encounter.RealmId, perspectiveId);
+                    continue;
+                }
+            }
+            else
+            {
+                (needsDecay, willFade) = CalculateDecay(perspective);
+                if (!needsDecay)
+                    continue;
+                decayAmount = GetDecayAmount(perspective);
+            }
 
             processed++;
-            var decayAmount = GetDecayAmount(perspective);
             var previousStrength = perspective.MemoryStrength;
 
             perspective.MemoryStrength = (float)Math.Max(0, previousStrength - decayAmount);

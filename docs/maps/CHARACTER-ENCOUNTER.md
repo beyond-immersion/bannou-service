@@ -52,6 +52,7 @@ All 10 typed store variables share a single `StateStoreDefinitions.CharacterEnco
 | lib-telemetry (`ITelemetryProvider`) | L0 | Hard | Span instrumentation on async helpers and event handlers |
 | lib-resource (`IResourceClient`) | L1 | Hard | Registering/unregistering character references; cleanup and compression callback registration at startup |
 | lib-character (`ICharacterClient`) | L2 | Hard | Validating participant character IDs exist during encounter recording |
+| lib-worldstate (`IWorldstateClient`) | L2 | Hard | `GetElapsedGameTimeAsync(realmId, from, to)` for game-time memory decay when `DecayTimeSource == GameTime` |
 | `IEncounterDataCache` | Internal | Hard | Singleton in-memory TTL cache; invalidated via self-event-subscription |
 
 **IStateStoreFactory handling**: Used only in constructor to populate 10 readonly store fields. Not stored as a field (correct per Foundation Tenets).
@@ -106,6 +107,7 @@ No external event subscriptions. `x-event-subscriptions: []` in schema.
 | `ICharacterClient` | Character existence validation |
 | `IResourceClient` | Reference registration/unregistration |
 | `IEncounterDataCache` | In-memory encounter cache invalidation |
+| `IWorldstateClient` | Game-time elapsed calculation for decay when `DecayTimeSource == GameTime` |
 | `ITelemetryProvider` | Telemetry spans |
 | `IEventConsumer` | Self-event handler registration for cache invalidation |
 
@@ -575,6 +577,11 @@ RETURN (200, RestoreFromArchiveResponse { encountersRestored, perspectivesRestor
 // Self-disables if config.MemoryDecayEnabled=false OR config.MemoryDecayMode != Scheduled
 // Follows canonical worker polling loop skeleton
 // Each cycle:
+//   When DecayTimeSource == GameTime:
+//     For each perspective, resolve encounter's realmId, call IWorldstateClient.GetElapsedGameTimeAsync
+//     Use game-seconds for decay interval calculation instead of real-time hours
+//   When DecayTimeSource == RealTime:
+//     Use existing real-time calculation (hours since last decay)
 CALL CharacterEncounterService.DecayMemoriesAsync({ characterId: null, dryRun: false })
   // Delegates to the service method which handles global character index iteration
 // Per-cycle telemetry span; per-item error isolation; WorkerErrorPublisher on cycle failure

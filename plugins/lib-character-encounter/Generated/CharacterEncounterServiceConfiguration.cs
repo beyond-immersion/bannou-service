@@ -64,6 +64,12 @@ public class CharacterEncounterServiceConfiguration : BaseServiceConfiguration
 {
 
     /// <summary>
+    /// Whether memory decay elapsed time uses real-world time or game-world time via Worldstate. Uses encounter realmId for game-time queries.
+    /// Environment variable: CHARACTER_ENCOUNTER_DECAY_TIME_SOURCE
+    /// </summary>
+    public TimeSource DecayTimeSource { get; set; } = TimeSource.GameTime;
+
+    /// <summary>
     /// Enable time-based memory decay for encounter perspectives
     /// Environment variable: CHARACTER_ENCOUNTER_MEMORY_DECAY_ENABLED
     /// </summary>
