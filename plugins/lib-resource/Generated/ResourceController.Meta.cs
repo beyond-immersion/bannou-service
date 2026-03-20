@@ -4564,6 +4564,7 @@ public partial class ResourceController
                 "createdAt",
                 "updatedAt",
                 "ttlSeconds",
+                "validationAttempts",
                 "provisions"
             ],
             "properties": {
@@ -4647,7 +4648,8 @@ public partial class ResourceController
                 "resourceType",
                 "resourceId",
                 "status",
-                "registeredAt"
+                "registeredAt",
+                "compensationAttempts"
             ],
             "properties": {
                 "provisionId": {

@@ -537,7 +537,7 @@ public class TransactionRecoveryWorker : BackgroundService
         // Query terminal transactions past retention
         var terminalTransactions = await queryStore.QueryAsync(
             t => (t.Status == TransactionStatus.Committed || t.Status == TransactionStatus.Aborted)
-                 && t.UpdatedAt < retentionCutoff, ct);
+                && t.UpdatedAt < retentionCutoff, ct);
 
         foreach (var transaction in terminalTransactions)
         {

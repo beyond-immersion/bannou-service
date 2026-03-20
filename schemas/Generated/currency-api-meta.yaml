@@ -122,37 +122,35 @@ paths:
         \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Season
         ID for end_of_season expiration policy\"\n                },\n                \"linkedToItem\": {\n              \
         \      \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether
-        this currency is represented by an inventory item\"\n                },\n                \"linkedItemTemplateId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Item template ID if linked to inventory\"\n            \
-        \    },\n                \"linkageMode\": {\n                    \"$ref\": \"#/$defs/ItemLinkageMode\",\n        \
-        \            \"nullable\": true,\n                    \"description\": \"How the item linkage works (null when linkedToItem
-        is false)\"\n                },\n                \"isBaseCurrency\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"Whether this is the base currency
-        for its scope\"\n                },\n                \"exchangeRateToBase\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Exchange rate relative to base currency (null for base itself)\"\n                },\n                \"iconAssetId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Asset ID for currency icon\"\n                },\n     \
-        \           \"displayFormat\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 200,\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Format string for display (e.g. '{amount}
-        gold', '${amount}')\"\n                }\n            }\n        },\n        \"CurrencyScope\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Scope of currency availability across realms\",\n            \"\
-        enum\": [\n                \"Global\",\n                \"RealmSpecific\",\n                \"MultiRealm\"\n     \
-        \       ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How the currency handles decimal values (immutable after creation)\",\n            \"enum\": [\n             \
-        \   \"Integer\",\n                \"Decimal2\",\n                \"Decimal4\",\n                \"Decimal8\",\n  \
-        \              \"DecimalFull\",\n                \"BigInteger\"\n            ]\n        },\n        \"CapOverflowBehavior\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"What happens when a credit would exceed the
-        wallet cap\",\n            \"enum\": [\n                \"Reject\",\n                \"CapAndLose\",\n           \
-        \     \"CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"How autogain (energy/interest) is calculated\",\n            \"enum\": [\n       \
-        \         \"Simple\",\n                \"Compound\"\n            ]\n        },\n        \"ExpirationPolicy\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How currency expiration is determined\",\n    \
-        \        \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n                \"EndOfSeason\"\
-        \n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How currency is linked to inventory items\",\n            \"enum\": [\n                \"None\",\n           \
-        \     \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n        }\n    }\n}"
+        this currency is linked to an item template for cross-entity reference. When true, linkedItemTemplateId must be set
+        and is validated against lib-item at creation time. Display semantics (icon, rendering mode) are game-specific and
+        belong in client metadata.\"\n                },\n                \"linkedItemTemplateId\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Item template ID this currency is linked to. Validated at creation time. Null
+        when linkedToItem is false.\"\n                },\n                \"isBaseCurrency\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether this is the
+        base currency for its scope\"\n                },\n                \"exchangeRateToBase\": {\n                   \
+        \ \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n  \
+        \                  \"description\": \"Exchange rate relative to base currency (null for base itself)\"\n         \
+        \       },\n                \"iconAssetId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Asset ID for
+        currency icon\"\n                },\n                \"displayFormat\": {\n                    \"type\": \"string\"\
+        ,\n                    \"maxLength\": 200,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Format string for display (e.g. '{amount} gold', '${amount}')\"\n                }\n            }\n        },\n\
+        \        \"CurrencyScope\": {\n            \"type\": \"string\",\n            \"description\": \"Scope of currency
+        availability across realms\",\n            \"enum\": [\n                \"Global\",\n                \"RealmSpecific\"\
+        ,\n                \"MultiRealm\"\n            ]\n        },\n        \"CurrencyPrecision\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"How the currency handles decimal values (immutable after creation)\"\
+        ,\n            \"enum\": [\n                \"Integer\",\n                \"Decimal2\",\n                \"Decimal4\"\
+        ,\n                \"Decimal8\",\n                \"DecimalFull\",\n                \"BigInteger\"\n            ]\n\
+        \        },\n        \"CapOverflowBehavior\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        What happens when a credit would exceed the wallet cap\",\n            \"enum\": [\n                \"Reject\",\n\
+        \                \"CapAndLose\",\n                \"CapAndReturn\"\n            ]\n        },\n        \"AutogainMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How autogain (energy/interest) is calculated\"\
+        ,\n            \"enum\": [\n                \"Simple\",\n                \"Compound\"\n            ]\n        },\n\
+        \        \"ExpirationPolicy\": {\n            \"type\": \"string\",\n            \"description\": \"How currency expiration
+        is determined\",\n            \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n\
+        \                \"EndOfSeason\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CurrencyDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"CurrencyDefinitionResponse\": {\n            \"allOf\": [\n                {\n    \
         \                \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n    \
@@ -211,13 +209,11 @@ paths:
         : \"Expiration duration\"\n                },\n                \"seasonId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Season ID for expiration\"\n                },\n                \"linkedToItem\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether linked to inventory item\"\n                },\n  \
-        \              \"linkedItemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"boolean\",\n                    \"description\": \"Whether linked to an item template\"\n                },\n\
+        \                \"linkedItemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Linked item template
-        ID\"\n                },\n                \"linkageMode\": {\n                    \"$ref\": \"#/$defs/ItemLinkageMode\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Item linkage mode\"\n         \
-        \       },\n                \"isBaseCurrency\": {\n                    \"type\": \"boolean\",\n                  \
-        \  \"description\": \"Whether this is the base currency\"\n                },\n                \"exchangeRateToBase\"\
+        ID\"\n                },\n                \"isBaseCurrency\": {\n                    \"type\": \"boolean\",\n    \
+        \                \"description\": \"Whether this is the base currency\"\n                },\n                \"exchangeRateToBase\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
         nullable\": true,\n                    \"description\": \"Exchange rate to base currency\"\n                },\n \
         \               \"exchangeRateUpdatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
@@ -245,10 +241,7 @@ paths:
         ,\n            \"enum\": [\n                \"Simple\",\n                \"Compound\"\n            ]\n        },\n\
         \        \"ExpirationPolicy\": {\n            \"type\": \"string\",\n            \"description\": \"How currency expiration
         is determined\",\n            \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n\
-        \                \"EndOfSeason\"\n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"How currency is linked to inventory items\",\n            \"enum\":
-        [\n                \"None\",\n                \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n\
-        \        }\n    }\n}"
+        \                \"EndOfSeason\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new currency definition\",\n    \"description\": \"Creates a new
         currency type with its behavior rules. Code, precision, and scope\\nare immutable after creation. Only one base currency
         per scope is allowed.\\n\",\n    \"tags\": [\n        \"Currency Definition\"\n    ],\n    \"deprecated\": false,\n\
@@ -347,13 +340,11 @@ paths:
         : \"Expiration duration\"\n                },\n                \"seasonId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Season ID for expiration\"\n                },\n                \"linkedToItem\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether linked to inventory item\"\n                },\n  \
-        \              \"linkedItemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"boolean\",\n                    \"description\": \"Whether linked to an item template\"\n                },\n\
+        \                \"linkedItemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Linked item template
-        ID\"\n                },\n                \"linkageMode\": {\n                    \"$ref\": \"#/$defs/ItemLinkageMode\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Item linkage mode\"\n         \
-        \       },\n                \"isBaseCurrency\": {\n                    \"type\": \"boolean\",\n                  \
-        \  \"description\": \"Whether this is the base currency\"\n                },\n                \"exchangeRateToBase\"\
+        ID\"\n                },\n                \"isBaseCurrency\": {\n                    \"type\": \"boolean\",\n    \
+        \                \"description\": \"Whether this is the base currency\"\n                },\n                \"exchangeRateToBase\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
         nullable\": true,\n                    \"description\": \"Exchange rate to base currency\"\n                },\n \
         \               \"exchangeRateUpdatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
@@ -381,10 +372,7 @@ paths:
         ,\n            \"enum\": [\n                \"Simple\",\n                \"Compound\"\n            ]\n        },\n\
         \        \"ExpirationPolicy\": {\n            \"type\": \"string\",\n            \"description\": \"How currency expiration
         is determined\",\n            \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n\
-        \                \"EndOfSeason\"\n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"How currency is linked to inventory items\",\n            \"enum\":
-        [\n                \"None\",\n                \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n\
-        \        }\n    }\n}"
+        \                \"EndOfSeason\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get currency definition by ID or code\",\n    \"description\": \"Retrieves
         a currency definition by its unique ID or code.\\nAt least one of definitionId or code must be provided.\\n\",\n \
         \   \"tags\": [\n        \"Currency Definition\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getCurrencyDefinition\"\
@@ -493,14 +481,12 @@ paths:
         \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Season ID for expiration\"\n                },\n                \"\
         linkedToItem\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether linked
-        to inventory item\"\n                },\n                \"linkedItemTemplateId\": {\n                    \"type\"\
+        to an item template\"\n                },\n                \"linkedItemTemplateId\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Linked item template ID\"\n                },\n                \"linkageMode\": {\n    \
-        \                \"$ref\": \"#/$defs/ItemLinkageMode\",\n                    \"nullable\": true,\n               \
-        \     \"description\": \"Item linkage mode\"\n                },\n                \"isBaseCurrency\": {\n        \
-        \            \"type\": \"boolean\",\n                    \"description\": \"Whether this is the base currency\"\n\
-        \                },\n                \"exchangeRateToBase\": {\n                    \"type\": \"number\",\n      \
-        \              \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
+        \      \"description\": \"Linked item template ID\"\n                },\n                \"isBaseCurrency\": {\n \
+        \                   \"type\": \"boolean\",\n                    \"description\": \"Whether this is the base currency\"\
+        \n                },\n                \"exchangeRateToBase\": {\n                    \"type\": \"number\",\n     \
+        \               \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Exchange rate to base currency\"\n                },\n                \"exchangeRateUpdatedAt\": {\n         \
         \           \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"When exchange rate was last updated\"\n                },\n      \
@@ -527,9 +513,7 @@ paths:
         \   \"Simple\",\n                \"Compound\"\n            ]\n        },\n        \"ExpirationPolicy\": {\n      \
         \      \"type\": \"string\",\n            \"description\": \"How currency expiration is determined\",\n          \
         \  \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n                \"EndOfSeason\"\
-        \n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How currency is linked to inventory items\",\n            \"enum\": [\n                \"None\",\n           \
-        \     \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n        }\n    }\n}"
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List currency definitions with filters\",\n    \"description\": \"Lists
         currency definitions with optional filtering by realm, scope,\\nactive status, and base currency flag.\\n\",\n   \
         \ \"tags\": [\n        \"Currency Definition\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listCurrencyDefinitions\"\
@@ -671,13 +655,11 @@ paths:
         : \"Expiration duration\"\n                },\n                \"seasonId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Season ID for expiration\"\n                },\n                \"linkedToItem\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether linked to inventory item\"\n                },\n  \
-        \              \"linkedItemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"boolean\",\n                    \"description\": \"Whether linked to an item template\"\n                },\n\
+        \                \"linkedItemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Linked item template
-        ID\"\n                },\n                \"linkageMode\": {\n                    \"$ref\": \"#/$defs/ItemLinkageMode\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Item linkage mode\"\n         \
-        \       },\n                \"isBaseCurrency\": {\n                    \"type\": \"boolean\",\n                  \
-        \  \"description\": \"Whether this is the base currency\"\n                },\n                \"exchangeRateToBase\"\
+        ID\"\n                },\n                \"isBaseCurrency\": {\n                    \"type\": \"boolean\",\n    \
+        \                \"description\": \"Whether this is the base currency\"\n                },\n                \"exchangeRateToBase\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
         nullable\": true,\n                    \"description\": \"Exchange rate to base currency\"\n                },\n \
         \               \"exchangeRateUpdatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
@@ -705,10 +687,7 @@ paths:
         ,\n            \"enum\": [\n                \"Simple\",\n                \"Compound\"\n            ]\n        },\n\
         \        \"ExpirationPolicy\": {\n            \"type\": \"string\",\n            \"description\": \"How currency expiration
         is determined\",\n            \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n\
-        \                \"EndOfSeason\"\n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"How currency is linked to inventory items\",\n            \"enum\":
-        [\n                \"None\",\n                \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n\
-        \        }\n    }\n}"
+        \                \"EndOfSeason\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update mutable fields of a currency definition\",\n    \"description\"\
         : \"Updates mutable fields of a currency definition. Code, precision, and scope\\nare immutable after creation and
         cannot be changed.\\n\",\n    \"tags\": [\n        \"Currency Definition\"\n    ],\n    \"deprecated\": false,\n \
@@ -808,13 +787,11 @@ paths:
         : \"Expiration duration\"\n                },\n                \"seasonId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Season ID for expiration\"\n                },\n                \"linkedToItem\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether linked to inventory item\"\n                },\n  \
-        \              \"linkedItemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"boolean\",\n                    \"description\": \"Whether linked to an item template\"\n                },\n\
+        \                \"linkedItemTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Linked item template
-        ID\"\n                },\n                \"linkageMode\": {\n                    \"$ref\": \"#/$defs/ItemLinkageMode\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Item linkage mode\"\n         \
-        \       },\n                \"isBaseCurrency\": {\n                    \"type\": \"boolean\",\n                  \
-        \  \"description\": \"Whether this is the base currency\"\n                },\n                \"exchangeRateToBase\"\
+        ID\"\n                },\n                \"isBaseCurrency\": {\n                    \"type\": \"boolean\",\n    \
+        \                \"description\": \"Whether this is the base currency\"\n                },\n                \"exchangeRateToBase\"\
         : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
         nullable\": true,\n                    \"description\": \"Exchange rate to base currency\"\n                },\n \
         \               \"exchangeRateUpdatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
@@ -842,10 +819,7 @@ paths:
         ,\n            \"enum\": [\n                \"Simple\",\n                \"Compound\"\n            ]\n        },\n\
         \        \"ExpirationPolicy\": {\n            \"type\": \"string\",\n            \"description\": \"How currency expiration
         is determined\",\n            \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n\
-        \                \"EndOfSeason\"\n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"How currency is linked to inventory items\",\n            \"enum\":
-        [\n                \"None\",\n                \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n\
-        \        }\n    }\n}"
+        \                \"EndOfSeason\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deprecate a currency definition (Category B \\u2014 one-way, no delete)\"\
         ,\n    \"description\": \"Deprecates a currency definition. Existing wallets continue to function\\nbut no new wallets
         can be created for this currency.\\nCategory B entity: deprecation is one-way (no undeprecate), no delete endpoint.\\
@@ -2477,14 +2451,12 @@ paths:
         \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Season ID for expiration\"\n                },\n                \"\
         linkedToItem\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether linked
-        to inventory item\"\n                },\n                \"linkedItemTemplateId\": {\n                    \"type\"\
+        to an item template\"\n                },\n                \"linkedItemTemplateId\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Linked item template ID\"\n                },\n                \"linkageMode\": {\n    \
-        \                \"$ref\": \"#/$defs/ItemLinkageMode\",\n                    \"nullable\": true,\n               \
-        \     \"description\": \"Item linkage mode\"\n                },\n                \"isBaseCurrency\": {\n        \
-        \            \"type\": \"boolean\",\n                    \"description\": \"Whether this is the base currency\"\n\
-        \                },\n                \"exchangeRateToBase\": {\n                    \"type\": \"number\",\n      \
-        \              \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
+        \      \"description\": \"Linked item template ID\"\n                },\n                \"isBaseCurrency\": {\n \
+        \                   \"type\": \"boolean\",\n                    \"description\": \"Whether this is the base currency\"\
+        \n                },\n                \"exchangeRateToBase\": {\n                    \"type\": \"number\",\n     \
+        \               \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Exchange rate to base currency\"\n                },\n                \"exchangeRateUpdatedAt\": {\n         \
         \           \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"When exchange rate was last updated\"\n                },\n      \
@@ -2511,9 +2483,7 @@ paths:
         \   \"Simple\",\n                \"Compound\"\n            ]\n        },\n        \"ExpirationPolicy\": {\n      \
         \      \"type\": \"string\",\n            \"description\": \"How currency expiration is determined\",\n          \
         \  \"enum\": [\n                \"FixedDate\",\n                \"DurationFromEarn\",\n                \"EndOfSeason\"\
-        \n            ]\n        },\n        \"ItemLinkageMode\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How currency is linked to inventory items\",\n            \"enum\": [\n                \"None\",\n           \
-        \     \"VisualOnly\",\n                \"ReferenceOnly\"\n            ]\n        }\n    }\n}"
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update a currency's exchange rate to base\",\n    \"description\": \"Updates
         the exchange rate of a currency relative to the base currency.\\nCannot set rate on the base currency itself.\\n\"\
         ,\n    \"tags\": [\n        \"Conversion\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateExchangeRate\"\
@@ -3669,13 +3639,6 @@ components:
       - FixedDate
       - DurationFromEarn
       - EndOfSeason
-    ItemLinkageMode:
-      type: string
-      description: How currency is linked to inventory items
-      enum:
-      - None
-      - VisualOnly
-      - ReferenceOnly
     TransactionType:
       type: string
       description: Classification of the currency transaction
@@ -3847,16 +3810,15 @@ components:
         linkedToItem:
           type: boolean
           default: false
-          description: Whether this currency is represented by an inventory item
+          description: Whether this currency is linked to an item template for cross-entity reference. When true, 
+            linkedItemTemplateId must be set and is validated against lib-item at creation time. Display semantics 
+            (icon, rendering mode) are game-specific and belong in client metadata.
         linkedItemTemplateId:
           type: string
           format: uuid
           nullable: true
-          description: Item template ID if linked to inventory
-        linkageMode:
-          $ref: '#/components/schemas/ItemLinkageMode'
-          nullable: true
-          description: How the item linkage works (null when linkedToItem is false)
+          description: Item template ID this currency is linked to. Validated at creation time. Null when linkedToItem 
+            is false.
         isBaseCurrency:
           type: boolean
           default: false
@@ -4162,16 +4124,12 @@ components:
           description: Season ID for expiration
         linkedToItem:
           type: boolean
-          description: Whether linked to inventory item
+          description: Whether linked to an item template
         linkedItemTemplateId:
           type: string
           format: uuid
           nullable: true
           description: Linked item template ID
-        linkageMode:
-          $ref: '#/components/schemas/ItemLinkageMode'
-          nullable: true
-          description: Item linkage mode
         isBaseCurrency:
           type: boolean
           description: Whether this is the base currency

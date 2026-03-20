@@ -176,18 +176,13 @@ public partial class CurrencyController
                 "linkedToItem": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Whether this currency is represented by an inventory item"
+                    "description": "Whether this currency is linked to an item template for cross-entity reference. When true, linkedItemTemplateId must be set and is validated against lib-item at creation time. Display semantics (icon, rendering mode) are game-specific and belong in client metadata."
                 },
                 "linkedItemTemplateId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
-                    "description": "Item template ID if linked to inventory"
-                },
-                "linkageMode": {
-                    "$ref": "#/$defs/ItemLinkageMode",
-                    "nullable": true,
-                    "description": "How the item linkage works (null when linkedToItem is false)"
+                    "description": "Item template ID this currency is linked to. Validated at creation time. Null when linkedToItem is false."
                 },
                 "isBaseCurrency": {
                     "type": "boolean",
@@ -259,15 +254,6 @@ public partial class CurrencyController
                 "FixedDate",
                 "DurationFromEarn",
                 "EndOfSeason"
-            ]
-        },
-        "ItemLinkageMode": {
-            "type": "string",
-            "description": "How currency is linked to inventory items",
-            "enum": [
-                "None",
-                "VisualOnly",
-                "ReferenceOnly"
             ]
         }
     }
@@ -440,18 +426,13 @@ public partial class CurrencyController
                 },
                 "linkedToItem": {
                     "type": "boolean",
-                    "description": "Whether linked to inventory item"
+                    "description": "Whether linked to an item template"
                 },
                 "linkedItemTemplateId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
                     "description": "Linked item template ID"
-                },
-                "linkageMode": {
-                    "$ref": "#/$defs/ItemLinkageMode",
-                    "nullable": true,
-                    "description": "Item linkage mode"
                 },
                 "isBaseCurrency": {
                     "type": "boolean",
@@ -542,15 +523,6 @@ public partial class CurrencyController
                 "FixedDate",
                 "DurationFromEarn",
                 "EndOfSeason"
-            ]
-        },
-        "ItemLinkageMode": {
-            "type": "string",
-            "description": "How currency is linked to inventory items",
-            "enum": [
-                "None",
-                "VisualOnly",
-                "ReferenceOnly"
             ]
         }
     }
@@ -807,18 +779,13 @@ public partial class CurrencyController
                 },
                 "linkedToItem": {
                     "type": "boolean",
-                    "description": "Whether linked to inventory item"
+                    "description": "Whether linked to an item template"
                 },
                 "linkedItemTemplateId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
                     "description": "Linked item template ID"
-                },
-                "linkageMode": {
-                    "$ref": "#/$defs/ItemLinkageMode",
-                    "nullable": true,
-                    "description": "Item linkage mode"
                 },
                 "isBaseCurrency": {
                     "type": "boolean",
@@ -909,15 +876,6 @@ public partial class CurrencyController
                 "FixedDate",
                 "DurationFromEarn",
                 "EndOfSeason"
-            ]
-        },
-        "ItemLinkageMode": {
-            "type": "string",
-            "description": "How currency is linked to inventory items",
-            "enum": [
-                "None",
-                "VisualOnly",
-                "ReferenceOnly"
             ]
         }
     }
@@ -1214,18 +1172,13 @@ public partial class CurrencyController
                 },
                 "linkedToItem": {
                     "type": "boolean",
-                    "description": "Whether linked to inventory item"
+                    "description": "Whether linked to an item template"
                 },
                 "linkedItemTemplateId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
                     "description": "Linked item template ID"
-                },
-                "linkageMode": {
-                    "$ref": "#/$defs/ItemLinkageMode",
-                    "nullable": true,
-                    "description": "Item linkage mode"
                 },
                 "isBaseCurrency": {
                     "type": "boolean",
@@ -1316,15 +1269,6 @@ public partial class CurrencyController
                 "FixedDate",
                 "DurationFromEarn",
                 "EndOfSeason"
-            ]
-        },
-        "ItemLinkageMode": {
-            "type": "string",
-            "description": "How currency is linked to inventory items",
-            "enum": [
-                "None",
-                "VisualOnly",
-                "ReferenceOnly"
             ]
         }
     }
@@ -1701,18 +1645,13 @@ public partial class CurrencyController
                 },
                 "linkedToItem": {
                     "type": "boolean",
-                    "description": "Whether linked to inventory item"
+                    "description": "Whether linked to an item template"
                 },
                 "linkedItemTemplateId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
                     "description": "Linked item template ID"
-                },
-                "linkageMode": {
-                    "$ref": "#/$defs/ItemLinkageMode",
-                    "nullable": true,
-                    "description": "Item linkage mode"
                 },
                 "isBaseCurrency": {
                     "type": "boolean",
@@ -1803,15 +1742,6 @@ public partial class CurrencyController
                 "FixedDate",
                 "DurationFromEarn",
                 "EndOfSeason"
-            ]
-        },
-        "ItemLinkageMode": {
-            "type": "string",
-            "description": "How currency is linked to inventory items",
-            "enum": [
-                "None",
-                "VisualOnly",
-                "ReferenceOnly"
             ]
         }
     }
@@ -2070,18 +2000,13 @@ public partial class CurrencyController
                 },
                 "linkedToItem": {
                     "type": "boolean",
-                    "description": "Whether linked to inventory item"
+                    "description": "Whether linked to an item template"
                 },
                 "linkedItemTemplateId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
                     "description": "Linked item template ID"
-                },
-                "linkageMode": {
-                    "$ref": "#/$defs/ItemLinkageMode",
-                    "nullable": true,
-                    "description": "Item linkage mode"
                 },
                 "isBaseCurrency": {
                     "type": "boolean",
@@ -2172,15 +2097,6 @@ public partial class CurrencyController
                 "FixedDate",
                 "DurationFromEarn",
                 "EndOfSeason"
-            ]
-        },
-        "ItemLinkageMode": {
-            "type": "string",
-            "description": "How currency is linked to inventory items",
-            "enum": [
-                "None",
-                "VisualOnly",
-                "ReferenceOnly"
             ]
         }
     }
@@ -6495,18 +6411,13 @@ public partial class CurrencyController
                 },
                 "linkedToItem": {
                     "type": "boolean",
-                    "description": "Whether linked to inventory item"
+                    "description": "Whether linked to an item template"
                 },
                 "linkedItemTemplateId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
                     "description": "Linked item template ID"
-                },
-                "linkageMode": {
-                    "$ref": "#/$defs/ItemLinkageMode",
-                    "nullable": true,
-                    "description": "Item linkage mode"
                 },
                 "isBaseCurrency": {
                     "type": "boolean",
@@ -6597,15 +6508,6 @@ public partial class CurrencyController
                 "FixedDate",
                 "DurationFromEarn",
                 "EndOfSeason"
-            ]
-        },
-        "ItemLinkageMode": {
-            "type": "string",
-            "description": "How currency is linked to inventory items",
-            "enum": [
-                "None",
-                "VisualOnly",
-                "ReferenceOnly"
             ]
         }
     }

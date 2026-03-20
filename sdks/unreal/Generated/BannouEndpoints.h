@@ -1522,12 +1522,6 @@ namespace Bannou
         /** Deprecate a seed type */
         constexpr const TCHAR* SeedDeprecateSeedType = TEXT("POST:/seed/type/deprecate");
 
-        /** Restore a deprecated seed type */
-        constexpr const TCHAR* SeedUndeprecateSeedType = TEXT("POST:/seed/type/undeprecate");
-
-        /** Delete a seed type */
-        constexpr const TCHAR* SeedDeleteSeedType = TEXT("POST:/seed/type/delete");
-
         /** Begin bond process between seeds */
         constexpr const TCHAR* SeedInitiateBond = TEXT("POST:/seed/bond/initiate");
 
@@ -5777,22 +5771,6 @@ namespace Bannou
                 TEXT("FDeprecateSeedTypeRequest"),
                 TEXT("FSeedTypeResponse"),
                 TEXT("Deprecate a seed type")
-            });
-            Registry.Add(TEXT("SeedUndeprecateSeedType"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/seed/type/undeprecate"),
-                TEXT("seed"),
-                TEXT("FUndeprecateSeedTypeRequest"),
-                TEXT("FSeedTypeResponse"),
-                TEXT("Restore a deprecated seed type")
-            });
-            Registry.Add(TEXT("SeedDeleteSeedType"), FEndpointInfo{
-                TEXT("POST"),
-                TEXT("/seed/type/delete"),
-                TEXT("seed"),
-                TEXT("FDeleteSeedTypeRequest"),
-                TEXT(""),
-                TEXT("Delete a seed type")
             });
             Registry.Add(TEXT("SeedInitiateBond"), FEndpointInfo{
                 TEXT("POST"),

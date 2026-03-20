@@ -492,7 +492,8 @@ paths:
         \    \"description\": \"Reason for the ratio change\"\n                }\n            }\n        },\n        \"TimeRatioChangeReason\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Why the time ratio was changed\",\n       \
         \     \"enum\": [\n                \"Initial\",\n                \"AdminAdjustment\",\n                \"Event\",\n\
-        \                \"Pause\",\n                \"Resume\"\n            ]\n        }\n    }\n}"
+        \                \"Pause\",\n                \"Resume\",\n                \"AutoPopulation\",\n                \"\
+        Compacted\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SetTimeRatioResponse\"\
         ,\n    \"$defs\": {\n        \"SetTimeRatioResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Result of time ratio change. Caller already knows realmId, newRatio, and
@@ -1491,6 +1492,8 @@ components:
       - Event
       - Pause
       - Resume
+      - AutoPopulation
+      - Compacted
     TimeSyncReason:
       type: string
       description: Why a time sync event was published to a client

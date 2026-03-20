@@ -504,6 +504,86 @@ paths:
       x-endpoint-info-json: "{\n    \"summary\": \"Archive a seed\",\n    \"description\": \"Soft-deletes a seed, preserving
         its data but removing it from active rotation. Archived seeds do not count toward the MaxPerOwner limit. Cannot archive
         an active seed.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"ArchiveSeed\"\n}"
+  /seed/reparent:
+    post:
+      operationId: ReparentSeed
+      summary: Change seed ownership
+      description: >
+        Atomically changes the ownerType and ownerId of a seed while preserving
+        all growth data, bonds, and capability cache. The new owner type must be
+        allowed by the seed type definition, and the new owner must not exceed
+        the per-owner seed limit. Seed must be Active or Dormant. Publishes
+        seed.updated with changedFields including ownerId and ownerType.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReparentSeedRequest'
+      responses:
+        '200':
+          description: Seed reparented successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedResponse'
+        '400':
+          description: >
+            Invalid request. New owner type not in AllowedOwnerTypes, or seed
+            is Archived.
+        '404':
+          description: Seed or seed type not found
+        '409':
+          description: >
+            Lock contention or new owner would exceed per-owner seed limit.
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ReparentSeedRequest\"\
+        ,\n    \"$defs\": {\n        \"ReparentSeedRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to change a seed's ownership. Atomically updates ownerType and ownerId
+        while preserving growth data, bonds, and cached capabilities.\\n\",\n            \"required\": [\n               \
+        \ \"seedId\",\n                \"newOwnerId\",\n                \"newOwnerType\"\n            ],\n            \"properties\"\
+        : {\n                \"seedId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"The seed to reparent.\"\n                },\n                \"newOwnerId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"The new owner entity ID.\"\n                },\n                \"newOwnerType\": {\n           \
+        \         \"type\": \"object\",\n                    \"description\": \"The new owner entity type. Must be in the
+        seed type's AllowedOwnerTypes.\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedResponse\"\
+        ,\n    \"$defs\": {\n        \"SeedResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Full seed entity response.\",\n            \"required\": [\n            \
+        \    \"seedId\",\n                \"ownerId\",\n                \"ownerType\",\n                \"seedTypeCode\",\n\
+        \                \"createdAt\",\n                \"growthPhase\",\n                \"totalGrowth\",\n            \
+        \    \"displayName\",\n                \"status\"\n            ],\n            \"properties\": {\n               \
+        \ \"seedId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n          \
+        \          \"description\": \"Unique identifier for this seed.\"\n                },\n                \"ownerId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"The entity that owns this seed.\"\n                },\n                \"ownerType\": {\n       \
+        \             \"type\": \"object\",\n                    \"description\": \"Owner entity type discriminator.\"\n \
+        \               },\n                \"seedTypeCode\": {\n                    \"type\": \"string\",\n             \
+        \       \"minLength\": 1,\n                    \"description\": \"Registered seed type code.\"\n                },\n\
+        \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
+        \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Game service this seed
+        is scoped to. Null for cross-game seed types.\"\n                },\n                \"createdAt\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the seed was created.\"\n                },\n                \"growthPhase\": {\n                    \"type\"\
+        : \"string\",\n                    \"minLength\": 1,\n                    \"description\": \"Current computed growth
+        phase code.\"\n                },\n                \"totalGrowth\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"float\",\n                    \"description\": \"Aggregate growth across all domains.\"\
+        \n                },\n                \"bondId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Bond ID
+        if this seed is bonded, null otherwise.\"\n                },\n                \"displayName\": {\n              \
+        \      \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"description\": \"Human-readable
+        name.\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/SeedStatus\",\n\
+        \                    \"description\": \"Current lifecycle status.\"\n                }\n            }\n        },\n\
+        \        \"SeedStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Lifecycle status of
+        a seed.\",\n            \"enum\": [\n                \"Active\",\n                \"Dormant\",\n                \"\
+        Archived\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Change seed ownership\",\n    \"description\": \"Atomically changes the
+        ownerType and ownerId of a seed while preserving all growth data, bonds, and capability cache. The new owner type
+        must be allowed by the seed type definition, and the new owner must not exceed the per-owner seed limit. Seed must
+        be Active or Dormant. Publishes seed.updated with changedFields including ownerId and ownerType.\\n\",\n    \"tags\"\
+        : [],\n    \"deprecated\": false,\n    \"operationId\": \"ReparentSeed\"\n}"
   /seed/growth/get:
     post:
       operationId: GetGrowth
@@ -1485,7 +1565,8 @@ paths:
       description: >
         Marks a seed type as deprecated. Deprecated seed types cannot be used
         to create new seeds. Existing seeds of this type remain unaffected.
-        Must be deprecated before it can be deleted.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
       x-permissions:
       - role: developer
       requestBody:
@@ -1505,16 +1586,15 @@ paths:
           description: Seed type not found
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeprecateSeedTypeRequest\"\
         ,\n    \"$defs\": {\n        \"DeprecateSeedTypeRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to deprecate a seed type, preventing new seed creation.\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"seedTypeCode\",\n                \"reason\"\n            ],\n    \
-        \        \"properties\": {\n                \"seedTypeCode\": {\n                    \"type\": \"string\",\n     \
-        \               \"minLength\": 1,\n                    \"description\": \"The seed type to deprecate.\"\n        \
-        \        },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                   \
-        \ \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"The game
-        service scope. Null for cross-game seed types.\"\n                },\n                \"reason\": {\n            \
-        \        \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 500,\n \
-        \                   \"description\": \"Optional reason for deprecation (for audit purposes).\"\n                }\n\
-        \            }\n        }\n    }\n}"
+        : \"Request to deprecate a seed type (Category B \\u2014 one-way, no delete).\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"seedTypeCode\"\n            ],\n            \"properties\"\
+        : {\n                \"seedTypeCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"description\": \"The seed type to deprecate.\"\n                },\n                \"\
+        gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
+        \             \"nullable\": true,\n                    \"description\": \"The game service scope. Null for cross-game
+        seed types.\"\n                },\n                \"reason\": {\n                    \"type\": \"string\",\n    \
+        \                \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\"\
+        : \"Reason for deprecation (recommended for audit trail).\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedTypeResponse\"\
         ,\n    \"$defs\": {\n        \"SeedTypeResponse\": {\n            \"allOf\": [\n                {\n              \
         \      \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n            \"\
@@ -1603,171 +1683,44 @@ paths:
         + (discoveryLevel * discoveryBonusPerLevel). Null or 0 means no discovery bonus.\\n\"\n                }\n       \
         \     }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deprecate a seed type\",\n    \"description\": \"Marks a seed type as deprecated.
-        Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Must be deprecated
-        before it can be deleted.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"DeprecateSeedType\"\
-        \n}"
-  /seed/type/undeprecate:
+        Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Category
+        B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate, no delete. Idempotent \\u2014 returns OK if already
+        deprecated.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"DeprecateSeedType\"\n}"
+  /seed/type/clean-deprecated:
     post:
-      operationId: UndeprecateSeedType
-      summary: Restore a deprecated seed type
+      operationId: CleanDeprecatedSeedTypes
+      summary: Clean deprecated seed types with zero remaining seeds
       description: >
-        Removes deprecated status from a seed type, allowing new seeds
-        of this type to be created again.
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        seed types and permanently removes those with zero remaining seeds (any status,
+        including archived), subject to an optional grace period. Publishes
+        seed.type.deleted events for each removed type. Idempotent and safe to call
+        at any frequency. Supports dry-run mode for admin panel preview.
       x-permissions:
-      - role: developer
+      - role: admin
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UndeprecateSeedTypeRequest'
+              $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedRequest'
       responses:
         '200':
-          description: Seed type restored
+          description: Cleanup sweep completed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SeedTypeResponse'
-        '404':
-          description: Seed type not found
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UndeprecateSeedTypeRequest\"\
-        ,\n    \"$defs\": {\n        \"UndeprecateSeedTypeRequest\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"Request to restore a deprecated seed type to active status.\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"seedTypeCode\"\n            ],\n            \"properties\"\
-        : {\n                \"seedTypeCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
-        : 1,\n                    \"description\": \"The seed type to restore.\"\n                },\n                \"gameServiceId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"The game service scope. Null for cross-game seed types.\"\
-        \n                }\n            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedTypeResponse\"\
-        ,\n    \"$defs\": {\n        \"SeedTypeResponse\": {\n            \"allOf\": [\n                {\n              \
-        \      \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n            \"\
-        additionalProperties\": false,\n            \"description\": \"Full seed type definition response.\",\n          \
-        \  \"required\": [\n                \"seedTypeCode\",\n                \"displayName\",\n                \"description\"\
-        ,\n                \"maxPerOwner\",\n                \"allowedOwnerTypes\",\n                \"growthPhases\",\n \
-        \               \"bondCardinality\",\n                \"bondPermanent\"\n            ],\n            \"properties\"\
-        : {\n                \"seedTypeCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
-        : 1,\n                    \"description\": \"Unique type code.\"\n                },\n                \"gameServiceId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Game service scope. Null for cross-game seed types.\"\n\
-        \                },\n                \"displayName\": {\n                    \"type\": \"string\",\n             \
-        \       \"minLength\": 1,\n                    \"description\": \"Human-readable name.\"\n                },\n   \
-        \             \"description\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
-        \                    \"description\": \"Type description.\"\n                },\n                \"maxPerOwner\":
-        {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum seeds of this type per
-        owner.\"\n                },\n                \"allowedOwnerTypes\": {\n                    \"type\": \"array\",\n\
-        \                    \"items\": {\n                        \"type\": \"object\"\n                    },\n        \
-        \            \"description\": \"Allowed owner entity types.\"\n                },\n                \"growthPhases\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/GrowthPhaseDefinition\"\n                    },\n                    \"description\": \"Phase definitions
-        with thresholds.\"\n                },\n                \"bondCardinality\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Bond participant limit.\"\n                },\n                \"bondPermanent\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether bonds of this type
-        are permanent.\"\n                },\n                \"capabilityRules\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/CapabilityRule\"\n              \
-        \      },\n                    \"nullable\": true,\n                    \"description\": \"Capability computation
-        rules.\"\n                },\n                \"growthDecayEnabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Whether unused growth domains decay
-        over time for this seed type. Null means using global config.\"\n                },\n                \"growthDecayRatePerDay\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Daily decay rate for unused domains of this seed type. Null
-        means using global config.\"\n                },\n                \"sameOwnerGrowthMultiplier\": {\n             \
-        \       \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"\
-        Fraction of growth applied to other seeds of the same type owned by the same entity.\"\n                },\n     \
-        \           \"collectionGrowthMappings\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
-        : true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/CollectionGrowthMapping\"\n\
-        \                    },\n                    \"description\": \"Collection-to-growth-domain mappings for this seed
-        type. Null if this type does not respond to collection unlocks.\"\n                }\n            }\n        },\n\
-        \        \"GrowthPhaseDefinition\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"description\": \"Defines a growth phase with its threshold.\",\n            \"required\": [\n     \
-        \           \"phaseCode\",\n                \"displayName\",\n                \"minTotalGrowth\"\n            ],\n\
-        \            \"properties\": {\n                \"phaseCode\": {\n                    \"type\": \"string\",\n    \
-        \                \"minLength\": 1,\n                    \"description\": \"Machine-readable phase identifier (e.g.,
-        \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n                \"displayName\": {\n                 \
-        \   \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"description\": \"Human-readable
-        phase label.\"\n                },\n                \"minTotalGrowth\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"description\"\
-        : \"Minimum total growth to enter this phase.\"\n                }\n            }\n        },\n        \"CapabilityRule\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Maps a growth domain to a capability with unlock threshold and fidelity formula.\",\n            \"required\"\
-        : [\n                \"capabilityCode\",\n                \"domain\",\n                \"unlockThreshold\",\n    \
-        \            \"fidelityFormula\"\n            ],\n            \"properties\": {\n                \"capabilityCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"description\"\
-        : \"Unique capability identifier (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"description\"\
-        : \"Which growth domain this capability maps to.\"\n                },\n                \"unlockThreshold\": {\n \
-        \                   \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\"\
-        : 0,\n                    \"description\": \"Minimum domain depth to unlock this capability.\"\n                },\n\
-        \                \"fidelityFormula\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
-        : 1,\n                    \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\",
-        \\\"logarithmic\\\", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n           \
-        \ }\n        },\n        \"CollectionGrowthMapping\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Maps a collection type to growth domain mappings. When a collection entry
-        is unlocked, Seed uses these mappings to determine which growth domains receive growth and how much. Matched by collection
-        type code.\\n\",\n            \"required\": [\n                \"collectionType\",\n                \"domainMappings\"\
-        \n            ],\n            \"properties\": {\n                \"collectionType\": {\n                    \"type\"\
-        : \"string\",\n                    \"minLength\": 1,\n                    \"description\": \"Collection type code
-        to match against (e.g., \\\"bestiary\\\", \\\"music_library\\\").\"\n                },\n                \"domainMappings\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/CollectionDomainMapping\"\n                    },\n                    \"minItems\": 1,\n            \
-        \        \"description\": \"Mappings from entry tag prefixes to growth domains.\"\n                }\n           \
-        \ }\n        },\n        \"CollectionDomainMapping\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Maps a tag prefix on a collection entry to a growth domain and amount. When
-        an entry is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix
-        becomes the domain path) and the growth amount to record.\\n\",\n            \"required\": [\n                \"tagPrefix\"\
-        ,\n                \"baseAmount\"\n            ],\n            \"properties\": {\n                \"tagPrefix\": {\n\
-        \                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"description\"\
-        : \"Tag prefix to match against entry tags. An entry tag \\\"combat.melee.sword\\\" matches prefix \\\"combat\\\"\
-        \ and \\\"combat.melee\\\". The full matching tag becomes the growth domain path.\\n\"\n                },\n     \
-        \           \"baseAmount\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
-        ,\n                    \"minimum\": 0,\n                    \"description\": \"Base growth amount to record when a
-        tag matches this prefix.\"\n                },\n                \"discoveryBonusPerLevel\": {\n                  \
-        \  \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"nullable\": true,\n  \
-        \                  \"description\": \"Additional growth amount per discovery level of the entry. Total growth = baseAmount
-        + (discoveryLevel * discoveryBonusPerLevel). Null or 0 means no discovery bonus.\\n\"\n                }\n       \
-        \     }\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Restore a deprecated seed type\",\n    \"description\": \"Removes deprecated
-        status from a seed type, allowing new seeds of this type to be created again.\\n\",\n    \"tags\": [],\n    \"deprecated\"\
-        : false,\n    \"operationId\": \"UndeprecateSeedType\"\n}"
-  /seed/type/delete:
-    post:
-      operationId: DeleteSeedType
-      summary: Delete a seed type
-      description: >
-        Hard deletes a deprecated seed type. Fails if any non-archived seeds
-        of this type exist. Must deprecate first, then ensure all seeds are
-        archived or deleted before calling this endpoint.
-      x-permissions:
-      - role: developer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DeleteSeedTypeRequest'
-      responses:
-        '200':
-          description: Seed type deleted
-        '400':
-          description: Seed type is not deprecated
-        '404':
-          description: Seed type not found
-        '409':
-          description: Non-archived seeds still exist for this type
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteSeedTypeRequest\"\
-        ,\n    \"$defs\": {\n        \"DeleteSeedTypeRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to hard-delete a deprecated seed type with no remaining non-archived seeds.\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"seedTypeCode\"\n            ],\n            \"properties\"\
-        : {\n                \"seedTypeCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
-        : 1,\n                    \"description\": \"The seed type to delete.\"\n                },\n                \"gameServiceId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"The game service scope. Null for cross-game seed types.\"\
-        \n                }\n            }\n        }\n    }\n}"
-      x-response-schema-json: '{}'
-      x-endpoint-info-json: "{\n    \"summary\": \"Delete a seed type\",\n    \"description\": \"Hard deletes a deprecated
-        seed type. Fails if any non-archived seeds of this type exist. Must deprecate first, then ensure all seeds are archived
-        or deleted before calling this endpoint.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\"\
-        : \"DeleteSeedType\"\n}"
+                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedStringKeyResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\
+        }"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\
+        }"
+      x-endpoint-info-json: "{\n    \"summary\": \"Clean deprecated seed types with zero remaining seeds\",\n    \"description\"\
+        : \"Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated seed types and permanently removes
+        those with zero remaining seeds (any status, including archived), subject to an optional grace period. Publishes seed.type.deleted
+        events for each removed type. Idempotent and safe to call at any frequency. Supports dry-run mode for admin panel
+        preview.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"CleanDeprecatedSeedTypes\"\n\
+        }"
   /seed/bond/initiate:
     post:
       operationId: InitiateBond
@@ -2351,6 +2304,28 @@ components:
           type: string
           format: uuid
           description: The seed to archive.
+    ReparentSeedRequest:
+      type: object
+      additionalProperties: false
+      description: >
+        Request to change a seed's ownership. Atomically updates ownerType and
+        ownerId while preserving growth data, bonds, and cached capabilities.
+      required:
+      - seedId
+      - newOwnerId
+      - newOwnerType
+      properties:
+        seedId:
+          type: string
+          format: uuid
+          description: The seed to reparent.
+        newOwnerId:
+          type: string
+          format: uuid
+          description: The new owner entity ID.
+        newOwnerType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: The new owner entity type. Must be in the seed type's AllowedOwnerTypes.
     GetGrowthRequest:
       type: object
       additionalProperties: false
@@ -2693,11 +2668,10 @@ components:
             empty array removes all mappings.
     DeprecateSeedTypeRequest:
       type: object
-      description: Request to deprecate a seed type, preventing new seed creation.
+      description: Request to deprecate a seed type (Category B — one-way, no delete).
       additionalProperties: false
       required:
       - seedTypeCode
-      - reason
       properties:
         seedTypeCode:
           type: string
@@ -2711,43 +2685,9 @@ components:
             The game service scope. Null for cross-game seed types.
         reason:
           type: string
-          minLength: 1
+          nullable: true
           maxLength: 500
-          description: Optional reason for deprecation (for audit purposes).
-    UndeprecateSeedTypeRequest:
-      type: object
-      description: Request to restore a deprecated seed type to active status.
-      additionalProperties: false
-      required:
-      - seedTypeCode
-      properties:
-        seedTypeCode:
-          type: string
-          minLength: 1
-          description: The seed type to restore.
-        gameServiceId:
-          type: string
-          format: uuid
-          nullable: true
-          description: >-
-            The game service scope. Null for cross-game seed types.
-    DeleteSeedTypeRequest:
-      type: object
-      description: Request to hard-delete a deprecated seed type with no remaining non-archived seeds.
-      additionalProperties: false
-      required:
-      - seedTypeCode
-      properties:
-        seedTypeCode:
-          type: string
-          minLength: 1
-          description: The seed type to delete.
-        gameServiceId:
-          type: string
-          format: uuid
-          nullable: true
-          description: >-
-            The game service scope. Null for cross-game seed types.
+          description: Reason for deprecation (recommended for audit trail).
     InitiateBondRequest:
       type: object
       additionalProperties: false

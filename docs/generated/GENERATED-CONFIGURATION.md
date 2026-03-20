@@ -1233,6 +1233,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `RESOURCE_DEFAULT_CLEANUP_POLICY` | string | `BestEffort` | Default cleanup policy when not specified per-resource-type |
 | `RESOURCE_DEFAULT_COMPRESSION_POLICY` | string | `AllRequired` | Default compression policy when not specified per-request |
 | `RESOURCE_DEFAULT_GRACE_PERIOD_SECONDS` | int | `604800` | Default grace period in seconds before cleanup eligible (7 d... |
+| `RESOURCE_PROVISION_INDEX_MAX_RETRIES` | int | `3` | Maximum optimistic concurrency retries for provision index l... |
 | `RESOURCE_SNAPSHOT_DEFAULT_TTL_SECONDS` | int | `3600` | Default TTL for snapshots when not specified in request (1 h... |
 | `RESOURCE_SNAPSHOT_MAX_TTL_SECONDS` | int | `86400` | Maximum allowed TTL for snapshots (24 hours default, max 7 d... |
 | `RESOURCE_SNAPSHOT_MIN_TTL_SECONDS` | int | `60` | Minimum allowed TTL for snapshots (1 minute default) |
@@ -1241,6 +1242,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `RESOURCE_TRANSACTION_COMPENSATION_MAX_RETRIES` | int | `10` | Maximum compensation retry attempts per provision before giv... |
 | `RESOURCE_TRANSACTION_DEFAULT_TTL_SECONDS` | int | `120` | Default TTL for transactions when the caller does not specif... |
 | `RESOURCE_TRANSACTION_MAX_TTL_SECONDS` | int | `600` | Maximum allowed TTL — BeginTransaction clamps requested TTL ... |
+| `RESOURCE_TRANSACTION_MIN_TTL_SECONDS` | int | `10` | Minimum allowed TTL for transactions (BeginTransaction clamp... |
 | `RESOURCE_TRANSACTION_RECOVERY_WORKER_INTERVAL_SECONDS` | int | `30` | How often the worker scans for transactions needing recovery... |
 | `RESOURCE_TRANSACTION_RECOVERY_WORKER_STARTUP_DELAY_SECONDS` | int | `15` | Delay before first recovery cycle after startup |
 | `RESOURCE_TRANSACTION_RETENTION_DAYS` | int | `7` | Days to retain completed or aborted transaction metadata bef... |
@@ -1328,6 +1330,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `SEED_BOND_SHARED_GROWTH_MULTIPLIER` | double | `1.5` | Growth multiplier applied when bonded seeds grow together in... |
 | `SEED_BOND_STRENGTH_GROWTH_RATE` | double | `0.1` | Rate at which bond strength increases per unit of shared gro... |
 | `SEED_CAPABILITY_RECOMPUTE_DEBOUNCE_MS` | int | `5000` | Debounce interval in milliseconds before recomputing capabil... |
+| `SEED_CROSS_POLLINATION_LOCK_TIMEOUT_SECONDS` | int | `3` | Timeout in seconds for cross-pollination try-lock on sibling... |
 | `SEED_DECAY_WORKER_INTERVAL_SECONDS` | int | `900` | Interval in seconds between growth decay worker cycles (defa... |
 | `SEED_DECAY_WORKER_STARTUP_DELAY_SECONDS` | int | `30` | Delay in seconds before the decay worker starts its first cy... |
 | `SEED_DEFAULT_MAX_SEEDS_PER_OWNER` | int | `3` | Default maximum seeds of any single type per owner when not ... |
@@ -1335,6 +1338,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `SEED_GROWTH_DECAY_ENABLED` | bool | `false` | Global toggle for growth domain decay. Per-type overrides ca... |
 | `SEED_GROWTH_DECAY_RATE_PER_DAY` | double | `0.01` | Global daily decay rate applied to unused growth domains. Pe... |
 | `SEED_IDEMPOTENCY_TTL_SECONDS` | int | `3600` | TTL in seconds for growth transfer idempotency keys in Redis |
+| `SEED_LOCK_TIMEOUT_SECONDS` | int | `10` | Timeout in seconds for distributed lock acquisition on seed ... |
 | `SEED_MAX_SEED_TYPES_PER_GAME_SERVICE` | int | `50` | Maximum number of seed types that can be registered per game... |
 | `SEED_SEED_DATA_CACHE_TTL_SECONDS` | int | `60` | TTL in seconds for the seed data cache used by the variable ... |
 
@@ -1502,9 +1506,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 1183
+- **Total properties**: 1187
 - **Required (no default)**: 67
-- **Optional (has default)**: 1116
+- **Optional (has default)**: 1120
 
 ## Environment Variable Naming Convention
 

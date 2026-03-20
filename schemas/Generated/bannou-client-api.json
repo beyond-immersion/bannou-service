@@ -19841,7 +19841,7 @@
       "post": {
         "operationId": "seed_DeprecateSeedType",
         "summary": "Deprecate a seed type",
-        "description": "Marks a seed type as deprecated. Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Must be deprecated before it can be deleted.\n",
+        "description": "Marks a seed type as deprecated. Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate, no delete. Idempotent \u2014 returns OK if already deprecated.\n",
         "x-permissions": [
           {
             "role": "developer"
@@ -19870,79 +19870,6 @@
           },
           "404": {
             "description": "Seed type not found"
-          }
-        }
-      }
-    },
-    "/seed/type/undeprecate": {
-      "post": {
-        "operationId": "seed_UndeprecateSeedType",
-        "summary": "Restore a deprecated seed type",
-        "description": "Removes deprecated status from a seed type, allowing new seeds of this type to be created again.\n",
-        "x-permissions": [
-          {
-            "role": "developer"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UndeprecateSeedTypeRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Seed type restored",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SeedTypeResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Seed type not found"
-          }
-        }
-      }
-    },
-    "/seed/type/delete": {
-      "post": {
-        "operationId": "seed_DeleteSeedType",
-        "summary": "Delete a seed type",
-        "description": "Hard deletes a deprecated seed type. Fails if any non-archived seeds of this type exist. Must deprecate first, then ensure all seeds are archived or deleted before calling this endpoint.\n",
-        "x-permissions": [
-          {
-            "role": "developer"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DeleteSeedTypeRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Seed type deleted"
-          },
-          "400": {
-            "description": "Seed type is not deprecated"
-          },
-          "404": {
-            "description": "Seed type not found"
-          },
-          "409": {
-            "description": "Non-archived seeds still exist for this type"
           }
         }
       }
@@ -36407,18 +36334,13 @@
           },
           "linkedToItem": {
             "type": "boolean",
-            "description": "Whether linked to inventory item"
+            "description": "Whether linked to an item template"
           },
           "linkedItemTemplateId": {
             "type": "string",
             "format": "uuid",
             "nullable": true,
             "description": "Linked item template ID"
-          },
-          "linkageMode": {
-            "$ref": "#/components/schemas/ItemLinkageMode",
-            "nullable": true,
-            "description": "Item linkage mode"
           },
           "isBaseCurrency": {
             "type": "boolean",
@@ -37281,27 +37203,6 @@
           }
         }
       },
-      "DeleteSeedTypeRequest": {
-        "type": "object",
-        "description": "Request to hard-delete a deprecated seed type with no remaining non-archived seeds.",
-        "additionalProperties": false,
-        "required": [
-          "seedTypeCode"
-        ],
-        "properties": {
-          "seedTypeCode": {
-            "type": "string",
-            "minLength": 1,
-            "description": "The seed type to delete."
-          },
-          "gameServiceId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true,
-            "description": "The game service scope. Null for cross-game seed types."
-          }
-        }
-      },
       "DeleteSlotRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -37901,11 +37802,10 @@
       },
       "DeprecateSeedTypeRequest": {
         "type": "object",
-        "description": "Request to deprecate a seed type, preventing new seed creation.",
+        "description": "Request to deprecate a seed type (Category B \u2014 one-way, no delete).",
         "additionalProperties": false,
         "required": [
-          "seedTypeCode",
-          "reason"
+          "seedTypeCode"
         ],
         "properties": {
           "seedTypeCode": {
@@ -37921,9 +37821,9 @@
           },
           "reason": {
             "type": "string",
-            "minLength": 1,
+            "nullable": true,
             "maxLength": 500,
-            "description": "Optional reason for deprecation (for audit purposes)."
+            "description": "Reason for deprecation (recommended for audit trail)."
           }
         }
       },
@@ -46402,15 +46302,6 @@
             "description": "Last modification timestamp"
           }
         }
-      },
-      "ItemLinkageMode": {
-        "type": "string",
-        "description": "How currency is linked to inventory items",
-        "enum": [
-          "None",
-          "VisualOnly",
-          "ReferenceOnly"
-        ]
       },
       "ItemOriginType": {
         "type": "string",
@@ -65915,7 +65806,9 @@
           "AdminAdjustment",
           "Event",
           "Pause",
-          "Resume"
+          "Resume",
+          "AutoPopulation",
+          "Compacted"
         ]
       },
       "TimeSignatureEvent": {
@@ -67266,27 +67159,6 @@
             "type": "string",
             "format": "uuid",
             "description": "ID of the relationship type to restore"
-          }
-        }
-      },
-      "UndeprecateSeedTypeRequest": {
-        "type": "object",
-        "description": "Request to restore a deprecated seed type to active status.",
-        "additionalProperties": false,
-        "required": [
-          "seedTypeCode"
-        ],
-        "properties": {
-          "seedTypeCode": {
-            "type": "string",
-            "minLength": 1,
-            "description": "The seed type to restore."
-          },
-          "gameServiceId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true,
-            "description": "The game service scope. Null for cross-game seed types."
           }
         }
       },

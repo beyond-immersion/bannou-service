@@ -10,8 +10,8 @@ need deprecation marker interfaces, and the current state of Category B complian
 ## Summary
 
 - **Total deprecatable entities**: 28
-- **With `instanceEntity` declared**: 18
-- **Missing `instanceEntity`**: 10
+- **With `instanceEntity` declared**: 19
+- **Missing `instanceEntity`**: 9
 
 ## All Deprecatable Entities
 
@@ -40,7 +40,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 | Quest | `QuestDefinition` | `QuestInstance` | OK |
 | Realm | `Realm` | — | Missing |
 | Relationship | `RelationshipType` | — | Missing |
-| Seed | `SeedType` | — | Missing |
+| Seed | `SeedType` | `Seed` | OK |
 | Species | `Species` | — | Missing |
 | Status | `StatusTemplate` | — | Missing |
 | Storyline | `ScenarioDefinition` | `ScenarioExecution` | OK |
@@ -237,7 +237,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Service**: `seed`
 - **Schema**: `schemas/seed-service-events.yaml`
 - **Topic prefix**: `seed`
-- **Instance entity**: `*(not declared)*`
+- **Instance entity**: `Seed`
 - **Model fields**: `seedTypeCode`, `gameServiceId`, `displayName`, `description`, `maxPerOwner`, `bondCardinality`, `bondPermanent`, `sameOwnerGrowthMultiplier`
 
 ### Species: Species

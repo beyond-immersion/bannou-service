@@ -393,7 +393,6 @@ struct FDeleteRelationshipTypeRequest;
 struct FDeleteRoomRequest;
 struct FDeleteSceneRequest;
 struct FDeleteSceneResponse;
-struct FDeleteSeedTypeRequest;
 struct FDeleteSlotRequest;
 struct FDeleteSlotResponse;
 struct FDeleteStatusTemplateRequest;
@@ -716,7 +715,6 @@ struct FInvalidateCacheRequest;
 struct FInvalidateCacheResponse;
 struct FItemCategory;
 struct FItemInstanceResponse;
-struct FItemLinkageMode;
 struct FItemOriginType;
 struct FItemRarity;
 struct FItemRequirement;
@@ -1351,7 +1349,6 @@ struct FUndeprecateFactionRequest;
 struct FUndeprecateLocationRequest;
 struct FUndeprecateModeRequest;
 struct FUndeprecateRelationshipTypeRequest;
-struct FUndeprecateSeedTypeRequest;
 struct FUndeprecateStatusTemplateRequest;
 struct FUnlinkPlatformRequest;
 struct FUnlockContractRequest;
@@ -11225,17 +11222,13 @@ struct FCurrencyDefinitionResponse
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FGuid> SeasonId;
 
-    /** Whether linked to inventory item */
+    /** Whether linked to an item template */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     bool LinkedToItem = false;
 
     /** Linked item template ID */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FGuid> LinkedItemTemplateId;
-
-    /** Item linkage mode */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FItemLinkageMode> LinkageMode;
 
     /** Whether this is the base currency */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
@@ -12000,24 +11993,6 @@ struct FDeleteSceneResponse
 };
 
 /**
- * Request to hard-delete a deprecated seed type with no remaining non-archived seeds.
- */
-USTRUCT(BlueprintType)
-struct FDeleteSeedTypeRequest
-{
-    GENERATED_BODY()
-
-    /** The seed type to delete. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString SeedTypeCode;
-
-    /** The game service scope. Null for cross-game seed types. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FGuid> GameServiceId;
-
-};
-
-/**
  * Request to permanently delete a save slot and all its versions
  */
 USTRUCT(BlueprintType)
@@ -12528,7 +12503,7 @@ struct FDeprecateScenarioDefinitionRequest
 };
 
 /**
- * Request to deprecate a seed type, preventing new seed creation.
+ * Request to deprecate a seed type (Category B — one-way, no delete).
  */
 USTRUCT(BlueprintType)
 struct FDeprecateSeedTypeRequest
@@ -12543,7 +12518,7 @@ struct FDeprecateSeedTypeRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FGuid> GameServiceId;
 
-    /** Optional reason for deprecation (for audit purposes). */
+    /** Reason for deprecation (recommended for audit trail). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Reason;
 
@@ -19366,16 +19341,6 @@ struct FItemInstanceResponse
     /** Last modification timestamp */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FDateTime> ModifiedAt;
-
-};
-
-/**
- * How currency is linked to inventory items
- */
-USTRUCT(BlueprintType)
-struct FItemLinkageMode
-{
-    GENERATED_BODY()
 
 };
 
@@ -35672,24 +35637,6 @@ struct FUndeprecateRelationshipTypeRequest
     /** ID of the relationship type to restore */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FGuid RelationshipTypeId;
-
-};
-
-/**
- * Request to restore a deprecated seed type to active status.
- */
-USTRUCT(BlueprintType)
-struct FUndeprecateSeedTypeRequest
-{
-    GENERATED_BODY()
-
-    /** The seed type to restore. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    FString SeedTypeCode;
-
-    /** The game service scope. Null for cross-game seed types. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    TOptional<FGuid> GameServiceId;
 
 };
 

@@ -10347,49 +10347,9 @@ export interface paths {
     put?: never;
     /**
      * Deprecate a seed type
-     * @description Marks a seed type as deprecated. Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Must be deprecated before it can be deleted.
+     * @description Marks a seed type as deprecated. Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate, no delete. Idempotent — returns OK if already deprecated.
      */
     post: operations['seed_DeprecateSeedType'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/seed/type/undeprecate': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Restore a deprecated seed type
-     * @description Removes deprecated status from a seed type, allowing new seeds of this type to be created again.
-     */
-    post: operations['seed_UndeprecateSeedType'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/seed/type/delete': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Delete a seed type
-     * @description Hard deletes a deprecated seed type. Fails if any non-archived seeds of this type exist. Must deprecate first, then ensure all seeds are archived or deleted before calling this endpoint.
-     */
-    post: operations['seed_DeleteSeedType'];
     delete?: never;
     options?: never;
     head?: never;
@@ -18646,15 +18606,13 @@ export interface components {
        * @description Season ID for expiration
        */
       seasonId?: string | null;
-      /** @description Whether linked to inventory item */
+      /** @description Whether linked to an item template */
       linkedToItem: boolean;
       /**
        * Format: uuid
        * @description Linked item template ID
        */
       linkedItemTemplateId?: string | null;
-      /** @description Item linkage mode */
-      linkageMode?: components['schemas']['ItemLinkageMode'];
       /** @description Whether this is the base currency */
       isBaseCurrency: boolean;
       /**
@@ -19118,16 +19076,6 @@ export interface components {
       /** @description If deletion was blocked (409), IDs of scenes that reference this one */
       referencingScenes?: string[] | null;
     };
-    /** @description Request to hard-delete a deprecated seed type with no remaining non-archived seeds. */
-    DeleteSeedTypeRequest: {
-      /** @description The seed type to delete. */
-      seedTypeCode: string;
-      /**
-       * Format: uuid
-       * @description The game service scope. Null for cross-game seed types.
-       */
-      gameServiceId?: string | null;
-    };
     /** @description Request to permanently delete a save slot and all its versions */
     DeleteSlotRequest: {
       /** @description Game identifier for namespace isolation */
@@ -19403,7 +19351,7 @@ export interface components {
       /** @description Reason for deprecation */
       reason?: string | null;
     };
-    /** @description Request to deprecate a seed type, preventing new seed creation. */
+    /** @description Request to deprecate a seed type (Category B — one-way, no delete). */
     DeprecateSeedTypeRequest: {
       /** @description The seed type to deprecate. */
       seedTypeCode: string;
@@ -19412,8 +19360,8 @@ export interface components {
        * @description The game service scope. Null for cross-game seed types.
        */
       gameServiceId?: string | null;
-      /** @description Optional reason for deprecation (for audit purposes). */
-      reason: string;
+      /** @description Reason for deprecation (recommended for audit trail). */
+      reason?: string | null;
     };
     /** @description Request to deprecate a status template */
     DeprecateStatusTemplateRequest: {
@@ -23772,11 +23720,6 @@ export interface components {
        */
       modifiedAt?: string | null;
     };
-    /**
-     * @description How currency is linked to inventory items
-     * @enum {string}
-     */
-    ItemLinkageMode: 'None' | 'VisualOnly' | 'ReferenceOnly';
     /**
      * @description How an item instance was created
      * @enum {string}
@@ -33288,7 +33231,14 @@ export interface components {
      * @description Why the time ratio was changed
      * @enum {string}
      */
-    TimeRatioChangeReason: 'Initial' | 'AdminAdjustment' | 'Event' | 'Pause' | 'Resume';
+    TimeRatioChangeReason:
+      | 'Initial'
+      | 'AdminAdjustment'
+      | 'Event'
+      | 'Pause'
+      | 'Resume'
+      | 'AutoPopulation'
+      | 'Compacted';
     /** @description A time signature change event */
     TimeSignatureEvent: {
       /** @description Tick position */
@@ -34002,16 +33952,6 @@ export interface components {
        * @description ID of the relationship type to restore
        */
       relationshipTypeId: string;
-    };
-    /** @description Request to restore a deprecated seed type to active status. */
-    UndeprecateSeedTypeRequest: {
-      /** @description The seed type to restore. */
-      seedTypeCode: string;
-      /**
-       * Format: uuid
-       * @description The game service scope. Null for cross-game seed types.
-       */
-      gameServiceId?: string | null;
     };
     /** @description Request to undeprecate a status template (Category A -- reversible) */
     UndeprecateStatusTemplateRequest: {
@@ -51711,80 +51651,6 @@ export interface operations {
       };
       /** @description Seed type not found */
       404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  seed_UndeprecateSeedType: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UndeprecateSeedTypeRequest'];
-      };
-    };
-    responses: {
-      /** @description Seed type restored */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['SeedTypeResponse'];
-        };
-      };
-      /** @description Seed type not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  seed_DeleteSeedType: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['DeleteSeedTypeRequest'];
-      };
-    };
-    responses: {
-      /** @description Seed type deleted */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Seed type is not deprecated */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Seed type not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Non-archived seeds still exist for this type */
-      409: {
         headers: {
           [name: string]: unknown;
         };

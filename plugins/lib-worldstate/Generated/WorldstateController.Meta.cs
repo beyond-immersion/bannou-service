@@ -1137,7 +1137,9 @@ public partial class WorldstateController
                 "AdminAdjustment",
                 "Event",
                 "Pause",
-                "Resume"
+                "Resume",
+                "AutoPopulation",
+                "Compacted"
             ]
         }
     }

@@ -29,10 +29,10 @@ public static class SeedPublishedTopics
     /// <summary>Published when a new seed type is registered.</summary>
     public const string SeedTypeCreated = "seed.type.created";
 
-    /// <summary>Published when a seed type is updated (including deprecation).</summary>
+    /// <summary>Published when a seed type is updated (including deprecation via changedFields).</summary>
     public const string SeedTypeUpdated = "seed.type.updated";
 
-    /// <summary>Published when a seed type is deleted.</summary>
+    /// <summary>Published when a deprecated seed type is permanently removed by the clean-deprecated sweep.</summary>
     public const string SeedTypeDeleted = "seed.type.deleted";
 
     /// <summary>Published when growth domain values change for a seed.</summary>

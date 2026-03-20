@@ -548,9 +548,14 @@ POST /currency/convert/calculate | Roles: [user]
 ```
 READ definitions:def:{fromCurrencyId} -> 404 if null
 READ definitions:def:{toCurrencyId} -> 404 if null
-// CalculateEffectiveRate: fromRate / toRate (base currency rate = 1.0)
-IF either lacks ExchangeRateToBase -> 400
-// toAmount = fromAmount * effectiveRate, rounded to ConversionRoundingPrecision
+// CalculateEffectiveRate (planned three-layer #478):
+//   Layer 1 - Base rate: IF both have UniversalValue → fromUV / toUV
+//                        ELSE IF both have ExchangeRateToBase → fromRate / toRate (current)
+//                        ELSE -> 400
+//   Layer 2 - Location modifiers (planned): read active modifiers from in-memory cache
+//             for request.locationId (if provided) and realmId
+//             effectiveRate = baseRate * product(modifier.multiplier)
+//   Layer 3 - Result: toAmount = fromAmount * effectiveRate, rounded to ConversionRoundingPrecision
 RETURN (200, CalculateConversionResponse { toAmount, effectiveRate, baseCurrency, conversionPath })
 ```
 

@@ -70,6 +70,12 @@ public enum TimeRatioChangeReason
     [System.Runtime.Serialization.EnumMember(Value = @"Resume")]
     Resume = 4,
 
+    [System.Runtime.Serialization.EnumMember(Value = @"AutoPopulation")]
+    AutoPopulation = 5,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Compacted")]
+    Compacted = 6,
+
 }
 #pragma warning restore CS1591
 

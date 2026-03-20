@@ -1949,16 +1949,16 @@ paths:
         : false,\n            \"description\": \"Full transaction status with per-provision detail\",\n            \"required\"\
         : [\n                \"transactionId\",\n                \"ownerService\",\n                \"parentResourceType\"\
         ,\n                \"parentResourceId\",\n                \"status\",\n                \"createdAt\",\n          \
-        \      \"updatedAt\",\n                \"ttlSeconds\",\n                \"provisions\"\n            ],\n         \
-        \   \"properties\": {\n                \"transactionId\": {\n                    \"type\": \"string\",\n         \
-        \           \"format\": \"uuid\",\n                    \"description\": \"Transaction identifier\"\n             \
-        \   },\n                \"ownerService\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Service that owns this transaction\"\n                },\n                \"parentResourceType\": {\n        \
-        \            \"type\": \"string\",\n                    \"description\": \"Type of entity being provisioned\"\n  \
-        \              },\n                \"parentResourceId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"ID of the entity being provisioned\"\n  \
-        \              },\n                \"status\": {\n                    \"$ref\": \"#/$defs/TransactionStatus\",\n \
-        \                   \"description\": \"Current transaction status\"\n                },\n                \"createdAt\"\
+        \      \"updatedAt\",\n                \"ttlSeconds\",\n                \"validationAttempts\",\n                \"\
+        provisions\"\n            ],\n            \"properties\": {\n                \"transactionId\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Transaction
+        identifier\"\n                },\n                \"ownerService\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Service that owns this transaction\"\n                },\n               \
+        \ \"parentResourceType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Type
+        of entity being provisioned\"\n                },\n                \"parentResourceId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the entity
+        being provisioned\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/TransactionStatus\"\
+        ,\n                    \"description\": \"Current transaction status\"\n                },\n                \"createdAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
         \   \"description\": \"When the transaction was created\"\n                },\n                \"updatedAt\": {\n\
         \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
@@ -1982,34 +1982,34 @@ paths:
         type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Status detail for
         a single provision within a transaction\",\n            \"required\": [\n                \"provisionId\",\n      \
         \          \"sequenceNumber\",\n                \"resourceType\",\n                \"resourceId\",\n             \
-        \   \"status\",\n                \"registeredAt\"\n            ],\n            \"properties\": {\n               \
-        \ \"provisionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n     \
-        \               \"description\": \"Unique provision identifier\"\n                },\n                \"sequenceNumber\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Registration order (compensated
-        in reverse)\"\n                },\n                \"resourceType\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Type of provisioned resource\"\n                },\n                \"resourceId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Pre-generated resource ID\"\n                },\n                \"status\": {\n                \
-        \    \"$ref\": \"#/$defs/ProvisionStatus\",\n                    \"description\": \"Current provision status\"\n \
-        \               },\n                \"registeredAt\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"date-time\",\n                    \"description\": \"When the provision was registered\"\n \
-        \               },\n                \"provisionedAt\": {\n                    \"type\": \"string\",\n            \
-        \        \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When the resource was confirmed created (null if still Pending)\"\n                },\n                \"compensatedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"When compensation completed (null if not compensated)\"\
-        \n                },\n                \"compensationAttempts\": {\n                    \"type\": \"integer\",\n  \
-        \                  \"description\": \"Number of compensation attempts made\"\n                },\n               \
-        \ \"lastCompensationError\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Error from last failed compensation attempt\"\n                }\n       \
-        \     }\n        },\n        \"ProvisionStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
-        \                \"Pending\",\n                \"Provisioned\",\n                \"ReferenceRegistered\",\n      \
-        \          \"Compensated\",\n                \"CompensationFailed\"\n            ],\n            \"description\":
-        \"Individual provision lifecycle state within a transaction.\\nPending: Registered with pre-generated ID but resource
-        not yet created\\nProvisioned: Resource confirmed created at the pre-generated ID\\nReferenceRegistered: Converted
-        to permanent resource reference during commit\\nCompensated: Compensation endpoint called successfully (resource deleted
-        or confirmed absent)\\nCompensationFailed: Compensation attempted but failed (worker will retry)\\n\"\n        }\n\
-        \    }\n}"
+        \   \"status\",\n                \"registeredAt\",\n                \"compensationAttempts\"\n            ],\n   \
+        \         \"properties\": {\n                \"provisionId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"description\": \"Unique provision identifier\"\n    \
+        \            },\n                \"sequenceNumber\": {\n                    \"type\": \"integer\",\n             \
+        \       \"description\": \"Registration order (compensated in reverse)\"\n                },\n                \"resourceType\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of provisioned resource\"\
+        \n                },\n                \"resourceId\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"uuid\",\n                    \"description\": \"Pre-generated resource ID\"\n              \
+        \  },\n                \"status\": {\n                    \"$ref\": \"#/$defs/ProvisionStatus\",\n               \
+        \     \"description\": \"Current provision status\"\n                },\n                \"registeredAt\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the provision was registered\"\n                },\n                \"provisionedAt\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"When the resource was confirmed created (null if still Pending)\"\n      \
+        \          },\n                \"compensatedAt\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When
+        compensation completed (null if not compensated)\"\n                },\n                \"compensationAttempts\":
+        {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of compensation attempts
+        made\"\n                },\n                \"lastCompensationError\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Error from last failed compensation
+        attempt\"\n                }\n            }\n        },\n        \"ProvisionStatus\": {\n            \"type\": \"\
+        string\",\n            \"enum\": [\n                \"Pending\",\n                \"Provisioned\",\n             \
+        \   \"ReferenceRegistered\",\n                \"Compensated\",\n                \"CompensationFailed\"\n         \
+        \   ],\n            \"description\": \"Individual provision lifecycle state within a transaction.\\nPending: Registered
+        with pre-generated ID but resource not yet created\\nProvisioned: Resource confirmed created at the pre-generated
+        ID\\nReferenceRegistered: Converted to permanent resource reference during commit\\nCompensated: Compensation endpoint
+        called successfully (resource deleted or confirmed absent)\\nCompensationFailed: Compensation attempted but failed
+        (worker will retry)\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query transaction status with per-provision detail\",\n    \"description\"\
         : \"Returns the current status of a transaction including per-provision\\nstatus. Useful for admin tooling, debugging,
         and monitoring.\\n\",\n    \"tags\": [\n        \"Transaction Management\"\n    ],\n    \"deprecated\": false,\n \
@@ -2448,6 +2448,7 @@ components:
       - createdAt
       - updatedAt
       - ttlSeconds
+      - validationAttempts
       - provisions
       properties:
         transactionId:
@@ -2505,6 +2506,7 @@ components:
       - resourceId
       - status
       - registeredAt
+      - compensationAttempts
       properties:
         provisionId:
           type: string

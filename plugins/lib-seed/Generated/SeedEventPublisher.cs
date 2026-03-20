@@ -48,14 +48,14 @@ public static class SeedEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(SeedPublishedTopics.SeedTypeCreated, eventData, cancellationToken);
 
-    /// <summary>Published when a seed type is updated (including deprecation).</summary>
+    /// <summary>Published when a seed type is updated (including deprecation via changedFields).</summary>
     public static Task<bool> PublishSeedTypeUpdatedAsync(
         this IMessageBus messageBus,
         SeedTypeUpdatedEvent eventData,
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(SeedPublishedTopics.SeedTypeUpdated, eventData, cancellationToken);
 
-    /// <summary>Published when a seed type is deleted.</summary>
+    /// <summary>Published when a deprecated seed type is permanently removed by the clean-deprecated sweep.</summary>
     public static Task<bool> PublishSeedTypeDeletedAsync(
         this IMessageBus messageBus,
         SeedTypeDeletedEvent eventData,

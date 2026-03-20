@@ -153,6 +153,24 @@ public sealed class SeedProxy
     }
 
     /// <summary>
+    /// Change seed ownership
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing SeedResponse on success.</returns>
+    public Task<ApiResponse<SeedResponse>> ReparentSeedAsync(
+        ReparentSeedRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ReparentSeedRequest, SeedResponse>(
+            "/seed/reparent", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Get full growth domain map
     /// </summary>
     /// <param name="request">The request payload.</param>
@@ -348,40 +366,6 @@ public sealed class SeedProxy
     {
         return _client.InvokeAsync<DeprecateSeedTypeRequest, SeedTypeResponse>(
             "/seed/type/deprecate", request, channel, timeout, cancellationToken);
-    }
-
-    /// <summary>
-    /// Restore a deprecated seed type
-    /// </summary>
-    /// <param name="request">The request payload.</param>
-    /// <param name="channel">Message channel for ordering (default 0).</param>
-    /// <param name="timeout">Request timeout.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing SeedTypeResponse on success.</returns>
-    public Task<ApiResponse<SeedTypeResponse>> UndeprecateSeedTypeAsync(
-        UndeprecateSeedTypeRequest request,
-        ushort channel = 0,
-        TimeSpan? timeout = null,
-        CancellationToken cancellationToken = default)
-    {
-        return _client.InvokeAsync<UndeprecateSeedTypeRequest, SeedTypeResponse>(
-            "/seed/type/undeprecate", request, channel, timeout, cancellationToken);
-    }
-
-    /// <summary>
-    /// Delete a seed type
-    /// </summary>
-    /// <param name="request">The request payload.</param>
-    /// <param name="channel">Message channel for ordering (default 0).</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Task that completes when the event is sent.</returns>
-    public Task DeleteSeedTypeEventAsync(
-        DeleteSeedTypeRequest request,
-        ushort channel = 0,
-        CancellationToken cancellationToken = default)
-    {
-        return _client.SendEventAsync<DeleteSeedTypeRequest>(
-            "/seed/type/delete", request, channel, cancellationToken);
     }
 
     /// <summary>

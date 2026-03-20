@@ -1016,15 +1016,6 @@ enum class EItemCategory : uint8
     Custom UMETA(DisplayName = "Custom"),
 };
 
-/** How currency is linked to inventory items */
-UENUM(BlueprintType)
-enum class EItemLinkageMode : uint8
-{
-    None UMETA(DisplayName = "None"),
-    VisualOnly UMETA(DisplayName = "VisualOnly"),
-    ReferenceOnly UMETA(DisplayName = "ReferenceOnly"),
-};
-
 /** How an item instance was created */
 UENUM(BlueprintType)
 enum class EItemOriginType : uint8
@@ -2077,6 +2068,8 @@ enum class ETimeRatioChangeReason : uint8
     Event UMETA(DisplayName = "Event"),
     Pause UMETA(DisplayName = "Pause"),
     Resume UMETA(DisplayName = "Resume"),
+    AutoPopulation UMETA(DisplayName = "AutoPopulation"),
+    Compacted UMETA(DisplayName = "Compacted"),
 };
 
 /** Category of tracked viewers who receive opaque tracking GUIDs. Returner type requires cross-session detection (not available in v1). */
