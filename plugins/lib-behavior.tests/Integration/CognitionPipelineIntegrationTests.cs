@@ -5,7 +5,12 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.Behavior.Cognition;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
+using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Logging;
+using Moq;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Integration;
@@ -22,7 +27,11 @@ public sealed class CognitionPipelineIntegrationTests
     public CognitionPipelineIntegrationTests()
     {
         _templateRegistry = new CognitionTemplateRegistry(loadEmbeddedDefaults: true);
-        _builder = new CognitionBuilder(_templateRegistry);
+        _builder = new CognitionBuilder(
+            _templateRegistry,
+            Mock.Of<IActionHandlerRegistry>(),
+            Mock.Of<ILogger<CognitionBuilder>>(),
+            Mock.Of<ITelemetryProvider>());
     }
 
     // =========================================================================

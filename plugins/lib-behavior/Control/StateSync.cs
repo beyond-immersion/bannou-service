@@ -125,7 +125,7 @@ public sealed class StateSync : IStateSync
     /// to enable sharing state across components.
     /// </remarks>
     public StateSync(ILogger<StateSync>? logger = null, ITelemetryProvider? telemetryProvider = null)
-        : this(new EntityStateRegistry(), logger, telemetryProvider)
+        : this(new EntityStateRegistry(Microsoft.Extensions.Logging.Abstractions.NullLogger<EntityStateRegistry>.Instance), logger, telemetryProvider)
     {
     }
 

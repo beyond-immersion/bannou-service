@@ -33,6 +33,7 @@ public class GenesisServiceBondTests : ServiceTestBase<GenesisServiceConfigurati
     private readonly Mock<IQueryableStateStore<GenesisEntityModel>> _mockEntityQueryStore;
     private readonly Mock<IStateStore<CachedGenesisEntity>> _mockEntityCacheStore;
     private readonly Mock<IStateStore<CachedCapabilityManifest>> _mockCapsCacheStore;
+    private readonly Mock<IStateStore<string>> _mockEntityIndexStore;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<GenesisService>> _mockLogger;
@@ -61,6 +62,7 @@ public class GenesisServiceBondTests : ServiceTestBase<GenesisServiceConfigurati
         _mockEntityQueryStore = new Mock<IQueryableStateStore<GenesisEntityModel>>();
         _mockEntityCacheStore = new Mock<IStateStore<CachedGenesisEntity>>();
         _mockCapsCacheStore = new Mock<IStateStore<CachedCapabilityManifest>>();
+        _mockEntityIndexStore = new Mock<IStateStore<string>>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<GenesisService>>();
@@ -79,11 +81,12 @@ public class GenesisServiceBondTests : ServiceTestBase<GenesisServiceConfigurati
         _mockEventConsumer = new Mock<IEventConsumer>();
 
         _mockStateStoreFactory.Setup(f => f.GetStore<GenesisTemplateModel>(StateStoreDefinitions.GenesisTemplates)).Returns(_mockTemplateStore.Object);
-        _mockStateStoreFactory.Setup(f => f.GetStore<GenesisTemplateListModel>(StateStoreDefinitions.GenesisTemplates)).Returns(_mockTemplateListStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetQueryableStore<GenesisTemplateModel>(StateStoreDefinitions.GenesisTemplates)).Returns(_mockTemplateQueryStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<GenesisTemplateListModel>(StateStoreDefinitions.GenesisTemplateIndexes)).Returns(_mockTemplateListStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<GenesisEntityModel>(StateStoreDefinitions.GenesisEntities)).Returns(_mockEntityStore.Object);
-        _mockStateStoreFactory.Setup(f => f.GetStore<GenesisEntityListModel>(StateStoreDefinitions.GenesisEntities)).Returns(_mockEntityListStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetQueryableStore<GenesisEntityModel>(StateStoreDefinitions.GenesisEntities)).Returns(_mockEntityQueryStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<string>(StateStoreDefinitions.GenesisEntityIndexes)).Returns(_mockEntityIndexStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<GenesisEntityListModel>(StateStoreDefinitions.GenesisEntityIndexes)).Returns(_mockEntityListStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<CachedGenesisEntity>(StateStoreDefinitions.GenesisEntityCache)).Returns(_mockEntityCacheStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<CachedCapabilityManifest>(StateStoreDefinitions.GenesisEntityCache)).Returns(_mockCapsCacheStore.Object);
 

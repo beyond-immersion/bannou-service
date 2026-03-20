@@ -14,7 +14,9 @@ using BeyondImmersion.BannouService.Behavior.Coordination;
 using BeyondImmersion.BannouService.Behavior.Handlers;
 using BeyondImmersion.BannouService.Behavior.Stack;
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Behavior;
 
@@ -78,11 +80,14 @@ public class BehaviorServicePlugin : StandardServicePlugin<IBehaviorService>
         // External dialogue loader for YAML-based dialogue files
         services.AddSingleton<IExternalDialogueLoader>(sp =>
         {
-            var loader = new ExternalDialogueLoader(new ExternalDialogueLoaderOptions
-            {
-                EnableCaching = true,
-                LogFileLoads = false
-            });
+            var loader = new ExternalDialogueLoader(
+                new ExternalDialogueLoaderOptions
+                {
+                    EnableCaching = true,
+                    LogFileLoads = false
+                },
+                sp.GetRequiredService<ILoggerFactory>().CreateLogger<ExternalDialogueLoader>(),
+                sp.GetRequiredService<ITelemetryProvider>());
             return loader;
         });
 

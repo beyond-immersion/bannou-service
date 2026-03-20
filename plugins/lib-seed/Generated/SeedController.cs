@@ -152,6 +152,21 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
 
 
     /// <summary>
+    /// Change seed ownership
+    /// </summary>
+
+    /// <remarks>
+    /// Atomically changes the ownerType and ownerId of a seed while preserving all growth data, bonds, and capability cache. The new owner type must be allowed by the seed type definition, and the new owner must not exceed the per-owner seed limit. Seed must be Active or Dormant. Publishes seed.updated with changedFields including ownerId and ownerType.
+    /// </remarks>
+
+
+
+    /// <returns>Seed reparented successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedResponse>> ReparentSeed(ReparentSeedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
     /// Get full growth domain map
     /// </summary>
 
@@ -786,6 +801,54 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase, I
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:seed/archive",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Change seed ownership
+    /// </summary>
+    /// <remarks>
+    /// Atomically changes the ownerType and ownerId of a seed while preserving all growth data, bonds, and capability cache. The new owner type must be allowed by the seed type definition, and the new owner must not exceed the per-owner seed limit. Seed must be Active or Dormant. Publishes seed.updated with changedFields including ownerId and ownerType.
+    /// </remarks>
+    /// <returns>Seed reparented successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("seed/reparent")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedResponse>> ReparentSeed([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ReparentSeedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.ReparentSeed",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/reparent");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.ReparentSeedAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/reparent");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:seed/reparent");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "seed",
+                "ReparentSeed",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:seed/reparent",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

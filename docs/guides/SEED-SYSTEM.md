@@ -290,7 +290,7 @@ The original design specified `IMatchmakingClient` (L4 soft dependency) for subm
 | Archived seed cleanup strategy | **Confirmed** (ready for implementation) | [#366](https://github.com/beyond-immersion/bannou-service/issues/366) -- Remove Archived status, replace archive with hard-delete, no retention worker; depends on #362 |
 | Bond growth multiplier when partner inactive | **Resolved** (implemented) | [#367](https://github.com/beyond-immersion/bannou-service/issues/367) -- Bond multiplier applies only when bond status is Active; inactive partners receive no multiplier |
 | Variable provider for Actor behavior system | **Resolved** (implemented) | [#361](https://github.com/beyond-immersion/bannou-service/issues/361) -- `SeedProviderFactory` provides `${seed.*}` variables via `IVariableProviderFactory` |
-| Client events for seed progression | Open issue | [#497](https://github.com/beyond-immersion/bannou-service/issues/497) -- Supersedes #365; uses Entity Session Registry for direct push from Seed (L2) |
+| Client events for seed progression | **Confirmed** (ready for implementation) | [#497](https://github.com/beyond-immersion/bannou-service/issues/497) -- 6 client events, interval-gated growth, seed.bond.initiated added; Entity Session Registry unblocked |
 | Seed → Collection reverse pipeline | Open issue | [#700](https://github.com/beyond-immersion/bannou-service/issues/700) -- Capability-gated collection grants for cross-seed pollination feedback loop |
 
 ### Gardener-Level

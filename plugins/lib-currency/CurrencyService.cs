@@ -786,6 +786,17 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
         }
 
         var (balance, isNewBalance) = await GetOrCreateBalanceAsync(body.WalletId, body.CurrencyDefinitionId, cancellationToken, earnCapResetTime: definition.EarnCapResetTime);
+
+        // Category B instance creation guard (per IMPLEMENTATION TENETS)
+        // First-ever credit of a deprecated currency to a wallet creates a new CurrencyBalance — blocked.
+        // Crediting an existing balance is instance modification, not creation — allowed.
+        if (isNewBalance && definition.IsDeprecated)
+        {
+            _logger.LogWarning("Cannot create balance for deprecated currency definition {DefinitionId} in wallet {WalletId}",
+                body.CurrencyDefinitionId, body.WalletId);
+            return (StatusCodes.BadRequest, null);
+        }
+
         ResetEarnCapsIfNeeded(balance, definition.EarnCapResetTime);
 
         var creditAmount = body.Amount;

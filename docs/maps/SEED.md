@@ -13,7 +13,7 @@
 |-------|-------|
 | Plugin | lib-seed |
 | Layer | L2 GameFoundation |
-| Endpoints | 24 |
+| Endpoints | 25 |
 | State Stores | seed (MySQL), seed-growth (MySQL), seed-type-definitions (MySQL), seed-bonds (MySQL), seed-capabilities-cache (Redis), seed-lock (Redis), seed-idempotency (Redis) |
 | Events Published | 12 (seed.created, seed.updated, seed.activated, seed.archived, seed.growth.updated, seed.growth.transferred, seed.phase.changed, seed.capability.updated, seed.bond.formed, seed.type.created, seed.type.updated, seed.type.deleted) |
 | Events Consumed | 0 |
@@ -150,6 +150,7 @@ This plugin does not consume external events. The Collection-to-Seed growth pipe
 | UpdateSeed | POST /seed/update | generated | user | seed | seed.updated |
 | ActivateSeed | POST /seed/activate | generated | user | seed (multiple) | seed.updated, seed.activated |
 | ArchiveSeed | POST /seed/archive | generated | user | seed | seed.archived |
+| ReparentSeed | POST /seed/reparent | generated | user | seed, cap (delete) | seed.updated |
 | GetGrowth | POST /seed/growth/get | generated | user | - | - |
 | RecordGrowth | POST /seed/growth/record | generated | [] | growth, seed, bond, cap (delete) | seed.growth.updated, seed.phase.changed |
 | RecordGrowthBatch | POST /seed/growth/record-batch | generated | [] | growth, seed, bond, cap (delete) | seed.growth.updated, seed.phase.changed |
@@ -262,6 +263,28 @@ IF seed.Status == Archived                                 -> 200 (idempotent)
 seed.Status = Archived
 WRITE seed-store:"seed:{seedId}" <- updated
 PUBLISH seed.archived { seedId, ownerId, ownerType, seedTypeCode }
+RETURN (200, SeedResponse)
+```
+
+### ReparentSeed
+POST /seed/reparent | Roles: [user]
+
+Atomically changes seed ownership while preserving growth, bonds, and capabilities.
+
+```
+LOCK seed-lock:{seedId}                                    -> 409 if fails
+READ seed-store:"seed:{seedId}"                            -> 404 if null
+IF seed.Status == Archived                                 -> 400 (must be active or dormant)
+READ type-store:"type:{gameServiceId}:{seedTypeCode}"      -> 404 if null
+IF newOwnerType not in type.AllowedOwnerTypes              -> 400
+// maxPerOwner: type.MaxPerOwner if > 0, else config.DefaultMaxSeedsPerOwner
+COUNT seed-store WHERE NewOwnerId, NewOwnerType, SeedTypeCode, GameServiceId, Status != Archived
+IF count >= maxPerOwner                                    -> 409
+seed.OwnerId = newOwnerId
+seed.OwnerType = newOwnerType
+WRITE seed-store:"seed:{seedId}" <- updated
+DELETE cap-store:"cap:{seedId}"  // Invalidate capability cache
+PUBLISH seed.updated { ..., changedFields: ["ownerId", "ownerType"] }
 RETURN (200, SeedResponse)
 ```
 

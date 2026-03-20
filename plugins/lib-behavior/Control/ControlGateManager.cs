@@ -48,7 +48,7 @@ public sealed class ControlGateManager : IControlGateRegistry
     {
         return _gates.GetOrAdd(entityId, id =>
         {
-            var gateLogger = _loggerFactory?.CreateLogger<ControlGate>();
+            var gateLogger = _loggerFactory.CreateLogger<ControlGate>();
             var gate = new ControlGate(id, gateLogger, _telemetryProvider);
 
             _logger?.LogDebug("Created control gate for entity {EntityId}", id);

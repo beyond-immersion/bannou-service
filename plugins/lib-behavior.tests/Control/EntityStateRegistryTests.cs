@@ -5,6 +5,7 @@
 
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Control;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Numerics;
 using Xunit;
 
@@ -19,7 +20,7 @@ public sealed class EntityStateRegistryTests
     public void UpdateState_NewEntity_StoresState()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var entityId = Guid.NewGuid();
         var state = new EntityState
         {
@@ -39,7 +40,7 @@ public sealed class EntityStateRegistryTests
     public void GetState_ExistingEntity_ReturnsState()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var entityId = Guid.NewGuid();
         var state = new EntityState
         {
@@ -63,7 +64,7 @@ public sealed class EntityStateRegistryTests
     public void GetState_NonExistentEntity_ReturnsNull()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var entityId = Guid.NewGuid();
 
         // Act
@@ -77,7 +78,7 @@ public sealed class EntityStateRegistryTests
     public void GetStateOrEmpty_ExistingEntity_ReturnsState()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var entityId = Guid.NewGuid();
         var state = new EntityState { Health = 0.5f };
         registry.UpdateState(entityId, state);
@@ -94,7 +95,7 @@ public sealed class EntityStateRegistryTests
     public void GetStateOrEmpty_NonExistentEntity_ReturnsEmptyState()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var entityId = Guid.NewGuid();
 
         // Act
@@ -110,7 +111,7 @@ public sealed class EntityStateRegistryTests
     public void UpdateState_ExistingEntity_OverwritesState()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var entityId = Guid.NewGuid();
         var originalState = new EntityState { Health = 1.0f, Stance = "standing" };
         var updatedState = new EntityState { Health = 0.25f, Stance = "prone" };
@@ -131,7 +132,7 @@ public sealed class EntityStateRegistryTests
     public void RemoveState_ExistingEntity_RemovesAndReturnsTrue()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var entityId = Guid.NewGuid();
         registry.UpdateState(entityId, new EntityState { Health = 1.0f });
 
@@ -148,7 +149,7 @@ public sealed class EntityStateRegistryTests
     public void RemoveState_NonExistentEntity_ReturnsFalse()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var entityId = Guid.NewGuid();
 
         // Act
@@ -162,7 +163,7 @@ public sealed class EntityStateRegistryTests
     public void GetTrackedEntityIds_ReturnsAllEntityIds()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var entityId1 = Guid.NewGuid();
         var entityId2 = Guid.NewGuid();
         var entityId3 = Guid.NewGuid();
@@ -184,7 +185,7 @@ public sealed class EntityStateRegistryTests
     public void Clear_RemovesAllState()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         registry.UpdateState(Guid.NewGuid(), new EntityState());
         registry.UpdateState(Guid.NewGuid(), new EntityState());
         registry.UpdateState(Guid.NewGuid(), new EntityState());
@@ -201,7 +202,7 @@ public sealed class EntityStateRegistryTests
     public void StateUpdated_NewEntity_RaisesEventWithNullPreviousState()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var entityId = Guid.NewGuid();
         var state = new EntityState { Health = 0.8f };
 
@@ -223,7 +224,7 @@ public sealed class EntityStateRegistryTests
     public void StateUpdated_ExistingEntity_RaisesEventWithPreviousState()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var entityId = Guid.NewGuid();
         var originalState = new EntityState { Health = 1.0f };
         var newState = new EntityState { Health = 0.5f };
@@ -246,7 +247,7 @@ public sealed class EntityStateRegistryTests
     public void HasState_EmptyRegistry_ReturnsFalse()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
 
         // Act & Assert
         Assert.False(registry.HasState(Guid.NewGuid()));
@@ -256,7 +257,7 @@ public sealed class EntityStateRegistryTests
     public void Count_EmptyRegistry_ReturnsZero()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
 
         // Act & Assert
         Assert.Equal(0, registry.Count);
@@ -266,7 +267,7 @@ public sealed class EntityStateRegistryTests
     public void StateUpdated_SourceIsRecorded()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var entityId = Guid.NewGuid();
         var sources = new List<string?>();
         registry.StateUpdated += (_, args) => sources.Add(args.Source);
@@ -287,7 +288,7 @@ public sealed class EntityStateRegistryTests
     public void ConcurrentUpdates_AllSucceed()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var entityIds = Enumerable.Range(0, 100).Select(_ => Guid.NewGuid()).ToArray();
         var updateCount = 0;
         registry.StateUpdated += (_, _) => Interlocked.Increment(ref updateCount);

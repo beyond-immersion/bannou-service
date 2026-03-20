@@ -5,6 +5,7 @@
 
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Control;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Numerics;
 using Xunit;
 
@@ -19,7 +20,7 @@ public sealed class StateSyncTests
     public async Task SyncStateAsync_InstantHandoff_UpdatesRegistryWithCorrectState()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var stateSync = new StateSync(registry);
         var entityId = Guid.NewGuid();
         var expectedPosition = new Vector3(10, 0, 5);
@@ -48,7 +49,7 @@ public sealed class StateSyncTests
     public async Task SyncStateAsync_SyncStateFalse_DoesNotUpdateRegistry()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var stateSync = new StateSync(registry);
         var entityId = Guid.NewGuid();
         var state = new EntityState
@@ -70,7 +71,7 @@ public sealed class StateSyncTests
     public async Task SyncStateAsync_BlendHandoff_UpdatesRegistryImmediately()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var stateSync = new StateSync(registry);
         var entityId = Guid.NewGuid();
         var expectedPosition = new Vector3(20, 5, 10);
@@ -96,7 +97,7 @@ public sealed class StateSyncTests
     public async Task SyncStateAsync_RaisesCompletedEvent_WithCorrectData()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var stateSync = new StateSync(registry);
         var entityId = Guid.NewGuid();
         var state = new EntityState
@@ -124,7 +125,7 @@ public sealed class StateSyncTests
     public async Task SyncStateAsync_RegistryRaisesStateUpdatedEvent()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var stateSync = new StateSync(registry);
         var entityId = Guid.NewGuid();
         var state = new EntityState
@@ -153,7 +154,7 @@ public sealed class StateSyncTests
     public async Task SyncStateAsync_MultipleUpdates_TracksStateHistory()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var stateSync = new StateSync(registry);
         var entityId = Guid.NewGuid();
         var firstState = new EntityState { Position = new Vector3(0, 0, 0), Health = 1.0f };
@@ -185,7 +186,7 @@ public sealed class StateSyncTests
     public async Task SyncStateAsync_ExplicitHandoff_UpdatesRegistry()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var stateSync = new StateSync(registry);
         var entityId = Guid.NewGuid();
         var expectedPosition = new Vector3(100, 0, 100);
@@ -205,7 +206,7 @@ public sealed class StateSyncTests
     public async Task SyncStateAsync_CancellationRequested_ThrowsOperationCanceledException()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var stateSync = new StateSync(registry);
         var entityId = Guid.NewGuid();
         var state = new EntityState { Position = new Vector3(0, 0, 0) };
@@ -225,7 +226,7 @@ public sealed class StateSyncTests
     public void StateRegistry_CanBeAccessedFromStateSync()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var stateSync = new StateSync(registry);
 
         // Act & Assert
@@ -236,7 +237,7 @@ public sealed class StateSyncTests
     public async Task SyncStateAsync_PreservesAllEntityStateProperties()
     {
         // Arrange
-        var registry = new EntityStateRegistry();
+        var registry = new EntityStateRegistry(NullLogger<EntityStateRegistry>.Instance);
         var stateSync = new StateSync(registry);
         var entityId = Guid.NewGuid();
         var targetId = Guid.NewGuid();

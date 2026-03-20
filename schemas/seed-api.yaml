@@ -188,6 +188,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/SeedResponse'
 
+  /seed/reparent:
+    post:
+      operationId: ReparentSeed
+      summary: Change seed ownership
+      description: >
+        Atomically changes the ownerType and ownerId of a seed while preserving
+        all growth data, bonds, and capability cache. The new owner type must be
+        allowed by the seed type definition, and the new owner must not exceed
+        the per-owner seed limit. Seed must be Active or Dormant. Publishes
+        seed.updated with changedFields including ownerId and ownerType.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReparentSeedRequest'
+      responses:
+        '200':
+          description: Seed reparented successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedResponse'
+        '400':
+          description: >
+            Invalid request. New owner type not in AllowedOwnerTypes, or seed
+            is Archived.
+        '404':
+          description: Seed or seed type not found
+        '409':
+          description: >
+            Lock contention or new owner would exceed per-owner seed limit.
+
   # --- Growth ---
 
   /seed/growth/get:
@@ -863,6 +898,26 @@ components:
           type: string
           format: uuid
           description: The seed to archive.
+
+    ReparentSeedRequest:
+      type: object
+      additionalProperties: false
+      description: >
+        Request to change a seed's ownership. Atomically updates ownerType and
+        ownerId while preserving growth data, bonds, and cached capabilities.
+      required: [seedId, newOwnerId, newOwnerType]
+      properties:
+        seedId:
+          type: string
+          format: uuid
+          description: The seed to reparent.
+        newOwnerId:
+          type: string
+          format: uuid
+          description: The new owner entity ID.
+        newOwnerType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: The new owner entity type. Must be in the seed type's AllowedOwnerTypes.
 
     GetGrowthRequest:
       type: object

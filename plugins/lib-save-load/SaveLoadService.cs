@@ -886,7 +886,7 @@ public partial class SaveLoadService : ISaveLoadService, IAccountDeletionCleanup
         // Validate the delta
         var deltaProcessor = new DeltaProcessor(
             _logger as ILogger<DeltaProcessor> ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<DeltaProcessor>.Instance,
-            _configuration.MigrationMaxPatchOperations);
+            _configuration);
         var algorithm = body.Algorithm ?? DeltaAlgorithm.JsonPatch;
         if (!deltaProcessor.ValidateDelta(body.Delta, algorithm))
         {

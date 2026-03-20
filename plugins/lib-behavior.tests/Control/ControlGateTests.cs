@@ -23,7 +23,7 @@ public class ControlGateTests
     public void ControlGate_InitialState_IsBehavior()
     {
         // Arrange & Act
-        var gate = new ControlGate(Guid.NewGuid());
+        var gate = new ControlGate(Guid.NewGuid(), NullLogger<ControlGate>.Instance, new NullTelemetryProvider());
 
         // Assert
         Assert.Equal(ControlSource.Behavior, gate.CurrentSource);
@@ -35,7 +35,7 @@ public class ControlGateTests
     public void ControlGate_InitialState_HasNoRestrictions()
     {
         // Arrange & Act
-        var gate = new ControlGate(Guid.NewGuid());
+        var gate = new ControlGate(Guid.NewGuid(), NullLogger<ControlGate>.Instance, new NullTelemetryProvider());
 
         // Assert
         Assert.Empty(gate.BehaviorInputChannels);
@@ -49,7 +49,7 @@ public class ControlGateTests
     public async Task TakeControl_Player_Success()
     {
         // Arrange
-        var gate = new ControlGate(Guid.NewGuid());
+        var gate = new ControlGate(Guid.NewGuid(), NullLogger<ControlGate>.Instance, new NullTelemetryProvider());
         var options = ControlOptions.ForPlayer();
 
         // Act
@@ -66,7 +66,7 @@ public class ControlGateTests
     public async Task TakeControl_Cinematic_Success()
     {
         // Arrange
-        var gate = new ControlGate(Guid.NewGuid());
+        var gate = new ControlGate(Guid.NewGuid(), NullLogger<ControlGate>.Instance, new NullTelemetryProvider());
         var options = ControlOptions.ForCinematic("test-cinematic");
 
         // Act
@@ -83,7 +83,7 @@ public class ControlGateTests
     public async Task TakeControl_LowerPriority_Denied()
     {
         // Arrange
-        var gate = new ControlGate(Guid.NewGuid());
+        var gate = new ControlGate(Guid.NewGuid(), NullLogger<ControlGate>.Instance, new NullTelemetryProvider());
         await gate.TakeControlAsync(ControlOptions.ForCinematic("test-cinematic"));
 
         // Act - try to take player control while cinematic is active
@@ -98,7 +98,7 @@ public class ControlGateTests
     public async Task TakeControl_EqualPriority_Allowed()
     {
         // Arrange
-        var gate = new ControlGate(Guid.NewGuid());
+        var gate = new ControlGate(Guid.NewGuid(), NullLogger<ControlGate>.Instance, new NullTelemetryProvider());
         await gate.TakeControlAsync(ControlOptions.ForCinematic("cinematic-1"));
 
         // Act - another cinematic can take over
@@ -117,7 +117,7 @@ public class ControlGateTests
     public async Task ReturnControl_RestoresToBehavior()
     {
         // Arrange
-        var gate = new ControlGate(Guid.NewGuid());
+        var gate = new ControlGate(Guid.NewGuid(), NullLogger<ControlGate>.Instance, new NullTelemetryProvider());
         await gate.TakeControlAsync(ControlOptions.ForCinematic("test-cinematic"));
 
         // Act
@@ -133,7 +133,7 @@ public class ControlGateTests
     public async Task ReturnControl_RaisesEvent()
     {
         // Arrange
-        var gate = new ControlGate(Guid.NewGuid());
+        var gate = new ControlGate(Guid.NewGuid(), NullLogger<ControlGate>.Instance, new NullTelemetryProvider());
         await gate.TakeControlAsync(ControlOptions.ForCinematic("test-cinematic"));
 
         ControlChangedEvent? capturedEvent = null;
@@ -157,7 +157,7 @@ public class ControlGateTests
     public async Task TakeControl_WithBehaviorChannels_AllowsSpecificChannels()
     {
         // Arrange
-        var gate = new ControlGate(Guid.NewGuid());
+        var gate = new ControlGate(Guid.NewGuid(), NullLogger<ControlGate>.Instance, new NullTelemetryProvider());
         var allowedChannels = new HashSet<string> { "expression", "speech" };
         var options = ControlOptions.ForCinematic("test-cinematic", allowedChannels);
 
@@ -173,7 +173,7 @@ public class ControlGateTests
     public async Task FilterEmissions_BehaviorDuringCinematic_OnlyAllowedChannels()
     {
         // Arrange
-        var gate = new ControlGate(Guid.NewGuid());
+        var gate = new ControlGate(Guid.NewGuid(), NullLogger<ControlGate>.Instance, new NullTelemetryProvider());
         var allowedChannels = new HashSet<string> { "expression" };
         await gate.TakeControlAsync(ControlOptions.ForCinematic("test", allowedChannels));
 
@@ -196,7 +196,7 @@ public class ControlGateTests
     public async Task FilterEmissions_CinematicSource_AlwaysPasses()
     {
         // Arrange
-        var gate = new ControlGate(Guid.NewGuid());
+        var gate = new ControlGate(Guid.NewGuid(), NullLogger<ControlGate>.Instance, new NullTelemetryProvider());
         await gate.TakeControlAsync(ControlOptions.ForCinematic("test", new HashSet<string>()));
 
         var emissions = new List<IntentEmission>
@@ -220,7 +220,7 @@ public class ControlGateTests
     public async Task TakeControl_WithDuration_ExpiresAutomatically()
     {
         // Arrange
-        var gate = new ControlGate(Guid.NewGuid());
+        var gate = new ControlGate(Guid.NewGuid(), NullLogger<ControlGate>.Instance, new NullTelemetryProvider());
         var options = new ControlOptions(
             ControlSource.Cinematic,
             CinematicId: "test",

@@ -14,6 +14,7 @@ public partial class GenesisService
     private const string ENTITY_CODE_KEY_PREFIX = "entity-code:";
     private const string ENTITY_TEMPLATE_KEY_PREFIX = "entity-template:";
     private const string ENTITY_WALLET_KEY_PREFIX = "entity-wallet:";
+    private const string ENTITY_TEMPLATE_INSTANCES_PREFIX = "entity-tmpl-inst:";
     private const string CACHE_ENTITY_KEY_PREFIX = "entity:";
     private const string CACHE_CAPS_KEY_PREFIX = "caps:";
 
@@ -40,6 +41,10 @@ public partial class GenesisService
     /// <summary>Builds key for wallet-to-entity reverse index.</summary>
     internal static string BuildEntityWalletKey(Guid walletId)
         => $"{ENTITY_WALLET_KEY_PREFIX}{walletId}";
+
+    /// <summary>Builds key for template→entity reverse index (for clean-deprecated instance checks).</summary>
+    internal static string BuildEntityTemplateInstancesKey(string templateCode)
+        => $"{ENTITY_TEMPLATE_INSTANCES_PREFIX}{templateCode}";
 
     /// <summary>Builds cache key for entity hot cache.</summary>
     internal static string BuildEntityCacheKey(Guid entityId)

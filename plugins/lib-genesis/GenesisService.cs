@@ -426,6 +426,22 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             {
                 await _templateStore.DeleteAsync(BuildTemplateKey(t.TemplateCode), ct);
                 await RemoveFromTemplateGameIndexAsync(t.GameServiceId, t.TemplateCode, ct);
+                await _messageBus.PublishTemplateDeletedAsync(new TemplateDeletedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    TemplateCode = t.TemplateCode,
+                    GameServiceId = t.GameServiceId,
+                    DisplayName = t.DisplayName,
+                    Description = t.Description,
+                    PhysicalFormType = t.PhysicalFormType,
+                    CreatedAt = t.CreatedAt,
+                    UpdatedAt = t.UpdatedAt,
+                    IsDeprecated = t.IsDeprecated,
+                    DeprecatedAt = t.DeprecatedAt,
+                    DeprecationReason = t.DeprecationReason,
+                    DeletedReason = "Removed by clean-deprecated sweep",
+                }, ct);
             },
             gracePeriodDays: body.GracePeriodDays,
             dryRun: body.DryRun,
@@ -965,48 +981,61 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         CleanupByRealmRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Cleaning up genesis entities for realm {RealmId}", body.RealmId);
-        var entitiesToDestroy = await FindEntitiesByRealmIdAsync(body.RealmId, cancellationToken);
 
-        foreach (var entity in entitiesToDestroy)
+        // Process in batches to avoid overwhelming infrastructure per implementation map
+        while (true)
         {
-            try
+            var batch = await _entityQueryStore.QueryPagedAsync(
+                e => e.RealmId == body.RealmId,
+                page: 1, // Always page 1 — we delete as we go, so earlier results shift
+                pageSize: _configuration.CleanupBatchSize,
+                orderBy: null,
+                descending: false,
+                cancellationToken);
+
+            if (batch.Items.Count == 0) break;
+
+            foreach (var entity in batch.Items)
             {
-                var template = await _templateStore.GetAsync(BuildTemplateKey(entity.TemplateCode), cancellationToken);
-
-                var lockOwner = $"cleanup-realm-{Guid.NewGuid():N}";
-                await using var lh = await _lockProvider.LockAsync(
-                    StateStoreDefinitions.GenesisLock, $"entity:{entity.EntityId}",
-                    lockOwner, _configuration.EntityLockTimeoutSeconds, cancellationToken: cancellationToken);
-                if (!lh.Success) continue;
-
-                if (entity.ActorId != null)
-                {
-                    try { await _actorClient.StopActorAsync(new StopActorRequest { ActorId = entity.ActorId.Value.ToString() }, cancellationToken); }
-                    catch (ApiException ex) { _logger.LogWarning(ex, "Failed to stop actor for entity {EntityId}", entity.EntityId); }
-                }
-                if (entity.CharacterId != null && template?.ArchiveOnDestruction == true)
-                {
-                    try { await _resourceClient.ExecuteCompressAsync(new ExecuteCompressRequest { ResourceType = "character", ResourceId = entity.CharacterId.Value }, cancellationToken); }
-                    catch (ApiException ex) { _logger.LogWarning(ex, "Failed to archive character for entity {EntityId}", entity.EntityId); }
-                }
-                if (entity.BondId != null)
-                {
-                    try { await _relationshipClient.EndRelationshipAsync(new EndRelationshipRequest { RelationshipId = entity.BondId.Value }, cancellationToken); }
-                    catch (ApiException ex) { _logger.LogWarning(ex, "Failed to end bond for entity {EntityId}", entity.EntityId); }
-                }
                 try
                 {
-                    await _resourceClient.ExecuteCleanupAsync(
-                        new ExecuteCleanupRequest { ResourceType = "genesis-entity", ResourceId = entity.EntityId }, cancellationToken);
-                }
-                catch (ApiException ex) { _logger.LogWarning(ex, "Failed resource cleanup for entity {EntityId}", entity.EntityId); }
+                    var template = await _templateStore.GetAsync(BuildTemplateKey(entity.TemplateCode), cancellationToken);
 
-                await DeleteEntityRecordsAsync(entity, cancellationToken);
-                await _messageBus.PublishEntityDeletedAsync(BuildEntityDeletedEvent(entity), cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to cleanup genesis entity {EntityId} for realm {RealmId}", entity.EntityId, body.RealmId);
+                    var lockOwner = $"cleanup-realm-{Guid.NewGuid():N}";
+                    await using var lh = await _lockProvider.LockAsync(
+                        StateStoreDefinitions.GenesisLock, $"entity:{entity.EntityId}",
+                        lockOwner, _configuration.EntityLockTimeoutSeconds, cancellationToken: cancellationToken);
+                    if (!lh.Success) continue;
+
+                    if (entity.ActorId != null)
+                    {
+                        try { await _actorClient.StopActorAsync(new StopActorRequest { ActorId = entity.ActorId.Value.ToString() }, cancellationToken); }
+                        catch (ApiException ex) { _logger.LogWarning(ex, "Failed to stop actor for entity {EntityId}", entity.EntityId); }
+                    }
+                    if (entity.CharacterId != null && template?.ArchiveOnDestruction == true)
+                    {
+                        try { await _resourceClient.ExecuteCompressAsync(new ExecuteCompressRequest { ResourceType = "character", ResourceId = entity.CharacterId.Value }, cancellationToken); }
+                        catch (ApiException ex) { _logger.LogWarning(ex, "Failed to archive character for entity {EntityId}", entity.EntityId); }
+                    }
+                    if (entity.BondId != null)
+                    {
+                        try { await _relationshipClient.EndRelationshipAsync(new EndRelationshipRequest { RelationshipId = entity.BondId.Value }, cancellationToken); }
+                        catch (ApiException ex) { _logger.LogWarning(ex, "Failed to end bond for entity {EntityId}", entity.EntityId); }
+                    }
+                    try
+                    {
+                        await _resourceClient.ExecuteCleanupAsync(
+                            new ExecuteCleanupRequest { ResourceType = "genesis-entity", ResourceId = entity.EntityId }, cancellationToken);
+                    }
+                    catch (ApiException ex) { _logger.LogWarning(ex, "Failed resource cleanup for entity {EntityId}", entity.EntityId); }
+
+                    await DeleteEntityRecordsAsync(entity, cancellationToken);
+                    await _messageBus.PublishEntityDeletedAsync(BuildEntityDeletedEvent(entity), cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to cleanup genesis entity {EntityId} for realm {RealmId}", entity.EntityId, body.RealmId);
+                }
             }
         }
         return StatusCodes.OK;

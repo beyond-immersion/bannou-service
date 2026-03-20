@@ -18,7 +18,7 @@ public class DeltaProcessorTests
     public DeltaProcessorTests()
     {
         _loggerMock = new Mock<ILogger<DeltaProcessor>>();
-        _processor = new DeltaProcessor(_loggerMock.Object, maxPatchOperations: 100);
+        _processor = new DeltaProcessor(_loggerMock.Object, new SaveLoadServiceConfiguration { MigrationMaxPatchOperations = 100 });
     }
 
     #region ComputeDelta Tests
@@ -321,7 +321,7 @@ public class DeltaProcessorTests
     public void ComputeDelta_ExceedingMaxOperations_ReturnsNull()
     {
         // Arrange - Use a processor with low max operations
-        var limitedProcessor = new DeltaProcessor(_loggerMock.Object, maxPatchOperations: 2);
+        var limitedProcessor = new DeltaProcessor(_loggerMock.Object, new SaveLoadServiceConfiguration { MigrationMaxPatchOperations = 2 });
 
         // Create source and target that will generate many patch operations
         var source = Encoding.UTF8.GetBytes("""{"a":1,"b":2,"c":3,"d":4}""");
@@ -338,7 +338,7 @@ public class DeltaProcessorTests
     public void ValidateDelta_ExceedingMaxOperations_ReturnsFalse()
     {
         // Arrange - Use a processor with low max operations
-        var limitedProcessor = new DeltaProcessor(_loggerMock.Object, maxPatchOperations: 1);
+        var limitedProcessor = new DeltaProcessor(_loggerMock.Object, new SaveLoadServiceConfiguration { MigrationMaxPatchOperations = 1 });
 
         // Create a patch with more than 1 operation
         var patch = Encoding.UTF8.GetBytes("""[{"op":"replace","path":"/a","value":1},{"op":"add","path":"/b","value":2}]""");

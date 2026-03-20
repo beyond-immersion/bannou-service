@@ -31,7 +31,7 @@ public sealed class StateSyncIntegrationTests : IAsyncDisposable
 
     public StateSyncIntegrationTests()
     {
-        _stateRegistry = new EntityStateRegistry();
+        _stateRegistry = new EntityStateRegistry(Microsoft.Extensions.Logging.Abstractions.NullLogger<EntityStateRegistry>.Instance);
         _stateSync = new StateSync(_stateRegistry);
         _controlGates = new ControlGateManager(NullLoggerFactory.Instance, new NullTelemetryProvider());
         _compiler = new BehaviorCompiler();

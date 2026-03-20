@@ -5,6 +5,8 @@
 
 using BeyondImmersion.Bannou.Behavior.Dialogue;
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Dialogue;
@@ -27,7 +29,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
             EnableCaching = true,
             LogFileLoads = false
         };
-        _loader = new ExternalDialogueLoader(options);
+        _loader = new ExternalDialogueLoader(options, NullLogger<ExternalDialogueLoader>.Instance, new NullTelemetryProvider());
         _loader.RegisterDirectory(_tempDir);
     }
 
@@ -200,7 +202,7 @@ public sealed class ExternalDialogueLoaderTests : IDisposable
         File.WriteAllText(Path.Combine(lowPriorityDir, "test.yaml"), DialogueTestFixtures.Load("dialogue_low_priority"));
         File.WriteAllText(Path.Combine(highPriorityDir, "test.yaml"), DialogueTestFixtures.Load("dialogue_high_priority"));
 
-        var loader = new ExternalDialogueLoader();
+        var loader = new ExternalDialogueLoader(new ExternalDialogueLoaderOptions(), NullLogger<ExternalDialogueLoader>.Instance, new NullTelemetryProvider());
         loader.RegisterDirectory(lowPriorityDir, priority: 0);
         loader.RegisterDirectory(highPriorityDir, priority: 10);
 

@@ -20,8 +20,8 @@ namespace BeyondImmersion.BannouService.Behavior.Control;
 public sealed class ControlGate : IControlGate
 {
     private readonly object _lock = new();
-    private readonly ILogger<ControlGate>? _logger;
-    private readonly ITelemetryProvider? _telemetryProvider;
+    private readonly ILogger<ControlGate> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly HashSet<string> _behaviorInputChannels;
 
     private ControlSource _currentSource;
@@ -34,7 +34,7 @@ public sealed class ControlGate : IControlGate
     /// <param name="entityId">The entity ID.</param>
     /// <param name="logger">Optional logger.</param>
     /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
-    public ControlGate(Guid entityId, ILogger<ControlGate>? logger = null, ITelemetryProvider? telemetryProvider = null)
+    public ControlGate(Guid entityId, ILogger<ControlGate> logger, ITelemetryProvider telemetryProvider)
     {
         EntityId = entityId;
         _logger = logger;
@@ -130,7 +130,7 @@ public sealed class ControlGate : IControlGate
             // Check priority - can only take control if new source has higher or equal priority
             if (options.Source < _currentSource)
             {
-                _logger?.LogDebug(
+                _logger.LogDebug(
                     "Control request denied for entity {EntityId}: {NewSource} < current {CurrentSource}",
                     EntityId,
                     options.Source,
@@ -157,7 +157,7 @@ public sealed class ControlGate : IControlGate
                 }
             }
 
-            _logger?.LogDebug(
+            _logger.LogDebug(
                 "Entity {EntityId} control changed: {PreviousSource} -> {NewSource}",
                 EntityId,
                 previousSource,
@@ -185,7 +185,7 @@ public sealed class ControlGate : IControlGate
             // Reset to behavior
             ResetToBehaviorInternal();
 
-            _logger?.LogDebug(
+            _logger.LogDebug(
                 "Entity {EntityId} control returned: {PreviousSource} -> Behavior (style: {Style})",
                 EntityId,
                 previousSource,

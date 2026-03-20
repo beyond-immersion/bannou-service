@@ -65,6 +65,11 @@ public partial interface ISeedService : IBannouService
         Task<(StatusCodes, SeedResponse?)> ArchiveSeedAsync(ArchiveSeedRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// ReparentSeed operation
+        /// </summary>
+        Task<(StatusCodes, SeedResponse?)> ReparentSeedAsync(ReparentSeedRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// GetGrowth operation
         /// </summary>
         Task<(StatusCodes, GrowthResponse?)> GetGrowthAsync(GetGrowthRequest body, CancellationToken cancellationToken = default(CancellationToken));

@@ -31,7 +31,7 @@ public sealed class DialogueIntegrationTests : IDisposable
         {
             EnableCaching = true,
             LogFileLoads = false
-        });
+        }, NullLogger<ExternalDialogueLoader>.Instance, new NullTelemetryProvider());
         _loader.RegisterDirectory(_tempDir, priority: 0);
 
         _resolver = new DialogueResolver(_loader, NullLogger<DialogueResolver>.Instance, new NullTelemetryProvider());

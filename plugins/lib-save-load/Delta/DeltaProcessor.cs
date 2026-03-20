@@ -23,10 +23,12 @@ public sealed class DeltaProcessor
     /// <summary>
     /// Creates a new DeltaProcessor instance.
     /// </summary>
-    public DeltaProcessor(ILogger<DeltaProcessor> logger, int maxPatchOperations = 1000)
+    /// <param name="logger">Logger for delta processing diagnostics.</param>
+    /// <param name="configuration">Service configuration providing MigrationMaxPatchOperations.</param>
+    public DeltaProcessor(ILogger<DeltaProcessor> logger, SaveLoadServiceConfiguration configuration)
     {
         _logger = logger;
-        _maxPatchOperations = maxPatchOperations;
+        _maxPatchOperations = configuration.MigrationMaxPatchOperations;
     }
 
     /// <summary>

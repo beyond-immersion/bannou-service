@@ -34,9 +34,9 @@ namespace BeyondImmersion.Bannou.Behavior.Cognition;
 public sealed class CognitionBuilder : ICognitionBuilder
 {
     private readonly ICognitionTemplateRegistry _registry;
-    private readonly IActionHandlerRegistry? _handlerRegistry;
-    private readonly ILogger<CognitionBuilder>? _logger;
-    private readonly ITelemetryProvider? _telemetryProvider;
+    private readonly IActionHandlerRegistry _handlerRegistry;
+    private readonly ILogger<CognitionBuilder> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new cognition builder.
@@ -47,9 +47,9 @@ public sealed class CognitionBuilder : ICognitionBuilder
     /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
     public CognitionBuilder(
         ICognitionTemplateRegistry registry,
-        IActionHandlerRegistry? handlerRegistry = null,
-        ILogger<CognitionBuilder>? logger = null,
-        ITelemetryProvider? telemetryProvider = null)
+        IActionHandlerRegistry handlerRegistry,
+        ILogger<CognitionBuilder> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _registry = registry;
         _handlerRegistry = handlerRegistry;
@@ -65,7 +65,7 @@ public sealed class CognitionBuilder : ICognitionBuilder
         var template = _registry.GetTemplate(templateId);
         if (template == null)
         {
-            _logger?.LogWarning("Cognition template not found: {TemplateId}", templateId);
+            _logger.LogWarning("Cognition template not found: {TemplateId}", templateId);
             return null;
         }
 
@@ -93,7 +93,7 @@ public sealed class CognitionBuilder : ICognitionBuilder
             .Select(kvp => CreateStage(kvp.Key, kvp.Value))
             .ToList();
 
-        _logger?.LogDebug(
+        _logger.LogDebug(
             "Built cognition pipeline from template {TemplateId} with {OverrideCount} overrides",
             template.Id,
             overrides?.Overrides.Count ?? 0);
@@ -212,7 +212,7 @@ public sealed class CognitionBuilder : ICognitionBuilder
     {
         if (!stages.TryGetValue(@override.Stage, out var handlers))
         {
-            _logger?.LogWarning("Override targets unknown stage: {Stage}", @override.Stage);
+            _logger.LogWarning("Override targets unknown stage: {Stage}", @override.Stage);
             return;
         }
 
@@ -239,7 +239,7 @@ public sealed class CognitionBuilder : ICognitionBuilder
                 break;
 
             default:
-                _logger?.LogWarning("Unknown override type: {Type}", @override.GetType().Name);
+                _logger.LogWarning("Unknown override type: {Type}", @override.GetType().Name);
                 break;
         }
     }
@@ -251,14 +251,14 @@ public sealed class CognitionBuilder : ICognitionBuilder
 
         if (handler == null)
         {
-            _logger?.LogWarning("Parameter override targets unknown handler: {HandlerId}", po.HandlerId);
+            _logger.LogWarning("Parameter override targets unknown handler: {HandlerId}", po.HandlerId);
             return;
         }
 
         // Deep merge parameters
         MergeParameters(handler.Parameters, po.Parameters);
 
-        _logger?.LogDebug(
+        _logger.LogDebug(
             "Applied parameter override to {HandlerId}: {ParamCount} parameters",
             po.HandlerId, po.Parameters.Count);
     }
@@ -270,7 +270,7 @@ public sealed class CognitionBuilder : ICognitionBuilder
 
         if (handler == null)
         {
-            _logger?.LogWarning("Disable override targets unknown handler: {HandlerId}", dho.HandlerId);
+            _logger.LogWarning("Disable override targets unknown handler: {HandlerId}", dho.HandlerId);
             return;
         }
 
@@ -284,7 +284,7 @@ public sealed class CognitionBuilder : ICognitionBuilder
             handler.Enabled = false;
         }
 
-        _logger?.LogDebug("Disabled handler {HandlerId}", dho.HandlerId);
+        _logger.LogDebug("Disabled handler {HandlerId}", dho.HandlerId);
     }
 
     private void ApplyAddOverride(List<MutableHandler> handlers, AddHandlerOverride aho)
@@ -327,7 +327,7 @@ public sealed class CognitionBuilder : ICognitionBuilder
 
         handlers.Insert(insertIndex, newHandler);
 
-        _logger?.LogDebug(
+        _logger.LogDebug(
             "Added handler {HandlerId} at position {Position}",
             aho.Handler.Id, insertIndex);
     }
@@ -339,7 +339,7 @@ public sealed class CognitionBuilder : ICognitionBuilder
 
         if (index < 0)
         {
-            _logger?.LogWarning("Replace override targets unknown handler: {HandlerId}", rho.HandlerId);
+            _logger.LogWarning("Replace override targets unknown handler: {HandlerId}", rho.HandlerId);
             return;
         }
 
@@ -352,7 +352,7 @@ public sealed class CognitionBuilder : ICognitionBuilder
             Parameters = new Dictionary<string, object>(rho.NewHandler.Parameters)
         };
 
-        _logger?.LogDebug(
+        _logger.LogDebug(
             "Replaced handler {OldId} with {NewId}",
             rho.HandlerId, rho.NewHandler.Id);
     }
@@ -364,7 +364,7 @@ public sealed class CognitionBuilder : ICognitionBuilder
 
         if (currentIndex < 0)
         {
-            _logger?.LogWarning("Reorder override targets unknown handler: {HandlerId}", roho.HandlerId);
+            _logger.LogWarning("Reorder override targets unknown handler: {HandlerId}", roho.HandlerId);
             return;
         }
 
@@ -395,7 +395,7 @@ public sealed class CognitionBuilder : ICognitionBuilder
 
         handlers.Insert(newIndex, handler);
 
-        _logger?.LogDebug(
+        _logger.LogDebug(
             "Reordered handler {HandlerId} from {OldIndex} to {NewIndex}",
             roho.HandlerId, currentIndex, newIndex);
     }

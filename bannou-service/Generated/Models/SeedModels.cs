@@ -458,6 +458,41 @@ public partial class ArchiveSeedRequest
 }
 
 /// <summary>
+/// Request to change a seed's ownership. Atomically updates ownerType and ownerId while preserving growth data, bonds, and cached capabilities.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ReparentSeedRequest
+{
+
+    /// <summary>
+    /// The seed to reparent.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("seedId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SeedId { get; set; } = default!;
+
+    /// <summary>
+    /// The new owner entity ID.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("newOwnerId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid NewOwnerId { get; set; } = default!;
+
+    /// <summary>
+    /// The new owner entity type. Must be in the seed type's AllowedOwnerTypes.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("newOwnerType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType NewOwnerType { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Request to get growth data for a seed.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

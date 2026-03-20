@@ -501,6 +501,109 @@ public partial class SeedService : ISeedService, ICleanDeprecatedEntity
         return (StatusCodes.OK, MapToResponse(seed));
     }
 
+    /// <summary>
+    /// Atomically changes a seed's ownership (ownerType and ownerId) while preserving
+    /// all growth data, bonds, and capability cache. Validates the new owner type is
+    /// allowed and the new owner hasn't exceeded the per-owner seed limit.
+    /// </summary>
+    public async Task<(StatusCodes, SeedResponse?)> ReparentSeedAsync(ReparentSeedRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Reparenting seed {SeedId} to {NewOwnerType} {NewOwnerId}",
+            body.SeedId, body.NewOwnerType, body.NewOwnerId);
+
+        var lockOwner = $"reparent-seed-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.SeedLock, body.SeedId.ToString(), lockOwner, 10, cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            return (StatusCodes.Conflict, null);
+        }
+
+        var key = $"seed:{body.SeedId}";
+        var seed = await _seedStore.GetAsync(key, cancellationToken);
+
+        if (seed == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Seed must be Active or Dormant (not Archived)
+        if (seed.Status == SeedStatus.Archived)
+        {
+            _logger.LogWarning("Cannot reparent archived seed {SeedId}", body.SeedId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Load type to validate AllowedOwnerTypes
+        var seedType = await _typeStore.GetAsync(TypeKey(seed.GameServiceId, seed.SeedTypeCode), cancellationToken);
+        if (seedType == null)
+        {
+            _logger.LogError("Seed type {SeedTypeCode} not found for seed {SeedId} during reparent",
+                seed.SeedTypeCode, body.SeedId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        if (!seedType.AllowedOwnerTypes.Contains(body.NewOwnerType))
+        {
+            _logger.LogWarning("New owner type {OwnerType} not allowed for seed type {SeedTypeCode}",
+                body.NewOwnerType, seed.SeedTypeCode);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Check per-owner limit for the NEW owner (excluding archived seeds)
+        var maxPerOwner = seedType.MaxPerOwner > 0 ? seedType.MaxPerOwner : _configuration.DefaultMaxSeedsPerOwner;
+        var ownerConditions = new List<QueryCondition>
+        {
+            new QueryCondition { Path = "$.OwnerId", Operator = QueryOperator.Equals, Value = body.NewOwnerId.ToString() },
+            new QueryCondition { Path = "$.OwnerType", Operator = QueryOperator.Equals, Value = body.NewOwnerType },
+            new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Equals, Value = seed.SeedTypeCode },
+            GameServiceIdCondition(seed.GameServiceId),
+            new QueryCondition { Path = "$.Status", Operator = QueryOperator.NotEquals, Value = SeedStatus.Archived.ToString() },
+            new QueryCondition { Path = "$.SeedId", Operator = QueryOperator.Exists, Value = true }
+        };
+        var existing = await _seedQueryStore.JsonQueryPagedAsync(ownerConditions, 0, 1, null, cancellationToken);
+
+        if (existing.TotalCount >= maxPerOwner)
+        {
+            _logger.LogWarning("New owner {OwnerId} already has {Count} seeds of type {SeedTypeCode} (max {Max})",
+                body.NewOwnerId, existing.TotalCount, seed.SeedTypeCode, maxPerOwner);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Apply ownership change
+        seed.OwnerId = body.NewOwnerId;
+        seed.OwnerType = body.NewOwnerType;
+
+        await _seedStore.SaveAsync(key, seed, cancellationToken: cancellationToken);
+
+        // Invalidate capability cache (owner change may affect variable provider contexts)
+        await _capabilityCacheStore.DeleteAsync($"cap:{seed.SeedId}", cancellationToken);
+
+        // Publish seed.updated with changed fields
+        await _messageBus.PublishSeedUpdatedAsync(new SeedUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SeedId = seed.SeedId,
+            OwnerId = seed.OwnerId,
+            OwnerType = seed.OwnerType,
+            SeedTypeCode = seed.SeedTypeCode,
+            GameServiceId = seed.GameServiceId,
+            GrowthPhase = seed.GrowthPhase,
+            TotalGrowth = seed.TotalGrowth,
+            DisplayName = seed.DisplayName,
+            Status = seed.Status,
+            BondId = seed.BondId,
+            ChangedFields = new List<string> { "ownerId", "ownerType" }
+        }, cancellationToken);
+
+        _logger.LogInformation("Reparented seed {SeedId} to {OwnerType} {OwnerId}",
+            seed.SeedId, seed.OwnerType, seed.OwnerId);
+
+        return (StatusCodes.OK, MapToResponse(seed));
+    }
+
     // ========================================================================
     // GROWTH
     // ========================================================================

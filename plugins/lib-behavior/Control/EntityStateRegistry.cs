@@ -29,13 +29,13 @@ namespace BeyondImmersion.BannouService.Behavior.Control;
 public sealed class EntityStateRegistry : IEntityStateRegistry
 {
     private readonly ConcurrentDictionary<Guid, EntityState> _states;
-    private readonly ILogger<EntityStateRegistry>? _logger;
+    private readonly ILogger<EntityStateRegistry> _logger;
 
     /// <summary>
     /// Creates a new entity state registry.
     /// </summary>
     /// <param name="logger">Optional logger.</param>
-    public EntityStateRegistry(ILogger<EntityStateRegistry>? logger = null)
+    public EntityStateRegistry(ILogger<EntityStateRegistry> logger)
     {
         _logger = logger;
         _states = new ConcurrentDictionary<Guid, EntityState>();
@@ -61,7 +61,7 @@ public sealed class EntityStateRegistry : IEntityStateRegistry
                 return state;
             });
 
-        _logger?.LogDebug(
+        _logger.LogDebug(
             "Updated state for entity {EntityId} from source {Source}: Position={Position}, Health={Health}",
             entityId,
             source ?? "unknown",
@@ -95,7 +95,7 @@ public sealed class EntityStateRegistry : IEntityStateRegistry
 
         if (removed)
         {
-            _logger?.LogDebug("Removed state tracking for entity {EntityId}", entityId);
+            _logger.LogDebug("Removed state tracking for entity {EntityId}", entityId);
         }
 
         return removed;
@@ -118,6 +118,6 @@ public sealed class EntityStateRegistry : IEntityStateRegistry
     {
         var count = _states.Count;
         _states.Clear();
-        _logger?.LogInformation("Cleared all entity state tracking ({Count} entities)", count);
+        _logger.LogInformation("Cleared all entity state tracking ({Count} entities)", count);
     }
 }

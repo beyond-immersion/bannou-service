@@ -39,31 +39,21 @@ public sealed class ExternalDialogueLoader : IExternalDialogueLoader, IDisposabl
     private readonly IMemoryCache _cache;
     private readonly ExternalDialogueLoaderOptions _options;
     private readonly IDeserializer _deserializer;
-    private readonly ILogger<ExternalDialogueLoader>? _logger;
-    private readonly ITelemetryProvider? _telemetryProvider;
+    private readonly ILogger<ExternalDialogueLoader> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly object _directoryLock = new();
     private bool _disposed;
 
     /// <summary>
-    /// Creates a new external dialogue loader with default options.
-    /// </summary>
-    /// <param name="logger">Optional logger.</param>
-    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
-    public ExternalDialogueLoader(ILogger<ExternalDialogueLoader>? logger = null, ITelemetryProvider? telemetryProvider = null)
-        : this(new ExternalDialogueLoaderOptions(), logger, telemetryProvider)
-    {
-    }
-
-    /// <summary>
     /// Creates a new external dialogue loader with specified options.
     /// </summary>
-    /// <param name="options">Loader options.</param>
-    /// <param name="logger">Optional logger.</param>
-    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
+    /// <param name="options">Loader options. Uses default options if not provided.</param>
+    /// <param name="logger">Logger for diagnostic output.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public ExternalDialogueLoader(
         ExternalDialogueLoaderOptions options,
-        ILogger<ExternalDialogueLoader>? logger = null,
-        ITelemetryProvider? telemetryProvider = null)
+        ILogger<ExternalDialogueLoader> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _options = options;
         _logger = logger;
@@ -112,7 +102,7 @@ public sealed class ExternalDialogueLoader : IExternalDialogueLoader, IDisposabl
                 Priority = priority
             });
 
-            _logger?.LogDebug(
+            _logger.LogDebug(
                 "Registered dialogue directory: {Directory}, priority: {Priority}",
                 directory,
                 priority);
@@ -122,12 +112,12 @@ public sealed class ExternalDialogueLoader : IExternalDialogueLoader, IDisposabl
     /// <inheritdoc/>
     public async Task<ExternalDialogueFile?> LoadAsync(string reference, CancellationToken ct = default)
     {
-        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "ExternalDialogueLoader.LoadAsync");
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "ExternalDialogueLoader.LoadAsync");
         ArgumentException.ThrowIfNullOrEmpty(reference);
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         // Check cache first
-        var cacheKey = GetCacheKey(reference);
+        var cacheKey = BuildCacheKey(reference);
         if (_options.EnableCaching && _cache.TryGetValue(cacheKey, out ExternalDialogueFile? cached))
         {
             return cached;
@@ -178,11 +168,11 @@ public sealed class ExternalDialogueLoader : IExternalDialogueLoader, IDisposabl
     /// <inheritdoc/>
     public async Task<ExternalDialogueFile?> ReloadAsync(string reference, CancellationToken ct = default)
     {
-        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "ExternalDialogueLoader.ReloadAsync");
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "ExternalDialogueLoader.ReloadAsync");
         ArgumentException.ThrowIfNullOrEmpty(reference);
 
         // Remove from cache
-        var cacheKey = GetCacheKey(reference);
+        var cacheKey = BuildCacheKey(reference);
         _cache.Remove(cacheKey);
 
         // Reload
@@ -227,7 +217,7 @@ public sealed class ExternalDialogueLoader : IExternalDialogueLoader, IDisposabl
         string filePath,
         CancellationToken ct)
     {
-        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "ExternalDialogueLoader.LoadFileAsync");
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "ExternalDialogueLoader.LoadFileAsync");
         try
         {
             var content = await File.ReadAllTextAsync(filePath, ct);
@@ -235,7 +225,7 @@ public sealed class ExternalDialogueLoader : IExternalDialogueLoader, IDisposabl
 
             if (raw == null)
             {
-                _logger?.LogWarning(
+                _logger.LogWarning(
                     "Failed to parse dialogue file (null result): {FilePath}",
                     filePath);
                 return null;
@@ -245,7 +235,7 @@ public sealed class ExternalDialogueLoader : IExternalDialogueLoader, IDisposabl
 
             if (_options.LogFileLoads)
             {
-                _logger?.LogDebug(
+                _logger.LogDebug(
                     "Loaded dialogue file: {Reference} from {FilePath}, " +
                     "{LocaleCount} localizations, {OverrideCount} overrides",
                     reference,
@@ -258,7 +248,7 @@ public sealed class ExternalDialogueLoader : IExternalDialogueLoader, IDisposabl
         }
         catch (Exception ex)
         {
-            _logger?.LogError(
+            _logger.LogError(
                 ex,
                 "Failed to load dialogue file: {FilePath}",
                 filePath);
@@ -319,9 +309,11 @@ public sealed class ExternalDialogueLoader : IExternalDialogueLoader, IDisposabl
         };
     }
 
-    private static string GetCacheKey(string reference)
+    private const string CACHE_KEY_PREFIX = "dialogue:";
+
+    internal static string BuildCacheKey(string reference)
     {
-        return $"dialogue:{reference.ToLowerInvariant()}";
+        return $"{CACHE_KEY_PREFIX}{reference.ToLowerInvariant()}";
     }
 
     /// <inheritdoc/>

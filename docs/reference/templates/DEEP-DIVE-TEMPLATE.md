@@ -208,18 +208,28 @@ Work tracking uses HTML comment markers placed immediately after the item being 
 - Design issue that needs human decisions
   <!-- AUDIT:NEEDS_DESIGN:2026-01-28:https://github.com/org/repo/issues/42 -->
 
+- Design resolved, ready for implementation
+  <!-- AUDIT:CONFIRMED:2026-02-15:https://github.com/org/repo/issues/42 -->
+
 - Item blocked on external dependency
   <!-- AUDIT:BLOCKED:2026-01-27:https://github.com/org/repo/issues/41 -->
+
+- Design question that turned out to be a non-issue
+  <!-- AUDIT:RESOLVED:2026-02-20:https://github.com/org/repo/issues/43 -->
 ```
 
 **Marker statuses:**
 | Status | Meaning | Issue Link |
 |--------|---------|------------|
 | `IN_PROGRESS` | Currently being worked on by automation or developer | Optional |
-| `NEEDS_DESIGN` | Investigated but requires human design decisions | **Required** |
+| `NEEDS_DESIGN` | Investigated but requires human design decisions before implementation | **Required** |
+| `CONFIRMED` | All design decisions resolved; ready for implementation. `/implement-plugin` prioritizes these items. | **Required** |
 | `BLOCKED` | Waiting on external dependency or other issue | Optional |
+| `RESOLVED` | Issue resolved without code changes (design clarification, superseded, or confirmed no-op) | Optional |
 
-**Important**: These markers are machine-managed. Do not remove or modify them during document maintenance - the `/audit-plugin` workflow manages their lifecycle.
+**Lifecycle**: A gap typically moves through: no marker → `NEEDS_DESIGN` (audit creates issue) → `CONFIRMED` (human resolves design questions) → `IN_PROGRESS` (implementation begins) → **FIXED** (strikethrough). `BLOCKED` and `RESOLVED` are terminal or pause states that can occur at any point.
+
+**Important**: These markers are machine-managed. Do not remove or modify them during document maintenance - the `/audit-plugin` and `/implement-plugin` workflows manage their lifecycle.
 
 ---
 

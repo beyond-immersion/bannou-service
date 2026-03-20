@@ -154,7 +154,7 @@ public sealed class VersionDataLoader : IVersionDataLoader
 
         var deltaProcessor = new DeltaProcessor(
             _logger as ILogger<DeltaProcessor> ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<DeltaProcessor>.Instance,
-            _configuration.MigrationMaxPatchOperations);
+            _configuration);
 
         var result = baseData;
         foreach (var deltaVersion in chain)

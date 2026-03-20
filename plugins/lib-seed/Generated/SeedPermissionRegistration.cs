@@ -152,6 +152,21 @@ public static class SeedPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/seed/reparent",
+            Method = ServiceEndpointMethod.Post,
+            Description = "ReparentSeed",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/seed/growth/get",
             Method = ServiceEndpointMethod.Post,
             Description = "GetGrowth",

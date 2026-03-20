@@ -468,8 +468,6 @@ Chest opened (game engine):
 
 6. **Event handlers are no-ops**: `HandleGenesisEntityCreatedAsync` and `HandleGenesisEntityDeletedAsync` in `GenesisService.Events.cs` are registered but do nothing (just `await Task.CompletedTask` with a debug log). They are placeholders for the wallet map coherence logic that depends on stub #2 (ICurrencyTransactionListener).
 
-7. **Test implementations**: All 5 test classes contain pseudocode stubs (`// TODO: Implement after GenesisEntityModel exists`). GenesisEntityModel now exists in `GenesisService.Models.cs` — tests are ready to be implemented.
-
 ---
 
 ## Potential Extensions
@@ -494,7 +492,9 @@ Chest opened (game engine):
 
 ### Bugs (Fix Immediately)
 
-*(None — no implementation exists yet.)*
+1. ~~**Clean-deprecated sweep does not publish `genesis.template.deleted` event**~~: **FIXED** (2026-03-19) — Added `PublishTemplateDeletedAsync` call with full `TemplateDeletedEvent` construction in the `deleteAndPublishAsync` delegate of `CleanDeprecatedAsync`. The `*.deleted` lifecycle event is now published for each permanently removed deprecated template per IMPLEMENTATION TENETS (T31 B22).
+
+2. ~~**CleanupByRealm does not batch — `CleanupBatchSize` config is dead**~~: **FIXED** (2026-03-19) — Refactored `CleanupByRealmAsync` to use `QueryPagedAsync` with `_configuration.CleanupBatchSize` per batch, always querying page 1 (entities are deleted as we go). `CleanupBatchSize` config is now referenced. Per IMPLEMENTATION TENETS (T21).
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -520,13 +520,9 @@ Chest opened (game engine):
 
 ### Design Considerations (Requires Planning)
 
+- **Clean-deprecated `hasInstancesAsync` uses QueryAsync scan instead of reverse index**: The `hasInstancesAsync` delegate in `CleanDeprecatedAsync` performs `_entityQueryStore.QueryAsync(e => e.TemplateCode == t.TemplateCode, ct)` — a full MySQL query scan per deprecated template per sweep invocation. HELPERS-AND-COMMON-PATTERNS.md recommends maintaining a reverse index (template→entity list via `AddToStringListAsync`/`RemoveFromStringListAsync`) and using `HasStringListEntriesAsync` for O(1) instance existence checks. At scale with many deprecated templates and thousands of entities, the current pattern compounds: each sweep iteration does a full table scan per deprecated template. Consider migrating to the standard reverse index pattern used by lib-item, lib-currency, and lib-contract for their clean-deprecated sweeps.
+
 - ~~**ICurrencyTransactionListener interface scope**~~: **RESOLVED** — Genesis uses an in-memory `ConcurrentDictionary<walletId, WalletMapping>` for O(1) filtering (~microseconds, no network I/O), populated from MySQL at startup and invalidated via self-subscription events. Non-genesis wallets are discarded in microseconds. Matched credits are buffered in a growth accumulator, flushed periodically by `GenesisGrowthFlushWorkerService` which calls `Seed.RecordGrowthBatch` once per entity per flush interval. This eliminates both the filtering overhead concern (in-memory vs Redis) and the processing volume concern (batched vs per-transaction). At 100K wallets, the listener adds ~30ms of ConcurrentDictionary lookups per autogain tick (vs ~9 seconds with Redis lookups). The batched flush reduces Seed lock acquisitions from one-per-wallet-credit to one-per-entity-per-flush-interval, a 10-20x reduction in state store operations. See § Core Mechanics for the full design.
-
-- ~~**System realm provisioning**~~: **RESOLVED** — Genesis validates but never auto-creates. System realms are pre-seeded configuration (established by Divine, Dungeon #667, and every L2 service). **At template registration**: Genesis calls `IRealmClient.GetRealmAsync` to verify the `awakening.systemRealmCode` exists AND is a system realm (`isSystemType: true`), and calls `ISpeciesClient.GetSpeciesAsync` to verify `awakening.characterSpeciesCode` exists in that realm. Returns BadRequest with clear messages if either is missing ("System realm '{code}' does not exist or is not a system realm. Create it via `/realm/seed` with `isSystemType: true` before registering templates that reference it."). **At awakening**: Re-validates both as defense-in-depth against post-registration deletion. If validation fails, the entity remains at EventBrain stage (no growth loss), logs Error, and publishes `genesis.entity.transition-failed` with the failure reason. This follows the universal L2 pattern — lib-location, lib-species, lib-character, lib-faction, and lib-worldstate all validate realm existence via `IRealmClient` before creating realm-scoped entities.
-
-- ~~**Bond before awakening**~~: **RESOLVED** — Option (c): deferred Relationship creation. `CreateBond` at any cognitive stage stores bond intent on the Genesis entity record (`bondTargetEntityType`, `bondTargetEntityId`); `bondId` remains null (no Relationship yet). The `${genesis.bond.*}` variable provider (active, targetId, targetType) serves from the Genesis record and is available immediately at all stages — sufficient for pre-awakening communication via `emit_perception:` (RabbitMQ topic routing, not Relationship-dependent). At Awakened phase transition, Genesis creates the actual Relationship using `(characterId, Character) ↔ (bondTargetEntityId, bondTargetEntityType)` with the template's `relationshipTypeCode`, then sets `bondId`. The `${relationship.*}` variable provider activates on next tick with full relationship data (sentiment, bond depth). `DissolveBond` pre-awakened clears Genesis record fields; post-awakened also deletes the Relationship. Option (a) (require awakening) was ruled out because ACTOR-BOUND-ENTITIES specifies weapon wielder bonds at equip time, and Stirring-stage actors need `${genesis.bond.targetId}` for perception injection. Option (b) (physical form reference + migration) was ruled out because it creates temporary Relationships that get deleted and recreated at awakening, doesn't work for `PhysicalFormType.None` entities, and adds migration complexity to the transition flow.
-
-- ~~**Multi-wallet growth mapping conflicts**~~: **RESOLVED** — Additive growth from multiple wallets to the same domain IS the design intent (a dungeon with ambient + harvested mana both feeding `mana_reserves`). Template authoring is a deliberate act by `developer`-role users; each mapping line is an explicit declaration. No warnings or opt-in flags — they would fire for every correctly-authored dungeon template. `RegisterTemplate` validates structural errors only: (1) every `growthMapping[].walletCode` references a wallet defined in `wallets[]`, (2) every `growthMapping[].domain` references a domain defined in `seed.domains[]`, (3) no exact duplicate `(walletCode, domain, direction)` triples (catches copy-paste errors). Different wallets mapping to the same domain at different ratios is intentional composition, not a conflict.
 
 - ~~**Concurrent ICurrencyTransactionListener processing**~~: **RESOLVED** — The batched growth flush design eliminates this concern entirely. The DI listener itself is microsecond-fast (in-memory map check + buffer write to a ConcurrentDictionary). The heavy Seed work (lock acquisition, growth recording, phase checks) happens asynchronously in the flush worker, which processes all accumulated growth for each entity in a single `Seed.RecordGrowthBatch` call. Even at 100K wallets with 30K autogain-enabled, the listener adds negligible overhead to Currency's autogain cycle. See the resolved DC-1 and § Core Mechanics for the full design.
 
@@ -534,4 +530,6 @@ Chest opened (game engine):
 
 ## Work Tracking
 
-*(No active work — aspirational service.)*
+- **Bug #1 (B22 violation)**: Clean-deprecated sweep needs `PublishTemplateDeletedAsync` call in `deleteAndPublishAsync` delegate. Straightforward fix — construct `TemplateDeletedEvent` and publish.
+- **Bug #2 (T21 dead config)**: Either implement batched processing in `CleanupByRealmAsync` using `CleanupBatchSize` config, or remove `CleanupBatchSize` from the configuration schema.
+- **DC-1 (reverse index)**: Migrate `hasInstancesAsync` from QueryAsync scan to maintained reverse index pattern for O(1) instance checks at scale.

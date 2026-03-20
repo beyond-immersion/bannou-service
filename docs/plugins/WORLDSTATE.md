@@ -442,10 +442,11 @@ flows:
 
 ### Design Considerations (Requires Planning)
 
-1. **Background worker scalability**: With many realms (100+), a single worker iteration may not complete within the tick interval. The current implementation processes realms sequentially. Options: (a) parallel realm advancement with configurable concurrency, (b) partitioning realms across nodes via `SupportedRealms` configuration (similar to GameSession's `SupportedGameServices` pattern), (c) staggered advancement.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/546 -->
+*No open design considerations remain.*
 
 ### Resolved Design Considerations
+
+- ~~**Background worker scalability**~~ ([#546](https://github.com/beyond-immersion/bannou-service/issues/546), resolved 2026-03-19): Three complementary aspects in one implementation: (1) cache the realm config list with event-driven invalidation via existing self-subscriptions, eliminating `QueryAsync(_ => true)` MySQL on every 5s tick; (2) add `SupportedRealms` config (string array, default `["*"]`) mirroring GameSession's `SupportedGameServices` pattern for horizontal partitioning across nodes — aligns with DEPLOYMENT-MODES Phase 2 realm partitioning; (3) add `MaxParallelRealmAdvancement` config (int, default 1) for vertical throughput — each realm has its own distributed lock so parallel processing is safe. See #546 for full resolution.
 
 - ~~**Game-time in existing schemas**~~ ([#544](https://github.com/beyond-immersion/bannou-service/issues/544), resolved 2026-03-19): Character-Encounter (L4, not L2 as previously stated) will add an optional `gameTimeSnapshot` companion field alongside existing `timestamp` DateTimeOffset, and transition `MemoryDecaySchedulerService` to game-time via shared `TimeSource` enum. Relationship timestamps are NOT applicable — cross-realm entities have no single clock. See #544 for full resolution.
 
