@@ -786,7 +786,7 @@ public partial class AnalyticsService
         try
         {
             using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleCharacterUpdatedForCacheInvalidationAsync");
-            var cacheKey = $"{CHARACTER_REALM_CACHE_PREFIX}:{evt.CharacterId}";
+            var cacheKey = BuildCharacterRealmCacheKey(evt.CharacterId);
             await _characterRealmCacheStore.DeleteAsync(cacheKey, CancellationToken.None);
             _logger.LogDebug(
                 "Invalidated character-to-realm cache for character {CharacterId}",
@@ -812,7 +812,7 @@ public partial class AnalyticsService
         try
         {
             using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleRealmUpdatedForCacheInvalidationAsync");
-            var cacheKey = $"{REALM_GAME_SERVICE_CACHE_PREFIX}:{evt.RealmId}";
+            var cacheKey = BuildRealmGameServiceCacheKey(evt.RealmId);
             await _realmGameServiceCacheStore.DeleteAsync(cacheKey, CancellationToken.None);
             _logger.LogDebug(
                 "Invalidated realm-to-gameService cache for realm {RealmId}",

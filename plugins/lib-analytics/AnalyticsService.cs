@@ -1294,7 +1294,7 @@ public partial class AnalyticsService : IAnalyticsService
         var cacheOptions = BuildResolutionCacheOptions();
         if (cacheOptions != null)
         {
-            var cacheKey = $"{REALM_GAME_SERVICE_CACHE_PREFIX}:{realmId}";
+            var cacheKey = BuildRealmGameServiceCacheKey(realmId);
             var cached = await _realmGameServiceCacheStore.GetAsync(cacheKey, cancellationToken);
             if (cached != null)
             {
@@ -1318,7 +1318,7 @@ public partial class AnalyticsService : IAnalyticsService
 
             if (cacheOptions != null)
             {
-                var cacheKey = $"{REALM_GAME_SERVICE_CACHE_PREFIX}:{realmId}";
+                var cacheKey = BuildRealmGameServiceCacheKey(realmId);
                 await _realmGameServiceCacheStore.SaveAsync(cacheKey, new RealmGameServiceCacheEntry
                 {
                     GameServiceId = realm.GameServiceId,
@@ -1362,7 +1362,7 @@ public partial class AnalyticsService : IAnalyticsService
         var cacheOptions = BuildResolutionCacheOptions();
         if (cacheOptions != null)
         {
-            var cacheKey = $"{CHARACTER_REALM_CACHE_PREFIX}:{characterId}";
+            var cacheKey = BuildCharacterRealmCacheKey(characterId);
             var cached = await _characterRealmCacheStore.GetAsync(cacheKey, cancellationToken);
             if (cached != null)
             {
@@ -1386,7 +1386,7 @@ public partial class AnalyticsService : IAnalyticsService
 
             if (cacheOptions != null)
             {
-                var cacheKey = $"{CHARACTER_REALM_CACHE_PREFIX}:{characterId}";
+                var cacheKey = BuildCharacterRealmCacheKey(characterId);
                 await _characterRealmCacheStore.SaveAsync(cacheKey, new CharacterRealmCacheEntry
                 {
                     RealmId = character.RealmId,
