@@ -205,7 +205,8 @@
 | CaptureHold | POST /currency/hold/capture | [] | hold, bal, tx, hold-wallet, idempotency | currency.hold.captured, currency.debited |
 | ReleaseHold | POST /currency/hold/release | [] | hold, hold-wallet | currency.hold.released |
 | GetHold | POST /currency/hold/get | [] | - | - |
-| CleanDeprecatedCurrencyDefinitions | POST /currency/definition/clean-deprecated | admin | def, def-code, all-defs | currency.definition.deleted, currency.balance.deleted *(unimplemented)* |
+| CleanupByOwner *(planned)* | POST /currency/cleanup-by-owner | [] | wallet, bal, hold, tx, indexes, cache | currency.balance.deleted, currency.wallet.closed |
+| CleanDeprecatedCurrencyDefinitions | POST /currency/definition/clean-deprecated | admin | def, def-code, all-defs | currency.definition.deleted, currency.balance.deleted |
 | CurrencyExpirationTaskService.ProcessExpirationCycleAsync | background | - | bal, tx | currency.expired |
 | HoldExpirationTaskService.ProcessHoldExpirationCycleAsync | background | - | hold, hold-wallet | currency.hold.expired |
 | TransactionRetentionCleanupWorkerService.ProcessRetentionCleanupCycleAsync *(planned)* | background | - | tx, tx-wallet, tx-ref | - |
@@ -776,12 +777,52 @@ WRITE holds-cache:hold:{holdId} // Populate cache on miss
 RETURN (200, HoldResponse)
 ```
 
+### CleanupByOwner (Planned)
+POST /currency/cleanup-by-owner | Roles: []
+
+```
+// Called by lib-resource during entity deletion (x-references CASCADE)
+// Shares cleanup logic with HandleAccountDeletedAsync (extract shared CleanupWalletsForOwnerAsync)
+QUERY currency-wallets via IQueryableStateStore<WalletModel>
+  WHERE $.OwnerId == request.ownerId AND $.OwnerType == request.ownerType
+IF no wallets -> RETURN (200, { walletsDeleted: 0 })
+
+FOREACH wallet in results (per-item error isolation, T7)
+  TRY
+    // Delete all balances (same logic as account cleanup)
+    READ balances:bal-wallet:{walletId}
+    FOREACH currencyDefId in balance list
+      READ + DELETE balances:bal:{walletId}:{currencyDefId}
+      DELETE balance-cache:bal:{walletId}:{currencyDefId}
+      PUBLISH currency.balance.deleted { walletId, currencyDefId, amount, deletedReason: "Owner deleted" }
+      // Remove from currency reverse index
+      RemoveFromStringListAsync(bal-currency:{currencyDefId}, walletId)
+      // Release all active holds for this wallet+currency
+      READ + DELETE holds:hold-wallet:{walletId}:{currencyDefId}
+      FOREACH holdId: DELETE holds:hold:{holdId} + holds-cache
+    DELETE balances:bal-wallet:{walletId}
+
+    // Delete all transactions
+    READ + DELETE transactions:tx-wallet:{walletId}
+    FOREACH txId: DELETE transactions:tx:{txId}
+
+    // Delete wallet record + owner index
+    DELETE wallets:wallet-owner:{ownerKey}
+    DELETE wallets:wallet:{walletId}
+
+    // Invalidate cache
+    _currencyCache.Invalidate(wallet.OwnerId)
+    walletsDeleted++
+  CATCH -> log Warning, continue
+
+RETURN (200, CleanupByOwnerResponse { walletsDeleted })
+```
+
 ### CleanDeprecatedCurrencyDefinitions
 POST /currency/definition/clean-deprecated | Roles: [admin]
 
 ```
-// UNIMPLEMENTED — throws NotImplementedException
-// Should use DeprecationCleanupHelper.ExecuteCleanupSweepAsync
+// Uses DeprecationCleanupHelper.ExecuteCleanupSweepAsync
 // Sweeps deprecated currency definitions with zero remaining balances
 // hasInstancesAsync: check bal-currency:{currencyDefId} reverse index (not wallet existence)
 // deleteAndPublishAsync: remove definition + indexes, publish currency.definition.deleted + currency.balance.deleted per balance
