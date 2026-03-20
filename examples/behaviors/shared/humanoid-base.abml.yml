@@ -33,7 +33,7 @@ context:
       source: "${agent.environment.indoors}"
       type: bool
     temperature:
-      source: "${world.weather.temperature}"
+      source: "${environment.temperature}"
       type: float
     time_of_day:
       source: "${world.time.period}"
@@ -105,7 +105,7 @@ flows:
 
     actions:
       - cond:
-          - when: "${world.weather.raining && !is_indoors}"
+          - when: "${environment.weather.is_precipitation && !is_indoors}"
             then:
               - emit_intent:
                   channel: expression

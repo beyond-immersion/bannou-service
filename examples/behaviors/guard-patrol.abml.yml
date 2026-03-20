@@ -56,7 +56,7 @@ context:
 
   requirements:
     # Must have patrol waypoints defined
-    patrol_waypoints: "${world.patrol_routes[patrol_route].waypoints.length > 0}"
+    patrol_waypoints: "${agent.memories.patrol_routes[patrol_route].waypoints.length > 0}"
 
 # -----------------------------------------------------------------------------
 # GOAP Goals - What the guard wants to achieve
@@ -128,7 +128,7 @@ flows:
       # Get current waypoint
       - set:
           variable: target_waypoint
-          value: "${world.patrol_routes[patrol_route].waypoints[current_waypoint]}"
+          value: "${agent.memories.patrol_routes[patrol_route].waypoints[current_waypoint]}"
 
       # Move to waypoint with appropriate stance
       - cond:
@@ -220,7 +220,7 @@ flows:
     actions:
       - set:
           variable: route_length
-          value: "${world.patrol_routes[patrol_route].waypoints.length}"
+          value: "${agent.memories.patrol_routes[patrol_route].waypoints.length}"
 
       - set:
           variable: next_index
@@ -231,7 +231,7 @@ flows:
           - when: "${next_index >= route_length}"
             then:
               - cond:
-                  - when: "${world.patrol_routes[patrol_route].loop}"
+                  - when: "${agent.memories.patrol_routes[patrol_route].loop}"
                     then:
                       - set: { variable: current_waypoint, value: 0 }
                   - else:

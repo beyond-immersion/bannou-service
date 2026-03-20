@@ -255,28 +255,24 @@ The event includes a full game time snapshot (all `GameTimeSnapshot` fields inli
 
 All 18 endpoints are fully implemented. No stubs remain.
 
-1. **Ratio history compaction**: The `RatioHistoryRetentionDays` configuration property was planned but is not implemented. The configuration property does not exist in the generated config class. Ratio history segments accumulate indefinitely. For long-running servers, this could grow unbounded.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/529 -->
+1. ~~**Ratio history compaction**~~ ([#529](https://github.com/beyond-immersion/bannou-service/issues/529), design resolved 2026-03-20): Lazy compaction inline in `SetTimeRatio`. Merged weighted-average segment replaces old segments past `RatioHistoryRetentionDays` (default 365) when `segments.Count > MaxSegmentsBeforeCompaction` (default 100). Dual trigger means typical deployments (2-10 segments/realm/year) never compact. Preserves exact accuracy for queries spanning the full compacted range. Low practical urgency — becomes relevant if #543 introduces automated ratio changes. See #529 for full design.
+<!-- AUDIT:DESIGN_RESOLVED:2026-03-20:https://github.com/beyond-immersion/bannou-service/issues/529 -->
 
 ---
 
 ## Potential Extensions
 
-1. **Calendar events/holidays**: Named dates in the calendar that repeat annually (harvest festival on Greenleaf 15, winter solstice on Frostmere 1). Publishable as events when the date is reached.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/538 -->
+1. ~~**Unified CalendarEvent system**~~ ([#538](https://github.com/beyond-immersion/bannou-service/issues/538), design resolved 2026-03-20; absorbs [#540](https://github.com/beyond-immersion/bannou-service/issues/540), closed): `CalendarEvent` entity with type discriminator supporting three modes: `Recurring` (holidays — month+day, annual), `Cyclical` (celestial — period-based continuous cycle with named phases), and `Once` (one-off events — specific year+month+day, auto-deactivates after duration). All types share: scope (`Realm`/`Location`), source (`Template`/`Divine`/`Admin`), tags, storage, clock worker detection, boundary events (`worldstate.calendar-event.reached`), and ABML action handler (`register_calendar_event`). Cyclical phase is deterministic pure math from realm epoch — no state advancement needed. Multi-cycle interactions (eclipses = two moons both full) are ABML conditions, not hardcoded. Variable provider: `${world.calendar.<code>.active}` (bool), `${world.calendar.<code>.phase}` (float 0.0-1.0), `${world.calendar.<code>.phase_name}` (string? for Cyclical), plus convenience aliases `${world.is_holiday}` and `${world.holiday_code}` for Recurring events. This gives `locationId` its first real use in the Worldstate variable provider. **Emergent pattern**: The `Once` type enables durable self-notification for god-actors — a divine actor registers a location-scoped `Once` event as a narrative checkpoint ("return to Frosthold in 3 game-months to continue this storyline"), the clock worker fires it regardless of actor lifecycle/restarts, and the god perceives it via its location watch subscription. This solves narrative continuity without quest triggers — gods evaluate world state at self-scheduled checkpoints, not hardcoded chains. See [CULTURAL-EMERGENCE.md](../planning/CULTURAL-EMERGENCE.md) for divine orchestration consuming calendar facts. See #538 for full unified design.
+<!-- AUDIT:DESIGN_RESOLVED:2026-03-20:https://github.com/beyond-immersion/bannou-service/issues/538 -->
 
-2. **Lunar cycles / celestial events**: Additional cyclical phenomena beyond seasons (moon phases, eclipses, celestial alignments). Configurable as additional cycles with their own variable namespace (`${world.moon.phase}`).
-<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/540 -->
-
-3. **Historical time queries**: "What season was it on game-year 47, month 3?" Useful for Storyline's retrospective narrative generation. Pure calendar math, no state required.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/542 -->
-
-4. **Variable-rate time**: Time ratio that changes based on player population. When no players are in a realm, time accelerates to advance the simulation faster.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/543 -->
+2. ~~**Historical time queries**~~ ([#542](https://github.com/beyond-immersion/bannou-service/issues/542), design resolved 2026-03-20): `POST /worldstate/calendar/historical-query` — calendar-template-scoped (no clock/realm needed), full input granularity `(year, monthIndex?, dayOfMonth?, hour?)`, slim `HistoricalCalendarResponse` with derived fields only (season, period, isDaylight, dayOfYear, monthCode, seasonProgress). Uses existing `CalendarLookup` math. ~200 lines. Future enhancement: return active CalendarEvents (#538) for the queried date. See #542 for full design.
+<!-- AUDIT:DESIGN_RESOLVED:2026-03-20:https://github.com/beyond-immersion/bannou-service/issues/542 -->
 
 ### Resolved Extensions (Not Worldstate Concerns)
 
 - ~~**Location-specific time zones**~~ ([#532](https://github.com/beyond-immersion/bannou-service/issues/532), reopened as Agency concern): Not a Worldstate (L2) clock concern. Game servers can offset displayed times from the authoritative clock. However, the issue has been reframed as a potential Agency (L4) capability: Agency could register per-session client event transformers with Connect that modify Worldstate's `WorldstateTimeSyncClientEvent` in transit, applying location-based timezone offsets before the client sees them. This is part of a broader "progressive agency event pipeline" concept where Agency controls what the client perceives. See Agency deep dive § Potential Extensions #10.
+
+- ~~**Variable-rate time**~~ ([#543](https://github.com/beyond-immersion/bannou-service/issues/543), closed): God-actor behavioral capability, not Worldstate infrastructure. Per ORCHESTRATION-PATTERNS.md: "Orchestration is authored content (YAML), not compiled code." A god-actor monitors realm population and calls `SetTimeRatio` via a Puppetmaster-hosted `set_realm_time_ratio` ABML action handler (following Environment's `register_weather_event` pattern). Different gods implement different policies as ABML content. The only Worldstate-side action is adding `AutoPopulation` to the `TimeRatioChangeReason` enum for auditability. Ratio history compaction (#529) handles increased segment frequency from automated changes.
 
 - ~~**Magical time dilation zones**~~ ([#534](https://github.com/beyond-immersion/bannou-service/issues/534), closed): Solved by existing realm-level time ratios. Each realm has its own configurable `timeRatio` — a fairy realm where time flows 10x faster is simply a realm with `timeRatio: 240.0`. Characters experience different time speeds by traveling between realms via Transit's cross-realm connections and Character's `TransferCharacterToRealm`. The actual unsolved problem — cross-realm journey orchestration (what happens to character state, actor bindings, and L4 data during cross-realm travel) — is tracked in [#702](https://github.com/beyond-immersion/bannou-service/issues/702). Note: the original deep dive entry incorrectly claimed a connection to `ITemporalManager` — that interface manages per-participant cinematic QTE time budgets in the behavior-compiler SDK, which is unrelated to world-level temporal zones.
 
@@ -417,8 +413,7 @@ flows:
 
 ### Intentional Quirks (Documented Behavior)
 
-1. **ABML behavior namespace cleanup needed**: Several example behavior files reference variables under the `${world.*}` namespace that do NOT belong to worldstate: `${world.weather.temperature}` and `${world.weather.raining}` (these are `${environment.*}` variables from lib-environment L4), and `${world.patrol_routes[...]}` (operational data, not temporal). These example files predate the final namespace design and need updating. The `${world.*}` namespace owned by worldstate is strictly temporal: time, calendar, and season data.
-<!-- AUDIT:TRACKED:2026-03-05:https://github.com/beyond-immersion/bannou-service/issues/568 -->
+1. ~~**ABML behavior namespace cleanup needed**~~ ([#568](https://github.com/beyond-immersion/bannou-service/issues/568), fixed 2026-03-20): Fixed. `${world.weather.temperature}` → `${environment.temperature}`, `${world.weather.raining}` → `${environment.weather.is_precipitation}`, `${world.patrol_routes[...]}` → `${agent.memories.patrol_routes[...]}`. The `${world.*}` namespace is strictly temporal: time, calendar, season, and (once implemented) calendar events.
 
 2. **Realm clocks are independent**: Two realms running on the same server can be in different seasons, years, or even different calendar systems entirely. There is no global game time. This is intentional -- Arcadia, Fantasia, and Omega are peer worlds that may have different temporal scales.
 
@@ -456,4 +451,4 @@ flows:
 
 ## Work Tracking
 
-*Remaining stubs: ratio history compaction (issue #529).*
+*All stubs and design considerations resolved as of 2026-03-20. Ratio history compaction (#529), background worker scalability (#546), game-time migration (#544, #545) — see Resolved sections above. Implementation awaiting prioritization.*

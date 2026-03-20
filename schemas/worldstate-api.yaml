@@ -527,6 +527,8 @@ components:
         - Event
         - Pause
         - Resume
+        - AutoPopulation
+        - Compacted
 
     TimeSyncReason:
       type: string
