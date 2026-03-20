@@ -4,6 +4,7 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Worldstate;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -107,6 +108,7 @@ public class CurrencyAutogainTaskService : BackgroundService
         var lockProvider = scope.ServiceProvider.GetRequiredService<IDistributedLockProvider>();
 
         // Acquire all stores once per scope (FOUNDATION TENETS: BackgroundService store access)
+        var worldstateClient = scope.ServiceProvider.GetRequiredService<IWorldstateClient>();
         var defStore = stateStoreFactory.GetStore<CurrencyDefinitionModel>(StateStoreDefinitions.CurrencyDefinitions);
         var defStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyDefinitions);
         var balanceStore = stateStoreFactory.GetStore<BalanceModel>(StateStoreDefinitions.CurrencyBalances);
@@ -133,7 +135,7 @@ public class CurrencyAutogainTaskService : BackgroundService
                 continue;
 
             var processed = await ProcessAutogainForCurrencyAsync(
-                definition, balanceStore, balanceStringStore, walletStore, messageBus, lockProvider, cancellationToken);
+                definition, balanceStore, balanceStringStore, walletStore, messageBus, lockProvider, worldstateClient, cancellationToken);
             totalProcessed += processed;
         }
 
@@ -158,6 +160,7 @@ public class CurrencyAutogainTaskService : BackgroundService
         IStateStore<WalletModel> walletStore,
         IMessageBus messageBus,
         IDistributedLockProvider lockProvider,
+        IWorldstateClient worldstateClient,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyAutogainTaskService.ProcessAutogainForCurrencyAsync");
@@ -180,7 +183,7 @@ public class CurrencyAutogainTaskService : BackgroundService
             var batch = walletIds.Skip(i).Take(_configuration.AutogainBatchSize);
             var tasks = batch.Select(walletId =>
                 ProcessSingleBalanceAutogainAsync(
-                    walletId, definition, balanceStore, walletStore, messageBus, lockProvider, cancellationToken));
+                    walletId, definition, balanceStore, walletStore, messageBus, lockProvider, worldstateClient, cancellationToken));
 
             var results = await Task.WhenAll(tasks);
             processed += results.Count(r => r);
@@ -200,6 +203,7 @@ public class CurrencyAutogainTaskService : BackgroundService
         IStateStore<WalletModel> walletStore,
         IMessageBus messageBus,
         IDistributedLockProvider lockProvider,
+        IWorldstateClient worldstateClient,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyAutogainTaskService.ProcessSingleBalanceAutogainAsync");
@@ -243,8 +247,47 @@ public class CurrencyAutogainTaskService : BackgroundService
 
             if (interval.TotalSeconds <= 0) return false;
 
-            var elapsed = now - balance.LastAutogainAt.Value;
-            var periodsElapsed = (int)(elapsed.TotalSeconds / interval.TotalSeconds);
+            // Resolve elapsed time based on time source (per-definition override wins, then global config)
+            var useGameTime = definition.AutogainUseGameTime ?? (_configuration.AutogainTimeSource == TimeSource.GameTime);
+            double elapsedSeconds;
+            WalletModel? walletForEvent = null;
+
+            if (useGameTime)
+            {
+                // Need wallet for realmId
+                walletForEvent = await walletStore.GetAsync($"{WALLET_PREFIX}{walletId}", cancellationToken);
+                if (walletForEvent?.RealmId is null)
+                {
+                    // No realm — fall back to real-time (global/account wallets)
+                    elapsedSeconds = (now - balance.LastAutogainAt.Value).TotalSeconds;
+                }
+                else
+                {
+                    try
+                    {
+                        var elapsedResponse = await worldstateClient.GetElapsedGameTimeAsync(
+                            new GetElapsedGameTimeRequest
+                            {
+                                RealmId = walletForEvent.RealmId.Value,
+                                FromRealTime = balance.LastAutogainAt.Value,
+                                ToRealTime = now
+                            }, cancellationToken);
+                        elapsedSeconds = elapsedResponse.TotalGameSeconds;
+                    }
+                    catch (ApiException ex)
+                    {
+                        _logger.LogWarning(ex, "Worldstate unavailable for realm {RealmId} during autogain task, skipping wallet {WalletId}",
+                            walletForEvent.RealmId.Value, walletId);
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                elapsedSeconds = (now - balance.LastAutogainAt.Value).TotalSeconds;
+            }
+
+            var periodsElapsed = (int)(elapsedSeconds / interval.TotalSeconds);
 
             if (periodsElapsed <= 0) return false;
 
@@ -281,8 +324,8 @@ public class CurrencyAutogainTaskService : BackgroundService
 
             await balanceStore.SaveAsync(balanceKey, balance, cancellationToken: cancellationToken);
 
-            // Get wallet for owner info in event
-            var wallet = await walletStore.GetAsync($"{WALLET_PREFIX}{walletId}", cancellationToken);
+            // Get wallet for owner info in event (reuse if already loaded for game-time check)
+            var wallet = walletForEvent ?? await walletStore.GetAsync($"{WALLET_PREFIX}{walletId}", cancellationToken);
             if (wallet is null)
             {
                 _logger.LogError("Wallet {WalletId} not found during autogain processing for currency {CurrencyId}",

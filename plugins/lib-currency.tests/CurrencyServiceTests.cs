@@ -8,6 +8,7 @@ using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
+using BeyondImmersion.BannouService.Worldstate;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -415,7 +416,8 @@ public class CurrencyConversionConcurrencyTests
             _mockTelemetryProvider.Object,
             _mockEntitySessionRegistry.Object,
             _mockCurrencyCache.Object,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            Mock.Of<IWorldstateClient>());
     }
 
     private WalletModel CreateTestWallet()

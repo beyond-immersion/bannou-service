@@ -35,6 +35,9 @@ internal class SeedModel
     /// <summary>Game service this seed is scoped to. Null for cross-game seed types.</summary>
     public Guid? GameServiceId { get; set; }
 
+    /// <summary>Realm this seed is associated with for game-time decay. Null if no realm association. Fixed at creation.</summary>
+    public Guid? RealmId { get; set; }
+
     /// <summary>When the seed was created.</summary>
     public DateTimeOffset CreatedAt { get; set; }
 

@@ -101,7 +101,9 @@ public class SeedEvolutionListenerTests : ServiceTestBase<SeedServiceConfigurati
         Configuration,
         _mockEventConsumer.Object,
         _mockGameServiceClient.Object,
-        evolutionListeners ?? Enumerable.Empty<ISeedEvolutionListener>());
+        evolutionListeners ?? Enumerable.Empty<ISeedEvolutionListener>(),
+        Mock.Of<BeyondImmersion.BannouService.Character.ICharacterClient>(),
+        Mock.Of<BeyondImmersion.BannouService.Worldstate.IWorldstateClient>());
 
     private SeedTypeDefinitionModel CreateTestSeedType(
         string seedTypeCode = "guardian",

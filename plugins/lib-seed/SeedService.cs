@@ -7,7 +7,9 @@ using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Worldstate;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -39,6 +41,8 @@ public partial class SeedService : ISeedService, ICleanDeprecatedEntity
     private readonly IGameServiceClient _gameServiceClient;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly IReadOnlyList<ISeedEvolutionListener> _evolutionListeners;
+    private readonly ICharacterClient _characterClient;
+    private readonly IWorldstateClient _worldstateClient;
 
     /// <summary>
     /// Creates a new instance of the SeedService.
@@ -52,7 +56,9 @@ public partial class SeedService : ISeedService, ICleanDeprecatedEntity
         SeedServiceConfiguration configuration,
         IEventConsumer eventConsumer,
         IGameServiceClient gameServiceClient,
-        IEnumerable<ISeedEvolutionListener> evolutionListeners)
+        IEnumerable<ISeedEvolutionListener> evolutionListeners,
+        ICharacterClient characterClient,
+        IWorldstateClient worldstateClient)
     {
         _messageBus = messageBus;
         _seedStore = stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
@@ -71,6 +77,8 @@ public partial class SeedService : ISeedService, ICleanDeprecatedEntity
         _eventConsumer = eventConsumer;
         _gameServiceClient = gameServiceClient;
         _evolutionListeners = evolutionListeners.ToList();
+        _characterClient = characterClient;
+        _worldstateClient = worldstateClient;
 
         RegisterEventConsumers(_eventConsumer);
 
@@ -200,6 +208,13 @@ public partial class SeedService : ISeedService, ICleanDeprecatedEntity
             ? ComputePhaseInfo(seedType.GrowthPhases, 0f).Current.PhaseCode
             : "initial";
 
+        // Resolve realmId: explicit from request, auto-associate from owner, or null
+        Guid? resolvedRealmId = body.RealmId;
+        if (resolvedRealmId is null && _configuration.AutoAssociateRealm)
+        {
+            resolvedRealmId = await ResolveRealmForOwnerAsync(body.OwnerId, body.OwnerType, cancellationToken);
+        }
+
         var seed = new SeedModel
         {
             SeedId = Guid.NewGuid(),
@@ -207,6 +222,7 @@ public partial class SeedService : ISeedService, ICleanDeprecatedEntity
             OwnerType = body.OwnerType,
             SeedTypeCode = body.SeedTypeCode,
             GameServiceId = body.GameServiceId,
+            RealmId = resolvedRealmId,
             CreatedAt = DateTimeOffset.UtcNow,
             GrowthPhase = initialPhase,
             TotalGrowth = 0f,
@@ -2177,6 +2193,7 @@ public partial class SeedService : ISeedService, ICleanDeprecatedEntity
         OwnerType = seed.OwnerType,
         SeedTypeCode = seed.SeedTypeCode,
         GameServiceId = seed.GameServiceId,
+        RealmId = seed.RealmId,
         CreatedAt = seed.CreatedAt,
         GrowthPhase = seed.GrowthPhase,
         TotalGrowth = seed.TotalGrowth,

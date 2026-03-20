@@ -1,3 +1,7 @@
+using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Character;
+using Microsoft.Extensions.Logging;
+
 namespace BeyondImmersion.BannouService.Seed;
 
 // =============================================================================
@@ -56,5 +60,36 @@ namespace BeyondImmersion.BannouService.Seed;
 /// </remarks>
 public partial class SeedService
 {
-    // Move private/internal helper methods here from SeedService.cs
+    /// <summary>
+    /// Resolves the realm association for a seed based on owner type.
+    /// Character → character's realmId, Realm → self, others → null.
+    /// </summary>
+    private async Task<Guid?> ResolveRealmForOwnerAsync(Guid ownerId, EntityType ownerType, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.seed", "SeedService.ResolveRealmForOwner");
+
+        if (ownerType == EntityType.Realm)
+        {
+            // Realm-owned seeds are self-evidently tied to their own time
+            return ownerId;
+        }
+
+        if (ownerType == EntityType.Character)
+        {
+            try
+            {
+                var character = await _characterClient.GetCharacterAsync(
+                    new BeyondImmersion.BannouService.Character.GetCharacterRequest { CharacterId = ownerId }, ct);
+                return character?.RealmId;
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Could not resolve realm for character {CharacterId}, realmId will be null", ownerId);
+                return null;
+            }
+        }
+
+        // Account, Actor without character binding, etc. → no realm
+        return null;
+    }
 }

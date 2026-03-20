@@ -1,7 +1,9 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Worldstate;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -134,6 +136,7 @@ public class SeedDecayWorkerService : BackgroundService
         var lockProvider = scope.ServiceProvider.GetRequiredService<IDistributedLockProvider>();
         var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
 
+        var worldstateClient = scope.ServiceProvider.GetRequiredService<IWorldstateClient>();
         var typeStore = stateStoreFactory.GetJsonQueryableStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
         var seedQueryStore = stateStoreFactory.GetJsonQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
         var seedStore = stateStoreFactory.GetStore<SeedModel>(StateStoreDefinitions.Seed);
@@ -171,7 +174,7 @@ public class SeedDecayWorkerService : BackgroundService
                 var (processed, decayed, regressed) = await ProcessSeedsForTypeAsync(
                     seedType, ratePerDay, now,
                     seedQueryStore, seedStore, growthStore, cacheStore, lockProvider, messageBus,
-                    cancellationToken);
+                    worldstateClient, cancellationToken);
 
                 totalSeedsProcessed += processed;
                 totalDomainsDecayed += decayed;
@@ -204,6 +207,7 @@ public class SeedDecayWorkerService : BackgroundService
         IStateStore<CapabilityManifestModel> cacheStore,
         IDistributedLockProvider lockProvider,
         IMessageBus messageBus,
+        IWorldstateClient worldstateClient,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity(
@@ -239,7 +243,7 @@ public class SeedDecayWorkerService : BackgroundService
                     var (decayed, regressed) = await ProcessSeedDecayAsync(
                         seed, seedType, ratePerDay, now,
                         seedStore, growthStore, cacheStore, lockProvider, messageBus,
-                        cancellationToken);
+                        worldstateClient, cancellationToken);
 
                     totalProcessed++;
                     totalDecayed += decayed;
@@ -273,6 +277,7 @@ public class SeedDecayWorkerService : BackgroundService
         IStateStore<CapabilityManifestModel> cacheStore,
         IDistributedLockProvider lockProvider,
         IMessageBus messageBus,
+        IWorldstateClient worldstateClient,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity(
@@ -296,16 +301,55 @@ public class SeedDecayWorkerService : BackgroundService
         if (growth == null || growth.Domains.Count == 0)
             return (0, false);
 
+        // Resolve elapsed time based on DecayTimeSource
+        double? gameTimeDecayDays = null;
+        if (_configuration.DecayTimeSource == TimeSource.GameTime)
+        {
+            if (seed.RealmId is null)
+            {
+                // No realm — skip this seed (no decay for seeds without realm in game-time mode)
+                return (0, false);
+            }
+
+            try
+            {
+                var fromTime = growth.LastDecayedAt ?? seed.CreatedAt;
+                var elapsedResponse = await worldstateClient.GetElapsedGameTimeAsync(
+                    new GetElapsedGameTimeRequest
+                    {
+                        RealmId = seed.RealmId.Value,
+                        FromRealTime = fromTime,
+                        ToRealTime = now
+                    }, cancellationToken);
+                gameTimeDecayDays = elapsedResponse.TotalGameSeconds / 86400.0;
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Worldstate unavailable for realm {RealmId} during seed decay, skipping seed {SeedId}",
+                    seed.RealmId.Value, seed.SeedId);
+                return (0, false);
+            }
+        }
+
         var domainsDecayed = 0;
 
         foreach (var (domainKey, entry) in growth.Domains)
         {
-            // Determine when decay should start for this domain
-            var decayStartTime = entry.LastActivityAt > (growth.LastDecayedAt ?? DateTimeOffset.MinValue)
-                ? entry.LastActivityAt
-                : growth.LastDecayedAt ?? seed.CreatedAt;
+            double decayDays;
+            if (gameTimeDecayDays.HasValue)
+            {
+                // Game-time mode: same elapsed game-days for all domains in this cycle
+                decayDays = gameTimeDecayDays.Value;
+            }
+            else
+            {
+                // Real-time mode: per-domain decay start time
+                var decayStartTime = entry.LastActivityAt > (growth.LastDecayedAt ?? DateTimeOffset.MinValue)
+                    ? entry.LastActivityAt
+                    : growth.LastDecayedAt ?? seed.CreatedAt;
+                decayDays = (now - decayStartTime).TotalDays;
+            }
 
-            var decayDays = (now - decayStartTime).TotalDays;
             if (decayDays <= 0)
                 continue;
 

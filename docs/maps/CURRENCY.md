@@ -99,6 +99,7 @@
 | lib-messaging (`IMessageBus`) | L0 | Hard | Publishing 21 event topics |
 | lib-telemetry (`ITelemetryProvider`) | L0 | Hard | Span instrumentation |
 | lib-connect (`IEntitySessionRegistry`) | L1 | Hard | Client events to wallet owner WebSocket sessions |
+| lib-worldstate (`IWorldstateClient`) | L2 | Hard | `GetElapsedGameTimeAsync(realmId, from, to)` for game-time autogain calculation when `AutogainTimeSource == GameTime`. Wallets without `realmId` fall back to real-time. |
 
 **DI interfaces implemented**: `IVariableProviderFactory` via `CurrencyProviderFactory` — exposes `${currency.*}` ABML namespace to Actor (L2) via the Variable Provider Factory pattern.
 
@@ -160,6 +161,7 @@
 | `IEntitySessionRegistry` | Client event publishing to wallet owner sessions |
 | `ICurrencyDataCache` | In-memory actor variable provider cache (invalidated by self-subscribed events) |
 | `IEventConsumer` | Self-subscribes to credited/debited/transferred for cache invalidation |
+| `IWorldstateClient` | Game-time elapsed calculation for autogain when `AutogainTimeSource == GameTime` |
 | `CurrencyAutogainTaskService` | Hosted singleton background worker for proactive autogain |
 | `CurrencyExpirationTaskService` | Hosted singleton background worker that scans and zeroes expired balances |
 | `HoldExpirationTaskService` | Hosted singleton background worker that auto-releases holds past their ExpiresAt |
@@ -388,7 +390,16 @@ IF cache miss
 IF autogainEnabled
  // ApplyAutogainIfNeededAsync
  LOCK balance:{walletId}:{currencyDefId} // skip if lock unavailable
- // Re-read balance under lock, calculate periods, apply gain
+ // Resolve time source: per-definition override wins, then global config
+ useGameTime = definition.AutogainUseGameTime ?? (config.AutogainTimeSource == GameTime)
+ IF useGameTime AND wallet.RealmId has value
+   TRY
+     CALL IWorldstateClient.GetElapsedGameTimeAsync(wallet.RealmId, balance.LastAutogainAt, now)
+     elapsedSeconds = response.ElapsedGameSeconds
+   CATCH (ApiException) -> skip autogain (lock released, return balance as-is)
+ ELSE
+   elapsedSeconds = (now - balance.LastAutogainAt).TotalSeconds
+ // Re-read balance under lock, calculate periods from elapsedSeconds, apply gain
  WRITE balances:bal:{walletId}:{currencyDefId}
  PUBLISH currency.autogain.calculated { walletId, periodsApplied, amountGained }
  PUSH CurrencyBalanceChangedClientEvent to owner sessions
@@ -835,7 +846,7 @@ POST /currency/definition/clean-deprecated | Roles: [admin]
 ## Background Services
 
 ### CurrencyAutogainTaskService
-**Interval**: `config.AutogainTaskIntervalMs` (default 60000ms)
+**Interval**: `config.AutogainTaskIntervalSeconds` (default 60s)
 **Startup Delay**: `config.AutogainTaskStartupDelaySeconds` (default 15s)
 **Active when**: `config.AutogainProcessingMode == Task`
 
@@ -843,11 +854,24 @@ POST /currency/definition/clean-deprecated | Roles: [admin]
 // Periodic loop
 READ definitions:all-defs // all definition IDs
 FOREACH definition where autogainEnabled
+ // Resolve time source: per-definition override wins, then global config
+ useGameTime = definition.AutogainUseGameTime ?? (config.AutogainTimeSource == GameTime)
  READ balances:bal-currency:{currencyDefId} // reverse index: all walletIds
  FOREACH walletId in batches of AutogainBatchSize
  LOCK balance:{walletId}:{currencyDefId} // skip if unavailable
  READ balances:bal:{walletId}:{currencyDefId}
- // Calculate periods elapsed since LastAutogainAt
+ // Resolve elapsed time based on time source
+ IF useGameTime AND wallet.RealmId has value
+   TRY
+     CALL IWorldstateClient.GetElapsedGameTimeAsync(wallet.RealmId, balance.LastAutogainAt, now)
+     elapsedSeconds = response.ElapsedGameSeconds
+   CATCH (ApiException)
+     // Worldstate unavailable — skip this wallet, retry next cycle
+     CONTINUE
+ ELSE
+   // Real-time fallback (no realmId or RealTime mode)
+   elapsedSeconds = (now - balance.LastAutogainAt).TotalSeconds
+ // Calculate periods elapsed from elapsedSeconds / autogainInterval
  // Simple: gain = periods * autogainAmount
  // Compound: gain = balance * ((1 + rate)^periods - 1)
  // Cap enforcement: clamp to autogainCap

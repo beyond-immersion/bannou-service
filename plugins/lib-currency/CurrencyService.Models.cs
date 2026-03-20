@@ -79,6 +79,8 @@ internal class CurrencyDefinitionModel
     public double? AutogainAmount { get; set; }
     public string? AutogainInterval { get; set; }
     public double? AutogainCap { get; set; }
+    /// <summary>Per-definition override for autogain time source. True = game-time, false = real-time, null = use global config.</summary>
+    public bool? AutogainUseGameTime { get; set; }
     public bool Expires { get; set; }
     public ExpirationPolicy? ExpirationPolicy { get; set; }
     public DateTimeOffset? ExpirationDate { get; set; }

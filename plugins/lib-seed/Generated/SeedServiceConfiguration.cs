@@ -59,6 +59,18 @@ public class SeedServiceConfiguration : BaseServiceConfiguration
     public int CapabilityRecomputeDebounceMs { get; set; } = 5000;
 
     /// <summary>
+    /// Whether decay elapsed time uses real-world time or game-world time via Worldstate. Seeds without realmId are skipped entirely when GameTime.
+    /// Environment variable: SEED_DECAY_TIME_SOURCE
+    /// </summary>
+    public TimeSource DecayTimeSource { get; set; } = TimeSource.GameTime;
+
+    /// <summary>
+    /// Whether to auto-resolve realmId from owner type on seed creation (character → realm, realm-owned → self, account → null)
+    /// Environment variable: SEED_AUTO_ASSOCIATE_REALM
+    /// </summary>
+    public bool AutoAssociateRealm { get; set; } = true;
+
+    /// <summary>
     /// Global toggle for growth domain decay. Per-type overrides can enable or disable decay independently.
     /// Environment variable: SEED_GROWTH_DECAY_ENABLED
     /// </summary>

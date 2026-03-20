@@ -20,6 +20,16 @@ x-service-configuration:
       default: 5000
       minimum: 0
       description: Debounce interval in milliseconds before recomputing capability manifest after growth changes
+    decayTimeSource:
+      $ref: 'common-api.yaml#/components/schemas/TimeSource'
+      env: SEED_DECAY_TIME_SOURCE
+      default: GameTime
+      description: Whether decay elapsed time uses real-world time or game-world time via Worldstate. Seeds without realmId are skipped entirely when GameTime.
+    autoAssociateRealm:
+      type: boolean
+      env: SEED_AUTO_ASSOCIATE_REALM
+      default: true
+      description: Whether to auto-resolve realmId from owner type on seed creation (character → realm, realm-owned → self, account → null)
     growthDecayEnabled:
       type: boolean
       env: SEED_GROWTH_DECAY_ENABLED

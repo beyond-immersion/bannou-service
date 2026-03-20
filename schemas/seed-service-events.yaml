@@ -90,6 +90,7 @@ x-lifecycle:
       ownerType: { $ref: 'common-api.yaml#/components/schemas/EntityType', required: true, description: "Owner entity type discriminator" }
       seedTypeCode: { type: string, required: true, minLength: 1, description: "Registered seed type code" }
       gameServiceId: { type: string, format: uuid, nullable: true, description: "Game service this seed is scoped to. Null for cross-game seed types." }
+      realmId: { type: string, format: uuid, nullable: true, description: "Realm associated with this seed for game-time decay. Null if no realm association." }
       growthPhase: { type: string, required: true, minLength: 1, description: "Current computed growth phase code" }
       totalGrowth: { type: number, format: float, required: true, description: "Aggregate growth across all domains" }
       displayName: { type: string, required: true, minLength: 1, description: "Human-readable seed name" }

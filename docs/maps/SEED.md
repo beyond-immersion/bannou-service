@@ -84,6 +84,8 @@
 | lib-messaging (IMessageBus) | L0 | Hard | Publishing all 11 event topics |
 | lib-telemetry (ITelemetryProvider) | L0 | Hard | Span instrumentation on internal async helpers |
 | lib-game-service (IGameServiceClient) | L2 | Hard | Validates game service existence during seed creation and type registration |
+| lib-worldstate (IWorldstateClient) | L2 | Hard | `GetElapsedGameTimeAsync(realmId, from, to)` for game-time decay when `DecayTimeSource == GameTime`. Seeds without `realmId` are skipped. |
+| lib-character (ICharacterClient) | L2 | Hard | Resolves character's realmId for `AutoAssociateRealm` during seed creation |
 | IEnumerable\<ISeedEvolutionListener\> | L4 | DI Collection | Dispatches growth, phase change, and capability notifications to registered L4 listeners |
 
 **DI Provider/Listener Interfaces**:
@@ -129,6 +131,8 @@ This plugin does not consume external events. The Collection-to-Seed growth pipe
 | `IMessageBus` | Event publishing |
 | `ITelemetryProvider` | Span instrumentation |
 | `IGameServiceClient` | Game service existence validation |
+| `IWorldstateClient` | Game-time elapsed calculation for decay when `DecayTimeSource == GameTime` |
+| `ICharacterClient` | Resolves character realmId for `AutoAssociateRealm` during creation |
 | `IEventConsumer` | Event consumer registration (no handlers registered) |
 | `IEnumerable<ISeedEvolutionListener>` | L4 listener dispatch for growth/phase/capability notifications |
 | `SeedEvolutionDispatcher` | Static helper dispatching ISeedEvolutionListener callbacks with isolation |
@@ -185,10 +189,24 @@ IF request.OwnerType not in type.AllowedOwnerTypes         -> 400
 // maxPerOwner: type.MaxPerOwner if > 0, else config.DefaultMaxSeedsPerOwner
 COUNT seed-store WHERE OwnerId, OwnerType, SeedTypeCode, GameServiceId, Status != Archived
 IF count >= maxPerOwner                                    -> 409
+// RealmId: use request.RealmId if provided; else auto-associate if config.AutoAssociateRealm
+IF request.RealmId has value
+  realmId = request.RealmId
+ELSE IF config.AutoAssociateRealm
+  IF ownerType == Character
+    TRY CALL ICharacterClient.GetCharacterAsync({ CharacterId = ownerId })
+      realmId = character.RealmId  // may be null
+    CATCH (ApiException) -> realmId = null
+  ELSE IF ownerType == Realm
+    realmId = ownerId  // realm-owned seeds use the realm itself
+  ELSE
+    realmId = null  // Account, Actor without character binding, etc.
+ELSE
+  realmId = null
 // Phase computed via ComputePhaseInfo; falls back to "initial" if no phases defined
 // DisplayName defaults to "{seedTypeCode}-{guid}"[..20] if not provided
 // Metadata wrapped: seed.Metadata["data"] = request.Metadata
-WRITE seed-store:"seed:{newId}" <- SeedModel from request
+WRITE seed-store:"seed:{newId}" <- SeedModel from request (includes realmId)
 WRITE growth-store:"growth:{newId}" <- SeedGrowthModel { empty Domains }
 // Maintain reverse index for Category B clean-deprecated sweep (type → seed list)
 ETAG-WRITE seed-store:"type-seeds:{gameServiceId}:{seedTypeCode}" <- append newId to list
@@ -638,9 +656,21 @@ FOREACH seedType in results
     LOCK seed-lock:{seed.SeedId} timeout:10 -> skip if fails
       READ seed-store:"seed:{seedId}"       // Re-read under lock
       READ growth-store:"growth:{seedId}"   -> skip if null or no domains
+      // Resolve elapsed time based on DecayTimeSource
+      IF config.DecayTimeSource == GameTime
+        IF seed.RealmId is null -> skip seed (no decay for seeds without realm)
+        TRY
+          CALL IWorldstateClient.GetElapsedGameTimeAsync(seed.RealmId, growth.LastDecayedAt ?? seed.CreatedAt, now)
+          elapsedDays = response.TotalGameSeconds / 86400.0
+        CATCH (ApiException) -> skip seed (Worldstate unavailable)
+      ELSE
+        // Per-domain decay start time (real-time)
       FOREACH (domain, entry) in growth.Domains
-        decayStartTime = max(entry.LastActivityAt, growth.LastDecayedAt ?? seed.CreatedAt)
-        decayDays = (now - decayStartTime).TotalDays
+        IF config.DecayTimeSource == GameTime
+          decayDays = elapsedDays  // same game-time for all domains in this cycle
+        ELSE
+          decayStartTime = max(entry.LastActivityAt, growth.LastDecayedAt ?? seed.CreatedAt)
+          decayDays = (now - decayStartTime).TotalDays
         IF decayDays <= 0 -> skip domain
         entry.Depth *= (1 - ratePerDay) ^ decayDays
       growth.LastDecayedAt = now

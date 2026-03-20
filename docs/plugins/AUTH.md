@@ -133,7 +133,7 @@ No Auth-specific stubs remain.
 
 ## Potential Extensions
 
-No extensions currently planned.
+- **Auth audit events consumed by Analytics**: All 12 auth audit events (login success/fail, registration, OAuth, Steam, password reset, MFA enabled/disabled/verified/failed) are consumed by Analytics (L4) for per-account security telemetry, per-IP geographic tracking, and future cross-account anomaly detection. Design resolved in [#142](https://github.com/beyond-immersion/bannou-service/issues/142) and [#639](https://github.com/beyond-immersion/bannou-service/issues/639). No Auth changes needed — Auth already publishes all required data including IP addresses and DeviceInfo. See Analytics deep dive § Work Tracking for the three-phase plan.
 
 ## Known Quirks & Caveats
 

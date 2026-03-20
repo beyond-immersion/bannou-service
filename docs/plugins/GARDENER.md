@@ -544,8 +544,8 @@ Player connects → Gardener triggers divine actor for garden-tending
 5. **Matchmaking integration**: The implementation plan specified `IMatchmakingClient` (L4 soft dependency) for submitting matchmaking tickets when templates have `MinPlayers > 1`. This was never implemented -- group scenarios beyond bond pairs have no queueing mechanism.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/685 -->
 
-6. **Analytics integration**: The implementation plan specified `IAnalyticsClient` (L4 soft dependency) for querying milestone data to enrich scenario scoring. This was never implemented -- the `NarrativeWeight` scoring component partially compensates but milestone-based scoring is absent.
-<!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/690 -->
+6. ~~**Analytics integration**~~: ~~The implementation plan specified `IAnalyticsClient` (L4 soft dependency) for querying milestone data to enrich scenario scoring. This was never implemented -- the `NarrativeWeight` scoring component partially compensates but milestone-based scoring is absent.~~ **REJECTED** (2026-03-20) — #690 closed. Gardener should use **Seed growth data** (Tier 1, L2, always-on) for experience-based scenario scoring, not Analytics milestones (Tier 3, L4, optional). The guardian spirit seed provides authoritative mastery data via `ISeedClient` (L4→L2 valid) or `${seed.*}` variable providers. If a 5th scoring component is desired, it should be Seed-based mastery scoring, not Analytics-dependent.
+<!-- AUDIT:REJECTED:2026-03-20:https://github.com/beyond-immersion/bannou-service/issues/690 -->
 
 7. ~~**Client event schema (gardener-client-events.yaml)**~~: **FIXED** (2026-03-17) - Created `gardener-client-events.yaml` with 7 client events (POI spawned/expired/triggered, garden entered/left, scenario started/completed). Added `IClientEventPublisher` to `GardenerService` constructor. Wired up client event publishing in `GardenerService` (garden entered/left, scenario started/completed) and `GardenerGardenOrchestratorWorker` (POI spawned/expired). Clients now receive real-time push notifications for garden/POI/scenario lifecycle changes via WebSocket instead of polling.
 
@@ -571,7 +571,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 7. **Genesis-managed guardian spirits (wallet-driven growth)**: Gardener currently awards guardian spirit growth by calling `ISeedClient.RecordGrowthBatchAsync` directly. If guardian spirits migrate to [lib-genesis](GENESIS.md) templates (NEXIUS system realm from VISION.md), growth would flow through Currency wallet credits instead — the game engine or Gardener credits a guardian spirit's wallet, and Genesis's `ICurrencyTransactionListener` converts credits to seed growth via template-defined mappings. This aligns with the "Bag of Kills" pattern from [DIVINITY-GENERATION-ARCHITECTURE.md](../planning/DIVINITY-GENERATION-ARCHITECTURE.md) where Currency wallets serve as universal accumulators consumed independently by multiple systems (growth, quest objectives, divine bond propagation). Gardener would simplify from directly managing seed API calls to crediting wallets — a single operation per growth award. Genesis's batched growth flush handles the Seed pipeline efficiently at scale. This migration is not blocking — the current direct-to-Seed pattern works correctly — but wallet-driven growth would unify guardian spirits with all other actor-bound entity types (dungeon cores, living weapons, divine entities) under the same Genesis lifecycle.
 
-7. **Analytics milestone integration for scoring**: The plan specified consuming `analytics.milestone.reached` events to enrich scenario selection. When Analytics publishes this event, a subscription could be added to boost templates that align with player milestone achievements.
+7. ~~**Analytics milestone integration for scoring**~~: **REJECTED** (2026-03-20) — see Stub #6. Use Seed growth data instead of Analytics milestones.
 
 8. **Gardener-to-Gardener communication for co-op gardens**: When multiple players share a cooperative garden, their gardener behaviors need to coordinate. This could use the existing pair bond mechanism for bonded players, but ad-hoc multiplayer gardens (matchmade groups, guild activities) need a coordination pattern. Possible approaches: shared garden state in Redis, inter-actor messaging via the Actor runtime, or a dedicated co-op coordination layer.
 
@@ -652,7 +652,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 ### P2 -- Feature Gaps
 
-- [ ] **Stub #6**: Add Analytics milestone integration for scenario scoring (`IAnalyticsClient` soft dependency)
+- [x] ~~**Stub #6**: Add Analytics milestone integration for scenario scoring (`IAnalyticsClient` soft dependency)~~ — REJECTED: Use Seed growth data (Tier 1) instead. #690 closed.
 - [ ] **Stub #5**: Add Matchmaking integration for group scenarios (`IMatchmakingClient` soft dependency)
 - [ ] **Extension #1**: Implement scenario history retention policy / cleanup worker
 - [ ] **Stub #8**: Implement `ConnectivityMode.Persistent` lifecycle differentiation — skip timeout/abandon in lifecycle worker; wire `PersistentEntryEnabled` flag as entry gate. Design resolved (2026-03-18); full Persistent experience requires garden-to-garden transitions (Stub #12).

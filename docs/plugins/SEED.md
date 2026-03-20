@@ -48,6 +48,8 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
 | `CapabilityRecomputeDebounceMs` | `SEED_CAPABILITY_RECOMPUTE_DEBOUNCE_MS` | `5000` | Debounce window (ms) for capability cache; reads within this window return cached manifest without recomputing |
+| `DecayTimeSource` | `SEED_DECAY_TIME_SOURCE` | `GameTime` | Whether decay elapsed time uses real-world time or game-world time via Worldstate (`$ref: TimeSource`). Seeds without realmId are skipped entirely when GameTime. |
+| `AutoAssociateRealm` | `SEED_AUTO_ASSOCIATE_REALM` | `true` | Whether to auto-resolve realmId from owner type on seed creation (character → character's realm, realm → self, actor → bound character's realm, account → null) |
 | `GrowthDecayEnabled` | `SEED_GROWTH_DECAY_ENABLED` | `false` | Global toggle for background growth decay; per-type overrides take precedence when set |
 | `GrowthDecayRatePerDay` | `SEED_GROWTH_DECAY_RATE_PER_DAY` | `0.01` | Global daily exponential decay rate; per-type overrides take precedence when set |
 | `DecayWorkerIntervalSeconds` | `SEED_DECAY_WORKER_INTERVAL_SECONDS` | `900` | Seconds between decay worker cycles (range: 60-86400) |
@@ -172,11 +174,11 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 
 ### Design Considerations (Requires Planning)
 
-- ~~**Decay worker uses real-time, should use game-time**~~ ([#545](https://github.com/beyond-immersion/bannou-service/issues/545), resolved 2026-03-19): Design resolved. Add `DecayTimeSource` config property (`$ref: TimeSource` from `common-api.yaml`, default: `GameTime`). `TimeSource` enum is shared across Currency autogain, Seed decay, and Character-Encounter memory decay. Seeds with resolved `realmId` call `GetElapsedGameTime`; seeds without realmId are skipped by the decay worker (no decay). `DecayWorkerIntervalSeconds` remains the real-time check frequency; the decay amount per cycle is computed from game-time elapsed. Data transition: accept the discontinuity (pre-release).
-<!-- AUDIT:RESOLVED:2026-03-19:https://github.com/beyond-immersion/bannou-service/issues/545 -->
+- ~~**Decay worker uses real-time, should use game-time**~~ ([#545](https://github.com/beyond-immersion/bannou-service/issues/545), **IMPLEMENTED** 2026-03-20): `DecayTimeSource` config property (`$ref: TimeSource`, default: `GameTime`). Seeds with resolved `realmId` call `IWorldstateClient.GetElapsedGameTimeAsync`; seeds without realmId are skipped by the decay worker (no decay). `DecayWorkerIntervalSeconds` remains the real-time check frequency; the decay amount per cycle is computed from game-time elapsed.
+<!-- AUDIT:IMPLEMENTED:2026-03-20:https://github.com/beyond-immersion/bannou-service/issues/545 -->
 
-- **Realm association for game-time decay**: **Confirmed** (2026-03-19): Seeds will gain a nullable `realmId` field on `SeedModel`, set at creation time and **fixed** (does not auto-follow owner realm changes). `AutoAssociateRealm` config (default `true`): infer realm from owner type on creation (character → character's realm, realm-owned → the realm itself, actor → bound character's realm, account → null). Seeds with null realmId after auto-association are skipped by the decay worker entirely — guardian spirit seeds (account-owned) naturally avoid decay. Fixed-at-creation is correct for v1: dungeon master seeds explicitly need fixed binding to the dungeon's realm, character realm migration is rare, and `POST /seed/update` can patch realmId if needed during migration callbacks. See [#545](https://github.com/beyond-immersion/bannou-service/issues/545) for implementation details.
-<!-- AUDIT:CONFIRMED:2026-03-19:https://github.com/beyond-immersion/bannou-service/issues/545 -->
+- ~~**Realm association for game-time decay**~~: **IMPLEMENTED** (2026-03-20): Seeds have a nullable `realmId` field on `SeedModel`, set at creation time and **fixed** (does not auto-follow owner realm changes). `AutoAssociateRealm` config (default `true`): infer realm from owner type on creation (character → character's realm, realm-owned → the realm itself, actor → bound character's realm, account → null). Seeds with null realmId after auto-association are skipped by the decay worker entirely. `DecayTimeSource` config (`$ref: TimeSource`, default `GameTime`) controls whether the decay worker uses real-time or game-time via `IWorldstateClient.GetElapsedGameTimeAsync`.
+<!-- AUDIT:IMPLEMENTED:2026-03-20:https://github.com/beyond-immersion/bannou-service/issues/545 -->
 
 ---
 
@@ -188,7 +190,7 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 - [#354](https://github.com/beyond-immersion/bannou-service/issues/354) - Cross-seed-type growth transfer matrix (creative game design decisions needed, not blocking)
 - ~~[#437](https://github.com/beyond-immersion/bannou-service/issues/437)~~ - Seed owner type promotion / re-parenting (implemented 2026-03-19: POST /seed/reparent endpoint with AllowedOwnerTypes + per-owner limit validation)
 - [#497](https://github.com/beyond-immersion/bannou-service/issues/497) - Client events for guardian spirit progression (confirmed 2026-03-19: 6 client events, interval-gated growth, seed.bond.initiated added, seed.dormant gap resolved; unblocked)
-- [#545](https://github.com/beyond-immersion/bannou-service/issues/545) - Currency/Seed background workers game-time migration via Worldstate (blocked by Worldstate; RealmId design confirmed 2026-03-19: fixed-at-creation, AutoAssociateRealm config, null = no decay)
+- ~~[#545](https://github.com/beyond-immersion/bannou-service/issues/545)~~ - Currency/Seed background workers game-time migration via Worldstate (**IMPLEMENTED** 2026-03-20: realmId field on SeedModel, AutoAssociateRealm config, DecayTimeSource config, IWorldstateClient integration in SeedDecayWorkerService)
 - [#413](https://github.com/beyond-immersion/bannou-service/issues/413) - Bond growth propagation for Divine/Faction (confirmed 2026-03-19: PropagationDirection/PropagationRatio, batched worker, GetOrCreate for missing seeds; depends on #362)
 - [#700](https://github.com/beyond-immersion/bannou-service/issues/700) - Seed → Collection reverse pipeline (confirmed 2026-03-19: capabilityCollectionGrants on type defs, lightweight threshold check during growth recording, GrantEntryAsync inline; ready for implementation)
 - ~~[#374](https://github.com/beyond-immersion/bannou-service/issues/374)~~ - Seed type merge endpoint (closed 2026-03-19: superseded by #645 — Category B reclassification eliminates merge)

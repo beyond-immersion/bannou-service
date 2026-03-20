@@ -10,6 +10,7 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Worldstate;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Xml;
@@ -32,6 +33,7 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly IEntitySessionRegistry _entitySessionRegistry;
     private readonly ICurrencyDataCache _currencyCache;
+    private readonly IWorldstateClient _worldstateClient;
 
     /// <summary>State store for currency definition models (MySQL-backed).</summary>
     private readonly IStateStore<CurrencyDefinitionModel> _definitionStore;
@@ -87,7 +89,8 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
         ITelemetryProvider telemetryProvider,
         IEntitySessionRegistry entitySessionRegistry,
         ICurrencyDataCache currencyCache,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        IWorldstateClient worldstateClient)
     {
         _messageBus = messageBus;
         _logger = logger;
@@ -96,6 +99,7 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
         _telemetryProvider = telemetryProvider;
         _entitySessionRegistry = entitySessionRegistry;
         _currencyCache = currencyCache;
+        _worldstateClient = worldstateClient;
 
         _definitionStore = stateStoreFactory.GetStore<CurrencyDefinitionModel>(StateStoreDefinitions.CurrencyDefinitions);
         _definitionStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyDefinitions);
@@ -170,6 +174,7 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
             AutogainAmount = body.AutogainAmount,
             AutogainInterval = body.AutogainInterval,
             AutogainCap = body.AutogainCap,
+            AutogainUseGameTime = body.AutogainUseGameTime,
             Expires = body.Expires,
             ExpirationPolicy = body.ExpirationPolicy,
             ExpirationDate = body.ExpirationDate,
@@ -289,6 +294,7 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
         if (body.AutogainAmount is not null) model.AutogainAmount = body.AutogainAmount;
         if (body.AutogainInterval is not null) model.AutogainInterval = body.AutogainInterval;
         if (body.AutogainCap is not null) model.AutogainCap = body.AutogainCap;
+        if (body.AutogainUseGameTime is not null) model.AutogainUseGameTime = body.AutogainUseGameTime;
         if (body.ExchangeRateToBase is not null)
         {
             model.ExchangeRateToBase = body.ExchangeRateToBase;
@@ -2256,6 +2262,10 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
         if (interval.TotalSeconds <= 0) return balance;
 
         // Quick pre-check before acquiring lock (avoids locking when no autogain is due)
+        // For game-time mode, the real-time pre-check is still a valid heuristic:
+        // if real-time hasn't passed one interval, game-time hasn't either (game-time
+        // ratio >= 1 means game-time advances faster than real-time, so real-time
+        // underestimates game-time elapsed — the pre-check is conservative and correct).
         var now = DateTimeOffset.UtcNow;
         if (balance.LastAutogainAt is not null)
         {
@@ -2287,8 +2297,35 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
             return balance;
         }
 
-        var elapsedUnderLock = now - balance.LastAutogainAt.Value;
-        var periods = (int)(elapsedUnderLock.TotalSeconds / interval.TotalSeconds);
+        // Resolve elapsed time based on time source (per-definition override wins, then global config)
+        var useGameTime = definition.AutogainUseGameTime ?? (_configuration.AutogainTimeSource == TimeSource.GameTime);
+        double elapsedSeconds;
+        if (useGameTime && wallet.RealmId.HasValue)
+        {
+            try
+            {
+                var elapsedResponse = await _worldstateClient.GetElapsedGameTimeAsync(
+                    new GetElapsedGameTimeRequest
+                    {
+                        RealmId = wallet.RealmId.Value,
+                        FromRealTime = balance.LastAutogainAt.Value,
+                        ToRealTime = now
+                    }, ct);
+                elapsedSeconds = elapsedResponse.TotalGameSeconds;
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Worldstate unavailable for realm {RealmId} during lazy autogain, skipping",
+                    wallet.RealmId.Value);
+                return balance;
+            }
+        }
+        else
+        {
+            elapsedSeconds = (now - balance.LastAutogainAt.Value).TotalSeconds;
+        }
+
+        var periods = (int)(elapsedSeconds / interval.TotalSeconds);
 
         if (periods <= 0) return balance;
 
@@ -2735,6 +2772,7 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
             AutogainAmount = m.AutogainAmount,
             AutogainInterval = m.AutogainInterval,
             AutogainCap = m.AutogainCap,
+            AutogainUseGameTime = m.AutogainUseGameTime,
             Expires = m.Expires,
             ExpirationPolicy = m.ExpirationPolicy,
             ExpirationDate = m.ExpirationDate,

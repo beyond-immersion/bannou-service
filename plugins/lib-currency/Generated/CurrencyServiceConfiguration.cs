@@ -64,6 +64,12 @@ public class CurrencyServiceConfiguration : BaseServiceConfiguration
     public AutogainProcessingMode AutogainProcessingMode { get; set; } = AutogainProcessingMode.Lazy;
 
     /// <summary>
+    /// Whether autogain elapsed time uses real-world time or game-world time via Worldstate. Wallets without realmId fall back to real-time regardless of this setting.
+    /// Environment variable: CURRENCY_AUTOGAIN_TIME_SOURCE
+    /// </summary>
+    public TimeSource AutogainTimeSource { get; set; } = TimeSource.GameTime;
+
+    /// <summary>
     /// Delay in seconds before first autogain task cycle (allows services to start)
     /// Environment variable: CURRENCY_AUTOGAIN_TASK_STARTUP_DELAY_SECONDS
     /// </summary>

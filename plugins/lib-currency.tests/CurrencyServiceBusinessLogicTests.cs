@@ -7,6 +7,7 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Worldstate;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -264,7 +265,8 @@ public class CurrencyServiceBusinessLogicTests
             _mockTelemetryProvider.Object,
             _mockEntitySessionRegistry.Object,
             _mockCurrencyCache.Object,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            Mock.Of<IWorldstateClient>());
     }
 
     /// <summary>

@@ -144,6 +144,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Active
 - **Batch lifecycle events** (2026-03-15): Switch to batch: true for high-frequency instance lifecycle events. Tracked via [#653](https://github.com/beyond-immersion/bannou-service/issues/653).
+- [#705](https://github.com/beyond-immersion/bannou-service/issues/705) — **Migrate event-driven triggers off Analytics dependency.** Achievement's auto-unlock system depends entirely on `analytics.score.updated` and `analytics.milestone.reached` events — when Analytics (the most optional plugin) is disabled, all event-driven achievements are dead. Migration path: direct domain event subscriptions (`quest.completed`, `collection.unlocked`, `seed.phase.changed`), direct API progress updates from game engines, and `IAccumulatedDataProvider` (#703) for soft-dependency cross-session aggregation queries. Same anti-pattern dissolved by DIVINITY-GENERATION-ARCHITECTURE for Divine.
 - [#581](https://github.com/beyond-immersion/bannou-service/issues/581) — TotalEligibleEntities automation for rarity calculation
 - [#582](https://github.com/beyond-immersion/bannou-service/issues/582) — Event handler N+1 definition loading — add caching layer
 - [#583](https://github.com/beyond-immersion/bannou-service/issues/583) — Platform sync permanent failure retry queue

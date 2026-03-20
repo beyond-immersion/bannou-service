@@ -45,7 +45,8 @@ public class SeedDecayWorkerServiceTests
             GrowthDecayRatePerDay = 0.01f,
             DecayWorkerIntervalSeconds = 900,
             DecayWorkerStartupDelaySeconds = 0,
-            DefaultQueryPageSize = 100
+            DefaultQueryPageSize = 100,
+            DecayTimeSource = TimeSource.RealTime // Existing tests use real-time; game-time tests are separate
         };
 
         // Wire up state store factory
@@ -106,6 +107,8 @@ public class SeedDecayWorkerServiceTests
         mock.Setup(p => p.GetService(typeof(IStateStoreFactory))).Returns(_mockStateStoreFactory.Object);
         mock.Setup(p => p.GetService(typeof(IDistributedLockProvider))).Returns(_mockLockProvider.Object);
         mock.Setup(p => p.GetService(typeof(IMessageBus))).Returns(_mockMessageBus.Object);
+        mock.Setup(p => p.GetService(typeof(BeyondImmersion.BannouService.Worldstate.IWorldstateClient)))
+            .Returns(Mock.Of<BeyondImmersion.BannouService.Worldstate.IWorldstateClient>());
         return mock.Object;
     }
 

@@ -24,6 +24,11 @@ x-service-configuration:
       env: CURRENCY_AUTOGAIN_PROCESSING_MODE
       default: lazy
       description: How autogain is calculated (lazy = on-demand at query time, task = background processing)
+    autogainTimeSource:
+      $ref: 'common-api.yaml#/components/schemas/TimeSource'
+      env: CURRENCY_AUTOGAIN_TIME_SOURCE
+      default: GameTime
+      description: Whether autogain elapsed time uses real-world time or game-world time via Worldstate. Wallets without realmId fall back to real-time regardless of this setting.
     autogainTaskStartupDelaySeconds:
       type: integer
       minimum: 0

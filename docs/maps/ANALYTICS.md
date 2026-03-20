@@ -4,6 +4,8 @@
 > **Schema**: schemas/analytics-api.yaml
 > **Layer**: GameFeatures
 > **Deep Dive**: [docs/plugins/ANALYTICS.md](../plugins/ANALYTICS.md)
+>
+> **Planned refactoring**: `gameServiceId: Guid` → `serviceType: AnalyticsServiceType` + `serviceId: string` across all schemas, models, events, and key builders ([#142](https://github.com/beyond-immersion/bannou-service/issues/142)). Key patterns in this map reflect the planned shape. Existing code still uses `gameServiceId`.
 
 ---
 
@@ -16,9 +18,9 @@
 | Endpoints | 9 (9 generated) |
 | State Stores | analytics-summary (Redis), analytics-summary-data (MySQL), analytics-rating (Redis), analytics-history-data (MySQL) |
 | Events Published | 4 (`analytics.score.updated`, `analytics.rating.updated`, `analytics.milestone.reached`, `analytics.controller.recorded`) |
-| Events Consumed | 12 |
+| Events Consumed | 12 (implemented), 10 planned (auth audit events — [#142](https://github.com/beyond-immersion/bannou-service/issues/142)) |
 | Client Events | 0 |
-| Background Services | 1 (ControllerHistoryCleanupWorker) |
+| Background Services | 1 implemented (ControllerHistoryCleanupWorker), 1 planned (AnalyticsRatingDecayWorker — [#249](https://github.com/beyond-immersion/bannou-service/issues/249)) |
 
 ---
 
@@ -39,20 +41,21 @@
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `analytics-entity:{gameServiceId}:{entityType}:{entityId}` | `EntitySummaryData` | Entity summary aggregations (event counts, aggregates, timestamps) |
+| `analytics-entity:{serviceType}:{serviceId}:{entityType}:{entityId}` | `EntitySummaryData` | Entity summary aggregations (event counts, aggregates, timestamps). `serviceType` is `Game` (serviceId = GUID) or `System` (serviceId = service name string e.g. `"auth"`). Planned refactoring from `{gameServiceId}` — [#142](https://github.com/beyond-immersion/bannou-service/issues/142). |
 
 **Store**: `analytics-rating` (Backend: Redis)
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `analytics-rating:{gameServiceId}:{ratingType}:{entityType}:{entityId}` | `SkillRatingData` | Glicko-2 skill rating data per entity per rating type |
+| `analytics-rating:{serviceType}:{serviceId}:{ratingType}:{entityType}:{entityId}` | `SkillRatingData` | Glicko-2 skill rating data per entity per rating type. Same serviceType/serviceId refactoring as summary keys. |
 | `account-rating-index:{accountId}` | `string` (JSON string list) | Reverse index: account → list of rating keys. Maintained on write for Account-typed entities; consumed during account.deleted cleanup |
+| `rating-decay-tracker` (sorted set) | sorted set of rating key strings, scored by LastMatchAt ms | Time-ordered index of ratings for decay worker processing. Maintained by `UpdateSkillRatingAsync` (add/update on match), removed by decay worker (at max RD), cleaned by `HandleAccountDeletedAsync`. Planned — [#249](https://github.com/beyond-immersion/bannou-service/issues/249). |
 
 **Store**: `analytics-history-data` (Backend: MySQL)
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `analytics-controller:{gameServiceId}:{accountId}:{timestamp:o}` | `ControllerHistoryData` | Individual controller possession/release history events |
+| `analytics-controller:{serviceType}:{serviceId}:{accountId}:{timestamp:o}` | `ControllerHistoryData` | Individual controller possession/release history events. Same serviceType/serviceId refactoring. |
 
 ---
 
@@ -105,6 +108,23 @@
 | `account.deleted` | `HandleAccountDeletedAsync` | Deletes controller history records (MySQL query by $.AccountId), entity summaries where entityType=Account (MySQL query), and skill ratings for Account entities (via reverse index `account-rating-index:{accountId}`). Per-item error isolation, telemetry span, error event publishing. |
 
 All history event handlers follow fail-fast: if game service resolution fails, the event is dropped permanently with error event publication. Incorrect GameServiceId is considered worse than missing data.
+
+**Planned (Phase 1 — [#142](https://github.com/beyond-immersion/bannou-service/issues/142))**:
+
+| Topic | Handler | Action |
+|-------|---------|--------|
+| `auth.login.successful` | `HandleAuthLoginSuccessfulAsync` | Buffers with `serviceType: System, serviceId: "auth"`, `EntityType.Account`, `entityId: accountId`, `eventType: "auth.login.successful"`, Value=1 |
+| `auth.login.failed` | `HandleAuthLoginFailedAsync` | If `accountId` non-null: buffers per-account. Phase 2 adds per-IP entity. Null accountId: dropped from per-account, buffered for per-IP only (Phase 2). |
+| `auth.registration.successful` | `HandleAuthRegistrationSuccessfulAsync` | Buffers with `serviceType: System, serviceId: "auth"`, per-account entity |
+| `auth.oauth.successful` | `HandleAuthOAuthSuccessfulAsync` | Buffers with `serviceType: System, serviceId: "auth"`, per-account entity |
+| `auth.steam.successful` | `HandleAuthSteamSuccessfulAsync` | Buffers with `serviceType: System, serviceId: "auth"`, per-account entity |
+| `auth.password-reset.successful` | `HandleAuthPasswordResetSuccessfulAsync` | Buffers with `serviceType: System, serviceId: "auth"`, per-account entity |
+| `auth.mfa.enabled` | `HandleAuthMfaEnabledAsync` | Buffers per-account |
+| `auth.mfa.disabled` | `HandleAuthMfaDisabledAsync` | Buffers per-account |
+| `auth.mfa.verified` | `HandleAuthMfaVerifiedAsync` | Buffers per-account |
+| `auth.mfa.failed` | `HandleAuthMfaFailedAsync` | Buffers per-account |
+
+Auth event handlers use `serviceType: System, serviceId: "auth"` — no game service resolution needed. No fail-fast on resolution (System type has no resolution step).
 
 ---
 
@@ -374,6 +394,71 @@ ExecuteAsync:
 - `ControllerHistoryCleanupStartupDelaySeconds` (default: 30) — delay before first cycle
 - `ControllerHistoryCleanupIntervalSeconds` (default: 3600) — interval between cycles (1 hour default)
 - Uses existing `ControllerHistoryRetentionDays`, `ControllerHistoryCleanupBatchSize`, `ControllerHistoryCleanupSubBatchSize`
+
+### AnalyticsRatingDecayWorker (Planned — [#249](https://github.com/beyond-immersion/bannou-service/issues/249))
+
+Periodic background service that applies Glicko-2 rating period decay to inactive players. Design resolved 2026-03-20.
+
+```
+ExecuteAsync:
+  DELAY config.RatingDecayStartupDelaySeconds
+  LOOP while not cancelled:
+    TRY:
+      SPAN "bannou.analytics" / "AnalyticsRatingDecayWorker.ProcessCycle"
+      SCOPE = CreateScope()
+      stateStoreFactory = scope.Resolve(IStateStoreFactory)
+      ratingStore = stateStoreFactory.GetStore<SkillRatingData>(AnalyticsRating)
+      cacheableStore = stateStoreFactory.GetCacheableStore<SkillRatingData>(AnalyticsRating)
+
+      cutoffMs = (now - config.RatingDecayInactivityDays).ToUnixTimeMilliseconds()
+      entries = cacheableStore.SortedSetRangeByScoreAsync(
+          "rating-decay-tracker", 0, cutoffMs, limit: config.RatingDecayBatchSize)
+      IF empty: CONTINUE
+
+      LOCK analytics-rating:"rating-decay-cycle" (expiry: config.RatingDecayLockExpirySeconds)
+        -> IF lock fails: CONTINUE (another node is processing)
+
+        FOREACH entry IN entries (per-item error isolation T7):
+          rating = ratingStore.GetAsync(entry.member)
+          IF null: SortedSetRemoveAsync("rating-decay-tracker", entry.member), CONTINUE
+          IF rating.RatingDeviation >= config.Glicko2DefaultDeviation - 0.001:
+            SortedSetRemoveAsync("rating-decay-tracker", entry.member), CONTINUE
+
+          // Apply existing Glicko-2 no-games-played formula
+          (_, newRD, newVolatility) = CalculateGlicko2Update(rating, emptyResults)
+          rating.RatingDeviation = newRD
+          rating.Volatility = newVolatility
+          ratingStore.SaveAsync(entry.member, rating)
+
+          IF newRD >= config.Glicko2DefaultDeviation - 0.001:
+            SortedSetRemoveAsync("rating-decay-tracker", entry.member)  // At max, done
+          ELSE:
+            SortedSetAddAsync("rating-decay-tracker", entry.member, now.ToUnixTimeMilliseconds())  // Re-eligible next cycle
+
+          PUBLISH analytics.rating.updated {
+            MatchId = null, RatingChange = 0,
+            PreviousRating = rating.Rating, NewRating = rating.Rating,
+            NewRatingDeviation = newRD, ... }
+
+      LOG Information "Decay cycle completed: {Processed} ratings processed"
+    CATCH OperationCanceledException when stopping: BREAK
+    CATCH Exception: LOG Error, TryPublishWorkerErrorAsync
+    DELAY config.RatingDecayIntervalSeconds
+```
+
+**Configuration** (all planned — not yet in schema):
+- `RatingDecayInactivityDays` (default: 30) — days of inactivity before decay applies
+- `RatingDecayIntervalSeconds` (default: 3600) — interval between decay cycles
+- `RatingDecayStartupDelaySeconds` (default: 60) — delay before first cycle
+- `RatingDecayBatchSize` (default: 500) — max ratings to process per cycle
+- `RatingDecayLockExpirySeconds` (default: 300) — distributed lock expiry
+
+**Schema change required**: `matchId` on `AnalyticsRatingUpdatedEvent` becomes nullable (remove from `required`, add `nullable: true`). Per FOUNDATION TENETS: background state changes publish only lifecycle events, no action event.
+
+**Sorted set maintenance**:
+- `UpdateSkillRatingAsync`: add/update entry scored by `LastMatchAt` after each rating save
+- Decay worker: remove entry when RD reaches `Glicko2DefaultDeviation`; update score to `now` otherwise
+- `HandleAccountDeletedAsync`: remove entries during account cleanup
 
 ---
 
