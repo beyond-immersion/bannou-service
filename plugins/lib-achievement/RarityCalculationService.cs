@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,7 @@ namespace BeyondImmersion.BannouService.Achievement;
 /// Background service that periodically recalculates achievement rarity percentages.
 /// Uses RarityCalculationIntervalMinutes from configuration to determine recalculation frequency.
 /// </summary>
+[BannouHelperService("rarity-calculation", typeof(IAchievementService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class RarityCalculationService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

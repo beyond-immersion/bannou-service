@@ -24,7 +24,5 @@ public class ContractServicePlugin : StandardServicePlugin<IContractService>
     public override void ConfigureServices(IServiceCollection services)
     {
         // Register the contract expiration background service (handles both
-        // effectiveUntil contract expiration and milestone deadline enforcement)
-        services.AddHostedService<ContractExpirationService>();
     }
 }

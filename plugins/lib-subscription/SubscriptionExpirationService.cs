@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,7 @@ namespace BeyondImmersion.BannouService.Subscription;
 /// and delegates expiration to SubscriptionService.ExpireSubscriptionAsync,
 /// enabling immediate capability revocation for connected clients.
 /// </summary>
+[BannouHelperService("subscription-expiration", typeof(ISubscriptionService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class SubscriptionExpirationService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

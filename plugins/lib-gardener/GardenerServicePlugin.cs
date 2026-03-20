@@ -35,10 +35,6 @@ public class GardenerServicePlugin : StandardServicePlugin<IGardenerService>
     public override void ConfigureServices(IServiceCollection services)
     {
         base.ConfigureServices(services);
-
-        // Register background workers as hosted services
-        services.AddHostedService<GardenerGardenOrchestratorWorker>();
-        services.AddHostedService<GardenerScenarioLifecycleWorker>();
     }
 
     /// <summary>

@@ -18,8 +18,5 @@ public class SeedServicePlugin : StandardServicePlugin<ISeedService>
     public override void ConfigureServices(IServiceCollection services)
     {
         base.ConfigureServices(services);
-
-        // Background worker for applying growth decay to seed domains
-        services.AddHostedService<SeedDecayWorkerService>();
     }
 }

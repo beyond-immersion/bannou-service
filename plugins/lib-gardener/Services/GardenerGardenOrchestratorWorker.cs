@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Gardener.ClientEvents;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
@@ -28,6 +29,7 @@ namespace BeyondImmersion.BannouService.Gardener;
 /// respecting MinPoiSpacing between POIs.
 /// </para>
 /// </remarks>
+[BannouHelperService("garden-orchestrator", typeof(IGardenerService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class GardenerGardenOrchestratorWorker : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

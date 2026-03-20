@@ -1,5 +1,7 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Subscription;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -10,6 +12,7 @@ namespace BeyondImmersion.BannouService.GameSession;
 /// Fetches all accounts subscribed to our game services so we can quickly filter
 /// session.connected events and know which accounts should receive game shortcuts.
 /// </summary>
+[BannouHelperService("game-session-startup", typeof(IGameSessionService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class GameSessionStartupService : BackgroundService
 {
     private readonly ISubscriptionClient _subscriptionClient;

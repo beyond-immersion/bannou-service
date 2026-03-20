@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,6 +35,7 @@ namespace BeyondImmersion.BannouService.Transit;
 /// (default 300 seconds = 5 minutes real-time).
 /// </para>
 /// </remarks>
+[BannouHelperService("journey-archival", typeof(ITransitService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class JourneyArchivalWorker : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

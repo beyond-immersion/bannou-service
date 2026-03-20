@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
@@ -28,6 +29,7 @@ namespace BeyondImmersion.BannouService.Seed;
 /// where decayDays = (now - max(domain.LastActivityAt, model.LastDecayedAt ?? seed.CreatedAt)).TotalDays
 /// </para>
 /// </remarks>
+[BannouHelperService("seed-decay", typeof(ISeedService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class SeedDecayWorkerService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

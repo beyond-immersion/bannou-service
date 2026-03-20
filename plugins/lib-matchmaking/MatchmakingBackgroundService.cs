@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -14,6 +15,7 @@ namespace BeyondImmersion.BannouService.Matchmaking;
 /// - Handles timeout behavior for tickets exceeding max intervals
 /// - Publishes matchmaking stats events
 /// </summary>
+[BannouHelperService("matchmaking-worker", typeof(IMatchmakingService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class MatchmakingBackgroundService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

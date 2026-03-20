@@ -17,6 +17,5 @@ public class ResourceServicePlugin : StandardServicePlugin<IResourceService>
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-        services.AddHostedService<TransactionRecoveryWorker>();
     }
 }

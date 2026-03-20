@@ -37,7 +37,7 @@ namespace BeyondImmersion.BannouService.Actor.PoolNode;
 /// </list>
 /// </para>
 /// </remarks>
-[BannouHelperService("actor-pool-node-worker", typeof(IActorService), lifetime: ServiceLifetime.Singleton)]
+[BannouHelperService("actor-pool-node-worker", typeof(IActorService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.SingletonAndHostedService)]
 public sealed class ActorPoolNodeWorker : BackgroundService
 {
     private readonly IMessageBus _messageBus;

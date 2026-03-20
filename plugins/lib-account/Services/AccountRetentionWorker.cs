@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,6 +23,7 @@ namespace BeyondImmersion.BannouService.Account;
 /// needs to hard-delete the account record itself — all secondary data is already cleaned up.
 /// </para>
 /// </remarks>
+[BannouHelperService("account-retention", typeof(IAccountService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class AccountRetentionWorker : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

@@ -1,6 +1,7 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Asset;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
@@ -17,6 +18,7 @@ namespace BeyondImmersion.BannouService.SaveLoad.Processing;
 /// Background service that runs scheduled cleanup of expired save versions.
 /// Only runs on the control plane instance when CleanupControlPlaneOnly is true.
 /// </summary>
+[BannouHelperService("save-cleanup", typeof(ISaveLoadService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class CleanupService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

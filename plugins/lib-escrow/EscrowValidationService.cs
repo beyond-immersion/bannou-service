@@ -18,7 +18,7 @@ namespace BeyondImmersion.BannouService.Escrow;
 /// Service unavailability is NOT validation failure — assets are skipped and retried next cycle.
 /// Only confirmed discrepancies trigger the ValidationFailed state and reaffirmation flow.
 /// </summary>
-[BannouHelperService("escrow-validation", typeof(IEscrowService), typeof(IHostedService), lifetime: ServiceLifetime.Singleton)]
+[BannouHelperService("escrow-validation", typeof(IEscrowService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class EscrowValidationService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

@@ -215,6 +215,91 @@ public class StructuralTests
 
     // ⛔ FROZEN — Do not modify without explicit user permission.
     /// <summary>
+    /// Detects BackgroundService and IHostedService types in plugin assemblies that do not
+    /// have [BannouHelperService] with RegistrationMode = HostedService or SingletonAndHostedService.
+    /// These types should use the attribute for automatic registration instead of manual
+    /// AddHostedService calls in Plugin.ConfigureServices.
+    /// </summary>
+    /// <remarks>
+    /// Exception list: Messaging workers that require conditional registration based on
+    /// messaging mode (RabbitMQ vs InMemory vs DirectDispatch). These are registered
+    /// manually in mode-specific branches of MessagingServicePlugin.ConfigureServices.
+    /// </remarks>
+    [Fact]
+    public void HostedServices_ShouldUseBannouHelperServiceAttribute()
+    {
+        EnsureAssembliesLoaded();
+
+        // Approved exceptions: workers that require conditional registration in Plugin.ConfigureServices
+        // and cannot use attribute-based auto-registration because they are only registered in
+        // specific messaging mode branches (RabbitMQ mode only).
+        var approvedExceptions = new HashSet<string>
+        {
+            "NativeEventConsumerBackend",          // lib-messaging: conditional on RabbitMQ mode
+            "MessagingSubscriptionRecoveryService", // lib-messaging: conditional on RabbitMQ mode
+            "DeadLetterConsumerService",            // lib-messaging: conditional on RabbitMQ mode
+        };
+
+        var hostedServiceInterface = typeof(Microsoft.Extensions.Hosting.IHostedService);
+        var violations = new List<string>();
+
+        var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+        foreach (var assembly in assemblies)
+        {
+            var assemblyName = assembly.GetName().Name;
+            if (assemblyName == null || !assemblyName.StartsWith("lib-", StringComparison.Ordinal))
+                continue;
+
+            Type[] types;
+            try
+            {
+                types = assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException)
+            {
+                continue;
+            }
+
+            foreach (var type in types)
+            {
+                // Skip interfaces, abstract classes, and non-IHostedService types
+                if (type.IsInterface || type.IsAbstract || !hostedServiceInterface.IsAssignableFrom(type))
+                    continue;
+
+                // Skip approved exceptions
+                if (approvedExceptions.Contains(type.Name))
+                    continue;
+
+                // Check for [BannouHelperService] with a hosted registration mode
+                var attr = type.GetCustomAttribute<BannouHelperServiceAttribute>();
+                if (attr == null)
+                {
+                    violations.Add(
+                        $"{type.FullName} implements IHostedService but has no [BannouHelperService] attribute. " +
+                        "Add [BannouHelperService(..., RegistrationMode = HelperRegistrationMode.HostedService)]");
+                    continue;
+                }
+
+                if (attr.RegistrationMode != HelperRegistrationMode.HostedService &&
+                    attr.RegistrationMode != HelperRegistrationMode.SingletonAndHostedService)
+                {
+                    violations.Add(
+                        $"{type.FullName} implements IHostedService but [BannouHelperService] has " +
+                        $"RegistrationMode = {attr.RegistrationMode}. " +
+                        "Use HelperRegistrationMode.HostedService or SingletonAndHostedService");
+                }
+            }
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            $"{violations.Count} IHostedService type(s) missing proper [BannouHelperService] attribute:\n" +
+            string.Join("\n", violations.Select(v => $"  - {v}")));
+    }
+
+    // ⛔ FROZEN — Do not modify without explicit user permission.
+    /// <summary>
     /// Lists helper services (types with [BannouHelperService]) whose parent plugin
     /// has no corresponding helper configuration class (a type with [ServiceConfiguration]
     /// in the same assembly whose class name contains the helper type's name or a

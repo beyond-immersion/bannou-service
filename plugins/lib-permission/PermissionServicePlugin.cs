@@ -31,12 +31,5 @@ public class PermissionServicePlugin : StandardServicePlugin<IPermissionService>
         services.AddSingleton<IPermissionRegistry>(sp =>
             (IPermissionRegistry)sp.GetRequiredService<IPermissionService>());
 
-        // Register RegistrationEventBatcher as Singleton + IHostedService.
-        // Shared instance: PermissionService injects it to call Add(),
-        // the host starts it as a BackgroundService for periodic flush.
-        services.AddSingleton<RegistrationEventBatcher>();
-        services.AddSingleton<IHostedService>(sp =>
-            sp.GetRequiredService<RegistrationEventBatcher>());
-
     }
 }

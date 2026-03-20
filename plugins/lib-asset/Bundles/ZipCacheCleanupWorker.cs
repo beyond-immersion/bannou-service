@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
@@ -12,6 +13,7 @@ namespace BeyondImmersion.BannouService.Asset.Bundles;
 /// Background service that periodically scans the ZIP cache storage path
 /// and removes expired ZIP conversions older than the configured TTL.
 /// </summary>
+[BannouHelperService("zip-cache-cleanup", typeof(IAssetService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public sealed class ZipCacheCleanupWorker : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

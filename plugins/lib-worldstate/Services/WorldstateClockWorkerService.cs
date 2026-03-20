@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Worldstate.ClientEvents;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Providers;
@@ -15,6 +16,7 @@ namespace BeyondImmersion.BannouService.Worldstate;
 /// each realm's time ratio, advances the clock through the time calculator,
 /// publishes boundary events, and handles catch-up for server downtime.
 /// </summary>
+[BannouHelperService("clock-worker", typeof(IWorldstateService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class WorldstateClockWorkerService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

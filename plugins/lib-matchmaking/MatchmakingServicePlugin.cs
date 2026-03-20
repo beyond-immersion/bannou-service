@@ -17,8 +17,5 @@ public class MatchmakingServicePlugin : StandardServicePlugin<IMatchmakingServic
     public override void ConfigureServices(IServiceCollection services)
     {
         base.ConfigureServices(services);
-
-        // Register background service for interval-based match processing
-        services.AddHostedService<MatchmakingBackgroundService>();
     }
 }

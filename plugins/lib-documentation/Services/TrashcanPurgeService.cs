@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,7 @@ namespace BeyondImmersion.BannouService.Documentation.Services;
 /// across all documentation namespaces. Without this service, expired entries
 /// are only cleaned lazily when ListTrashcan is called.
 /// </summary>
+[BannouHelperService("trashcan-purge", typeof(IDocumentationService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class TrashcanPurgeService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

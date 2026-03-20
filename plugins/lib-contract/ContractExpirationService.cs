@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -13,6 +14,7 @@ namespace BeyondImmersion.BannouService.Contract;
 /// Delegates to <see cref="IContractService.GetContractInstanceStatusAsync"/> for lazy enforcement
 /// of expiration/milestones, and directly checks payment due dates for event publishing.
 /// </summary>
+[BannouHelperService("contract-expiration", typeof(IContractService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class ContractExpirationService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

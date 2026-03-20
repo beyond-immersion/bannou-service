@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Messaging;
@@ -28,6 +29,7 @@ namespace BeyondImmersion.BannouService.Gardener;
 /// for lifecycle thresholds. Uses GrowthAwardMultiplier for partial growth calculation.
 /// </para>
 /// </remarks>
+[BannouHelperService("scenario-lifecycle", typeof(IGardenerService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class GardenerScenarioLifecycleWorker : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

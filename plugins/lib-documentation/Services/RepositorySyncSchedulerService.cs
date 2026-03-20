@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Documentation.Models;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
@@ -12,6 +13,7 @@ namespace BeyondImmersion.BannouService.Documentation.Services;
 /// Background service that periodically checks for repository bindings
 /// that need synchronization and triggers sync operations.
 /// </summary>
+[BannouHelperService("repository-sync", typeof(IDocumentationService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class RepositorySyncSchedulerService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

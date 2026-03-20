@@ -12,7 +12,7 @@ namespace BeyondImmersion.BannouService.Escrow;
 /// Background service that checks for expired escrows and transitions them
 /// to the Expired state with automatic refund of any deposits.
 /// </summary>
-[BannouHelperService("escrow-expiration", typeof(IEscrowService), typeof(IHostedService), lifetime: ServiceLifetime.Singleton)]
+[BannouHelperService("escrow-expiration", typeof(IEscrowService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class EscrowExpirationService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +29,7 @@ namespace BeyondImmersion.BannouService.Permission;
 /// double-catch cancellation filter, per-cycle telemetry, and WorkerErrorPublisher.
 /// </para>
 /// </remarks>
+[BannouHelperService("registration-event-batcher", typeof(IPermissionService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.SingletonAndHostedService)]
 public class RegistrationEventBatcher : BackgroundService
 {
     private readonly DeduplicatingEventBatcher<string, PermissionRegistrationEntry> _batcher;

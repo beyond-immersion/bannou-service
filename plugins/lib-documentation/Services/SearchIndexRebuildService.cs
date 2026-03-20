@@ -1,5 +1,6 @@
 #nullable enable
 
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -13,6 +14,7 @@ namespace BeyondImmersion.BannouService.Documentation.Services;
 /// Iterates all known namespaces and populates the search index from state store data.
 /// Runs once on startup then exits, ensuring search works immediately after restart.
 /// </summary>
+[BannouHelperService("search-index-rebuild", typeof(IDocumentationService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class SearchIndexRebuildService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

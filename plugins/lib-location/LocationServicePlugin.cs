@@ -27,7 +27,6 @@ public class LocationServicePlugin : StandardServicePlugin<ILocationService>
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-        services.AddHostedService<EntityPresenceCleanupWorker>();
     }
 
     /// <summary>

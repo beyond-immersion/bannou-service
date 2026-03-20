@@ -7,6 +7,7 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Asset.Models;
 using BeyondImmersion.BannouService.Asset.Pool;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
@@ -37,6 +38,7 @@ namespace BeyondImmersion.BannouService.Asset.Processing;
 /// </list>
 /// </para>
 /// </remarks>
+[BannouHelperService("asset-processing", typeof(IAssetService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public sealed class AssetProcessingWorker : BackgroundService
 {
     private readonly AssetProcessorRegistry _processorRegistry;

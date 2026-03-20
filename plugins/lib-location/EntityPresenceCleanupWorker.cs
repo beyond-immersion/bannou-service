@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,6 +13,7 @@ namespace BeyondImmersion.BannouService.Location;
 /// but the entity remains in the location's entity set. This worker evicts those stale set members.
 /// Uses an index set (location-entities:__index__) to discover active location entity sets.
 /// </summary>
+[BannouHelperService("entity-presence-cleanup", typeof(ILocationService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class EntityPresenceCleanupWorker : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

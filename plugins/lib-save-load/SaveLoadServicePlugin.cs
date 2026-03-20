@@ -22,9 +22,5 @@ public class SaveLoadServicePlugin : StandardServicePlugin<ISaveLoadService>
 
         // Register HttpClient factory for downloading save data from pre-signed URLs
         services.AddHttpClient();
-
-        // Register background workers
-        services.AddHostedService<SaveUploadWorker>();
-        services.AddHostedService<CleanupService>();
     }
 }

@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.Bannou.Voice.ClientEvents;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Permission;
@@ -29,6 +30,7 @@ namespace BeyondImmersion.BannouService.Voice.Services;
 /// EmptyRoomGracePeriodSeconds, and BroadcastConsentTimeoutSeconds from VoiceServiceConfiguration.
 /// </para>
 /// </remarks>
+[BannouHelperService("participant-eviction", typeof(IVoiceService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class ParticipantEvictionWorker : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

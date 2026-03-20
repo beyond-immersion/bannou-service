@@ -17,6 +17,5 @@ public class AccountServicePlugin : StandardServicePlugin<IAccountService>
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-        services.AddHostedService<AccountRetentionWorker>();
     }
 }

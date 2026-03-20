@@ -1,6 +1,7 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
@@ -17,6 +18,7 @@ namespace BeyondImmersion.BannouService.Currency.Services;
 /// Supports FixedDate (global cutoff) and DurationFromEarn (per-balance cutoff) policies.
 /// EndOfSeason is deferred until Worldstate integration is implemented.
 /// </summary>
+[BannouHelperService("currency-expiration", typeof(ICurrencyService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class CurrencyExpirationTaskService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

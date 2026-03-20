@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.ServiceClients;
@@ -30,6 +31,7 @@ namespace BeyondImmersion.BannouService.Resource;
 /// 4. Metadata retention — Committed/Aborted past retention → purge records
 /// </para>
 /// </remarks>
+[BannouHelperService("transaction-recovery", typeof(IResourceService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class TransactionRecoveryWorker : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Chat.ClientEvents;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
@@ -25,6 +26,7 @@ namespace BeyondImmersion.BannouService.Chat;
 /// from ChatServiceConfiguration.
 /// </para>
 /// </remarks>
+[BannouHelperService("typing-expiry", typeof(IChatService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class TypingExpiryWorker : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

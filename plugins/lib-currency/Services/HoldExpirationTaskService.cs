@@ -1,6 +1,7 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
@@ -17,6 +18,7 @@ namespace BeyondImmersion.BannouService.Currency.Services;
 /// Hold expiration is semantically identical to ReleaseHold — no balance record write
 /// is needed because holds only reduce effective balance (Amount - sum(active holds)).
 /// </summary>
+[BannouHelperService("hold-expiration", typeof(ICurrencyService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class HoldExpirationTaskService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

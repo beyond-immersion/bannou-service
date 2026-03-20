@@ -17,6 +17,5 @@ public class AnalyticsServicePlugin : StandardServicePlugin<IAnalyticsService>
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
-        services.AddHostedService<ControllerHistoryCleanupWorker>();
     }
 }

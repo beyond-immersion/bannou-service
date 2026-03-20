@@ -61,9 +61,6 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
                 sp.GetRequiredService<ITelemetryProvider>());
         });
 
-        // Register active health checking background service
-        services.AddHostedService<MeshHealthCheckService>();
-
         // Register IServiceMappingReceiver — Mesh's default implementation.
         // Orchestrator (L3) discovers this via IEnumerable<IServiceMappingReceiver> and pushes
         // live mapping updates. The implementation updates the local IServiceAppMappingResolver

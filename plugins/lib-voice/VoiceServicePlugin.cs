@@ -30,9 +30,6 @@ public class VoiceServicePlugin : StandardServicePlugin<IVoiceService>
             return new RtpEngineClient(config.RtpEngineHost, config.RtpEnginePort, logger, messageBus, telemetryProvider, timeoutSeconds: config.RtpEngineTimeoutSeconds);
         });
         Logger?.LogDebug("Registered Voice scaled tier services (ScaledTierCoordinator, RtpEngineClient)");
-
-        // Register background worker for participant eviction, empty room cleanup, and consent timeout
-        services.AddHostedService<ParticipantEvictionWorker>();
         Logger?.LogDebug("Registered ParticipantEvictionWorker background service");
 
         Logger?.LogInformation("Voice service dependencies configured");

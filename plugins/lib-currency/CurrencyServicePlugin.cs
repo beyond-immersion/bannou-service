@@ -18,10 +18,5 @@ public class CurrencyServicePlugin : StandardServicePlugin<ICurrencyService>
     public override void ConfigureServices(IServiceCollection services)
     {
         base.ConfigureServices(services);
-
-        // Register background task processing services
-        services.AddHostedService<CurrencyAutogainTaskService>();
-        services.AddHostedService<CurrencyExpirationTaskService>();
-        services.AddHostedService<HoldExpirationTaskService>();
     }
 }

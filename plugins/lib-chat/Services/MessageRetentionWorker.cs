@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
@@ -29,6 +30,7 @@ namespace BeyondImmersion.BannouService.Chat;
 /// MessageRetentionBatchSize, and MessageRetentionLockExpirySeconds from ChatServiceConfiguration.
 /// </para>
 /// </remarks>
+[BannouHelperService("message-retention", typeof(IChatService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class MessageRetentionWorker : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

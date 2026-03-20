@@ -137,13 +137,6 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
 
         services.AddSingleton<AssetProcessorRegistry>();
 
-        // Register background worker for asset processing
-        // Worker checks ProcessingMode from configuration at startup and exits early if mode is "api"
-        services.AddHostedService<AssetProcessingWorker>();
-
-        // Register background worker for expired ZIP cache cleanup
-        services.AddHostedService<Bundles.ZipCacheCleanupWorker>();
-
         Logger?.LogDebug("Service dependencies configured");
     }
 

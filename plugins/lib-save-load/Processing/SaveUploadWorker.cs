@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Asset;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.SaveLoad;
@@ -15,6 +16,7 @@ namespace BeyondImmersion.BannouService.SaveLoad.Processing;
 /// Background service that processes the async upload queue.
 /// Uploads save data from Redis to MinIO via the Asset service.
 /// </summary>
+[BannouHelperService("save-upload", typeof(ISaveLoadService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class SaveUploadWorker : BackgroundService
 {
     /// <summary>

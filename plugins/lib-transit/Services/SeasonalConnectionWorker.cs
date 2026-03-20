@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +27,7 @@ namespace BeyondImmersion.BannouService.Transit;
 /// for seasonal state.
 /// </para>
 /// </remarks>
+[BannouHelperService("seasonal-connection", typeof(ITransitService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class SeasonalConnectionWorker : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

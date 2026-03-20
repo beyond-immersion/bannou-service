@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Worldstate;
@@ -25,6 +26,7 @@ namespace BeyondImmersion.BannouService.CharacterEncounter;
 /// on-demand during read operations (QueryByCharacter, GetPerspective, etc.).
 /// </para>
 /// </remarks>
+[BannouHelperService("memory-decay", typeof(ICharacterEncounterService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class MemoryDecaySchedulerService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

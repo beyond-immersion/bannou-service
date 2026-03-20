@@ -20,9 +20,6 @@ public class AchievementServicePlugin : StandardServicePlugin<IAchievementServic
     public override void ConfigureServices(IServiceCollection services)
     {
         base.ConfigureServices(services);
-
-        // Background service for periodic rarity percentage recalculation
-        services.AddHostedService<RarityCalculationService>();
     }
 
     /// <summary>

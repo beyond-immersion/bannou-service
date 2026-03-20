@@ -18,11 +18,5 @@ public class GameSessionServicePlugin : StandardServicePlugin<IGameSessionServic
     public override void ConfigureServices(IServiceCollection services)
     {
         base.ConfigureServices(services);
-
-        // Register the startup service to initialize subscription caches on startup
-        services.AddHostedService<GameSessionStartupService>();
-
-        // Register the cleanup service to handle expired reservations
-        services.AddHostedService<ReservationCleanupService>();
     }
 }

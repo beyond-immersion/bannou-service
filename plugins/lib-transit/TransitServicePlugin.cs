@@ -25,9 +25,6 @@ public class TransitServicePlugin : StandardServicePlugin<ITransitService>
     /// <param name="services">The service collection to register services with.</param>
     public override void ConfigureServices(IServiceCollection services)
     {
-        // Background workers
-        services.AddHostedService<SeasonalConnectionWorker>();
-        services.AddHostedService<JourneyArchivalWorker>();
     }
 
     /// <inheritdoc />

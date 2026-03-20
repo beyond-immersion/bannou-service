@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,7 @@ namespace BeyondImmersion.BannouService.Analytics;
 /// Uses the same cleanup logic as the CleanupControllerHistory endpoint, running
 /// automatically at a configurable interval to avoid unbounded data growth.
 /// </summary>
+[BannouHelperService("controller-history-cleanup", typeof(IAnalyticsService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class ControllerHistoryCleanupWorker : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

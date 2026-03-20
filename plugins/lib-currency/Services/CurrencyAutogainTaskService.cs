@@ -1,6 +1,7 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
@@ -19,6 +20,7 @@ namespace BeyondImmersion.BannouService.Currency.Services;
 /// with autogain-enabled currencies and applies gains without waiting for balance queries.
 /// This ensures accurate global supply statistics, leaderboards, and timely cap events.
 /// </summary>
+[BannouHelperService("autogain", typeof(ICurrencyService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class CurrencyAutogainTaskService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

@@ -67,9 +67,6 @@ public class ActorServicePlugin : StandardServicePlugin<IActorService>
         // if running in the wrong mode. This follows FOUNDATION TENETS - configuration access
         // via DI, not Environment.GetEnvironmentVariable during registration.
         services.AddSingleton<HeartbeatEmitter>();
-        services.AddSingleton<ActorPoolNodeWorker>();
-        services.AddHostedService(sp => sp.GetRequiredService<ActorPoolNodeWorker>());
-        services.AddHostedService<PoolHealthMonitor>();
     }
 
     /// <summary>

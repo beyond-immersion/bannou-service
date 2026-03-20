@@ -1,5 +1,6 @@
 #nullable enable
 
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Mesh;
@@ -21,6 +22,7 @@ namespace BeyondImmersion.BannouService.Mesh.Services;
 /// After consecutive failures (configurable via HealthCheckFailureThreshold),
 /// the endpoint is deregistered and a deregistration event is published.
 /// </summary>
+[BannouHelperService("mesh-health-check", typeof(IMeshService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class MeshHealthCheckService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

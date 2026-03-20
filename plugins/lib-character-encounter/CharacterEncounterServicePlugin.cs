@@ -24,8 +24,6 @@ public class CharacterEncounterServicePlugin : StandardServicePlugin<ICharacterE
         base.ConfigureServices(services);
 
         // Register the memory decay scheduler background service
-        // This only activates when MemoryDecayMode is set to Scheduled
-        services.AddHostedService<MemoryDecaySchedulerService>();
     }
 
     /// <summary>

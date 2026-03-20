@@ -3,8 +3,10 @@
 // BackgroundService that monitors pool node heartbeats and marks unhealthy nodes.
 // =============================================================================
 
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -20,6 +22,7 @@ namespace BeyondImmersion.BannouService.Actor.Pool;
 /// Only one instance will "win" the race to mark a node unhealthy (idempotent).
 /// </para>
 /// </remarks>
+[BannouHelperService("pool-health-monitor", typeof(IActorService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public sealed class PoolHealthMonitor : BackgroundService
 {
     private readonly IActorPoolManager _poolManager;

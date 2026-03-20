@@ -21,7 +21,6 @@ public class WorldstateServicePlugin : StandardServicePlugin<IWorldstateService>
     /// <param name="services">The service collection to register services with.</param>
     public override void ConfigureServices(IServiceCollection services)
     {
-        services.AddHostedService<WorldstateClockWorkerService>();
     }
 
     /// <inheritdoc />

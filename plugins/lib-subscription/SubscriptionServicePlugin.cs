@@ -13,7 +13,5 @@ public class SubscriptionServicePlugin : StandardServicePlugin<ISubscriptionServ
 
     public override void ConfigureServices(IServiceCollection services)
     {
-        // Register the subscription expiration background service
-        services.AddHostedService<SubscriptionExpirationService>();
     }
 }

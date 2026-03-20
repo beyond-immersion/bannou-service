@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.Bannou.GameSession.ClientEvents;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
@@ -18,6 +19,7 @@ namespace BeyondImmersion.BannouService.GameSession;
 /// - Notify remaining players of session cancellation
 /// - Clean up orphaned session state
 /// </summary>
+[BannouHelperService("reservation-cleanup", typeof(IGameSessionService), lifetime: ServiceLifetime.Singleton, RegistrationMode = HelperRegistrationMode.HostedService)]
 public class ReservationCleanupService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
