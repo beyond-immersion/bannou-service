@@ -150,7 +150,7 @@ This plugin does not consume external events. The Collection-to-Seed growth pipe
 | UpdateSeed | POST /seed/update | generated | user | seed | seed.updated |
 | ActivateSeed | POST /seed/activate | generated | user | seed (multiple) | seed.updated, seed.activated |
 | ArchiveSeed | POST /seed/archive | generated | user | seed | seed.archived |
-| ReparentSeed | POST /seed/reparent | generated | user | seed, cap (delete) | seed.updated |
+| ReparentSeed | POST /seed/reparent | generated | admin | seed, cap (delete) | seed.updated |
 | GetGrowth | POST /seed/growth/get | generated | user | - | - |
 | RecordGrowth | POST /seed/growth/record | generated | [] | growth, seed, bond, cap (delete) | seed.growth.updated, seed.phase.changed |
 | RecordGrowthBatch | POST /seed/growth/record-batch | generated | [] | growth, seed, bond, cap (delete) | seed.growth.updated, seed.phase.changed |
@@ -267,7 +267,7 @@ RETURN (200, SeedResponse)
 ```
 
 ### ReparentSeed
-POST /seed/reparent | Roles: [user]
+POST /seed/reparent | Roles: [admin]
 
 Atomically changes seed ownership while preserving growth, bonds, and capabilities.
 

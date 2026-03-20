@@ -16,7 +16,7 @@
 | Events Published | 21 (currency.credited, currency.debited, currency.transferred, currency.autogain.calculated, currency.earn-cap.reached, currency.wallet-cap.reached, currency.expired, currency.exchange-rate.updated, currency.definition.created, currency.definition.updated, currency.wallet.created, currency.wallet.frozen, currency.wallet.unfrozen, currency.wallet.closed, currency.balance.created, currency.balance.updated, currency.balance.deleted, currency.hold.created, currency.hold.captured, currency.hold.released, currency.hold.expired) |
 | Events Consumed | 4 (1 external: account.deleted; 3 self-subscription for cache invalidation) |
 | Client Events | 3 (currency.balance.changed, currency.wallet.frozen, currency.wallet.unfrozen) |
-| Background Services | 3 (CurrencyAutogainTaskService, CurrencyExpirationTaskService, HoldExpirationTaskService) |
+| Background Services | 3 implemented + 1 planned (CurrencyAutogainTaskService, CurrencyExpirationTaskService, HoldExpirationTaskService, TransactionRetentionCleanupWorkerService *(planned)*) |
 
 ---
 
@@ -208,6 +208,7 @@
 | CleanDeprecatedCurrencyDefinitions | POST /currency/definition/clean-deprecated | admin | def, def-code, all-defs | currency.definition.deleted, currency.balance.deleted *(unimplemented)* |
 | CurrencyExpirationTaskService.ProcessExpirationCycleAsync | background | - | bal, tx | currency.expired |
 | HoldExpirationTaskService.ProcessHoldExpirationCycleAsync | background | - | hold, hold-wallet | currency.hold.expired |
+| TransactionRetentionCleanupWorkerService.ProcessRetentionCleanupCycleAsync *(planned)* | background | - | tx, tx-wallet, tx-ref | - |
 
 ---
 
@@ -417,6 +418,7 @@ READ wallets:wallet:{walletId} -> 404 if null, 400 if frozen
 READ definitions:def:{currencyDefinitionId} -> 404 if null
 LOCK balance:{walletId}:{currencyDefId} -> 409 if fails
  // GetOrCreateBalanceAsync
+ IF isNewBalance AND definition.IsDeprecated -> 400 (Category B instance creation guard)
  // ResetEarnCapsIfNeeded
  IF !bypassEarnCap AND earn cap applies
  // Apply daily/weekly earn cap, reduce creditAmount
@@ -428,6 +430,10 @@ LOCK balance:{walletId}:{currencyDefId} -> 409 if fails
  IF CapAndLose AND newBalance > cap
  // Truncate creditAmount
  PUBLISH currency.wallet-cap.reached { capAmount, overflowBehavior, amountLost }
+ IF globalSupplyCap (planned: supply cap enforcement #471)
+ // Atomic INCRBY supply:{defId}:net creditAmount → returns newNetSupply
+ // IF newNetSupply > globalSupplyCap → DECRBY to compensate, apply overflow behavior
+ // PUBLISH currency.supply-cap.reached { ... }
  // balance.Amount += creditAmount, update earn tracking counters
  WRITE balances:bal:{walletId}:{currencyDefId} <- updated balance
  WRITE balance-cache:bal:{walletId}:{currencyDefId}
@@ -439,6 +445,9 @@ LOCK balance:{walletId}:{currencyDefId} -> 409 if fails
  LOCK index:tx-ref:{refType}:{refId}
  // AddToListAsync
  WRITE idempotency:{idempotencyKey} <- transactionId (TTL)
+ // Supply counter update (planned: #211)
+ // INCRBY supply:{currencyDefId}:net creditAmount via IRedisOperations
+ // IF transactionType is EscrowRelease or EscrowRefund: DECRBY supply:{currencyDefId}:escrow creditAmount
 PUBLISH currency.credited { transactionId, walletId, ownerId, amount, transactionType, newBalance, earnCapApplied, walletCapApplied }
 PUSH CurrencyBalanceChangedClientEvent to owner sessions
 RETURN (200, CreditCurrencyResponse { transaction, newBalance, earnCapApplied, walletCapApplied })
@@ -461,6 +470,9 @@ LOCK balance:{walletId}:{currencyDefId} -> 409 if fails
  WRITE balance-cache:bal:{walletId}:{currencyDefId}
  // RecordTransactionAsync (same pattern as CreditCurrency)
  WRITE idempotency:{idempotencyKey} <- transactionId (TTL)
+ // Supply counter update (planned: #211)
+ // DECRBY supply:{currencyDefId}:net debitAmount via IRedisOperations
+ // IF transactionType is EscrowDeposit: INCRBY supply:{currencyDefId}:escrow debitAmount
 PUBLISH currency.debited { transactionId, walletId, ownerId, amount, transactionType, newBalance }
 PUSH CurrencyBalanceChangedClientEvent to owner sessions (negative delta)
 RETURN (200, DebitCurrencyResponse { transaction, newBalance })
@@ -630,18 +642,32 @@ RETURN (200, GetTransactionsByReferenceResponse { transactions })
 POST /currency/stats/global-supply | Roles: []
 
 ```
-// STUB: returns all zeros
+// Design resolved (2026-03-20): Redis atomic counters per currency
+// Counters maintained by CreditCurrency (INCRBY net) and DebitCurrency (DECRBY net)
+// Escrow counter maintained by EscrowDeposit (INCRBY escrow) and EscrowRelease/Refund (DECRBY escrow)
 READ definitions:def:{currencyDefinitionId} -> 404 if null
-RETURN (200, GetGlobalSupplyResponse { totalSupply: 0, inCirculation: 0, inEscrow: 0, totalMinted: 0, totalBurned: 0, supplyCap })
+// Planned: READ supply:{currencyDefinitionId}:net via IRedisOperations -> totalSupply (0 if counter absent)
+// Planned: READ supply:{currencyDefinitionId}:escrow via IRedisOperations -> inEscrow (0 if counter absent)
+// InCirculation = totalSupply - inEscrow
+// TotalMinted = null (game-design classification — Analytics/extension responsibility)
+// TotalBurned = null (game-design classification — Analytics/extension responsibility)
+// SupplyCapRemaining = max(0, supplyCap - totalSupply) if supplyCap set
+RETURN (200, GetGlobalSupplyResponse { totalSupply, inCirculation, inEscrow, totalMinted: null, totalBurned: null, supplyCap, supplyCapRemaining })
 ```
 
 ### GetWalletDistribution
 POST /currency/stats/wallet-distribution | Roles: []
 
 ```
-// STUB: returns all zeros
+// Design resolved (2026-03-20): Background aggregation with Redis-cached results
+// CurrencyDistributionAggregationWorker (planned BackgroundService) periodically:
+//   - loads all balance amounts from bal-currency:{defId} reverse index
+//   - sorts, computes percentiles (p10/p25/p50/p75/p90/p99), Gini coefficient
+//   - caches result in Redis with TTL
+// Planned: READ distribution-cache:{currencyDefinitionId} -> cached result
+// If cache miss: return zeros (next worker cycle will populate)
 READ definitions:def:{currencyDefinitionId} -> 404 if null
-RETURN (200, GetWalletDistributionResponse { all fields: 0 })
+RETURN (200, GetWalletDistributionResponse { from cache or zeros if cache miss })
 ```
 
 ### EscrowDeposit
@@ -938,3 +964,49 @@ FOREACH definitionId in allIds
 - Lock ordering: hold-level lock only (`hold:{holdId}`). No balance-level lock required since no balance record is written.
 - Publishes `currency.hold.expired`, not `currency.hold.released`: consumers that need to distinguish between user-initiated release and system auto-expiry (e.g., for audit trails or rebooking workflows) can subscribe to the specific event.
 - Per-item error isolation: each hold is processed in an individual try-catch. Lock contention or a corrupt hold logs a Warning and continues to the next hold.
+
+### TransactionRetentionCleanupWorkerService (Planned)
+**Interval**: `config.TransactionCleanupIntervalSeconds` (default 86400 = daily)
+**Startup Delay**: `config.TransactionCleanupStartupDelaySeconds` (default 120s)
+**Active when**: always (unconditional — transactions always accumulate)
+
+```
+// ProcessRetentionCleanupCycleAsync — per-cycle span via ITelemetryProvider
+// Scope created once per cycle; all stores resolved once from scoped IStateStoreFactory
+retentionFloor = now - TransactionRetentionDays
+
+LOOP (paginated — always page 1 since records are deleted)
+  QUERY currency-transactions via IQueryableStateStore<TransactionModel>
+    WHERE $.Timestamp < retentionFloor
+    PAGED(1, config.TransactionCleanupBatchSize)
+  IF no results -> BREAK
+
+  FOREACH tx in batch
+    // Per-item try-catch: one corrupt record must not block the rest (IMPLEMENTATION TENETS)
+    TRY
+      // Delete transaction record
+      DELETE currency-transactions:tx:{tx.TransactionId}
+
+      // Clean wallet indexes (selective removal via RemoveFromStringListAsync)
+      IF tx.SourceWalletId != null
+        RemoveFromStringListAsync(tx-wallet:{tx.SourceWalletId}, tx.TransactionId)
+      IF tx.TargetWalletId != null
+        RemoveFromStringListAsync(tx-wallet:{tx.TargetWalletId}, tx.TransactionId)
+
+      // Clean reference index
+      IF tx.ReferenceType != null AND tx.ReferenceId != null
+        RemoveFromStringListAsync(tx-ref:{tx.ReferenceType}:{tx.ReferenceId}, tx.TransactionId)
+
+      successCount++
+    CATCH -> log Warning, failureCount++, continue
+
+// Cycle summary: log Information with count of cleaned transactions
+```
+
+**Design notes**:
+- Uses `IQueryableStateStore<TransactionModel>` for efficient MySQL-native timestamp filtering. Always queries page 1 because records are deleted between pages.
+- No archive before delete: transactions are operational records, not entity identity/narrative data (T29). Analytics accumulates from live events (#703), not historical records.
+- No events published: transaction deletion is internal housekeeping, not a business event.
+- Index cleanup uses shared `RemoveFromStringListAsync` helper (idempotent, deletes key when list empties).
+- Per-item error isolation per T7. Per-item failures logged at Warning.
+- Scale consideration: at 100K NPC scale (~86M records to clean daily), batch size and interval may need tuning. Consider `TransactionCleanupBatchSize: 5000` and hourly intervals for high-volume deployments.

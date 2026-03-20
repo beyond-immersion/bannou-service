@@ -94,3 +94,17 @@ x-service-configuration:
       minimum: 60
       maximum: 86400
       description: TTL in seconds for growth transfer idempotency keys in Redis
+    lockTimeoutSeconds:
+      type: integer
+      env: SEED_LOCK_TIMEOUT_SECONDS
+      default: 10
+      minimum: 1
+      maximum: 60
+      description: Timeout in seconds for distributed lock acquisition on seed mutations
+    crossPollinationLockTimeoutSeconds:
+      type: integer
+      env: SEED_CROSS_POLLINATION_LOCK_TIMEOUT_SECONDS
+      default: 3
+      minimum: 1
+      maximum: 30
+      description: Timeout in seconds for cross-pollination try-lock on sibling seeds. Intentionally short — failure is expected and graceful (best-effort semantics).

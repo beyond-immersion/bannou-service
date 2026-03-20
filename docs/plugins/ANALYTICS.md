@@ -125,6 +125,8 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 <!-- AUDIT:NEEDS_DESIGN:2026-03-11:https://github.com/beyond-immersion/bannou-service/issues/634 -->
 - **Time-series queries**: Adding time-bucketed aggregations for trend analysis
 <!-- AUDIT:NEEDS_DESIGN:2026-03-11:https://github.com/beyond-immersion/bannou-service/issues/635 -->
+- **Declarative event accumulation engine**: Generic registration-driven accumulation system where services register templates defining which events to watch, what fields to extract (reusing Core SDK's `ResponseTransformation` / JsonPath infrastructure), how to accumulate (Sum/Count/Min/Max/Latest), and where to store results (category + field name). DI Provider inversion: `IAnalyticsAccumulationRegistrant` for registration discovery, `IAccumulatedDataProvider` for query. Partitioned single-consumer queues (`x-single-active-consumer`) for multi-node safety. In-memory batching with periodic MySQL persistence for restart recovery. First consumer: Currency TotalMinted/TotalBurned (#211). See [#703](https://github.com/beyond-immersion/bannou-service/issues/703).
+<!-- AUDIT:DESIGN_RESOLVED:2026-03-20:https://github.com/beyond-immersion/bannou-service/issues/703 -->
 
 ## Known Quirks & Caveats
 
@@ -153,3 +155,7 @@ None currently identified.
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above.
+
+### Design Resolved (Awaiting Implementation)
+
+- [#703](https://github.com/beyond-immersion/bannou-service/issues/703) - Declarative event accumulation engine with PreboundApi-style registration. DI Provider inversion (`IAnalyticsAccumulationRegistrant` + `IAccumulatedDataProvider`), partitioned single-consumer queues for multi-node safety (`x-single-active-consumer`), in-memory batching with periodic MySQL persistence, `JsonPathIn` condition extension for OR-style event filtering. First consumer: Currency TotalMinted/TotalBurned (#211).

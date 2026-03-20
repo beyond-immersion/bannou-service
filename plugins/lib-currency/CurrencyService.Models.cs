@@ -86,7 +86,6 @@ internal class CurrencyDefinitionModel
     public Guid? SeasonId { get; set; }
     public bool LinkedToItem { get; set; }
     public Guid? LinkedItemTemplateId { get; set; }
-    public ItemLinkageMode? LinkageMode { get; set; }
     public bool IsBaseCurrency { get; set; }
     public double? ExchangeRateToBase { get; set; }
     public DateTimeOffset? ExchangeRateUpdatedAt { get; set; }

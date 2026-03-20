@@ -80,11 +80,28 @@ public partial class SeedService : ISeedService, ICleanDeprecatedEntity
             string.Join(", ", _evolutionListeners.Select(l => l.GetType().Name)));
     }
 
+    private const string SEED_KEY_PREFIX = "seed:";
+    private const string CAPABILITY_KEY_PREFIX = "cap:";
+    private const string TYPE_SEEDS_KEY_PREFIX = "type-seeds:";
+
+    #region Key Building Helpers
+
+    /// <summary>
+    /// Builds the seed entity key: seed:{seedId}.
+    /// </summary>
+    internal static string BuildSeedKey(Guid seedId)
+        => $"{SEED_KEY_PREFIX}{seedId}";
+
+    /// <summary>
+    /// Builds the capability cache key: cap:{seedId}.
+    /// </summary>
+    internal static string BuildCapabilityKey(Guid seedId)
+        => $"{CAPABILITY_KEY_PREFIX}{seedId}";
+
     /// <summary>
     /// Builds the composite type key: type:{gameServiceId}:{seedTypeCode}.
     /// Cross-game types (null GameServiceId) use "cross-game" as the key segment.
     /// </summary>
-    private const string TYPE_SEEDS_KEY_PREFIX = "type-seeds:";
 
     internal static string TypeKey(Guid? gameServiceId, string seedTypeCode) =>
         $"type:{gameServiceId?.ToString() ?? "cross-game"}:{seedTypeCode}";
@@ -104,6 +121,8 @@ public partial class SeedService : ISeedService, ICleanDeprecatedEntity
         gameServiceId.HasValue
             ? new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = gameServiceId.Value.ToString() }
             : new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.NotExists, Value = true };
+
+    #endregion
 
     // ========================================================================
     // SEED CRUD
@@ -317,7 +336,7 @@ public partial class SeedService : ISeedService, ICleanDeprecatedEntity
     {
         var lockOwner = $"update-seed-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
-            StateStoreDefinitions.SeedLock, body.SeedId.ToString(), lockOwner, 10, cancellationToken);
+            StateStoreDefinitions.SeedLock, body.SeedId.ToString(), lockOwner, _configuration.LockTimeoutSeconds, cancellationToken);
 
         if (!lockResponse.Success)
         {
@@ -395,7 +414,7 @@ public partial class SeedService : ISeedService, ICleanDeprecatedEntity
         var lockOwner = $"activate-seed-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.SeedLock, $"owner:{seed.OwnerId}:{seed.SeedTypeCode}",
-            lockOwner, 10, cancellationToken);
+            lockOwner, _configuration.LockTimeoutSeconds, cancellationToken);
 
         if (!lockResponse.Success)
         {
@@ -513,14 +532,14 @@ public partial class SeedService : ISeedService, ICleanDeprecatedEntity
 
         var lockOwner = $"reparent-seed-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
-            StateStoreDefinitions.SeedLock, body.SeedId.ToString(), lockOwner, 10, cancellationToken);
+            StateStoreDefinitions.SeedLock, body.SeedId.ToString(), lockOwner, _configuration.LockTimeoutSeconds, cancellationToken);
 
         if (!lockResponse.Success)
         {
             return (StatusCodes.Conflict, null);
         }
 
-        var key = $"seed:{body.SeedId}";
+        var key = BuildSeedKey(body.SeedId);
         var seed = await _seedStore.GetAsync(key, cancellationToken);
 
         if (seed == null)
@@ -556,7 +575,7 @@ public partial class SeedService : ISeedService, ICleanDeprecatedEntity
         var ownerConditions = new List<QueryCondition>
         {
             new QueryCondition { Path = "$.OwnerId", Operator = QueryOperator.Equals, Value = body.NewOwnerId.ToString() },
-            new QueryCondition { Path = "$.OwnerType", Operator = QueryOperator.Equals, Value = body.NewOwnerType },
+            new QueryCondition { Path = "$.OwnerType", Operator = QueryOperator.Equals, Value = body.NewOwnerType.ToString() },
             new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Equals, Value = seed.SeedTypeCode },
             GameServiceIdCondition(seed.GameServiceId),
             new QueryCondition { Path = "$.Status", Operator = QueryOperator.NotEquals, Value = SeedStatus.Archived.ToString() },
@@ -578,7 +597,7 @@ public partial class SeedService : ISeedService, ICleanDeprecatedEntity
         await _seedStore.SaveAsync(key, seed, cancellationToken: cancellationToken);
 
         // Invalidate capability cache (owner change may affect variable provider contexts)
-        await _capabilityCacheStore.DeleteAsync($"cap:{seed.SeedId}", cancellationToken);
+        await _capabilityCacheStore.DeleteAsync(BuildCapabilityKey(seed.SeedId), cancellationToken);
 
         // Publish seed.updated with changed fields
         await _messageBus.PublishSeedUpdatedAsync(new SeedUpdatedEvent
@@ -868,7 +887,7 @@ public partial class SeedService : ISeedService, ICleanDeprecatedEntity
         var lockOwner = $"update-type-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.SeedLock, TypeKey(body.GameServiceId, body.SeedTypeCode),
-            lockOwner, 30, cancellationToken);
+            lockOwner, _configuration.LockTimeoutSeconds, cancellationToken);
 
         if (!lockResponse.Success)
         {
@@ -1110,14 +1129,14 @@ public partial class SeedService : ISeedService, ICleanDeprecatedEntity
         var lockOwner = $"bond-{Guid.NewGuid():N}";
 
         await using var lockFirst = await _lockProvider.LockAsync(
-            StateStoreDefinitions.SeedLock, orderedIds[0].ToString(), lockOwner, 10, cancellationToken);
+            StateStoreDefinitions.SeedLock, orderedIds[0].ToString(), lockOwner, _configuration.LockTimeoutSeconds, cancellationToken);
         if (!lockFirst.Success)
         {
             return (StatusCodes.Conflict, null);
         }
 
         await using var lockSecond = await _lockProvider.LockAsync(
-            StateStoreDefinitions.SeedLock, orderedIds[1].ToString(), lockOwner, 10, cancellationToken);
+            StateStoreDefinitions.SeedLock, orderedIds[1].ToString(), lockOwner, _configuration.LockTimeoutSeconds, cancellationToken);
         if (!lockSecond.Success)
         {
             return (StatusCodes.Conflict, null);
@@ -1196,7 +1215,7 @@ public partial class SeedService : ISeedService, ICleanDeprecatedEntity
     {
         var lockOwner = $"confirm-bond-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
-            StateStoreDefinitions.SeedLock, $"bond:{body.BondId}", lockOwner, 10, cancellationToken);
+            StateStoreDefinitions.SeedLock, $"bond:{body.BondId}", lockOwner, _configuration.LockTimeoutSeconds, cancellationToken);
 
         if (!lockResponse.Success)
         {
@@ -1355,7 +1374,7 @@ public partial class SeedService : ISeedService, ICleanDeprecatedEntity
         using var activity = _telemetryProvider.StartActivity("bannou.seed", "SeedService.RecordGrowthInternal");
         var lockOwner = $"growth-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
-            StateStoreDefinitions.SeedLock, seedId.ToString(), lockOwner, 10, cancellationToken);
+            StateStoreDefinitions.SeedLock, seedId.ToString(), lockOwner, _configuration.LockTimeoutSeconds, cancellationToken);
 
         if (!lockResponse.Success)
         {
@@ -1576,7 +1595,7 @@ public partial class SeedService : ISeedService, ICleanDeprecatedEntity
         using var activity = _telemetryProvider.StartActivity("bannou.seed", "SeedService.ApplyCrossPollination");
         var lockOwner = $"crosspoll-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
-            StateStoreDefinitions.SeedLock, siblingSeedId.ToString(), lockOwner, 3, cancellationToken);
+            StateStoreDefinitions.SeedLock, siblingSeedId.ToString(), lockOwner, _configuration.CrossPollinationLockTimeoutSeconds, cancellationToken);
 
         if (!lockResponse.Success)
         {
@@ -1800,12 +1819,12 @@ public partial class SeedService : ISeedService, ICleanDeprecatedEntity
         var lockOwner = $"transfer-{Guid.NewGuid():N}";
 
         await using var lock1 = await _lockProvider.LockAsync(
-            StateStoreDefinitions.SeedLock, orderedIds[0].ToString(), lockOwner, 10, cancellationToken);
+            StateStoreDefinitions.SeedLock, orderedIds[0].ToString(), lockOwner, _configuration.LockTimeoutSeconds, cancellationToken);
         if (!lock1.Success)
             return (StatusCodes.Conflict, null);
 
         await using var lock2 = await _lockProvider.LockAsync(
-            StateStoreDefinitions.SeedLock, orderedIds[1].ToString(), lockOwner, 10, cancellationToken);
+            StateStoreDefinitions.SeedLock, orderedIds[1].ToString(), lockOwner, _configuration.LockTimeoutSeconds, cancellationToken);
         if (!lock2.Success)
             return (StatusCodes.Conflict, null);
 

@@ -134,4 +134,18 @@ public class SeedServiceConfiguration : BaseServiceConfiguration
     [ConfigRange(Minimum = 60, Maximum = 86400)]
     public int IdempotencyTtlSeconds { get; set; } = 3600;
 
+    /// <summary>
+    /// Timeout in seconds for distributed lock acquisition on seed mutations
+    /// Environment variable: SEED_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 60)]
+    public int LockTimeoutSeconds { get; set; } = 10;
+
+    /// <summary>
+    /// Timeout in seconds for cross-pollination try-lock on sibling seeds. Intentionally short — failure is expected and graceful (best-effort semantics).
+    /// Environment variable: SEED_CROSS_POLLINATION_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 30)]
+    public int CrossPollinationLockTimeoutSeconds { get; set; } = 3;
+
 }

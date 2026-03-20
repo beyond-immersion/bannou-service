@@ -199,7 +199,7 @@ paths:
         the per-owner seed limit. Seed must be Active or Dormant. Publishes
         seed.updated with changedFields including ownerId and ownerType.
       x-permissions:
-        - role: user
+        - role: admin
       requestBody:
         required: true
         content:

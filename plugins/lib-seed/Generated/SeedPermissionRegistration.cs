@@ -159,7 +159,7 @@ public static class SeedPermissionRegistration
             {
                 new PermissionRequirement
                 {
-                    Role = "user",
+                    Role = "admin",
                     RequiredStates = new Dictionary<string, string> {  }
                 },
             }

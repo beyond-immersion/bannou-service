@@ -104,6 +104,8 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         Configuration.GrowthDecayRatePerDay = 0.01f;
         Configuration.BondStrengthGrowthRate = 0.1f;
         Configuration.DefaultQueryPageSize = 100;
+        Configuration.LockTimeoutSeconds = 10;
+        Configuration.CrossPollinationLockTimeoutSeconds = 3;
     }
 
     private SeedService CreateService(
@@ -202,6 +204,20 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
     {
         var config = new SeedServiceConfiguration();
         Assert.NotNull(config);
+    }
+
+    [Fact]
+    public void SeedServiceConfiguration_LockTimeoutSeconds_DefaultIsTen()
+    {
+        var config = new SeedServiceConfiguration();
+        Assert.Equal(10, config.LockTimeoutSeconds);
+    }
+
+    [Fact]
+    public void SeedServiceConfiguration_CrossPollinationLockTimeoutSeconds_DefaultIsThree()
+    {
+        var config = new SeedServiceConfiguration();
+        Assert.Equal(3, config.CrossPollinationLockTimeoutSeconds);
     }
 
     #endregion
@@ -4720,6 +4736,25 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .Callback<string, SeedModel, StateOptions?, CancellationToken>((_, m, _, _) => savedSeed = m)
             .ReturnsAsync("etag");
 
+        // Capture event topic and payload
+        string? capturedTopic = null;
+        object? capturedEvent = null;
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+            {
+                capturedTopic = topic;
+                capturedEvent = evt;
+            })
+            .ReturnsAsync(true);
+
+        // Capture capability cache deletion key
+        string? capturedDeleteKey = null;
+        _mockCapabilitiesStore.Setup(s => s.DeleteAsync(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CancellationToken>((key, _) => capturedDeleteKey = key)
+            .ReturnsAsync(true);
+
         var request = new ReparentSeedRequest
         {
             SeedId = seedId,
@@ -4740,20 +4775,19 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         Assert.Equal(newOwnerId, savedSeed.OwnerId);
         Assert.Equal(EntityType.Character, savedSeed.OwnerType);
 
-        // Capability cache invalidated
-        _mockCapabilitiesStore.Verify(s => s.DeleteAsync(
-            $"cap:{seedId}", It.IsAny<CancellationToken>()), Times.Once);
+        // Capability cache invalidated with correct key
+        Assert.Equal($"cap:{seedId}", capturedDeleteKey);
 
-        // seed.updated event published with ownerId and ownerType in changedFields
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "seed.updated",
-            It.Is<SeedUpdatedEvent>(e =>
-                e.SeedId == seedId &&
-                e.OwnerId == newOwnerId &&
-                e.OwnerType == EntityType.Character &&
-                e.ChangedFields.Contains("ownerId") &&
-                e.ChangedFields.Contains("ownerType")),
-            It.IsAny<CancellationToken>()), Times.Once);
+        // seed.updated event captured and verified
+        Assert.Equal("seed.updated", capturedTopic);
+        Assert.NotNull(capturedEvent);
+        var updatedEvent = Assert.IsType<SeedUpdatedEvent>(capturedEvent);
+        Assert.Equal(seedId, updatedEvent.SeedId);
+        Assert.Equal(newOwnerId, updatedEvent.OwnerId);
+        Assert.Equal(EntityType.Character, updatedEvent.OwnerType);
+        Assert.Contains("ownerId", updatedEvent.ChangedFields);
+        Assert.Contains("ownerType", updatedEvent.ChangedFields);
+        Assert.Equal(2, updatedEvent.ChangedFields.Count);
     }
 
     [Fact]
