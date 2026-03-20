@@ -3,6 +3,34 @@ using Microsoft.Extensions.DependencyInjection;
 namespace BeyondImmersion.BannouService.Attributes;
 
 /// <summary>
+/// Controls how PluginLoader registers a helper service in the DI container.
+/// </summary>
+public enum HelperRegistrationMode
+{
+    /// <summary>
+    /// Standard interface → implementation registration.
+    /// Requires <see cref="BannouHelperServiceAttribute.InterfaceType"/> to be set.
+    /// PluginLoader registers: services.Add(ServiceDescriptor(InterfaceType, ConcreteType, Lifetime))
+    /// </summary>
+    Interface,
+
+    /// <summary>
+    /// Register as a hosted service (BackgroundService / IHostedService).
+    /// <see cref="BannouHelperServiceAttribute.InterfaceType"/> is not used.
+    /// PluginLoader registers via AddHostedService pattern.
+    /// </summary>
+    HostedService,
+
+    /// <summary>
+    /// Register as both a DI-injectable Singleton AND a hosted service.
+    /// Used when a BackgroundService also needs to be injected into other services
+    /// (e.g., RegistrationEventBatcher injected into PermissionService for Add() calls).
+    /// PluginLoader registers: services.AddSingleton(ConcreteType) + AddHostedService(factory).
+    /// </summary>
+    SingletonAndHostedService
+}
+
+/// <summary>
 /// Attribute for helper/sub-services within a Bannou plugin assembly.
 /// Helper services are discovered and registered in DI automatically,
 /// just like primary services with <see cref="BannouServiceAttribute"/>.
@@ -18,6 +46,14 @@ namespace BeyondImmersion.BannouService.Attributes;
 /// <para>
 /// Structural tests auto-discover helper services via this attribute
 /// for constructor validation, hierarchy validation, and key builder checks.
+/// </para>
+/// <para>
+/// <b>Registration modes</b> (controlled by <see cref="RegistrationMode"/>):
+/// <list type="bullet">
+/// <item><see cref="HelperRegistrationMode.Interface"/>: Standard interface→implementation (default, existing behavior)</item>
+/// <item><see cref="HelperRegistrationMode.HostedService"/>: BackgroundService auto-registration via AddHostedService</item>
+/// <item><see cref="HelperRegistrationMode.SingletonAndHostedService"/>: DI-injectable Singleton + hosted service factory</item>
+/// </list>
 /// </para>
 /// </remarks>
 [AttributeUsage(validOn: AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
@@ -63,6 +99,15 @@ public class BannouHelperServiceAttribute : Attribute
     /// How long the service instance lasts in the DI container.
     /// </summary>
     public ServiceLifetime Lifetime { get; }
+
+    /// <summary>
+    /// Controls how PluginLoader registers this helper service in DI.
+    /// Defaults to <see cref="HelperRegistrationMode.Interface"/> for backward compatibility.
+    /// Set to <see cref="HelperRegistrationMode.HostedService"/> for BackgroundService workers,
+    /// or <see cref="HelperRegistrationMode.SingletonAndHostedService"/> for workers that also
+    /// need to be injected into other services.
+    /// </summary>
+    public HelperRegistrationMode RegistrationMode { get; set; } = HelperRegistrationMode.Interface;
 
     /// <summary>
     /// Initializes a new instance of the BannouHelperServiceAttribute.

@@ -25,6 +25,8 @@ public partial class PluginLoader
         _clientTypesToRegister.Clear();
         _serviceTypesToRegister.Clear();
         _helperServiceTypesToRegister.Clear();
+        _hostedServiceTypesToRegister.Clear();
+        _singletonAndHostedServiceTypesToRegister.Clear();
         _configurationTypesToRegister.Clear();
 
         // FIRST: Scan the host assembly (bannou-service) for centralized client types
@@ -75,8 +77,9 @@ public partial class PluginLoader
             }
         }
 
-        _logger.LogInformation("Type discovery complete. {ClientCount} client types, {ServiceCount} service types, {HelperCount} helper service types, {ConfigCount} configuration types",
-            _clientTypesToRegister.Count, _serviceTypesToRegister.Count, _helperServiceTypesToRegister.Count, _configurationTypesToRegister.Count);
+        _logger.LogInformation("Type discovery complete. {ClientCount} client types, {ServiceCount} service types, {HelperCount} helper service types, {HostedCount} hosted service types, {DualCount} singleton+hosted types, {ConfigCount} configuration types",
+            _clientTypesToRegister.Count, _serviceTypesToRegister.Count, _helperServiceTypesToRegister.Count,
+            _hostedServiceTypesToRegister.Count, _singletonAndHostedServiceTypesToRegister.Count, _configurationTypesToRegister.Count);
     }
 
     /// <summary>
@@ -134,8 +137,14 @@ public partial class PluginLoader
 
     /// <summary>
     /// Discover helper service types using BannouHelperServiceAttribute.
-    /// Only registers types that have a non-null InterfaceType (simple interface→implementation registrations).
-    /// Types without InterfaceType require manual registration in Plugin.cs (multi-implementation, factory lambdas, etc.).
+    /// Handles three registration modes:
+    /// <list type="bullet">
+    /// <item><see cref="HelperRegistrationMode.Interface"/>: Standard interface→implementation (requires non-null InterfaceType)</item>
+    /// <item><see cref="HelperRegistrationMode.HostedService"/>: BackgroundService auto-registration via AddHostedService</item>
+    /// <item><see cref="HelperRegistrationMode.SingletonAndHostedService"/>: DI-injectable Singleton + hosted service factory</item>
+    /// </list>
+    /// Types with <see cref="HelperRegistrationMode.Interface"/> and null InterfaceType require
+    /// manual registration in Plugin.cs (multi-implementation, factory lambdas, conditional branches).
     /// </summary>
     private void DiscoverHelperServiceTypes(Assembly assembly, string pluginName)
     {
@@ -143,25 +152,49 @@ public partial class PluginLoader
             .Where(t => !t.IsInterface && !t.IsAbstract && t.GetCustomAttribute<BannouHelperServiceAttribute>() != null)
             .ToList();
 
+        var autoRegistered = 0;
+
         foreach (var helperType in helperTypes)
         {
             var attr = helperType.GetCustomAttribute<BannouHelperServiceAttribute>()!;
 
-            if (attr.InterfaceType == null)
+            switch (attr.RegistrationMode)
             {
-                _logger.LogDebug("Skipping helper {HelperType} — no InterfaceType (requires manual registration)",
-                    helperType.Name);
-                continue;
-            }
+                case HelperRegistrationMode.HostedService:
+                    // Hosted services are tracked separately — registered via AddHostedService pattern
+                    _hostedServiceTypesToRegister.Add(helperType);
+                    _logger.LogDebug("Will auto-register hosted service: {Implementation} (Singleton)",
+                        helperType.Name);
+                    autoRegistered++;
+                    break;
 
-            _helperServiceTypesToRegister.Add((attr.InterfaceType, helperType, attr.Lifetime));
-            _logger.LogDebug("Will auto-register helper: {Interface} -> {Implementation} ({Lifetime})",
-                attr.InterfaceType.Name, helperType.Name, attr.Lifetime);
+                case HelperRegistrationMode.SingletonAndHostedService:
+                    // Dual registration: concrete Singleton for DI injection + hosted service factory
+                    _singletonAndHostedServiceTypesToRegister.Add(helperType);
+                    _logger.LogDebug("Will auto-register singleton+hosted service: {Implementation}",
+                        helperType.Name);
+                    autoRegistered++;
+                    break;
+
+                case HelperRegistrationMode.Interface:
+                default:
+                    if (attr.InterfaceType == null)
+                    {
+                        _logger.LogDebug("Skipping helper {HelperType} — Interface mode with no InterfaceType (requires manual registration)",
+                            helperType.Name);
+                        continue;
+                    }
+
+                    _helperServiceTypesToRegister.Add((attr.InterfaceType, helperType, attr.Lifetime));
+                    _logger.LogDebug("Will auto-register helper: {Interface} -> {Implementation} ({Lifetime})",
+                        attr.InterfaceType.Name, helperType.Name, attr.Lifetime);
+                    autoRegistered++;
+                    break;
+            }
         }
 
         _logger.LogDebug("Discovered {Count} auto-registrable helper service types in assembly {AssemblyName}",
-            helperTypes.Count(t => t.GetCustomAttribute<BannouHelperServiceAttribute>()?.InterfaceType != null),
-            assembly.GetName().Name);
+            autoRegistered, assembly.GetName().Name);
     }
 
     /// <summary>
@@ -264,8 +297,9 @@ public partial class PluginLoader
     /// <param name="services">Service collection</param>
     public void ConfigureServices(IServiceCollection services)
     {
-        _logger.LogInformation("Centrally registering {ClientCount} client types, {ServiceCount} service types, {HelperCount} helper service types, and {ConfigCount} configuration types",
-            _clientTypesToRegister.Count, _serviceTypesToRegister.Count, _helperServiceTypesToRegister.Count, _configurationTypesToRegister.Count);
+        _logger.LogInformation("Centrally registering {ClientCount} client types, {ServiceCount} service types, {HelperCount} helper service types, {HostedCount} hosted service types, {DualCount} singleton+hosted types, and {ConfigCount} configuration types",
+            _clientTypesToRegister.Count, _serviceTypesToRegister.Count, _helperServiceTypesToRegister.Count,
+            _hostedServiceTypesToRegister.Count, _singletonAndHostedServiceTypesToRegister.Count, _configurationTypesToRegister.Count);
 
         // STAGE 1: Register ALL client types (even from disabled plugins for dependencies)
         RegisterClientTypes(services);
@@ -295,7 +329,13 @@ public partial class PluginLoader
         // STAGE 5: Auto-register helper services discovered via [BannouHelperService] attribute.
         // Runs AFTER plugin.ConfigureServices() so that manual registrations take precedence.
         // Only registers types not already in the collection (safe incremental migration).
+        // Handles all three HelperRegistrationMode values:
+        //   Interface → standard interface→implementation
+        //   HostedService → AddHostedService<T>()
+        //   SingletonAndHostedService → AddSingleton(T) + AddHostedService factory
         RegisterHelperServiceTypes(services);
+        RegisterHostedServiceTypes(services);
+        RegisterSingletonAndHostedServiceTypes(services);
 
         _logger.LogInformation("Service configuration complete - centralized type registration finished");
     }
@@ -439,6 +479,85 @@ public partial class PluginLoader
 
         _logger.LogInformation(
             "Helper service registration complete. {AutoRegistered} auto-registered, {Skipped} skipped (already registered by plugin)",
+            autoRegistered, skippedAlreadyRegistered);
+    }
+
+    /// <summary>
+    /// Register helper services with <see cref="HelperRegistrationMode.HostedService"/>.
+    /// Uses the AddHostedService pattern: services.Add(ServiceDescriptor.Singleton&lt;IHostedService, T&gt;()).
+    /// Skips types already registered as IHostedService (Plugin.ConfigureServices may have registered manually).
+    /// </summary>
+    private void RegisterHostedServiceTypes(IServiceCollection services)
+    {
+        var autoRegistered = 0;
+        var skippedAlreadyRegistered = 0;
+
+        foreach (var hostedType in _hostedServiceTypesToRegister)
+        {
+            // Check if this type is already registered as IHostedService
+            var alreadyRegistered = services.Any(sd =>
+                sd.ServiceType == typeof(Microsoft.Extensions.Hosting.IHostedService) &&
+                sd.ImplementationType == hostedType);
+
+            if (alreadyRegistered)
+            {
+                _logger.LogDebug(
+                    "Skipping auto-registration of hosted service {Implementation} (already registered by plugin)",
+                    hostedType.Name);
+                skippedAlreadyRegistered++;
+                continue;
+            }
+
+            // Register as IHostedService with Singleton lifetime (same as AddHostedService<T>())
+            services.Add(ServiceDescriptor.Singleton(typeof(Microsoft.Extensions.Hosting.IHostedService), hostedType));
+            _logger.LogDebug("Auto-registered hosted service: {Implementation}", hostedType.Name);
+            autoRegistered++;
+        }
+
+        _logger.LogInformation(
+            "Hosted service registration complete. {AutoRegistered} auto-registered, {Skipped} skipped (already registered by plugin)",
+            autoRegistered, skippedAlreadyRegistered);
+    }
+
+    /// <summary>
+    /// Register helper services with <see cref="HelperRegistrationMode.SingletonAndHostedService"/>.
+    /// Performs dual registration: concrete type as Singleton (for DI injection by other services)
+    /// AND as IHostedService via factory (for the .NET generic host to start it).
+    /// Skips types already registered as their concrete type or as IHostedService.
+    /// </summary>
+    private void RegisterSingletonAndHostedServiceTypes(IServiceCollection services)
+    {
+        var autoRegistered = 0;
+        var skippedAlreadyRegistered = 0;
+
+        foreach (var dualType in _singletonAndHostedServiceTypesToRegister)
+        {
+            // Check if the concrete type is already registered
+            var concreteAlreadyRegistered = services.Any(sd =>
+                sd.ServiceType == dualType);
+
+            if (concreteAlreadyRegistered)
+            {
+                _logger.LogDebug(
+                    "Skipping auto-registration of singleton+hosted service {Implementation} (already registered by plugin)",
+                    dualType.Name);
+                skippedAlreadyRegistered++;
+                continue;
+            }
+
+            // Step 1: Register concrete type as Singleton (for DI injection)
+            services.AddSingleton(dualType);
+
+            // Step 2: Register as IHostedService via factory (for .NET host startup)
+            services.AddSingleton(typeof(Microsoft.Extensions.Hosting.IHostedService),
+                sp => (Microsoft.Extensions.Hosting.IHostedService)sp.GetRequiredService(dualType));
+
+            _logger.LogDebug("Auto-registered singleton+hosted service: {Implementation}", dualType.Name);
+            autoRegistered++;
+        }
+
+        _logger.LogInformation(
+            "Singleton+hosted service registration complete. {AutoRegistered} auto-registered, {Skipped} skipped (already registered by plugin)",
             autoRegistered, skippedAlreadyRegistered);
     }
 

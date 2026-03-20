@@ -343,7 +343,8 @@ Cooperative scheduling for multi-channel ABML execution (cinematic choreography)
 | Attribute | Purpose | Generated? |
 |-----------|---------|------------|
 | `BannouServiceAttribute` | Marks service classes for DI discovery (name, interface, lifetime, layer) | Yes |
-| `BannouHelperServiceAttribute` | Marks helper services within a plugin | No (manual) |
+| `BannouHelperServiceAttribute` | Marks helper services within a plugin (supports `HelperRegistrationMode`: Interface, HostedService, SingletonAndHostedService) | No (manual) |
+| `HelperRegistrationMode` | Enum controlling how PluginLoader registers helper services in DI (Interface = standard, HostedService = BackgroundService, SingletonAndHostedService = DI-injectable + hosted) | N/A (enum) |
 | `BannouControllerAttribute` | Marks controller classes with route template | Yes |
 | `ServiceConfigurationAttribute` | Marks config classes with env prefix binding | Yes |
 | `IServiceAttribute` | Static discovery: `GetClassesWithAttribute<T>()` across all assemblies | N/A |
@@ -375,7 +376,7 @@ Cooperative scheduling for multi-channel ABML execution (cinematic choreography)
 - Assembly scanning from `plugins/` directory
 - Layer-based load ordering (L0 first, L5 last)
 - Infrastructure plugin requirement enforcement (state, messaging, mesh must load)
-- 6-stage DI registration (plugin.ConfigureServices → auto-register services → helpers → clients → configs → event consumers)
+- 6-stage DI registration (plugin.ConfigureServices → auto-register services → helpers (with `HelperRegistrationMode` support for Interface, HostedService, SingletonAndHostedService) → clients → configs → event consumers)
 - Service resolution and lifecycle (Initialize → Start → Running → Shutdown)
 - Permission registration orchestration
 - Variable provider validation against schema definitions
