@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "bannou-read": {
+      "type": "stdio",
+      "command": "node",
+      "args": [".claude/mcp/server.mjs"],
+      "env": {}
+    }
+  }
+}
