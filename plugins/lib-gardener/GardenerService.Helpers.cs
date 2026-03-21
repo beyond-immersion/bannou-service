@@ -1,3 +1,6 @@
+using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.GameSession;
+using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.State;
 
 namespace BeyondImmersion.BannouService.Gardener;
@@ -143,5 +146,190 @@ public partial class GardenerService
             .Where(h => h.Value.TemplateCode != null)
             .Select(h => h.Value.TemplateCode!)
             .ToHashSet();
+    }
+
+    /// <summary>
+    /// Loads all active POIs for a garden instance from Redis.
+    /// </summary>
+    private async Task<IReadOnlyList<PoiModel>> LoadActivePoisAsync(
+        GardenInstanceModel garden, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerService.LoadActivePoisAsync");
+        var pois = new List<PoiModel>();
+        foreach (var poiId in garden.ActivePoiIds)
+        {
+            var poi = await _poiStore.GetAsync(PoiKey(garden.GardenInstanceId, poiId), ct);
+            if (poi != null)
+                pois.Add(poi);
+        }
+        return pois;
+    }
+
+    /// <summary>
+    /// Loads or creates the deployment phase configuration singleton.
+    /// </summary>
+    internal async Task<DeploymentPhaseConfigModel> GetOrCreatePhaseConfigAsync(
+        CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerService.GetOrCreatePhaseConfigAsync");
+        var config = await _phaseStore.GetAsync(PhaseConfigKey, ct);
+        if (config != null)
+            return config;
+
+        config = new DeploymentPhaseConfigModel
+        {
+            CurrentPhase = _configuration.DefaultPhase,
+            MaxConcurrentScenariosGlobal = _configuration.MaxConcurrentScenariosGlobal,
+            PersistentEntryEnabled = false,
+            GardenMinigamesEnabled = false,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        await _phaseStore.SaveAsync(PhaseConfigKey, config, cancellationToken: ct);
+        _logger.LogInformation(
+            "Created default phase config with phase {Phase}", config.CurrentPhase);
+        return config;
+    }
+
+    /// <summary>
+    /// Calculates growth awards and records them via ISeedClient (per FOUNDATION TENETS cross-service communication).
+    /// </summary>
+    private async Task<Dictionary<string, float>> CalculateAndAwardGrowthAsync(
+        ScenarioInstanceModel scenario,
+        ScenarioTemplateModel? template,
+        bool fullCompletion,
+        CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerService.CalculateAndAwardGrowthAsync");
+        var growthAwarded = GardenerGrowthCalculation.CalculateGrowth(
+            scenario, template, _configuration.GrowthAwardMultiplier, fullCompletion,
+            (float)_configuration.GrowthFullCompletionMaxRatio,
+            (float)_configuration.GrowthFullCompletionMinRatio,
+            (float)_configuration.GrowthPartialMaxRatio,
+            _configuration.DefaultEstimatedDurationMinutes);
+
+        if (growthAwarded.Count == 0)
+            return growthAwarded;
+
+        var entries = growthAwarded.Select(kvp =>
+            new GrowthEntry { Domain = kvp.Key, Amount = kvp.Value }).ToList();
+
+        // Award growth for primary participant via batch API (per FOUNDATION TENETS)
+        var primaryParticipant = scenario.Participants.FirstOrDefault();
+        if (primaryParticipant != null && entries.Count > 0)
+        {
+            try
+            {
+                await _seedClient.RecordGrowthBatchAsync(new RecordGrowthBatchRequest
+                {
+                    SeedId = primaryParticipant.SeedId,
+                    Entries = entries,
+                    Source = "gardener"
+                }, ct);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex,
+                    "Failed to record growth for seed {SeedId}, scenario {ScenarioId}",
+                    primaryParticipant.SeedId, scenario.ScenarioInstanceId);
+            }
+
+            // Award growth for additional participants
+            foreach (var participant in scenario.Participants.Skip(1))
+            {
+                try
+                {
+                    await _seedClient.RecordGrowthBatchAsync(new RecordGrowthBatchRequest
+                    {
+                        SeedId = participant.SeedId,
+                        Entries = entries,
+                        Source = "gardener"
+                    }, ct);
+                }
+                catch (ApiException ex)
+                {
+                    _logger.LogError(ex,
+                        "Failed to record growth for participant seed {SeedId}",
+                        participant.SeedId);
+                }
+            }
+        }
+
+        return growthAwarded;
+    }
+
+    /// <summary>
+    /// Writes a completed/abandoned scenario to the durable MySQL history store.
+    /// </summary>
+    private async Task WriteScenarioHistoryAsync(
+        ScenarioInstanceModel scenario,
+        ScenarioTemplateModel? template,
+        CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerService.WriteScenarioHistoryAsync");
+        if (scenario.Participants.Count == 0) return;
+
+        var durationSeconds = scenario.CompletedAt.HasValue
+            ? (float)(scenario.CompletedAt.Value - scenario.CreatedAt).TotalSeconds
+            : (float)(DateTimeOffset.UtcNow - scenario.CreatedAt).TotalSeconds;
+
+        var completedAt = scenario.CompletedAt ?? DateTimeOffset.UtcNow;
+
+        foreach (var participant in scenario.Participants)
+        {
+            try
+            {
+                var history = new ScenarioHistoryModel
+                {
+                    ScenarioInstanceId = scenario.ScenarioInstanceId,
+                    ScenarioTemplateId = scenario.ScenarioTemplateId,
+                    AccountId = participant.AccountId,
+                    SeedId = participant.SeedId,
+                    CompletedAt = completedAt,
+                    Status = scenario.Status,
+                    GrowthAwarded = scenario.GrowthAwarded,
+                    DurationSeconds = durationSeconds,
+                    TemplateCode = template?.Code
+                };
+
+                await _historyStore.SaveAsync(
+                    HistoryKey(scenario.ScenarioInstanceId, participant.AccountId),
+                    history, cancellationToken: ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Failed to write scenario history for participant {AccountId} in scenario {ScenarioId}",
+                    participant.AccountId, scenario.ScenarioInstanceId);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Attempts to clean up the game session by having participants leave.
+    /// </summary>
+    private async Task TryCleanupGameSessionAsync(
+        ScenarioInstanceModel scenario, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerService.TryCleanupGameSessionAsync");
+        foreach (var participant in scenario.Participants)
+        {
+            try
+            {
+                await _gameSessionClient.LeaveGameSessionByIdAsync(
+                    new LeaveGameSessionByIdRequest
+                    {
+                        GameSessionId = scenario.GameSessionId,
+                        AccountId = participant.AccountId,
+                        WebSocketSessionId = null
+                    }, ct);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex,
+                    "Failed to remove participant {AccountId} from game session {SessionId}",
+                    participant.AccountId, scenario.GameSessionId);
+            }
+        }
     }
 }

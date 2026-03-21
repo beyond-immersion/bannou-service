@@ -217,7 +217,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>Created status with the registered mode, or Conflict if code already exists.</returns>
     public async Task<(StatusCodes, ModeResponse?)> RegisterModeAsync(RegisterModeRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.RegisterModeAsync");
 
         _logger.LogDebug("Registering transit mode with code {ModeCode}", body.Code);
 
@@ -297,7 +296,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with the mode data, or NotFound if the code does not exist.</returns>
     public async Task<(StatusCodes, ModeResponse?)> GetModeAsync(GetModeRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.GetModeAsync");
 
         _logger.LogDebug("Getting transit mode by code: {ModeCode}", body.Code);
 
@@ -321,7 +319,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with the list of matching modes.</returns>
     public async Task<(StatusCodes, ListModesResponse?)> ListModesAsync(ListModesRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.ListModesAsync");
 
         _logger.LogDebug("Listing transit modes with filters - RealmId: {RealmId}, TerrainType: {TerrainType}, IncludeDeprecated: {IncludeDeprecated}",
             body.RealmId, body.TerrainType, body.IncludeDeprecated);
@@ -374,7 +371,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with the updated mode, or NotFound if the code does not exist.</returns>
     public async Task<(StatusCodes, ModeResponse?)> UpdateModeAsync(UpdateModeRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.UpdateModeAsync");
 
         _logger.LogDebug("Updating transit mode: {ModeCode}", body.Code);
 
@@ -422,7 +418,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with the mode data (whether newly deprecated or already deprecated), or NotFound.</returns>
     public async Task<(StatusCodes, ModeResponse?)> DeprecateModeAsync(DeprecateModeRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.DeprecateModeAsync");
 
         _logger.LogDebug("Deprecating transit mode: {ModeCode}", body.Code);
 
@@ -469,7 +464,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with the mode data (whether newly undeprecated or already active), or NotFound.</returns>
     public async Task<(StatusCodes, ModeResponse?)> UndeprecateModeAsync(UndeprecateModeRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.UndeprecateModeAsync");
 
         _logger.LogDebug("Undeprecating transit mode: {ModeCode}", body.Code);
 
@@ -517,7 +511,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK on successful deletion, NotFound if missing, BadRequest if not deprecated or in use.</returns>
     public async Task<(StatusCodes, DeleteModeResponse?)> DeleteModeAsync(DeleteModeRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.DeleteModeAsync");
 
         _logger.LogDebug("Deleting transit mode: {ModeCode}", body.Code);
 
@@ -604,7 +597,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with per-mode availability results.</returns>
     public async Task<(StatusCodes, CheckModeAvailabilityResponse?)> CheckModeAvailabilityAsync(CheckModeAvailabilityRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.CheckModeAvailabilityAsync");
 
         _logger.LogDebug("Checking mode availability for entity {EntityId} of type {EntityType}",
             body.EntityId, body.EntityType);
@@ -651,335 +643,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
         return (StatusCodes.OK, new CheckModeAvailabilityResponse { AvailableModes = results });
     }
 
-    /// <summary>
-    /// Evaluates whether a specific entity can use a given transit mode.
-    /// Checks entity type, species compatibility, item requirements, and applies DI cost modifiers.
-    /// </summary>
-    private async Task<ModeAvailabilityResult> EvaluateModeAvailabilityAsync(
-        TransitModeModel mode,
-        Guid entityId,
-        string entityType,
-        string? speciesCode,
-        CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.EvaluateModeAvailabilityAsync");
-
-        // Check entity type restrictions
-        if (mode.ValidEntityTypes != null && mode.ValidEntityTypes.Count > 0)
-        {
-            if (!mode.ValidEntityTypes.Contains(entityType))
-            {
-                return new ModeAvailabilityResult
-                {
-                    Code = mode.Code,
-                    Available = false,
-                    UnavailableReason = "entity_type_not_allowed",
-                    EffectiveSpeed = 0,
-                    PreferenceCost = 0
-                };
-            }
-        }
-
-        // Check species compatibility
-        if (speciesCode != null)
-        {
-            // Check excluded species
-            if (mode.Requirements.ExcludedSpeciesCodes != null &&
-                mode.Requirements.ExcludedSpeciesCodes.Contains(speciesCode))
-            {
-                return new ModeAvailabilityResult
-                {
-                    Code = mode.Code,
-                    Available = false,
-                    UnavailableReason = "species_excluded",
-                    EffectiveSpeed = 0,
-                    PreferenceCost = 0
-                };
-            }
-
-            // Check allowed species (null = any species allowed)
-            if (mode.Requirements.AllowedSpeciesCodes != null &&
-                mode.Requirements.AllowedSpeciesCodes.Count > 0 &&
-                !mode.Requirements.AllowedSpeciesCodes.Contains(speciesCode))
-            {
-                return new ModeAvailabilityResult
-                {
-                    Code = mode.Code,
-                    Available = false,
-                    UnavailableReason = "wrong_species",
-                    EffectiveSpeed = 0,
-                    PreferenceCost = 0
-                };
-            }
-        }
-
-        // Check item requirements via IInventoryClient
-        if (!string.IsNullOrEmpty(mode.Requirements.RequiredItemTag))
-        {
-            var hasItem = await CheckEntityHasItemTagAsync(entityId, entityType, mode.Requirements.RequiredItemTag, cancellationToken);
-            if (!hasItem)
-            {
-                return new ModeAvailabilityResult
-                {
-                    Code = mode.Code,
-                    Available = false,
-                    UnavailableReason = "missing_item",
-                    EffectiveSpeed = 0,
-                    PreferenceCost = 0
-                };
-            }
-        }
-
-        // Base effective speed
-        var effectiveSpeed = mode.BaseSpeedKmPerGameHour;
-
-        // Apply DI cost modifiers with graceful degradation
-        var aggregatedPreferenceCost = 0m;
-        var aggregatedSpeedMultiplier = 1m;
-
-        foreach (var provider in _costModifierProviders)
-        {
-            try
-            {
-                var modifier = await provider.GetModifierAsync(
-                    entityId, entityType, mode.Code, null, cancellationToken);
-
-                aggregatedPreferenceCost += modifier.PreferenceCostDelta;
-                aggregatedSpeedMultiplier *= modifier.SpeedMultiplier;
-            }
-            catch (Exception ex)
-            {
-                // Graceful degradation per service hierarchy -- L4 providers may fail
-                _logger.LogWarning(ex, "Cost modifier provider {ProviderName} failed for entity {EntityId} and mode {ModeCode}, skipping",
-                    provider.ProviderName, entityId, mode.Code);
-            }
-        }
-
-        // Clamp aggregated values to configured bounds per IMPLEMENTATION TENETS (configuration-first)
-        aggregatedPreferenceCost = Math.Clamp(aggregatedPreferenceCost, (decimal)_configuration.MinPreferenceCost, (decimal)_configuration.MaxPreferenceCost);
-        aggregatedSpeedMultiplier = Math.Clamp(aggregatedSpeedMultiplier, (decimal)_configuration.MinSpeedMultiplier, (decimal)_configuration.MaxSpeedMultiplier);
-
-        effectiveSpeed *= aggregatedSpeedMultiplier;
-
-        return new ModeAvailabilityResult
-        {
-            Code = mode.Code,
-            Available = true,
-            UnavailableReason = null,
-            EffectiveSpeed = effectiveSpeed,
-            PreferenceCost = aggregatedPreferenceCost
-        };
-    }
-
-    /// <summary>
-    /// Resolves the species code for an entity by calling the Character service.
-    /// Returns null if the entity is not found or the character has no species.
-    /// </summary>
-    private async Task<string?> ResolveEntitySpeciesCodeAsync(Guid entityId, CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.ResolveEntitySpeciesCodeAsync");
-        try
-        {
-            var characterResponse = await _characterClient.GetCharacterAsync(
-                new Character.GetCharacterRequest { CharacterId = entityId },
-                cancellationToken);
-
-            var speciesResponse = await _speciesClient.GetSpeciesAsync(
-                new Species.GetSpeciesRequest { SpeciesId = characterResponse.SpeciesId },
-                cancellationToken);
-
-            return speciesResponse.Code;
-        }
-        catch (ApiException ex) when (ex.StatusCode == 404)
-        {
-            _logger.LogDebug("Character or species not found for entity {EntityId}: {StatusCode}", entityId, ex.StatusCode);
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Checks whether the entity has an item with the required tag in any of their inventories.
-    /// Uses QueryItems with tag filtering for a single API call instead of iterating containers.
-    /// </summary>
-    private async Task<bool> CheckEntityHasItemTagAsync(Guid entityId, string entityType, string requiredItemTag, CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.CheckEntityHasItemTagAsync");
-
-        // Map entity type string to ContainerOwnerType for inventory query
-        if (!EntityTypeToOwnerType.TryGetValue(entityType, out var ownerType))
-        {
-            // Entity type doesn't map to an inventory owner type -- cannot have items
-            _logger.LogDebug("Entity type {EntityType} has no inventory mapping, skipping item tag check", entityType);
-            return false;
-        }
-
-        try
-        {
-            var queryResponse = await _inventoryClient.QueryItemsAsync(
-                new Inventory.QueryItemsRequest
-                {
-                    OwnerId = entityId,
-                    OwnerType = ownerType,
-                    Tags = new[] { requiredItemTag },
-                    Limit = 1
-                },
-                cancellationToken);
-
-            return queryResponse.TotalCount > 0;
-        }
-        catch (ApiException ex) when (ex.StatusCode == 404)
-        {
-            _logger.LogDebug("Inventory not found for entity {EntityId}: {StatusCode}", entityId, ex.StatusCode);
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Applies non-null field updates from an UpdateModeRequest to an existing mode model.
-    /// Returns the list of field names that were actually changed.
-    /// </summary>
-    private static List<string> ApplyModeFieldUpdates(TransitModeModel model, UpdateModeRequest request)
-    {
-        var changedFields = new List<string>();
-
-        if (request.Name != null && request.Name != model.Name)
-        {
-            model.Name = request.Name;
-            changedFields.Add("name");
-        }
-
-        if (request.Description != null && request.Description != model.Description)
-        {
-            model.Description = request.Description;
-            changedFields.Add("description");
-        }
-
-        if (request.BaseSpeedKmPerGameHour.HasValue && request.BaseSpeedKmPerGameHour.Value != model.BaseSpeedKmPerGameHour)
-        {
-            model.BaseSpeedKmPerGameHour = request.BaseSpeedKmPerGameHour.Value;
-            changedFields.Add("baseSpeedKmPerGameHour");
-        }
-
-        if (request.TerrainSpeedModifiers != null)
-        {
-            model.TerrainSpeedModifiers = request.TerrainSpeedModifiers.Select(t => new TerrainSpeedModifierEntry
-            {
-                TerrainType = t.TerrainType,
-                Multiplier = t.Multiplier
-            }).ToList();
-            changedFields.Add("terrainSpeedModifiers");
-        }
-
-        if (request.PassengerCapacity.HasValue && request.PassengerCapacity.Value != model.PassengerCapacity)
-        {
-            model.PassengerCapacity = request.PassengerCapacity.Value;
-            changedFields.Add("passengerCapacity");
-        }
-
-        if (request.CargoCapacityKg.HasValue && request.CargoCapacityKg.Value != model.CargoCapacityKg)
-        {
-            model.CargoCapacityKg = request.CargoCapacityKg.Value;
-            changedFields.Add("cargoCapacityKg");
-        }
-
-        if (request.CargoSpeedPenaltyRate.HasValue && request.CargoSpeedPenaltyRate != model.CargoSpeedPenaltyRate)
-        {
-            model.CargoSpeedPenaltyRate = request.CargoSpeedPenaltyRate;
-            changedFields.Add("cargoSpeedPenaltyRate");
-        }
-
-        if (request.CompatibleTerrainTypes != null)
-        {
-            model.CompatibleTerrainTypes = request.CompatibleTerrainTypes.ToList();
-            changedFields.Add("compatibleTerrainTypes");
-        }
-
-        if (request.ValidEntityTypes != null)
-        {
-            model.ValidEntityTypes = request.ValidEntityTypes.ToList();
-            changedFields.Add("validEntityTypes");
-        }
-
-        if (request.Requirements != null)
-        {
-            model.Requirements = new TransitModeRequirementsModel
-            {
-                RequiredItemTag = request.Requirements.RequiredItemTag,
-                AllowedSpeciesCodes = request.Requirements.AllowedSpeciesCodes?.ToList(),
-                ExcludedSpeciesCodes = request.Requirements.ExcludedSpeciesCodes?.ToList(),
-                MinimumPartySize = request.Requirements.MinimumPartySize,
-                MaximumEntitySizeCategory = request.Requirements.MaximumEntitySizeCategory
-            };
-            changedFields.Add("requirements");
-        }
-
-        if (request.FatigueRatePerGameHour.HasValue && request.FatigueRatePerGameHour.Value != model.FatigueRatePerGameHour)
-        {
-            model.FatigueRatePerGameHour = request.FatigueRatePerGameHour.Value;
-            changedFields.Add("fatigueRatePerGameHour");
-        }
-
-        if (request.NoiseLevelNormalized.HasValue && request.NoiseLevelNormalized.Value != model.NoiseLevelNormalized)
-        {
-            model.NoiseLevelNormalized = request.NoiseLevelNormalized.Value;
-            changedFields.Add("noiseLevelNormalized");
-        }
-
-        if (request.RealmRestrictions != null)
-        {
-            model.RealmRestrictions = request.RealmRestrictions.ToList();
-            changedFields.Add("realmRestrictions");
-        }
-
-        if (request.Tags != null)
-        {
-            model.Tags = request.Tags.ToList();
-            changedFields.Add("tags");
-        }
-
-        return changedFields;
-    }
-
-    /// <summary>
-    /// Maps an internal <see cref="TransitModeModel"/> to the generated <see cref="TransitMode"/> API model.
-    /// </summary>
-    private static TransitMode MapModeToApi(TransitModeModel model)
-    {
-        return new TransitMode
-        {
-            Code = model.Code,
-            Name = model.Name,
-            Description = model.Description,
-            BaseSpeedKmPerGameHour = model.BaseSpeedKmPerGameHour,
-            TerrainSpeedModifiers = model.TerrainSpeedModifiers?.Select(t => new TerrainSpeedModifier
-            {
-                TerrainType = t.TerrainType,
-                Multiplier = t.Multiplier
-            }).ToList(),
-            PassengerCapacity = model.PassengerCapacity,
-            CargoCapacityKg = model.CargoCapacityKg,
-            CargoSpeedPenaltyRate = model.CargoSpeedPenaltyRate,
-            CompatibleTerrainTypes = model.CompatibleTerrainTypes.ToList(),
-            ValidEntityTypes = model.ValidEntityTypes?.ToList(),
-            Requirements = new TransitModeRequirements
-            {
-                RequiredItemTag = model.Requirements.RequiredItemTag,
-                AllowedSpeciesCodes = model.Requirements.AllowedSpeciesCodes?.ToList(),
-                ExcludedSpeciesCodes = model.Requirements.ExcludedSpeciesCodes?.ToList(),
-                MinimumPartySize = model.Requirements.MinimumPartySize,
-                MaximumEntitySizeCategory = model.Requirements.MaximumEntitySizeCategory
-            },
-            FatigueRatePerGameHour = model.FatigueRatePerGameHour,
-            NoiseLevelNormalized = model.NoiseLevelNormalized,
-            RealmRestrictions = model.RealmRestrictions?.ToList(),
-            IsDeprecated = model.IsDeprecated,
-            DeprecatedAt = model.DeprecatedAt,
-            DeprecationReason = model.DeprecationReason,
-            Tags = model.Tags?.ToList(),
-            CreatedAt = model.CreatedAt,
-            ModifiedAt = model.ModifiedAt
-        };
-    }
 
     #endregion
 
@@ -1008,7 +671,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>Created with the new connection, or error status.</returns>
     public async Task<(StatusCodes, ConnectionResponse?)> CreateConnectionAsync(CreateConnectionRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.CreateConnectionAsync");
 
         _logger.LogDebug("Creating connection from location {FromLocationId} to location {ToLocationId}",
             body.FromLocationId, body.ToLocationId);
@@ -1179,8 +841,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with the connection data, or NotFound.</returns>
     public async Task<(StatusCodes, ConnectionResponse?)> GetConnectionAsync(GetConnectionRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.GetConnectionAsync");
-
         _logger.LogDebug("Getting connection by ID {ConnectionId} or code {Code}",
             body.ConnectionId, body.Code);
 
@@ -1218,8 +878,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with the filtered connections list.</returns>
     public async Task<(StatusCodes, QueryConnectionsResponse?)> QueryConnectionsAsync(QueryConnectionsRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.QueryConnectionsAsync");
-
         _logger.LogDebug("Querying connections with filters - LocationId: {LocationId}, RealmId: {RealmId}, TerrainType: {TerrainType}, Status: {Status}",
             body.LocationId, body.RealmId, body.TerrainType, body.Status);
 
@@ -1319,8 +977,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with the updated connection, NotFound, or Conflict on ETag mismatch.</returns>
     public async Task<(StatusCodes, ConnectionResponse?)> UpdateConnectionAsync(UpdateConnectionRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.UpdateConnectionAsync");
-
         _logger.LogDebug("Updating connection {ConnectionId}", body.ConnectionId);
 
         var key = BuildConnectionKey(body.ConnectionId);
@@ -1381,8 +1037,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with the updated connection, NotFound, BadRequest on mismatch, or Conflict on lock failure.</returns>
     public async Task<(StatusCodes, ConnectionResponse?)> UpdateConnectionStatusAsync(UpdateConnectionStatusRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.UpdateConnectionStatusAsync");
-
         _logger.LogDebug("Updating connection status for {ConnectionId}: {NewStatus} (forceUpdate: {ForceUpdate})",
             body.ConnectionId, body.NewStatus, body.ForceUpdate);
 
@@ -1468,8 +1122,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK on successful deletion, NotFound if missing, BadRequest if active journeys exist.</returns>
     public async Task<(StatusCodes, DeleteConnectionResponse?)> DeleteConnectionAsync(DeleteConnectionRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.DeleteConnectionAsync");
-
         _logger.LogDebug("Deleting connection {ConnectionId}", body.ConnectionId);
 
         var key = BuildConnectionKey(body.ConnectionId);
@@ -1531,8 +1183,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with counts of created, updated, and any errors.</returns>
     public async Task<(StatusCodes, BulkSeedConnectionsResponse?)> BulkSeedConnectionsAsync(BulkSeedConnectionsRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.BulkSeedConnectionsAsync");
-
         _logger.LogDebug("Bulk seeding {Count} connections (replaceExisting: {ReplaceExisting})",
             body.Connections.Count, body.ReplaceExisting);
 
@@ -1815,8 +1465,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>Created with the new journey, or error status.</returns>
     public async Task<(StatusCodes, JourneyResponse?)> CreateJourneyAsync(CreateJourneyRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.CreateJourneyAsync");
-
         _logger.LogDebug("Creating journey for entity {EntityId} ({EntityType}) from {OriginLocationId} to {DestinationLocationId} via mode {ModeCode}",
             body.EntityId, body.EntityType, body.OriginLocationId, body.DestinationLocationId, body.PrimaryModeCode);
 
@@ -2026,8 +1674,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with the updated journey, or error status.</returns>
     public async Task<(StatusCodes, JourneyResponse?)> DepartJourneyAsync(DepartJourneyRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.DepartJourneyAsync");
-
         _logger.LogDebug("Departing journey {JourneyId}", body.JourneyId);
 
         // Distributed lock on journey ID for state transition per IMPLEMENTATION TENETS
@@ -2143,8 +1789,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with the updated journey, or error status.</returns>
     public async Task<(StatusCodes, JourneyResponse?)> ResumeJourneyAsync(ResumeJourneyRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.ResumeJourneyAsync");
-
         _logger.LogDebug("Resuming journey {JourneyId}", body.JourneyId);
 
         // Distributed lock on journey ID
@@ -2233,8 +1877,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with the updated journey, or error status.</returns>
     public async Task<(StatusCodes, JourneyResponse?)> AdvanceJourneyAsync(AdvanceJourneyRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.AdvanceJourneyAsync");
-
         _logger.LogDebug("Advancing journey {JourneyId} with arrival game-time {ArrivedAtGameTime}",
             body.JourneyId, body.ArrivedAtGameTime);
 
@@ -2382,8 +2024,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with per-journey results.</returns>
     public async Task<(StatusCodes, AdvanceBatchResponse?)> AdvanceBatchJourneysAsync(AdvanceBatchRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.AdvanceBatchJourneysAsync");
-
         _logger.LogDebug("Processing batch advance of {Count} journeys", body.Advances.Count);
 
         var results = new List<BatchAdvanceResult>();
@@ -2448,8 +2088,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with the updated journey, or error status.</returns>
     public async Task<(StatusCodes, JourneyResponse?)> ArriveJourneyAsync(ArriveJourneyRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.ArriveJourneyAsync");
-
         _logger.LogDebug("Force-arriving journey {JourneyId}", body.JourneyId);
 
         // Distributed lock on journey ID
@@ -2530,8 +2168,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with the updated journey, or error status.</returns>
     public async Task<(StatusCodes, JourneyResponse?)> InterruptJourneyAsync(InterruptJourneyRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.InterruptJourneyAsync");
-
         _logger.LogDebug("Interrupting journey {JourneyId}: {Reason}", body.JourneyId, body.Reason);
 
         // Distributed lock on journey ID
@@ -2607,8 +2243,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with the updated journey, or error status.</returns>
     public async Task<(StatusCodes, JourneyResponse?)> AbandonJourneyAsync(AbandonJourneyRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.AbandonJourneyAsync");
-
         _logger.LogDebug("Abandoning journey {JourneyId}: {Reason}", body.JourneyId, body.Reason);
 
         // Distributed lock on journey ID
@@ -2679,8 +2313,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with the journey data, or NotFound.</returns>
     public async Task<(StatusCodes, JourneyResponse?)> GetJourneyAsync(GetJourneyRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.GetJourneyAsync");
-
         _logger.LogDebug("Getting journey {JourneyId}", body.JourneyId);
 
         // Try Redis first (active journeys)
@@ -2715,8 +2347,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with matching journeys.</returns>
     public async Task<(StatusCodes, ListJourneysResponse?)> QueryJourneysByConnectionAsync(QueryJourneysByConnectionRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.QueryJourneysByConnectionAsync");
-
         _logger.LogDebug("Querying journeys by connection {ConnectionId}", body.ConnectionId);
 
         // Verify connection exists
@@ -2769,8 +2399,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with matching journeys.</returns>
     public async Task<(StatusCodes, ListJourneysResponse?)> ListJourneysAsync(ListJourneysRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.ListJourneysAsync");
-
         _logger.LogDebug("Listing journeys - EntityId: {EntityId}, EntityType: {EntityType}, RealmId: {RealmId}, Status: {Status}, ActiveOnly: {ActiveOnly}",
             body.EntityId, body.EntityType, body.RealmId, body.Status, body.ActiveOnly);
 
@@ -2821,8 +2449,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with matching archived journeys.</returns>
     public async Task<(StatusCodes, ListJourneysResponse?)> QueryJourneyArchiveAsync(QueryJourneyArchiveRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.QueryJourneyArchiveAsync");
-
         _logger.LogDebug("Querying journey archive - EntityId: {EntityId}, ModeCode: {ModeCode}, FromGameTime: {From}, ToGameTime: {To}",
             body.EntityId, body.ModeCode, body.FromGameTime, body.ToGameTime);
 
@@ -2878,8 +2504,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with ranked route options, or BadRequest if locations not found.</returns>
     public async Task<(StatusCodes, CalculateRouteResponse?)> CalculateRouteAsync(CalculateRouteRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.CalculateRouteAsync");
-
         _logger.LogDebug("Calculating route from {FromLocationId} to {ToLocationId}, sortBy: {SortBy}, multiModal: {MultiModal}",
             body.FromLocationId, body.ToLocationId, body.SortBy, body.PreferMultiModal);
 
@@ -3015,8 +2639,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with the discovery record, NotFound if connection does not exist, BadRequest if not discoverable.</returns>
     public async Task<(StatusCodes, RevealDiscoveryResponse?)> RevealDiscoveryAsync(RevealDiscoveryRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.RevealDiscoveryAsync");
-
         _logger.LogDebug("Revealing connection {ConnectionId} to entity {EntityId} via source {Source}",
             body.ConnectionId, body.EntityId, body.Source);
 
@@ -3112,8 +2734,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with the list of discovered connection IDs.</returns>
     public async Task<(StatusCodes, ListDiscoveriesResponse?)> ListDiscoveriesAsync(ListDiscoveriesRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.ListDiscoveriesAsync");
-
         _logger.LogDebug("Listing discoveries for entity {EntityId} with realm filter {RealmId}",
             body.EntityId, body.RealmId);
 
@@ -3165,8 +2785,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK with per-connection discovery check results.</returns>
     public async Task<(StatusCodes, CheckDiscoveriesResponse?)> CheckDiscoveriesAsync(CheckDiscoveriesRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.CheckDiscoveriesAsync");
-
         _logger.LogDebug("Checking {Count} connection discoveries for entity {EntityId}",
             body.ConnectionIds.Count, body.EntityId);
 
@@ -3227,8 +2845,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK after cleanup completes.</returns>
     public async Task<StatusCodes> CleanupByLocationAsync(CleanupByLocationRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.CleanupByLocationAsync");
-
         _logger.LogDebug("Cleaning up transit data for deleted location {LocationId}", body.LocationId);
 
         var deletedLocationId = body.LocationId;
@@ -3396,8 +3012,6 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
     /// <returns>OK after cleanup completes.</returns>
     public async Task<StatusCodes> CleanupByCharacterAsync(CleanupByCharacterRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.CleanupByCharacterAsync");
-
         _logger.LogDebug("Cleaning up transit data for deleted character {CharacterId}", body.CharacterId);
 
         var deletedCharacterId = body.CharacterId;

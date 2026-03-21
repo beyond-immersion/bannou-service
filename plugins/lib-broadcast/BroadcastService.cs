@@ -132,7 +132,7 @@ public partial class BroadcastService : IBroadcastService
     }
 
     // ── Platform Endpoints ──────────────────────────────────────────────
-    // NOTE: No StartActivity spans on primary interface methods — generated controller provides them (per IMPLEMENTATION TENETS)
+    // NOTE: No telemetry spans on primary interface methods — generated controller provides them (per IMPLEMENTATION TENETS)
 
     /// <summary>
     /// Link a streaming platform account. For OAuth platforms (Twitch, YouTube),

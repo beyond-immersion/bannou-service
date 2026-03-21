@@ -1088,75 +1088,6 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService
     }
 
     /// <summary>
-    /// Recursively traverses ancestor generations via genetic profile parentAId/parentBId.
-    /// </summary>
-    private async Task TraverseAncestorsAsync(Guid characterId, int currentDepth, int maxDepth,
-        List<FamilyTreeNode> nodes, HashSet<Guid> visited, CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity(
-            "bannou.character-lifecycle", "CharacterLifecycleService.TraverseAncestors");
-        if (currentDepth > maxDepth) return;
-
-        var genetic = await _geneticStore.GetAsync(BuildGeneticKey(characterId), cancellationToken);
-        if (genetic == null) return;
-
-        foreach (var parentId in new[] { genetic.ParentAId, genetic.ParentBId })
-        {
-            if (parentId == null || visited.Contains(parentId.Value)) continue;
-            visited.Add(parentId.Value);
-
-            var parentProfile = await _profileStore.GetAsync(BuildProfileKey(parentId.Value), cancellationToken);
-            var parentGenetic = await _geneticStore.GetAsync(BuildGeneticKey(parentId.Value), cancellationToken);
-
-            nodes.Add(new FamilyTreeNode
-            {
-                CharacterId = parentId.Value,
-                SpeciesCode = parentProfile?.SpeciesCode,
-                Generation = -currentDepth,
-                Relationship = "ancestor",
-                PhenotypeSummary = parentGenetic?.Phenotype.ToList(),
-                BloodlineCodes = parentGenetic?.Bloodlines.Select(b => b.BloodlineCode).ToList()
-            });
-
-            await TraverseAncestorsAsync(parentId.Value, currentDepth + 1, maxDepth, nodes, visited, cancellationToken);
-        }
-    }
-
-    /// <summary>
-    /// Recursively traverses descendant generations by querying profiles where parentAId/parentBId matches.
-    /// </summary>
-    private async Task TraverseDescendantsAsync(Guid characterId, int currentDepth, int maxDepth,
-        List<FamilyTreeNode> nodes, HashSet<Guid> visited, CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity(
-            "bannou.character-lifecycle", "CharacterLifecycleService.TraverseDescendants");
-        if (currentDepth > maxDepth) return;
-
-        var children = await _queryableProfileStore.QueryAsync(
-            p => p.ParentAId == characterId || p.ParentBId == characterId, cancellationToken);
-
-        foreach (var child in children)
-        {
-            if (visited.Contains(child.CharacterId)) continue;
-            visited.Add(child.CharacterId);
-
-            var childGenetic = await _geneticStore.GetAsync(BuildGeneticKey(child.CharacterId), cancellationToken);
-
-            nodes.Add(new FamilyTreeNode
-            {
-                CharacterId = child.CharacterId,
-                SpeciesCode = child.SpeciesCode,
-                Generation = currentDepth,
-                Relationship = "descendant",
-                PhenotypeSummary = childGenetic?.Phenotype.ToList(),
-                BloodlineCodes = childGenetic?.Bloodlines.Select(b => b.BloodlineCode).ToList()
-            });
-
-            await TraverseDescendantsAsync(child.CharacterId, currentDepth + 1, maxDepth, nodes, visited, cancellationToken);
-        }
-    }
-
-    /// <summary>
     /// Creates lifecycle stage definitions for a species. Validates game service,
     /// checks for existing template, validates stage boundary contiguity.
     /// </summary>
@@ -1767,22 +1698,6 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService
         _logger.LogInformation("Cleaned up lifecycle data for character {CharacterId}", body.CharacterId);
 
         return (StatusCodes.OK, new CleanupByCharacterResponse());
-    }
-
-    /// <summary>
-    /// Decrements child count on a parent profile using ETag for concurrency.
-    /// </summary>
-    private async Task DecrementChildCountAsync(Guid parentId, CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity(
-            "bannou.character-lifecycle", "CharacterLifecycleService.DecrementChildCount");
-        var key = BuildProfileKey(parentId);
-        var (parentProfile, etag) = await _profileStore.GetWithETagAsync(key, cancellationToken);
-        if (parentProfile == null || etag == null) return;
-
-        parentProfile.ChildCount = Math.Max(0, parentProfile.ChildCount - 1);
-        parentProfile.UpdatedAt = DateTimeOffset.UtcNow;
-        await _profileStore.TrySaveAsync(key, parentProfile, etag, cancellationToken: cancellationToken);
     }
 
     /// <summary>

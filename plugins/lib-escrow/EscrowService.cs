@@ -352,86 +352,6 @@ public partial class EscrowService : IEscrowService
         return Convert.ToBase64String(hashBytes);
     }
 
-
-    /// <summary>
-    /// Atomically increments the pending escrow count for a party using optimistic concurrency.
-    /// </summary>
-    /// <param name="partyId">The party ID.</param>
-    /// <param name="partyType">The party type.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    internal async Task IncrementPartyPendingCountAsync(Guid partyId, EntityType partyType, CancellationToken cancellationToken = default)
-    {
-        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.IncrementPartyPendingCountAsync");
-        var partyKey = BuildPartyPendingKey(partyId, partyType);
-        var now = DateTimeOffset.UtcNow;
-
-        for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
-        {
-            var (existing, etag) = await _partyPendingStore.GetWithETagAsync(partyKey, cancellationToken);
-            var newCount = new PartyPendingCount
-            {
-                PartyId = partyId,
-                PartyType = partyType,
-                PendingCount = (existing?.PendingCount ?? 0) + 1,
-                LastUpdated = now
-            };
-
-            // etag is null when key doesn't exist yet; empty string signals
-            // "create new" to TrySaveAsync (will never conflict on new entries)
-            var saveResult = await _partyPendingStore.TrySaveAsync(partyKey, newCount, etag ?? string.Empty, cancellationToken: cancellationToken);
-            if (saveResult != null)
-            {
-                return;
-            }
-
-            _logger.LogDebug("Concurrent modification on party pending count {PartyKey}, retrying increment (attempt {Attempt})",
-                partyKey, attempt + 1);
-        }
-
-        _logger.LogWarning("Failed to increment party pending count for {PartyType}:{PartyId} after {MaxRetries} attempts",
-            partyType, partyId, _configuration.MaxConcurrencyRetries);
-    }
-
-    /// <summary>
-    /// Atomically decrements the pending escrow count for a party using optimistic concurrency.
-    /// Only decrements if current count is greater than zero.
-    /// </summary>
-    /// <param name="partyId">The party ID.</param>
-    /// <param name="partyType">The party type.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    internal async Task DecrementPartyPendingCountAsync(Guid partyId, EntityType partyType, CancellationToken cancellationToken = default)
-    {
-        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.DecrementPartyPendingCountAsync");
-        var partyKey = BuildPartyPendingKey(partyId, partyType);
-        var now = DateTimeOffset.UtcNow;
-
-        for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
-        {
-            var (existing, etag) = await _partyPendingStore.GetWithETagAsync(partyKey, cancellationToken);
-            if (existing == null || existing.PendingCount <= 0)
-            {
-                return;
-            }
-
-            existing.PendingCount--;
-            existing.LastUpdated = now;
-
-            // GetWithETagAsync returns non-null etag for existing records;
-            // coalesce satisfies compiler's nullable analysis (will never execute)
-            var saveResult = await _partyPendingStore.TrySaveAsync(partyKey, existing, etag ?? string.Empty, cancellationToken: cancellationToken);
-            if (saveResult != null)
-            {
-                return;
-            }
-
-            _logger.LogDebug("Concurrent modification on party pending count {PartyKey}, retrying decrement (attempt {Attempt})",
-                partyKey, attempt + 1);
-        }
-
-        _logger.LogWarning("Failed to decrement party pending count for {PartyType}:{PartyId} after {MaxRetries} attempts",
-            partyType, partyId, _configuration.MaxConcurrencyRetries);
-    }
-
     /// <summary>
     /// Maps internal model to API model.
     /// </summary>
@@ -643,9 +563,6 @@ public partial class EscrowService : IEscrowService
     public async Task<(StatusCodes, CleanupByCharacterResponse?)> CleanupByCharacterAsync(
         CleanupByCharacterRequest body, CancellationToken cancellationToken = default)
     {
-        using var activity = _telemetryProvider.StartActivity(
-            "bannou.escrow", "EscrowService.CleanupByCharacterAsync");
-
         var agreements = await _agreementStore.QueryAsync(
             a => a.Parties != null && a.Parties.Any(p => p.PartyId == body.CharacterId && p.PartyType == EntityType.Character),
             cancellationToken: cancellationToken);
@@ -679,26 +596,6 @@ public partial class EscrowService : IEscrowService
             body.CharacterId, successCount, failureCount);
 
         return (StatusCodes.OK, new CleanupByCharacterResponse { AgreementsDeleted = successCount });
-    }
-
-    /// <summary>
-    /// Emits an error event for unexpected failures.
-    /// </summary>
-    /// <param name="operation">Operation name.</param>
-    /// <param name="error">Error message.</param>
-    /// <param name="context">Additional context.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    private async Task EmitErrorAsync(string operation, string error, object? context = null, CancellationToken cancellationToken = default)
-    {
-        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.EmitErrorAsync");
-        _logger.LogError("Escrow operation {Operation} failed: {Error}", operation, error);
-        await _messageBus.TryPublishErrorAsync(
-            "escrow",
-            operation,
-            error,
-            error,
-            details: context,
-            cancellationToken: cancellationToken);
     }
 
     /// <summary>

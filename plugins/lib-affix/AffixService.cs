@@ -1210,7 +1210,6 @@ public partial class AffixService : IAffixService, ICleanDeprecatedEntity
     /// <summary>Generates a filtered affix pool for item generation.</summary>
     public async Task<(StatusCodes, AffixPoolResponse?)> GenerateAffixPoolAsync(GenerateAffixPoolRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.affix", "AffixService.GenerateAffixPool");
 
         var ilvlBucket = (body.ItemLevel / _configuration.ItemLevelBucketSize) * _configuration.ItemLevelBucketSize;
         var poolKey = BuildPoolCacheKey(body.GameServiceId, body.ItemClass, body.SlotType, ilvlBucket);
@@ -1279,7 +1278,6 @@ public partial class AffixService : IAffixService, ICleanDeprecatedEntity
     /// <summary>Generates a complete affix set for an item. Pure computation.</summary>
     public async Task<(StatusCodes, AffixSetDataResponse?)> GenerateAffixSetAsync(GenerateAffixSetRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.affix", "AffixService.GenerateAffixSet");
 
         // Roll implicits if mapping exists
         var implicitSlots = new List<AffixSlotData>();
@@ -1367,7 +1365,6 @@ public partial class AffixService : IAffixService, ICleanDeprecatedEntity
     /// <summary>Generates affix sets for multiple items with batch event deduplication.</summary>
     public async Task<(StatusCodes, BatchGenerateAffixSetsResponse?)> BatchGenerateAffixSetsAsync(BatchGenerateAffixSetsRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.affix", "AffixService.BatchGenerateAffixSets");
 
         var results = new List<AffixSetDataResponse>();
 
@@ -1415,7 +1412,6 @@ public partial class AffixService : IAffixService, ICleanDeprecatedEntity
     /// <summary>Gets enriched affix data for an item, respecting identification state.</summary>
     public async Task<(StatusCodes, EnrichedAffixInstanceResponse?)> GetItemAffixesAsync(GetItemAffixesRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.affix", "AffixService.GetItemAffixes");
 
         var instance = await GetInstanceWithCacheAsync(body.ItemInstanceId, cancellationToken);
         if (instance == null)
@@ -1445,7 +1441,6 @@ public partial class AffixService : IAffixService, ICleanDeprecatedEntity
     /// <summary>Computes aggregated stats for a single item.</summary>
     public async Task<(StatusCodes, ComputedItemStatsResponse?)> ComputeItemStatsAsync(ComputeItemStatsRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.affix", "AffixService.ComputeItemStats");
 
         // Check stats cache first
         var cached = await _statsCache.GetAsync(BuildStatsCacheKey(body.ItemInstanceId), cancellationToken);
@@ -1484,7 +1479,6 @@ public partial class AffixService : IAffixService, ICleanDeprecatedEntity
     /// <summary>Computes aggregate equipment stats for an entity.</summary>
     public async Task<(StatusCodes, EquipmentStatsResponse?)> ComputeEquipmentStatsAsync(ComputeEquipmentStatsRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.affix", "AffixService.ComputeEquipmentStats");
 
         var cacheKey = BuildEquipmentCacheKey(body.EntityId, body.EntityType);
         var cached = await _equipmentCache.GetAsync(cacheKey, cancellationToken);
@@ -1569,7 +1563,6 @@ public partial class AffixService : IAffixService, ICleanDeprecatedEntity
     /// <summary>Compares stats between two items.</summary>
     public async Task<(StatusCodes, ItemComparisonResponse?)> CompareItemsAsync(CompareItemsRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.affix", "AffixService.CompareItems");
 
         var instanceA = await GetInstanceWithCacheAsync(body.ItemInstanceIdA, cancellationToken);
         if (instanceA == null) return (StatusCodes.NotFound, null);
@@ -1602,7 +1595,6 @@ public partial class AffixService : IAffixService, ICleanDeprecatedEntity
     /// <summary>Estimates the value of an item based on affix quality.</summary>
     public async Task<(StatusCodes, ItemValueEstimateResponse?)> EstimateItemValueAsync(EstimateItemValueRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.affix", "AffixService.EstimateItemValue");
 
         var instance = await GetInstanceWithCacheAsync(body.ItemInstanceId, cancellationToken);
         if (instance == null) return (StatusCodes.NotFound, null);
@@ -1681,7 +1673,6 @@ public partial class AffixService : IAffixService, ICleanDeprecatedEntity
     /// <summary>Cleans up all affix data for a game service (lib-resource callback).</summary>
     public async Task<(StatusCodes, CleanupByGameServiceResponse?)> CleanupByGameServiceAsync(CleanupByGameServiceRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.affix", "AffixService.CleanupByGameService");
 
         _logger.LogInformation("Cleaning up affix data for game service {GameServiceId}", body.GameServiceId);
 
@@ -1745,371 +1736,4 @@ public partial class AffixService : IAffixService, ICleanDeprecatedEntity
 
     #endregion
 
-    #region Private Helpers
-
-    /// <summary>Gets definition from cache with read-through to store.</summary>
-    private async Task<AffixDefinitionModel?> GetDefinitionWithCacheAsync(Guid definitionId, CancellationToken ct)
-    {
-        var cached = await _definitionCache.GetAsync(BuildDefinitionCacheKey(definitionId), ct);
-        if (cached != null) return cached;
-
-        var stored = await _definitionStore.GetAsync(BuildDefinitionKey(definitionId), ct);
-        if (stored != null)
-            await _definitionCache.SaveAsync(BuildDefinitionCacheKey(definitionId), stored, new StateOptions { Ttl = _configuration.DefinitionCacheTtlSeconds }, ct);
-
-        return stored;
-    }
-
-    /// <summary>Gets instance from cache with read-through to store.</summary>
-    private async Task<AffixInstanceModel?> GetInstanceWithCacheAsync(Guid itemInstanceId, CancellationToken ct)
-    {
-        var cached = await _instanceCache.GetAsync(BuildInstanceCacheKey(itemInstanceId), ct);
-        if (cached != null) return cached;
-
-        var stored = await _instanceStore.GetAsync(BuildInstanceKey(itemInstanceId), ct);
-        if (stored != null)
-            await _instanceCache.SaveAsync(BuildInstanceCacheKey(itemInstanceId), stored, new StateOptions { Ttl = _configuration.InstanceCacheTtlSeconds }, ct);
-
-        return stored;
-    }
-
-    /// <summary>Rolls values for a definition's stat grants.</summary>
-    private static double[] RollValuesForDefinition(AffixDefinitionModel definition, ImplicitDefinitionRef? overrides = null, double? percentileTarget = null)
-    {
-        var random = Random.Shared;
-        var values = new double[definition.StatGrants.Length];
-        for (var i = 0; i < definition.StatGrants.Length; i++)
-        {
-            var grant = definition.StatGrants[i];
-            var min = overrides?.MinValueOverride ?? grant.MinValue;
-            var max = overrides?.MaxValueOverride ?? grant.MaxValue;
-
-            if (percentileTarget.HasValue)
-            {
-                // Bias toward percentile target
-                var target = min + (max - min) * percentileTarget.Value;
-                var spread = (max - min) * 0.1;
-                values[i] = Math.Clamp(target + (random.NextDouble() - 0.5) * spread, min, max);
-            }
-            else
-            {
-                values[i] = min + random.NextDouble() * (max - min);
-            }
-            values[i] = Math.Round(values[i], 2);
-        }
-        return values;
-    }
-
-    /// <summary>Builds a pool of eligible definitions for generation.</summary>
-    private async Task<CachedAffixPool> BuildPoolAsync(Guid gameServiceId, string itemClass, string slotType, int ilvlBucket, CancellationToken ct)
-    {
-        var upperBound = ilvlBucket + _configuration.ItemLevelBucketSize;
-        var definitions = await _definitionQueryStore.QueryAsync(
-            d => d.GameServiceId == gameServiceId && d.SlotType == slotType && !d.IsDeprecated && d.RequiredItemLevel <= upperBound, ct);
-
-        var pool = new CachedAffixPool();
-        foreach (var def in definitions)
-        {
-            if (def.ValidItemClasses != null && !def.ValidItemClasses.Contains(itemClass))
-                continue;
-
-            pool.Entries.Add(new CachedPoolEntry
-            {
-                DefinitionId = def.DefinitionId,
-                DefinitionCode = def.Code,
-                ModGroup = def.ModGroup,
-                Tier = def.Tier,
-                BaseWeight = def.SpawnWeight,
-                StatGrants = def.StatGrants,
-                RequiredItemLevel = def.RequiredItemLevel,
-                RequiredInfluences = def.RequiredInfluences,
-                SpawnTagModifiers = def.SpawnTagModifiers
-            });
-            pool.TotalWeight += def.SpawnWeight;
-        }
-
-        return pool;
-    }
-
-    /// <summary>Selects a weighted random definition from the pool.</summary>
-    private async Task<AffixDefinitionModel?> SelectWeightedAffixAsync(
-        Guid gameServiceId, string itemClass, string slotType, int itemLevel,
-        HashSet<string> usedModGroups, ICollection<WeightModifier>? weightModifiers,
-        ICollection<string>? influences, CancellationToken ct)
-    {
-        var (_, poolResponse) = await GenerateAffixPoolAsync(new GenerateAffixPoolRequest
-        {
-            GameServiceId = gameServiceId,
-            ItemClass = itemClass,
-            ItemLevel = itemLevel,
-            SlotType = slotType,
-            ExistingModGroups = usedModGroups.ToList(),
-            WeightModifiers = weightModifiers?.ToList(),
-            Influences = influences?.ToList()
-        }, ct);
-
-        if (poolResponse == null || poolResponse.Entries.Count == 0 || poolResponse.TotalWeight <= 0)
-            return null;
-
-        var roll = Random.Shared.Next(poolResponse.TotalWeight);
-        var cumulative = 0;
-        foreach (var entry in poolResponse.Entries)
-        {
-            cumulative += entry.EffectiveWeight;
-            if (roll < cumulative)
-            {
-                return await GetDefinitionWithCacheAsync(entry.DefinitionId, ct);
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>Computes effective rarity from slot counts.</summary>
-    private static string ComputeEffectiveRarity(AffixInstanceModel instance)
-        => DetermineRarity(instance.PrefixSlots.Count, instance.SuffixSlots.Count);
-
-    /// <summary>Determines rarity from prefix/suffix counts.</summary>
-    private static string DetermineRarity(int prefixCount, int suffixCount)
-    {
-        var total = prefixCount + suffixCount;
-        return total switch
-        {
-            0 => "normal",
-            <= 2 => "magic",
-            _ => "rare"
-        };
-    }
-
-    /// <summary>Gets the slot list for a given slot type string.</summary>
-    private static List<AffixSlotModel> GetSlotListForType(AffixInstanceModel instance, string slotType)
-    {
-        return slotType.ToLowerInvariant() switch
-        {
-            "prefix" => instance.PrefixSlots,
-            "suffix" => instance.SuffixSlots,
-            "enchant" => instance.EnchantSlots,
-            "implicit" => instance.ImplicitSlots,
-            _ => instance.PrefixSlots
-        };
-    }
-
-    /// <summary>Gets max slot count for a slot type.</summary>
-    private int GetMaxSlotsForType(string slotType)
-    {
-        return slotType.ToLowerInvariant() switch
-        {
-            "prefix" => _configuration.DefaultMaxPrefixes,
-            "suffix" => _configuration.DefaultMaxSuffixes,
-            "enchant" => _configuration.MaxAffixesPerItem,
-            "implicit" => _configuration.MaxAffixesPerItem,
-            _ => _configuration.DefaultMaxPrefixes
-        };
-    }
-
-    /// <summary>Finds an affix slot by definition ID across all slot types.</summary>
-    private static (AffixSlotModel? slot, List<AffixSlotModel>? list) FindSlotByDefinitionId(AffixInstanceModel instance, Guid definitionId)
-    {
-        foreach (var slot in instance.ImplicitSlots)
-            if (slot.DefinitionId == definitionId) return (slot, instance.ImplicitSlots);
-        foreach (var slot in instance.PrefixSlots)
-            if (slot.DefinitionId == definitionId) return (slot, instance.PrefixSlots);
-        foreach (var slot in instance.SuffixSlots)
-            if (slot.DefinitionId == definitionId) return (slot, instance.SuffixSlots);
-        foreach (var slot in instance.EnchantSlots)
-            if (slot.DefinitionId == definitionId) return (slot, instance.EnchantSlots);
-        return (null, null);
-    }
-
-    /// <summary>Gets the slot type string for a list of slots within an instance.</summary>
-    private static string GetSlotTypeForList(AffixInstanceModel instance, List<AffixSlotModel> list)
-    {
-        if (ReferenceEquals(list, instance.ImplicitSlots)) return "implicit";
-        if (ReferenceEquals(list, instance.PrefixSlots)) return "prefix";
-        if (ReferenceEquals(list, instance.SuffixSlots)) return "suffix";
-        if (ReferenceEquals(list, instance.EnchantSlots)) return "enchant";
-        return "unknown";
-    }
-
-    /// <summary>Invalidates pool cache entries for all level buckets of an item class.</summary>
-    private async Task InvalidatePoolCacheForItemClassAsync(Guid gameServiceId, string itemClass, CancellationToken ct)
-    {
-        // Invalidate known slot types across level buckets
-        var slotTypes = new[] { "prefix", "suffix", "enchant" };
-        foreach (var slotType in slotTypes)
-        {
-            for (var bucket = 0; bucket <= _configuration.MaxItemLevel; bucket += _configuration.ItemLevelBucketSize)
-            {
-                await _poolCache.DeleteAsync(BuildPoolCacheKey(gameServiceId, itemClass, slotType, bucket), ct);
-            }
-        }
-    }
-
-    /// <summary>Enriches affix slots with definition details.</summary>
-    private async Task<List<EnrichedAffixSlot>> EnrichSlotsAsync(List<AffixSlotModel> slots, bool isIdentified, CancellationToken ct)
-    {
-        var enriched = new List<EnrichedAffixSlot>();
-        foreach (var slot in slots)
-        {
-            var def = await GetDefinitionWithCacheAsync(slot.DefinitionId, ct);
-            enriched.Add(new EnrichedAffixSlot
-            {
-                DefinitionId = slot.DefinitionId,
-                DefinitionCode = slot.DefinitionCode,
-                ModGroup = slot.ModGroup,
-                DisplayName = def?.DisplayName,
-                Tier = def?.Tier,
-                Category = def?.Category,
-                RolledValues = isIdentified ? slot.RolledValues.ToList() : null,
-                StatGrants = isIdentified ? def?.StatGrants.ToList() : null,
-                IsFractured = slot.IsFractured
-            });
-        }
-        return enriched;
-    }
-
-    /// <summary>Computes stats for an instance without caching (used by CompareItems).</summary>
-    private async Task<Dictionary<string, double>> ComputeStatsForInstance(AffixInstanceModel instance, CancellationToken ct)
-    {
-        var stats = new Dictionary<string, double>();
-        var qualityMod = 1.0 + (instance.Quality / 100.0);
-        foreach (var slot in instance.AllSlots())
-        {
-            var def = await GetDefinitionWithCacheAsync(slot.DefinitionId, ct);
-            if (def == null) continue;
-            for (var i = 0; i < def.StatGrants.Length && i < slot.RolledValues.Length; i++)
-            {
-                var sc = def.StatGrants[i].StatCode;
-                stats[sc] = stats.GetValueOrDefault(sc) + slot.RolledValues[i] * qualityMod;
-            }
-        }
-        return stats;
-    }
-
-    #endregion
-
-    #region Mapping Helpers
-
-    private static AffixDefinitionResponse MapDefinitionToResponse(AffixDefinitionModel model)
-        => new()
-        {
-            DefinitionId = model.DefinitionId,
-            GameServiceId = model.GameServiceId,
-            Code = model.Code,
-            SlotType = model.SlotType,
-            ModGroup = model.ModGroup,
-            Tier = model.Tier,
-            Category = model.Category,
-            Tags = model.Tags?.ToList(),
-            StatGrants = model.StatGrants.ToList(),
-            SpawnWeight = model.SpawnWeight,
-            SpawnTagModifiers = model.SpawnTagModifiers?.ToList(),
-            RequiredItemLevel = model.RequiredItemLevel,
-            RequiredInfluences = model.RequiredInfluences?.ToList(),
-            ValidItemClasses = model.ValidItemClasses?.ToList(),
-            DisplayName = model.DisplayName,
-            DisplayOrder = model.DisplayOrder,
-            IsDeprecated = model.IsDeprecated,
-            DeprecatedAt = model.DeprecatedAt,
-            DeprecationReason = model.DeprecationReason,
-            CreatedAt = model.CreatedAt,
-            UpdatedAt = model.UpdatedAt
-        };
-
-    private static AffixDefinitionUpdatedEvent MapDefinitionToUpdatedEvent(AffixDefinitionModel model, List<string> changedFields)
-        => new()
-        {
-            DefinitionId = model.DefinitionId,
-            GameServiceId = model.GameServiceId,
-            Code = model.Code,
-            SlotType = model.SlotType,
-            ModGroup = model.ModGroup,
-            Tier = model.Tier,
-            Category = model.Category,
-            Tags = model.Tags?.ToList(),
-            StatGrants = model.StatGrants.ToList(),
-            SpawnWeight = model.SpawnWeight,
-            SpawnTagModifiers = model.SpawnTagModifiers?.ToList(),
-            RequiredItemLevel = model.RequiredItemLevel,
-            RequiredInfluences = model.RequiredInfluences?.ToList(),
-            ValidItemClasses = model.ValidItemClasses?.ToList(),
-            DisplayName = model.DisplayName,
-            DisplayOrder = model.DisplayOrder,
-            CreatedAt = model.CreatedAt,
-            UpdatedAt = model.UpdatedAt ?? model.CreatedAt,
-            IsDeprecated = model.IsDeprecated,
-            DeprecatedAt = model.DeprecatedAt,
-            DeprecationReason = model.DeprecationReason,
-            ChangedFields = changedFields
-        };
-
-    private static ImplicitMappingResponse MapImplicitToResponse(ImplicitMappingModel model)
-        => new()
-        {
-            MappingId = model.MappingId,
-            GameServiceId = model.GameServiceId,
-            ItemTemplateCode = model.ItemTemplateCode,
-            ImplicitDefinitionIds = model.ImplicitDefinitionIds.ToList()
-        };
-
-    private static AffixInstanceResponse MapInstanceToResponse(AffixInstanceModel model)
-        => new()
-        {
-            ItemInstanceId = model.ItemInstanceId,
-            GameServiceId = model.GameServiceId,
-            EffectiveRarity = model.EffectiveRarity,
-            ItemLevel = model.ItemLevel,
-            ImplicitSlots = model.ImplicitSlots.Select(MapSlotModelToData).ToList(),
-            PrefixSlots = model.PrefixSlots.Select(MapSlotModelToData).ToList(),
-            SuffixSlots = model.SuffixSlots.Select(MapSlotModelToData).ToList(),
-            EnchantSlots = model.EnchantSlots.Select(MapSlotModelToData).ToList(),
-            Influences = model.Influences.ToList(),
-            States = MapStatesToResponse(model.States),
-            Quality = model.Quality
-        };
-
-    private static AffixSlotData MapSlotModelToData(AffixSlotModel model)
-        => new()
-        {
-            DefinitionId = model.DefinitionId,
-            DefinitionCode = model.DefinitionCode,
-            ModGroup = model.ModGroup,
-            RolledValues = model.RolledValues.ToList(),
-            IsFractured = model.IsFractured
-        };
-
-    private static AffixSlotModel MapSlotDataToModel(AffixSlotData data)
-        => new()
-        {
-            DefinitionId = data.DefinitionId,
-            DefinitionCode = data.DefinitionCode,
-            ModGroup = data.ModGroup,
-            RolledValues = data.RolledValues.ToArray(),
-            IsFractured = data.IsFractured
-        };
-
-    private static AffixStates MapStatesToResponse(AffixStatesModel model)
-        => new()
-        {
-            IsCorrupted = model.IsCorrupted,
-            IsMirrored = model.IsMirrored,
-            IsSplit = model.IsSplit,
-            IsIdentified = model.IsIdentified,
-            IsSynthesized = model.IsSynthesized
-        };
-
-    private static AffixInstanceBatchModifiedEntry MapInstanceToModifiedEntry(AffixInstanceModel model, string[] changedFields)
-        => new()
-        {
-            ItemInstanceId = model.ItemInstanceId,
-            GameServiceId = model.GameServiceId,
-            EffectiveRarity = model.EffectiveRarity,
-            ItemLevel = model.ItemLevel,
-            Quality = model.Quality,
-            CreatedAt = model.CreatedAt,
-            UpdatedAt = model.UpdatedAt ?? model.CreatedAt,
-            ChangedFields = changedFields.ToList()
-        };
-
-    #endregion
 }

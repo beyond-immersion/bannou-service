@@ -368,8 +368,6 @@ public partial class LeaderboardService : ILeaderboardService, ICleanDeprecatedE
     /// </summary>
     public async Task<(StatusCodes, LeaderboardDefinitionResponse?)> DeprecateLeaderboardDefinitionAsync(DeprecateLeaderboardDefinitionRequest body, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.leaderboard", "LeaderboardService.DeprecateLeaderboardDefinitionAsync");
-
         var key = BuildDefinitionKey(body.GameServiceId, body.LeaderboardId);
 
         var definition = await _definitionStore.GetAsync(key, cancellationToken);
@@ -972,9 +970,6 @@ public partial class LeaderboardService : ILeaderboardService, ICleanDeprecatedE
     public async Task<(StatusCodes, CleanDeprecatedStringKeyResponse?)> CleanDeprecatedLeaderboardDefinitionsAsync(
         CleanDeprecatedRequest body, CancellationToken cancellationToken = default)
     {
-        using var activity = _telemetryProvider.StartActivity(
-            "bannou.leaderboard", "LeaderboardService.CleanDeprecatedLeaderboardDefinitionsAsync");
-
         // Collect all deprecated definitions across all game services
         var gameServiceIds = await _definitionStore.GetSetAsync<string>(GAME_SERVICE_INDEX_KEY, cancellationToken);
         var deprecated = new List<LeaderboardDefinitionData>();

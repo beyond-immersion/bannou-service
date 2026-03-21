@@ -76,6 +76,335 @@ namespace BeyondImmersion.BannouService.Transit;
 public partial class TransitService
 {
     // Move private/internal helper methods here from TransitService.cs
+    /// <summary>
+    /// Evaluates whether a specific entity can use a given transit mode.
+    /// Checks entity type, species compatibility, item requirements, and applies DI cost modifiers.
+    /// </summary>
+    private async Task<ModeAvailabilityResult> EvaluateModeAvailabilityAsync(
+        TransitModeModel mode,
+        Guid entityId,
+        string entityType,
+        string? speciesCode,
+        CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.EvaluateModeAvailabilityAsync");
+
+        // Check entity type restrictions
+        if (mode.ValidEntityTypes != null && mode.ValidEntityTypes.Count > 0)
+        {
+            if (!mode.ValidEntityTypes.Contains(entityType))
+            {
+                return new ModeAvailabilityResult
+                {
+                    Code = mode.Code,
+                    Available = false,
+                    UnavailableReason = "entity_type_not_allowed",
+                    EffectiveSpeed = 0,
+                    PreferenceCost = 0
+                };
+            }
+        }
+
+        // Check species compatibility
+        if (speciesCode != null)
+        {
+            // Check excluded species
+            if (mode.Requirements.ExcludedSpeciesCodes != null &&
+                mode.Requirements.ExcludedSpeciesCodes.Contains(speciesCode))
+            {
+                return new ModeAvailabilityResult
+                {
+                    Code = mode.Code,
+                    Available = false,
+                    UnavailableReason = "species_excluded",
+                    EffectiveSpeed = 0,
+                    PreferenceCost = 0
+                };
+            }
+
+            // Check allowed species (null = any species allowed)
+            if (mode.Requirements.AllowedSpeciesCodes != null &&
+                mode.Requirements.AllowedSpeciesCodes.Count > 0 &&
+                !mode.Requirements.AllowedSpeciesCodes.Contains(speciesCode))
+            {
+                return new ModeAvailabilityResult
+                {
+                    Code = mode.Code,
+                    Available = false,
+                    UnavailableReason = "wrong_species",
+                    EffectiveSpeed = 0,
+                    PreferenceCost = 0
+                };
+            }
+        }
+
+        // Check item requirements via IInventoryClient
+        if (!string.IsNullOrEmpty(mode.Requirements.RequiredItemTag))
+        {
+            var hasItem = await CheckEntityHasItemTagAsync(entityId, entityType, mode.Requirements.RequiredItemTag, cancellationToken);
+            if (!hasItem)
+            {
+                return new ModeAvailabilityResult
+                {
+                    Code = mode.Code,
+                    Available = false,
+                    UnavailableReason = "missing_item",
+                    EffectiveSpeed = 0,
+                    PreferenceCost = 0
+                };
+            }
+        }
+
+        // Base effective speed
+        var effectiveSpeed = mode.BaseSpeedKmPerGameHour;
+
+        // Apply DI cost modifiers with graceful degradation
+        var aggregatedPreferenceCost = 0m;
+        var aggregatedSpeedMultiplier = 1m;
+
+        foreach (var provider in _costModifierProviders)
+        {
+            try
+            {
+                var modifier = await provider.GetModifierAsync(
+                    entityId, entityType, mode.Code, null, cancellationToken);
+
+                aggregatedPreferenceCost += modifier.PreferenceCostDelta;
+                aggregatedSpeedMultiplier *= modifier.SpeedMultiplier;
+            }
+            catch (Exception ex)
+            {
+                // Graceful degradation per service hierarchy -- L4 providers may fail
+                _logger.LogWarning(ex, "Cost modifier provider {ProviderName} failed for entity {EntityId} and mode {ModeCode}, skipping",
+                    provider.ProviderName, entityId, mode.Code);
+            }
+        }
+
+        // Clamp aggregated values to configured bounds per IMPLEMENTATION TENETS (configuration-first)
+        aggregatedPreferenceCost = Math.Clamp(aggregatedPreferenceCost, (decimal)_configuration.MinPreferenceCost, (decimal)_configuration.MaxPreferenceCost);
+        aggregatedSpeedMultiplier = Math.Clamp(aggregatedSpeedMultiplier, (decimal)_configuration.MinSpeedMultiplier, (decimal)_configuration.MaxSpeedMultiplier);
+
+        effectiveSpeed *= aggregatedSpeedMultiplier;
+
+        return new ModeAvailabilityResult
+        {
+            Code = mode.Code,
+            Available = true,
+            UnavailableReason = null,
+            EffectiveSpeed = effectiveSpeed,
+            PreferenceCost = aggregatedPreferenceCost
+        };
+    }
+
+    /// <summary>
+    /// Resolves the species code for an entity by calling the Character service.
+    /// Returns null if the entity is not found or the character has no species.
+    /// </summary>
+    private async Task<string?> ResolveEntitySpeciesCodeAsync(Guid entityId, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.ResolveEntitySpeciesCodeAsync");
+        try
+        {
+            var characterResponse = await _characterClient.GetCharacterAsync(
+                new Character.GetCharacterRequest { CharacterId = entityId },
+                cancellationToken);
+
+            var speciesResponse = await _speciesClient.GetSpeciesAsync(
+                new Species.GetSpeciesRequest { SpeciesId = characterResponse.SpeciesId },
+                cancellationToken);
+
+            return speciesResponse.Code;
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _logger.LogDebug("Character or species not found for entity {EntityId}: {StatusCode}", entityId, ex.StatusCode);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Checks whether the entity has an item with the required tag in any of their inventories.
+    /// Uses QueryItems with tag filtering for a single API call instead of iterating containers.
+    /// </summary>
+    private async Task<bool> CheckEntityHasItemTagAsync(Guid entityId, string entityType, string requiredItemTag, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.CheckEntityHasItemTagAsync");
+
+        // Map entity type string to ContainerOwnerType for inventory query
+        if (!EntityTypeToOwnerType.TryGetValue(entityType, out var ownerType))
+        {
+            // Entity type doesn't map to an inventory owner type -- cannot have items
+            _logger.LogDebug("Entity type {EntityType} has no inventory mapping, skipping item tag check", entityType);
+            return false;
+        }
+
+        try
+        {
+            var queryResponse = await _inventoryClient.QueryItemsAsync(
+                new Inventory.QueryItemsRequest
+                {
+                    OwnerId = entityId,
+                    OwnerType = ownerType,
+                    Tags = new[] { requiredItemTag },
+                    Limit = 1
+                },
+                cancellationToken);
+
+            return queryResponse.TotalCount > 0;
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _logger.LogDebug("Inventory not found for entity {EntityId}: {StatusCode}", entityId, ex.StatusCode);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Applies non-null field updates from an UpdateModeRequest to an existing mode model.
+    /// Returns the list of field names that were actually changed.
+    /// </summary>
+    private static List<string> ApplyModeFieldUpdates(TransitModeModel model, UpdateModeRequest request)
+    {
+        var changedFields = new List<string>();
+
+        if (request.Name != null && request.Name != model.Name)
+        {
+            model.Name = request.Name;
+            changedFields.Add("name");
+        }
+
+        if (request.Description != null && request.Description != model.Description)
+        {
+            model.Description = request.Description;
+            changedFields.Add("description");
+        }
+
+        if (request.BaseSpeedKmPerGameHour.HasValue && request.BaseSpeedKmPerGameHour.Value != model.BaseSpeedKmPerGameHour)
+        {
+            model.BaseSpeedKmPerGameHour = request.BaseSpeedKmPerGameHour.Value;
+            changedFields.Add("baseSpeedKmPerGameHour");
+        }
+
+        if (request.TerrainSpeedModifiers != null)
+        {
+            model.TerrainSpeedModifiers = request.TerrainSpeedModifiers.Select(t => new TerrainSpeedModifierEntry
+            {
+                TerrainType = t.TerrainType,
+                Multiplier = t.Multiplier
+            }).ToList();
+            changedFields.Add("terrainSpeedModifiers");
+        }
+
+        if (request.PassengerCapacity.HasValue && request.PassengerCapacity.Value != model.PassengerCapacity)
+        {
+            model.PassengerCapacity = request.PassengerCapacity.Value;
+            changedFields.Add("passengerCapacity");
+        }
+
+        if (request.CargoCapacityKg.HasValue && request.CargoCapacityKg.Value != model.CargoCapacityKg)
+        {
+            model.CargoCapacityKg = request.CargoCapacityKg.Value;
+            changedFields.Add("cargoCapacityKg");
+        }
+
+        if (request.CargoSpeedPenaltyRate.HasValue && request.CargoSpeedPenaltyRate != model.CargoSpeedPenaltyRate)
+        {
+            model.CargoSpeedPenaltyRate = request.CargoSpeedPenaltyRate;
+            changedFields.Add("cargoSpeedPenaltyRate");
+        }
+
+        if (request.CompatibleTerrainTypes != null)
+        {
+            model.CompatibleTerrainTypes = request.CompatibleTerrainTypes.ToList();
+            changedFields.Add("compatibleTerrainTypes");
+        }
+
+        if (request.ValidEntityTypes != null)
+        {
+            model.ValidEntityTypes = request.ValidEntityTypes.ToList();
+            changedFields.Add("validEntityTypes");
+        }
+
+        if (request.Requirements != null)
+        {
+            model.Requirements = new TransitModeRequirementsModel
+            {
+                RequiredItemTag = request.Requirements.RequiredItemTag,
+                AllowedSpeciesCodes = request.Requirements.AllowedSpeciesCodes?.ToList(),
+                ExcludedSpeciesCodes = request.Requirements.ExcludedSpeciesCodes?.ToList(),
+                MinimumPartySize = request.Requirements.MinimumPartySize,
+                MaximumEntitySizeCategory = request.Requirements.MaximumEntitySizeCategory
+            };
+            changedFields.Add("requirements");
+        }
+
+        if (request.FatigueRatePerGameHour.HasValue && request.FatigueRatePerGameHour.Value != model.FatigueRatePerGameHour)
+        {
+            model.FatigueRatePerGameHour = request.FatigueRatePerGameHour.Value;
+            changedFields.Add("fatigueRatePerGameHour");
+        }
+
+        if (request.NoiseLevelNormalized.HasValue && request.NoiseLevelNormalized.Value != model.NoiseLevelNormalized)
+        {
+            model.NoiseLevelNormalized = request.NoiseLevelNormalized.Value;
+            changedFields.Add("noiseLevelNormalized");
+        }
+
+        if (request.RealmRestrictions != null)
+        {
+            model.RealmRestrictions = request.RealmRestrictions.ToList();
+            changedFields.Add("realmRestrictions");
+        }
+
+        if (request.Tags != null)
+        {
+            model.Tags = request.Tags.ToList();
+            changedFields.Add("tags");
+        }
+
+        return changedFields;
+    }
+
+    /// <summary>
+    /// Maps an internal <see cref="TransitModeModel"/> to the generated <see cref="TransitMode"/> API model.
+    /// </summary>
+    private static TransitMode MapModeToApi(TransitModeModel model)
+    {
+        return new TransitMode
+        {
+            Code = model.Code,
+            Name = model.Name,
+            Description = model.Description,
+            BaseSpeedKmPerGameHour = model.BaseSpeedKmPerGameHour,
+            TerrainSpeedModifiers = model.TerrainSpeedModifiers?.Select(t => new TerrainSpeedModifier
+            {
+                TerrainType = t.TerrainType,
+                Multiplier = t.Multiplier
+            }).ToList(),
+            PassengerCapacity = model.PassengerCapacity,
+            CargoCapacityKg = model.CargoCapacityKg,
+            CargoSpeedPenaltyRate = model.CargoSpeedPenaltyRate,
+            CompatibleTerrainTypes = model.CompatibleTerrainTypes.ToList(),
+            ValidEntityTypes = model.ValidEntityTypes?.ToList(),
+            Requirements = new TransitModeRequirements
+            {
+                RequiredItemTag = model.Requirements.RequiredItemTag,
+                AllowedSpeciesCodes = model.Requirements.AllowedSpeciesCodes?.ToList(),
+                ExcludedSpeciesCodes = model.Requirements.ExcludedSpeciesCodes?.ToList(),
+                MinimumPartySize = model.Requirements.MinimumPartySize,
+                MaximumEntitySizeCategory = model.Requirements.MaximumEntitySizeCategory
+            },
+            FatigueRatePerGameHour = model.FatigueRatePerGameHour,
+            NoiseLevelNormalized = model.NoiseLevelNormalized,
+            RealmRestrictions = model.RealmRestrictions?.ToList(),
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
+            Tags = model.Tags?.ToList(),
+            CreatedAt = model.CreatedAt,
+            ModifiedAt = model.ModifiedAt
+        };
+    }
     #region Mode Event Publishing
 
     /// <summary>
