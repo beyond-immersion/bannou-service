@@ -1,3 +1,19 @@
+using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.Bannou.Worldstate.ClientEvents;
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.GameService;
+using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Realm;
+using BeyondImmersion.BannouService.Resource;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Telemetry;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
 namespace BeyondImmersion.BannouService.Worldstate;
 
 // =============================================================================
@@ -56,5 +72,28 @@ namespace BeyondImmersion.BannouService.Worldstate;
 /// </remarks>
 public partial class WorldstateService
 {
-    // Move private/internal helper methods here from WorldstateService.cs
+    /// <summary>
+    /// Publishes boundary events (hour, period, day, month, season, year) based on the
+    /// list of boundary crossings detected during clock advancement. Delegates to the
+    /// shared static helper to avoid duplication with the worker's boundary publishing.
+    /// </summary>
+    /// <param name="realmId">The realm whose clock crossed boundaries.</param>
+    /// <param name="clock">The current clock state after advancement.</param>
+    /// <param name="boundaries">The list of boundary crossings to publish events for.</param>
+    /// <param name="isCatchUp">Whether these boundaries were crossed during catch-up processing.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    private async Task PublishBoundaryEventsAsync(
+        Guid realmId,
+        RealmClockModel clock,
+        List<BoundaryCrossing> boundaries,
+        bool isCatchUp,
+        CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.worldstate", "WorldstateService.PublishBoundaryEvents");
+
+        var snapshot = WorldstateBoundaryEventPublisher.MapClockToSnapshot(clock);
+        await WorldstateBoundaryEventPublisher.PublishBoundaryEventsAsync(
+            realmId, snapshot, clock, boundaries, isCatchUp, _messageBus, cancellationToken);
+    }
 }

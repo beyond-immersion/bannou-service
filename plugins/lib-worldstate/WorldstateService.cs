@@ -1751,31 +1751,6 @@ public partial class WorldstateService : IWorldstateService
         };
     }
 
-    /// <summary>
-    /// Publishes boundary events (hour, period, day, month, season, year) based on the
-    /// list of boundary crossings detected during clock advancement. Delegates to the
-    /// shared static helper to avoid duplication with the worker's boundary publishing.
-    /// </summary>
-    /// <param name="realmId">The realm whose clock crossed boundaries.</param>
-    /// <param name="clock">The current clock state after advancement.</param>
-    /// <param name="boundaries">The list of boundary crossings to publish events for.</param>
-    /// <param name="isCatchUp">Whether these boundaries were crossed during catch-up processing.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    private async Task PublishBoundaryEventsAsync(
-        Guid realmId,
-        RealmClockModel clock,
-        List<BoundaryCrossing> boundaries,
-        bool isCatchUp,
-        CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity(
-            "bannou.worldstate", "WorldstateService.PublishBoundaryEvents");
-
-        var snapshot = WorldstateBoundaryEventPublisher.MapClockToSnapshot(clock);
-        await WorldstateBoundaryEventPublisher.PublishBoundaryEventsAsync(
-            realmId, snapshot, clock, boundaries, isCatchUp, _messageBus, cancellationToken);
-    }
-
     #endregion
 
 }
