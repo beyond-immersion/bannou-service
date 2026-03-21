@@ -24,6 +24,13 @@ public class RepositorySyncSchedulerService : BackgroundService
     private const string BINDINGS_REGISTRY_KEY = "repo-bindings";
     private const string BINDING_KEY_PREFIX = "repo-binding:";
 
+    #region Key Building Helpers
+
+    internal static string BuildBindingKey(string namespaceId)
+        => $"{BINDING_KEY_PREFIX}{namespaceId}";
+
+    #endregion
+
     /// <summary>
     /// Creates a new instance of the RepositorySyncSchedulerService.
     /// </summary>
@@ -154,7 +161,7 @@ public class RepositorySyncSchedulerService : BackgroundService
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var bindingKey = $"{BINDING_KEY_PREFIX}{namespaceId}";
+                var bindingKey = BuildBindingKey(namespaceId);
                 var binding = await bindingStore.GetAsync(bindingKey, cancellationToken);
 
                 if (binding == null)
@@ -263,7 +270,7 @@ public class RepositorySyncSchedulerService : BackgroundService
         var validBindingIds = new HashSet<string>();
         foreach (var ns in bindingNamespaces)
         {
-            var bindingKey = $"{BINDING_KEY_PREFIX}{ns}";
+            var bindingKey = BuildBindingKey(ns);
             var binding = await bindingStore.GetAsync(bindingKey, cancellationToken);
             if (binding != null)
             {

@@ -23,6 +23,16 @@ public class RarityCalculationService : BackgroundService
     private const string DEFINITION_INDEX_PREFIX = "achievement-definitions";
     private const string GAME_SERVICE_INDEX_KEY = "achievement-game-services";
 
+    #region Key Building Helpers
+
+    internal static string BuildDefinitionIndexKey(Guid gameServiceId)
+        => $"{DEFINITION_INDEX_PREFIX}:{gameServiceId}";
+
+    internal static string BuildDefinitionKey(Guid gameServiceId, string achievementId)
+        => $"{gameServiceId}:{achievementId}";
+
+    #endregion
+
     /// <summary>
     /// Interval between rarity recalculations, from configuration.
     /// </summary>
@@ -123,12 +133,12 @@ public class RarityCalculationService : BackgroundService
                     continue;
                 }
 
-                var indexKey = $"{DEFINITION_INDEX_PREFIX}:{gameServiceId}";
+                var indexKey = BuildDefinitionIndexKey(gameServiceId);
                 var achievementIds = await definitionStore.GetSetAsync<string>(indexKey, cancellationToken);
 
                 foreach (var achievementId in achievementIds)
                 {
-                    var defKey = $"{gameServiceId}:{achievementId}";
+                    var defKey = BuildDefinitionKey(gameServiceId, achievementId);
                     var (definition, etag) = await definitionStore.GetWithETagAsync(defKey, cancellationToken);
                     if (definition == null)
                     {

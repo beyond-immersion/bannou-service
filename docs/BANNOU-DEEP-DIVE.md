@@ -496,6 +496,13 @@ Runtime schema introspection for generated Controller.Meta.cs files. Builds endp
 
 ---
 
+## Known Issues
+
+1. **Orphaned lib-common plugin project (#711)**: `plugins/lib-common/` exists as an empty shell project (only `AssemblyInfo.cs`, no Generated/ directory, no service class). Created by the generation pipeline treating `common-api.yaml` as a service schema, but common types belong in `bannou-service/Generated/`. Should be deleted from the solution. May need a guard in generation scripts to skip `common-api.yaml`.
+<!-- AUDIT:CONFIRMED:2026-03-21:https://github.com/beyond-immersion/bannou-service/issues/711 -->
+
+---
+
 ## HELPERS-AND-COMMON-PATTERNS Sync Status
 
 Tracking what's documented in HELPERS vs. what lives only in this deep dive.

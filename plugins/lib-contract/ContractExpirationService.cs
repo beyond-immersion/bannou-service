@@ -23,6 +23,13 @@ public class ContractExpirationService : BackgroundService
 
     private const string STATUS_INDEX_PREFIX = "status-idx:";
 
+    #region Key Building Helpers
+
+    internal static string BuildStatusIndexKey(string status)
+        => $"{STATUS_INDEX_PREFIX}{status}";
+
+    #endregion
+
     /// <summary>
     /// Interval between expiration checks, from configuration.
     /// </summary>
@@ -120,7 +127,7 @@ public class ContractExpirationService : BackgroundService
         var contractServiceImpl = contractService as ContractService;
 
         // Check pending contracts for effectiveFrom activation
-        var pendingContractIds = await indexStore.GetAsync($"{STATUS_INDEX_PREFIX}pending", cancellationToken);
+        var pendingContractIds = await indexStore.GetAsync(BuildStatusIndexKey("pending"), cancellationToken);
         var activatedCount = 0;
 
         if (pendingContractIds?.Count > 0)
@@ -154,7 +161,7 @@ public class ContractExpirationService : BackgroundService
         }
 
         // Check active contracts for expirations, milestones, and payment schedules
-        var activeContractIds = await indexStore.GetAsync($"{STATUS_INDEX_PREFIX}active", cancellationToken);
+        var activeContractIds = await indexStore.GetAsync(BuildStatusIndexKey("active"), cancellationToken);
 
         if (activeContractIds == null || activeContractIds.Count == 0)
         {

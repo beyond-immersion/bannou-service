@@ -156,6 +156,9 @@ Event-Driven Auto-Registration
 
 1. ~~**L0 subscribing to L3 events (`bannou.full-service-mappings`)**~~: **FIXED** (2026-03-13) - Replaced with DI interface inversion: Mesh (L0) provides `IServiceMappingReceiver` implementation that Orchestrator (L3) discovers and pushes mapping updates into. The implementation updates the local `IServiceAppMappingResolver` and broadcasts `mesh.mappings.updated` (L0→L0) events for cross-node sync. Mesh no longer subscribes to any L3 events.
 
+2. **MeshCircuitStateChangedEvent handler not wired up (#710)**: `x-event-subscriptions` declares a subscription to `mesh.circuit.changed` (`MeshCircuitStateChangedEvent`) but `MeshServiceEvents.cs` has no corresponding `RegisterHandler` call.
+<!-- AUDIT:CONFIRMED:2026-03-21:https://github.com/beyond-immersion/bannou-service/issues/710 -->
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **`InvokeRawAsync` bypasses circuit breaker**: The raw API invocation path (`InvokeRawAsync`) intentionally skips circuit breaker checks and does not record success/failure to the breaker. This is by design because raw API execution targets services that may be optional or disabled — failures against absent services should not trip the circuit.

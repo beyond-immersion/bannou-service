@@ -24,6 +24,13 @@ public class TrashcanPurgeService : BackgroundService
     private const string BINDINGS_REGISTRY_KEY = "repo-bindings";
     private const string TRASH_KEY_PREFIX = "trash:";
 
+    #region Key Building Helpers
+
+    internal static string BuildTrashKey(string namespaceId, Guid docId)
+        => $"{TRASH_KEY_PREFIX}{namespaceId}:{docId}";
+
+    #endregion
+
     /// <summary>
     /// Creates a new instance of the TrashcanPurgeService.
     /// </summary>
@@ -233,7 +240,7 @@ public class TrashcanPurgeService : BackgroundService
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var trashKey = $"{TRASH_KEY_PREFIX}{namespaceId}:{docId}";
+            var trashKey = BuildTrashKey(namespaceId, docId);
             var trashedDoc = await trashStore.GetAsync(trashKey, cancellationToken);
 
             if (trashedDoc == null)

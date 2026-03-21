@@ -39,6 +39,16 @@ public class MemoryDecaySchedulerService : BackgroundService
     private const string GLOBAL_CHAR_INDEX_KEY = "global-char-idx";
     private const string CHAR_INDEX_PREFIX = "char-idx-";
 
+    #region Key Building Helpers
+
+    internal static string BuildPerspectiveKey(Guid perspectiveId)
+        => $"{PERSPECTIVE_KEY_PREFIX}{perspectiveId}";
+
+    internal static string BuildCharIndexKey(Guid characterId)
+        => $"{CHAR_INDEX_PREFIX}{characterId}";
+
+    #endregion
+
     /// <summary>
     /// Interval between decay checks, from configuration.
     /// </summary>
@@ -213,7 +223,7 @@ public class MemoryDecaySchedulerService : BackgroundService
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "MemoryDecaySchedulerService.ProcessCharacterDecayAsync");
-        var characterIndex = await indexStore.GetAsync($"{CHAR_INDEX_PREFIX}{characterId}", cancellationToken);
+        var characterIndex = await indexStore.GetAsync(BuildCharIndexKey(characterId), cancellationToken);
         if (characterIndex == null || characterIndex.PerspectiveIds.Count == 0)
         {
             return (0, 0);
@@ -224,7 +234,7 @@ public class MemoryDecaySchedulerService : BackgroundService
 
         foreach (var perspectiveId in characterIndex.PerspectiveIds)
         {
-            var perspectiveKey = $"{PERSPECTIVE_KEY_PREFIX}{perspectiveId}";
+            var perspectiveKey = BuildPerspectiveKey(perspectiveId);
             var (perspective, etag) = await perspectiveStore.GetWithETagAsync(perspectiveKey, cancellationToken);
 
             if (perspective == null)

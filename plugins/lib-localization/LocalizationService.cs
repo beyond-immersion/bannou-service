@@ -58,66 +58,6 @@ public partial class LocalizationService : ILocalizationService
         RegisterEventConsumers(eventConsumer);
     }
 
-    /// <summary>
-    /// Seeds schema-defined categories from LocalizationCategoryDefinitions on startup.
-    /// Idempotent — existing categories are skipped silently.
-    /// </summary>
-    public async Task OnStartAsync(CancellationToken token)
-    {
-        using var activity = _telemetryProvider.StartActivity(
-            "bannou.localization", "LocalizationService.OnStartAsync");
-
-        _logger.LogInformation("Seeding schema-defined localization categories");
-
-        foreach (var (code, metadata) in LocalizationCategoryDefinitions.Metadata)
-        {
-            try
-            {
-                var existingCodeId = await _categoryCodeStore.GetAsync(BuildCategoryCodeKey(code), token);
-                if (existingCodeId != null)
-                    continue; // Already seeded — idempotent
-
-                var categoryId = Guid.NewGuid();
-                var now = DateTimeOffset.UtcNow;
-
-                var model = new LocalizationCategoryModel
-                {
-                    CategoryId = categoryId,
-                    Code = code,
-                    Description = metadata.Description,
-                    IsSchemaDefinition = true,
-                    ValidationMode = metadata.ValidationMode,
-                    DefaultLanguage = _configuration.DefaultLanguage,
-                    EntryCount = 0,
-                    CreatedAt = now,
-                };
-
-                await _categoryStore.SaveAsync(BuildCategoryKey(categoryId), model, cancellationToken: token);
-                await _categoryCodeStore.SaveAsync(BuildCategoryCodeKey(code), categoryId.ToString(), cancellationToken: token);
-
-                await _messageBus.PublishLocalizationCategoryCreatedAsync(new LocalizationCategoryCreatedEvent
-                {
-                    CategoryId = categoryId,
-                    Code = code,
-                    Description = metadata.Description,
-                    IsSchemaDefinition = true,
-                    ValidationMode = metadata.ValidationMode,
-                    DefaultLanguage = _configuration.DefaultLanguage,
-                    EntryCount = 0,
-                    CreatedAt = now,
-                    UpdatedAt = now,
-                }, token);
-
-                _logger.LogInformation("Seeded schema-defined category {Code} with ID {CategoryId}", code, categoryId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to seed schema-defined category {Code}", code);
-            }
-        }
-
-        _logger.LogInformation("Schema-defined category seeding complete");
-    }
 
     /// <summary>
     /// Creates a new runtime localization category.

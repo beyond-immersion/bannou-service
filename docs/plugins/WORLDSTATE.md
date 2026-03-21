@@ -409,7 +409,8 @@ flows:
 
 ### Bugs (Fix Immediately)
 
-*(No active bugs.)*
+1. **Self-subscription event handlers not wired up (#710)**: 10 events declared in `x-event-subscriptions` (calendar template lifecycle, realm config lifecycle, boundary events, realm clock initialized) have no corresponding `RegisterHandler` calls in `WorldstateServiceEvents.cs`. These are self-subscriptions for cache invalidation (CalendarTemplateCache, RealmClockCache) per quirk #11 — the subscriptions are declared but the handlers were never implemented.
+<!-- AUDIT:CONFIRMED:2026-03-21:https://github.com/beyond-immersion/bannou-service/issues/710 -->
 
 ### Intentional Quirks (Documented Behavior)
 

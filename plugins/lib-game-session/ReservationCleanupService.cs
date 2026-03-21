@@ -31,6 +31,13 @@ public class ReservationCleanupService : BackgroundService
     private const string SESSION_KEY_PREFIX = GameSessionService.SESSION_KEY_PREFIX;
     private const string SESSION_LIST_KEY = GameSessionService.SESSION_LIST_KEY;
 
+    #region Key Building Helpers
+
+    internal static string BuildSessionKey(string sessionId)
+        => $"{SESSION_KEY_PREFIX}{sessionId}";
+
+    #endregion
+
     /// <summary>
     /// Creates a new ReservationCleanupService instance.
     /// </summary>
@@ -122,7 +129,7 @@ public class ReservationCleanupService : BackgroundService
 
         foreach (var sessionId in sessionIds)
         {
-            var session = await cleanupStore.GetAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
+            var session = await cleanupStore.GetAsync(BuildSessionKey(sessionId), cancellationToken);
             if (session == null)
             {
                 continue;
@@ -153,7 +160,7 @@ public class ReservationCleanupService : BackgroundService
             {
                 // Acquire per-session lock to prevent duplicate cancellation across instances
                 await using var sessionLock = await lockProvider.LockAsync(
-                    StateStoreDefinitions.GameSessionLock, SESSION_KEY_PREFIX + sessionId, Guid.NewGuid().ToString(),
+                    StateStoreDefinitions.GameSessionLock, BuildSessionKey(sessionId), Guid.NewGuid().ToString(),
                     _configuration.LockTimeoutSeconds, cancellationToken);
                 if (!sessionLock.Success)
                 {
@@ -162,7 +169,7 @@ public class ReservationCleanupService : BackgroundService
                 }
 
                 // Re-check session state under lock — another instance may have already cancelled it
-                var sessionUnderLock = await cleanupStore.GetAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
+                var sessionUnderLock = await cleanupStore.GetAsync(BuildSessionKey(sessionId), cancellationToken);
                 if (sessionUnderLock == null)
                 {
                     _logger.LogDebug("Session {SessionId} already deleted by another instance", sessionId);
@@ -252,7 +259,7 @@ public class ReservationCleanupService : BackgroundService
                 cancellationToken);
 
             // Read full model for lifecycle event before deletion
-            var fullModel = await fullSessionStore.GetAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
+            var fullModel = await fullSessionStore.GetAsync(BuildSessionKey(sessionId), cancellationToken);
             if (fullModel != null)
             {
                 // Publish lifecycle deleted event using shared helper
@@ -262,7 +269,7 @@ public class ReservationCleanupService : BackgroundService
             }
 
             // Delete the session
-            await cleanupStore.DeleteAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
+            await cleanupStore.DeleteAsync(BuildSessionKey(sessionId), cancellationToken);
 
             // Remove from session list under distributed lock (read-modify-write)
             await using var listLock = await lockProvider.LockAsync(

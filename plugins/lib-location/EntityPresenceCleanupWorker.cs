@@ -25,6 +25,16 @@ public class EntityPresenceCleanupWorker : BackgroundService
     private const string LOCATION_ENTITIES_PREFIX = "location-entities:";
     private const string LOCATION_ENTITIES_INDEX_KEY = "location-entities:__index__";
 
+    #region Key Building Helpers
+
+    internal static string BuildEntityLocationKey(string entityType, Guid entityId)
+        => $"{ENTITY_LOCATION_PREFIX}{entityType}:{entityId}";
+
+    internal static string BuildLocationEntitiesKey(Guid locationId)
+        => $"{LOCATION_ENTITIES_PREFIX}{locationId}";
+
+    #endregion
+
     /// <summary>
     /// Interval between cleanup cycles, from configuration.
     /// </summary>
@@ -132,7 +142,7 @@ public class EntityPresenceCleanupWorker : BackgroundService
                 continue;
             }
 
-            var locationSetKey = $"{LOCATION_ENTITIES_PREFIX}{locationId}";
+            var locationSetKey = BuildLocationEntitiesKey(locationId);
             var members = await entitySetStore.GetSetAsync<string>(locationSetKey, cancellationToken);
 
             if (members.Count == 0)
@@ -162,7 +172,7 @@ public class EntityPresenceCleanupWorker : BackgroundService
                 }
 
                 // Check if the entity's presence key still exists
-                var entityLocationKey = $"{ENTITY_LOCATION_PREFIX}{entityType}:{entityId}";
+                var entityLocationKey = BuildEntityLocationKey(entityType, entityId);
                 var presence = await presenceStore.GetAsync(entityLocationKey, cancellationToken);
 
                 if (presence is null)
