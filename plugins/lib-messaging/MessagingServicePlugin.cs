@@ -125,7 +125,11 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
         // Register NativeEventConsumerBackend as IHostedService
         // This bridges RabbitMQ subscriptions to existing IEventConsumer fan-out
         // MANDATORY: This is always registered as messaging is required infrastructure
-        services.AddHostedService<NativeEventConsumerBackend>();
+        // Conditional hosted services: registered only in RabbitMQ mode (not direct-dispatch or in-memory).
+        // Uses AddConditionalHostedService to signal structural tests that manual registration is approved.
+        Func<bool> isRabbitMqMode = () => config?.UseDirectDispatch != true && config?.UseInMemory != true;
+
+        services.AddConditionalHostedService<NativeEventConsumerBackend>(isRabbitMqMode);
         Logger?.LogInformation("Registered NativeEventConsumerBackend - messaging is required infrastructure");
 
         // Register MessagingService concrete type in addition to interface
@@ -135,15 +139,10 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
             (MessagingService)sp.GetRequiredService<IMessagingService>());
         Logger?.LogDebug("Registered MessagingService concrete type for recovery service access");
 
-        // Register subscription recovery service
-        // Recovers external HTTP callback subscriptions from lib-state on startup
-        services.AddHostedService<MessagingSubscriptionRecoveryService>();
+        services.AddConditionalHostedService<MessagingSubscriptionRecoveryService>(isRabbitMqMode);
         Logger?.LogDebug("Registered MessagingSubscriptionRecoveryService for external subscription recovery");
 
-        // Register dead letter consumer for monitoring/logging
-        // Only registers for RabbitMQ mode (dead letters don't exist in in-memory mode)
-        // Enabled/disabled check happens inside ExecuteAsync (reads config at runtime)
-        services.AddHostedService<DeadLetterConsumerService>();
+        services.AddConditionalHostedService<DeadLetterConsumerService>(isRabbitMqMode);
         Logger?.LogDebug("Registered DeadLetterConsumerService for dead letter monitoring");
 
         Logger?.LogDebug("Messaging service dependencies configured");

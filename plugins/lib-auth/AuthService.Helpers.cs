@@ -1,3 +1,20 @@
+using BCrypt.Net;
+using BeyondImmersion.Bannou.Auth.ClientEvents;
+using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Account;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Auth.Services;
+using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.ServiceClients;
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
 namespace BeyondImmersion.BannouService.Auth;
 
 // =============================================================================
@@ -56,5 +73,22 @@ namespace BeyondImmersion.BannouService.Auth;
 /// </remarks>
 public partial class AuthService
 {
-    // Move private/internal helper methods here from AuthService.cs
+    private async Task PublishClientEventToAccountSessionsAsync<TEvent>(
+        Guid accountId, TEvent clientEvent, CancellationToken ct = default)
+        where TEvent : BaseClientEvent
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "AuthService.PublishClientEventToAccountSessions");
+        try
+        {
+            var count = await _entitySessionRegistry.PublishToEntitySessionsAsync(
+                "account", accountId, clientEvent, ct);
+            _logger.LogDebug("Published {EventName} to {SessionCount} sessions for account {AccountId}",
+                clientEvent.EventName, count, accountId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish {EventName} to account {AccountId} sessions",
+                clientEvent.EventName, accountId);
+        }
+    }
 }

@@ -68,9 +68,6 @@ public partial class TelemetryService : ITelemetryService
         TelemetryHealthRequest body,
         CancellationToken cancellationToken = default)
     {
-        using var activity = _telemetryProvider.StartActivity(
-            TelemetryComponents.Telemetry, "health");
-
         _logger.LogDebug("Health check requested");
 
         var response = new TelemetryHealthResponse
@@ -99,9 +96,6 @@ public partial class TelemetryService : ITelemetryService
         TelemetryStatusRequest body,
         CancellationToken cancellationToken = default)
     {
-        using var activity = _telemetryProvider.StartActivity(
-            TelemetryComponents.Telemetry, "status");
-
         _logger.LogDebug("Status requested");
 
         // Use configured service name, or fall back to effective app-id

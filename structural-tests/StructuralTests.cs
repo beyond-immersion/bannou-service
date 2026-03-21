@@ -221,24 +221,41 @@ public class StructuralTests
     /// AddHostedService calls in Plugin.ConfigureServices.
     /// </summary>
     /// <remarks>
-    /// Exception list: Messaging workers that require conditional registration based on
-    /// messaging mode (RabbitMQ vs InMemory vs DirectDispatch). These are registered
-    /// manually in mode-specific branches of MessagingServicePlugin.ConfigureServices.
+    /// Types that require conditional registration (backend mode branches, feature flags)
+    /// must use <see cref="ConditionalServiceRegistration.AddConditionalHostedService{T}"/>
+    /// in their Plugin.ConfigureServices. The structural test discovers these by scanning
+    /// Plugin.cs source files for AddConditionalHostedService calls — no hardcoded exception list.
     /// </remarks>
     [Fact]
     public void HostedServices_ShouldUseBannouHelperServiceAttribute()
     {
         EnsureAssembliesLoaded();
 
-        // Approved exceptions: workers that require conditional registration in Plugin.ConfigureServices
-        // and cannot use attribute-based auto-registration because they are only registered in
-        // specific messaging mode branches (RabbitMQ mode only).
-        var approvedExceptions = new HashSet<string>
+        // Build set of type names registered via AddConditionalHostedService in Plugin.cs source.
+        // These are approved self-registrations — the condition delegate is the justification.
+        var conditionallyRegistered = new HashSet<string>();
+        var pluginsDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "plugins");
+        if (Directory.Exists(pluginsDir))
         {
-            "NativeEventConsumerBackend",          // lib-messaging: conditional on RabbitMQ mode
-            "MessagingSubscriptionRecoveryService", // lib-messaging: conditional on RabbitMQ mode
-            "DeadLetterConsumerService",            // lib-messaging: conditional on RabbitMQ mode
-        };
+            foreach (var pluginFile in Directory.GetFiles(pluginsDir, "*Plugin.cs", SearchOption.AllDirectories))
+            {
+                foreach (var line in File.ReadAllLines(pluginFile))
+                {
+                    var trimmed = line.TrimStart();
+                    if (!trimmed.Contains("AddConditionalHostedService<", StringComparison.Ordinal))
+                        continue;
+
+                    // Extract type name from AddConditionalHostedService<TypeName>(
+                    var start = trimmed.IndexOf("AddConditionalHostedService<", StringComparison.Ordinal)
+                        + "AddConditionalHostedService<".Length;
+                    var end = trimmed.IndexOf('>', start);
+                    if (end > start)
+                    {
+                        conditionallyRegistered.Add(trimmed[start..end]);
+                    }
+                }
+            }
+        }
 
         var hostedServiceInterface = typeof(Microsoft.Extensions.Hosting.IHostedService);
         var violations = new List<string>();
@@ -267,8 +284,8 @@ public class StructuralTests
                 if (type.IsInterface || type.IsAbstract || !hostedServiceInterface.IsAssignableFrom(type))
                     continue;
 
-                // Skip approved exceptions
-                if (approvedExceptions.Contains(type.Name))
+                // Skip types registered via AddConditionalHostedService (approved self-registration)
+                if (conditionallyRegistered.Contains(type.Name))
                     continue;
 
                 // Check for [BannouHelperService] with a hosted registration mode
@@ -277,7 +294,8 @@ public class StructuralTests
                 {
                     violations.Add(
                         $"{type.FullName} implements IHostedService but has no [BannouHelperService] attribute. " +
-                        "Add [BannouHelperService(..., RegistrationMode = HelperRegistrationMode.HostedService)]");
+                        "Add [BannouHelperService(..., RegistrationMode = HelperRegistrationMode.HostedService)] " +
+                        "or use AddConditionalHostedService<T> for conditional registration");
                     continue;
                 }
 

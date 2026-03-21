@@ -25,6 +25,8 @@ public partial class PluginLoader
         _clientTypesToRegister.Clear();
         _serviceTypesToRegister.Clear();
         _helperServiceTypesToRegister.Clear();
+        _concreteHelperTypesToRegister.Clear();
+        _bothHelperTypesToRegister.Clear();
         _hostedServiceTypesToRegister.Clear();
         _singletonAndHostedServiceTypesToRegister.Clear();
         _configurationTypesToRegister.Clear();
@@ -178,17 +180,47 @@ public partial class PluginLoader
 
                 case HelperRegistrationMode.Interface:
                 default:
-                    if (attr.InterfaceType == null)
+                    switch (attr.DependencyMode)
                     {
-                        _logger.LogDebug("Skipping helper {HelperType} — Interface mode with no InterfaceType (requires manual registration)",
-                            helperType.Name);
-                        continue;
-                    }
+                        case DependencyRegistrationMode.Concrete:
+                            _concreteHelperTypesToRegister.Add((helperType, attr.Lifetime));
+                            _logger.LogDebug("Will auto-register concrete helper: {Implementation} ({Lifetime})",
+                                helperType.Name, attr.Lifetime);
+                            autoRegistered++;
+                            break;
 
-                    _helperServiceTypesToRegister.Add((attr.InterfaceType, helperType, attr.Lifetime));
-                    _logger.LogDebug("Will auto-register helper: {Interface} -> {Implementation} ({Lifetime})",
-                        attr.InterfaceType.Name, helperType.Name, attr.Lifetime);
-                    autoRegistered++;
+                        case DependencyRegistrationMode.Both:
+                            if (attr.InterfaceType == null)
+                            {
+                                // Both without InterfaceType degrades to Concrete
+                                _concreteHelperTypesToRegister.Add((helperType, attr.Lifetime));
+                                _logger.LogDebug("Will auto-register concrete helper (Both with null InterfaceType): {Implementation} ({Lifetime})",
+                                    helperType.Name, attr.Lifetime);
+                            }
+                            else
+                            {
+                                _bothHelperTypesToRegister.Add((attr.InterfaceType, helperType, attr.Lifetime));
+                                _logger.LogDebug("Will auto-register both concrete+interface helper: {Implementation} -> {Interface} ({Lifetime})",
+                                    helperType.Name, attr.InterfaceType.Name, attr.Lifetime);
+                            }
+                            autoRegistered++;
+                            break;
+
+                        case DependencyRegistrationMode.Interface:
+                        default:
+                            if (attr.InterfaceType == null)
+                            {
+                                _logger.LogDebug("Skipping helper {HelperType} — Interface mode with no InterfaceType (requires manual registration)",
+                                    helperType.Name);
+                                continue;
+                            }
+
+                            _helperServiceTypesToRegister.Add((attr.InterfaceType, helperType, attr.Lifetime));
+                            _logger.LogDebug("Will auto-register helper: {Interface} -> {Implementation} ({Lifetime})",
+                                attr.InterfaceType.Name, helperType.Name, attr.Lifetime);
+                            autoRegistered++;
+                            break;
+                    }
                     break;
             }
         }
@@ -334,6 +366,8 @@ public partial class PluginLoader
         //   HostedService → AddHostedService<T>()
         //   SingletonAndHostedService → AddSingleton(T) + AddHostedService factory
         RegisterHelperServiceTypes(services);
+        RegisterConcreteHelperTypes(services);
+        RegisterBothHelperTypes(services);
         RegisterHostedServiceTypes(services);
         RegisterSingletonAndHostedServiceTypes(services);
 
@@ -479,6 +513,79 @@ public partial class PluginLoader
 
         _logger.LogInformation(
             "Helper service registration complete. {AutoRegistered} auto-registered, {Skipped} skipped (already registered by plugin)",
+            autoRegistered, skippedAlreadyRegistered);
+    }
+
+    /// <summary>
+    /// Register helper services with <see cref="DependencyRegistrationMode.Concrete"/>.
+    /// Registers the concrete type only (no interface mapping).
+    /// </summary>
+    private void RegisterConcreteHelperTypes(IServiceCollection services)
+    {
+        var autoRegistered = 0;
+        var skippedAlreadyRegistered = 0;
+
+        foreach (var (concreteType, lifetime) in _concreteHelperTypesToRegister)
+        {
+            var alreadyRegistered = services.Any(sd => sd.ServiceType == concreteType);
+
+            if (alreadyRegistered)
+            {
+                _logger.LogDebug(
+                    "Skipping auto-registration of concrete helper {Implementation} (already registered by plugin)",
+                    concreteType.Name);
+                skippedAlreadyRegistered++;
+                continue;
+            }
+
+            services.Add(new ServiceDescriptor(concreteType, concreteType, lifetime));
+            _logger.LogDebug("Auto-registered concrete helper: {Implementation} ({Lifetime})",
+                concreteType.Name, lifetime);
+            autoRegistered++;
+        }
+
+        _logger.LogInformation(
+            "Concrete helper registration complete. {AutoRegistered} auto-registered, {Skipped} skipped (already registered by plugin)",
+            autoRegistered, skippedAlreadyRegistered);
+    }
+
+    /// <summary>
+    /// Register helper services with <see cref="DependencyRegistrationMode.Both"/>.
+    /// Registers concrete type as Singleton AND interface → factory(ConcreteType).
+    /// Supports IEnumerable accumulation (multiple implementations of the same interface).
+    /// </summary>
+    private void RegisterBothHelperTypes(IServiceCollection services)
+    {
+        var autoRegistered = 0;
+        var skippedAlreadyRegistered = 0;
+
+        foreach (var (interfaceType, implementationType, lifetime) in _bothHelperTypesToRegister)
+        {
+            var concreteAlreadyRegistered = services.Any(sd => sd.ServiceType == implementationType);
+
+            if (concreteAlreadyRegistered)
+            {
+                _logger.LogDebug(
+                    "Skipping auto-registration of both helper {Implementation} (already registered by plugin)",
+                    implementationType.Name);
+                skippedAlreadyRegistered++;
+                continue;
+            }
+
+            // Step 1: Register concrete type (for direct DI injection)
+            services.Add(new ServiceDescriptor(implementationType, implementationType, lifetime));
+
+            // Step 2: Register interface → factory (for IEnumerable<T> accumulation or polymorphic resolution)
+            services.Add(new ServiceDescriptor(interfaceType,
+                sp => sp.GetRequiredService(implementationType), lifetime));
+
+            _logger.LogDebug("Auto-registered both helper: {Implementation} + {Interface} ({Lifetime})",
+                implementationType.Name, interfaceType.Name, lifetime);
+            autoRegistered++;
+        }
+
+        _logger.LogInformation(
+            "Both (concrete+interface) helper registration complete. {AutoRegistered} auto-registered, {Skipped} skipped (already registered by plugin)",
             autoRegistered, skippedAlreadyRegistered);
     }
 

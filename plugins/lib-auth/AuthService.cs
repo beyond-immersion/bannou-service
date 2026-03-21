@@ -2062,31 +2062,4 @@ public partial class AuthService : IAuthService, IAccountDeletionCleanupRequired
 
     #endregion
 
-    #region Client Event Publishing (Multi-Device Security Notifications)
-
-    /// <summary>
-    /// Publish a client event to all WebSocket sessions for the given account.
-    /// Uses the Entity Session Registry for account-to-session routing.
-    /// Failures are logged but do not affect the caller (fire-and-forget for client notifications).
-    /// </summary>
-    private async Task PublishClientEventToAccountSessionsAsync<TEvent>(
-        Guid accountId, TEvent clientEvent, CancellationToken ct = default)
-        where TEvent : BaseClientEvent
-    {
-        using var activity = _telemetryProvider.StartActivity("bannou.auth", "AuthService.PublishClientEventToAccountSessions");
-        try
-        {
-            var count = await _entitySessionRegistry.PublishToEntitySessionsAsync(
-                "account", accountId, clientEvent, ct);
-            _logger.LogDebug("Published {EventName} to {SessionCount} sessions for account {AccountId}",
-                clientEvent.EventName, count, accountId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish {EventName} to account {AccountId} sessions",
-                clientEvent.EventName, accountId);
-        }
-    }
-
-    #endregion
 }

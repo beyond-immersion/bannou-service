@@ -74,6 +74,8 @@ public partial class PluginLoader
     private readonly List<Type> _clientTypesToRegister = new();
     private readonly List<(Type interfaceType, Type implementationType, ServiceLifetime lifetime)> _serviceTypesToRegister = new();
     private readonly List<(Type interfaceType, Type implementationType, ServiceLifetime lifetime)> _helperServiceTypesToRegister = new();
+    private readonly List<(Type concreteType, ServiceLifetime lifetime)> _concreteHelperTypesToRegister = new();
+    private readonly List<(Type interfaceType, Type implementationType, ServiceLifetime lifetime)> _bothHelperTypesToRegister = new();
     private readonly List<Type> _hostedServiceTypesToRegister = new();
     private readonly List<Type> _singletonAndHostedServiceTypesToRegister = new();
     private readonly List<(Type configurationType, ServiceLifetime lifetime)> _configurationTypesToRegister = new();

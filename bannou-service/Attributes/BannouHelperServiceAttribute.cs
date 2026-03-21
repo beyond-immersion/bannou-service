@@ -31,6 +31,38 @@ public enum HelperRegistrationMode
 }
 
 /// <summary>
+/// Controls how PluginLoader registers the DI dependency for this helper service.
+/// Orthogonal to <see cref="HelperRegistrationMode"/> which controls hosted service registration.
+/// </summary>
+public enum DependencyRegistrationMode
+{
+    /// <summary>
+    /// Register interface → implementation only (default).
+    /// Requires <see cref="BannouHelperServiceAttribute.InterfaceType"/> to be non-null.
+    /// PluginLoader registers: services.Add(ServiceDescriptor(InterfaceType, ConcreteType, Lifetime))
+    /// </summary>
+    Interface,
+
+    /// <summary>
+    /// Register concrete type only (no interface mapping).
+    /// <see cref="BannouHelperServiceAttribute.InterfaceType"/> is not used.
+    /// PluginLoader registers: services.Add(ServiceDescriptor(ConcreteType, ConcreteType, Lifetime))
+    /// </summary>
+    Concrete,
+
+    /// <summary>
+    /// Register both: concrete type as Singleton for direct DI injection,
+    /// AND interface → factory(ConcreteType) for interface-based resolution.
+    /// Requires <see cref="BannouHelperServiceAttribute.InterfaceType"/> to be non-null.
+    /// Used when a service needs to be injected both by concrete type (for direct access)
+    /// and by interface (for IEnumerable&lt;T&gt; accumulation or polymorphic resolution).
+    /// PluginLoader registers: services.AddSingleton(ConcreteType) +
+    ///   services.AddSingleton(InterfaceType, sp =&gt; sp.GetRequiredService(ConcreteType))
+    /// </summary>
+    Both
+}
+
+/// <summary>
 /// Attribute for helper/sub-services within a Bannou plugin assembly.
 /// Helper services are discovered and registered in DI automatically,
 /// just like primary services with <see cref="BannouServiceAttribute"/>.
@@ -108,6 +140,17 @@ public class BannouHelperServiceAttribute : Attribute
     /// need to be injected into other services.
     /// </summary>
     public HelperRegistrationMode RegistrationMode { get; set; } = HelperRegistrationMode.Interface;
+
+    /// <summary>
+    /// Controls how the DI dependency is registered (concrete type, interface, or both).
+    /// Defaults to <see cref="DependencyRegistrationMode.Interface"/> (standard interface→implementation).
+    /// Set to <see cref="DependencyRegistrationMode.Concrete"/> for helpers that only need
+    /// concrete type injection. Set to <see cref="DependencyRegistrationMode.Both"/> for helpers
+    /// that need both concrete type AND interface registration (e.g., action handlers registered
+    /// as both their concrete type and IActionHandler for IEnumerable accumulation).
+    /// Ignored when <see cref="RegistrationMode"/> is <see cref="HelperRegistrationMode.HostedService"/>.
+    /// </summary>
+    public DependencyRegistrationMode DependencyMode { get; set; } = DependencyRegistrationMode.Interface;
 
     /// <summary>
     /// Initializes a new instance of the BannouHelperServiceAttribute.

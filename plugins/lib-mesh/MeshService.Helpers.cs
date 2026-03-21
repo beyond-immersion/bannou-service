@@ -1,3 +1,13 @@
+using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Mesh.Services;
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+
 namespace BeyondImmersion.BannouService.Mesh;
 
 // =============================================================================
@@ -56,5 +66,75 @@ namespace BeyondImmersion.BannouService.Mesh;
 /// </remarks>
 public partial class MeshService
 {
-    // Move private/internal helper methods here from MeshService.cs
+    #region Event Publishing
+
+    private async Task PublishEndpointRegisteredEventAsync(
+        MeshEndpoint endpoint,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.publish_registered", ActivityKind.Internal);
+
+            var evt = new MeshEndpointRegisteredEvent
+            {
+                EventName = "mesh.endpoint_registered",
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                InstanceId = endpoint.InstanceId,
+                AppId = endpoint.AppId,
+                Host = endpoint.Host,
+                Port = endpoint.Port,
+                Services = endpoint.Services
+            };
+
+            await _messageBus.PublishMeshEndpointRegisteredAsync(evt, cancellationToken);
+
+            _logger.LogDebug("Published endpoint registered event for {InstanceId}", endpoint.InstanceId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish endpoint registered event");
+            await _messageBus.TryPublishErrorAsync(
+                "mesh", "PublishEndpointRegistered", ex.GetType().Name, ex.Message,
+                severity: ServiceErrorEventSeverity.Warning,
+                cancellationToken: cancellationToken);
+        }
+    }
+
+    private async Task PublishEndpointDeregisteredEventAsync(
+        Guid instanceId,
+        string appId,
+        DeregistrationReason reason,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.publish_deregistered", ActivityKind.Internal);
+
+            var evt = new MeshEndpointDeregisteredEvent
+            {
+                EventName = "mesh.endpoint_deregistered",
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                InstanceId = instanceId,
+                AppId = appId,
+                Reason = reason
+            };
+
+            await _messageBus.PublishMeshEndpointDeregisteredAsync(evt, cancellationToken);
+
+            _logger.LogDebug("Published endpoint deregistered event for {InstanceId}", instanceId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish endpoint deregistered event");
+            await _messageBus.TryPublishErrorAsync(
+                "mesh", "PublishEndpointDeregistered", ex.GetType().Name, ex.Message,
+                severity: ServiceErrorEventSeverity.Warning,
+                cancellationToken: cancellationToken);
+        }
+    }
+
+    #endregion
 }

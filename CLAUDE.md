@@ -25,6 +25,14 @@ An agent once read 145 files in a single session to write a comprehensive deep d
 
 ---
 
+## Command Execution via `run_command`
+
+**All shell commands in this document are executed via the MCP tool `mcp__bannou-read__run_command`.** When this document shows `bash` code blocks, `gh` commands, `dotnet build`, `make` targets, `find`, `ls`, `git diff`, generation scripts, or any other command-line invocation, use `run_command` to execute them. There is no separate Bash tool.
+
+`run_command` accepts a whitelisted set of commands: `gh` (GitHub CLI), `dotnet build/test`, `make` targets, generation scripts (`scripts/`, `python3 scripts/`), file discovery (`ls`, `find`, `wc`, `comm`), temp file operations (`cat /tmp/`, `rm -f /tmp/`, `echo`), and read-only git (`git status`, `git diff`, `git log`). Output redirection to `/tmp/` is supported (e.g., `dotnet test ... > /tmp/output.txt 2>&1`). Arbitrary shell scripting, file writes outside `/tmp/`, and destructive git operations are blocked.
+
+---
+
 ## ⚠️ GitHub Issues Reference
 
 **When "Issues" or "GH Issues" is mentioned, this refers to the bannou-service repository issues.** Use the GH CLI to check issues:
