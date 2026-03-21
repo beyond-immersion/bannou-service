@@ -132,10 +132,8 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
         });
         services.AddSingleton<BundleValidator>();
 
-        // Register metrics
-        services.AddSingleton<AssetMetrics>();
-
-        services.AddSingleton<AssetProcessorRegistry>();
+        // AssetMetrics and AssetProcessorRegistry auto-registered via [BannouHelperService]
+        // (DependencyMode.Concrete)
 
         Logger?.LogDebug("Service dependencies configured");
     }

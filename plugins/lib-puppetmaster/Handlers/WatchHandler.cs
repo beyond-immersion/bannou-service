@@ -37,7 +37,7 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Handlers;
 /// the Puppetmaster service injects a perception into the actor's bounded channel.
 /// </para>
 /// </remarks>
-[BannouHelperService("watch", typeof(IPuppetmasterService), lifetime: ServiceLifetime.Singleton)]
+[BannouHelperService("watch-action", typeof(IPuppetmasterService), typeof(IActionHandler), lifetime: ServiceLifetime.Singleton, DependencyMode = DependencyRegistrationMode.Both)]
 public sealed class WatchHandler : IActionHandler
 {
     private readonly WatchRegistry _registry;

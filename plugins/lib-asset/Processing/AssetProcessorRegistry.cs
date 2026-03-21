@@ -7,7 +7,7 @@ namespace BeyondImmersion.BannouService.Asset.Processing;
 /// <summary>
 /// Registry for asset processors. Manages processor discovery and routing.
 /// </summary>
-[BannouHelperService("asset-processor", typeof(IAssetService), lifetime: ServiceLifetime.Singleton)]
+[BannouHelperService("asset-processor", typeof(IAssetService), lifetime: ServiceLifetime.Singleton, DependencyMode = DependencyRegistrationMode.Concrete)]
 public sealed class AssetProcessorRegistry
 {
     private readonly IReadOnlyList<IAssetProcessor> _processors;

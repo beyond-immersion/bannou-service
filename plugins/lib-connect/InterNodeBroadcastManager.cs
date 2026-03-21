@@ -23,7 +23,7 @@ namespace BeyondImmersion.BannouService.Connect;
 /// </list>
 /// When inactive, no registration, discovery, connections, or timers are created.
 /// </remarks>
-[BannouHelperService("inter-node-broadcast", typeof(IConnectService), lifetime: ServiceLifetime.Singleton)]
+[BannouHelperService("inter-node-broadcast", typeof(IConnectService), lifetime: ServiceLifetime.Singleton, DependencyMode = DependencyRegistrationMode.Concrete)]
 public sealed class InterNodeBroadcastManager : IDisposable
 {
     private const string BROADCAST_REGISTRY_KEY = "broadcast-registry";

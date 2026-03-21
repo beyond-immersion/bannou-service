@@ -41,7 +41,7 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Handlers;
 /// </code>
 /// </para>
 /// </remarks>
-[BannouHelperService("prefetch-snapshots", typeof(IPuppetmasterService), lifetime: ServiceLifetime.Singleton)]
+[BannouHelperService("prefetch-snapshots", typeof(IPuppetmasterService), typeof(IActionHandler), lifetime: ServiceLifetime.Singleton, DependencyMode = DependencyRegistrationMode.Both)]
 public sealed class PrefetchSnapshotsHandler : IActionHandler
 {
     private readonly IResourceSnapshotCache _cache;

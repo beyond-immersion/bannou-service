@@ -25,7 +25,7 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Watches;
 /// all its watches are automatically cleaned up.
 /// </para>
 /// </remarks>
-[BannouHelperService("watch", typeof(IPuppetmasterService), lifetime: ServiceLifetime.Singleton)]
+[BannouHelperService("watch-registry", typeof(IPuppetmasterService), lifetime: ServiceLifetime.Singleton, DependencyMode = DependencyRegistrationMode.Concrete)]
 public sealed class WatchRegistry
 {
     // actorId -> { resourceKey -> WatchEntry }

@@ -30,7 +30,7 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Handlers;
 /// </code>
 /// </para>
 /// </remarks>
-[BannouHelperService("unwatch", typeof(IPuppetmasterService), lifetime: ServiceLifetime.Singleton)]
+[BannouHelperService("unwatch", typeof(IPuppetmasterService), typeof(IActionHandler), lifetime: ServiceLifetime.Singleton, DependencyMode = DependencyRegistrationMode.Both)]
 public sealed class UnwatchHandler : IActionHandler
 {
     private readonly WatchRegistry _registry;

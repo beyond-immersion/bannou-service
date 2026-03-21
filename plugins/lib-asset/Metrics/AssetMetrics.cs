@@ -9,7 +9,7 @@ namespace BeyondImmersion.BannouService.Asset.Metrics;
 /// Prometheus-compatible metrics for the Asset service.
 /// Uses System.Diagnostics.Metrics which can be exported via OpenTelemetry.
 /// </summary>
-[BannouHelperService("asset-metrics", typeof(IAssetService), lifetime: ServiceLifetime.Singleton)]
+[BannouHelperService("asset-metrics", typeof(IAssetService), lifetime: ServiceLifetime.Singleton, DependencyMode = DependencyRegistrationMode.Concrete)]
 public sealed class AssetMetrics : IDisposable
 {
     private readonly Meter _meter;

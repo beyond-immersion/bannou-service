@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Caching;
 /// <summary>
 /// Thread-safe cache for ABML behavior documents loaded from the asset service.
 /// </summary>
-[BannouHelperService("behavior-document", typeof(IPuppetmasterService), lifetime: ServiceLifetime.Singleton)]
+[BannouHelperService("behavior-document", typeof(IPuppetmasterService), typeof(IBehaviorDocumentCache), lifetime: ServiceLifetime.Singleton, DependencyMode = DependencyRegistrationMode.Both)]
 public sealed class BehaviorDocumentCache : IBehaviorDocumentCache
 {
     private readonly ConcurrentDictionary<string, CacheEntry> _cache = new();

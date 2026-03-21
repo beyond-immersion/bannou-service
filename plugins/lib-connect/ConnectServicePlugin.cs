@@ -14,15 +14,5 @@ public class ConnectServicePlugin : StandardServicePlugin<IConnectService>
     public override string PluginName => "connect";
     public override string DisplayName => "Connect Service";
 
-    public override void ConfigureServices(IServiceCollection services)
-    {
-        Logger?.LogDebug("Configuring service dependencies");
-
-        // Register inter-node broadcast manager for multi-instance broadcast relay
-        // Must be Singleton because it maintains WebSocket connections to peer Connect instances
-        services.AddSingleton<InterNodeBroadcastManager>();
-        Logger?.LogDebug("Registered InterNodeBroadcastManager");
-
-        Logger?.LogDebug("Service dependencies configured");
-    }
+    // InterNodeBroadcastManager auto-registered via [BannouHelperService] (DependencyMode.Concrete)
 }

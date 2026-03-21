@@ -31,7 +31,7 @@ namespace BeyondImmersion.BannouService.Actor.Providers;
 /// sorted by priority descending. The first provider that can serve a behavior reference wins.
 /// </para>
 /// </remarks>
-[BannouHelperService("behavior-document", typeof(IActorService), lifetime: ServiceLifetime.Singleton)]
+[BannouHelperService("behavior-document", typeof(IActorService), typeof(IBehaviorDocumentLoader), lifetime: ServiceLifetime.Singleton, DependencyMode = DependencyRegistrationMode.Both)]
 public sealed class BehaviorDocumentLoader : IBehaviorDocumentLoader
 {
     private readonly IReadOnlyList<IBehaviorDocumentProvider> _providers;

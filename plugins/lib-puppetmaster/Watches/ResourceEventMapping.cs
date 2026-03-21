@@ -24,7 +24,7 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Watches;
 /// from x-resource-mapping extensions in event schemas.
 /// </para>
 /// </remarks>
-[BannouHelperService("resource-event", typeof(IPuppetmasterService), lifetime: ServiceLifetime.Singleton)]
+[BannouHelperService("resource-event", typeof(IPuppetmasterService), lifetime: ServiceLifetime.Singleton, DependencyMode = DependencyRegistrationMode.Concrete)]
 public sealed class ResourceEventMapping
 {
     private readonly ConcurrentDictionary<string, SourceTypeMapping> _sourceToMapping = new();

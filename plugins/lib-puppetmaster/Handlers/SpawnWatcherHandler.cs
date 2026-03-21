@@ -35,7 +35,7 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Handlers;
 /// Puppetmaster service.
 /// </para>
 /// </remarks>
-[BannouHelperService("spawn-watcher", typeof(IPuppetmasterService), lifetime: ServiceLifetime.Singleton)]
+[BannouHelperService("spawn-watcher", typeof(IPuppetmasterService), typeof(IActionHandler), lifetime: ServiceLifetime.Singleton, DependencyMode = DependencyRegistrationMode.Both)]
 public sealed class SpawnWatcherHandler : IActionHandler
 {
     private readonly IServiceScopeFactory _scopeFactory;

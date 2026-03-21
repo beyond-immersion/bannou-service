@@ -59,14 +59,8 @@ public class ActorServicePlugin : StandardServicePlugin<IActorService>
         // owning L3/L4 plugins (lib-character-personality, lib-character-encounter, lib-quest) via
         // IVariableProviderFactory interface. Actor (L2) discovers them via DI collection injection.
 
-        services.AddSingleton<BehaviorDocumentLoader>();
-        services.AddSingleton<IBehaviorDocumentLoader>(sp => sp.GetRequiredService<BehaviorDocumentLoader>());
-
-        // Register all pool-related services unconditionally
-        // Each service checks its own configuration in ExecuteAsync/Start and becomes a no-op
-        // if running in the wrong mode. This follows FOUNDATION TENETS - configuration access
-        // via DI, not Environment.GetEnvironmentVariable during registration.
-        services.AddSingleton<HeartbeatEmitter>();
+        // BehaviorDocumentLoader and HeartbeatEmitter auto-registered via [BannouHelperService]
+        // (DependencyMode.Both and DependencyMode.Concrete respectively)
     }
 
     /// <summary>

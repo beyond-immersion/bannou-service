@@ -46,7 +46,7 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Handlers;
 /// null for all paths (graceful degradation).
 /// </para>
 /// </remarks>
-[BannouHelperService("load-snapshot", typeof(IPuppetmasterService), lifetime: ServiceLifetime.Singleton)]
+[BannouHelperService("load-snapshot", typeof(IPuppetmasterService), typeof(IActionHandler), lifetime: ServiceLifetime.Singleton, DependencyMode = DependencyRegistrationMode.Both)]
 public sealed class LoadSnapshotHandler : IActionHandler
 {
     private readonly IResourceSnapshotCache _cache;
