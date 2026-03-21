@@ -25,6 +25,22 @@ An agent once read 145 files in a single session to write a comprehensive deep d
 
 ---
 
+## MCP File Operations (`mcp__bannou-read__*`)
+
+**All file and command operations use the Bannou MCP server** (`.claude/mcp/server.mjs`). These tools operate in their own permission space, independent of Claude Code's built-in Read/Edit tools.
+
+| Tool | Purpose | When to Use |
+|------|---------|-------------|
+| `read_file` | Full-read files with line numbers. Large files split into continuation parts — **all parts must be read before editing or moving**. | Always. Use instead of built-in Read. |
+| `edit_file` | Exact string replacement in files. Requires `read_file` first. | Small, targeted in-place changes (modifying content, adding code, removing short sections). |
+| `move_lines` | Move a line range from one file to another by line number. Both files written atomically. Runs **structure validation** automatically after each move. | Relocating methods, blocks, or sections between files. No string matching — immune to invisible whitespace issues. |
+| `validate_structure` | Check a C# file for balanced braces, `#region`/`#endregion`, and `#if`/`#endif`. | After manual edits, or to diagnose structural build failures. Also runs automatically inside `move_lines`. |
+| `run_command` | Execute whitelisted shell commands (see below). | Builds, tests, generation, git queries, file discovery. |
+
+**`move_lines` details**: Takes `source_file`, `start_line`, `end_line`, `dest_file`, `dest_insert_after_line`. Optional safety anchors `expect_first_line_contains` and `expect_last_line_contains` verify content before moving — catches off-by-one errors. Work bottom-up when moving multiple blocks from the same file (preserves line numbers for earlier blocks). After writing both files, automatically validates structure and reports any issues (orphaned regions, brace imbalances).
+
+**When to use `move_lines` vs `edit_file`**: Use `move_lines` when relocating existing code between files (method moves, block extraction). Use `edit_file` for in-place modifications (changing content, adding new code, removing small sections).
+
 ## Command Execution via `run_command`
 
 **All shell commands in this document are executed via the MCP tool `mcp__bannou-read__run_command`.** When this document shows `bash` code blocks, `gh` commands, `dotnet build`, `make` targets, `find`, `ls`, `git diff`, generation scripts, or any other command-line invocation, use `run_command` to execute them. There is no separate Bash tool.
