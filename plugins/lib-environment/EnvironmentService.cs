@@ -60,13 +60,16 @@ public partial class EnvironmentService : IEnvironmentService
         IStateStoreFactory stateStoreFactory,
         IResourceClient resourceClient,
         ILogger<EnvironmentService> logger,
-        EnvironmentServiceConfiguration configuration)
+        EnvironmentServiceConfiguration configuration,
+        IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
         _resourceClient = resourceClient;
         _logger = logger;
         _configuration = configuration;
+
+        RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>

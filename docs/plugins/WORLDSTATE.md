@@ -409,8 +409,7 @@ flows:
 
 ### Bugs (Fix Immediately)
 
-1. **Self-subscription event handlers not wired up (#710)**: 10 events declared in `x-event-subscriptions` (calendar template lifecycle, realm config lifecycle, boundary events, realm clock initialized) have no corresponding `RegisterHandler` calls in `WorldstateServiceEvents.cs`. These are self-subscriptions for cache invalidation (CalendarTemplateCache, RealmClockCache) per quirk #11 — the subscriptions are declared but the handlers were never implemented.
-<!-- AUDIT:CONFIRMED:2026-03-21:https://github.com/beyond-immersion/bannou-service/issues/710 -->
+1. ~~**Self-subscription event handlers not wired up (#710)**~~: **NOT A BUG** (2026-03-21) — False positive from structural test `ParseSubscriptionEntries` bleeding from `x-event-subscriptions` into `x-event-publications` when both are indented under `info:`. All 5 actual subscriptions have working RegisterHandler calls. The 10 "missing" events were publications misread as subscriptions. Parser fixed in #710.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -453,3 +452,6 @@ flows:
 ## Work Tracking
 
 *All stubs and design considerations resolved as of 2026-03-20. Ratio history compaction (#529), background worker scalability (#546), game-time migration (#544, #545) — see Resolved sections above. Implementation awaiting prioritization.*
+
+### Completed
+- **2026-03-21**: Issue #710 — Structural test parser bug caused 10 false positive "missing handler" findings. Parser fixed; all 5 actual subscriptions were already correctly wired.

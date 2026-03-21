@@ -47,6 +47,8 @@ An agent once read 145 files in a single session to write a comprehensive deep d
 
 `run_command` accepts a whitelisted set of commands: `gh` (GitHub CLI), `dotnet build/test`, `make` targets, generation scripts (`scripts/`, `python3 scripts/`), file discovery (`ls`, `find`, `wc`, `comm`), temp file operations (`cat /tmp/`, `rm -f /tmp/`, `echo`), and read-only git (`git status`, `git diff`, `git log`). Output redirection to `/tmp/` is supported (e.g., `dotnet test ... > /tmp/output.txt 2>&1`). Arbitrary shell scripting, file writes outside `/tmp/`, and destructive git operations are blocked.
 
+**GitHub issue comments**: Use `--body-file` instead of inline `--body` for `gh issue comment`. PreToolUse hooks scan the full command string including body content, which triggers false positives. Write the comment to `/tmp/gh-comment-{number}.md` with the Write tool, then run `gh issue comment {number} --body-file /tmp/gh-comment-{number}.md`.
+
 ---
 
 ## ⚠️ GitHub Issues Reference

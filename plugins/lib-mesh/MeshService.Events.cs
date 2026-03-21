@@ -35,6 +35,7 @@ public partial class MeshService
                 MeshPublishedTopics.MeshMappingsUpdated,
                 async (svc, evt) => await ((MeshService)svc).HandleMeshMappingsUpdatedAsync(evt));
         }
+
     }
 
     /// <summary>

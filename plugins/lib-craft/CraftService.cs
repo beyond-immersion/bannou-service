@@ -60,13 +60,16 @@ public partial class CraftService : ICraftService
         IStateStoreFactory stateStoreFactory,
         IResourceClient resourceClient,
         ILogger<CraftService> logger,
-        CraftServiceConfiguration configuration)
+        CraftServiceConfiguration configuration,
+        IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
         _resourceClient = resourceClient;
         _logger = logger;
         _configuration = configuration;
+
+        RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>

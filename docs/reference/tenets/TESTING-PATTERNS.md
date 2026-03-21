@@ -186,6 +186,10 @@ Assert.Equal(request.DisplayName, savedModel.DisplayName);
 
 Most structural validators are **centralized in `structural-tests/StructuralTests.cs`** and run automatically for every service discovered via `[BannouService]` attribute reflection. Individual plugin test projects do **not** need to duplicate these tests — adding a project reference to `structural-tests.csproj` is sufficient.
 
+### Structural Test Failures Are Implementation Gaps
+
+Structural test failures mean something is missing — a handler, a constructor call, a key prefix. The fix is implementing the missing logic, not creating empty handlers to satisfy the test's string search. If the entire service is in a pre-implementation state (all endpoints throw `NotImplementedException`), stub handlers are acceptable. Otherwise, implement the real behavior.
+
 ### What Structural Tests Cover (Per Service, Auto-Discovered)
 
 | Validator | Structural Test | What It Catches |

@@ -94,6 +94,7 @@ Present concerns about frozen files and wait for explicit, in-conversation instr
 ### Environment & Testing
 - Use .env files for configuration. Integration tests run only when the user asks (hook-enforced: `block-integration-tests.sh`).
 - Testing rules load contextually via `.claude/rules/testing-patterns.md` when working in test projects.
+- Structural test failures are implementation gaps, not test problems. Implement the missing logic — do not write stubs unless the entire service is in a pre-implementation state.
 
 ### Cross-Service Data
 - `additionalProperties: true` is not a data contract between services. See FOUNDATION TENETS (T29) for the full rule. Issue #308 tracks existing violations.

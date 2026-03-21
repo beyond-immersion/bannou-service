@@ -169,7 +169,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-escrow", "plugins\lib-e
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-escrow.tests", "plugins\lib-escrow.tests\lib-escrow.tests.csproj", "{3B2426BF-AADD-4D79-9CDC-D0F756506DAE}"
 EndProject
-
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-telemetry", "plugins\lib-telemetry\lib-telemetry.csproj", "{4F22FE61-EF4E-4B74-9AF1-D082CA8AF486}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lib-telemetry.tests", "plugins\lib-telemetry.tests\lib-telemetry.tests.csproj", "{DC5E61C0-76BA-43A5-9A89-20C67E6501FE}"

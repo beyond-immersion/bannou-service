@@ -48,9 +48,9 @@ public partial class MappingService
     protected void RegisterEventConsumers(IEventConsumer eventConsumer)
     {
         // No static event consumers required.
-        // Ingest subscriptions are managed dynamically:
+        // MapIngestEvent subscriptions are managed dynamically per-channel:
         // - SubscribeToIngestTopicAsync() creates subscription when channel is created
-        // - HandleIngestEventAsync() processes ingest events from authority
+        // - HandleIngestEventAsync() processes MapIngestEvent payloads from authority
         // - Subscriptions are disposed when authority is released
         //
         // This dynamic model allows the service to handle arbitrary numbers of

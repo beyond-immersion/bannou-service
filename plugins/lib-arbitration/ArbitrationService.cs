@@ -60,13 +60,16 @@ public partial class ArbitrationService : IArbitrationService
         IStateStoreFactory stateStoreFactory,
         IResourceClient resourceClient,
         ILogger<ArbitrationService> logger,
-        ArbitrationServiceConfiguration configuration)
+        ArbitrationServiceConfiguration configuration,
+        IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
         _resourceClient = resourceClient;
         _logger = logger;
         _configuration = configuration;
+
+        RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>

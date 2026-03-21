@@ -156,8 +156,7 @@ Event-Driven Auto-Registration
 
 1. ~~**L0 subscribing to L3 events (`bannou.full-service-mappings`)**~~: **FIXED** (2026-03-13) - Replaced with DI interface inversion: Mesh (L0) provides `IServiceMappingReceiver` implementation that Orchestrator (L3) discovers and pushes mapping updates into. The implementation updates the local `IServiceAppMappingResolver` and broadcasts `mesh.mappings.updated` (L0→L0) events for cross-node sync. Mesh no longer subscribes to any L3 events.
 
-2. **MeshCircuitStateChangedEvent handler not wired up (#710)**: `x-event-subscriptions` declares a subscription to `mesh.circuit.changed` (`MeshCircuitStateChangedEvent`) but `MeshServiceEvents.cs` has no corresponding `RegisterHandler` call.
-<!-- AUDIT:CONFIRMED:2026-03-21:https://github.com/beyond-immersion/bannou-service/issues/710 -->
+2. ~~**MeshCircuitStateChangedEvent handler not wired up (#710)**~~: **NOT A BUG** (2026-03-21) — The handler exists in `DistributedCircuitBreaker.HandleStateChangeEvent` via direct `IMessageSubscriber` subscription in `MeshInvocationClient`, not `IEventConsumer`. Added to human-curated `EventSubscriptionHandlerExclusions` in structural tests. The `x-event-subscriptions` declaration is correct (the event IS consumed), but the mechanism is alternative to the standard IEventConsumer pattern.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -189,4 +188,5 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed
 
+- [#710](https://github.com/beyond-immersion/bannou-service/issues/710) — MeshCircuitStateChangedEvent false positive: handler exists in DistributedCircuitBreaker via direct IMessageSubscriber, not IEventConsumer. Added to structural test exception list. (2026-03-21)
 - [#638](https://github.com/beyond-immersion/bannou-service/issues/638) — T27: Mesh (L0) subscribes to Orchestrator (L3) full-service-mappings event — **FIXED** (2026-03-13)

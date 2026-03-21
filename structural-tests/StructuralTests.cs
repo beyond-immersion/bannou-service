@@ -19,6 +19,10 @@ namespace BeyondImmersion.BannouService.StructuralTests;
 /// Services are discovered via [BannouService] attribute reflection — adding
 /// a new plugin automatically includes it with zero opt-in required.
 /// </summary>
+/// <remarks>
+/// Structural tests identify implementation gaps. When a test fails, implement the
+/// missing logic — do not write empty stubs to make it pass.
+/// </remarks>
 public class StructuralTests
 {
     /// <summary>
@@ -847,6 +851,19 @@ public class StructuralTests
     /// If a service declares event subscriptions in the schema but never wires them up,
     /// events are silently lost at runtime (IMPLEMENTATION TENETS T3).
     /// </summary>
+    ///
+    // ⛔ FROZEN — Only the human adds entries. Agents MUST NOT modify this list.
+    // Contains "service-name:EventTypeName" entries for subscriptions handled via
+    // alternative mechanisms (e.g., direct IMessageSubscriber in a helper service)
+    // rather than IEventConsumer in *Service.Events.cs.
+    private static readonly HashSet<string> EventSubscriptionHandlerExclusions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        // mesh:MeshCircuitStateChangedEvent — handled by DistributedCircuitBreaker via
+        // direct IMessageSubscriber subscription in MeshInvocationClient, not IEventConsumer.
+        // See docs/maps/MESH.md § HandleCircuitStateChanged.
+        "mesh:MeshCircuitStateChangedEvent",
+    };
+
     [Fact]
     public void Services_WithEventSubscriptions_MustRegisterConsumers()
     {
@@ -924,6 +941,11 @@ public class StructuralTests
             // Verify each subscribed event type has a RegisterHandler call
             foreach (var (topic, eventType) in subscriptions)
             {
+                // Skip events handled via alternative mechanisms (direct IMessageSubscriber, etc.)
+                var exclusionKey = $"{serviceName}:{eventType}";
+                if (EventSubscriptionHandlerExclusions.Contains(exclusionKey))
+                    continue;
+
                 if (!eventsContent.Contains(eventType, StringComparison.Ordinal))
                 {
                     failures.Add(
@@ -970,6 +992,13 @@ public class StructuralTests
             if (trimmed.Length > 0 && !char.IsWhiteSpace(lines[i][0])
                 && !trimmed.StartsWith("-", StringComparison.Ordinal)
                 && !trimmed.StartsWith("#", StringComparison.Ordinal))
+            {
+                break;
+            }
+
+            // Exit at sibling x-* extension attributes at the same indentation level
+            // (prevents bleeding from x-event-subscriptions into x-event-publications)
+            if (trimmed.StartsWith("x-", StringComparison.Ordinal) && trimmed.Contains(':', StringComparison.Ordinal))
             {
                 break;
             }
@@ -1582,6 +1611,13 @@ public class StructuralTests
                     inSubscriptions = false;
                 }
 
+                // Exit at sibling x-* extension attributes at the same indentation level
+                if (inSubscriptions && trimmed.StartsWith("x-", StringComparison.Ordinal)
+                    && trimmed.Contains(':', StringComparison.Ordinal))
+                {
+                    inSubscriptions = false;
+                }
+
                 if (inSubscriptions && trimmed.StartsWith("topic: account.deleted", StringComparison.Ordinal))
                 {
                     services.Add(serviceName);
@@ -1871,6 +1907,14 @@ public class StructuralTests
                 inPublications = false;
             }
 
+            // Exit at sibling x-* extension attributes at the same indentation level
+            // (prevents bleeding from x-event-publications into x-event-subscriptions)
+            if (inPublications && trimmed.StartsWith("x-", StringComparison.Ordinal)
+                && trimmed.Contains(':', StringComparison.Ordinal))
+            {
+                inPublications = false;
+            }
+
             if (inPublications && trimmed.StartsWith("- topic:", StringComparison.Ordinal))
             {
                 var topic = trimmed["- topic:".Length..].Trim();
@@ -2102,6 +2146,14 @@ public class StructuralTests
             if (inSubscriptions && trimmed.Length > 0 && !char.IsWhiteSpace(lines[i][0])
                 && !trimmed.StartsWith("-", StringComparison.Ordinal)
                 && !trimmed.StartsWith("#", StringComparison.Ordinal))
+            {
+                inSubscriptions = false;
+            }
+
+            // Exit at sibling x-* extension attributes at the same indentation level
+            // (prevents bleeding from x-event-subscriptions into x-event-publications)
+            if (inSubscriptions && trimmed.StartsWith("x-", StringComparison.Ordinal)
+                && trimmed.Contains(':', StringComparison.Ordinal))
             {
                 inSubscriptions = false;
             }
