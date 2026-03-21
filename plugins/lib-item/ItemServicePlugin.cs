@@ -22,9 +22,7 @@ public class ItemServicePlugin : StandardServicePlugin<IItemService>
     {
         base.ConfigureServices(services);
 
-        // Register instance lifecycle event batcher as Singleton.
-        // ItemService (Scoped) injects it to call Add* synchronously.
-        services.AddSingleton<ItemInstanceEventBatcher>();
+        // ItemInstanceEventBatcher auto-registered via [BannouHelperService] (Concrete mode)
 
         // Single worker flushes all three batchers (created, modified, destroyed) per cycle.
         services.AddSingleton<IHostedService>(sp =>

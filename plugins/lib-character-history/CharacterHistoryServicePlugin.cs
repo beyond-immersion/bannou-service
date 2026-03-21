@@ -23,8 +23,7 @@ public class CharacterHistoryServicePlugin : StandardServicePlugin<ICharacterHis
     {
         base.ConfigureServices(services);
 
-        // Register participation event batcher (Singleton — accumulates entries from Scoped service methods)
-        services.AddSingleton<ParticipationEventBatcher>();
+        // ParticipationEventBatcher auto-registered via [BannouHelperService] (Concrete mode)
 
         // Register EventBatcherWorker to flush batched participation events periodically
         services.AddSingleton<IHostedService>(sp =>

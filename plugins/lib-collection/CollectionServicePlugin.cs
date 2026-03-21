@@ -23,9 +23,7 @@ public class CollectionServicePlugin : StandardServicePlugin<ICollectionService>
     {
         base.ConfigureServices(services);
 
-        // Register instance lifecycle event batcher as Singleton.
-        // CollectionService (Scoped) injects it to call Add* synchronously.
-        services.AddSingleton<CollectionInstanceEventBatcher>();
+        // CollectionInstanceEventBatcher auto-registered via [BannouHelperService] (Concrete mode)
 
         // Single worker flushes both batchers (created, destroyed) per cycle.
         services.AddSingleton<IHostedService>(sp =>

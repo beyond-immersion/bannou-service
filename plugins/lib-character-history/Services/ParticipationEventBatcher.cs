@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +16,7 @@ namespace BeyondImmersion.BannouService.CharacterHistory;
 /// Registered as Singleton. Service methods call Add* synchronously (non-blocking).
 /// A single <see cref="EventBatcherWorker"/> flushes both batchers per cycle.
 /// </remarks>
+[BannouHelperService("participation-batcher", typeof(ICharacterHistoryService), lifetime: ServiceLifetime.Singleton, DependencyMode = DependencyRegistrationMode.Concrete)]
 public class ParticipationEventBatcher
 {
     private readonly EventBatcher<ParticipationBatchEntry> _created;

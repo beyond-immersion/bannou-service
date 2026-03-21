@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +16,7 @@ namespace BeyondImmersion.BannouService.Item;
 /// Registered as Singleton. Service methods call Add* synchronously (non-blocking).
 /// A single <see cref="EventBatcherWorker"/> flushes all three batchers per cycle.
 /// </remarks>
+[BannouHelperService("item-instance-batcher", typeof(IItemService), lifetime: ServiceLifetime.Singleton, DependencyMode = DependencyRegistrationMode.Concrete)]
 public class ItemInstanceEventBatcher
 {
     private readonly EventBatcher<ItemInstanceBatchEntry> _created;

@@ -1,6 +1,8 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Localization;
@@ -10,6 +12,7 @@ namespace BeyondImmersion.BannouService.Localization;
 /// Registered as Singleton, discovered by L2+ services via <c>IEnumerable&lt;ILocalizationKeyValidator&gt;</c>.
 /// Distributed safety: always safe — reads from MySQL/Redis distributed state.
 /// </summary>
+[BannouHelperService("localization-key-validator", typeof(ILocalizationService), typeof(ILocalizationKeyValidator), lifetime: ServiceLifetime.Singleton)]
 public class LocalizationKeyValidator : ILocalizationKeyValidator
 {
     private readonly IStateStore<string> _categoryCodeStore;

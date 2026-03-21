@@ -135,6 +135,122 @@ public class StructuralTests
 
     // ⛔ FROZEN — Do not modify without explicit user permission.
     /// <summary>
+    /// Detects types registered in Plugin.ConfigureServices that live in plugin assemblies
+    /// (lib-*) but lack a [BannouHelperService] attribute. If a type is DI-registered and
+    /// injected into services, it is a helper service and should use the attribute for
+    /// auto-discovery by PluginLoader. Types in non-plugin assemblies (bannou-service, SDKs)
+    /// are exempt because PluginLoader only scans plugin assemblies.
+    /// Factory lambda registrations (sp =>) are exempt because they require custom construction.
+    /// </summary>
+    [Fact]
+    public void PluginTypes_RegisteredInDI_ShouldHaveBannouHelperServiceAttribute()
+    {
+        EnsureAssembliesLoaded();
+
+        var pluginsDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "plugins");
+        if (!Directory.Exists(pluginsDir))
+            return;
+
+        // Build a lookup: type name -> Type for all types in lib-* assemblies
+        var pluginTypesByName = new Dictionary<string, List<Type>>(StringComparer.Ordinal);
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            var assemblyName = assembly.GetName().Name;
+            if (assemblyName == null || !assemblyName.StartsWith("lib-", StringComparison.Ordinal))
+                continue;
+            if (assemblyName.EndsWith(".tests", StringComparison.Ordinal))
+                continue;
+
+            Type[] types;
+            try { types = assembly.GetTypes(); }
+            catch (ReflectionTypeLoadException) { continue; }
+
+            foreach (var type in types)
+            {
+                if (type.IsInterface || type.IsAbstract) continue;
+
+                if (!pluginTypesByName.TryGetValue(type.Name, out var list))
+                {
+                    list = new List<Type>();
+                    pluginTypesByName[type.Name] = list;
+                }
+                list.Add(type);
+            }
+        }
+
+        var violations = new List<string>();
+
+        foreach (var pluginFile in Directory.GetFiles(pluginsDir, "*Plugin.cs", SearchOption.AllDirectories))
+        {
+            var relativePath = Path.GetRelativePath(TestAssemblyDiscovery.RepoRoot, pluginFile);
+
+            foreach (var line in File.ReadAllLines(pluginFile))
+            {
+                var trimmed = line.TrimStart();
+
+                // Only look at service registration calls
+                if (!trimmed.StartsWith("services.Add", StringComparison.Ordinal))
+                    continue;
+
+                // Skip patterns that can't use attribute-based registration
+                if (trimmed.Contains("sp =>") || trimmed.Contains("(sp"))
+                    continue; // factory lambda
+                if (trimmed.Contains("AddConditional", StringComparison.Ordinal))
+                    continue; // approved conditional
+                if (trimmed.Contains("AddHostedService", StringComparison.Ordinal))
+                    continue; // covered by hosted service test
+                if (trimmed.Contains("AddHttpClient", StringComparison.Ordinal))
+                    continue; // framework
+                if (trimmed.Contains("AddOptions", StringComparison.Ordinal))
+                    continue; // framework
+                if (trimmed.StartsWith("base.", StringComparison.Ordinal))
+                    continue;
+                if (trimmed.StartsWith("//", StringComparison.Ordinal))
+                    continue;
+
+                // Extract type name(s) from generic arguments
+                var angleBracketStart = trimmed.IndexOf('<');
+                var angleBracketEnd = trimmed.IndexOf('>');
+                if (angleBracketStart < 0 || angleBracketEnd < 0)
+                    continue;
+
+                var generics = trimmed[(angleBracketStart + 1)..angleBracketEnd];
+                var parts = generics.Split(',', StringSplitOptions.TrimEntries);
+
+                // Get the implementation type name (last generic arg, or only arg)
+                var implTypeName = parts[^1];
+
+                // Skip namespace-qualified external types (e.g., Bundles.ZipCacheCleanupWorker)
+                if (implTypeName.Contains('.'))
+                    continue;
+
+                // Look up in plugin assemblies
+                if (!pluginTypesByName.TryGetValue(implTypeName, out var matchingTypes))
+                    continue; // type not in any plugin assembly — exempt (SDK, bannou-service, external)
+
+                // Check if ANY matching type has [BannouHelperService]
+                var hasAttribute = matchingTypes.Any(t =>
+                    t.GetCustomAttribute<BannouHelperServiceAttribute>() != null);
+
+                if (!hasAttribute)
+                {
+                    var assemblyNames = string.Join(", ", matchingTypes.Select(t => t.Assembly.GetName().Name));
+                    violations.Add(
+                        $"{relativePath}: services.Add*<{implTypeName}>() — " +
+                        $"type lives in plugin assembly ({assemblyNames}) but has no [BannouHelperService] attribute");
+                }
+            }
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            $"{violations.Count} plugin type(s) registered in DI without [BannouHelperService] attribute. " +
+            $"Plugin types that are DI-registered and injected should use the attribute for auto-discovery:\n" +
+            string.Join("\n", violations.Select(v => $"  - {v}")));
+    }
+
+    // ⛔ FROZEN — Do not modify without explicit user permission.
+    /// <summary>
     /// Detects Plugin.cs files that still manually register helper services which have
     /// [BannouHelperService] with a non-null InterfaceType. These registrations are now
     /// redundant because PluginLoader auto-discovers and registers them.

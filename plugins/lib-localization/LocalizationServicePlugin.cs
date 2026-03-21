@@ -15,14 +15,5 @@ public class LocalizationServicePlugin : StandardServicePlugin<ILocalizationServ
     /// <inheritdoc />
     public override string DisplayName => "Localization Service";
 
-    /// <summary>
-    /// Registers DI services including the ILocalizationKeyValidator for cross-layer validation.
-    /// </summary>
-    public override void ConfigureServices(IServiceCollection services)
-    {
-        base.ConfigureServices(services);
-
-        // Register key validator as Singleton — discovered by L2+ via IEnumerable<ILocalizationKeyValidator>
-        services.AddSingleton<ILocalizationKeyValidator, LocalizationKeyValidator>();
-    }
+    // LocalizationKeyValidator auto-registered via [BannouHelperService] (Interface mode, ILocalizationKeyValidator)
 }

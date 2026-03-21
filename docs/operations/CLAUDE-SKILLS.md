@@ -1,21 +1,22 @@
 # Claude Code Integration Guide
 
-> **Last Updated**: 2026-03-19
+> **Last Updated**: 2026-03-21
 > **Scope**: Claude Code configuration, hooks, and custom automation for Bannou development
 
 ## Summary
 
-Claude Code integration configuration for Bannou development. Covers PreToolUse hooks (blocking dangerous operations, enforcing commit format, providing contextual reminders), a permission canary fail-fast gate for skills, and 16 custom slash commands for plugin documentation, auditing, implementation, schema work, and issue investigation. Required reading before creating new hooks, commands, or agent workflows.
+Claude Code integration configuration for Bannou development. Built around a custom MCP server (`bannou-read`) that replaces Claude's built-in Read, Edit, and Bash tools with a sandboxed tool set — eliminating entire categories of failure by making them structurally impossible rather than behaviorally discouraged. Also covers PreToolUse hooks (behavioral reminders, commit format enforcement), a permission canary fail-fast gate for skills, 16 custom skills for plugin documentation/auditing/implementation/schema work, and project-aware agent types. Required reading before creating new hooks, skills, or agent workflows.
 
 ---
 
 ## Overview
 
-Bannou uses Claude Code with custom configuration organized in three layers:
+Bannou uses Claude Code with custom configuration organized in four layers:
 
-1. **Hooks** — Real-time procedural gates that fire on specific tool calls. Some block (destructive git, production deploys), some remind (frozen files, task format, language patterns). Hooks enforce rules at the moment of action rather than relying on Claude remembering rules from thousands of tokens ago.
-2. **Skills** — Mechanical checklists for complex workflows (auditing, implementation, testing). Each skill is a step-by-step procedure with verification at each stage.
-3. **Agents** — Project-aware sub-agents that pre-load Bannou context (tenets, patterns, schema rules) before doing work.
+1. **MCP Server** — A custom file operations server (`bannou-read`) that replaces Claude's built-in Read, Edit, and Bash tools. Agents operate exclusively through this sandboxed tool set: `read_file`, `edit_file`, `move_lines`, `validate_structure`, and `run_command` (whitelisted commands only). This is the foundation — by controlling what tools are available, entire categories of misbehavior become structurally impossible.
+2. **Hooks** — Real-time procedural gates that fire on specific tool calls. Some block (destructive git, production deploys), some remind (frozen files, task format, language patterns). Many hooks that were critical before the MCP server are now redundant for agents — the MCP server's tool restrictions achieve the same result with zero interruption cost.
+3. **Skills** — Mechanical checklists for complex workflows (auditing, implementation, testing). Each skill is a step-by-step procedure with verification at each stage, stored as `.claude/skills/{name}/SKILL.md` with shared fragments in `.claude/skills/_shared/`.
+4. **Agents** — Project-aware sub-agents that pre-load Bannou context (tenets, patterns, schema rules) before doing work. Agent tool lists are defined in `.claude/agents/*.md` and include only MCP tools — agents cannot access built-in Read, Edit, or Bash.
 
 ---
 
@@ -42,6 +43,110 @@ For the history of specific incidents that shaped individual hooks, see `docs/re
 
 ---
 
+## MCP File Operations Server
+
+The most impactful improvement to the Claude workflow is a custom MCP server (`.claude/mcp/server.mjs`) that replaces Claude Code's built-in Read, Edit, and Bash tools with a sandboxed alternative. This shifts the enforcement model from **behavioral restriction** (hooks that detect and block bad actions) to **capability restriction** (tools that simply don't offer bad actions).
+
+### Why It Exists
+
+Claude Code's built-in tools have three problems this project cannot tolerate:
+
+| Built-in Tool | Problem | Impact |
+|---------------|---------|--------|
+| **Read** | Truncates files over ~2000 lines, injects "use limit/offset" messages | Agents chunk reads unnecessarily, skip content, silently degrade quality |
+| **Edit** | Requires built-in Read to have been called first (internal tracking) | MCP-based reads cannot satisfy this gate — Edit refuses to work |
+| **Bash** | Unrestricted shell access | Agents can `cat` files (bypassing read tracking), `sed`/`awk` edit files (bypassing edit tracking), run arbitrary scripts, and improvise solutions the instructions never anticipated |
+
+The MCP server solves all three by owning the entire file operation space:
+
+### What It Provides
+
+| Tool | Purpose | Key Behavior |
+|------|---------|-------------|
+| `read_file` | Full file reads with line numbers | Never truncates. Large files split into continuation parts with preserved line numbers. Tracks which files have been read. |
+| `edit_file` | Exact string replacement | Requires `read_file` first (MCP's own tracking). Validates uniqueness. Rejects edits to files with unread continuation parts. |
+| `move_lines` | Line-range relocation between files | Atomic dual-file write. Safety anchors catch off-by-one errors. Automatic C# structure validation post-move. |
+| `validate_structure` | C# structural integrity check | Balanced braces, `#region`/`#endregion`, `#if`/`#endif`. Used automatically by `move_lines`, available standalone. |
+| `run_command` | Whitelisted shell execution | Only allows specific command prefixes (see below). Blocked patterns prevent file writes outside `/tmp/`, destructive git, command injection, and ad-hoc scripting. |
+
+### The Command Whitelist
+
+`run_command` replaces unrestricted Bash access with a prefix whitelist:
+
+```
+gh *                    — GitHub CLI (issues, PRs, API queries)
+dotnet build/test       — .NET build and test
+make *                  — Makefile targets
+scripts/*               — Code generation scripts
+ls, find, wc, comm, shuf — File discovery (read-only)
+echo, cat /tmp/*, rm -f /tmp/* — Temp file operations
+git status/diff/log     — Read-only git queries
+```
+
+Everything else is rejected. Blocked patterns additionally catch:
+- File write redirects outside `/tmp/` (`> /path` but not `> /tmp/path`)
+- Destructive git (`git reset`, `git restore`, `git checkout --`, `git clean`, `git push --force`)
+- Command injection (`$()`, backticks, `eval`, `source`)
+- Ad-hoc scripting (`python3 -c`, `node -e`, `curl`, `wget`)
+- File operations (`rm` outside `/tmp/`, `mv`, `cp`, `chmod`, `chown`)
+
+### Large File Handling
+
+Claude Code has a platform-level output size cap (~100KB serialized). MCP responses exceeding this are persisted to disk with only a 2KB preview reaching the agent. The server detects this and splits large files:
+
+- **Part 1**: Returned directly (fits under the cap, ~70KB formatted content)
+- **Part 2+**: Written to `/tmp/` as continuation files with original line numbers preserved
+
+The edit gate blocks modifications to any file with unread continuation parts — the agent must read ALL parts before it can edit. `run_command` is also blocked globally while any split-file reads are incomplete.
+
+### The Philosophical Shift: Capability vs. Behavior
+
+The MCP server represents a fundamental change in how we manage Claude's behavior:
+
+**Before (behavioral restriction)**:
+- Hook detects Claude using `cat` to read a file → fires reminder to use Read tool
+- Hook detects Claude using `sed` to edit → fires reminder to use Edit tool
+- Hook detects Claude running `git reset` → blocks the action
+- Hook detects Claude using limit/offset on Read → fires reminder to read fully
+- Each hook is an interruption. Each interruption costs attention. The accumulated weight of 15+ hooks firing on every tool call creates cognitive overhead that degrades performance.
+
+**After (capability restriction)**:
+- Agent's tool list contains `read_file`, `edit_file`, `run_command` — no `cat`, no `sed`, no `git reset`
+- Agent literally cannot consider these actions because the tools don't exist in its action space
+- Zero interruptions. Zero negative reinforcement. The agent stays focused on the actual work.
+
+This approach is also **future-proof against model behavior changes**. Claude's system prompt includes efficiency directives ("be concise," "try the simplest approach") and there appears to be an internal weight that increases pressure to finish as sessions grow longer — likely an infrastructure optimization to reduce compute costs on long conversations. These pressures are at direct odds with the 1M context window and a 78-plugin codebase that demands thoroughness. Behavioral hooks can be undermined by shifting weights; capability restrictions cannot. The agent cannot take a shortcut through a tool that doesn't exist, regardless of how much internal pressure it feels to wrap up.
+
+### Agent Tool Configuration
+
+Agent definitions in `.claude/agents/*.md` specify their tool lists explicitly. All project agents include only MCP tools:
+
+```yaml
+tools: Glob, Grep, LS, mcp__bannou-read__read_file, mcp__bannou-read__edit_file,
+       mcp__bannou-read__move_lines, mcp__bannou-read__validate_structure,
+       mcp__bannou-read__run_command, WebFetch, TodoWrite, WebSearch, Write,
+       TaskCreate, TaskList, TaskGet, TaskUpdate, Agent
+```
+
+Note the absence of `Read`, `Edit`, and `Bash` from agent tool lists. The built-in search tools (`Glob`, `Grep`, `LS`) are retained because they are read-only and optimized for their purpose. `Write` is retained for creating new files (MCP `edit_file` handles modifications to existing files).
+
+### Which Hooks Are Now Redundant for Agents
+
+With agents restricted to MCP tools, several hooks that were previously essential are now structurally unnecessary for agent sessions:
+
+| Hook | Why It's Redundant for Agents |
+|------|------------------------------|
+| `block-destructive-git.sh` | `run_command` whitelist doesn't include destructive git |
+| `block-production-deploy.sh` | `run_command` whitelist doesn't include publish commands |
+| `block-integration-tests.sh` | `run_command` whitelist doesn't include Docker commands |
+| `block-file-moves.sh` | `run_command` blocked patterns reject `mv` |
+| `block-symlinks.sh` | `run_command` blocked patterns reject `ln` |
+| `block-read-limit.sh` | MCP `read_file` has no limit/offset parameters |
+
+These hooks remain configured in `settings.json` because they still protect the **parent session** (which retains access to built-in tools). They fire zero times during agent execution — zero cost, zero interruption.
+
+---
+
 ## Configuration Files
 
 ```
@@ -51,45 +156,59 @@ For the history of specific incidents that shaped individual hooks, see `docs/re
 ├── permission-canary.txt      # Permission gate canary file (see below)
 ├── system-prompt-original.md  # Original Claude Code system prompt (reference)
 ├── system-prompt-modified.md  # Modified system prompt (edit here, sync to config)
-├── skills-guide.txt           # Skill discovery reference
+├── skills-guide.txt           # Anthropic's skill authoring reference
+├── mcp/                               # MCP server (file operations sandbox)
+│   ├── server.mjs             # Main server: read_file, edit_file, move_lines,
+│   │                          #   validate_structure, run_command
+│   ├── package.json           # Dependencies (@modelcontextprotocol/sdk)
+│   └── node_modules/          # Installed dependencies
 ├── hooks/
 │   ├── frozen-file-check.sh           # PreToolUse: frozen dir + test weakening check
 │   ├── no-minimizing-language.sh      # PreToolUse: language pattern detection (8 categories)
 │   ├── block-backwards-compatibility.sh # PreToolUse: backwards compat language (5 categories)
 │   ├── block-all-agents.sh            # PreToolUse: restricts to project-aware agent types
 │   ├── block-worktree-isolation.sh    # PreToolUse: blocks worktree isolation
-│   ├── block-agent-polling.sh         # PreToolUse: blocks agent resume attempts
-│   ├── block-destructive-git.sh       # PreToolUse: blocks destructive git commands
-│   ├── block-production-deploy.sh     # PreToolUse: blocks production publish commands
-│   ├── block-integration-tests.sh     # PreToolUse: blocks long-running test suites
-│   ├── block-file-moves.sh            # PreToolUse: blocks mv on code files
-│   ├── block-symlinks.sh              # PreToolUse: blocks symbolic link creation
-│   ├── block-read-limit.sh            # PreToolUse: reminds about full file reads
+│   ├── block-destructive-git.sh       # PreToolUse: blocks destructive git (parent session only)
+│   ├── block-production-deploy.sh     # PreToolUse: blocks production publish (parent session only)
+│   ├── block-integration-tests.sh     # PreToolUse: blocks long-running tests (parent session only)
+│   ├── block-file-moves.sh            # PreToolUse: blocks mv on code files (parent session only)
+│   ├── block-symlinks.sh              # PreToolUse: blocks symbolic link creation (parent session only)
+│   ├── block-read-limit.sh            # PreToolUse: reminds about full file reads (parent session only)
 │   ├── validate-senryu-commit.sh      # PreToolUse: enforces senryu commit format
+│   ├── enforce-parallel-reads.sh      # PreToolUse: blocks all non-read tools during read gate
 │   ├── git-history-reminder.sh        # PreToolUse: reminds about git history usage
 │   ├── task-creation-reminder.sh      # PreToolUse: reminds about task list format
 │   ├── track-parallel-reads.sh        # PostToolUse: silent read counter for skills
 │   └── post-edit-reminder.sh          # RETIRED (replaced by frozen-file-check.sh)
-├── commands/                          # Custom slash commands (skills)
-│   ├── audit-plugin.md
-│   ├── check-plugin.md
-│   ├── implement-feature.md
-│   ├── implement-plugin.md
-│   ├── investigate-issue.md
-│   ├── maintain-faq.md
-│   ├── maintain-guide.md
-│   ├── maintain-operations-doc.md
-│   ├── maintain-planning-doc.md
-│   ├── maintain-plugin.md
-│   ├── map-plugin.md
-│   ├── orchestrate-skill.md
-│   ├── propose.md
-│   ├── schema-plugin.md
-│   ├── test-plugin.md
-│   └── update-permissions.md
-├── agents/                            # Custom agent definitions
+├── skills/                            # Custom skills (SKILL.md format)
+│   ├── _shared/                       # Shared fragments included via !`cat ...`
+│   │   ├── permission-canary.md       # Edit gate: toggle canary file to verify permissions
+│   │   ├── required-tools-gate.md     # Tool availability check
+│   │   ├── reading-gate.md            # Parallel read gate protocol
+│   │   ├── context-carryover.md       # Same-session file reuse rules
+│   │   ├── decision-checkpoints.md    # When to stop and ask the user
+│   │   ├── common-pitfalls-preamble.md # Intro for pitfall sections
+│   │   └── self-check-preamble.md     # Intro for self-check sections
+│   ├── audit-plugin/SKILL.md
+│   ├── check-plugin/SKILL.md
+│   ├── implement-feature/SKILL.md
+│   ├── implement-plugin/SKILL.md
+│   ├── investigate-issue/SKILL.md
+│   ├── maintain-faq/SKILL.md
+│   ├── maintain-guide/SKILL.md
+│   ├── maintain-operations-doc/SKILL.md
+│   ├── maintain-planning-doc/SKILL.md
+│   ├── maintain-plugin/SKILL.md
+│   ├── map-plugin/SKILL.md
+│   ├── orchestrate-skill/SKILL.md
+│   ├── propose/SKILL.md
+│   ├── schema-plugin/SKILL.md
+│   ├── test-plugin/SKILL.md
+│   └── update-permissions/SKILL.md
+├── agents/                            # Custom agent definitions (MCP tools only)
 │   ├── bannou.md              # General project awareness (CLAUDE.md + CLAUDE-PRACTICES.md)
 │   ├── bannou-dev.md          # Development (above + tenets + patterns)
+│   ├── bannou-limited.md      # Minimal awareness (CLAUDE.md + CLAUDE-PRACTICES.md, reduced tools)
 │   ├── bannou-schema.md       # Schema work (above + schema rules + specifications)
 │   └── bannou-code-reviewer.md  # Read-only code review (tenets + all plugin source)
 └── rules/                             # Contextual rules (loaded near matching files)
@@ -138,34 +257,55 @@ Hooks intercept tool calls before execution. Two types:
 
 ### Blocking Hooks
 
+> **MCP impact**: Hooks marked with † only protect the parent session. Agents use MCP `run_command` which enforces the same restrictions via its command whitelist — these hooks fire zero times during agent execution.
+
 | Hook | Matcher | What It Blocks |
 |------|---------|----------------|
 | `validate-senryu-commit.sh` | Bash | Commits without senryu first line (5-7-5 format with ` / ` separators) |
-| `block-destructive-git.sh` | Bash | `git restore`, `git checkout --`, `git checkout .`, `git stash`, `git reset`, `git clean` |
-| `block-production-deploy.sh` | Bash | `make push-release`, `make publish-sdk-ts` |
-| `block-integration-tests.sh` | Bash | `make test-http`, `make test-edge`, `make test-infrastructure`, `make all` |
-| `block-file-moves.sh` | Bash | `mv` targeting code file extensions |
-| `block-symlinks.sh` | Bash | `ln -s` / `ln --symbolic` |
+| `block-destructive-git.sh` † | Bash | `git restore`, `git checkout --`, `git checkout .`, `git stash`, `git reset`, `git clean` |
+| `block-production-deploy.sh` † | Bash | `make push-release`, `make publish-sdk-ts` |
+| `block-integration-tests.sh` † | Bash | `make test-http`, `make test-edge`, `make test-infrastructure`, `make all` |
+| `block-file-moves.sh` † | Bash | `mv` targeting code file extensions |
+| `block-symlinks.sh` † | Bash | `ln -s` / `ln --symbolic` |
 | `block-worktree-isolation.sh` | Agent, EnterWorktree | Agent calls with `isolation: "worktree"`, EnterWorktree tool |
-| `block-agent-polling.sh` | Agent | Agent calls with `resume` parameter |
-| `block-all-agents.sh` | Agent | Non-approved agent types (only `bannou`, `bannou-dev`, `bannou-schema`, `bannou-code-reviewer` allowed) |
+| `block-all-agents.sh` | Agent | Non-approved agent types (only `bannou`, `bannou-dev`, `bannou-limited`, `bannou-schema`, `bannou-code-reviewer` allowed) |
+| `enforce-parallel-reads.sh` | .* (all) | ALL non-read tools while a parallel read gate is active (skill-activated, auto-clears when read count met) |
 
 ### Reminder Hooks
+
+> **MCP impact**: Hooks marked with † only fire in the parent session. Agents using MCP tools are unaffected — either because the MCP tool doesn't offer the capability being guarded, or because the agent doesn't have the built-in tool in its tool list.
 
 | Hook | Matcher | What It Reminds |
 |------|---------|-----------------|
 | `frozen-file-check.sh` | Edit, Write | "This file is in a frozen directory. Proceed if you have explicit authorization." Also checks test files for weakening patterns. |
 | `no-minimizing-language.sh` | .* (all) | Detects 8 categories of language that signal rationalization, minimization, self-authorization, exception-invention, precedent-mining, work-avoidance, or corner-cutting |
 | `block-backwards-compatibility.sh` | .* (all) | Detects backwards-compatibility language, breaking-change anxiety, compatibility shims, soft removal, consumer anxiety |
-| `block-read-limit.sh` | Read | "Read full files — you have a 1M token context window" when limit/offset parameters are used |
-| `git-history-reminder.sh` | Bash | "Use git history to understand changes, not to justify reverting completed work" on `git diff`/`git log` |
+| `block-read-limit.sh` † | Read | "Read full files — you have a 1M token context window" when limit/offset parameters are used. MCP `read_file` has no limit/offset — structurally impossible. |
+| `git-history-reminder.sh` † | Bash | "Use git history to understand changes, not to justify reverting completed work" on `git diff`/`git log` |
 | `task-creation-reminder.sh` | TaskCreate, TodoWrite | Reminds of the 5-element format for violation task lists |
 
 ### PostToolUse Hooks
 
 | Hook | Matcher | What It Does |
 |------|---------|--------------|
-| `track-parallel-reads.sh` | Read | Silently appends a character to `/tmp/.parallel-read-token` on each Read. Skills clear the file before parallel read phases and check the count after. |
+| `track-parallel-reads.sh` | Read, mcp__bannou-read__read_file | Silently appends a character to `/tmp/.parallel-read-token` on each read. Works with both built-in Read and MCP `read_file`. Skills clear the file before parallel read phases and check the count after. |
+
+### The Parallel Read Gate
+
+The `enforce-parallel-reads.sh` and `track-parallel-reads.sh` hooks work together to enforce bulk file reading in skills. This prevents a behavioral tendency to serialize reads across multiple messages and interleave analysis between them.
+
+```
+Skill activates gate:  echo 16 > /tmp/.parallel-read-expected
+                       rm -f /tmp/.parallel-read-token
+
+Each read_file call:   track-parallel-reads.sh appends 1 char to token file
+
+Any non-read tool:     enforce-parallel-reads.sh checks: token length < expected?
+                       YES → block ("12 of 16 reads remaining")
+                       NO  → allow (gate clears, deletes expected file)
+```
+
+The gate is physically enforced — there is no override. This is a capability restriction: during the read phase, the only available tool is `read_file`. This maps naturally to the MCP philosophy — rather than reminding Claude to read all files before analyzing, the hook makes it impossible to do anything else until reading is complete.
 
 ---
 
@@ -185,7 +325,23 @@ The canary block is present in all 16 skill files. When creating a new skill, pa
 
 ---
 
-## Custom Slash Commands (Skills)
+## Custom Skills
+
+Skills use the `.claude/skills/{name}/SKILL.md` format with YAML frontmatter for metadata and markdown body for instructions. Skills are invoked via `/skill-name` in the Claude Code CLI.
+
+### Shared Fragments
+
+Common patterns are extracted into `.claude/skills/_shared/` and included via `!`cat .claude/skills/_shared/{name}.md`` (Anthropic's shell inclusion syntax). This ensures consistency across all 16 skills:
+
+| Fragment | Purpose | Used By |
+|----------|---------|---------|
+| `permission-canary.md` | Edit gate: toggle canary file to verify write permissions before work begins | All skills |
+| `required-tools-gate.md` | Verify Edit/Write tool availability, fail fast if unavailable | Skills that create files |
+| `reading-gate.md` | Parallel read gate protocol (activate, read, verify, prove comprehension) | Skills with bulk read phases |
+| `context-carryover.md` | Same-session file reuse rules (skip re-reading files still in context) | Skills chained in one session |
+| `decision-checkpoints.md` | When to stop work and present the situation to the user | All skills |
+| `common-pitfalls-preamble.md` | Intro for pitfall sections ("each entry exists because the mistake actually happened") | Skills with pitfall lists |
+| `self-check-preamble.md` | Intro for self-check gates ("most common failure mode is declaring completion before all phases are done") | Skills with self-check gates |
 
 ### Plugin Pipeline Commands
 
@@ -237,10 +393,21 @@ The canary block is present in all 16 skill files. When creating a new skill, pa
 |-------|-----------|---------|
 | `bannou` | CLAUDE.md, CLAUDE-PRACTICES.md | General tasks needing project awareness |
 | `bannou-dev` | Above + all tenet files + HELPERS-AND-COMMON-PATTERNS.md | Implementation, code review, auditing, tenet compliance |
+| `bannou-limited` | CLAUDE.md, CLAUDE-PRACTICES.md (reduced tool set) | Lightweight tasks needing basic project awareness |
 | `bannou-schema` | Above + SCHEMA-RULES.md + specifications catalog + scripts catalog | Schema work, generation, extension attributes |
-| `bannou-code-reviewer` | Above + all tenet files + all plugin source code | Read-only deep code review for tenet violations |
+| `bannou-code-reviewer` | Read-only tools + all tenet files + all plugin source | Read-only deep code review for tenet violations |
 
-All agents are restricted to safe tool sets. Non-approved agent types (general-purpose, Explore, Plan, feature-dev:*, etc.) are blocked by `block-all-agents.sh`.
+All agents use MCP tools exclusively for file operations and command execution. Their tool lists are defined in `.claude/agents/*.md` and deliberately exclude built-in `Read`, `Edit`, and `Bash`. Non-approved agent types (general-purpose, Explore, Plan, feature-dev:*, etc.) are blocked by `block-all-agents.sh`.
+
+### Why Agents Cannot Use Built-in Tools
+
+The agent tool list restriction is the single most impactful configuration decision in this project. By giving agents only MCP tools:
+
+1. **No truncation**: MCP `read_file` returns complete files. Built-in `Read` truncates at ~2000 lines and injects "use limit/offset" which causes progressive quality degradation as sessions grow longer.
+2. **No arbitrary shell**: MCP `run_command` only allows whitelisted commands. Built-in `Bash` allows anything — `cat` bypasses read tracking, `sed` bypasses edit tracking, improvised scripts bypass all guardrails.
+3. **No edit gate confusion**: MCP `edit_file` requires MCP `read_file` (same tracking space). Built-in `Edit` requires built-in `Read` — an MCP read cannot satisfy this gate, causing mysterious "file not read" errors.
+4. **Self-enforcing read completeness**: MCP `edit_file` blocks edits on files with unread continuation parts. The agent must fully read large files before modifying them — no configuration, no hooks, no reminders needed.
+5. **Structural safety**: MCP `move_lines` automatically validates C# structure after every move. No separate tool call needed, no possibility of forgetting.
 
 ---
 
@@ -295,6 +462,21 @@ The plugin auditor uses HTML comment markers to track work status in deep dive d
 ---
 
 ## Adding New Hooks
+
+### Before Creating a Hook: Consider MCP First
+
+Before writing a new hook, ask: **can this be enforced by the MCP server's tool design instead?**
+
+| If the goal is... | Prefer |
+|-------------------|--------|
+| Preventing a shell command | Add to `run_command`'s blocked patterns or remove from the whitelist |
+| Preventing file reads without full content | Already handled — MCP `read_file` never truncates |
+| Preventing edits without reading first | Already handled — MCP `edit_file` requires `read_file` |
+| Preventing arbitrary file manipulation | Already handled — agents don't have `Bash` |
+| Detecting behavioral language patterns | Hook is appropriate — language patterns are in tool_input text, not tool capability |
+| Enforcing workflow ordering | Hook is appropriate — parallel read gates, permission canaries |
+
+Hooks are the right tool for **behavioral** guidance (language patterns, workflow enforcement). The MCP server is the right tool for **capability** restriction (what operations are possible).
 
 ### Blocking Hook (PreToolUse)
 
@@ -363,11 +545,15 @@ Per the research findings that shaped this configuration:
 
 ---
 
-## Task Tool Limitations
+## Platform Limitations and Workarounds
 
 ### Background Agents Cannot Use Skill Tool
 
-Background agents (`run_in_background: true`) have the Skill tool auto-denied ("prompts unavailable"). This is a Claude Code architectural limitation. Workaround: `/orchestrate-skill` embeds full skill content in agent prompts instead of using the Skill tool.
+Background agents (`run_in_background: true`) have the Skill tool auto-denied ("prompts unavailable"). This is a Claude Code architectural limitation. Workaround: `/orchestrate-skill` embeds full skill content verbatim in agent prompts via `TaskCreate` descriptions instead of using the Skill tool.
+
+### MCP Output Size Cap
+
+Claude Code has a platform-level output size cap (~100KB serialized). MCP responses exceeding this are persisted to disk with only a 2KB preview reaching the agent. The MCP server works around this by splitting large file reads into continuation parts, each under the cap. The edit gate ensures all parts are read before modifications are allowed.
 
 ### Permission Modes
 
@@ -377,6 +563,8 @@ Background agents (`run_in_background: true`) have the Skill tool auto-denied ("
 | `acceptEdits` | Auto-accept file edit permissions |
 | `bypassPermissions` | Skip all permission checks (still doesn't help Skill in background) |
 
+MCP tools operate in their own permission space (configured in `settings.local.json`). Once approved, all MCP tool calls bypass Claude Code's built-in permission prompts — this eliminates the interactive permission overhead that slows down agent workflows.
+
 ---
 
 ## Troubleshooting
@@ -385,16 +573,22 @@ Background agents (`run_in_background: true`) have the Skill tool auto-denied ("
 |-------|------------|
 | Hook not triggering | Verify `settings.json` has the hook configured; check `chmod +x`; ensure `jq` is installed |
 | Command blocked unexpectedly | Read the block message — it explains why. Ask user to run manually if legitimate |
-| Slash commands not available | Restart Claude Code session; verify `.md` file exists in `.claude/commands/` |
+| Skill not available | Restart Claude Code session; verify `SKILL.md` exists in `.claude/skills/{name}/` |
+| MCP tool "file not read" error | Read the file with MCP `read_file` first (not built-in Read). For split files, read all continuation parts. |
+| MCP `run_command` rejected | Command doesn't match the whitelist. Check allowed prefixes in `server.mjs`. |
+| Agent using wrong tools | Verify the agent definition in `.claude/agents/*.md` lists only MCP tools, not built-in Read/Edit/Bash |
 
 ---
 
 ## References
 
-- [CLAUDE.md](../../CLAUDE.md) — Main project instructions
-- [CLAUDE-PRACTICES.md](../../CLAUDE-PRACTICES.md) — Behavioral practices
-- [INCIDENT-HISTORY.md](../reference/INCIDENT-HISTORY.md) — Hook incident history
+- [CLAUDE.md](../../CLAUDE.md) — Main project instructions (MCP tool usage, generation commands, workflow)
+- [CLAUDE-PRACTICES.md](../../CLAUDE-PRACTICES.md) — Behavioral practices (surface problems, execute completely, frozen artifacts)
+- [MCP Server Source](../../.claude/mcp/server.mjs) — The MCP server implementation (read_file, edit_file, move_lines, validate_structure, run_command)
+- [INCIDENT-HISTORY.md](../reference/INCIDENT-HISTORY.md) — Hook incident history (why specific hooks exist)
 - [TENETS.md](../reference/TENETS.md) — Development standards
 - [Anthropic Prompt Engineering Best Practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-4-best-practices) — Official Claude 4.6 guidance
 - [Hooks Reference](https://docs.anthropic.com/en/docs/claude-code/hooks) — Official hook documentation
+- [MCP Specification](https://modelcontextprotocol.io/) — Model Context Protocol standard
 - [Best Practices for Claude Code](https://code.claude.com/docs/en/best-practices) — Official Claude Code guidance
+- [Anthropic Skills Guide](../../.claude/skills-guide.txt) — Official skill authoring reference

@@ -51,8 +51,7 @@ public class ActorServicePlugin : StandardServicePlugin<IActorService>
         services.AddSingleton<EvaluateGoalImpactHandler>();
         services.AddSingleton<TriggerGoapReplanHandler>();
 
-        // Register scheduled event manager for delayed event handling
-        services.AddSingleton<IScheduledEventManager, ScheduledEventManager>();
+        // ScheduledEventManager auto-registered via [BannouHelperService] (Interface mode, IScheduledEventManager)
 
         // Register behavior execution infrastructure
         // Note: Variable provider factories (personality, encounters, quests) are registered by their

@@ -254,6 +254,7 @@ public interface IScheduledEventManager
 /// In-memory implementation of scheduled event management.
 /// Uses a background timer to check for events that need to fire.
 /// </summary>
+[BannouHelperService("scheduled-event", typeof(IActorService), typeof(IScheduledEventManager), lifetime: ServiceLifetime.Singleton)]
 public sealed class ScheduledEventManager : IScheduledEventManager, IDisposable
 {
     private readonly IMessageBus _messageBus;
