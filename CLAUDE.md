@@ -33,9 +33,11 @@ An agent once read 145 files in a single session to write a comprehensive deep d
 |------|---------|-------------|
 | `read_file` | Full-read files with line numbers. Large files split into continuation parts — **all parts must be read before editing or moving**. | Always. Use instead of built-in Read. |
 | `edit_file` | Exact string replacement in files. Requires `read_file` first. | Small, targeted in-place changes (modifying content, adding code, removing short sections). |
+| `write_file` | Write complete file contents. Replaces the built-in Write tool. Uses our read gate for existing files (no gate needed for new files). **Content is preserved to `/tmp/` on any failure** — never lost. Optional `expected_size_bytes` for race condition detection, `dry_run` for gate testing without writing. | Full file rewrites, creating new files. Use instead of built-in Write. |
+| `write_script` | Write a script to the sandboxed scripts directory with automatic chmod +x and syntax validation. | Creating utility scripts (.sh, .py, .mjs). Scripts written to `/tmp/bannou-scripts/` ONLY. Auto-validates syntax (bash -n, py_compile, node --check). |
 | `move_lines` | Move a line range from one file to another by line number. Both files written atomically. Runs **structure validation** automatically after each move. | Relocating methods, blocks, or sections between files. No string matching — immune to invisible whitespace issues. |
 | `validate_structure` | Check a C# file for balanced braces, `#region`/`#endregion`, and `#if`/`#endif`. | After manual edits, or to diagnose structural build failures. Also runs automatically inside `move_lines`. |
-| `run_command` | Execute whitelisted shell commands (see below). | Builds, tests, generation, git queries, file discovery. |
+| `run_command` | Execute whitelisted shell commands (see below). | Builds, tests, generation, git queries, file discovery, running sandboxed scripts. |
 
 **`move_lines` details**: Takes `source_file`, `start_line`, `end_line`, `dest_file`, `dest_insert_after_line`. Optional safety anchors `expect_first_line_contains` and `expect_last_line_contains` verify content before moving — catches off-by-one errors. Work bottom-up when moving multiple blocks from the same file (preserves line numbers for earlier blocks). After writing both files, automatically validates structure and reports any issues (orphaned regions, brace imbalances).
 
@@ -48,13 +50,29 @@ An agent once read 145 files in a single session to write a comprehensive deep d
 
 **`validate_structure` notes**: The brace validator handles single-line strings, comments, multi-line verbatim strings (`@"..."`), multi-line comments (`/* ... */`), and escaped interpolation braces (`{{ }}`). The C# compiler (`dotnet build`) is always the authoritative structural check — if the build passes clean, any validator warnings are false positives.
 
+**`write_file` details**: For existing files, requires `read_file` first (same gate as `edit_file`). For new files, no prior read needed. On any gate failure, content is automatically saved to `/tmp/bannou-write-recovery-{hash}.txt` and the path is returned — the content is never lost. Use `dry_run: true` to test gates without writing. Use `expected_size_bytes` (from the `read_file` header) to catch race conditions where the file changed between read and write. After a successful write, the file is auto-registered as read — subsequent `edit_file` calls work without re-reading.
+
+**`write_script` details**: Scripts are written to `/tmp/bannou-scripts/` ONLY — agents cannot create executable scripts elsewhere. Allowed extensions: `.sh`, `.py`, `.mjs`. Shebangs are auto-added if missing. Syntax is validated before returning (`bash -n` for shell, `python3 -m py_compile` for Python, `node --check` for mjs). Execute via `run_command`: `/tmp/bannou-scripts/my-script.sh`. Filenames must be flat (no path separators), no hidden files, alphanumeric + hyphens/underscores/dots only.
+
+**Protected paths**: The sentinel injection file (`/tmp/bannou-mcp-inject.json`) cannot be written or edited by agents via any MCP tool. It is controlled exclusively by external human action (terminal commands, Stream Deck, etc.).
+
+**Sentinel injection** (human-only, external): The MCP server checks for `/tmp/bannou-mcp-inject.json` at the start of every tool call. If found, it processes the commands and deletes the file. This enables the user to inject state changes (mark files as read, grant temporary write permissions to frozen directories, send messages to agents) without agent involvement. Agents cannot create or modify this file — it is a protected path. Format:
+```json
+{
+  "markRead": ["/path/to/file1", "/path/to/file2"],
+  "grantPermissions": ["scripts/", "docs/reference/"],
+  "revokePermissions": ["scripts/"],
+  "message": "Optional message displayed to the agent"
+}
+```
+
 ## Command Execution via `run_command`
 
 **All shell commands in this document are executed via the MCP tool `mcp__bannou-read__run_command`.** When this document shows `bash` code blocks, `gh` commands, `dotnet build`, `make` targets, `find`, `ls`, `git diff`, generation scripts, or any other command-line invocation, use `run_command` to execute them. There is no separate Bash tool.
 
-`run_command` accepts a whitelisted set of commands: `gh` (GitHub CLI), `dotnet build/test`, `make` targets, generation scripts (`scripts/`, `python3 scripts/`), file discovery (`ls`, `find`, `wc`, `comm`), temp file operations (`cat /tmp/`, `rm -f /tmp/`, `echo`), and read-only git (`git status`, `git diff`, `git log`). Output redirection to `/tmp/` is supported (e.g., `dotnet test ... > /tmp/output.txt 2>&1`). Arbitrary shell scripting, file writes outside `/tmp/`, and destructive git operations are blocked.
+`run_command` accepts a whitelisted set of commands: `gh` (GitHub CLI), `dotnet build/test`, `make` targets, generation scripts (`scripts/`, `python3 scripts/`), file discovery (`ls`, `find`, `wc`, `comm`), temp file operations (`cat /tmp/`, `rm -f /tmp/`, `echo`), sandboxed script execution (`/tmp/bannou-scripts/`), and read-only git (`git status`, `git diff`, `git log`). Output redirection to `/tmp/` is supported (e.g., `dotnet test ... > /tmp/output.txt 2>&1`). Arbitrary shell scripting, file writes outside `/tmp/`, `chmod`, `chown`, and destructive git operations are blocked.
 
-**GitHub issue comments**: Use `--body-file` instead of inline `--body` for `gh issue comment`. PreToolUse hooks scan the full command string including body content, which triggers false positives. Write the comment to `/tmp/gh-comment-{number}.md` with the Write tool, then run `gh issue comment {number} --body-file /tmp/gh-comment-{number}.md`.
+**GitHub issue comments**: Use `--body-file` instead of inline `--body` for `gh issue comment`. PreToolUse hooks scan the full command string including body content, which triggers false positives. Write the comment to `/tmp/gh-comment-{number}.md` with `write_file`, then run `gh issue comment {number} --body-file /tmp/gh-comment-{number}.md`.
 
 ---
 
