@@ -253,80 +253,6 @@ public partial class LicenseService : ILicenseService, ICleanDeprecatedEntity
 
     #endregion
 
-    #region Board Cache Reconciliation
-
-    /// <summary>
-    /// Loads or rebuilds the board cache. Tries Redis cache first; on miss,
-    /// queries inventory as the authoritative source and rebuilds the cache.
-    /// </summary>
-    private async Task<BoardCacheModel> LoadOrRebuildBoardCacheAsync(
-        BoardInstanceModel board,
-        IReadOnlyList<LicenseDefinitionModel> definitions,
-        CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity("bannou.license", "LicenseService.LoadOrRebuildBoardCacheAsync");
-        // Try cache first
-        var cache = await _boardCache.GetAsync(BuildBoardCacheKey(board.BoardId), cancellationToken);
-        if (cache != null)
-        {
-            return cache;
-        }
-
-        // Cache miss: rebuild from inventory (authoritative source)
-        _logger.LogInformation("Board cache miss for board {BoardId}, rebuilding from inventory", board.BoardId);
-
-        var containerContents = await _inventoryClient.GetContainerAsync(
-            new GetContainerRequest { ContainerId = board.ContainerId, IncludeContents = true },
-            cancellationToken);
-
-        // Build a lookup from item template ID to definition for matching
-        var defsByTemplateId = definitions
-            .GroupBy(d => d.ItemTemplateId)
-            .ToDictionary(g => g.Key, g => g.ToList());
-
-        var unlockedEntries = new List<UnlockedLicenseEntry>();
-        foreach (var item in containerContents.Items)
-        {
-            if (defsByTemplateId.TryGetValue(item.TemplateId, out var matchingDefs))
-            {
-                // Find the definition that matches this item (could be multiple defs with same template)
-                // Use the first unmatched one
-                var matchedDef = matchingDefs.FirstOrDefault(d =>
-                    !unlockedEntries.Any(u => u.Code == d.Code));
-
-                if (matchedDef != null)
-                {
-                    unlockedEntries.Add(new UnlockedLicenseEntry
-                    {
-                        Code = matchedDef.Code,
-                        PositionX = matchedDef.PositionX,
-                        PositionY = matchedDef.PositionY,
-                        ItemInstanceId = item.InstanceId,
-                        UnlockedAt = board.CreatedAt // Best approximation when rebuilding
-                    });
-                }
-            }
-        }
-
-        cache = new BoardCacheModel
-        {
-            BoardId = board.BoardId,
-            UnlockedPositions = unlockedEntries,
-            LastUpdated = DateTimeOffset.UtcNow
-        };
-
-        // Persist rebuilt cache
-        await _boardCache.SaveAsync(
-            BuildBoardCacheKey(board.BoardId),
-            cache,
-            new StateOptions { Ttl = _configuration.BoardCacheTtlSeconds },
-            cancellationToken);
-
-        return cache;
-    }
-
-    #endregion
-
     #region Board Template Management
 
     /// <inheritdoc/>
@@ -1531,60 +1457,6 @@ public partial class LicenseService : ILicenseService, ICleanDeprecatedEntity
         });
     }
 
-    /// <summary>
-    /// Compensates for a failed contract by destroying the item created during the unlock flow.
-    /// Called when contract execution fails after item creation succeeded (saga compensation).
-    /// </summary>
-    private async Task CompensateItemCreationAsync(
-        Guid itemInstanceId, Guid boardId, string licenseCode, CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity("bannou.license", "LicenseService.CompensateItemCreationAsync");
-        try
-        {
-            await _itemClient.DestroyItemInstanceAsync(
-                new DestroyItemInstanceRequest { InstanceId = itemInstanceId },
-                cancellationToken);
-            _logger.LogInformation(
-                "Compensation successful: destroyed item {ItemInstanceId} after contract failure for {Code} on board {BoardId}",
-                itemInstanceId, licenseCode, boardId);
-        }
-        catch (Exception compensationEx)
-        {
-            // Compensation failure is serious but must not mask the original error.
-            // The orphaned item will be cleaned up when the board is deleted or manually reconciled.
-            _logger.LogError(compensationEx,
-                "Compensation FAILED: could not destroy item {ItemInstanceId} after contract failure for {Code} on board {BoardId}. Orphaned item requires manual cleanup",
-                itemInstanceId, licenseCode, boardId);
-            await _messageBus.TryPublishErrorAsync(
-                "license", "CompensateItemCreation", "compensation_failed",
-                $"Failed to destroy orphaned item {itemInstanceId} after contract failure",
-                dependency: "item", endpoint: "post:/item/instance/destroy",
-                details: null, stack: compensationEx.StackTrace, cancellationToken: cancellationToken);
-        }
-    }
-
-    /// <summary>
-    /// Publishes a license.unlock-failed event.
-    /// </summary>
-    private async Task PublishUnlockFailedAsync(
-        Guid boardId, EntityType ownerType, Guid ownerId, string licenseCode,
-        UnlockFailureReason reason, CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity("bannou.license", "LicenseService.PublishUnlockFailedAsync");
-        await _messageBus.PublishLicenseUnlockFailedAsync(
-            new LicenseUnlockFailedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                BoardId = boardId,
-                OwnerType = ownerType,
-                OwnerId = ownerId,
-                LicenseCode = licenseCode,
-                Reason = reason
-            },
-            cancellationToken);
-    }
-
     /// <inheritdoc/>
     public async Task<(StatusCodes, CheckUnlockableResponse?)> CheckUnlockableAsync(
         CheckUnlockableRequest body,
@@ -2341,9 +2213,6 @@ public partial class LicenseService : ILicenseService, ICleanDeprecatedEntity
         CleanDeprecatedRequest body,
         CancellationToken cancellationToken = default)
     {
-        using var activity = _telemetryProvider.StartActivity(
-            "bannou.license", "LicenseService.CleanDeprecatedBoardTemplatesAsync");
-
         // Query all deprecated board templates
         var deprecatedTemplates = await _boardTemplateStore.QueryAsync(
             t => t.IsDeprecated,

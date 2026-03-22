@@ -223,9 +223,17 @@ Analyzes how the anime production paradigm of decomposing complex scenes into in
 
 Records the results of a full cross-service architectural audit comparing VISION.md, PLAYER-VISION.md, and BEHAVIORAL-BOOTSTRAP.md against the 76-service plugin architecture. Categorizes findings as resolved (11 issues with architectural rationale), open (8 issues with priority and impact), or design recommendations requiring human judgment. The behavioral bootstrap critical path analysis identifies Puppetmaster watcher-actor spawning as the first-order blocker and Divine implementation as the second-order blocker for the content flywheel.
 
+## Other
+
+### Plan: Implement MCP Server Service (L3 App Features) {#mcp-server}
+
+**Status**: Draft | [Full Document](../planning/MCP-SERVER.md)
+
+The MCP (Model Context Protocol) server is a new L3 App Features plugin that exposes a standards-compliant MCP endpoint for AI agents to query documentation, schemas, service capabilities, and game-specific knowledge. Game server operators deploy it alongside their game — AI integrations can describe the game, its servers, or the underlying Bannou architecture.
+
 ## Summary
 
-- **Documents in catalog**: 34
+- **Documents in catalog**: 35
 
 ---
 

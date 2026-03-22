@@ -2501,25 +2501,6 @@ public partial class SaveLoadService : ISaveLoadService, IAccountDeletionCleanup
         };
     }
 
-    /// <summary>
-    /// Finds a slot by owner and name (without gameId).
-    /// Used by version operations that don't include gameId in request.
-    /// </summary>
-    private async Task<SaveSlotMetadata?> FindSlotByOwnerAndNameAsync(
-        Guid ownerId,
-        EntityType ownerType,
-        string slotName,
-        CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.FindSlotByOwnerAndNameAsync");
-        var matchingSlots = await _slotQueryStore.QueryAsync(
-            s => s.OwnerId == ownerId &&
-                s.OwnerType == ownerType &&
-                s.SlotName == slotName,
-            cancellationToken);
-
-        return matchingSlots.FirstOrDefault();
-    }
 
     #endregion
 
@@ -2556,93 +2537,6 @@ public partial class SaveLoadService : ISaveLoadService, IAccountDeletionCleanup
     #endregion
 
     #region Permission Registration
-
-    #endregion
-
-    #region Lifecycle Event Publishing
-
-    private async Task PublishSaveSlotCreatedEventAsync(SaveSlotMetadata slot, CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.PublishSaveSlotCreatedEventAsync");
-        var eventModel = new SaveSlotCreatedEvent
-        {
-            EventId = Guid.NewGuid(),
-            Timestamp = DateTimeOffset.UtcNow,
-            SlotId = slot.SlotId,
-            GameId = slot.GameId,
-            OwnerId = slot.OwnerId,
-            OwnerType = slot.OwnerType,
-            SlotName = slot.SlotName,
-            Category = slot.Category,
-            MaxVersions = slot.MaxVersions,
-            RetentionDays = slot.RetentionDays,
-            CompressionType = slot.CompressionType,
-            VersionCount = slot.VersionCount,
-            LatestVersion = slot.LatestVersion,
-            TotalSizeBytes = slot.TotalSizeBytes,
-            CreatedAt = slot.CreatedAt,
-            UpdatedAt = slot.UpdatedAt
-        };
-
-        await _messageBus.PublishSaveSlotCreatedAsync(eventModel, cancellationToken);
-        _logger.LogDebug("Published SaveSlotCreatedEvent for slot: {SlotId}", slot.SlotId);
-    }
-
-    private async Task PublishSaveSlotUpdatedEventAsync(SaveSlotMetadata slot, IEnumerable<string> changedFields, CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.PublishSaveSlotUpdatedEventAsync");
-        var eventModel = new SaveSlotUpdatedEvent
-        {
-            EventId = Guid.NewGuid(),
-            Timestamp = DateTimeOffset.UtcNow,
-            SlotId = slot.SlotId,
-            GameId = slot.GameId,
-            OwnerId = slot.OwnerId,
-            OwnerType = slot.OwnerType,
-            SlotName = slot.SlotName,
-            Category = slot.Category,
-            MaxVersions = slot.MaxVersions,
-            RetentionDays = slot.RetentionDays,
-            CompressionType = slot.CompressionType,
-            VersionCount = slot.VersionCount,
-            LatestVersion = slot.LatestVersion,
-            TotalSizeBytes = slot.TotalSizeBytes,
-            CreatedAt = slot.CreatedAt,
-            UpdatedAt = slot.UpdatedAt,
-            ChangedFields = changedFields.ToList()
-        };
-
-        await _messageBus.PublishSaveSlotUpdatedAsync(eventModel, cancellationToken);
-        _logger.LogDebug("Published SaveSlotUpdatedEvent for slot: {SlotId}, changed: {ChangedFields}", slot.SlotId, string.Join(", ", changedFields));
-    }
-
-    private async Task PublishSaveSlotDeletedEventAsync(SaveSlotMetadata slot, string? deletedReason, CancellationToken cancellationToken)
-    {
-        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.PublishSaveSlotDeletedEventAsync");
-        var eventModel = new SaveSlotDeletedEvent
-        {
-            EventId = Guid.NewGuid(),
-            Timestamp = DateTimeOffset.UtcNow,
-            SlotId = slot.SlotId,
-            GameId = slot.GameId,
-            OwnerId = slot.OwnerId,
-            OwnerType = slot.OwnerType,
-            SlotName = slot.SlotName,
-            Category = slot.Category,
-            MaxVersions = slot.MaxVersions,
-            RetentionDays = slot.RetentionDays,
-            CompressionType = slot.CompressionType,
-            VersionCount = slot.VersionCount,
-            LatestVersion = slot.LatestVersion,
-            TotalSizeBytes = slot.TotalSizeBytes,
-            CreatedAt = slot.CreatedAt,
-            UpdatedAt = slot.UpdatedAt,
-            DeletedReason = deletedReason
-        };
-
-        await _messageBus.PublishSaveSlotDeletedAsync(eventModel, cancellationToken);
-        _logger.LogDebug("Published SaveSlotDeletedEvent for slot: {SlotId}", slot.SlotId);
-    }
 
     #endregion
 

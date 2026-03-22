@@ -41,6 +41,13 @@ An agent once read 145 files in a single session to write a comprehensive deep d
 
 **When to use `move_lines` vs `edit_file`**: Use `move_lines` when relocating existing code between files (method moves, block extraction). Use `edit_file` for in-place modifications (changing content, adding new code, removing small sections).
 
+**`move_lines` gotchas** (learned from production use across 50 plugins):
+- **Insert line precision**: When inserting into a `.Helpers.cs` file with a placeholder comment like `// Move private/internal helper methods here`, the `dest_insert_after_line` must be the **placeholder comment line**, NOT the `}` on the next line. Inserting after `}` puts code outside the class body and causes build failures.
+- **`#region` orphaning**: When a moved block includes methods from the middle of a `#region`, the `#region` or `#endregion` markers may be left orphaned. The structure validation catches these — fix by removing empty region pairs or adding missing markers.
+- **Bottom-up ordering**: When moving multiple blocks from the same source file, always move the **bottom-most block first**. This preserves line numbers for blocks above it. Insert all blocks at the same `dest_insert_after_line` — this naturally maintains original source order.
+
+**`validate_structure` notes**: The brace validator handles single-line strings, comments, multi-line verbatim strings (`@"..."`), multi-line comments (`/* ... */`), and escaped interpolation braces (`{{ }}`). The C# compiler (`dotnet build`) is always the authoritative structural check — if the build passes clean, any validator warnings are false positives.
+
 ## Command Execution via `run_command`
 
 **All shell commands in this document are executed via the MCP tool `mcp__bannou-read__run_command`.** When this document shows `bash` code blocks, `gh` commands, `dotnet build`, `make` targets, `find`, `ls`, `git diff`, generation scripts, or any other command-line invocation, use `run_command` to execute them. There is no separate Bash tool.

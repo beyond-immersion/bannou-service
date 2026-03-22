@@ -2,6 +2,7 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.State;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Gardener;
 

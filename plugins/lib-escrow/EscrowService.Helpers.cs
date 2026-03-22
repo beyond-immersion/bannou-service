@@ -3,8 +3,8 @@ using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Inventory;
-using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Escrow;

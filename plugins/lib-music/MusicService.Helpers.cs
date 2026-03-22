@@ -1,3 +1,7 @@
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
+using Microsoft.Extensions.Logging;
+
 namespace BeyondImmersion.BannouService.Music;
 
 // =============================================================================
@@ -56,5 +60,46 @@ namespace BeyondImmersion.BannouService.Music;
 /// </remarks>
 public partial class MusicService
 {
-    // Move private/internal helper methods here from MusicService.cs
+    /// <summary>
+    /// Attempts to retrieve a cached composition from Redis.
+    /// </summary>
+    private async Task<GenerateCompositionResponse?> TryGetCachedCompositionAsync(
+        string cacheKey,
+        CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.music", "MusicService.TryGetCachedCompositionAsync");
+        try
+        {
+            return await _compositionCache.GetAsync(cacheKey, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            // Cache miss or error - proceed with generation
+            _logger.LogWarning(ex, "Cache lookup failed for {CacheKey}", cacheKey);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Caches a generated composition for future requests with the same parameters.
+    /// </summary>
+    private async Task CacheCompositionAsync(
+        string cacheKey,
+        GenerateCompositionResponse response,
+        CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.music", "MusicService.CacheCompositionAsync");
+        try
+        {
+            // Compositions with explicit seed are deterministic - cache with configured TTL
+            await _compositionCache.SaveAsync(cacheKey, response,
+                new StateOptions { Ttl = _configuration.CompositionCacheTtlSeconds }, cancellationToken);
+            _logger.LogDebug("Cached composition {CacheKey}", cacheKey);
+        }
+        catch (Exception ex)
+        {
+            // Cache write failure is non-fatal
+            _logger.LogWarning(ex, "Failed to cache composition {CacheKey}", cacheKey);
+        }
+    }
 }

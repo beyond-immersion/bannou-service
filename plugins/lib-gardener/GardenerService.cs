@@ -1730,8 +1730,6 @@ public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
 
     #endregion
 
-    #region Private Helpers
-
     #region Model Mapping
 
     private static GardenStateResponse MapToGardenStateResponse(
@@ -1922,8 +1920,6 @@ public partial class GardenerService : IGardenerService, ICleanDeprecatedEntity
             LocationCode = c.LocationCode
         };
     }
-
-    #endregion
 
     #endregion
 

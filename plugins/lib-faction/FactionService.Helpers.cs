@@ -1,7 +1,9 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.State;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Faction;
 
@@ -61,6 +63,138 @@ namespace BeyondImmersion.BannouService.Faction;
 /// </remarks>
 public partial class FactionService
 {
+    /// <summary>
+    /// Checks whether a faction's seed has a specific capability unlocked.
+    /// </summary>
+    private async Task<bool> HasCapabilityAsync(Guid? seedId, string capabilityCode, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionService.HasCapabilityAsync");
+        if (seedId == null) return false;
+
+        try
+        {
+            var manifest = await _seedClient.GetCapabilityManifestAsync(
+                new GetCapabilityManifestRequest { SeedId = seedId.Value }, ct);
+
+            return manifest.Capabilities.Any(c => c.CapabilityCode == capabilityCode);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Failed to check seed capability {Capability} for seed {SeedId}", capabilityCode, seedId);
+            return false;
+        }
+    }
+    /// <summary>
+    /// Publishes a lifecycle created event for a faction.
+    /// </summary>
+    private async Task PublishCreatedEventAsync(FactionModel model, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionService.PublishCreatedEventAsync");
+        var evt = new FactionCreatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            EventName = "faction.created",
+            FactionId = model.FactionId,
+            GameServiceId = model.GameServiceId,
+            Name = model.Name,
+            Code = model.Code,
+            RealmId = model.RealmId,
+            IsRealmBaseline = model.IsRealmBaseline,
+            ParentFactionId = model.ParentFactionId,
+            SeedId = model.SeedId,
+            Status = model.Status,
+            AuthorityLevel = model.AuthorityLevel,
+            CurrentPhase = model.CurrentPhase,
+            MemberCount = model.MemberCount,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = model.UpdatedAt,
+        };
+        await _messageBus.PublishFactionCreatedAsync(evt, ct);
+    }
+    /// <summary>
+    /// Publishes a lifecycle updated event for a faction.
+    /// </summary>
+    private async Task PublishUpdatedEventAsync(FactionModel model, ICollection<string> changedFields, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionService.PublishUpdatedEventAsync");
+        var evt = new FactionUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            EventName = "faction.updated",
+            FactionId = model.FactionId,
+            GameServiceId = model.GameServiceId,
+            Name = model.Name,
+            Code = model.Code,
+            RealmId = model.RealmId,
+            IsRealmBaseline = model.IsRealmBaseline,
+            ParentFactionId = model.ParentFactionId,
+            SeedId = model.SeedId,
+            Status = model.Status,
+            AuthorityLevel = model.AuthorityLevel,
+            CurrentPhase = model.CurrentPhase,
+            MemberCount = model.MemberCount,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = model.UpdatedAt,
+            ChangedFields = changedFields.ToList(),
+        };
+        await _messageBus.PublishFactionUpdatedAsync(evt, ct);
+    }
+    /// <summary>
+    /// Invalidates norm resolution cache entries for all members of a faction.
+    /// Called after mutations that affect norm resolution (norm CRUD, territory, baseline).
+    /// </summary>
+    /// <remarks>
+    /// Cache keys are <c>ncache:{characterId}:{locationId}</c>. Since we cannot enumerate
+    /// all location combinations per character, this deletes the known character-scoped entries
+    /// by querying faction members. For location-specific invalidation, callers should use
+    /// the <c>forceRefresh</c> parameter on QueryApplicableNorms. Remaining stale entries
+    /// expire via TTL (configured by NormQueryCacheTtlSeconds).
+    /// </remarks>
+    private async Task InvalidateNormCacheForFactionAsync(Guid factionId, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionService.InvalidateNormCacheForFactionAsync");
+        // Query members of this faction to invalidate their norm caches
+        var memberConditions = new List<QueryCondition>
+        {
+            new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Exists },
+            new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Equals, Value = factionId.ToString() },
+        };
+        var offset = 0;
+        var pageSize = _configuration.SeedBulkPageSize;
+        bool hasMore;
+        do
+        {
+            var members = await _memberQueryStore.JsonQueryPagedAsync(
+                memberConditions, offset, pageSize, cancellationToken: ct);
+
+            foreach (var member in members.Items)
+            {
+                // Delete the generic cache key (no location)
+                await _normCacheStore.DeleteAsync(BuildNormCacheKey(member.Value.CharacterId, null), ct);
+            }
+
+            offset += pageSize;
+            hasMore = members.HasMore;
+        } while (hasMore);
+    }
+    /// <summary>
+    /// Invalidates norm resolution cache entries for a specific character.
+    /// Called after membership mutations (add/remove member).
+    /// </summary>
+    private async Task InvalidateNormCacheForCharacterAsync(Guid characterId, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionService.InvalidateNormCacheForCharacterAsync");
+        // Delete the generic cache key (no location); location-specific entries expire via TTL
+        await _normCacheStore.DeleteAsync(BuildNormCacheKey(characterId, null), ct);
+    }
     /// <summary>
     /// Cascades deletion of all faction sub-entities and deletes the faction itself.
     /// Does NOT check deprecation status — caller is responsible for lifecycle guards.
@@ -352,5 +486,4 @@ public partial class FactionService
             SovereignFactionId = sovereign?.FactionId ?? faction.FactionId,
         };
     }
-    // Move private/internal helper methods here from FactionService.cs
 }
