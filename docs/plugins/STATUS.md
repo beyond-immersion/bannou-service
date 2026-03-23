@@ -416,6 +416,9 @@ All 19 API endpoints are fully implemented. The remaining stub is the `item.expi
 - **Variable provider factory**: `IStatusVariableProviderFactory` for ABML behavior expressions (`${status.has_buff}`, `${status.is_dead}`, `${status.poison_stacks}`). Critical for NPC intelligence stack -- every other data-providing L4 service has a variable provider. Needs GH issue.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-07:Variable provider factory for ${status.*} ABML namespace -->
 
+- **Prerequisite provider factory**: `StatusPrerequisiteProviderFactory` implementing `IPrerequisiteProviderFactory` for Quest (L2) prerequisite validation. `ProviderName = "character_level"` (and potentially `"reputation"`). Status is the unified effects query layer — "does this character have capability X at depth Y?" is exactly what `GetEffects` / `GetSeedEffects` answers. Quest's `CHARACTER_LEVEL` and `REPUTATION` prerequisite types currently route through the DI provider pattern but **have no registered provider** (silent no-op — any character passes). Status is the natural home: it aggregates seed-derived capabilities (the "level" IS a seed capability) and item-based effects. Same pattern as `AchievementPrerequisiteProviderFactory` in lib-achievement. See [QUEST.md Design Consideration #2](QUEST.md) for the full analysis.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-23:StatusPrerequisiteProviderFactory for character_level and reputation -->
+
 - **Effect magnitude computation**: Status templates define base magnitudes; stacking computes actual magnitude from base * stackCount * fidelity. Requires typed effect definitions beyond MVP scope.
 
 ---

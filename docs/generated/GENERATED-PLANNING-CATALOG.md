@@ -91,7 +91,7 @@ Designs a system where a divine actor (regional watcher pattern) orchestrates mu
 
 ### Divinity Generation Architecture {#divinity-generation-architecture}
 
-**Type**: Design | **Status**: Draft | **Last Updated**: 2026-03-16 | **North Stars**: #1, #2, #5 | [Full Document](../planning/DIVINITY-GENERATION-ARCHITECTURE.md)
+**Type**: Design | **Status**: Draft | **Last Updated**: 2026-03-23 | **North Stars**: #1, #2, #5 | [Full Document](../planning/DIVINITY-GENERATION-ARCHITECTURE.md)
 
 Redesigns Divine's divinity generation pipeline to use Seed bond propagation and Currency wallets instead of Analytics event subscriptions. Analytics is the most optional plugin in the system and cannot be in the critical path for game mechanics. The new architecture extends Seed's existing bond mechanism with configurable growth propagation (per-bond direction and ratio), so a character's domain seed bonded to a god's domain seed automatically transfers growth at L2 with no Divine involvement. Also introduces the "wallet as multi-consumer accumulation point" pattern where different systems (Quest, Divine, leveling) independently consume from the same wallet without contention. This makes Divine a pure orchestration layer (deity CRUD, blessings, followers) with no divinity generation plumbing.
 
@@ -227,7 +227,7 @@ Records the results of a full cross-service architectural audit comparing VISION
 
 ### Plan: Implement MCP Server Service (L3 App Features) {#mcp-server}
 
-**Status**: Draft | [Full Document](../planning/MCP-SERVER.md)
+**Status**: Phase 1 complete | [Full Document](../planning/MCP-SERVER.md)
 
 The MCP (Model Context Protocol) server is a new L3 App Features plugin that exposes a standards-compliant MCP endpoint for AI agents to query documentation, schemas, service capabilities, and game-specific knowledge. Game server operators deploy it alongside their game — AI integrations can describe the game, its servers, or the underlying Bannou architecture.
 

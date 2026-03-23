@@ -278,7 +278,7 @@ This approach:
 
 ### 5.2 Economic Deities
 
-Economic deities are long-running Actor instances (via lib-actor) that observe analytics and spawn corrective events. They use the Divine service (lib-divine) for identity, divinity economy, and blessing mechanics.
+Economic deities are long-running Actor instances (via lib-actor) that observe economic metrics and spawn corrective events. They use the Divine service (lib-divine) for identity, divinity economy, and blessing mechanics. Primary observation is through Currency variable providers (`${currency.*}`) for direct balance/transaction data; Analytics provides optional enrichment (aggregate velocity, distribution metrics) when available but is NOT required — Analytics is the most optional plugin and cannot be in the critical path for game mechanics (per [DIVINITY-GENERATION-ARCHITECTURE.md](../planning/DIVINITY-GENERATION-ARCHITECTURE.md)).
 
 | Deity Archetype | Domain | Intervention Style |
 |-----------------|--------|-------------------|
@@ -367,7 +367,7 @@ Locations can have a divine attention level: `active` (gods maintain velocity), 
 Economic deities use the same GOAP infrastructure as NPC brains, with world state populated from analytics queries:
 
 ```yaml
-# Economic Deity World State (from analytics)
+# Economic Deity World State (from Currency variable providers; Analytics enrichment optional)
 deity_worldstate:
   velocity:
     market_square: 2.1
@@ -636,13 +636,14 @@ The economic intelligence layer is **distributed across existing services** rath
 
 ```
                     Divine Economic Deities (L4)
-                    observe velocity → spawn narrative events
+                    observe metrics → spawn narrative events
                               │
                     ┌─────────┴─────────┐
                     │                   │
-              lib-analytics         lib-actor
-              /economy/velocity     Event dispatch
-              /economy/distrib      NPC GOAP brains
+              lib-currency          lib-actor
+              ${currency.*}         Event dispatch
+              (+ lib-analytics      NPC GOAP brains
+               when available)
                     ▲                   │
                     │ records            │ affects
               lib-currency          NPC Economic
@@ -668,9 +669,9 @@ The economic intelligence layer is **distributed across existing services** rath
 1. Players and NPCs transact via lib-currency, lib-item, lib-inventory
 2. Quests distribute rewards via lib-contract prebound APIs
 3. Escrow holds assets during multi-party exchanges
-4. Currency transactions publish events consumed by Analytics
-5. Analytics computes velocity and distribution metrics
-6. Economic deities observe analytics and spawn intervention events
+4. Currency transactions publish events consumed by Analytics (when enabled)
+5. Economic deities observe economic metrics via Currency variable providers (`${currency.*}`), optionally enriched by Analytics velocity/distribution data when available
+6. Economic deities spawn narrative intervention events based on GOAP evaluation
 7. NPC GOAP brains react to events, creating organic economic activity
 8. The cycle continues, with divine intervention maintaining healthy velocity
 

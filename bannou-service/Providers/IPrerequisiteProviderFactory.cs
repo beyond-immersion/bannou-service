@@ -20,11 +20,13 @@ namespace BeyondImmersion.BannouService.Providers;
 /// </list>
 /// <para>
 /// <b>Built-in Prerequisites (L2)</b>: Quest handles these directly via service clients:
-/// <c>quest_completed</c>, <c>currency</c>, <c>item</c>, <c>character_level</c>
+/// <c>quest_completed</c>, <c>currency</c>, <c>item</c>
 /// </para>
 /// <para>
 /// <b>Dynamic Prerequisites (L4)</b>: Handled by provider factories:
-/// <c>skill</c>, <c>magic</c>, <c>achievement</c>, <c>reputation</c>, etc.
+/// <c>character_level</c> (Status — unified effects query for seed-derived capabilities),
+/// <c>reputation</c> (Status — faction standing as seed-derived effect),
+/// <c>achievement</c> (Achievement), <c>skill</c>, <c>magic</c>, etc.
 /// </para>
 /// <para>
 /// <b>Example Implementation</b>:

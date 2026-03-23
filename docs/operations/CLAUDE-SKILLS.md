@@ -1,11 +1,11 @@
 # Claude Code Integration Guide
 
-> **Last Updated**: 2026-03-21
+> **Last Updated**: 2026-03-23
 > **Scope**: Claude Code configuration, hooks, and custom automation for Bannou development
 
 ## Summary
 
-Claude Code integration configuration for Bannou development. Built around a custom MCP server (`bannou-read`) that replaces Claude's built-in Read, Edit, and Bash tools with a sandboxed tool set — eliminating entire categories of failure by making them structurally impossible rather than behaviorally discouraged. Also covers PreToolUse hooks (behavioral reminders, commit format enforcement), a permission canary fail-fast gate for skills, 16 custom skills for plugin documentation/auditing/implementation/schema work, and project-aware agent types. Required reading before creating new hooks, skills, or agent workflows.
+Claude Code integration configuration for Bannou development. Built around a custom MCP server (`bannou-read`) that replaces Claude's built-in Read, Edit, and Bash tools with a sandboxed tool set — eliminating entire categories of failure by making them structurally impossible rather than behaviorally discouraged. Includes context preparation (`prepare_context`) for efficient bulk documentation loading with profile-based file sets and sentinel-triggered external activation. Also covers PreToolUse hooks (behavioral reminders, commit format enforcement), a permission canary fail-fast gate for skills, 16 custom skills for plugin documentation/auditing/implementation/schema work, and project-aware agent types. Required reading before creating new hooks, skills, or agent workflows.
 
 ---
 
@@ -13,7 +13,7 @@ Claude Code integration configuration for Bannou development. Built around a cus
 
 Bannou uses Claude Code with custom configuration organized in four layers:
 
-1. **MCP Server** — A custom file operations server (`bannou-read`) that replaces Claude's built-in Read, Edit, and Bash tools. Agents operate exclusively through this sandboxed tool set: `read_file`, `edit_file`, `move_lines`, `validate_structure`, and `run_command` (whitelisted commands only). This is the foundation — by controlling what tools are available, entire categories of misbehavior become structurally impossible.
+1. **MCP Server** — A custom file operations server (`bannou-read`) that replaces Claude's built-in Read, Edit, and Bash tools. Agents operate exclusively through this sandboxed tool set: `read_file`, `edit_file`, `write_file`, `write_script`, `move_lines`, `validate_structure`, `prepare_context`, and `run_command` (whitelisted commands only). This is the foundation — by controlling what tools are available, entire categories of misbehavior become structurally impossible.
 2. **Hooks** — Real-time procedural gates that fire on specific tool calls. Some block (destructive git, production deploys), some remind (frozen files, task format, language patterns). Many hooks that were critical before the MCP server are now redundant for agents — the MCP server's tool restrictions achieve the same result with zero interruption cost.
 3. **Skills** — Mechanical checklists for complex workflows (auditing, implementation, testing). Each skill is a step-by-step procedure with verification at each stage, stored as `.claude/skills/{name}/SKILL.md` with shared fragments in `.claude/skills/_shared/`.
 4. **Agents** — Project-aware sub-agents that pre-load Bannou context (tenets, patterns, schema rules) before doing work. Agent tool lists are defined in `.claude/agents/*.md` and include only MCP tools — agents cannot access built-in Read, Edit, or Bash.
@@ -65,8 +65,11 @@ The MCP server solves all three by owning the entire file operation space:
 |------|---------|-------------|
 | `read_file` | Full file reads with line numbers | Never truncates. Large files split into continuation parts with preserved line numbers. Tracks which files have been read. |
 | `edit_file` | Exact string replacement | Requires `read_file` first (MCP's own tracking). Validates uniqueness. Rejects edits to files with unread continuation parts. |
+| `write_file` | Complete file writes | Requires `read_file` first for existing files (no gate for new files). Content preserved to `/tmp/` on any failure. Race condition detection via `expected_size_bytes`. |
+| `write_script` | Sandboxed script creation | Scripts written to `/tmp/bannou-scripts/` only. Auto chmod +x. Syntax validation (bash -n, py_compile, node --check). |
 | `move_lines` | Line-range relocation between files | Atomic dual-file write. Safety anchors catch off-by-one errors. Automatic C# structure validation post-move. |
 | `validate_structure` | C# structural integrity check | Balanced braces, `#region`/`#endregion`, `#if`/`#endif`. Used automatically by `move_lines`, available standalone. |
+| `prepare_context` | Context composite creation | Packs documentation into optimally-sized composites (≤64KB). Pre-registers originals as read. Gates all tools until composites are read. See [Context Preparation](#context-preparation). |
 | `run_command` | Whitelisted shell execution | Only allows specific command prefixes (see below). Blocked patterns prevent file writes outside `/tmp/`, destructive git, command injection, and ad-hoc scripting. |
 
 ### The Command Whitelist
@@ -98,6 +101,61 @@ Claude Code has a platform-level output size cap (~100KB serialized). MCP respon
 - **Part 2+**: Written to `/tmp/` as continuation files with original line numbers preserved
 
 The edit gate blocks modifications to any file with unread continuation parts — the agent must read ALL parts before it can edit. `run_command` is also blocked globally while any split-file reads are incomplete.
+
+### Context Preparation
+
+The `prepare_context` tool replaces behavioral "read these N files" instructions with a mechanical tool. Instead of agents individually reading 8+ reference documents (each requiring a separate tool call and MCP response), the server reads all files at once, packs them into optimally-sized composites, and gates the agent until they read the composites.
+
+#### How It Works
+
+1. Agent calls `prepare_context(profile: "dev")` (or `plugin`, `schema`, `custom`)
+2. Server resolves the profile to a file list (defined in `.claude/mcp/profiles.mjs`)
+3. Server reads all files, adds line numbers (same format as `read_file`)
+4. Files are packed into composites ≤64KB each (fits in a single `read_file` response)
+5. Original files are pre-registered in `readFiles` (enabling immediate `edit_file` without re-reading)
+6. Composites are added to `requiredReading` — all tools except `read_file` and `prepare_context` are gated
+7. Agent reads each composite with `read_file` — as each is read, it's removed from the gate
+8. When all composites are read, the gate clears and all tools become available
+
+#### Profiles
+
+Profiles are defined in `.claude/mcp/profiles.mjs` with inheritance support:
+
+| Profile | Inherits | Static Files | Dynamic Files | Description |
+|---------|----------|-------------|---------------|-------------|
+| `dev` | — | CLAUDE.md, CLAUDE-PRACTICES.md, HELPERS-AND-COMMON-PATTERNS.md, 5 tenet files | — | Core development context |
+| `plugin` | `dev` | — | `docs/plugins/{SERVICE}.md`, `docs/maps/{SERVICE}.md` | Plugin-specific context (requires `service` option) |
+| `schema` | `dev` | SCHEMA-RULES.md, specifications catalog | — | Schema work context |
+| `custom` | — | — | Arbitrary file list from `files` option | Ad-hoc context loading |
+
+Adding a new profile: add an entry to `CONTEXT_PROFILES` in `profiles.mjs`. Use `extends` for inheritance, `files` for static paths, `dynamicFiles(options)` for option-dependent paths, and `requiresOption` to enforce required parameters.
+
+#### Sentinel-Triggered Context Preparation
+
+Context preparation can also be triggered externally via sentinel injection — the user writes a JSON file that the MCP server processes on the next tool call. This enables one-button context loading from a Stream Deck or terminal:
+
+```json
+{
+  "prepareContext": { "profile": "dev" },
+  "message": "Context prepared: dev"
+}
+```
+
+For plugin-specific context:
+```json
+{
+  "prepareContext": { "profile": "plugin", "service": "account" },
+  "message": "Context prepared: account plugin"
+}
+```
+
+When triggered via sentinel, the same composite-and-gate mechanism applies. A `UserPromptSubmit` hook notifies the agent that an injection is pending, prompting it to call any MCP tool to process the sentinel file. The composites are created, the required reading gate activates, and the agent reads each composite to clear the gate.
+
+#### Idempotency and Stacking
+
+- **Idempotent**: If all files for a profile are already read, `prepare_context` returns immediately with no composites. Calling it twice is a no-op.
+- **Stackable**: Calling `prepare_context` while a gate is active (from a previous call) adds new composites to the existing gate. This enables layered context loading — e.g., first load `dev`, then stack `plugin` context.
+- **Skip logic**: Files already in `readFiles` (from previous reads or prepare_context calls) are skipped — only new files are packed into composites.
 
 ### The Philosophical Shift: Capability vs. Behavior
 
@@ -158,8 +216,16 @@ These hooks remain configured in `settings.json` because they still protect the 
 ├── system-prompt-modified.md  # Modified system prompt (edit here, sync to config)
 ├── skills-guide.txt           # Anthropic's skill authoring reference
 ├── mcp/                               # MCP server (file operations sandbox)
-│   ├── server.mjs             # Main server: read_file, edit_file, move_lines,
-│   │                          #   validate_structure, run_command
+│   ├── server.mjs             # Entry point: all tool registrations
+│   ├── state.mjs              # Shared mutable state (read tracking, gates, constants)
+│   ├── profiles.mjs           # Context profile definitions (dev, plugin, schema)
+│   ├── helpers/
+│   │   ├── file-ops.mjs       # Read tracking, gate checks, chunking
+│   │   ├── structure.mjs      # C# brace/region/preprocessor validation
+│   │   ├── commands.mjs       # Command whitelist, blocked patterns, execution
+│   │   ├── sentinel.mjs       # External state injection (Stream Deck, manual)
+│   │   ├── scripts.mjs        # Sandboxed script writing with syntax validation
+│   │   └── context.mjs        # Context preparation, composite packing
 │   ├── package.json           # Dependencies (@modelcontextprotocol/sdk)
 │   └── node_modules/          # Installed dependencies
 ├── hooks/
@@ -389,15 +455,17 @@ Common patterns are extracted into `.claude/skills/_shared/` and included via `!
 
 ## Custom Agent Types
 
-| Agent | Pre-reads | Use For |
-|-------|-----------|---------|
-| `bannou` | CLAUDE.md, CLAUDE-PRACTICES.md | General tasks needing project awareness |
-| `bannou-dev` | Above + all tenet files + HELPERS-AND-COMMON-PATTERNS.md | Implementation, code review, auditing, tenet compliance |
-| `bannou-limited` | CLAUDE.md, CLAUDE-PRACTICES.md (reduced tool set) | Lightweight tasks needing basic project awareness |
-| `bannou-schema` | Above + SCHEMA-RULES.md + specifications catalog + scripts catalog | Schema work, generation, extension attributes |
-| `bannou-code-reviewer` | Read-only tools + all tenet files + all plugin source | Read-only deep code review for tenet violations |
+| Agent | Context Loading | Use For |
+|-------|----------------|---------|
+| `bannou` | Manual reads (CLAUDE.md, CLAUDE-PRACTICES.md) | General tasks needing project awareness |
+| `bannou-dev` | `prepare_context(profile: "dev")` or `prepare_context(profile: "plugin", service: "name")` | Implementation, code review, auditing, tenet compliance |
+| `bannou-limited` | Manual reads (CLAUDE.md, CLAUDE-PRACTICES.md), reduced tool set | Lightweight tasks needing basic project awareness |
+| `bannou-schema` | `prepare_context(profile: "schema")` | Schema work, generation, extension attributes |
+| `bannou-code-reviewer` | `prepare_context(profile: "plugin", service: "name")` + all plugin source | Read-only deep code review for tenet violations |
 
 All agents use MCP tools exclusively for file operations and command execution. Their tool lists are defined in `.claude/agents/*.md` and deliberately exclude built-in `Read`, `Edit`, and `Bash`. Non-approved agent types (general-purpose, Explore, Plan, feature-dev:*, etc.) are blocked by `block-all-agents.sh`.
+
+Agents that load reference documents (`bannou-dev`, `bannou-schema`, `bannou-code-reviewer`) use `prepare_context` instead of individual `read_file` calls. This is more efficient: the server reads files once, packs them into composites optimized for the MCP output size cap, and pre-registers originals for immediate `edit_file` — reducing 8+ individual reads to 1 tool call + a handful of composite reads.
 
 ### Why Agents Cannot Use Built-in Tools
 

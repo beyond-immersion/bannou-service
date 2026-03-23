@@ -37,7 +37,23 @@ An agent once read 145 files in a single session to write a comprehensive deep d
 | `write_script` | Write a script to the sandboxed scripts directory with automatic chmod +x and syntax validation. | Creating utility scripts (.sh, .py, .mjs). Scripts written to `/tmp/bannou-scripts/` ONLY. Auto-validates syntax (bash -n, py_compile, node --check). |
 | `move_lines` | Move a line range from one file to another by line number. Both files written atomically. Runs **structure validation** automatically after each move. | Relocating methods, blocks, or sections between files. No string matching — immune to invisible whitespace issues. |
 | `validate_structure` | Check a C# file for balanced braces, `#region`/`#endregion`, and `#if`/`#endif`. | After manual edits, or to diagnose structural build failures. Also runs automatically inside `move_lines`. |
+| `prepare_context` | Pack documentation files into optimally-sized composites for efficient context loading. Pre-registers originals as read. Gates all other tools until composites are read. | Agent initialization, plugin context loading. Profiles: `dev`, `plugin`, `schema`, `custom`. |
+| `list_plugins` | List all 78 plugins with layer, endpoint count, and doc availability. | Discovering available services, checking doc coverage. |
+| `get_plugin_docs` | Get deep dive + implementation map for a plugin. Marks source files as read. | Plugin investigation. Replaces manually reading `docs/plugins/` + `docs/maps/`. |
+| `list_documents` | Categorized index of all docs from generated catalogs. | Documentation discovery. Replaces reading catalog files individually. |
+| `get_document` | Get a specific document by path. Marks source as read. | Reading any doc file. |
+| `search_docs` | Full-text keyword search across all docs/ with relevance ranking. | Finding relevant documentation by topic. |
+| `list_schemas` | List all schema files organized by service. | Schema discovery. |
+| `get_schema` | Get a specific schema file or all schemas for a service. Marks source as read. | Schema inspection. Replaces reading `schemas/*.yaml` individually. |
+| `get_service_details` | Generated service details, optionally by layer. | Service investigation. Replaces reading `GENERATED-*-SERVICE-DETAILS.md`. |
+| `get_events` | Generated events reference (all topics and schemas). | Event investigation. Replaces reading `GENERATED-EVENTS.md`. |
+| `get_state_stores` | Generated state store definitions. | State store investigation. Replaces reading `GENERATED-STATE-STORES.md`. |
+| `get_configuration` | Generated configuration reference (all env vars). | Config investigation. Replaces reading `GENERATED-CONFIGURATION.md`. |
+| `print_models` | Compact model shapes for a service (~6x smaller than schemas). | Understanding service models. Replaces `make print-models`. |
+| `print_interfaces` | Interface shapes from bannou-service (catalog or detail mode). | Understanding infrastructure APIs. Replaces `make print-interfaces`. |
 | `run_command` | Execute whitelisted shell commands (see below). | Builds, tests, generation, git queries, file discovery, running sandboxed scripts. |
+
+**Introspection tool notes**: Tools that return file-sourced content (`get_plugin_docs`, `get_document`, `get_schema`, `get_service_details`, `get_events`, `get_state_stores`, `get_configuration`) automatically mark the source files as read — enabling immediate `edit_file` without a separate `read_file` call. If output exceeds the MCP response size cap, it is split into continuation composites with the same required-reading gate as `prepare_context`.
 
 **`move_lines` details**: Takes `source_file`, `start_line`, `end_line`, `dest_file`, `dest_insert_after_line`. Optional safety anchors `expect_first_line_contains` and `expect_last_line_contains` verify content before moving — catches off-by-one errors. Work bottom-up when moving multiple blocks from the same file (preserves line numbers for earlier blocks). After writing both files, automatically validates structure and reports any issues (orphaned regions, brace imbalances).
 
@@ -54,17 +70,31 @@ An agent once read 145 files in a single session to write a comprehensive deep d
 
 **`write_script` details**: Scripts are written to `/tmp/bannou-scripts/` ONLY — agents cannot create executable scripts elsewhere. Allowed extensions: `.sh`, `.py`, `.mjs`. Shebangs are auto-added if missing. Syntax is validated before returning (`bash -n` for shell, `python3 -m py_compile` for Python, `node --check` for mjs). Execute via `run_command`: `/tmp/bannou-scripts/my-script.sh`. Filenames must be flat (no path separators), no hidden files, alphanumeric + hyphens/underscores/dots only.
 
-**Protected paths**: The sentinel injection file (`/tmp/bannou-mcp-inject.json`) cannot be written or edited by agents via any MCP tool. It is controlled exclusively by external human action (terminal commands, Stream Deck, etc.).
+**`prepare_context` details**: Reads documentation files server-side, packs them into optimally-sized composites (≤64KB each, fits in a single `read_file` response), pre-registers originals as read (enabling immediate `edit_file`), and gates all other tools until composites are read. Profiles are defined in `.claude/mcp/profiles.mjs`:
 
-**Sentinel injection** (human-only, external): The MCP server checks for `/tmp/bannou-mcp-inject.json` at the start of every tool call. If found, it processes the commands and deletes the file. This enables the user to inject state changes (mark files as read, grant temporary write permissions to frozen directories, send messages to agents) without agent involvement. Agents cannot create or modify this file — it is a protected path. Format:
+| Profile | Files Loaded | Options |
+|---------|-------------|---------|
+| `dev` | CLAUDE.md, CLAUDE-PRACTICES.md, HELPERS-AND-COMMON-PATTERNS.md, all 5 tenet files | — |
+| `plugin` | Everything in `dev` + `docs/plugins/{SERVICE}.md` + `docs/maps/{SERVICE}.md` | `service: "name"` (required) |
+| `schema` | Everything in `dev` + SCHEMA-RULES.md + specifications catalog | — |
+| `custom` | Arbitrary file list | `files: ["path/to/file", ...]` (required) |
+
+Idempotent: files already read are skipped. Stackable: calling `prepare_context` while a gate is active adds new composites to the existing gate. After calling, read ALL returned composites to clear the gate and unlock other tools.
+
+**Protected paths**: The sentinel injection file (`/tmp/bannou-mcp-inject-{bucket}.json`) cannot be written or edited by agents via any MCP tool. It is controlled exclusively by external human action (terminal commands, Stream Deck, etc.).
+
+**Sentinel injection** (human-only, external): The MCP server checks for `/tmp/bannou-mcp-inject-{bucket}.json` at the start of every tool call (`{bucket}` is set by `BANNOU_MCP_BUCKET` env var, default `1`). If found, it processes the commands and deletes the file. This enables the user to inject state changes (mark files as read, grant temporary write permissions to frozen directories, prepare context, send messages to agents) without agent involvement. Agents cannot create or modify this file — it is a protected path. Format:
 ```json
 {
   "markRead": ["/path/to/file1", "/path/to/file2"],
   "grantPermissions": ["scripts/", "docs/reference/"],
   "revokePermissions": ["scripts/"],
+  "prepareContext": { "profile": "dev" },
   "message": "Optional message displayed to the agent"
 }
 ```
+
+The `prepareContext` command accepts the same options as the `prepare_context` tool: `{ "profile": "plugin", "service": "account" }` for plugin context, `{ "profile": "custom", "files": ["path/to/file"] }` for arbitrary files. When triggered via sentinel, the composites are created and the required reading gate is activated — the agent must read all composites before any other tool call proceeds. A `UserPromptSubmit` hook notifies the agent that an injection is pending.
 
 ## Command Execution via `run_command`
 
@@ -95,7 +125,7 @@ This is never a reference to claude-code's issues or any other repository.
 
 @docs/BANNOU-DESIGN.md
 
-**Key Points**: All generated files are in `plugins/lib-{service}/Generated/`. Manual files are: `{Service}Service.cs` (business logic), `{Service}Service.Models.cs` (internal data models), and `{Service}Service.Events.cs` (event handlers). Request/response models are generated into `bannou-service/Generated/Models/` — use `make print-models PLUGIN="service"` to inspect them instead of reading generated files directly.
+**Key Points**: All generated files are in `plugins/lib-{service}/Generated/`. Manual files are: `{Service}Service.cs` (business logic), `{Service}Service.Models.cs` (internal data models), and `{Service}Service.Events.cs` (event handlers). Request/response models are generated into `bannou-service/Generated/Models/` — use the `print_models` MCP tool to inspect them instead of reading generated files directly.
 
 **Implementation Maps**: Every service has an implementation map at `docs/maps/{SERVICE}.md` containing the detailed method-by-method pseudocode, state store key patterns, dependency tables, event inventories, DI service lists, and complete endpoint indexes with routes, roles, mutations, and published events. Deep dives (`docs/plugins/{SERVICE}.md`) provide high-level context (overview, design considerations, quirks, work tracking); implementation maps provide the detailed "what does each method do" specification. **When investigating a specific plugin's behavior, always read its implementation map** — the deep dive alone does not contain endpoint details, dependency tables, or method logic.
 
@@ -103,11 +133,11 @@ This is never a reference to claude-code's issues or any other repository.
 
 @docs/reference/TENETS.md
 
-**On-demand references** (read when needed, not auto-included):
-- `docs/reference/HELPERS-AND-COMMON-PATTERNS.md` — Shared helpers, canonical implementation patterns, test validators. **Read this FIRST when searching for the canonical example of any pattern** (background workers, state store access, event publishing, deprecation, cleanup, enum mapping, telemetry, etc.)
-- `docs/BANNOU-DEEP-DIVE.md` — Complete inventory of bannou-service subsystems (state, messaging, mesh, ABML runtime, cognition pipeline, behavior interfaces, plugin loading, DI providers, events). Read when working on bannou-service infrastructure, investigating shared helpers/interfaces, or tracing how plugins wire into the host. Companion to HELPERS (deep dive maps what EXISTS; HELPERS shows how to USE it).
-- `docs/reference/SERVICE-HIERARCHY.md` — Full hierarchy rules, Variable Provider Factory, DI Provider vs Listener safety, deployment modes (read when designing cross-layer communication)
-- `docs/generated/GENERATED-*-SERVICE-DETAILS.md` — Full per-service details by layer (read when investigating a specific layer's services)
+**On-demand references** (read when needed, not auto-included — many available via MCP tools):
+- `docs/reference/HELPERS-AND-COMMON-PATTERNS.md` — Shared helpers, canonical implementation patterns, test validators. **Read this FIRST when searching for the canonical example of any pattern.** Included in `dev`/`plugin`/`schema` profiles.
+- `docs/BANNOU-DEEP-DIVE.md` — Complete inventory of bannou-service subsystems. Read when working on bannou-service infrastructure. Companion to HELPERS.
+- `docs/reference/SERVICE-HIERARCHY.md` — Full hierarchy rules, Variable Provider Factory, DI Provider vs Listener safety, deployment modes.
+- Service details by layer — use `get_service_details` tool (optionally filtered by layer) instead of reading `GENERATED-*-SERVICE-DETAILS.md` files directly.
 - `docs/reference/ORCHESTRATION-PATTERNS.md` — Full orchestration specifications (bootstrap sequence, divine economy, dungeon patterns, living weapons)
 - `docs/BANNOU-ASPIRATIONS.md` § Platform Vision — Genre case studies, developer time savings, competitive positioning
 
@@ -123,7 +153,7 @@ This is never a reference to claude-code's issues or any other repository.
 - **Claude Skills Operations**: `docs/operations/CLAUDE-SKILLS.md` - Hook and skill documentation
 
 **Claude Code Configuration Locations**:
-- **Skills (slash commands)**: `.claude/commands/*.md` — project-level skill files invoked via `/skill-name`
+- **Skills (slash commands)**: `.claude/skills/{name}/SKILL.md` — project-level skill files invoked via `/skill-name`
 - **PreToolUse hooks**: `.claude/hooks/*.sh` — project-level hook scripts (blocking and reminder)
 - **Hook/permission config**: `.claude/settings.json` (project, checked in) and `~/.claude/settings.json` (user-level, global)
 - **Permission canary**: `.claude/permission-canary.txt` — fail-fast Edit permission gate used by all skills
@@ -146,70 +176,74 @@ This protocol exists because there is a behavioral tendency to serialize reads a
 
 **All agents run on Opus 4.6 with 1M token context by default (inherited from the parent session).** Reading 5-10 reference documents (~100-150K tokens) is a trivial fraction of capacity. Do not hesitate to have agents read comprehensive context.
 
-**Prefer project-aware agent types** over the generic `general-purpose` type. Three custom agents are defined in `.claude/agents/`:
+**Prefer project-aware agent types** over the generic `general-purpose` type. Custom agents are defined in `.claude/agents/`:
 
-| Agent Type | Pre-reads | Use For |
-|------------|-----------|---------|
-| `bannou` | CLAUDE.md, CLAUDE-PRACTICES.md | General tasks needing project awareness |
-| `bannou-dev` | Above + all tenet files + HELPERS-AND-COMMON-PATTERNS.md | Implementation, code review, auditing, tenet compliance |
-| `bannou-schema` | Above + SCHEMA-RULES.md + specifications catalog + scripts catalog | Schema work, generation, extension attributes |
+| Agent Type | Context Profile | Use For |
+|------------|----------------|---------|
+| `bannou` | Manual reads (CLAUDE.md, CLAUDE-PRACTICES.md) | General tasks needing project awareness |
+| `bannou-dev` | `prepare_context(profile: "dev")` — tenets + patterns | Implementation, code review, auditing, tenet compliance |
+| `bannou-schema` | `prepare_context(profile: "schema")` — tenets + schema rules | Schema work, generation, extension attributes |
 
-These agents read their reference documents as Step 0 before starting work. Use them via `subagent_type: "bannou"` (or `"bannou-dev"`, `"bannou-schema"`).
+These agents call `prepare_context` as Step 0, then read the returned composites to load all reference documents efficiently. Use them via `subagent_type: "bannou"` (or `"bannou-dev"`, `"bannou-schema"`).
 
 **Additional context by mission type** — add these to the agent's prompt alongside the base agent type:
 
-| Agent Mission | Also Read |
-|---------------|-----------|
+| Agent Mission | Context Loading |
+|---------------|----------------|
+| **Plugin work** (auditing, mapping, testing, implementing) | Use `prepare_context(profile: "plugin", service: "{name}")` — loads dev context + deep dive + implementation map. **Always use this instead of reading plugin docs individually.** |
 | **Investigation** (tracing dependencies, exploring architecture) | Layer-specific service details: `docs/generated/GENERATED-*-SERVICE-DETAILS.md`. Also `docs/reference/SERVICE-HIERARCHY.md` for dependency analysis. |
-| **Plugin work** (auditing, mapping, testing, implementing) | `docs/plugins/{SERVICE}.md` (deep dive) AND `docs/maps/{SERVICE}.md` (implementation map). **Always read both.** |
-| **Testing work** | `docs/reference/tenets/TESTING-PATTERNS.md` — the sole testing reference. |
+| **Testing work** | `docs/reference/tenets/TESTING-PATTERNS.md` — already included in `dev` and `plugin` profiles. |
 | **High-level vision** | `docs/reference/VISION.md` and `docs/reference/PLAYER-VISION.md` (same as Big Brain Mode). |
 | **Documentation search** | The relevant catalog(s) — see Catalog-First Documentation Search below. |
-| **bannou-service infrastructure** (shared helpers, ABML runtime, plugin loading, DI providers) | `docs/BANNOU-DEEP-DIVE.md` — the complete bannou-service subsystem inventory. Also `docs/reference/HELPERS-AND-COMMON-PATTERNS.md` for usage patterns. |
+| **bannou-service infrastructure** (shared helpers, ABML runtime, plugin loading, DI providers) | `docs/BANNOU-DEEP-DIVE.md` — the complete bannou-service subsystem inventory. HELPERS already included via `dev` profile. |
 
 **Rules:**
-1. Every sub-agent prompt MUST include an explicit instruction to read the relevant documents BEFORE doing any work
-2. Agents may need multiple orientations (e.g., an agent auditing code for tenet compliance while investigating service dependencies would read both the tenet files AND the service details files)
-3. The agent's prompt should specify which documents to read — do not rely on the agent discovering them on its own
-4. For ANY agent working on a specific plugin, ALWAYS include both `docs/plugins/{SERVICE}.md` (deep dive) and `docs/maps/{SERVICE}.md` (implementation map) in the agent's reading list
-5. For ANY agent implementing a pattern, instruct it to read `docs/reference/HELPERS-AND-COMMON-PATTERNS.md` BEFORE grepping the codebase. The patterns file is the canonical source — grepping other services risks copying violations
+1. Every sub-agent prompt MUST include an explicit instruction to call `prepare_context` with the appropriate profile BEFORE doing any work — or to read specific documents if no profile covers them
+2. For ANY agent working on a specific plugin, instruct it to use `prepare_context(profile: "plugin", service: "{name}")` — this is more efficient than reading files individually (fewer reads, optimally-packed composites)
+3. `prepare_context` is stackable — an agent can call it multiple times with different profiles; files already read are skipped
+4. For ANY agent implementing a pattern, the `dev` profile already includes `HELPERS-AND-COMMON-PATTERNS.md` — no separate read needed
+5. Agents may need additional reads beyond what profiles provide (e.g., service details files for investigation work) — instruct them to read those after the profile context is loaded
 
 **Other Planning References**:
 
 - **Plan Example**: `docs/reference/templates/PLAN-EXAMPLE.md` - A preserved real implementation plan (Seed service) showing the expected structure, detail level, and patterns for planning a new Bannou service. Read this when creating implementation plans for new services or major features to match the established planning format.
 - **Implementation Maps**: `docs/maps/{SERVICE}.md` - Method-by-method specifications for each plugin. Contains pseudocode, state store key patterns, dependency tables, event inventories, DI service lists, and full endpoint indexes. Every implemented service has one. **Do not confuse with deep dives** (`docs/plugins/{SERVICE}.md`) — deep dives are high-level context; maps are detailed specifications.
 
-**Auto-Generated References** (regenerate with `make generate-docs`):
+**Auto-Generated References** (regenerate with `make generate-docs`; **all accessible via MCP tools**):
 
-- **Service Details**: `docs/generated/GENERATED-SERVICE-DETAILS.md` - Service descriptions and API endpoints
-- **Configuration**: `docs/generated/GENERATED-CONFIGURATION.md` - Environment variables per service
-- **Events**: `docs/generated/GENERATED-EVENTS.md` - Event schemas and topics
-- **State Stores**: `docs/generated/GENERATED-STATE-STORES.md` - Redis/MySQL state stores
-- **Document Catalogs** (index-first search — see rule below):
-  - `docs/generated/GENERATED-GUIDES-CATALOG.md` — All developer guides with summaries, status, key plugins
-  - `docs/generated/GENERATED-PLANNING-CATALOG.md` — All planning/design/research docs with summaries, type, status, north stars
-  - `docs/generated/GENERATED-FAQ-CATALOG.md` — All architectural rationale FAQs with summaries and related plugins
-  - `docs/generated/GENERATED-OPERATIONS-CATALOG.md` — All operations docs with summaries and scope
-  - `docs/generated/GENERATED-SPECIFICATIONS-CATALOG.md` — All extension attribute specifications with summaries, status, schema scope
-  - `docs/generated/GENERATED-SDKS-CATALOG.md` — All SDK deep dives with summaries, layer, domain, implementation map links
+| Reference | MCP Tool | File Path |
+|-----------|----------|-----------|
+| Service Details | `get_service_details` (with optional layer filter) | `docs/generated/GENERATED-*-SERVICE-DETAILS.md` |
+| Configuration | `get_configuration` | `docs/generated/GENERATED-CONFIGURATION.md` |
+| Events | `get_events` | `docs/generated/GENERATED-EVENTS.md` |
+| State Stores | `get_state_stores` | `docs/generated/GENERATED-STATE-STORES.md` |
+| Document Catalogs | `list_documents` (with optional category filter) | `docs/generated/GENERATED-*-CATALOG.md` |
+| Model Shapes | `print_models` | (computed from schemas) |
+| Interface Shapes | `print_interfaces` | (computed from bannou-service C# sources) |
+
+**Prefer MCP tools over reading generated files directly** — tools mark source files as read (enabling immediate edits), handle oversized output with continuation gating, and provide structured formatting.
 
 ### Catalog-First Documentation Search (MANDATORY)
 
-**When searching documentation broadly** — e.g., "find documentation about X", "search docs for anything related to Y", "which guide covers Z", or when launching agents to search documentation — **read the relevant catalog FIRST before opening individual documents.** Each catalog is a single-file index (~50-200 lines) with rich summary paragraphs, metadata (status, key plugins, last updated), and direct links. Reading a catalog first ensures you find ALL relevant documents — not just the first match from a filename glob. The goal is completeness: catalogs surface documents whose relevance isn't obvious from their filenames.
+**When searching documentation broadly**, use MCP tools instead of reading catalog files individually:
 
-**Which catalog to check:**
+- **`search_docs`**: Full-text keyword search across all `docs/` files. Returns ranked results with scores. Use this first when you have a specific topic or keyword.
+- **`list_documents`**: All 6 catalog files at once, or filtered by category. Use this when browsing or need the full catalog index with summaries.
+- **`get_document`**: Read a specific document by path once you've identified it.
 
-| Looking for... | Read first |
-|----------------|------------|
-| How-to guides, SDK docs, system explanations, developer workflows | `docs/generated/GENERATED-GUIDES-CATALOG.md` |
-| Design documents, vision docs, research, implementation plans, architectural analysis | `docs/generated/GENERATED-PLANNING-CATALOG.md` |
-| "Why does Bannou do X?", architectural rationale, design decision justification | `docs/generated/GENERATED-FAQ-CATALOG.md` |
-| Deployment, testing, CI/CD, linting, release procedures | `docs/generated/GENERATED-OPERATIONS-CATALOG.md` |
-| Extension attribute syntax, generation behavior, runtime validation | `docs/generated/GENERATED-SPECIFICATIONS-CATALOG.md` |
-| SDK deep dives, implementation maps, creative/infrastructure libraries | `docs/generated/GENERATED-SDKS-CATALOG.md` |
-| Unknown or cross-cutting topic | Check all six catalogs — total ~700 lines, well within context |
+**Which category to check** (pass as `category` parameter to `list_documents`):
 
-**This applies to both direct searches and sub-agent instructions.** When launching an agent to "search documentation for X", instruct it to read the relevant catalog(s) first, identify ALL target documents from the summaries, then read every identified document in full. Do not instruct agents to glob `docs/guides/` or `docs/planning/` and read files blindly — that misses documents whose relevance is only apparent from their summary, not their filename.
+| Looking for... | Category |
+|----------------|----------|
+| How-to guides, SDK docs, system explanations, developer workflows | `guides` |
+| Design documents, vision docs, research, implementation plans | `planning` |
+| "Why does Bannou do X?", architectural rationale | `faqs` |
+| Deployment, testing, CI/CD, linting, release procedures | `operations` |
+| Extension attribute syntax, generation behavior, runtime validation | `specifications` |
+| SDK deep dives, implementation maps, creative/infrastructure libraries | `sdks` |
+| Unknown or cross-cutting topic | Omit category — returns all six catalogs |
+
+**This applies to both direct searches and sub-agent instructions.** When launching an agent to "search documentation for X", instruct it to use `search_docs` or `list_documents` first, identify ALL target documents from the results, then read them with `get_document`. Do not instruct agents to glob `docs/` directories blindly — that misses documents whose relevance is only apparent from their summary, not their filename.
 
 ## Development Rules
 
@@ -295,21 +329,18 @@ make test-structural-info METHOD=PackageReferences_AreLatestStableVersions  # Sp
 #   PluginPackages_DoNotDuplicateBannouServicePackages — transitive duplicate detection
 #   PluginPackages_AreReferencedInSource — unused plugin-specific package detection
 
-# Model Shape Inspection (for understanding service models without loading full schemas)
-# Prints compact model shapes (~6x smaller than schemas or generated C# code).
-# Use this INSTEAD of reading *Models.cs or *-api.yaml when you need to understand
-# all models for a service. Format: * = required, ? = nullable, = val = default.
-make print-models PLUGIN="character"     # Print all model shapes for a service
+# Model Shape Inspection — use the MCP tool instead of make:
+#   print_models(plugin: "character")          # Compact model shapes (~6x smaller than schemas)
+#   Format: * = required, ? = nullable, = val = default
+# The MCP tool executes the same script internally and handles oversized output.
 
-# Interface Shape Inspection (for understanding bannou-service shared interfaces)
-# Prints compact interface shapes — method signatures, properties, inheritance.
-# Use this INSTEAD of reading 400+ line interface files when you need to understand
-# the infrastructure API surface (state stores, messaging, DI providers, etc.).
-make print-interfaces                         # Catalog: all interfaces by category
-make print-interfaces INTERFACE="IStateStore" # Detail: full method signatures
-make print-interfaces INTERFACE="Cacheable"   # Partial name match supported
+# Interface Shape Inspection — use the MCP tool instead of make:
+#   print_interfaces()                         # Catalog: all interfaces by category
+#   print_interfaces(name: "IStateStore")      # Detail: full method signatures
+#   print_interfaces(name: "Cacheable")        # Partial name match supported
+# The MCP tool executes the same script internally and handles oversized output.
 
-# Assembly Inspection (for understanding external APIs)
+# Assembly Inspection (for understanding external APIs — no MCP equivalent, use run_command)
 make inspect-type TYPE="IChannel" PKG="RabbitMQ.Client"
 make inspect-method METHOD="IChannel.BasicPublishAsync" PKG="RabbitMQ.Client"
 make inspect-constructor TYPE="ConnectionFactory" PKG="RabbitMQ.Client"

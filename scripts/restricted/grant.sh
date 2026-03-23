@@ -16,7 +16,7 @@
 #   structural  → structural-tests/      (structural validators)
 #   test-utils  → test-utilities/        (shared test infrastructure)
 #   hooks       → .claude/hooks/         (enforcement hooks)
-#   commands    → .claude/commands/       (skill definitions)
+#   skills      → .claude/skills/        (skill definitions)
 #   settings    → .claude/settings.json  (permission config)
 #   agents      → .claude/agents/        (agent definitions)
 #   all         → all of the above
@@ -33,7 +33,7 @@ declare -A CATEGORIES=(
   [structural]="structural-tests/"
   [test-utils]="test-utilities/"
   [hooks]=".claude/hooks/"
-  [commands]=".claude/commands/"
+  [skills]=".claude/skills/"
   [settings]=".claude/settings.json"
   [agents]=".claude/agents/"
 )

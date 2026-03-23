@@ -57,7 +57,7 @@ Do not attempt to work around any of these. The first workaround creates a new p
 
 ## 5. Frozen Artifacts
 
-Frozen directories: `scripts/`, `docs/reference/`, `structural-tests/`, `test-utilities/`, `.claude/hooks/`, `.claude/commands/`, `.claude/settings.json`.
+Frozen directories: `scripts/`, `docs/reference/`, `structural-tests/`, `test-utilities/`, `.claude/hooks/`, `.claude/skills/`, `.claude/settings.json`.
 
 Present concerns about frozen files and wait for explicit, in-conversation instruction before modifying. Detailed rules load contextually via `.claude/rules/frozen-files.md`. Schemas (`schemas/*.yaml`) are not frozen.
 

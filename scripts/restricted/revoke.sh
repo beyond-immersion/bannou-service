@@ -20,7 +20,7 @@ declare -A CATEGORIES=(
   [structural]="structural-tests/"
   [test-utils]="test-utilities/"
   [hooks]=".claude/hooks/"
-  [commands]=".claude/commands/"
+  [skills]=".claude/skills/"
   [settings]=".claude/settings.json"
   [agents]=".claude/agents/"
 )

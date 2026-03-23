@@ -351,9 +351,11 @@ IF deity.Status != Active                                             -> 400
 COUNT _blessingStore WHERE $.entityId = body.EntityId
   AND $.entityType = body.EntityType AND $.status = Active
 IF count >= config.MaxBlessingsPerEntity                              -> 409
-// Calculate divinity cost from tier config
-CALL _currencyClient.DebitAsync(deity.CurrencyWalletId, cost)         -> 400 if insufficient
-// Compensation: if grant fails after debit, re-credit divinity (per Implementation Tenets)
+// Itemized blessing model: the god-actor has already produced the blessing item
+// via Workshop/Craft and holds it in inventory. The caller provides the itemInstanceId
+// of the blessing item to consume. The cost was paid at item production time, not here.
+// Divine validates the item exists in the deity's inventory and consumes it.
+// See deep dive § Divine Economy as Real Economy.
 IF tier is Greater or Supreme
   CALL _collectionClient.UnlockAsync(body.EntityId, body.EntityType, config.BlessingCollectionType, body.ItemTemplateCode)
 ELSE // Minor or Standard

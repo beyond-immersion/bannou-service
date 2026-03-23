@@ -2,8 +2,9 @@
 
 > **Plugin**: lib-mcp
 > **Layer**: L3 App Features
-> **Status**: Draft
+> **Status**: Phase 1 complete
 > **Created**: 2026-03-21
+> **Phase 1 Completed**: 2026-03-23
 > **NuGet**: `ModelContextProtocol.AspNetCore` v1.1.0
 
 ## Context
@@ -40,74 +41,61 @@ The plugin ships with **seed knowledge** — Bannou's own documentation compiled
 
 ## Implementation Phases
 
-### Phase 1: Local MCP Server Enhancement (`.claude/mcp/server.mjs`)
+### Phase 1: Local MCP Server Enhancement (`.claude/mcp/server.mjs`) — ✅ COMPLETE
 
 **Goal**: Add developer-facing tools to the existing local MCP server. These tools serve two purposes: (1) immediate value for agent investigations and implementations, (2) informing the seed data format and becoming the "shared helpers" that the seed generation tool calls.
 
-#### 1a. Shared Helper Architecture
+**Status**: Complete as of 2026-03-23. All tools implemented and syntax-validated.
 
-Refactor the existing `validateStructure()` function pattern — currently a shared helper called by both `move_lines` (automatic post-move check) and `validate_structure` (standalone tool) — into a general pattern for all new capabilities. Each helper is:
+#### 1a. Shared Helper Architecture — ✅ COMPLETE
 
-- A pure function that takes input and returns structured data
-- Callable from a registered tool (exposed to agents)
-- Callable from other helpers or the seed generation tool (Phase 2)
+Refactored from monolithic `server.mjs` into modular `helpers/` directory. Each helper is an ES module with pure async functions callable from both registered tools and (future) seed generation.
 
-```javascript
-// Pattern: shared helper → callable from tool AND from seed generation
-function inspectModelShapes(pluginName) {
-  // Reads schemas/{plugin}-api.yaml, parses component schemas
-  // Returns structured model shape data
-  // Same output whether called from a tool or from generate_docs_seed
-}
-```
+**Implemented helper files:**
 
-#### 1b. New Tools to Register
+| File | Functions | Purpose |
+|------|-----------|---------|
+| `helpers/file-ops.mjs` | Read tracking, gate checks, chunking | Core file operations |
+| `helpers/structure.mjs` | `validateStructure()`, `formatValidationResults()` | C# structural validation |
+| `helpers/commands.mjs` | `execAsync()`, `validateCommand()`, `checkCommandGate()` | Command whitelist & execution |
+| `helpers/sentinel.mjs` | `processSentinel()`, `isPathProtected()` | External state injection |
+| `helpers/scripts.mjs` | `writeScript()` | Sandboxed script creation |
+| `helpers/context.mjs` | `prepareContext()`, `resolveProfile()` | Context composite preparation |
+| `helpers/plugins.mjs` | `getPluginCatalog()`, `getPluginDocs()` | Plugin listing & docs |
+| `helpers/docs.mjs` | `getDocumentCatalog()`, `getDocument()`, `searchDocs()` | Doc catalog, retrieval, search |
+| `helpers/schemas.mjs` | `getSchemaCatalog()`, `getSchema()` | Schema listing & retrieval |
+| `helpers/infrastructure.mjs` | `getServiceDetails()`, `getEventCatalog()`, `getStateStoreCatalog()`, `getConfigurationCatalog()`, `printModelShapes()`, `printInterfaceShapes()` | Generated references & script execution |
 
-| Tool | Shared Helper | Description | Source |
-|------|--------------|-------------|--------|
-| `list_plugins` | `getPluginCatalog()` | List all plugins with layer, endpoint count, doc availability | Scan `plugins/lib-*/` + read generated composition reference |
-| `get_plugin_docs` | `getPluginDocs(name)` | Get deep dive + implementation map for a plugin | Read `docs/plugins/{NAME}.md` + `docs/maps/{NAME}.md` |
-| `list_documents` | `getDocumentCatalog()` | Categorized index of all docs with summaries | Read all 6 `GENERATED-*-CATALOG.md` files |
-| `get_document` | `getDocument(path)` | Get a specific document by path | Read file from `docs/` |
-| `search_docs` | `searchDocs(query)` | Full-text search across documentation | Build inverted index at startup from `docs/` |
-| `list_schemas` | `getSchemaCatalog()` | List all schema files by service | Scan `schemas/*.yaml` |
-| `get_schema` | `getSchema(name)` | Get a specific schema file | Read from `schemas/` |
-| `print_models` | `printModelShapes(plugin)` | Compact model shapes (mirrors `make print-models`) | Port `scripts/print-model-shapes.py` logic |
-| `print_interfaces` | `printInterfaceShapes(name?)` | Interface shapes (mirrors `make print-interfaces`) | Port `scripts/print-interface-shapes.py` logic |
-| `get_service_details` | `getServiceDetails(layer?)` | Service details by layer | Read `GENERATED-*-SERVICE-DETAILS.md` |
-| `get_events` | `getEventCatalog()` | Event schemas and topics | Read `GENERATED-EVENTS.md` |
-| `get_state_stores` | `getStateStoreCatalog()` | State store definitions | Read `GENERATED-STATE-STORES.md` |
-| `get_configuration` | `getConfigurationCatalog()` | Configuration by service | Read `GENERATED-CONFIGURATION.md` |
+**Additional files (not in original plan):**
+- `state.mjs` — Shared mutable state singleton (readFiles, requiredReading, constants)
+- `profiles.mjs` — Context profile definitions (dev, plugin, schema) for `prepare_context`
 
-**Implementation notes**:
-- The `print_models` and `print_interfaces` tools port logic currently handled by Python scripts (`scripts/print-model-shapes.py`, `scripts/print-interface-shapes.py`). The JavaScript versions read the same source files (YAML schemas, C# interfaces) and produce equivalent compact output.
-- The search index is built at server startup by tokenizing all `docs/` content (same approach as the SignalWire MCP server's `_index_document` / `search_all` pattern).
-- Existing `run_command` tool already supports `make print-models` and `make print-interfaces` — the new tools provide the same data without needing `dotnet` or `python3` available.
+**Design deviation from plan:** `print_models` and `print_interfaces` delegate to existing Python scripts via internal `child_process.exec` rather than porting the parsing logic to JavaScript. This keeps the scripts as the single source of truth — human operators use them via `make`; MCP tools use them server-internally. No new scripts were needed for Makefile.
 
-#### 1c. Implementation in `server.mjs`
+#### 1b. New Tools — ✅ COMPLETE (12 tools implemented)
 
-Add a new section after the existing tools. All helpers go in a shared helpers block, tools call helpers:
+All 12 tools registered in `server.mjs` as thin wrappers around helper functions:
 
-```javascript
-// ─── Shared Helpers (callable from tools AND from seed generation) ──
+| Tool | Helper | File | Description |
+|------|--------|------|-------------|
+| `list_plugins` | `getPluginCatalog()` | `plugins.mjs` | All plugins by layer with endpoint count & doc availability |
+| `get_plugin_docs` | `getPluginDocs(name)` | `plugins.mjs` | Deep dive + implementation map for a plugin |
+| `list_documents` | `getDocumentCatalog()` | `docs.mjs` | All 6 catalog files, optionally filtered by category |
+| `get_document` | `getDocument(path)` | `docs.mjs` | Specific document by path (relative to project or docs/) |
+| `search_docs` | `searchDocs(query)` | `docs.mjs` | Keyword search with lazy-built inverted index, mtime invalidation |
+| `list_schemas` | `getSchemaCatalog()` | `schemas.mjs` | All schema files organized by service |
+| `get_schema` | `getSchema(name)` | `schemas.mjs` | Specific schema file or all schemas for a service |
+| `get_service_details` | `getServiceDetails(layer?)` | `infrastructure.mjs` | Service details, optionally by layer |
+| `get_events` | `getEventCatalog()` | `infrastructure.mjs` | Generated events reference |
+| `get_state_stores` | `getStateStoreCatalog()` | `infrastructure.mjs` | Generated state stores reference |
+| `get_configuration` | `getConfigurationCatalog()` | `infrastructure.mjs` | Generated configuration reference |
+| `print_models` | `printModelShapes(plugin)` | `infrastructure.mjs` | Compact model shapes via internal `python3 scripts/print-model-shapes.py` |
+| `print_interfaces` | `printInterfaceShapes(name?)` | `infrastructure.mjs` | Interface shapes via internal `python3 scripts/print-interface-shapes.py` |
 
-function getPluginCatalog() { /* ... */ }
-function getPluginDocs(name) { /* ... */ }
-function getDocumentCatalog() { /* ... */ }
-// ...
-
-// ─── Tool: list_plugins ──────────────────────────────────────────
-
-server.registerTool("list_plugins", {
-  description: "List all Bannou plugins with layer, endpoint count, and documentation availability",
-  inputSchema: {},
-}, async () => {
-  const catalog = getPluginCatalog();
-  return { content: [{ type: "text", text: JSON.stringify(catalog, null, 2) }] };
-});
-```
-
-**Files modified**: `.claude/mcp/server.mjs` (frozen — requires explicit user approval per session)
+**Implementation notes (deviations from original plan)**:
+- `print_models` and `print_interfaces` execute existing Python scripts via internal `child_process.exec` rather than porting to JavaScript. The scripts remain the single source of truth for both `make` commands and MCP tools.
+- The search index is built lazily on first `search_docs` call (not at startup) with mtime-based cache invalidation on the `docs/` directory. This handles long sessions where docs are edited mid-conversation.
+- `prepare_context` was added as a bonus tool (not in original plan) for efficient bulk context loading with profile-based file sets and sentinel integration.
 
 ---
 

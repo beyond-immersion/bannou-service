@@ -536,9 +536,9 @@ Divine's remaining dependencies are unchanged — it still needs `ICurrencyClien
 **Remove or repurpose**:
 - `DivinityGenerationWorkerIntervalSeconds` — the batch worker for analytics-driven generation may no longer be needed. If direct prayer/offering credits go through Currency directly, and domain growth goes through bond propagation, the Redis queue + worker pattern may be unnecessary.
 
-**Keep**:
-- `DivinityCostMinor/Standard/Greater/Supreme` — blessing cost tiers (unchanged)
-- `DivinityGenerationMultiplier` — could be repurposed as a global modifier if needed, or removed
+**Remove**:
+- `DivinityCostMinor/Standard/Greater/Supreme` — superseded by the itemized blessing model (see DIVINE.md § Divine Economy as Real Economy). Blessing costs are defined in Craft recipes and Workshop blueprints, not flat config properties.
+- `DivinityGenerationMultiplier` — no longer needed. Divinity generation flows through Seed bond propagation; production rates are Workshop blueprint parameters.
 
 ### Implementation Map Changes
 

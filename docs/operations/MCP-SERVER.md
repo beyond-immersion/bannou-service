@@ -23,9 +23,12 @@ The Bannou MCP server (`.claude/mcp/`) is a modular Node.js server that replaces
 │   ├── commands.mjs        ← Command whitelist, blocked patterns, execution
 │   ├── sentinel.mjs        ← External state injection + frozen-directory protection
 │   ├── scripts.mjs         ← Sandboxed script writing with syntax validation
-│   ├── docs.mjs            ← (planned) Documentation catalog, search, retrieval
-│   ├── schemas.mjs         ← (planned) Schema parsing, model shapes
-│   ├── infrastructure.mjs  ← (planned) Service details, events, state stores
+│   ├── context.mjs         ← Context preparation, composite packing, profile resolution
+│   ├── plugins.mjs         ← Plugin catalog, documentation retrieval
+│   ├── docs.mjs            ← Documentation catalog, search, retrieval
+│   ├── schemas.mjs         ← Schema catalog, retrieval
+│   ├── infrastructure.mjs  ← Service details, events, state stores, model/interface shapes
+│   ├── tool-output.mjs     ← Gated tool response (shared oversized output handler)
 │   └── seed.mjs            ← (planned) Seed bundle generation orchestration
 └── node_modules/
 ```
@@ -96,7 +99,7 @@ The MCP server replicates the frozen-files list from `CLAUDE-PRACTICES.md` with 
 | `structural` | `structural-tests/` | Structural validators |
 | `test-utils` | `test-utilities/` | Shared test infrastructure |
 | `hooks` | `.claude/hooks/` | Enforcement hooks |
-| `commands` | `.claude/commands/` | Skill definitions |
+| `skills` | `.claude/skills/` | Skill definitions |
 | `settings` | `.claude/settings.json` | Permission config |
 | `agents` | `.claude/agents/` | Agent definitions |
 
