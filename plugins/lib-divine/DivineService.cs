@@ -41,7 +41,7 @@ namespace BeyondImmersion.BannouService.Divine;
 /// </para>
 /// </remarks>
 [BannouService("divine", typeof(IDivineService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFeatures)]
-public partial class DivineService : IDivineService
+public partial class DivineService : IDivineService, IDeprecateAndMergeEntity
 {
     // Infrastructure (L0)
     private readonly IMessageBus _messageBus;

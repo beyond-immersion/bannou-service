@@ -17,10 +17,6 @@ public partial class DivineService
     /// <param name="eventConsumer">The event consumer for registering handlers.</param>
     protected void RegisterEventConsumers(IEventConsumer eventConsumer)
     {
-        eventConsumer.RegisterHandler<IDivineService, AnalyticsScoreUpdatedEvent>(
-            "analytics.score.updated",
-            async (svc, evt) => await ((DivineService)svc).HandleAnalyticsScoreUpdatedAsync(evt));
-
         eventConsumer.RegisterHandler<IDivineService, CharacterCreatedEvent>(
             "character.created",
             async (svc, evt) => await ((DivineService)svc).HandleCharacterCreatedAsync(evt));
@@ -31,41 +27,30 @@ public partial class DivineService
     }
 
     /// <summary>
-    /// Handles analytics.score.updated events for domain-relevant divinity generation.
-    /// Maps analytics categories to domain codes and queues divinity generation events.
-    /// </summary>
-    /// <param name="evt">The analytics score updated event data.</param>
-    public async Task HandleAnalyticsScoreUpdatedAsync(AnalyticsScoreUpdatedEvent evt)
-    {
-        using var activity = _telemetryProvider.StartActivity("bannou.divine", "DivineService.HandleAnalyticsScoreUpdatedAsync");
-        // TODO: Map analytics categories to domain codes, queue DivinityEventModel entries
-        _logger.LogInformation("Received {Topic} event for game service {GameServiceId}", "analytics.score.updated", evt.GameServiceId);
-        await Task.CompletedTask;
-    }
-
-    /// <summary>
     /// Handles character.created events for patron deity auto-bonding.
-    /// When a character is created, checks if the character's realm has patron deities
-    /// and auto-bonds the character to the appropriate deity based on species/location.
+    /// If the character has a patronDeityCode, looks up the deity in the bond template
+    /// registry and auto-initiates seed bonds between the character's domain seeds and
+    /// the patron god's matching seeds.
     /// </summary>
     /// <param name="evt">The character created event data.</param>
     public async Task HandleCharacterCreatedAsync(CharacterCreatedEvent evt)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.divine", "DivineService.HandleCharacterCreatedAsync");
-        // TODO: Check realm patron deities, auto-bond character
+        // TODO: If evt.PatronDeityCode is set, look up deity in bond template registry, auto-initiate seed bonds
         _logger.LogInformation("Received {Topic} event for character {CharacterId}", "character.created", evt.CharacterId);
         await Task.CompletedTask;
     }
 
     /// <summary>
     /// Handles character.updated events for patron deity re-evaluation.
-    /// When a character's species or realm changes, re-evaluates patron deity bindings.
+    /// If changedFields includes patronDeityCode, dissolves old patron seed bonds
+    /// (if any) and creates new bonds per the new deity's bond template.
     /// </summary>
     /// <param name="evt">The character updated event data.</param>
     public async Task HandleCharacterUpdatedAsync(CharacterUpdatedEvent evt)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.divine", "DivineService.HandleCharacterUpdatedAsync");
-        // TODO: Re-evaluate patron deity bindings on character changes
+        // TODO: If changedFields includes patronDeityCode, dissolve old bonds, create new bonds per deity template
         _logger.LogInformation("Received {Topic} event for character {CharacterId}", "character.updated", evt.CharacterId);
         await Task.CompletedTask;
     }

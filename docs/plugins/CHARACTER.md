@@ -125,7 +125,10 @@ None currently tracked.
 
 ### Design Considerations (Requires Planning)
 
-1. **Delete flow O(N) reference unregistration**: When Character is deleted, cleanup callbacks fire on 4 L4 services (CharacterPersonality, CharacterHistory, CharacterEncounter, Actor). Each entity deletion in those services publishes an individual `resource.reference.unregistered` event. For characters with rich data (hundreds of encounters, many history entries), this creates O(N) message bus traffic. A batch unregistration endpoint in lib-resource would reduce this to a single operation.
+1. **Character-affecting L4 event pipeline to player sessions** ([#717](https://github.com/beyond-immersion/bannou-service/issues/717)): When L4 services change character state (Divine grants blessings, Status applies buffs, Collection unlocks entries), the player needs notification. Currently each service publishes its own client events independently. No canonical pattern exists for how Gardener/Agency gates which events reach the player (progressive agency — new spirits see less), transforms events for presentation fidelity, or unifies events from multiple services into a coherent player experience. Character is central to this because most player-visible state changes ultimately affect a character record or character-associated data. Cross-cutting with Gardener, Agency, Status, Collection, Divine, and all L4 services producing player-visible effects.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-23:https://github.com/beyond-immersion/bannou-service/issues/717 -->
+
+2. **Delete flow O(N) reference unregistration**: When Character is deleted, cleanup callbacks fire on 4 L4 services (CharacterPersonality, CharacterHistory, CharacterEncounter, Actor). Each entity deletion in those services publishes an individual `resource.reference.unregistered` event. For characters with rich data (hundreds of encounters, many history entries), this creates O(N) message bus traffic. A batch unregistration endpoint in lib-resource would reduce this to a single operation.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-23:https://github.com/beyond-immersion/bannou-service/issues/351 -->
 
 2. ~~**No realm deletion reference tracking via lib-resource**~~ ([#591](https://github.com/beyond-immersion/bannou-service/issues/591)): **COMPLETED** (2026-03-15) — Character now declares `x-references` with `target: realm` and `onDelete: restrict` in its schema. RESTRICT references are registered with lib-resource during character creation and transfer. Realm deletion is blocked if characters exist in that realm. A `migrate-by-realm` endpoint is available for lib-resource to call during realm merge, re-keying characters from the source realm to the target realm.
@@ -139,7 +142,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Active
 
-No active work items.
+- [#715](https://github.com/beyond-immersion/bannou-service/issues/715) - Add `patronDeityCode` (opaque string, nullable) field to Character schema. Authoritative source of truth for a character's current patron deity. Divine reads this via `character.created`/`character.updated` events for patron deity auto-bonding. Prerequisite for Divine patron deity mechanism. Design resolved in [DIVINITY-GENERATION-ARCHITECTURE.md](../planning/DIVINITY-GENERATION-ARCHITECTURE.md) § Patron Deity Field.
 
 ### Historical
 

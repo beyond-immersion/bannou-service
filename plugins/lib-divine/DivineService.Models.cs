@@ -41,8 +41,12 @@ internal class DeityModel
     public Guid? ActorId { get; set; }
     public Guid? SeedId { get; set; }
     public Guid? CurrencyWalletId { get; set; }
+    public Guid? GenesisEntityId { get; set; }
     public Guid? CharacterId { get; set; }
     public Guid? RealmId { get; set; }
+    public bool IsDeprecated { get; set; }
+    public DateTimeOffset? DeprecatedAt { get; set; }
+    public string? DeprecationReason { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 }
@@ -85,18 +89,4 @@ internal class AttentionSlotModel
     public Guid CharacterId { get; set; }
     public double Impression { get; set; }
     public DateTimeOffset LastInteractionAt { get; set; }
-}
-
-/// <summary>
-/// Internal storage model for a pending divinity generation event awaiting batch processing.
-/// Stored in divine-divinity-events (Redis).
-/// </summary>
-internal class DivinityEventModel
-{
-    public Guid EventId { get; set; }
-    public Guid DeityId { get; set; }
-    public double Amount { get; set; }
-    public string Source { get; set; } = string.Empty;
-    public Guid? SourceEventId { get; set; }
-    public DateTimeOffset QueuedAt { get; set; }
 }

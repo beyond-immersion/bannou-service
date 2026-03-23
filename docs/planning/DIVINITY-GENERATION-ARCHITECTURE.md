@@ -3,7 +3,7 @@
 > **Type**: Design
 > **Status**: Draft
 > **Created**: 2026-03-16
-> **Last Updated**: 2026-03-16
+> **Last Updated**: 2026-03-23
 > **North Stars**: #1, #2, #5
 > **Related Plugins**: Divine, Seed, Currency, Genesis, Actor, Quest, Analytics
 > **Prerequisites**: Genesis implementation (genesis templates, ICurrencyTransactionListener, ISeedEvolutionListener)
@@ -632,34 +632,33 @@ Schema impact: None (UpdateDeityRequest already lacks a `code` field). Implement
 
 | Issue | Status After This Design |
 |-------|--------------------------|
-| [#636](https://github.com/beyond-immersion/bannou-service/issues/636) | **Dissolves** — domain-to-analytics mapping replaced by seed bond propagation |
+| [#636](https://github.com/beyond-immersion/bannou-service/issues/636) | **Dissolved** — domain-to-analytics mapping replaced by seed bond propagation (CLOSED) |
 | [#655](https://github.com/beyond-immersion/bannou-service/issues/655) | **Unchanged** — batch lifecycle events for blessings still needed |
-| [#675](https://github.com/beyond-immersion/bannou-service/issues/675) | **Unchanged** — blessing entity existence validation still open |
-| [#415](https://github.com/beyond-immersion/bannou-service/issues/415) | **Still blocks** entity-agnostic Minor/Standard blessings |
+| [#675](https://github.com/beyond-immersion/bannou-service/issues/675) | **Resolved** — skip validation, matches established codebase pattern (CLOSED) |
+| [#415](https://github.com/beyond-immersion/bannou-service/issues/415) | **Resolved** — hardcoded EntityType.Character fixed in Status 2026-03-07 hardening pass (CLOSED) |
 
 ### Seed Issues (Prerequisites)
 
 | Issue | Relevance |
 |-------|-----------|
 | [#362](https://github.com/beyond-immersion/bannou-service/issues/362) | **Required** — bond dissolution endpoint needed for changing patron deities |
-| New issue needed | **Required** — add `PropagationDirection` + `PropagationRatio` to bond model |
-| New issue needed | **Required** — add `propagated` flag to RecordGrowth for anti-cascade |
-| Existing growth events | **Required** — batch `seed.growth.updated` events for scale |
+| [#712](https://github.com/beyond-immersion/bannou-service/issues/712) | **Required** — add `PropagationDirection` + `PropagationRatio` to bond model, `propagated` flag for anti-cascade, batched propagation worker |
+| [#713](https://github.com/beyond-immersion/bannou-service/issues/713) | **Required** — batch `seed.growth.updated` events for 100K+ scale |
 
 ### Genesis Issues (Prerequisites)
 
 | Issue | Relevance |
 |-------|-----------|
-| New issue needed | **Required** — add nullable `seedId` to `/genesis/entity/create` for external seed adoption |
+| [#714](https://github.com/beyond-immersion/bannou-service/issues/714) | **Required** — add nullable `seedId` to `/genesis/entity/create` for external seed adoption |
 
 ### Character Issues (Prerequisites)
 
 | Issue | Relevance |
 |-------|-----------|
-| New issue needed | **Required** — add `patronDeityCode` (opaque string, nullable) to Character schema and lifecycle events |
+| [#715](https://github.com/beyond-immersion/bannou-service/issues/715) | **Required** — add `patronDeityCode` (opaque string, nullable) to Character schema and lifecycle events |
 
 ### Character Lifecycle Issues (Prerequisites)
 
 | Issue | Relevance |
 |-------|-----------|
-| New issue needed | **Required** — add `patronDeityCode` to generational data with parental inheritance |
+| [#716](https://github.com/beyond-immersion/bannou-service/issues/716) | **Required** — add `patronDeityCode` to generational data with parental inheritance |

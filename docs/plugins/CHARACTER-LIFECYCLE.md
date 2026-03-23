@@ -1202,6 +1202,7 @@ Heritage provides the NATURE. Personality/Disposition/History provide the NURTUR
 
 - **Event handler implementation**: All 5 event handlers are TODO stubs. This is the highest-priority remaining work — without event handlers, the temporal engine (aging, pregnancy, divorce, bloodline formation) does not function.
 - **Variable provider factories**: `HeritageProviderFactory` and `LifecycleProviderFactory` not yet implemented. Required for NPC ABML behavior integration.
+- [#716](https://github.com/beyond-immersion/bannou-service/issues/716) - Add `patronDeityCode` to generational data with parental inheritance. Children inherit parents' patron deity at birth; character-level field can be overridden later. Prerequisite for Divine generational patron continuity. Design resolved in [DIVINITY-GENERATION-ARCHITECTURE.md](../planning/DIVINITY-GENERATION-ARCHITECTURE.md) § Patron Deity Field: Two-Level Design.
 - **#670**: Organization: implement Dissolve endpoint for household split (external prerequisite for full household lifecycle integration)
 - **#680**: Ethology: Heritage phenotype axis mapping data location unresolved (cross-cutting: determines whether phenotype-to-ethology mapping lives in Lifecycle or Ethology)
 

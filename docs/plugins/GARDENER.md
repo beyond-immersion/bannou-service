@@ -668,6 +668,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 ### P3 -- Documentation & Cleanup
 
 - [ ] **Extension #6**: Document multi-seed-type deployment pattern (multiple Gardener instances with different `GARDENER_SEED_TYPE_CODE`)
+- [ ] **Design #6**: Design character-affecting L4 event pipeline to player sessions ([#717](https://github.com/beyond-immersion/bannou-service/issues/717)). Gardener/Agency is the natural gating and transformation layer for character-affecting events from L4 services (Divine blessings, Status buffs, Collection unlocks). No canonical pattern exists for how the UX capability manifest gates which events reach the player, how events are transformed for progressive agency presentation fidelity, or how multiple L4 events are unified into coherent player experiences. Cross-cutting with Agency, Character, Status, Collection, Divine.
 - [ ] **Design #2**: Design divine gardener behavior document structure (base/default behavior, per-game customization, ABML action handlers for Gardener APIs)
 - [ ] **Design #3**: Design garden type abstraction (registry, behavioral patterns, entity association rules)
 - [ ] **Design #4**: Design garden-to-garden transition mechanics (state persistence, actor lifecycle, game session relationship)
