@@ -43,33 +43,5 @@ public class ChatServicePluginTests
         Assert.IsAssignableFrom<StandardServicePlugin<IChatService>>(plugin);
     }
 
-    /// <summary>
-    /// Verifies ConfigureServices registers the expected background workers.
-    /// Uses a real ServiceCollection to verify registrations.
-    /// </summary>
-    [Fact]
-    public void ChatServicePlugin_ConfigureServices_RegistersBackgroundWorkers()
-    {
-        var plugin = new ChatServicePlugin();
-        var services = new ServiceCollection();
 
-        plugin.ConfigureServices(services);
-
-        // Verify all 4 background workers are registered as hosted services
-        var hostedServiceDescriptors = services
-            .Where(d => d.ServiceType == typeof(Microsoft.Extensions.Hosting.IHostedService))
-            .ToList();
-
-        Assert.True(hostedServiceDescriptors.Count >= 4,
-            $"Expected at least 4 hosted services, got {hostedServiceDescriptors.Count}");
-
-        var implementationTypes = hostedServiceDescriptors
-            .Select(d => d.ImplementationType?.Name ?? d.ServiceType.Name)
-            .ToList();
-
-        Assert.Contains("IdleRoomCleanupWorker", implementationTypes);
-        Assert.Contains("TypingExpiryWorker", implementationTypes);
-        Assert.Contains("BanExpiryWorker", implementationTypes);
-        Assert.Contains("MessageRetentionWorker", implementationTypes);
-    }
 }

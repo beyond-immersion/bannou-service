@@ -189,8 +189,15 @@ public class GenesisServiceCleanupTests : ServiceTestBase<GenesisServiceConfigur
         };
 
         _mockEntityQueryStore
-            .Setup(s => s.QueryAsync(It.IsAny<Expression<Func<GenesisEntityModel, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<GenesisEntityModel> { entity } as IReadOnlyList<GenesisEntityModel>);
+            .SetupSequence(s => s.QueryPagedAsync(
+                It.IsAny<Expression<Func<GenesisEntityModel, bool>>>(),
+                It.IsAny<int>(), It.IsAny<int>(),
+                It.IsAny<Expression<Func<GenesisEntityModel, object>>?>(),
+                It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PagedResult<GenesisEntityModel>(
+                new List<GenesisEntityModel> { entity }, 1, 1, 100))
+            .ReturnsAsync(new PagedResult<GenesisEntityModel>(
+                new List<GenesisEntityModel>(), 0, 1, 100));
         _mockTemplateStore
             .Setup(s => s.GetAsync(GenesisService.BuildTemplateKey(entity.TemplateCode), It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);

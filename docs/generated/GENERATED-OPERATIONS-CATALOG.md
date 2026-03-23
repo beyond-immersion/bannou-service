@@ -23,6 +23,12 @@ GitHub Actions CI/CD pipeline configuration covering the integration testing pip
 
 EditorConfig validation and linting procedures for ensuring CI compliance across all project files. Covers the relationship between dotnet format (C# code style) and editorconfig-checker (text formatting: indentation, line endings, final newlines), available Makefile commands for local validation and fixing, and troubleshooting CI failures. Required reading when CI lint checks fail or before pushing changes that touch formatting.
 
+## Local MCP Server Operations Guide {#mcp-server}
+
+**Last Updated**: 2026-03-22 | **Scope**: Local MCP server architecture, tool inventory, sentinel injection system, frozen-directory protection, and Stream Deck integration | [Full Document](../operations/MCP-SERVER.md)
+
+The Bannou MCP server (`.claude/mcp/`) is a modular Node.js server that replaces Claude Code's built-in Read, Edit, Write, and Bash tools with a sandboxed alternative. It enforces read-before-write gates, preserves content on all write failures, validates C# structure automatically, restricts shell commands to a whitelist, sandboxes script creation, and manages frozen-directory permissions through an external injection system designed for Stream Deck integration. This document covers the current architecture, every tool, and the permission management workflow.
+
 ## NuGet Package Setup for Bannou SDKs {#nuget-setup}
 
 **Last Updated**: 2026-03-08 | **Scope**: NuGet package publishing configuration, SDK architecture, GitHub Actions CI workflows, and version management for all Bannou SDK packages | [Full Document](../operations/NUGET-SETUP.md)
@@ -43,7 +49,7 @@ User-facing testing operations document covering test commands, CI/CD pipeline i
 
 ## Summary
 
-- **Documents in catalog**: 6
+- **Documents in catalog**: 7
 
 ---
 
