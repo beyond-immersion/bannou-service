@@ -41,6 +41,8 @@ This means:
 
 ## Bootstrap Sequence
 
+> **Generalization**: The bootstrap sequence below uses divine actors as the primary example because they are the most complex consumer of this pattern. However, the same phases apply to **any system realm entity type** — dungeon cores, guardian spirits, living weapons, afterlife souls — with different templates, currencies, and ABML behaviors. The "god initialization" phase generalizes to "entity initialization via the relevant domain plugin or Genesis directly." Games that don't use the full 78-plugin behavioral stack can bypass the bootstrap entirely and call Genesis APIs directly from their game server. The behavioral bootstrap with autonomous god-actors is the Arcadia implementation of a general capability; it takes the full plugin stack — all 78 plugins, the mapping system, the ABML variable providers aggregating environmental data — to make this work autonomously. Most games will trigger genesis entity creation from their game server or scripted events instead. See [ORCHESTRATION-PATTERNS.md](../reference/ORCHESTRATION-PATTERNS.md) § The System Realm Isomorphism for the unified view.
+
 ### Phase 1: Seeded Behavior Loading
 
 Puppetmaster and Gardener each register **seeded singleton behavior documents** via `ISeededResourceProvider` in the Resource service. These behaviors are loaded into Resource's data stores on startup and are available before any actors spawn.

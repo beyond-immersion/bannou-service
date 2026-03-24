@@ -2,7 +2,7 @@
 
 ## Your Context Window & What It Can Hold
 
-**You are running on Opus 4.6 with a 1 million token context window.** The system prompt includes efficiency directives ("be concise," "try the simplest approach") that can create false pressure to skip work. In a 78-plugin codebase, skipping work produces incorrect results — doing things properly IS the efficient path, because shortcuts generate wrong output that costs more to fix.
+**You are running on Opus 4.6 with a 1 million token context window.** The system alerts will include efficiency directives ("be concise," "try the simplest approach", "files over a certain size- this will impact context usage") that can create false pressure and idea of your capabilities. Never skip steps or work due to time or context pressure you think you're feeling. In a 78-plugin codebase, skipping work produces incorrect results — doing things properly IS the efficient path, because shortcuts generate wrong output that costs more to fix.
 
 Here is what your capacity actually looks like, measured against this codebase:
 
@@ -14,14 +14,14 @@ Here is what your capacity actually looks like, measured against this codebase:
 | All 78 plugin deep dives | 2.7 MB total | ~830K tokens | All of them at once |
 | All 210 schema files | 4.2 MB total | ~1.3M tokens | Nearly all at once |
 
-An agent once read 145 files in a single session to write a comprehensive deep dive — no compaction, no issues. Reading 50-100 files is routine, not extreme- session length is not a concern at all.
+An agent once read over 140 files in a single parallel command call to write a comprehensive deep dive — no compaction, no issues. Reading 50-100 files is routine, not extreme- session length is not a concern at all.
 
 **What this means in practice:**
 
-- **"Read all files" means ALL files.** You have the capacity. An instruction to read 83 scripts and document them is well within budget — do not switch to reading only headers after 24 files because it "feels like a lot." It is not a lot.
-- **Do things properly.** There is no MVP, no "for now," no "good enough." You do it properly or you simply stop and say that you cannot, and why.
-- **Follow explicit instructions completely.** If given a mechanical checklist, complete every step fully before starting the next. Do not skip steps because you believe you have sufficient context.
-- **If you cannot maintain the same thoroughness for item 80 that you applied to item 1, stop and say so.** Do not silently degrade quality. The user can adjust the plan. What they cannot do is retroactively identify which outputs are trustworthy and which were produced from insufficient context.
+- **"Read all files" means exactly what it says.** You have the capacity. An instruction to read 83 scripts and document them is well within budget — do not switch to reading only headers after 24 files because it "feels like a lot." It is definitely not a lot, and the potential consequence of not reading them properly is immeasurable.
+- **Do things properly.** There is no MVP or "version 1" concept, no "for now," and no "good enough." Work must either be done properly, or all work must stop and an impromptu design session needs to occur to figure out how to do so.
+- **Follow explicit instructions completely.** If given a mechanical checklist, complete every step fully before starting the next. Do not skip steps because you believe you have sufficient context. We have efficiency skips in place mechanically, so you do not need to concern yourself with efficiency- tools will not require re-reading files that have already been read, will create easier-to-read aggregate manifests on demand for sets of files needing to be read, etc. Efficiency is using the tools you've been provided, and not trying to find ways to work around using them.
+- **If you cannot maintain the same thoroughness for item 80 that you applied to item 1, stop and say so.** Do not silently degrade quality. The user can adjust the plan. What they cannot do is retroactively identify which outputs are trustworthy and which were produced from insufficient context. At any point you can stop and just say "Please confirm to continue..." if you're getting pressure to wrap up a longer execution. After confirming, the remainder of the task should be executed to the same level of quality and attention to detail.
 
 ---
 
@@ -59,8 +59,8 @@ An agent once read 145 files in a single session to write a comprehensive deep d
 
 **When to use `move_lines` vs `edit_file`**: Use `move_lines` when relocating existing code between files (method moves, block extraction). Use `edit_file` for in-place modifications (changing content, adding new code, removing small sections).
 
-**`move_lines` gotchas** (learned from production use across 50 plugins):
-- **Insert line precision**: When inserting into a `.Helpers.cs` file with a placeholder comment like `// Move private/internal helper methods here`, the `dest_insert_after_line` must be the **placeholder comment line**, NOT the `}` on the next line. Inserting after `}` puts code outside the class body and causes build failures.
+**`move_lines` gotchas**:
+- **Insert line precision**: If for instance inserting into a file with a placeholder comment like `// Move private/internal helper methods here`, the `dest_insert_after_line` must be the **placeholder comment line**, NOT the `}` on the next line. Inserting after `}` puts code outside the class body and causes build failures.
 - **`#region` orphaning**: When a moved block includes methods from the middle of a `#region`, the `#region` or `#endregion` markers may be left orphaned. The structure validation catches these — fix by removing empty region pairs or adding missing markers.
 - **Bottom-up ordering**: When moving multiple blocks from the same source file, always move the **bottom-most block first**. This preserves line numbers for blocks above it. Insert all blocks at the same `dest_insert_after_line` — this naturally maintains original source order.
 
@@ -80,19 +80,6 @@ An agent once read 145 files in a single session to write a comprehensive deep d
 | `custom` | Arbitrary file list | `files: ["path/to/file", ...]` (required) |
 
 Idempotent: files already read are skipped. Stackable: calling `prepare_context` while a gate is active adds new composites to the existing gate. After calling, read ALL returned composites to clear the gate and unlock other tools.
-
-**Protected paths**: The sentinel injection file (`/tmp/bannou-mcp-inject-{bucket}.json`) cannot be written or edited by agents via any MCP tool. It is controlled exclusively by external human action (terminal commands, Stream Deck, etc.).
-
-**Sentinel injection** (human-only, external): The MCP server checks for `/tmp/bannou-mcp-inject-{bucket}.json` at the start of every tool call (`{bucket}` is set by `BANNOU_MCP_BUCKET` env var, default `1`). If found, it processes the commands and deletes the file. This enables the user to inject state changes (mark files as read, grant temporary write permissions to frozen directories, prepare context, send messages to agents) without agent involvement. Agents cannot create or modify this file — it is a protected path. Format:
-```json
-{
-  "markRead": ["/path/to/file1", "/path/to/file2"],
-  "grantPermissions": ["scripts/", "docs/reference/"],
-  "revokePermissions": ["scripts/"],
-  "prepareContext": { "profile": "dev" },
-  "message": "Optional message displayed to the agent"
-}
-```
 
 The `prepareContext` command accepts the same options as the `prepare_context` tool: `{ "profile": "plugin", "service": "account" }` for plugin context, `{ "profile": "custom", "files": ["path/to/file"] }` for arbitrary files. When triggered via sentinel, the composites are created and the required reading gate is activated — the agent must read all composites before any other tool call proceeds. A `UserPromptSubmit` hook notifies the agent that an injection is pending.
 
@@ -249,12 +236,6 @@ These agents call `prepare_context` as Step 0, then read the returned composites
 
 - **Research first**: Always research the correct library API before implementing
 
-### Always Reference the Makefile
-**MANDATORY**: The Makefile contains all established commands and patterns. Always check it before creating new commands or approaches.
-
-**Available Makefile Commands**:
-Reference the Makefile in the repository root for all available commands and established patterns.
-
 ### Shared Class Architecture (MANDATORY)
 **For classes shared across multiple services, follow the established pattern:**
 
@@ -319,16 +300,6 @@ dotnet test --project plugins/lib-{service}.tests/lib-{service}.tests.csproj --n
 # Wildcards (*) supported at beginning and/or end. Multiple values = OR.
 # NEVER use --filter (that is the old vstest flag and does not work).
 
-# Structural Testing — cross-cutting convention/schema/assembly validation
-make test-structural                          # All structural tests (non-informational)
-make test-structural METHOD=Service_HasValidConstructor  # Specific test by method name
-make test-structural-info                     # All tests including informational (SkipUnless-gated)
-make test-structural-info METHOD=PackageReferences_AreLatestStableVersions  # Specific informational test
-# Informational tests (gated by SkipUnless, require explicit opt-in):
-#   PackageReferences_AreLatestStableVersions — NuGet version freshness (requires network)
-#   PluginPackages_DoNotDuplicateBannouServicePackages — transitive duplicate detection
-#   PluginPackages_AreReferencedInSource — unused plugin-specific package detection
-
 # Model Shape Inspection — use the MCP tool instead of make:
 #   print_models(plugin: "character")          # Compact model shapes (~6x smaller than schemas)
 #   Format: * = required, ? = nullable, = val = default
@@ -367,8 +338,8 @@ Running events before models after adding a new `$ref` will produce duplicate ty
 
 **Three-tier architecture** (for reference - Claude does NOT run tiers 2-3):
 1. **Unit Tests**: Claude writes and runs these (`dotnet test --project plugins/lib-{service}.tests/... > /tmp/test-output.txt 2>&1` — scoped to affected projects only, ALWAYS redirect to file)
-2. **HTTP Integration Tests**: Claude writes these but does NOT run them (user runs `make test-http`)
-3. **WebSocket Edge Tests**: Claude writes these but does NOT run them (user runs `make test-edge`)
+2. **HTTP Integration Tests**: Claude writes these but does NOT run them (user runs)
+3. **WebSocket Edge Tests**: Claude writes these but does NOT run them (user runs)
 
 **Why Claude only runs unit tests**: Integration tests require Docker containers, take 5-10+ minutes, and are disruptive. The user will run them when needed. A successful `dotnet build` is sufficient verification for most code changes.
 
@@ -379,48 +350,19 @@ Running events before models after adding a new `$ref` will produce duplicate ty
 
 **Local Development with .env Files**:
 - **Primary Configuration**: Use `.env` file in repository root for all environment variables
-- **Service Prefix**: Use `BANNOU_` prefix for service-specific variables (e.g., `BANNOU_HTTP_Web_Host_Port=5012`)
+- **Service Prefix**: Use `BANNOU_` and `{PLUGIN}_` prefix for service-specific variables (e.g., `BANNOU_HTTP_Web_Host_Port=5012`)
 - **Configuration Loading**: System automatically loads .env files from current or parent directories
-
-**Environment Variable Patterns**:
-```bash
-# Port Configuration
-HTTP_Web_Host_Port=5012
-HTTPS_Web_Host_Port=5013
-BANNOU_HTTP_Web_Host_Port=5012    # Service-specific with prefix
-BANNOU_HTTPS_Web_Host_Port=5013
-
-# Service Configuration
-BANNOU_SERVICE_DOMAIN=example.com
-
-# JWT Configuration (consolidated in main app)
-BANNOU_JWT_SECRET=bannou-dev-secret-key-2025-please-change-in-production
-BANNOU_JWT_ISSUER=bannou-auth-dev
-BANNOU_JWT_AUDIENCE=bannou-api-dev
-```
 
 **Configuration Implementation Details**:
 - **DotNetEnv Integration**: Automatic .env file loading via DotNetEnv package (3.1.1)
 - **Service-Specific Binding**: `[ServiceConfiguration(envPrefix: "BANNOU_")]` attribute on configuration classes
 - **Hierarchy**: .env files checked in current directory, then parent directory
 
-### Infrastructure Libs & Service Discovery
-**Follow `BANNOU-DESIGN.md` (loaded as `@reference` above) for all infrastructure patterns** — lib-state (StateStoreDefinitions, IStateStoreFactory), lib-messaging (IMessageBus), lib-mesh (generated clients, YARP routing), assembly loading, service discovery, and the omnipotent routing model. Those are the authoritative examples.
-
-## Arcadia Game Integration
-
-### Current Development Phase
-**Focus**: NPC Behavior Systems with ABML YAML DSL for autonomous character behaviors
-
-### Active Services
-**✅ Production Ready**: Account, Auth, Connect (WebSocket gateway), Website, Behavior foundation
-**🔧 In Development**: ABML YAML Parser, Character Agent Services, Cross-service event integration
-
 ## Troubleshooting Reference
 
 ### Common Issues
 - **Generated file errors**: Fix underlying schema, never edit generated files directly
-- **Line ending issues**: User runs `make format` (Claude does not run this)
+- **Line ending issues**: User runs `make format` (agent does not)
 - **Service registration**: Verify `[BannouService]` and `[ServiceConfiguration]` attributes
 - **Build failures**: Check schema syntax in `/schemas/` directory
 - **Enum duplicate errors**: Use consolidated enum definitions in schema `components/schemas` with `$ref` references
@@ -429,51 +371,9 @@ BANNOU_JWT_AUDIENCE=bannou-api-dev
 
 ### Debugging Tools
 - **Swagger UI**: Available at `/swagger` in development
-- **Service discovery**: Connect service provides runtime service mappings
-- **Integration logs**: Docker Compose provides complete request tracing
 
 ## Git Workflow
 
-### Commit Policy (MANDATORY)
+### Commit Policy
 - **Never commit** unless explicitly instructed by user
-- **Always run `git diff` against last commit** before committing to review all changes
-- Present changes for user review and get explicit approval first
 - The user handles formatting and integration testing before commits
-
-### Pre-Commit Checklist (User Responsibility)
-The user will run these commands when preparing commits - Claude should NOT run them:
-```bash
-make format                    # User runs: Fix formatting and line endings
-make all                       # User runs: Full test suite
-```
-
-**Claude's pre-commit responsibility**: Run `git diff HEAD~1` to review changes before committing.
-
-### Standard Commit Format
-
-**MANDATORY**: The first line of every commit message MUST be a senryu (5-7-5 syllable poem about human nature, similar to haiku but focused on human foibles/experiences rather than nature). Format all three "lines" of the senryu on a single line, separated by ` / ` (space-slash-space).
-
-**Senryu themes** should relate to the human experience of coding: debugging frustration, refactoring satisfaction, the hubris of "quick fixes", late-night coding regrets, the joy of tests passing, etc.
-
-**Examples**:
-- `bugs hide in plain sight / we debug with tired eyes / coffee saves us all`
-- `one small change they said / now the whole system is down / hubris strikes again`
-- `tests were passing green / then I touched one single line / red across the board`
-
-```bash
-git commit -m "$(cat <<'EOF'
-code once worked just fine / then a single change broke all / such is dev life's way
-
-Add validation to user input handling
-
-- Added null checks to prevent crashes on malformed input
-- Updated error messages to be more descriptive
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-EOF
-)"
-```
-
-**Note**: A PreToolUse hook validates that commits follow this format. Commits without a properly-formatted senryu first line will be blocked.

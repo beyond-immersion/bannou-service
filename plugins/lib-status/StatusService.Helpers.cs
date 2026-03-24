@@ -705,7 +705,7 @@ public partial class StatusService
             CachedAt = now
         };
 
-        // Save to cache with TTL; MaxCachedEntities is enforced by Redis eviction policy
+        // Save to cache with TTL
         await _activeCacheStore.SaveAsync(cacheKey, cache,
             new StateOptions { Ttl = _configuration.StatusCacheTtlSeconds },
             cancellationToken);

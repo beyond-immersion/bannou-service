@@ -21,6 +21,8 @@ Dungeon cores and divine actors share the same structural pattern. Both follow t
 
 **The answer is no -- same lifecycle, different ceremony.**
 
+> **The deeper unification**: Both lib-divine and lib-dungeon are thin ceremony layers over the same Genesis + Actor + Seed + Currency + Behavioral Bootstrap infrastructure. The underlying lifecycle, economy, and cognitive progression are structurally identical across ALL system realms (PANTHEON, DUNGEON_CORES, SENTIENT_ARMS, UNDERWORLD, NEXIUS). What varies is entirely seed data: different genesis templates, different currency codes, different ABML behaviors, different ABML action handlers. Living weapons validate this — they need **zero** ceremony plugin. The ceremony plugins exist because divine and dungeon operations require multi-service atomic orchestration (blessings composing Collection + Status; inhabitant spawning composing Actor + Mapping + Item) that benefits from a dedicated coordination layer. The lifecycle itself is Genesis. See [ORCHESTRATION-PATTERNS.md](../reference/ORCHESTRATION-PATTERNS.md) § The System Realm Isomorphism.
+
 | Concern | lib-divine Ceremony | lib-dungeon Ceremony |
 |---------|---------------------|----------------------|
 | **Identity** | Deity with domains, personality traits | Dungeon core with personality type, core location, domain radius |

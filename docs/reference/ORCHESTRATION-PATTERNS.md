@@ -192,6 +192,83 @@ Same 3-stage progression: Dormant (fine sword with passive bonuses) -> Stirring 
 
 ---
 
+## The System Realm Isomorphism
+
+Every system realm — PANTHEON, DUNGEON_CORES, SENTIENT_ARMS, UNDERWORLD, NEXIUS, and any future realm — is the same structural pattern with different seed data. The Bannou infrastructure is identical; what varies is game implementation: genesis templates, currency codes, ABML behaviors, and domain-specific ABML action handlers.
+
+### The Shared Infrastructure
+
+| Layer | Component | Same Across All System Realms |
+|-------|-----------|-------------------------------|
+| Lifecycle | Genesis (L2) | Template-driven creation, wallet provisioning, cognitive progression |
+| Growth | Seed (L2) | Phase-gated capabilities, growth domains, bond propagation |
+| Economy | Currency (L2) | Wallets with domain-specific currency codes, autogain, caps |
+| Cognition | Actor (L2) | ABML behavior execution, variable providers, perception queues |
+| Identity | Character (L2) | System realm character records with full L2/L4 entity stack |
+| Bonds | Relationship (L2) | Typed bonds (followers, wielders, masters, kin) |
+| Knowledge | Collection (L2) | Permanent experience records feeding Seed growth |
+| Effects | Status (L4) | Unified effects query (blessings, buffs, curses, capabilities) |
+| Bootstrap | Behavioral Bootstrap | Seeded behaviors loaded via Resource, actors spawned by managers |
+
+### What Varies (All Configuration, Not Code)
+
+| Dimension | Divine | Dungeon | Weapon | Spirit | Afterlife |
+|-----------|--------|---------|--------|--------|-----------|
+| System realm | PANTHEON | DUNGEON_CORES | SENTIENT_ARMS | NEXIUS | UNDERWORLD |
+| Genesis template | `deity_domain` | `dungeon_core:*` | `sentient_weapon` | `guardian_spirit` | `afterlife_soul` |
+| Currency | Divinity | Mana | (optional) | Experience | Soul currency |
+| Physical form | None (immaterial) | Location hierarchy | Item instance | None (metaphysical) | None (leyline) |
+| Bond pattern | Followers (many) | Master (one) | Wielder (one) | Account (one) | None |
+| ABML behaviors | God behaviors | Dungeon behaviors | Weapon behaviors | Spirit behaviors | Soul behaviors |
+| L4 ceremony plugin | lib-divine | lib-dungeon | None needed | lib-agency | None needed |
+
+The L4 ceremony plugins (lib-divine, lib-dungeon) provide domain-specific orchestration conveniences — multi-service atomic operations, domain-specific validation, specialized queries. Living weapons validate that many entity types need no ceremony plugin at all.
+
+### The Unified Economy Pattern
+
+Every system realm economy follows the same architecture:
+
+```
+Income Sources (anything can credit the entity's wallet)
+    │ Game engine, bond propagation, autogain, direct offering
+    ▼
+Currency Wallet (domain-specific currency code)
+    │ ICurrencyTransactionListener (DI, L2)
+    ▼
+Genesis Growth Mapping (wallet credit × ratio → seed domain growth)
+    │ ISeedEvolutionListener (phase transitions)
+    ▼
+Cognitive Progression (Dormant → EventBrain → CharacterBrain)
+    │ Actor perceives wallet balance + seed capabilities
+    ▼
+ABML Spending Decisions (personality-driven resource allocation)
+    │ God: grant blessings, manifest avatars
+    │ Dungeon: spawn monsters, activate traps, expand domain
+    │ Weapon: grant wielder effects, refuse commands
+    │ Spirit: unlock UX capabilities, deepen bonds
+    ▼
+Budget Constraint (finite currency prevents spam/overload)
+    Maps to actual server resource management
+```
+
+The divine economy (gods competing for finite divinity to spend on blessings) and the dungeon mana economy (dungeons spending finite mana on spawning and traps) are not parallel systems — they are the same system with different currency codes, different ABML spending logic, and different genesis templates.
+
+### Seed Agnosticism and Physical Form Mobility
+
+Seeds are completely agnostic to their physical form. A dungeon core's seed grows via wallet credits regardless of whether the core is anchored in its location hierarchy or has been physically extracted as an item. A transplanted dungeon core continues receiving wallet credits (if the wallet is still active), continues growing through phases, and can still reach Awakened — at which point the character brain actor begins trying to assert itself through whatever APIs its ABML behavior references. The actor might attempt to reconnect to its domain, seek a new location, or simply express extreme displeasure through perception injection to whoever is carrying it.
+
+This agnosticism is fundamental: seeds don't know or care what they're growing into. The template, currency flows, and ABML behaviors determine what emerges. A genesis entity created with a `dungeon_core:martial` template fed by mana currency with dungeon behaviors produces a dungeon. The same infrastructure with a `sentient_weapon` template fed by experience currency with weapon behaviors produces a living weapon. Same services, same lifecycle, different seed data. Sometimes you'll be surprised what kind of thing a seed grows into.
+
+### The "Divine Bootstrap OR Game Server" Duality
+
+The behavioral bootstrap pattern — where divine actors (god-actors running ABML behaviors) autonomously create and manage system realm entities — is the **Arcadia** implementation. A monster-domain god detecting mana stagnation and planting a dungeon seed is how Arcadia does it, because Arcadia uses all 78 plugins and the ABML variable provider stack aggregates enough environmental information for gods to make those decisions autonomously.
+
+But there is nothing in the infrastructure that requires a divine actor to trigger Genesis. **Any caller can create genesis entities via the API.** A game server can call `POST /genesis/entity/create` with a `dungeon_core:martial` template directly. A game designer can seed entities at deployment time. An L5 extension can create entities from game-specific triggers.
+
+This matters because most games using Bannou will NOT use the full 78-plugin behavioral stack. A factory game might use 15 plugins with the game server calling Genesis directly. A mobile RPG might use 30 plugins with scripted triggers. Only a game aspiring to Arcadia's level of autonomous world simulation needs the full behavioral bootstrap where gods perceive, evaluate, and act through the content flywheel. It takes *everything* — all 78 plugins, the mapping system, the ABML variable providers aggregating environmental data, the full divine economy — to make behavioral bootstrapping work for everything autonomously. The infrastructure serves all levels of sophistication; the depth of orchestration is a game design choice, not an architectural requirement.
+
+---
+
 ## Why This Matters for Development
 
 **When implementing any L4 service**, ask: "Does a god-actor need to interact with this?" If a service produces events that affect the game world (deaths, economy changes, faction shifts, environmental changes), god-actors will consume those events and compose them into gameplay. Design event schemas with god-actor consumption in mind.

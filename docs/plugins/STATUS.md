@@ -187,8 +187,6 @@ Server-to-client push events delivered via WebSocket through the Entity Session 
 | `MaxStatusTemplatesPerGameService` | `STATUS_MAX_STATUS_TEMPLATES_PER_GAME_SERVICE` | `200` | Maximum status template definitions per game service |
 | `StatusCacheTtlSeconds` | `STATUS_STATUS_CACHE_TTL_SECONDS` | `60` | TTL for active status cache per entity (short -- statuses change frequently) |
 | `SeedEffectsCacheTtlSeconds` | `STATUS_SEED_EFFECTS_CACHE_TTL_SECONDS` | `300` | TTL for seed-derived effects cache (longer -- capabilities change less frequently) |
-| `MaxCachedEntities` | `STATUS_MAX_CACHED_ENTITIES` | `10000` | Maximum entity active-status cache entries retained in Redis (LRU eviction when exceeded) |
-| `CacheWarmingEnabled` | `STATUS_CACHE_WARMING_ENABLED` | `false` | Enable proactive cache warming on startup for recently active entities |
 | `LockTimeoutSeconds` | `STATUS_LOCK_TIMEOUT_SECONDS` | `30` | TTL for distributed locks on status mutations |
 | `LockAcquisitionTimeoutSeconds` | `STATUS_LOCK_ACQUISITION_TIMEOUT_SECONDS` | `5` | Maximum seconds to wait when acquiring a distributed lock |
 | `DefaultPageSize` | `STATUS_DEFAULT_PAGE_SIZE` | `50` | Default page size for paginated queries |
@@ -386,18 +384,13 @@ All 19 API endpoints are fully implemented. The remaining stub is the `item.expi
 
 - ~~**DeleteStatusTemplate endpoint**~~: **IMPLEMENTED** (2026-03-07) - Added `DeprecateStatusTemplateAsync`, `UndeprecateStatusTemplateAsync`, and `DeleteStatusTemplateAsync` endpoints following Category A deprecation lifecycle. Grants are rejected for deprecated templates.
 
-- **Cache warming**: `CacheWarmingEnabled` config property exists and is checked in the constructor (logs a message when true), but no actual cache warming logic is implemented. Setting it to `true` has no functional effect beyond the log message.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-12:https://github.com/beyond-immersion/bannou-service/issues/412 -->
-
-- **MaxCachedEntities LRU eviction**: The `MaxCachedEntities` config (default 10,000) is referenced in the constructor log message but is not enforced. Redis TTL handles individual entry expiration, but there is no mechanism to enforce the 10,000 entry cap. The code comments note "MaxCachedEntities is enforced by Redis eviction policy" but this requires external Redis `maxmemory-policy` configuration.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-12:https://github.com/beyond-immersion/bannou-service/issues/412 -->
+- ~~**Cache warming and MaxCachedEntities**~~: **RESOLVED** (2026-03-23) — Config properties `CacheWarmingEnabled` and `MaxCachedEntities` were never added to the schema. Redis TTL (60s default) provides sufficient cache lifecycle management. The misleading code comment referencing `MaxCachedEntities` has been removed. If proactive cache warming or entity cap enforcement is needed in the future, add config properties at that time. See GH#412.
 
 ---
 
 ## Potential Extensions
 
-- **Tick-based effects (DOT/HOT)**: Repeating actions during a status duration (damage every 3s, healing every 5s). Requires either contract milestone ticking support or a dedicated tick worker. The `onTick` pattern from #282 defines the interface; contract prebound APIs handle execution.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-12:https://github.com/beyond-immersion/bannou-service/issues/417 -->
+- ~~**Tick-based effects (DOT/HOT)**~~: **RESOLVED** (2026-03-24) — Tick execution is a game-server/client concern, not a Bannou service concern. Status provides the data layer: active effects with stack counts, durations, and template metadata. Game servers run their own tick loops, query Status for current effect state, and apply game-specific damage/healing formulas (flat multiply, diminishing returns, caps — all game logic). ABML behaviors use status data (`${status.poison_stacks}`) as weights in NPC decision-making ("I'm poisoned → seek healing"), but NPCs do not execute damage calculations — the game server does. No tick infrastructure, no pre-calculated cumulative values (the game server has stack count + metadata and can apply its own formulas; pre-calculation would violate T29 by inspecting opaque metadata, and the aggregation formula is inherently game-specific). See GH#417.
 
 - **Conditional milestone completion**: Death penalty resurrection conditions ("wait 30s OR use resurrection scroll OR reach shrine"). Requires Contract's conditional milestone resolution (`anyOf` condition types).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-13:https://github.com/beyond-immersion/bannou-service/issues/419 -->
@@ -419,7 +412,7 @@ All 19 API endpoints are fully implemented. The remaining stub is the `item.expi
 - **Prerequisite provider factory**: `StatusPrerequisiteProviderFactory` implementing `IPrerequisiteProviderFactory` for Quest (L2) prerequisite validation. `ProviderName = "character_level"` (and potentially `"reputation"`). Status is the unified effects query layer — "does this character have capability X at depth Y?" is exactly what `GetEffects` / `GetSeedEffects` answers. Quest's `CHARACTER_LEVEL` and `REPUTATION` prerequisite types currently route through the DI provider pattern but **have no registered provider** (silent no-op — any character passes). Status is the natural home: it aggregates seed-derived capabilities (the "level" IS a seed capability) and item-based effects. Same pattern as `AchievementPrerequisiteProviderFactory` in lib-achievement. See [QUEST.md Design Consideration #2](QUEST.md) for the full analysis.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-23:StatusPrerequisiteProviderFactory for character_level and reputation -->
 
-- **Effect magnitude computation**: Status templates define base magnitudes; stacking computes actual magnitude from base * stackCount * fidelity. Requires typed effect definitions beyond MVP scope.
+
 
 ---
 
@@ -427,13 +420,15 @@ All 19 API endpoints are fully implemented. The remaining stub is the `item.expi
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Missing account cleanup callback registration**~~: **FIXED** (2026-02-12) - Added account cleanup callback registration in `StatusServicePlugin.RegisterResourceCleanupCallbacksAsync`. Both character and account callbacks now register independently with separate try-catch blocks. The `CleanupByOwnerAsync` endpoint was already polymorphic and required no changes. **Note**: Per the updated Account Deletion Cleanup Obligation, account cleanup should use `account.deleted` event subscription rather than lib-resource registration (privacy constraint — lib-resource must not track account references). The `CleanupByOwnerAsync` endpoint can remain as-is (polymorphic), but the account `x-references` entry in `status-api.yaml` should be removed and replaced with an `account.deleted` event handler that calls the same cleanup endpoint internally. Character cleanup continues to use lib-resource as normal.
+1. ~~**Missing account cleanup callback registration**~~: **FIXED** (2026-02-12) - Added account cleanup callback registration. Subsequently migrated to `account.deleted` event subscription per FOUNDATION TENETS (Account Deletion Cleanup Obligation) — lib-resource must not track account references (privacy constraint). The account `x-references` entry was removed from `status-api.yaml`, replaced with `HandleAccountDeletedAsync` in `StatusService.Events.cs` that delegates to the polymorphic `CleanupByOwnerAsync` endpoint. `account-service-events.yaml` is declared in `x-event-subscriptions`. Character cleanup continues to use lib-resource as normal.
 
 2. ~~**SeedStatusTemplatesAsync skips item template validation**~~: **FIXED** (2026-02-12) - Added item template validation in `SeedStatusTemplatesAsync`. Templates referencing non-existent item templates are now skipped with a warning log and counted as "skipped" in the response, consistent with the idempotent seeding pattern.
 
 3. ~~**SeedStatusTemplatesAsync skips game service validation**~~: **FIXED** (2026-02-12) - Added `_gameServiceClient.GetServiceAsync` validation at the top of `SeedStatusTemplatesAsync`, matching `CreateStatusTemplateAsync` pattern. Returns 404 if the game service doesn't exist, preventing orphaned templates.
 
 ### Intentional Quirks (Documented Behavior)
+
+- **Every status template requires an item template (`itemTemplateId` is required)**: This is the "items in inventories" pattern (#280/#282) — every active status is a physical item in a per-entity status container. The item provides TTL infrastructure, container-based cleanup, saga compensation, and economy integration (status-granting consumables participate in loot/craft/trade). For minimal status backing items (death penalty, divine blessing, environmental effect), create an item template with `displayName`, `iconAssetId` (for UI), and `quantityModel: Unique`. The status template's own fields (category, stacking, duration, contract) carry the gameplay configuration. Multiple status templates may share one item template if they differ only in status-level properties. Use `SeedStatusTemplatesAsync` for bulk creation.
 
 - **Polymorphic ownership with EntityType enum**: Entity types use the shared `EntityType` enum from `common-api.yaml` per IMPLEMENTATION TENETS. Status does NOT validate entity existence -- the caller is responsible for ensuring the entity exists before granting statuses.
 
@@ -453,13 +448,13 @@ All 19 API endpoints are fully implemented. The remaining stub is the `item.expi
 
 ### Design Considerations (Requires Planning)
 
-- **Item template per status template**: Each status template requires an `itemTemplateId` reference. This means game designers must create item templates for every status type before creating status templates. The relationship between item template properties and status behavior needs documentation.
+- ~~**Item template per status template**~~: **RESOLVED** (2026-03-23) — The 1:1 requirement is architecturally correct and intentional per the "Itemize Anything" pattern (#280/#282). Every status IS an item in a container — that's the design foundation. The item instance provides TTL/expiry infrastructure (via #407), container-based cleanup (cascading deletes), saga compensation (destroy item if contract fails), and integration with the economy (status-granting consumables are tradeable/craftable/lootable items). Game designers create item templates for each status type; `SeedStatusTemplatesAsync` handles bulk creation ergonomically. The typical pattern is 1:1 (one item template per status template), though multiple status templates MAY share the same item template when they differ only in status-specific properties (category, stacking behavior, duration, contract). Relevant item template properties for status backing items: `displayName` and `iconAssetId` (for client UI rendering), `quantityModel: Unique` (each status instance is distinct). Other item properties (stats, effects, rarity) are optional — the status template's own fields carry the meaningful gameplay configuration.
 
 - ~~**Hardcoded `EntityType.Character` in contract creation/termination**~~: **FIXED** (2026-03-07) - Both contract creation and termination now use the entity's actual `EntityType` from the request/instance model instead of hardcoded `EntityType.Character`.
 
 - ~~**ISeedClient injection pattern: constructor vs runtime resolution**~~: **FIXED** (2026-03-09) - All ISeedClient usage now uses constructor injection per FOUNDATION TENETS. Seed is L2, Status is L4 — hard dependency, no graceful degradation.
 
-- **AUDIT:NEEDS_DESIGN — Dead config #412: implement inactive check or remove config property**: `InactiveCheckIntervalSeconds` exists in the configuration schema but is not wired to any functionality. Decision needed: implement the inactive status check feature using this config, or remove the config property from the schema?
+- ~~**Dead config #412: InactiveCheckIntervalSeconds**~~: **RESOLVED** (2026-03-23) — Config property `InactiveCheckIntervalSeconds` was never added to the schema. No inactive status check feature exists or is planned. If needed in the future, add config property at that time. See GH#412.
 
 - ~~**echoed fields in query responses**~~: **FIXED** (2026-03-09) - Removed `entityId` and `entityType` from `GetEffectsResponse` and `SeedEffectsResponse`. Caller already knows what they requested per IMPLEMENTATION TENETS.
 

@@ -108,6 +108,14 @@ After binding, the entity has the full L2/L4 character entity stack -- personali
 
 **This pattern is used by all genesis entity types** — Divine actors (gods binding to PANTHEON characters), dungeon cores (binding to DUNGEON_CORES characters), living weapons (binding to SENTIENT_ARMS characters), and any future entity type defined via a genesis template.
 
+### Seed Agnosticism and Physical Form Mobility
+
+Seeds are completely agnostic to their physical form. Growth is driven by currency wallet credits flowing through template-defined growth mappings — the seed doesn't know or care whether the entity is anchored in a location hierarchy, equipped as an item, floating in a void, or sitting in someone's inventory. A dungeon core that has been physically extracted from its location as an item continues receiving wallet credits (if the wallet is still active), continues growing through phases, and can still reach Awakened — at which point the character brain actor begins trying to assert itself through whatever APIs its ABML behavior references.
+
+This produces genuinely emergent scenarios: a transplanted dungeon core item might grow enough to spawn an actor that attempts to reconnect to its domain, seeks a new location to root in, or simply expresses extreme displeasure through perception injection to whoever is carrying it. A living weapon passed between wielders continues accumulating combat experience regardless of who holds it. A guardian spirit seed continues deepening regardless of which character the player possesses.
+
+The template, currency flows, and ABML behaviors determine what a seed grows into — not the physical form of the entity. A genesis entity created with a `dungeon_core:martial` template fed by mana currency with dungeon behaviors produces a dungeon. The same infrastructure with a `sentient_weapon` template fed by experience currency with weapon behaviors produces a living weapon. Same services, same lifecycle, different seed data. Sometimes you'll be surprised what kind of thing a seed grows into.
+
 ### System Realms: Conceptual Namespaces for Non-Physical Entities
 
 Each category of actor-bound entity gets its own system realm, following the pattern established for divine characters:
@@ -594,6 +602,8 @@ The pattern is general. Any entity that should progressively awaken into an auto
 | **Familiar spirit** | Actor-only | FAMILIARS | `familiar_bond` | Summoner (Relationship) | No (pure actor pattern) |
 
 The key decision for each: does it need **domain-specific multi-service orchestration** that can't be game-engine-coordinated? If yes, it warrants a plugin. If no, it composes from primitives.
+
+**The "divine bootstrap OR game server" duality**: In Arcadia, entity creation is triggered by god-actors — a monster-domain god detecting mana stagnation and planting a dungeon seed, a smith-god recognizing a masterwork blade and seeding its awakening. This works because Arcadia uses all 78 plugins and the ABML variable provider stack aggregates enough environmental information for gods to make those decisions autonomously. But there is nothing in the infrastructure that requires a divine actor. Any caller can create genesis entities via `POST /genesis/entity/create` with a template code. A game server can plant dungeon seeds directly. A game designer can seed entities at deployment time. An L5 extension can create entities from game-specific triggers. The behavioral bootstrap with autonomous god-actors is one consumer of a general API — the most sophisticated consumer, but not the only one. Most games using Bannou will NOT use the full behavioral stack; a factory game might use 15 plugins with the game server calling Genesis directly.
 
 ---
 

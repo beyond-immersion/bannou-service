@@ -126,7 +126,7 @@ This intersects directly with the Divine pattern.
 
 When dungeon_core seed reaches Awakened phase (MinTotalGrowth: 50.0):
 
-1. Create a Character record in the UNDERWORLD system realm (isSystemType: true)
+1. Create a Character record in the DUNGEON_CORES system realm (isSystemType: true)
 2. Assign the "Dungeon Core" species within that system realm
 3. Link the dungeon entity to the character via Relationship
 4. Rebind the actor from event brain → character brain
@@ -195,7 +195,7 @@ The inventory tracks what the dungeon has available to manifest (creative fuel).
 
 Each floor as a Location in the dungeon hierarchy is architecturally clean:
 
-UNDERWORLD (System Realm)
+DUNGEON_CORES (System Realm)
 └── Thornhold (Location, depth: 0, "dungeon root")
     ├── Floor 1: Fungal Caves (Location, depth: 1)
     │   ├── Entry Hall (Location, depth: 2)
@@ -255,9 +255,9 @@ Gating floor creation behind actor existence is clean design:
 
 The following areas genuinely require new design beyond what is already specified:
 
-1. The Event Brain → Character Brain Transition
+1. ~~The Event Brain → Character Brain Transition~~ **RESOLVED** — Actor's `BindCharacterAsync` API handles this (2026-02-16). No actor relaunch needed. See [ACTOR-BOUND-ENTITIES.md](ACTOR-BOUND-ENTITIES.md) Part 1 § The Three Cognitive Stages and [Genesis deep dive](../plugins/GENESIS.md) § GenesisEvolutionListener.
 
-When the dungeon creates a Character identity at Awakened phase, the actor needs to rebind. This isn't a pattern anyone has built yet. Options:
+~~When the dungeon creates a Character identity at Awakened phase, the actor needs to rebind. This isn't a pattern anyone has built yet. Options:~~
 - Kill the event brain actor, spawn a new character brain actor (loses in-flight state)
 - Hot-swap the actor's binding type (requires ActorRunner changes)
 - Design the behavior document to work with BOTH binding types (flexible variable references that degrade gracefully when character providers aren't available)
@@ -334,7 +334,7 @@ pipeline.
 ├───────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────┤
 │ Master bond communication (same as gods)                  │ Covered -- CommunicateMasterHandler, perception injection             │
 ├───────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────┤
-│ Character identity at high growth (system realm)          │ Needs design -- system realm creation, actor rebinding pattern        │
+│ Character identity at high growth (system realm)          │ Resolved -- Actor BindCharacter API + Genesis cognitive progression    │
 ├───────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────┤
 │ Memory as inventory (consumable) + collection (permanent) │ Needs design -- dual-system replacing custom memory store             │
 ├───────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────┤
@@ -353,9 +353,8 @@ pipeline.
 │ Content flywheel integration (dungeon archives)           │ Covered -- standard Resource compression pipeline                     │
 └───────────────────────────────────────────────────────────┴───────────────────────────────────────────────────────────────────────┘
 
-The existing architecture covers most aspirations well. The major new design work is:
-1. The UNDERWORLD system realm and actor rebinding pattern
-2. The dual memory system (Collection + Inventory replacing custom store)
-3. Workshop adapter for habitat creature production
+The existing architecture covers most aspirations well. The actor rebinding pattern is resolved via Actor's `BindCharacterAsync` API and Genesis's `GenesisEvolutionListener`. The remaining design work is:
+1. The dual memory system (Collection + Inventory replacing custom store)
+2. Workshop adapter for habitat creature production
 
 Everything else is configuration, ABML behavior authoring, and seed type definition.

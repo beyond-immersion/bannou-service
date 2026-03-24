@@ -10,6 +10,8 @@
 
 ## Summary
 
+> **Generality note**: While this document is framed around divine divinity generation, the mechanisms it describes — seed bond propagation, wallet-driven growth, the "bag of kills" multi-consumer accumulation pattern — are **fully general** and apply to any system realm economy. The same bond propagation that transfers growth from follower domain seeds to deity domain seeds works identically for dungeon master seeds propagating to dungeon core seeds, wielder experience propagating to weapon seeds, or any future entity-to-entity growth channel. See [ORCHESTRATION-PATTERNS.md](../reference/ORCHESTRATION-PATTERNS.md) § The System Realm Isomorphism for the unified view.
+
 Redesigns Divine's divinity generation pipeline to use Seed bond propagation and Currency wallets instead of Analytics event subscriptions. Analytics is the most optional plugin in the system and cannot be in the critical path for game mechanics. The new architecture extends Seed's existing bond mechanism with configurable growth propagation (per-bond direction and ratio), so a character's domain seed bonded to a god's domain seed automatically transfers growth at L2 with no Divine involvement. Also introduces the "wallet as multi-consumer accumulation point" pattern where different systems (Quest, Divine, leveling) independently consume from the same wallet without contention. This makes Divine a pure orchestration layer (deity CRUD, blessings, followers) with no divinity generation plumbing.
 
 ---

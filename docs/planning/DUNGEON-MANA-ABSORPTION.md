@@ -484,6 +484,10 @@ These capabilities layer onto the existing DUNGEON.md capability table. A Dorman
 
 **No new services required.** The absorption mechanic composes from existing primitives: Currency for mana transfer, Status for drain effects, Environment for field modeling, Seed for capability gating, Actor for strategic decision-making.
 
+### Connection to the Unified System Realm Economy Pattern
+
+The dungeon mana economy is structurally identical to the divine economy described in [DIVINITY-GENERATION-ARCHITECTURE.md](DIVINITY-GENERATION-ARCHITECTURE.md) and all other system realm economies. Both are Currency wallets feeding Genesis growth mappings driving Seed progression that unlocks ABML capabilities, with personality-driven spending decisions constrained by finite budgets. The divine economy (gods competing for limited divinity to spend on blessings) and the dungeon mana economy (dungeons spending finite mana on spawning, traps, and domain expansion) are not parallel systems — they are the same system with different currency codes, different ABML spending logic, and different genesis templates. A commerce-domain god choosing between blessing a merchant and manifesting an avatar is the same GOAP resource-allocation decision as a dungeon core choosing between spawning a monster and expanding its domain. See [ORCHESTRATION-PATTERNS.md](../reference/ORCHESTRATION-PATTERNS.md) § The System Realm Isomorphism.
+
 ---
 
 ## Content Flywheel Integration
