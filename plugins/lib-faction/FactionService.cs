@@ -120,26 +120,43 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
     }
 
     // ========================================================================
+    // KEY PREFIX CONSTANTS
+    // ========================================================================
+
+    private const string FACTION_KEY_PREFIX = "fac:";
+    private const string MEMBER_KEY_PREFIX = "mem:";
+    private const string CHARACTER_MEMBERSHIPS_KEY_PREFIX = "mem:char:";
+    private const string CLAIM_KEY_PREFIX = "tcl:";
+    private const string LOCATION_CLAIM_KEY_PREFIX = "tcl:loc:";
+    private const string FACTION_CLAIMS_KEY_PREFIX = "tcl:fac:";
+    private const string NORM_KEY_PREFIX = "nrm:";
+    private const string FACTION_NORMS_KEY_PREFIX = "nrm:fac:";
+    private const string NORM_CACHE_KEY_PREFIX = "ncache:";
+    private const string GOVERNANCE_CACHE_KEY_PREFIX = "govcache:";
+    private const string GOVERNANCE_KEY_PREFIX = "gov:";
+    private const string FACTION_GOVERNANCE_KEY_PREFIX = "gov:fac:";
+
+    // ========================================================================
     // KEY BUILDERS
     // ========================================================================
 
-    internal static string BuildFactionKey(Guid factionId) => $"fac:{factionId}";
-    internal static string BuildFactionCodeKey(Guid gameServiceId, string code) => $"fac:{gameServiceId}:{code}";
-    internal static string BuildMemberKey(Guid factionId, Guid characterId) => $"mem:{factionId}:{characterId}";
-    internal static string BuildCharacterMembershipsKey(Guid characterId) => $"mem:char:{characterId}";
-    internal static string BuildClaimKey(Guid claimId) => $"tcl:{claimId}";
-    internal static string BuildLocationClaimKey(Guid locationId) => $"tcl:loc:{locationId}";
-    internal static string BuildFactionClaimsKey(Guid factionId) => $"tcl:fac:{factionId}";
-    internal static string BuildNormKey(Guid normId) => $"nrm:{normId}";
-    internal static string BuildFactionNormsKey(Guid factionId) => $"nrm:fac:{factionId}";
+    internal static string BuildFactionKey(Guid factionId) => $"{FACTION_KEY_PREFIX}{factionId}";
+    internal static string BuildFactionCodeKey(Guid gameServiceId, string code) => $"{FACTION_KEY_PREFIX}{gameServiceId}:{code}";
+    internal static string BuildMemberKey(Guid factionId, Guid characterId) => $"{MEMBER_KEY_PREFIX}{factionId}:{characterId}";
+    internal static string BuildCharacterMembershipsKey(Guid characterId) => $"{CHARACTER_MEMBERSHIPS_KEY_PREFIX}{characterId}";
+    internal static string BuildClaimKey(Guid claimId) => $"{CLAIM_KEY_PREFIX}{claimId}";
+    internal static string BuildLocationClaimKey(Guid locationId) => $"{LOCATION_CLAIM_KEY_PREFIX}{locationId}";
+    internal static string BuildFactionClaimsKey(Guid factionId) => $"{FACTION_CLAIMS_KEY_PREFIX}{factionId}";
+    internal static string BuildNormKey(Guid normId) => $"{NORM_KEY_PREFIX}{normId}";
+    internal static string BuildFactionNormsKey(Guid factionId) => $"{FACTION_NORMS_KEY_PREFIX}{factionId}";
     internal static string BuildNormCacheKey(Guid characterId, Guid? locationId) =>
-        $"ncache:{characterId}:{locationId?.ToString() ?? "none"}";
+        $"{NORM_CACHE_KEY_PREFIX}{characterId}:{locationId?.ToString() ?? "none"}";
     internal static string BuildGovernanceCacheKey(Guid locationId, string domain) =>
-        $"govcache:{locationId}:{domain.ToLowerInvariant()}";
-    internal static string BuildGovernanceKey(Guid governanceId) => $"gov:{governanceId}";
-    internal static string BuildFactionGovernanceKey(Guid factionId) => $"gov:fac:{factionId}";
+        $"{GOVERNANCE_CACHE_KEY_PREFIX}{locationId}:{domain.ToLowerInvariant()}";
+    internal static string BuildGovernanceKey(Guid governanceId) => $"{GOVERNANCE_KEY_PREFIX}{governanceId}";
+    internal static string BuildFactionGovernanceKey(Guid factionId) => $"{FACTION_GOVERNANCE_KEY_PREFIX}{factionId}";
     internal static string BuildFactionGovernanceDomainKey(Guid factionId, string domain) =>
-        $"gov:fac:{factionId}:dom:{domain.ToLowerInvariant()}";
+        $"{FACTION_GOVERNANCE_KEY_PREFIX}{factionId}:dom:{domain.ToLowerInvariant()}";
 
     // ========================================================================
     // MAPPING HELPERS

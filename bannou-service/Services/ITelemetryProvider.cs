@@ -305,4 +305,19 @@ public static class TelemetryMetrics
     /// Used by prebound APIs where target services may be intentionally offline.
     /// </summary>
     public const string MeshRawInvocations = "bannou.mesh.raw_invocations";
+
+    // Analytics metrics
+
+    /// <summary>
+    /// Counter for analytics score deltas processed during buffer flush.
+    /// Tagged by game_service_id, entity_type, and score_type.
+    /// Enables Prometheus rate/increase queries (e.g., kills per hour, gold earned per day).
+    /// </summary>
+    public const string AnalyticsScoreProcessed = "bannou.analytics.score.processed";
+
+    /// <summary>
+    /// Counter for raw analytics events processed per entity batch during buffer flush.
+    /// Tagged by game_service_id. Enables throughput monitoring queries.
+    /// </summary>
+    public const string AnalyticsEventsProcessed = "bannou.analytics.events.processed";
 }

@@ -400,6 +400,315 @@ public class AnalyticsServiceTests
 
     #endregion
 
+    #region FlushBufferedEvents Metric Emission Tests
+
+    /// <summary>
+    /// Creates a fully configured state store factory mock for Redis-backed buffer flush tests.
+    /// Uses a fresh factory mock to avoid Moq generic type resolution conflicts.
+    /// </summary>
+    private (Mock<IStateStoreFactory> factory,
+             Mock<ICacheableStateStore<BufferedAnalyticsEvent>> bufferStore,
+             Mock<ICacheableStateStore<object>> indexStore,
+             Mock<IStateStore<EntitySummaryData>> summaryStore) CreateRedisBackedStoreFactory()
+    {
+        var factory = new Mock<IStateStoreFactory>();
+
+        // Redis backend for summary store (enables buffering)
+        factory.Setup(f => f.GetBackendType(It.IsAny<string>())).Returns(StateBackend.Redis);
+
+        // Cacheable stores for event buffer
+        // Order matters: <object> first, then <BufferedAnalyticsEvent> — Moq/Castle
+        // generic method dispatch requires the specific internal type setup last
+        var bufferStore = new Mock<ICacheableStateStore<BufferedAnalyticsEvent>>();
+        var indexStore = new Mock<ICacheableStateStore<object>>();
+        factory.Setup(f => f.GetCacheableStore<object>(It.IsAny<string>())).Returns(indexStore.Object);
+        factory.Setup(f => f.GetCacheableStore<BufferedAnalyticsEvent>(It.IsAny<string>())).Returns(bufferStore.Object);
+
+        // Summary data store with ETag support
+        var summaryStore = new Mock<IStateStore<EntitySummaryData>>();
+        factory.Setup(f => f.GetStore<EntitySummaryData>(It.IsAny<string>())).Returns(summaryStore.Object);
+
+        // Remaining stores needed by constructor (default mocks)
+        factory.Setup(f => f.GetStore<SkillRatingData>(It.IsAny<string>())).Returns(new Mock<IStateStore<SkillRatingData>>().Object);
+        factory.Setup(f => f.GetStore<ControllerHistoryData>(It.IsAny<string>())).Returns(new Mock<IStateStore<ControllerHistoryData>>().Object);
+        factory.Setup(f => f.GetStore<GameServiceCacheEntry>(It.IsAny<string>())).Returns(new Mock<IStateStore<GameServiceCacheEntry>>().Object);
+        factory.Setup(f => f.GetStore<GameSessionMappingData>(It.IsAny<string>())).Returns(new Mock<IStateStore<GameSessionMappingData>>().Object);
+        factory.Setup(f => f.GetStore<RealmGameServiceCacheEntry>(It.IsAny<string>())).Returns(new Mock<IStateStore<RealmGameServiceCacheEntry>>().Object);
+        factory.Setup(f => f.GetStore<CharacterRealmCacheEntry>(It.IsAny<string>())).Returns(new Mock<IStateStore<CharacterRealmCacheEntry>>().Object);
+        factory.Setup(f => f.GetStore<string>(It.IsAny<string>())).Returns(new Mock<IStateStore<string>>().Object);
+
+        var mockJsonQueryStore = new Mock<IJsonQueryableStateStore<EntitySummaryData>>();
+        mockJsonQueryStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(), It.IsAny<int>(), It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<EntitySummaryData>(
+                new List<JsonQueryResult<EntitySummaryData>>(), 0, 0, 10));
+        factory.Setup(f => f.GetJsonQueryableStore<EntitySummaryData>(It.IsAny<string>())).Returns(mockJsonQueryStore.Object);
+        factory.Setup(f => f.GetJsonQueryableStore<ControllerHistoryData>(It.IsAny<string>()))
+            .Returns(new Mock<IJsonQueryableStateStore<ControllerHistoryData>>().Object);
+
+        return (factory, bufferStore, indexStore, summaryStore);
+    }
+
+    private AnalyticsService CreateRedisBackedService(Mock<IStateStoreFactory> factory)
+    {
+        return new AnalyticsService(
+            _mockMessageBus.Object,
+            factory.Object,
+            _mockGameServiceClient.Object,
+            _mockGameSessionClient.Object,
+            _mockRealmClient.Object,
+            _mockCharacterClient.Object,
+            _mockLockProvider.Object,
+            _mockLogger.Object,
+            _configuration,
+            _mockEventConsumer.Object,
+            _mockTelemetryProvider.Object);
+    }
+
+    [Fact]
+    public async Task FlushBufferedEvents_ScoreEvent_EmitsScoreProcessedCounter()
+    {
+        // Arrange — configure Redis backend to enable buffering/flushing
+        var gameServiceId = Guid.NewGuid();
+        var entityId = Guid.NewGuid();
+        var entityType = EntityType.Character;
+        var eventType = "kills";
+        var eventValue = 5.0;
+        var eventKey = $"analytics-event-buffer-entry:{Guid.NewGuid()}";
+
+        var (storeFactory, mockEventBufferStore, mockEventBufferIndexStore, mockSummaryDataStore) =
+            CreateRedisBackedStoreFactory();
+
+        // Buffer size = 10 with count >= 10 triggers flush; range returns 1 entry
+        // so entries.Count (1) < batchSize (10) exits the flush loop after one iteration
+        _configuration.EventBufferSize = 10;
+        _configuration.EventBufferFlushIntervalSeconds = 0;
+        _configuration.EventBufferLockExpiryBaseSeconds = 10;
+
+        // SortedSetCountAsync returns 10 (>= buffer size, triggers flush)
+        mockEventBufferIndexStore
+            .Setup(s => s.SortedSetCountAsync(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(10);
+
+        // SortedSetRangeByRankAsync returns one entry (< batchSize, exits loop)
+        mockEventBufferIndexStore
+            .Setup(s => s.SortedSetRangeByRankAsync(
+                It.IsAny<string>(), It.IsAny<long>(), It.IsAny<long>(),
+                It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<(string member, double score)>
+            {
+                (eventKey, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
+            });
+
+        // GetBulkAsync returns the buffered event
+        mockEventBufferStore
+            .Setup(s => s.GetBulkAsync(
+                It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, BufferedAnalyticsEvent>
+            {
+                [eventKey] = new BufferedAnalyticsEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    GameServiceId = gameServiceId,
+                    EntityId = entityId,
+                    EntityType = entityType,
+                    EventType = eventType,
+                    Timestamp = DateTimeOffset.UtcNow,
+                    Value = eventValue,
+                    SessionId = null
+                }
+            });
+
+        // GetWithETagAsync returns null summary (new entity)
+        mockSummaryDataStore
+            .Setup(s => s.GetWithETagAsync(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((EntitySummaryData?)null, (string?)null));
+
+        // TrySaveAsync succeeds (returns new ETag)
+        mockSummaryDataStore
+            .Setup(s => s.TrySaveAsync(
+                It.IsAny<string>(), It.IsAny<EntitySummaryData>(),
+                It.IsAny<string>(), It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        // Lock succeeds
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        mockLockResponse.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider
+            .Setup(p => p.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
+
+        // Capture RecordCounter calls
+        var capturedCounterCalls = new List<(string component, string metric, long value, KeyValuePair<string, object?>[] tags)>();
+        _mockTelemetryProvider
+            .Setup(t => t.RecordCounter(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long>(),
+                It.IsAny<KeyValuePair<string, object?>[]>()))
+            .Callback<string, string, long, KeyValuePair<string, object?>[]>(
+                (component, metric, value, tags) =>
+                    capturedCounterCalls.Add((component, metric, value, tags)));
+
+        // PublishAnalyticsScoreUpdatedAsync setup (generated extension method calls TryPublishAsync)
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var service = CreateRedisBackedService(storeFactory);
+
+        // Act
+        var request = new IngestEventRequest
+        {
+            GameServiceId = gameServiceId,
+            EventType = eventType,
+            EntityId = entityId,
+            EntityType = entityType,
+            Timestamp = DateTimeOffset.UtcNow,
+            Value = eventValue
+        };
+        await service.IngestEventAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert — verify score processed counter was emitted
+        var scoreCounterCall = capturedCounterCalls.FirstOrDefault(
+            c => c.metric == TelemetryMetrics.AnalyticsScoreProcessed);
+        Assert.NotNull(scoreCounterCall.metric);
+        Assert.Equal("bannou.analytics", scoreCounterCall.component);
+        Assert.Equal((long)eventValue, scoreCounterCall.value);
+
+        var scoreTags = scoreCounterCall.tags.ToDictionary(t => t.Key, t => t.Value);
+        Assert.Equal(gameServiceId.ToString(), scoreTags["game_service_id"]);
+        Assert.Equal(entityType.ToString(), scoreTags["entity_type"]);
+        Assert.Equal(eventType, scoreTags["score_type"]);
+
+        // Assert — verify events processed counter was emitted
+        var eventsCounterCall = capturedCounterCalls.FirstOrDefault(
+            c => c.metric == TelemetryMetrics.AnalyticsEventsProcessed);
+        Assert.NotNull(eventsCounterCall.metric);
+        Assert.Equal("bannou.analytics", eventsCounterCall.component);
+        Assert.Equal(1, eventsCounterCall.value);
+
+        var eventsTags = eventsCounterCall.tags.ToDictionary(t => t.Key, t => t.Value);
+        Assert.Equal(gameServiceId.ToString(), eventsTags["game_service_id"]);
+    }
+
+    [Fact]
+    public async Task FlushBufferedEvents_NoValueEvent_DoesNotEmitScoreCounter()
+    {
+        // Arrange — event without a value should not produce a score counter
+        var gameServiceId = Guid.NewGuid();
+        var entityId = Guid.NewGuid();
+        var eventKey = $"analytics-event-buffer-entry:{Guid.NewGuid()}";
+
+        var (storeFactory, mockEventBufferStore, mockEventBufferIndexStore, mockSummaryDataStore) =
+            CreateRedisBackedStoreFactory();
+
+        _configuration.EventBufferSize = 10;
+        _configuration.EventBufferFlushIntervalSeconds = 0;
+        _configuration.EventBufferLockExpiryBaseSeconds = 10;
+
+        mockEventBufferIndexStore
+            .Setup(s => s.SortedSetCountAsync(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(10);
+
+        mockEventBufferIndexStore
+            .Setup(s => s.SortedSetRangeByRankAsync(
+                It.IsAny<string>(), It.IsAny<long>(), It.IsAny<long>(),
+                It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<(string member, double score)>
+            {
+                (eventKey, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
+            });
+
+        mockEventBufferStore
+            .Setup(s => s.GetBulkAsync(
+                It.IsAny<IReadOnlyList<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, BufferedAnalyticsEvent>
+            {
+                [eventKey] = new BufferedAnalyticsEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    GameServiceId = gameServiceId,
+                    EntityId = entityId,
+                    EntityType = EntityType.Character,
+                    EventType = "session.created",
+                    Timestamp = DateTimeOffset.UtcNow,
+                    Value = null, // No value — no score event
+                    SessionId = null
+                }
+            });
+
+        mockSummaryDataStore
+            .Setup(s => s.GetWithETagAsync(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((EntitySummaryData?)null, (string?)null));
+
+        mockSummaryDataStore
+            .Setup(s => s.TrySaveAsync(
+                It.IsAny<string>(), It.IsAny<EntitySummaryData>(),
+                It.IsAny<string>(), It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        mockLockResponse.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider
+            .Setup(p => p.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
+
+        var capturedCounterCalls = new List<(string component, string metric, long value, KeyValuePair<string, object?>[] tags)>();
+        _mockTelemetryProvider
+            .Setup(t => t.RecordCounter(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long>(),
+                It.IsAny<KeyValuePair<string, object?>[]>()))
+            .Callback<string, string, long, KeyValuePair<string, object?>[]>(
+                (component, metric, value, tags) =>
+                    capturedCounterCalls.Add((component, metric, value, tags)));
+
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var service = CreateRedisBackedService(storeFactory);
+
+        // Act
+        var request = new IngestEventRequest
+        {
+            GameServiceId = gameServiceId,
+            EventType = "session.created",
+            EntityId = entityId,
+            EntityType = EntityType.Character,
+            Timestamp = DateTimeOffset.UtcNow,
+            Value = null // No value
+        };
+        await service.IngestEventAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert — score counter should NOT be emitted (no value → no score event)
+        var scoreCounterCalls = capturedCounterCalls.Where(
+            c => c.metric == TelemetryMetrics.AnalyticsScoreProcessed).ToList();
+        Assert.Empty(scoreCounterCalls);
+
+        // Assert — events processed counter SHOULD still be emitted
+        var eventsCounterCall = capturedCounterCalls.FirstOrDefault(
+            c => c.metric == TelemetryMetrics.AnalyticsEventsProcessed);
+        Assert.NotNull(eventsCounterCall.metric);
+        Assert.Equal(1, eventsCounterCall.value);
+    }
+
+    #endregion
+
     #region IngestEvent Backend Tests
 
     [Fact]

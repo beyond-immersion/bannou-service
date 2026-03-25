@@ -241,8 +241,7 @@ Faction is a Category A entity per Implementation Tenets (deprecation lifecycle)
 
 4. ~~**Variable Provider missing territory context variable**~~: **FIXED** (2026-03-16) - The `IVariableProviderFactory.CreateAsync` interface already provides `locationId` as a parameter. Added territory store lookup to `FactionProviderFactory` — looks up `TerritoryClaimModel` by location, checks if the controlling faction is among the character's memberships, and passes the result to `FactionProvider` as `${faction.in_controlled_territory}`. Returns false when locationId is null or no active claim exists.
 
-5. **State store key builders missing prefix constants (T6)**: FactionService has 16 `Build*Key()` methods but uses inline string prefixes (`"fac:"`, `"mem:"`, `"tcl:"`, `"nrm:"`, `"gov:"`) instead of `private const string` prefix fields. The `StateStoreKeyValidator` requires both. Mechanical refactor — extract each inline prefix into a const field.
-<!-- AUDIT:CONFIRMED:2026-03-21:https://github.com/beyond-immersion/bannou-service/issues/709 -->
+5. ~~**State store key builders missing prefix constants (T6)**~~: **FIXED** (2026-03-25) - Extracted 12 `private const string` prefix fields (`FACTION_KEY_PREFIX`, `MEMBER_KEY_PREFIX`, `CHARACTER_MEMBERSHIPS_KEY_PREFIX`, `CLAIM_KEY_PREFIX`, `LOCATION_CLAIM_KEY_PREFIX`, `FACTION_CLAIMS_KEY_PREFIX`, `NORM_KEY_PREFIX`, `FACTION_NORMS_KEY_PREFIX`, `NORM_CACHE_KEY_PREFIX`, `GOVERNANCE_CACHE_KEY_PREFIX`, `GOVERNANCE_KEY_PREFIX`, `FACTION_GOVERNANCE_KEY_PREFIX`) and updated all 16 `Build*Key()` methods to reference them. `StateStoreKeyValidator` passes.
 
 6. **Missing lib-contract integration for guild charters (plan gap)**: Issue #410 decision Q3 states: "When a character joins a faction (formal guild membership), the guild contract is created explicitly through lib-contract." The plan lists `lib-contract (L1) — formal membership agreements, guild charters` as a dependency. The current implementation does not use `IContractClient` at all -- membership is managed directly without contract backing. This means guild charters are not formalized as binding agreements, and lib-obligation cannot discover faction-sourced contractual obligations through lib-contract.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-16:https://github.com/beyond-immersion/bannou-service/issues/284 -->
@@ -251,9 +250,9 @@ Faction is a Category A entity per Implementation Tenets (deprecation lifecycle)
 
 ### Active
 - **Category A merge endpoint**: `IDeprecateAndMergeEntity` interface is implemented but `MergeFactionAsync` logic is pending. See Stubs § Category A Merge Endpoint.
-- **Key builder prefix extraction (#709)**: Extract inline key prefixes into `private const string` fields across 16 `Build*Key()` methods. See Design Considerations #5.
 
 ### Completed
+- **2026-03-25 (#709)**: Key builder prefix extraction — extracted 12 `private const string` prefix fields and updated all 16 `Build*Key()` methods to reference them. DC #5 resolved.
 - **2026-03-16 (audit)**: DC #4 (Variable Provider territory context) — `IVariableProviderFactory.CreateAsync` already provides `locationId`; added territory store lookup to `FactionProviderFactory` and `${faction.in_controlled_territory}` variable to `FactionProvider`.
 - **2026-03-16 (audit)**: Bug #2 (CleanupByRealm deprecation guard bypass) — extracted `DeleteFactionCascadeInternalAsync` helper, CleanupByRealmAsync bypasses deprecation guard with per-item error isolation.
 

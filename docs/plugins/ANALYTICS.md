@@ -10,7 +10,7 @@
 
 ## Overview
 
-The Analytics plugin (L4 GameFeatures) is the central event aggregation point for all game-related statistics. Handles event ingestion, entity summary computation, Glicko-2 skill rating calculations, and controller history tracking. Publishes score updates and milestone events consumed by Achievement and Leaderboard for downstream processing. Subscribes to game session lifecycle and character/realm history events for automatic ingestion. Unlike typical L4 services, Analytics is a leaf node for write calls — it makes read-only entity resolution calls to L2 services (game-service, game-session, realm, character) but no write calls to any other service. It should not be called by L1/L2/L3 services.
+The Analytics plugin (L4 GameFeatures) is the central event aggregation point for all game-related statistics. Handles event ingestion, entity summary computation, Glicko-2 skill rating calculations, and controller history tracking. Publishes score updates and milestone events consumed by Achievement and Leaderboard for downstream processing. Emits Prometheus-compatible `RecordCounter` metrics during buffer flush (`analytics.score.processed` and `analytics.events.processed`) enabling time-series analysis (rate, increase, distribution queries) via the observability stack without custom storage. Subscribes to game session lifecycle and character/realm history events for automatic ingestion. Unlike typical L4 services, Analytics is a leaf node for write calls — it makes read-only entity resolution calls to L2 services (game-service, game-session, realm, character) but no write calls to any other service. It should not be called by L1/L2/L3 services.
 
 ## Type Field Classification
 
@@ -82,18 +82,19 @@ realm-history.* ----------------+ +----------+----------+
  | realm-> | | Flush (locked) |
  | gameService | | Group by entity |
  | (cached) | | Update summaries |
- +--------------+ +--+------------+----+
- | |
- +-----------------v--+ +----v---------------+
- | analytics.score | | analytics |
- | .updated | | .milestone |
- | | | .reached |
- +------+-------------+ +------+-------------+
- | |
- +-------+-------+ +--------+-------+
- | Leaderboard | | Achievement |
- | Service | | Service |
- +---------------+ +----------------+
+ +--------------+ | Emit metrics |
+                  +--+------+-----+-+
+                     |      |     |
+ +--------------v-+ +--v--------+ +-v----------------+
+ | analytics.score| | analytics  | | RecordCounter    |
+ | .updated       | | .milestone | | score.processed  |
+ |                | | .reached   | | events.processed |
+ +------+---------+ +-----+------+ +---+--------------+
+        |                 |             |
+  +-----v-------+ +------v------+ +---v-----------+
+  | Leaderboard | | Achievement | | Prometheus    |
+  | Service     | | Service     | | /Grafana      |
+  +-------------+ +-------------+ +---------------+
 
 Direct API
  +---------------------+

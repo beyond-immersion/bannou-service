@@ -66,7 +66,7 @@
 | lib-state (IStateStoreFactory) | L0 | Hard | Acquires 11 typed store references across 4 store definitions |
 | lib-state (IDistributedLockProvider) | L0 | Hard | Buffer flush lock, per-game/ratingType rating update lock |
 | lib-messaging (IMessageBus) | L0 | Hard | Publishes 4 event topics, error reporting via TryPublishErrorAsync |
-| lib-telemetry (ITelemetryProvider) | L0 | Hard | Span instrumentation on async helper methods |
+| lib-telemetry (ITelemetryProvider) | L0 | Hard | Span instrumentation on async helper methods; RecordCounter metric emission during buffer flush (`analytics.score.processed`, `analytics.events.processed`) |
 | lib-game-service (IGameServiceClient) | L2 | Hard | Resolves game type stub names to game service IDs |
 | lib-game-session (IGameSessionClient) | L2 | Hard | Fallback session-to-game-type resolution |
 | lib-realm (IRealmClient) | L2 | Hard | Resolves realm IDs to game service IDs for history events |
@@ -344,10 +344,15 @@ LOOP
     // On successful save:
     FOREACH score event in group
       PUBLISH analytics.score.updated { GameServiceId, EntityId, EntityType, ScoreType, PreviousValue, NewValue, Delta, SessionId }
+      RECORD_COUNTER TelemetryMetrics.AnalyticsScoreProcessed, value=(long)Delta,
+        tags: { game_service_id=GameServiceId, entity_type=EntityType, score_type=ScoreType }
       // Check milestone thresholds
       FOREACH threshold IN config.MilestoneThresholds
         IF previousValue < threshold AND newValue >= threshold
           PUBLISH analytics.milestone.reached { GameServiceId, EntityId, EntityType, MilestoneType=scoreType, MilestoneValue=threshold, MilestoneName="{scoreType}_{threshold}" }
+    // Per-entity batch throughput metric
+    RECORD_COUNTER TelemetryMetrics.AnalyticsEventsProcessed, value=entityEvents.Count,
+      tags: { game_service_id=GameServiceId }
     // Cleanup processed entries
     FOREACH evt IN group
       DELETE buffer-entry:{entryKey}

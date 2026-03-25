@@ -77,7 +77,7 @@
 | lib-currency (ICurrencyClient) | L2 | Hard | CURRENCY_AMOUNT prerequisite validation, wallet resolution for rewards |
 | lib-inventory (IInventoryClient) | L2 | Hard | ITEM_OWNED prerequisite validation, container resolution for rewards |
 | lib-item (IItemClient) | L2 | Hard | Item template lookup by code for prerequisite validation |
-| IEnumerable\<IPrerequisiteProviderFactory\> | L4 via DI | Collection | Dynamic prerequisite providers (character_level, reputation, etc.) |
+| IEnumerable\<IPrerequisiteProviderFactory\> | L4 via DI | Collection | Dynamic prerequisite providers — game-specific types registered by L4/L5 extensions (e.g., achievement). `CharacterLevel` and `Reputation` enum values are game concepts scheduled for removal (see GH#719). |
 
 **Notes:**
 - `IResourceClient` (L1) is a hard constructor dependency: used for reference registration/unregistration (cleanup) and at startup for compression/cleanup callback registration.

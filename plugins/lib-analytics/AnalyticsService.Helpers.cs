@@ -786,6 +786,15 @@ public partial class AnalyticsService
                 foreach (var scoreEvent in scoreEvents)
                 {
                     await _messageBus.PublishAnalyticsScoreUpdatedAsync(scoreEvent, cancellationToken);
+
+                    // Per-score metric: enables rate/increase queries in Prometheus (e.g., kills per hour, gold per day)
+                    _telemetryProvider.RecordCounter(
+                        "bannou.analytics",
+                        TelemetryMetrics.AnalyticsScoreProcessed,
+                        (long)scoreEvent.Delta,
+                        new KeyValuePair<string, object?>("game_service_id", scoreEvent.GameServiceId.ToString()),
+                        new KeyValuePair<string, object?>("entity_type", scoreEvent.EntityType.ToString()),
+                        new KeyValuePair<string, object?>("score_type", scoreEvent.ScoreType));
                 }
 
                 foreach (var milestone in milestoneChecks)
@@ -799,6 +808,13 @@ public partial class AnalyticsService
                         milestone.newValue,
                         cancellationToken);
                 }
+
+                // Per-entity batch throughput metric: enables event ingestion rate monitoring
+                _telemetryProvider.RecordCounter(
+                    "bannou.analytics",
+                    TelemetryMetrics.AnalyticsEventsProcessed,
+                    entityEvents.Count,
+                    new KeyValuePair<string, object?>("game_service_id", summary.GameServiceId.ToString()));
 
                 foreach (var envelope in entityEvents)
                 {
