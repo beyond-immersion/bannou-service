@@ -273,6 +273,12 @@ exist and are battle-tested. Quest translates game-flavored semantics into Contr
 infrastructure and adds quest-specific concerns (prerequisites, quest giver roles, reward
 distribution).
 
+## Why Is There No Monetization / Premium / MTX Plugin? {#why-is-there-no-monetization-plugin}
+
+**Last Updated**: 2026-03-25 | **Related Plugins**: Subscription (L2), Status (L4), Collection (L2), Inventory (L2), Relationship (L2), Currency (L2), Item (L2), Permission (L1) | [Full FAQ](../faqs/WHY-IS-THERE-NO-MONETIZATION-PLUGIN.md)
+
+Because monetization is not a domain — it is a business-specific composition of existing primitives. Every studio's monetization model is different, and building explicit MTX infrastructure into Bannou would be simultaneously too restrictive (imposing a specific model) and too complex (spreading billing concerns throughout the service layer). The composable APIs already provide all building blocks with zero blockers.
+
 ## Why Is There No Player Housing Plugin? {#why-is-there-no-player-housing-plugin}
 
 **Last Updated**: 2026-03-08 | **Related Plugins**: Actor (L2), Agency (L4), Asset (L3), Behavior (L4), Connect (L1), Craft (L4), Divine (L4), Game Session (L2), Gardener (L4), Inventory (L2), Item (L2), Permission (L1), Puppetmaster (L4), Save Load (L4), Scene (L4), Seed (L2) | [Full FAQ](../faqs/WHY-IS-THERE-NO-PLAYER-HOUSING-PLUGIN.md)
@@ -312,7 +318,7 @@ updates, game events, NPC actions, and permission changes without the client pol
 
 ## Summary
 
-- **Documents in catalog**: 36
+- **Documents in catalog**: 37
 
 ---
 

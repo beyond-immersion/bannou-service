@@ -407,9 +407,9 @@ public class AnalyticsServiceTests
     /// Uses a fresh factory mock to avoid Moq generic type resolution conflicts.
     /// </summary>
     private (Mock<IStateStoreFactory> factory,
-             Mock<ICacheableStateStore<BufferedAnalyticsEvent>> bufferStore,
-             Mock<ICacheableStateStore<object>> indexStore,
-             Mock<IStateStore<EntitySummaryData>> summaryStore) CreateRedisBackedStoreFactory()
+            Mock<ICacheableStateStore<BufferedAnalyticsEvent>> bufferStore,
+            Mock<ICacheableStateStore<object>> indexStore,
+            Mock<IStateStore<EntitySummaryData>> summaryStore) CreateRedisBackedStoreFactory()
     {
         var factory = new Mock<IStateStoreFactory>();
 
