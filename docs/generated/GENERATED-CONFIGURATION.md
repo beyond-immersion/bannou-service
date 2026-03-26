@@ -141,10 +141,17 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ANALYTICS_GLICKO2_SYSTEM_CONSTANT` | double | `0.5` | Glicko-2 system constant (tau) - controls volatility change ... |
 | `ANALYTICS_GLICKO2_VOLATILITY_CONVERGENCE_TOLERANCE` | double | `1e-06` | Convergence tolerance for Glicko-2 volatility iteration (sma... |
 | `ANALYTICS_MILESTONE_THRESHOLDS` | string[] | `[10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000]` | Score thresholds that trigger milestone events (comma-separa... |
+| `ANALYTICS_RATING_DECAY_BATCH_SIZE` | int | `500` | Maximum number of inactive ratings to process per decay cycl... |
+| `ANALYTICS_RATING_DECAY_INACTIVITY_DAYS` | int | `30` | Days of inactivity before Glicko-2 rating deviation decay be... |
+| `ANALYTICS_RATING_DECAY_INTERVAL_SECONDS` | int | `3600` | Interval in seconds between rating decay worker cycles |
+| `ANALYTICS_RATING_DECAY_LOCK_EXPIRY_SECONDS` | int | `300` | Distributed lock expiry time in seconds for rating decay ope... |
+| `ANALYTICS_RATING_DECAY_STARTUP_DELAY_SECONDS` | int | `60` | Startup delay in seconds before the first rating decay cycle... |
 | `ANALYTICS_RATING_INDEX_MAX_RETRIES` | int | `3` | Maximum optimistic concurrency retry attempts for rating rev... |
 | `ANALYTICS_RATING_UPDATE_LOCK_EXPIRY_SECONDS` | int | `30` | Lock expiry time in seconds for skill rating update operatio... |
 | `ANALYTICS_RESOLUTION_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for resolution caches (game service, realm, c... |
 | `ANALYTICS_SESSION_MAPPING_TTL_SECONDS` | int | `3600` | TTL in seconds for game session mappings (should exceed typi... |
+| `ANALYTICS_SUMMARY_RESET_BATCH_SIZE` | int | `100` | Number of summary records to delete per iteration during res... |
+| `ANALYTICS_SUMMARY_RESET_LOCK_EXPIRY_SECONDS` | int | `60` | Distributed lock expiry time in seconds for summary reset op... |
 
 ### Arbitration
 
@@ -1515,9 +1522,9 @@ This document lists all configuration options defined in Bannou's configuration 
 
 ## Configuration Summary
 
-- **Total properties**: 1196
+- **Total properties**: 1203
 - **Required (no default)**: 67
-- **Optional (has default)**: 1129
+- **Optional (has default)**: 1136
 
 ## Environment Variable Naming Convention
 

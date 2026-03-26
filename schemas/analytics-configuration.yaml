@@ -186,6 +186,42 @@ x-service-configuration:
       description: Distributed lock expiry time in seconds for summary reset operations
       default: 60
       env: ANALYTICS_SUMMARY_RESET_LOCK_EXPIRY_SECONDS
+    # Rating Decay Configuration
+    RatingDecayInactivityDays:
+      type: integer
+      minimum: 1
+      maximum: 365
+      description: Days of inactivity before Glicko-2 rating deviation decay begins
+      default: 30
+      env: ANALYTICS_RATING_DECAY_INACTIVITY_DAYS
+    RatingDecayIntervalSeconds:
+      type: integer
+      minimum: 60
+      maximum: 86400
+      description: Interval in seconds between rating decay worker cycles
+      default: 3600
+      env: ANALYTICS_RATING_DECAY_INTERVAL_SECONDS
+    RatingDecayStartupDelaySeconds:
+      type: integer
+      minimum: 0
+      maximum: 600
+      description: Startup delay in seconds before the first rating decay cycle runs
+      default: 60
+      env: ANALYTICS_RATING_DECAY_STARTUP_DELAY_SECONDS
+    RatingDecayBatchSize:
+      type: integer
+      minimum: 1
+      maximum: 10000
+      description: Maximum number of inactive ratings to process per decay cycle
+      default: 500
+      env: ANALYTICS_RATING_DECAY_BATCH_SIZE
+    RatingDecayLockExpirySeconds:
+      type: integer
+      minimum: 10
+      maximum: 600
+      description: Distributed lock expiry time in seconds for rating decay operations
+      default: 300
+      env: ANALYTICS_RATING_DECAY_LOCK_EXPIRY_SECONDS
     # Rating Index Configuration
     RatingIndexMaxRetries:
       type: integer

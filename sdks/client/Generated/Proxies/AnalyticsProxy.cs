@@ -99,6 +99,24 @@ public sealed class AnalyticsProxy
     }
 
     /// <summary>
+    /// Reset entity summaries for corruption recovery
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ResetEntitySummariesResponse on success.</returns>
+    public Task<ApiResponse<ResetEntitySummariesResponse>> ResetEntitySummariesAsync(
+        ResetEntitySummariesRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ResetEntitySummariesRequest, ResetEntitySummariesResponse>(
+            "/analytics/summary/reset", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Get entity Glicko-2 skill rating
     /// </summary>
     /// <param name="request">The request payload.</param>

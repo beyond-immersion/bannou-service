@@ -206,6 +206,41 @@ public class AnalyticsServiceConfiguration : BaseServiceConfiguration
     public int SummaryResetLockExpirySeconds { get; set; } = 60;
 
     /// <summary>
+    /// Days of inactivity before Glicko-2 rating deviation decay begins
+    /// Environment variable: ANALYTICS_RATING_DECAY_INACTIVITY_DAYS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 365)]
+    public int RatingDecayInactivityDays { get; set; } = 30;
+
+    /// <summary>
+    /// Interval in seconds between rating decay worker cycles
+    /// Environment variable: ANALYTICS_RATING_DECAY_INTERVAL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 60, Maximum = 86400)]
+    public int RatingDecayIntervalSeconds { get; set; } = 3600;
+
+    /// <summary>
+    /// Startup delay in seconds before the first rating decay cycle runs
+    /// Environment variable: ANALYTICS_RATING_DECAY_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 600)]
+    public int RatingDecayStartupDelaySeconds { get; set; } = 60;
+
+    /// <summary>
+    /// Maximum number of inactive ratings to process per decay cycle
+    /// Environment variable: ANALYTICS_RATING_DECAY_BATCH_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10000)]
+    public int RatingDecayBatchSize { get; set; } = 500;
+
+    /// <summary>
+    /// Distributed lock expiry time in seconds for rating decay operations
+    /// Environment variable: ANALYTICS_RATING_DECAY_LOCK_EXPIRY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 600)]
+    public int RatingDecayLockExpirySeconds { get; set; } = 300;
+
+    /// <summary>
     /// Maximum optimistic concurrency retry attempts for rating reverse index operations
     /// Environment variable: ANALYTICS_RATING_INDEX_MAX_RETRIES
     /// </summary>

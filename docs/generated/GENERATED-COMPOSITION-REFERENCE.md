@@ -414,7 +414,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Achievement | L4 | Achievement/trophy system with progressive/binary types, rarity calculation, and platform sync | 13 |
 | Affix | L4 | Item modifier definition and procedural generation for equipment customization | 28 |
 | Agency | L4 | Guardian spirit progressive agency and UX manifest engine for player capability unlocking | — |
-| Analytics | L4 | Event aggregation, Glicko-2 skill ratings, and milestone detection (event-only observer) | 9 |
+| Analytics | L4 | Event aggregation, Glicko-2 skill ratings, and milestone detection (event-only observer) | 10 |
 | Arbitration | L4 | Dispute resolution orchestration composing Contract/Faction primitives for jurisdictional rulings | 25 |
 | Behavior | L4 | ABML compiler (YAML to bytecode), A*-based GOAP planner, and 5-stage cognition pipeline | 6 |
 | Character Encounter | L4 | NPC encounter memory with per-participant perspectives, time-decay, and sentiment aggregation | 22 |
@@ -454,7 +454,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Utility | L4 | Infrastructure network topology, flow calculation, and coverage cascading (aqueducts, power grids) | — |
 | Workshop | L4 | Time-based automated production with lazy evaluation and background materialization | — |
 
-**78 services, 1140 endpoints**
+**78 services, 1141 endpoints**
 
 For full per-service details: `docs/generated/GENERATED-*-SERVICE-DETAILS.md`
 

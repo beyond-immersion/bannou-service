@@ -148,6 +148,11 @@ public class AnalyticsServiceTests
         Assert.Equal(300, config.ResolutionCacheTtlSeconds);
         Assert.Equal(3600, config.SessionMappingTtlSeconds);
         Assert.Equal(30, config.RatingUpdateLockExpirySeconds);
+        Assert.Equal(30, config.RatingDecayInactivityDays);
+        Assert.Equal(3600, config.RatingDecayIntervalSeconds);
+        Assert.Equal(60, config.RatingDecayStartupDelaySeconds);
+        Assert.Equal(500, config.RatingDecayBatchSize);
+        Assert.Equal(300, config.RatingDecayLockExpirySeconds);
     }
 
     [Fact]
@@ -441,6 +446,7 @@ public class AnalyticsServiceTests
         factory.Setup(f => f.GetStore<EntitySummaryData>(It.IsAny<string>())).Returns(summaryStore.Object);
 
         // Remaining stores needed by constructor (default mocks)
+        factory.Setup(f => f.GetCacheableStore<SkillRatingData>(It.IsAny<string>())).Returns(new Mock<ICacheableStateStore<SkillRatingData>>().Object);
         factory.Setup(f => f.GetStore<SkillRatingData>(It.IsAny<string>())).Returns(new Mock<IStateStore<SkillRatingData>>().Object);
         factory.Setup(f => f.GetStore<ControllerHistoryData>(It.IsAny<string>())).Returns(new Mock<IStateStore<ControllerHistoryData>>().Object);
         factory.Setup(f => f.GetStore<GameServiceCacheEntry>(It.IsAny<string>())).Returns(new Mock<IStateStore<GameServiceCacheEntry>>().Object);
@@ -1152,6 +1158,108 @@ public class AnalyticsServiceTests
         Assert.Equal(2, deletedKeys.Count);
         Assert.Contains(summaryKey1, deletedKeys);
         Assert.Contains(summaryKey2, deletedKeys);
+    }
+
+    #endregion
+
+    #region Rating Decay Worker Tests (#249)
+
+    [Fact]
+    public void RatingDecayWorker_CanBeConstructed()
+    {
+        // Arrange & Act — verify the worker can be constructed with standard dependencies
+        using var worker = new AnalyticsRatingDecayWorker(
+            Mock.Of<IServiceProvider>(),
+            Mock.Of<ILogger<AnalyticsRatingDecayWorker>>(),
+            new AnalyticsServiceConfiguration(),
+            Mock.Of<ITelemetryProvider>());
+
+        // Assert — construction succeeded (no ArgumentNullException or similar)
+        Assert.NotNull(worker);
+    }
+
+    [Fact]
+    public async Task UpdateSkillRatingAsync_MaintainsDecayTrackerSortedSet()
+    {
+        // Arrange — set up full Redis-backed stores for rating update flow
+        var (storeFactory, _, _, _) = CreateRedisBackedStoreFactory();
+
+        // Track SortedSetAddAsync calls on the rating cacheable store
+        var capturedSortedSetAdds = new List<(string key, string member, double score)>();
+        var mockRatingCacheableStore = new Mock<ICacheableStateStore<SkillRatingData>>();
+        mockRatingCacheableStore
+            .Setup(s => s.SortedSetAddAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, string, double, StateOptions?, CancellationToken>(
+                (key, member, score, _, _) => capturedSortedSetAdds.Add((key, member, score)))
+            .ReturnsAsync(true);
+        storeFactory.Setup(f => f.GetCacheableStore<SkillRatingData>(It.IsAny<string>()))
+            .Returns(mockRatingCacheableStore.Object);
+
+        // Rating store — return null (new player, defaults synthesized)
+        var mockRatingStore = new Mock<IStateStore<SkillRatingData>>();
+        mockRatingStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((SkillRatingData?)null);
+        mockRatingStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SkillRatingData>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+        storeFactory.Setup(f => f.GetStore<SkillRatingData>(It.IsAny<string>()))
+            .Returns(mockRatingStore.Object);
+
+        // Lock succeeds
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        mockLockResponse.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider
+            .Setup(p => p.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
+
+        // Publish setup
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var service = CreateRedisBackedService(storeFactory);
+
+        var entity1Id = Guid.NewGuid();
+        var entity2Id = Guid.NewGuid();
+        var request = new UpdateSkillRatingRequest
+        {
+            ServiceType = AnalyticsServiceType.Game,
+            ServiceId = Guid.NewGuid().ToString(),
+            RatingType = "ranked",
+            MatchId = Guid.NewGuid(),
+            Results = new List<MatchResult>
+            {
+                new() { EntityId = entity1Id, EntityType = EntityType.Account, Outcome = 1.0 },
+                new() { EntityId = entity2Id, EntityType = EntityType.Account, Outcome = 0.0 }
+            }
+        };
+
+        // Act
+        var (status, response) = await service.UpdateSkillRatingAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert — update succeeded
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.UpdatedRatings.Count);
+
+        // Assert — decay tracker sorted set was updated for both participants
+        var decayAdds = capturedSortedSetAdds.Where(a => a.key == "rating-decay-tracker").ToList();
+        Assert.Equal(2, decayAdds.Count);
+
+        // Verify both rating keys were added with timestamp scores
+        Assert.All(decayAdds, add =>
+        {
+            Assert.StartsWith("analytics-rating:", add.member);
+            Assert.True(add.score > 0); // Unix timestamp ms
+        });
     }
 
     #endregion

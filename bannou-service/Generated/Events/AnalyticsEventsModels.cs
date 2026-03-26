@@ -200,12 +200,10 @@ public partial class AnalyticsRatingUpdatedEvent : BaseServiceEvent
     public double NewRatingDeviation { get; set; } = default!;
 
     /// <summary>
-    /// ID of the match that caused this update
+    /// ID of the match that caused this update (null for background decay)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("matchId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid MatchId { get; set; } = default!;
+    public System.Guid? MatchId { get; set; } = default!;
 
 }
 

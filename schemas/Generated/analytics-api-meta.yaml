@@ -313,6 +313,68 @@ paths:
       x-endpoint-info-json: "{\n    \"summary\": \"Query entity summaries with filters\",\n    \"description\": \"Query multiple
         entity summaries with filtering and sorting options.\\nUseful for dashboards and reporting.\\n\",\n    \"tags\": [\n\
         \        \"Statistics\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryEntitySummaries\"\n}"
+  /analytics/summary/reset:
+    post:
+      summary: Reset entity summaries for corruption recovery
+      description: |
+        Deletes entity summaries for a given service scope, allowing them to rebuild
+        naturally as new events are ingested. Practical recovery mechanism for corrupted
+        summary data. Supports optional entity type and entity ID filters.
+        Dry-run mode (default: true) counts matching records without deleting.
+        Uses a distributed lock to prevent concurrent reset operations.
+      operationId: resetEntitySummaries
+      tags:
+      - Statistics
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetEntitySummariesRequest'
+      responses:
+        '200':
+          description: Reset completed (or dry-run count returned)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetEntitySummariesResponse'
+        '409':
+          description: Concurrent reset operation in progress
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ResetEntitySummariesRequest\"\
+        ,\n    \"$defs\": {\n        \"ResetEntitySummariesRequest\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Request to reset entity summaries for a service scope. Summaries rebuild naturally as new events
+        arrive.\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"serviceType\"\
+        ,\n                \"serviceId\"\n            ],\n            \"properties\": {\n                \"serviceType\":
+        {\n                    \"$ref\": \"#/$defs/AnalyticsServiceType\",\n                    \"description\": \"Service
+        type discriminator\"\n                },\n                \"serviceId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 256,\n                    \"description\"\
+        : \"Service scope identifier (GUID for Game, logical name for System)\"\n                },\n                \"entityType\"\
+        : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Filter to specific entity type (null resets all entity types in scope)\"\n                },\n               \
+        \ \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n        \
+        \            \"nullable\": true,\n                    \"description\": \"Filter to specific entity (null resets all
+        entities in scope)\"\n                },\n                \"dryRun\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": true,\n                    \"description\": \"Count matching summaries without
+        deleting (default true for safety)\"\n                }\n            }\n        },\n        \"AnalyticsServiceType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Discriminator for service scope type. Game
+        = GUID referencing a registered GameService entry. System = logical platform service name (e.g., \\\"auth\\\", \\\"\
+        permission\\\").\",\n            \"enum\": [\n                \"Game\",\n                \"System\"\n            ]\n\
+        \        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ResetEntitySummariesResponse\"\
+        ,\n    \"$defs\": {\n        \"ResetEntitySummariesResponse\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Result of entity summary reset operation\",\n            \"additionalProperties\": false,\n     \
+        \       \"required\": [\n                \"deletedCount\"\n            ],\n            \"properties\": {\n       \
+        \         \"deletedCount\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
+        ,\n                    \"minimum\": 0,\n                    \"description\": \"Number of summary records deleted (or
+        would be deleted if dry run)\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Reset entity summaries for corruption recovery\",\n    \"description\"\
+        : \"Deletes entity summaries for a given service scope, allowing them to rebuild\\nnaturally as new events are ingested.
+        Practical recovery mechanism for corrupted\\nsummary data. Supports optional entity type and entity ID filters.\\\
+        nDry-run mode (default: true) counts matching records without deleting.\\nUses a distributed lock to prevent concurrent
+        reset operations.\\n\",\n    \"tags\": [\n        \"Statistics\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"resetEntitySummaries\"\n}"
   /analytics/rating/get:
     post:
       summary: Get entity Glicko-2 skill rating
@@ -899,6 +961,48 @@ components:
           format: int64
           minimum: 0
           description: Total number of matching entities
+    ResetEntitySummariesRequest:
+      type: object
+      description: Request to reset entity summaries for a service scope. Summaries rebuild naturally as new events 
+        arrive.
+      additionalProperties: false
+      required:
+      - serviceType
+      - serviceId
+      properties:
+        serviceType:
+          $ref: '#/components/schemas/AnalyticsServiceType'
+          description: Service type discriminator
+        serviceId:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Service scope identifier (GUID for Game, logical name for System)
+        entityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
+          description: Filter to specific entity type (null resets all entity types in scope)
+        entityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter to specific entity (null resets all entities in scope)
+        dryRun:
+          type: boolean
+          default: true
+          description: Count matching summaries without deleting (default true for safety)
+    ResetEntitySummariesResponse:
+      type: object
+      description: Result of entity summary reset operation
+      additionalProperties: false
+      required:
+      - deletedCount
+      properties:
+        deletedCount:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Number of summary records deleted (or would be deleted if dry run)
     GetSkillRatingRequest:
       type: object
       description: Request to get skill rating for an entity

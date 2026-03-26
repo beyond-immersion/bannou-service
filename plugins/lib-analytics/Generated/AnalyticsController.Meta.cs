@@ -761,6 +761,141 @@ public partial class AnalyticsController
 
     #endregion
 
+    #region Meta Endpoints for ResetEntitySummaries
+
+    private static readonly string _ResetEntitySummaries_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ResetEntitySummariesRequest",
+    "$defs": {
+        "ResetEntitySummariesRequest": {
+            "type": "object",
+            "description": "Request to reset entity summaries for a service scope. Summaries rebuild naturally as new events arrive.",
+            "additionalProperties": false,
+            "required": [
+                "serviceType",
+                "serviceId"
+            ],
+            "properties": {
+                "serviceType": {
+                    "$ref": "#/$defs/AnalyticsServiceType",
+                    "description": "Service type discriminator"
+                },
+                "serviceId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Service scope identifier (GUID for Game, logical name for System)"
+                },
+                "entityType": {
+                    "type": "object",
+                    "nullable": true,
+                    "description": "Filter to specific entity type (null resets all entity types in scope)"
+                },
+                "entityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Filter to specific entity (null resets all entities in scope)"
+                },
+                "dryRun": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Count matching summaries without deleting (default true for safety)"
+                }
+            }
+        },
+        "AnalyticsServiceType": {
+            "type": "string",
+            "description": "Discriminator for service scope type. Game = GUID referencing a registered GameService entry. System = logical platform service name (e.g., \"auth\", \"permission\").",
+            "enum": [
+                "Game",
+                "System"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _ResetEntitySummaries_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ResetEntitySummariesResponse",
+    "$defs": {
+        "ResetEntitySummariesResponse": {
+            "type": "object",
+            "description": "Result of entity summary reset operation",
+            "additionalProperties": false,
+            "required": [
+                "deletedCount"
+            ],
+            "properties": {
+                "deletedCount": {
+                    "type": "integer",
+                    "format": "int64",
+                    "minimum": 0,
+                    "description": "Number of summary records deleted (or would be deleted if dry run)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ResetEntitySummaries_Info = """
+{
+    "summary": "Reset entity summaries for corruption recovery",
+    "description": "Deletes entity summaries for a given service scope, allowing them to rebuild\nnaturally as new events are ingested. Practical recovery mechanism for corrupted\nsummary data. Supports optional entity type and entity ID filters.\nDry-run mode (default: true) counts matching records without deleting.\nUses a distributed lock to prevent concurrent reset operations.\n",
+    "tags": [
+        "Statistics"
+    ],
+    "deprecated": false,
+    "operationId": "resetEntitySummaries"
+}
+""";
+
+    /// <summary>Returns endpoint information for ResetEntitySummaries</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/analytics/summary/reset/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ResetEntitySummaries_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Analytics",
+            "POST",
+            "/analytics/summary/reset",
+            _ResetEntitySummaries_Info));
+
+    /// <summary>Returns request schema for ResetEntitySummaries</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/analytics/summary/reset/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ResetEntitySummaries_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Analytics",
+            "POST",
+            "/analytics/summary/reset",
+            "request-schema",
+            _ResetEntitySummaries_RequestSchema));
+
+    /// <summary>Returns response schema for ResetEntitySummaries</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/analytics/summary/reset/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ResetEntitySummaries_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Analytics",
+            "POST",
+            "/analytics/summary/reset",
+            "response-schema",
+            _ResetEntitySummaries_ResponseSchema));
+
+    /// <summary>Returns full schema for ResetEntitySummaries</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/analytics/summary/reset/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ResetEntitySummaries_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Analytics",
+            "POST",
+            "/analytics/summary/reset",
+            _ResetEntitySummaries_Info,
+            _ResetEntitySummaries_RequestSchema,
+            _ResetEntitySummaries_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for GetSkillRating
 
     private static readonly string _GetSkillRating_RequestSchema = """

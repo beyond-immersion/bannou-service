@@ -5,7 +5,6 @@
 > **Layer**: GameFeatures
 > **Deep Dive**: [docs/plugins/ANALYTICS.md](../plugins/ANALYTICS.md)
 >
-> **Planned refactoring**: `gameServiceId: Guid` → `serviceType: AnalyticsServiceType` + `serviceId: string` across all schemas, models, events, and key builders ([#142](https://github.com/beyond-immersion/bannou-service/issues/142)). Key patterns in this map reflect the planned shape. Existing code still uses `gameServiceId`.
 
 ---
 
@@ -20,7 +19,7 @@
 | Events Published | 4 (`analytics.score.updated`, `analytics.rating.updated`, `analytics.milestone.reached`, `analytics.controller.recorded`) |
 | Events Consumed | 12 (implemented), 10 planned (auth audit events — [#142](https://github.com/beyond-immersion/bannou-service/issues/142)) |
 | Client Events | 0 |
-| Background Services | 1 implemented (ControllerHistoryCleanupWorker), 1 planned (AnalyticsRatingDecayWorker — [#249](https://github.com/beyond-immersion/bannou-service/issues/249)) |
+| Background Services | 2 (ControllerHistoryCleanupWorker, AnalyticsRatingDecayWorker) |
 
 ---
 
@@ -49,7 +48,7 @@
 |-------------|-----------|---------|
 | `analytics-rating:{serviceType}:{serviceId}:{ratingType}:{entityType}:{entityId}` | `SkillRatingData` | Glicko-2 skill rating data per entity per rating type. Same serviceType/serviceId refactoring as summary keys. |
 | `account-rating-index:{accountId}` | `string` (JSON string list) | Reverse index: account → list of rating keys. Maintained on write for Account-typed entities; consumed during account.deleted cleanup |
-| `rating-decay-tracker` (sorted set) | sorted set of rating key strings, scored by LastMatchAt ms | Time-ordered index of ratings for decay worker processing. Maintained by `UpdateSkillRatingAsync` (add/update on match), removed by decay worker (at max RD), cleaned by `HandleAccountDeletedAsync`. Planned — [#249](https://github.com/beyond-immersion/bannou-service/issues/249). |
+| `rating-decay-tracker` (sorted set) | sorted set of rating key strings, scored by LastMatchAt ms | Time-ordered index of ratings for decay worker processing. Maintained by `UpdateSkillRatingAsync` (add/update on match), removed by decay worker (at max RD), cleaned by `HandleAccountDeletedAsync`. |
 
 **Store**: `analytics-history-data` (Backend: MySQL)
 
@@ -262,6 +261,8 @@ LOCK analytics-rating:"rating-update:{gameServiceId}:{ratingType}"
     IF entityType == Account
       // Maintain reverse index for account.deleted cleanup
       AddToStringList rating-index:account-rating-index:{entityId} <- ratingKey
+    // Maintain decay tracker sorted set for AnalyticsRatingDecayWorker
+    SortedSetAdd rating-decay-tracker <- ratingKey, score=now.ToUnixTimeMilliseconds()
 
   // Pass 4: publish events (still under lock)
   FOREACH calculated result
@@ -429,9 +430,9 @@ ExecuteAsync:
 - `ControllerHistoryCleanupIntervalSeconds` (default: 3600) — interval between cycles (1 hour default)
 - Uses existing `ControllerHistoryRetentionDays`, `ControllerHistoryCleanupBatchSize`, `ControllerHistoryCleanupSubBatchSize`
 
-### AnalyticsRatingDecayWorker (Planned — [#249](https://github.com/beyond-immersion/bannou-service/issues/249))
+### AnalyticsRatingDecayWorker
 
-Periodic background service that applies Glicko-2 rating period decay to inactive players. Design resolved 2026-03-20.
+Periodic background service that applies Glicko-2 rating period decay to inactive players.
 
 ```
 ExecuteAsync:
@@ -480,14 +481,14 @@ ExecuteAsync:
     DELAY config.RatingDecayIntervalSeconds
 ```
 
-**Configuration** (all planned — not yet in schema):
+**Configuration**:
 - `RatingDecayInactivityDays` (default: 30) — days of inactivity before decay applies
 - `RatingDecayIntervalSeconds` (default: 3600) — interval between decay cycles
 - `RatingDecayStartupDelaySeconds` (default: 60) — delay before first cycle
 - `RatingDecayBatchSize` (default: 500) — max ratings to process per cycle
 - `RatingDecayLockExpirySeconds` (default: 300) — distributed lock expiry
 
-**Schema change required**: `matchId` on `AnalyticsRatingUpdatedEvent` becomes nullable (remove from `required`, add `nullable: true`). Per FOUNDATION TENETS: background state changes publish only lifecycle events, no action event.
+**Schema**: `matchId` on `AnalyticsRatingUpdatedEvent` is nullable — `null` indicates decay (background state change), non-null indicates match result. Per FOUNDATION TENETS: background state changes publish only lifecycle events, no action event.
 
 **Sorted set maintenance**:
 - `UpdateSkillRatingAsync`: add/update entry scored by `LastMatchAt` after each rating save

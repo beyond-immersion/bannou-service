@@ -87,6 +87,9 @@ public partial class AnalyticsService : IAnalyticsService
     /// <summary>String store on analytics-rating (Redis) for account→rating-key reverse indexes.</summary>
     private readonly IStateStore<string> _ratingIndexStore;
 
+    /// <summary>Cacheable rating store (Redis) for sorted set operations (decay tracker).</summary>
+    private readonly ICacheableStateStore<SkillRatingData> _ratingCacheableStore;
+
     /// <summary>Whether the analytics summary store backend is Redis (required for buffered ingestion).</summary>
     private readonly bool _summaryStoreIsRedis;
 
@@ -102,6 +105,7 @@ public partial class AnalyticsService : IAnalyticsService
     private const string CHARACTER_REALM_CACHE_PREFIX = "analytics-character-realm-cache";
     private const string BUFFER_LOCK_RESOURCE = "analytics-event-buffer-flush";
     private const string ACCOUNT_RATING_INDEX_PREFIX = "account-rating-index:";
+    private const string RATING_DECAY_TRACKER_KEY = "rating-decay-tracker";
 
     // Glicko-2 scale conversion constant
     private const double GlickoScale = 173.7178;
@@ -149,6 +153,7 @@ public partial class AnalyticsService : IAnalyticsService
         _eventBufferStore = stateStoreFactory.GetCacheableStore<BufferedAnalyticsEvent>(StateStoreDefinitions.AnalyticsSummary);
         _eventBufferIndexStore = stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.AnalyticsSummary);
         _ratingIndexStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.AnalyticsRating);
+        _ratingCacheableStore = stateStoreFactory.GetCacheableStore<SkillRatingData>(StateStoreDefinitions.AnalyticsRating);
         _summaryStoreIsRedis = stateStoreFactory.GetBackendType(StateStoreDefinitions.AnalyticsSummary) == StateBackend.Redis;
 
         // Parse milestone thresholds from configuration array
@@ -611,6 +616,14 @@ public partial class AnalyticsService : IAnalyticsService
                     _logger,
                     cancellationToken);
             }
+
+            // Maintain decay tracker sorted set for AnalyticsRatingDecayWorker
+            await _ratingCacheableStore.SortedSetAddAsync(
+                RATING_DECAY_TRACKER_KEY,
+                key,
+                now.ToUnixTimeMilliseconds(),
+                options: null,
+                cancellationToken: cancellationToken);
 
             var ratingChange = newRating - previousRating;
             updatedRatings.Add(new SkillRatingChange

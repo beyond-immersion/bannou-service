@@ -13,7 +13,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Achievement Service API](#achievement) | `client.Achievement` | 12 | Achievement and trophy system with progress tracking and pla... |
 | [Actor Service API](#actor) | `client.Actor` | 17 | Distributed actor management and execution for NPC brains, e... |
 | [Bannou Affix Service API](#affix) | `client.Affix` | 27 | Item modifier definition, instance management, and stat comp... |
-| [Bannou Analytics Service API](#analytics) | `client.Analytics` | 9 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
+| [Bannou Analytics Service API](#analytics) | `client.Analytics` | 10 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
 | [Bannou Arbitration Service API](#arbitration) | `client.Arbitration` | 25 | Dispute resolution orchestration composing Contract/Faction ... |
 | [Asset Service API](#asset) | `client.Asset` | 19 | Asset management service for storage, versioning, and distri... |
 | [Bannou Auth Service API](#auth) | `client.Auth` | 18 | Authentication and session management service (Internet-faci... |
@@ -318,6 +318,7 @@ Event ingestion, entity statistics, skill ratings (Glicko-2), and controller his
 |--------|---------|----------|---------|
 | `GetEntitysummaryAsync` | `GetEntitySummaryRequest` | `EntitySummaryResponse` | Get entity statistics summary |
 | `QueryentitysummariesAsync` | `QueryEntitySummariesRequest` | `QueryEntitySummariesResponse` | Query entity summaries with filters |
+| `ResetentitysummariesAsync` | `ResetEntitySummariesRequest` | `ResetEntitySummariesResponse` | Reset entity summaries for corruption recovery |
 
 ---
 
@@ -3101,7 +3102,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 ## Summary
 
 - **Total services**: 63
-- **Total methods**: 1116
+- **Total methods**: 1117
 
 ---
 

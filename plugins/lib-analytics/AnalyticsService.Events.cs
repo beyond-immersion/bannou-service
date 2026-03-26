@@ -835,6 +835,9 @@ public partial class AnalyticsService
                 try
                 {
                     await _ratingStore.DeleteAsync(ratingKey, CancellationToken.None);
+                    // Remove from decay tracker sorted set
+                    await _ratingCacheableStore.SortedSetRemoveAsync(
+                        RATING_DECAY_TRACKER_KEY, ratingKey, CancellationToken.None);
                     ratingDeletedCount++;
                 }
                 catch (Exception ex)

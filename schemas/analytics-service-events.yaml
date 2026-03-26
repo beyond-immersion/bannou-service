@@ -193,7 +193,6 @@ components:
         - newRating
         - ratingChange
         - newRatingDeviation
-        - matchId
       properties:
         eventName:
           type: string
@@ -238,7 +237,8 @@ components:
         matchId:
           type: string
           format: uuid
-          description: ID of the match that caused this update
+          nullable: true
+          description: ID of the match that caused this update (null for background decay)
 
     AnalyticsMilestoneReachedEvent:
       allOf:
