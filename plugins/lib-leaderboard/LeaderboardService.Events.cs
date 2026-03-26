@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Analytics;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
@@ -37,8 +38,12 @@ public partial class LeaderboardService
         using var activity = _telemetryProvider.StartActivity("bannou.leaderboard", "LeaderboardService.HandleScoreUpdatedAsync");
         try
         {
+            // System analytics (e.g., auth) don't trigger game-scoped leaderboards
+            if (evt.ServiceType != AnalyticsServiceType.Game) return;
+            var gameServiceId = Guid.Parse(evt.ServiceId);
+
             var definition = await GetDefinitionForAnalyticsEventAsync(
-                evt.GameServiceId,
+                gameServiceId,
                 evt.ScoreType,
                 "scoreType",
                 "event:analytics.score.updated",
@@ -62,7 +67,7 @@ public partial class LeaderboardService
             var score = definition.UpdateMode == UpdateMode.Increment ? evt.Delta : evt.NewValue;
             var (status, _) = await SubmitScoreAsync(new SubmitScoreRequest
             {
-                GameServiceId = evt.GameServiceId,
+                GameServiceId = gameServiceId,
                 LeaderboardId = definition.LeaderboardId,
                 EntityId = evt.EntityId,
                 EntityType = entityType,
@@ -120,8 +125,12 @@ public partial class LeaderboardService
         using var activity = _telemetryProvider.StartActivity("bannou.leaderboard", "LeaderboardService.HandleRatingUpdatedAsync");
         try
         {
+            // System analytics (e.g., auth) don't trigger game-scoped leaderboards
+            if (evt.ServiceType != AnalyticsServiceType.Game) return;
+            var gameServiceId = Guid.Parse(evt.ServiceId);
+
             var definition = await GetDefinitionForAnalyticsEventAsync(
-                evt.GameServiceId,
+                gameServiceId,
                 evt.RatingType,
                 "ratingType",
                 "event:analytics.rating.updated",
@@ -153,7 +162,7 @@ public partial class LeaderboardService
 
             var (status, _) = await SubmitScoreAsync(new SubmitScoreRequest
             {
-                GameServiceId = evt.GameServiceId,
+                GameServiceId = gameServiceId,
                 LeaderboardId = definition.LeaderboardId,
                 EntityId = evt.EntityId,
                 EntityType = entityType,

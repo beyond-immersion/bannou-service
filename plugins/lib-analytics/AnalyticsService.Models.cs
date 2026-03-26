@@ -37,7 +37,8 @@ public partial class AnalyticsService
 internal sealed class BufferedAnalyticsEvent
 {
     public Guid EventId { get; set; }
-    public Guid GameServiceId { get; set; }
+    public AnalyticsServiceType ServiceType { get; set; }
+    public string ServiceId { get; set; } = string.Empty;
     public Guid EntityId { get; set; }
     public EntityType EntityType { get; set; }
     public string EventType { get; set; } = string.Empty;
@@ -74,7 +75,8 @@ internal class EntitySummaryData
 {
     public Guid EntityId { get; set; }
     public EntityType EntityType { get; set; }
-    public Guid GameServiceId { get; set; }
+    public AnalyticsServiceType ServiceType { get; set; }
+    public string ServiceId { get; set; } = string.Empty;
     public long TotalEvents { get; set; }
     public DateTimeOffset FirstEventAt { get; set; }
     public DateTimeOffset LastEventAt { get; set; }
@@ -90,7 +92,8 @@ internal class SkillRatingData
     public Guid EntityId { get; set; }
     public EntityType EntityType { get; set; }
     public string RatingType { get; set; } = string.Empty;
-    public Guid GameServiceId { get; set; }
+    public AnalyticsServiceType ServiceType { get; set; }
+    public string ServiceId { get; set; } = string.Empty;
     public double Rating { get; set; }
     public double RatingDeviation { get; set; }
     public double Volatility { get; set; }
@@ -104,7 +107,8 @@ internal class SkillRatingData
 internal class ControllerHistoryData
 {
     public Guid EventId { get; set; }
-    public Guid GameServiceId { get; set; }
+    public AnalyticsServiceType ServiceType { get; set; }
+    public string ServiceId { get; set; } = string.Empty;
     public Guid AccountId { get; set; }
     public Guid TargetEntityId { get; set; }
     public EntityType TargetEntityType { get; set; }

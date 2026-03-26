@@ -51,7 +51,8 @@ An agent once read over 140 files in a single parallel command call to write a c
 | `get_configuration` | Generated configuration reference (all env vars). | Config investigation. Replaces reading `GENERATED-CONFIGURATION.md`. |
 | `print_models` | Compact model shapes for a service (~6x smaller than schemas). | Understanding service models. Replaces `make print-models`. |
 | `print_interfaces` | Interface shapes from bannou-service (catalog or detail mode). | Understanding infrastructure APIs. Replaces `make print-interfaces`. |
-| `run_command` | Execute whitelisted shell commands (see below). | Builds, tests, generation, git queries, file discovery, running sandboxed scripts. |
+| `generate` | Run code generation scripts. No args = catalog of all generators with triggers and ordering rules. With args = execute a specific generator. | After any schema change. **Always run `generate()` first to see available generators.** |
+| `run_command` | Execute whitelisted shell commands (see below). | Builds, tests, git queries, file discovery, running sandboxed scripts. |
 
 **Introspection tool notes**: Tools that return file-sourced content (`get_plugin_docs`, `get_document`, `get_schema`, `get_service_details`, `get_events`, `get_state_stores`, `get_configuration`) automatically mark the source files as read — enabling immediate `edit_file` without a separate `read_file` call. If output exceeds the MCP response size cap, it is split into continuation composites with the same required-reading gate as `prepare_context`.
 
@@ -70,7 +71,7 @@ An agent once read over 140 files in a single parallel command call to write a c
 
 **`write_script` details**: Scripts are written to `/tmp/bannou-scripts/` ONLY — agents cannot create executable scripts elsewhere. Allowed extensions: `.sh`, `.py`, `.mjs`. Shebangs are auto-added if missing. Syntax is validated before returning (`bash -n` for shell, `python3 -m py_compile` for Python, `node --check` for mjs). Execute via `run_command`: `/tmp/bannou-scripts/my-script.sh`. Filenames must be flat (no path separators), no hidden files, alphanumeric + hyphens/underscores/dots only.
 
-**`prepare_context` details**: Reads documentation files server-side, packs them into optimally-sized composites (≤64KB each, fits in a single `read_file` response), pre-registers originals as read (enabling immediate `edit_file`), and gates all other tools until composites are read. Profiles are defined in `.claude/mcp/profiles.mjs`:
+**`prepare_context` details**: Reads documentation files server-side, packs them into optimally-sized composites (≤26KB each, fits in a single `read_file` response without triggering "Large MCP response" warnings), pre-registers originals as read (enabling immediate `edit_file`), and gates all other tools until composites are read. Profiles are defined in `.claude/mcp/profiles.mjs`:
 
 | Profile | Files Loaded | Options |
 |---------|-------------|---------|
@@ -196,7 +197,7 @@ These agents call `prepare_context` as Step 0, then read the returned composites
 - **Plan Example**: `docs/reference/templates/PLAN-EXAMPLE.md` - A preserved real implementation plan (Seed service) showing the expected structure, detail level, and patterns for planning a new Bannou service. Read this when creating implementation plans for new services or major features to match the established planning format.
 - **Implementation Maps**: `docs/maps/{SERVICE}.md` - Method-by-method specifications for each plugin. Contains pseudocode, state store key patterns, dependency tables, event inventories, DI service lists, and full endpoint indexes. Every implemented service has one. **Do not confuse with deep dives** (`docs/plugins/{SERVICE}.md`) — deep dives are high-level context; maps are detailed specifications.
 
-**Auto-Generated References** (regenerate with `make generate-docs`; **all accessible via MCP tools**):
+**Auto-Generated References** (regenerate with `generate(script: "docs")`; **all accessible via MCP tools**):
 
 | Reference | MCP Tool | File Path |
 |-----------|----------|-----------|
@@ -251,7 +252,7 @@ These agents call `prepare_context` as Step 0, then read the returned composites
 
 **Implementation Pattern**:
 1. Create shared class in `bannou-service/` project with proper namespace
-2. Add exclusion to both controller generation AND model generation in `scripts/generate-all-services.sh`
+2. Add exclusion to both controller generation AND model generation in the generation pipeline (see `scripts/generate-all-services.sh`)
 3. All services reference `bannou-service` project, so shared classes are available
 4. Never duplicate shared classes across multiple service projects
 
@@ -265,21 +266,13 @@ These agents call `prepare_context` as Step 0, then read the returned composites
 make build                     # Build all services
 dotnet build                   # Alternative: direct dotnet build
 
-# Code Generation - USE THE MOST GRANULAR COMMAND POSSIBLE
-# ⚠️ Some scripts must be run FROM the scripts/ directory (they use relative paths).
-# Scripts marked with † below auto-cd and can be run from anywhere.
-
-# If you only changed ONE schema type, use the specific script:
-cd scripts && ./generate-config.sh <service>   # Configuration only (changed *-configuration.yaml)
-scripts/generate-service-events.sh <service>   # † Events + lifecycle events (changed *-service-events.yaml or x-lifecycle)
-cd scripts && ./generate-models.sh <service>   # Models only (changed *-api.yaml models)
-scripts/generate-client-events.sh <service>    # † Client events only (changed *-client-events.yaml)
-
-# If you changed multiple schema types for ONE service:
-cd scripts && ./generate-service.sh <service>  # All generated code for one service
-
-# ONLY use full regeneration when necessary (e.g., changed common schemas):
-scripts/generate-all-services.sh               # † Regenerate ALL services (slow - avoid if possible)
+# Code Generation — use the MCP generate tool:
+#   generate()                                    # List all generators with triggers, ordering rules, and timing
+#   generate(script: "models", service: "foo")    # Run a specific per-service generator
+#   generate(script: "state-stores")              # Run a global generator
+#   generate(script: "all")                       # Full regeneration (~10 min — use only when common-*.yaml changed)
+# The generate tool handles all script paths, working directories, and timeouts internally.
+# Run generate() with no args whenever you need to regenerate — it tells you exactly which command to use.
 
 # Unit Testing - SCOPED TESTS ONLY (same rule as scoped builds)
 # NEVER run `make test` (full suite) when only specific plugins were changed.
@@ -300,16 +293,10 @@ dotnet test --project plugins/lib-{service}.tests/lib-{service}.tests.csproj --n
 # Wildcards (*) supported at beginning and/or end. Multiple values = OR.
 # NEVER use --filter (that is the old vstest flag and does not work).
 
-# Model Shape Inspection — use the MCP tool instead of make:
+# Model/Interface Inspection — use MCP tools:
 #   print_models(plugin: "character")          # Compact model shapes (~6x smaller than schemas)
-#   Format: * = required, ? = nullable, = val = default
-# The MCP tool executes the same script internally and handles oversized output.
-
-# Interface Shape Inspection — use the MCP tool instead of make:
 #   print_interfaces()                         # Catalog: all interfaces by category
 #   print_interfaces(name: "IStateStore")      # Detail: full method signatures
-#   print_interfaces(name: "Cacheable")        # Partial name match supported
-# The MCP tool executes the same script internally and handles oversized output.
 
 # Assembly Inspection (for understanding external APIs — no MCP equivalent, use run_command)
 make inspect-type TYPE="IChannel" PKG="RabbitMQ.Client"
@@ -318,20 +305,6 @@ make inspect-constructor TYPE="ConnectionFactory" PKG="RabbitMQ.Client"
 make inspect-search PATTERN="*Connection*" PKG="RabbitMQ.Client"
 make inspect-list PKG="RabbitMQ.Client"
 ```
-
-**⚠️ Generation Script Selection Guide**:
-- Changed `schemas/foo-configuration.yaml` → run `cd scripts && ./generate-config.sh foo`
-- Changed `schemas/foo-service-events.yaml` (events, x-lifecycle, or both) → run `scripts/generate-service-events.sh foo` (handles both service events and lifecycle events)
-- Changed `x-event-publications` in `schemas/foo-service-events.yaml` → also run `python3 scripts/generate-published-topics.py` (topic constants) AND `python3 scripts/generate-event-publishers.py` (typed `Publish*Async` extension methods)
-- Changed `schemas/foo-api.yaml` (models only) → run `cd scripts && ./generate-models.sh foo`
-- Changed `schemas/foo-client-events.yaml` → run `scripts/generate-client-events.sh foo`
-- Changed multiple schema files for `foo` → run `cd scripts && ./generate-service.sh foo`
-- Changed `schemas/common-*.yaml` or multiple services → run `scripts/generate-all-services.sh`
-
-**⚠️ Generation Order Dependency**: Event schemas `$ref` types from `*-api.yaml` and `common-api.yaml`. The events script **excludes** those types (they're already generated by their own scripts). This means: **if you change both an API schema and an events schema in the same edit, generate models FIRST, then events.** Specifically:
-- Changed `foo-api.yaml` + `foo-service-events.yaml` → run `generate-models.sh foo` THEN `generate-service-events.sh foo`
-- Changed `common-api.yaml` + any events → run `generate-all-services.sh` (handles ordering automatically)
-Running events before models after adding a new `$ref` will produce duplicate types or unresolved references.
 
 ### Testing Strategy
 **Claude's testing responsibilities**: WRITE all tests, but only RUN unit tests.
@@ -361,13 +334,12 @@ Running events before models after adding a new `$ref` will produce duplicate ty
 ## Troubleshooting Reference
 
 ### Common Issues
-- **Generated file errors**: Fix underlying schema, never edit generated files directly
+- **Generated file errors**: Fix underlying schema, regenerate with the `generate` tool, never edit generated files directly
 - **Line ending issues**: User runs `make format` (agent does not)
 - **Service registration**: Verify `[BannouService]` and `[ServiceConfiguration]` attributes
 - **Build failures**: Check schema syntax in `/schemas/` directory
 - **Enum duplicate errors**: Use consolidated enum definitions in schema `components/schemas` with `$ref` references
 - **Parameter type mismatches**: Ensure interface generation properly handles `$ref` parameters (Provider not string)
-- **Script not found errors**: All generation scripts moved to `scripts/` directory - use the appropriate granular script
 
 ### Debugging Tools
 - **Swagger UI**: Available at `/swagger` in development

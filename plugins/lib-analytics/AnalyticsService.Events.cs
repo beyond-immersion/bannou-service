@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
@@ -66,6 +67,47 @@ public partial class AnalyticsService
             "account.deleted",
             async (svc, evt) => await ((AnalyticsService)svc).HandleAccountDeletedAsync(evt));
 
+        // Auth audit events for security monitoring (#142 Phase 1)
+        eventConsumer.RegisterHandler<IAnalyticsService, AuthLoginSuccessfulEvent>(
+            "auth.login.successful",
+            async (svc, evt) => await ((AnalyticsService)svc).HandleAuthLoginSuccessfulAsync(evt));
+
+        eventConsumer.RegisterHandler<IAnalyticsService, AuthLoginFailedEvent>(
+            "auth.login.failed",
+            async (svc, evt) => await ((AnalyticsService)svc).HandleAuthLoginFailedAsync(evt));
+
+        eventConsumer.RegisterHandler<IAnalyticsService, AuthRegistrationSuccessfulEvent>(
+            "auth.registration.successful",
+            async (svc, evt) => await ((AnalyticsService)svc).HandleAuthRegistrationSuccessfulAsync(evt));
+
+        eventConsumer.RegisterHandler<IAnalyticsService, AuthOAuthLoginSuccessfulEvent>(
+            "auth.oauth.successful",
+            async (svc, evt) => await ((AnalyticsService)svc).HandleAuthOAuthSuccessfulAsync(evt));
+
+        eventConsumer.RegisterHandler<IAnalyticsService, AuthSteamLoginSuccessfulEvent>(
+            "auth.steam.successful",
+            async (svc, evt) => await ((AnalyticsService)svc).HandleAuthSteamSuccessfulAsync(evt));
+
+        eventConsumer.RegisterHandler<IAnalyticsService, AuthPasswordResetSuccessfulEvent>(
+            "auth.password-reset.successful",
+            async (svc, evt) => await ((AnalyticsService)svc).HandleAuthPasswordResetSuccessfulAsync(evt));
+
+        eventConsumer.RegisterHandler<IAnalyticsService, AuthMfaEnabledEvent>(
+            "auth.mfa.enabled",
+            async (svc, evt) => await ((AnalyticsService)svc).HandleAuthMfaEnabledAsync(evt));
+
+        eventConsumer.RegisterHandler<IAnalyticsService, AuthMfaDisabledEvent>(
+            "auth.mfa.disabled",
+            async (svc, evt) => await ((AnalyticsService)svc).HandleAuthMfaDisabledAsync(evt));
+
+        eventConsumer.RegisterHandler<IAnalyticsService, AuthMfaVerifiedEvent>(
+            "auth.mfa.verified",
+            async (svc, evt) => await ((AnalyticsService)svc).HandleAuthMfaVerifiedAsync(evt));
+
+        eventConsumer.RegisterHandler<IAnalyticsService, AuthMfaFailedEvent>(
+            "auth.mfa.failed",
+            async (svc, evt) => await ((AnalyticsService)svc).HandleAuthMfaFailedAsync(evt));
+
         // Cache invalidation events
         eventConsumer.RegisterHandler<IAnalyticsService, CharacterUpdatedEvent>(
             "character.updated",
@@ -105,7 +147,8 @@ public partial class AnalyticsService
             await BufferAnalyticsEventAsync(new BufferedAnalyticsEvent
             {
                 EventId = Guid.NewGuid(),
-                GameServiceId = gameServiceId.Value,
+                ServiceType = AnalyticsServiceType.Game,
+                ServiceId = gameServiceId.Value.ToString(),
                 EntityId = evt.SessionId,
                 EntityType = EntityType.Other,
                 EventType = evt.ActionType.ToString(),
@@ -188,7 +231,8 @@ public partial class AnalyticsService
             await BufferAnalyticsEventAsync(new BufferedAnalyticsEvent
             {
                 EventId = Guid.NewGuid(),
-                GameServiceId = gameServiceId.Value,
+                ServiceType = AnalyticsServiceType.Game,
+                ServiceId = gameServiceId.Value.ToString(),
                 EntityId = evt.SessionId,
                 EntityType = EntityType.Other,
                 EventType = "session.created",
@@ -272,7 +316,8 @@ public partial class AnalyticsService
             await BufferAnalyticsEventAsync(new BufferedAnalyticsEvent
             {
                 EventId = Guid.NewGuid(),
-                GameServiceId = gameServiceId.Value,
+                ServiceType = AnalyticsServiceType.Game,
+                ServiceId = gameServiceId.Value.ToString(),
                 EntityId = evt.SessionId,
                 EntityType = EntityType.Other,
                 EventType = "session.deleted",
@@ -330,7 +375,8 @@ public partial class AnalyticsService
                 await BufferAnalyticsEventAsync(new BufferedAnalyticsEvent
                 {
                     EventId = Guid.NewGuid(),
-                    GameServiceId = gameServiceId.Value,
+                    ServiceType = AnalyticsServiceType.Game,
+                    ServiceId = gameServiceId.Value.ToString(),
                     EntityId = entry.CharacterId,
                     EntityType = EntityType.Character,
                     EventType = "history.participation.recorded",
@@ -390,7 +436,8 @@ public partial class AnalyticsService
             await BufferAnalyticsEventAsync(new BufferedAnalyticsEvent
             {
                 EventId = evt.EventId,
-                GameServiceId = gameServiceId.Value,
+                ServiceType = AnalyticsServiceType.Game,
+                ServiceId = gameServiceId.Value.ToString(),
                 EntityId = evt.CharacterId,
                 EntityType = EntityType.Character,
                 EventType = "history.backstory.created",
@@ -444,7 +491,8 @@ public partial class AnalyticsService
             await BufferAnalyticsEventAsync(new BufferedAnalyticsEvent
             {
                 EventId = evt.EventId,
-                GameServiceId = gameServiceId.Value,
+                ServiceType = AnalyticsServiceType.Game,
+                ServiceId = gameServiceId.Value.ToString(),
                 EntityId = evt.CharacterId,
                 EntityType = EntityType.Character,
                 EventType = "history.backstory.updated",
@@ -499,7 +547,8 @@ public partial class AnalyticsService
             await BufferAnalyticsEventAsync(new BufferedAnalyticsEvent
             {
                 EventId = evt.EventId,
-                GameServiceId = gameServiceId.Value,
+                ServiceType = AnalyticsServiceType.Game,
+                ServiceId = gameServiceId.Value.ToString(),
                 EntityId = evt.RealmId,
                 EntityType = EntityType.Realm,
                 EventType = "history.participation.recorded",
@@ -552,7 +601,8 @@ public partial class AnalyticsService
             await BufferAnalyticsEventAsync(new BufferedAnalyticsEvent
             {
                 EventId = evt.EventId,
-                GameServiceId = gameServiceId.Value,
+                ServiceType = AnalyticsServiceType.Game,
+                ServiceId = gameServiceId.Value.ToString(),
                 EntityId = evt.RealmId,
                 EntityType = EntityType.Realm,
                 EventType = "history.lore.created",
@@ -610,7 +660,8 @@ public partial class AnalyticsService
             await BufferAnalyticsEventAsync(new BufferedAnalyticsEvent
             {
                 EventId = evt.EventId,
-                GameServiceId = gameServiceId.Value,
+                ServiceType = AnalyticsServiceType.Game,
+                ServiceId = gameServiceId.Value.ToString(),
                 EntityId = evt.RealmId,
                 EntityType = EntityType.Realm,
                 EventType = "history.lore.updated",
@@ -807,6 +858,250 @@ public partial class AnalyticsService
         if (historyDeletedCount == 0 && summaryDeletedCount == 0 && ratingDeletedCount == 0)
         {
             _logger.LogDebug("No analytics data found for account {AccountId}", accountId);
+        }
+    }
+
+    // =========================================================================
+    // Auth Audit Event Handlers (#142 Phase 1)
+    //
+    // All auth events use serviceType: System, serviceId: "auth".
+    // No game service resolution needed — System type has no resolution step.
+    // Per-account entity summaries keyed by EntityType.Account + accountId.
+    // =========================================================================
+
+    private const string AUTH_SERVICE_ID = "auth";
+
+    /// <summary>
+    /// Buffers an auth audit event into the analytics pipeline.
+    /// Shared helper for auth events with a guaranteed non-null accountId.
+    /// </summary>
+    private async Task BufferAuthEventAsync(Guid accountId, string eventType, DateTimeOffset timestamp)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.BufferAuthEventAsync");
+        await BufferAnalyticsEventAsync(new BufferedAnalyticsEvent
+        {
+            EventId = Guid.NewGuid(),
+            ServiceType = AnalyticsServiceType.System,
+            ServiceId = AUTH_SERVICE_ID,
+            EntityId = accountId,
+            EntityType = EntityType.Account,
+            EventType = eventType,
+            Timestamp = timestamp,
+            Value = 1,
+            SessionId = null,
+            Metadata = null
+        }, CancellationToken.None);
+    }
+
+    /// <summary>
+    /// Handles auth.login.successful events.
+    /// </summary>
+    public async Task HandleAuthLoginSuccessfulAsync(AuthLoginSuccessfulEvent evt)
+    {
+        try
+        {
+            using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleAuthLoginSuccessfulAsync");
+            await BufferAuthEventAsync(evt.AccountId, "auth.login.successful", evt.Timestamp);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling auth.login.successful event for account {AccountId}", evt.AccountId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics", "HandleAuthLoginSuccessful", "unexpected_exception", ex.Message,
+                endpoint: "event:auth.login.successful", details: $"accountId:{evt.AccountId}",
+                stack: ex.StackTrace, cancellationToken: CancellationToken.None);
+        }
+    }
+
+    /// <summary>
+    /// Handles auth.login.failed events.
+    /// Failed logins with null accountId are dropped from per-account aggregation.
+    /// Phase 2 (#639) will add per-IP entity tracking for null-accountId events.
+    /// </summary>
+    public async Task HandleAuthLoginFailedAsync(AuthLoginFailedEvent evt)
+    {
+        try
+        {
+            using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleAuthLoginFailedAsync");
+
+            // Null accountId means the login attempt didn't match any account
+            // (e.g., enumeration attempt). Drop from per-account aggregation.
+            // Phase 2 (#639) will track these per-IP instead.
+            if (!evt.AccountId.HasValue)
+            {
+                _logger.LogDebug("Dropping auth.login.failed event with null accountId (username: {Username})", evt.Username);
+                return;
+            }
+
+            await BufferAuthEventAsync(evt.AccountId.Value, "auth.login.failed", evt.Timestamp);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling auth.login.failed event for username {Username}", evt.Username);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics", "HandleAuthLoginFailed", "unexpected_exception", ex.Message,
+                endpoint: "event:auth.login.failed", details: $"username:{evt.Username}",
+                stack: ex.StackTrace, cancellationToken: CancellationToken.None);
+        }
+    }
+
+    /// <summary>
+    /// Handles auth.registration.successful events.
+    /// </summary>
+    public async Task HandleAuthRegistrationSuccessfulAsync(AuthRegistrationSuccessfulEvent evt)
+    {
+        try
+        {
+            using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleAuthRegistrationSuccessfulAsync");
+            await BufferAuthEventAsync(evt.AccountId, "auth.registration.successful", evt.Timestamp);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling auth.registration.successful event for account {AccountId}", evt.AccountId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics", "HandleAuthRegistrationSuccessful", "unexpected_exception", ex.Message,
+                endpoint: "event:auth.registration.successful", details: $"accountId:{evt.AccountId}",
+                stack: ex.StackTrace, cancellationToken: CancellationToken.None);
+        }
+    }
+
+    /// <summary>
+    /// Handles auth.oauth.successful events.
+    /// </summary>
+    public async Task HandleAuthOAuthSuccessfulAsync(AuthOAuthLoginSuccessfulEvent evt)
+    {
+        try
+        {
+            using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleAuthOAuthSuccessfulAsync");
+            await BufferAuthEventAsync(evt.AccountId, "auth.oauth.successful", evt.Timestamp);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling auth.oauth.successful event for account {AccountId}", evt.AccountId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics", "HandleAuthOAuthSuccessful", "unexpected_exception", ex.Message,
+                endpoint: "event:auth.oauth.successful", details: $"accountId:{evt.AccountId}",
+                stack: ex.StackTrace, cancellationToken: CancellationToken.None);
+        }
+    }
+
+    /// <summary>
+    /// Handles auth.steam.successful events.
+    /// </summary>
+    public async Task HandleAuthSteamSuccessfulAsync(AuthSteamLoginSuccessfulEvent evt)
+    {
+        try
+        {
+            using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleAuthSteamSuccessfulAsync");
+            await BufferAuthEventAsync(evt.AccountId, "auth.steam.successful", evt.Timestamp);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling auth.steam.successful event for account {AccountId}", evt.AccountId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics", "HandleAuthSteamSuccessful", "unexpected_exception", ex.Message,
+                endpoint: "event:auth.steam.successful", details: $"accountId:{evt.AccountId}",
+                stack: ex.StackTrace, cancellationToken: CancellationToken.None);
+        }
+    }
+
+    /// <summary>
+    /// Handles auth.password-reset.successful events.
+    /// </summary>
+    public async Task HandleAuthPasswordResetSuccessfulAsync(AuthPasswordResetSuccessfulEvent evt)
+    {
+        try
+        {
+            using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleAuthPasswordResetSuccessfulAsync");
+            await BufferAuthEventAsync(evt.AccountId, "auth.password-reset.successful", evt.Timestamp);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling auth.password-reset.successful event for account {AccountId}", evt.AccountId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics", "HandleAuthPasswordResetSuccessful", "unexpected_exception", ex.Message,
+                endpoint: "event:auth.password-reset.successful", details: $"accountId:{evt.AccountId}",
+                stack: ex.StackTrace, cancellationToken: CancellationToken.None);
+        }
+    }
+
+    /// <summary>
+    /// Handles auth.mfa.enabled events.
+    /// </summary>
+    public async Task HandleAuthMfaEnabledAsync(AuthMfaEnabledEvent evt)
+    {
+        try
+        {
+            using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleAuthMfaEnabledAsync");
+            await BufferAuthEventAsync(evt.AccountId, "auth.mfa.enabled", evt.Timestamp);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling auth.mfa.enabled event for account {AccountId}", evt.AccountId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics", "HandleAuthMfaEnabled", "unexpected_exception", ex.Message,
+                endpoint: "event:auth.mfa.enabled", details: $"accountId:{evt.AccountId}",
+                stack: ex.StackTrace, cancellationToken: CancellationToken.None);
+        }
+    }
+
+    /// <summary>
+    /// Handles auth.mfa.disabled events.
+    /// </summary>
+    public async Task HandleAuthMfaDisabledAsync(AuthMfaDisabledEvent evt)
+    {
+        try
+        {
+            using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleAuthMfaDisabledAsync");
+            await BufferAuthEventAsync(evt.AccountId, "auth.mfa.disabled", evt.Timestamp);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling auth.mfa.disabled event for account {AccountId}", evt.AccountId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics", "HandleAuthMfaDisabled", "unexpected_exception", ex.Message,
+                endpoint: "event:auth.mfa.disabled", details: $"accountId:{evt.AccountId}",
+                stack: ex.StackTrace, cancellationToken: CancellationToken.None);
+        }
+    }
+
+    /// <summary>
+    /// Handles auth.mfa.verified events.
+    /// </summary>
+    public async Task HandleAuthMfaVerifiedAsync(AuthMfaVerifiedEvent evt)
+    {
+        try
+        {
+            using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleAuthMfaVerifiedAsync");
+            await BufferAuthEventAsync(evt.AccountId, "auth.mfa.verified", evt.Timestamp);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling auth.mfa.verified event for account {AccountId}", evt.AccountId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics", "HandleAuthMfaVerified", "unexpected_exception", ex.Message,
+                endpoint: "event:auth.mfa.verified", details: $"accountId:{evt.AccountId}",
+                stack: ex.StackTrace, cancellationToken: CancellationToken.None);
+        }
+    }
+
+    /// <summary>
+    /// Handles auth.mfa.failed events.
+    /// </summary>
+    public async Task HandleAuthMfaFailedAsync(AuthMfaFailedEvent evt)
+    {
+        try
+        {
+            using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.HandleAuthMfaFailedAsync");
+            await BufferAuthEventAsync(evt.AccountId, "auth.mfa.failed", evt.Timestamp);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling auth.mfa.failed event for account {AccountId}", evt.AccountId);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics", "HandleAuthMfaFailed", "unexpected_exception", ex.Message,
+                endpoint: "event:auth.mfa.failed", details: $"accountId:{evt.AccountId}",
+                stack: ex.StackTrace, cancellationToken: CancellationToken.None);
         }
     }
 

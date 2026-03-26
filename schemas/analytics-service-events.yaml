@@ -50,6 +50,37 @@ info:
     - topic: account.deleted
       event: AccountDeletedEvent
       handler: HandleAccountDeleted
+    # Auth audit events for security monitoring (#142 Phase 1)
+    - topic: auth.login.successful
+      event: AuthLoginSuccessfulEvent
+      handler: HandleAuthLoginSuccessful
+    - topic: auth.login.failed
+      event: AuthLoginFailedEvent
+      handler: HandleAuthLoginFailed
+    - topic: auth.registration.successful
+      event: AuthRegistrationSuccessfulEvent
+      handler: HandleAuthRegistrationSuccessful
+    - topic: auth.oauth.successful
+      event: AuthOAuthLoginSuccessfulEvent
+      handler: HandleAuthOAuthSuccessful
+    - topic: auth.steam.successful
+      event: AuthSteamLoginSuccessfulEvent
+      handler: HandleAuthSteamSuccessful
+    - topic: auth.password-reset.successful
+      event: AuthPasswordResetSuccessfulEvent
+      handler: HandleAuthPasswordResetSuccessful
+    - topic: auth.mfa.enabled
+      event: AuthMfaEnabledEvent
+      handler: HandleAuthMfaEnabled
+    - topic: auth.mfa.disabled
+      event: AuthMfaDisabledEvent
+      handler: HandleAuthMfaDisabled
+    - topic: auth.mfa.verified
+      event: AuthMfaVerifiedEvent
+      handler: HandleAuthMfaVerified
+    - topic: auth.mfa.failed
+      event: AuthMfaFailedEvent
+      handler: HandleAuthMfaFailed
     # Cache invalidation events
     - topic: character.updated
       event: CharacterUpdatedEvent
@@ -92,7 +123,8 @@ components:
         - eventName
         - eventId
         - timestamp
-        - gameServiceId
+        - serviceType
+        - serviceId
         - entityId
         - entityType
         - scoreType
@@ -103,10 +135,14 @@ components:
           type: string
           default: analytics.score.updated
           description: 'Event type identifier: analytics.score.updated'
-        gameServiceId:
+        serviceType:
+          $ref: 'analytics-api.yaml#/components/schemas/AnalyticsServiceType'
+          description: Service type discriminator (Game or System)
+        serviceId:
           type: string
-          format: uuid
-          description: ID of the game service
+          minLength: 1
+          maxLength: 256
+          description: Service scope identifier (GUID for Game, logical name for System)
         entityId:
           type: string
           format: uuid
@@ -148,7 +184,8 @@ components:
         - eventName
         - eventId
         - timestamp
-        - gameServiceId
+        - serviceType
+        - serviceId
         - entityId
         - entityType
         - ratingType
@@ -162,10 +199,14 @@ components:
           type: string
           default: analytics.rating.updated
           description: 'Event type identifier: analytics.rating.updated'
-        gameServiceId:
+        serviceType:
+          $ref: 'analytics-api.yaml#/components/schemas/AnalyticsServiceType'
+          description: Service type discriminator (Game or System)
+        serviceId:
           type: string
-          format: uuid
-          description: ID of the game service
+          minLength: 1
+          maxLength: 256
+          description: Service scope identifier (GUID for Game, logical name for System)
         entityId:
           type: string
           format: uuid
@@ -209,7 +250,8 @@ components:
         - eventName
         - eventId
         - timestamp
-        - gameServiceId
+        - serviceType
+        - serviceId
         - entityId
         - entityType
         - milestoneType
@@ -219,10 +261,14 @@ components:
           type: string
           default: analytics.milestone.reached
           description: 'Event type identifier: analytics.milestone.reached'
-        gameServiceId:
+        serviceType:
+          $ref: 'analytics-api.yaml#/components/schemas/AnalyticsServiceType'
+          description: Service type discriminator (Game or System)
+        serviceId:
           type: string
-          format: uuid
-          description: ID of the game service
+          minLength: 1
+          maxLength: 256
+          description: Service scope identifier (GUID for Game, logical name for System)
         entityId:
           type: string
           format: uuid
@@ -255,7 +301,8 @@ components:
         - eventName
         - eventId
         - timestamp
-        - gameServiceId
+        - serviceType
+        - serviceId
         - accountId
         - targetEntityId
         - targetEntityType
@@ -265,10 +312,14 @@ components:
           type: string
           default: analytics.controller.recorded
           description: 'Event type identifier: analytics.controller.recorded'
-        gameServiceId:
+        serviceType:
+          $ref: 'analytics-api.yaml#/components/schemas/AnalyticsServiceType'
+          description: Service type discriminator (Game or System)
+        serviceId:
           type: string
-          format: uuid
-          description: ID of the game service
+          minLength: 1
+          maxLength: 256
+          description: Service scope identifier (GUID for Game, logical name for System)
         accountId:
           type: string
           format: uuid

@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Analytics;
+using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameService;
@@ -179,7 +180,8 @@ public class AnalyticsServiceTests
         var service = CreateService();
         var request = new UpdateSkillRatingRequest
         {
-            GameServiceId = Guid.NewGuid(),
+            ServiceType = AnalyticsServiceType.Game,
+            ServiceId = Guid.NewGuid().ToString(),
             RatingType = "ranked",
             MatchId = Guid.NewGuid(),
             Results = new List<MatchResult>()
@@ -199,7 +201,8 @@ public class AnalyticsServiceTests
         var service = CreateService();
         var request = new UpdateSkillRatingRequest
         {
-            GameServiceId = Guid.NewGuid(),
+            ServiceType = AnalyticsServiceType.Game,
+            ServiceId = Guid.NewGuid().ToString(),
             RatingType = "ranked",
             MatchId = Guid.NewGuid(),
             Results = new List<MatchResult>
@@ -226,7 +229,8 @@ public class AnalyticsServiceTests
         var service = CreateService();
         var request = new QueryControllerHistoryRequest
         {
-            GameServiceId = Guid.NewGuid(),
+            ServiceType = AnalyticsServiceType.Game,
+            ServiceId = Guid.NewGuid().ToString(),
             Limit = 0
         };
 
@@ -244,7 +248,8 @@ public class AnalyticsServiceTests
         var service = CreateService();
         var request = new QueryControllerHistoryRequest
         {
-            GameServiceId = Guid.NewGuid(),
+            ServiceType = AnalyticsServiceType.Game,
+            ServiceId = Guid.NewGuid().ToString(),
             Limit = -5
         };
 
@@ -263,7 +268,8 @@ public class AnalyticsServiceTests
         var now = DateTimeOffset.UtcNow;
         var request = new QueryControllerHistoryRequest
         {
-            GameServiceId = Guid.NewGuid(),
+            ServiceType = AnalyticsServiceType.Game,
+            ServiceId = Guid.NewGuid().ToString(),
             Limit = 10,
             StartTime = now,
             EndTime = now.AddHours(-1) // End before start
@@ -287,7 +293,8 @@ public class AnalyticsServiceTests
         var service = CreateService();
         var request = new QueryEntitySummariesRequest
         {
-            GameServiceId = Guid.NewGuid(),
+            ServiceType = AnalyticsServiceType.Game,
+            ServiceId = Guid.NewGuid().ToString(),
             Limit = 0
         };
 
@@ -305,7 +312,8 @@ public class AnalyticsServiceTests
         var service = CreateService();
         var request = new QueryEntitySummariesRequest
         {
-            GameServiceId = Guid.NewGuid(),
+            ServiceType = AnalyticsServiceType.Game,
+            ServiceId = Guid.NewGuid().ToString(),
             Limit = -10
         };
 
@@ -323,7 +331,8 @@ public class AnalyticsServiceTests
         var service = CreateService();
         var request = new QueryEntitySummariesRequest
         {
-            GameServiceId = Guid.NewGuid(),
+            ServiceType = AnalyticsServiceType.Game,
+            ServiceId = Guid.NewGuid().ToString(),
             Limit = 10,
             Offset = -1
         };
@@ -342,7 +351,8 @@ public class AnalyticsServiceTests
         var service = CreateService();
         var request = new QueryEntitySummariesRequest
         {
-            GameServiceId = Guid.NewGuid(),
+            ServiceType = AnalyticsServiceType.Game,
+            ServiceId = Guid.NewGuid().ToString(),
             Limit = 10,
             MinEvents = -5
         };
@@ -361,7 +371,8 @@ public class AnalyticsServiceTests
         var service = CreateService();
         var request = new QueryEntitySummariesRequest
         {
-            GameServiceId = Guid.NewGuid(),
+            ServiceType = AnalyticsServiceType.Game,
+            ServiceId = Guid.NewGuid().ToString(),
             Limit = 10,
             SortBy = "invalid_sort_field"
         };
@@ -386,7 +397,8 @@ public class AnalyticsServiceTests
         var service = CreateService();
         var request = new QueryEntitySummariesRequest
         {
-            GameServiceId = Guid.NewGuid(),
+            ServiceType = AnalyticsServiceType.Game,
+            ServiceId = Guid.NewGuid().ToString(),
             Limit = 10,
             SortBy = sortBy
         };
@@ -512,7 +524,8 @@ public class AnalyticsServiceTests
                 [eventKey] = new BufferedAnalyticsEvent
                 {
                     EventId = Guid.NewGuid(),
-                    GameServiceId = gameServiceId,
+                    ServiceType = AnalyticsServiceType.Game,
+                    ServiceId = gameServiceId.ToString(),
                     EntityId = entityId,
                     EntityType = entityType,
                     EventType = eventType,
@@ -567,7 +580,8 @@ public class AnalyticsServiceTests
         // Act
         var request = new IngestEventRequest
         {
-            GameServiceId = gameServiceId,
+            ServiceType = AnalyticsServiceType.Game,
+            ServiceId = gameServiceId.ToString(),
             EventType = eventType,
             EntityId = entityId,
             EntityType = entityType,
@@ -584,7 +598,7 @@ public class AnalyticsServiceTests
         Assert.Equal((long)eventValue, scoreCounterCall.value);
 
         var scoreTags = scoreCounterCall.tags.ToDictionary(t => t.Key, t => t.Value);
-        Assert.Equal(gameServiceId.ToString(), scoreTags["game_service_id"]);
+        Assert.Equal(gameServiceId.ToString(), scoreTags["service_id"]);
         Assert.Equal(entityType.ToString(), scoreTags["entity_type"]);
         Assert.Equal(eventType, scoreTags["score_type"]);
 
@@ -596,7 +610,7 @@ public class AnalyticsServiceTests
         Assert.Equal(1, eventsCounterCall.value);
 
         var eventsTags = eventsCounterCall.tags.ToDictionary(t => t.Key, t => t.Value);
-        Assert.Equal(gameServiceId.ToString(), eventsTags["game_service_id"]);
+        Assert.Equal(gameServiceId.ToString(), eventsTags["service_id"]);
     }
 
     [Fact]
@@ -636,7 +650,8 @@ public class AnalyticsServiceTests
                 [eventKey] = new BufferedAnalyticsEvent
                 {
                     EventId = Guid.NewGuid(),
-                    GameServiceId = gameServiceId,
+                    ServiceType = AnalyticsServiceType.Game,
+                    ServiceId = gameServiceId.ToString(),
                     EntityId = entityId,
                     EntityType = EntityType.Character,
                     EventType = "session.created",
@@ -686,7 +701,8 @@ public class AnalyticsServiceTests
         // Act
         var request = new IngestEventRequest
         {
-            GameServiceId = gameServiceId,
+            ServiceType = AnalyticsServiceType.Game,
+            ServiceId = gameServiceId.ToString(),
             EventType = "session.created",
             EntityId = entityId,
             EntityType = EntityType.Character,
@@ -718,7 +734,8 @@ public class AnalyticsServiceTests
         var service = CreateService();
         var request = new IngestEventRequest
         {
-            GameServiceId = Guid.NewGuid(),
+            ServiceType = AnalyticsServiceType.Game,
+            ServiceId = Guid.NewGuid().ToString(),
             EventType = "kill",
             EntityId = Guid.NewGuid(),
             EntityType = EntityType.Character,
@@ -743,7 +760,8 @@ public class AnalyticsServiceTests
             {
                 new()
                 {
-                    GameServiceId = Guid.NewGuid(),
+                    ServiceType = AnalyticsServiceType.Game,
+                    ServiceId = Guid.NewGuid().ToString(),
                     EventType = "kill",
                     EntityId = Guid.NewGuid(),
                     EntityType = EntityType.Character,
@@ -760,6 +778,170 @@ public class AnalyticsServiceTests
         Assert.NotNull(response);
         Assert.Equal(0, response.Accepted);
         Assert.Equal(1, response.Rejected);
+    }
+
+    #endregion
+
+    #region Auth Event Handler Tests (#142)
+
+    [Fact]
+    public async Task HandleAuthLoginSuccessfulAsync_BuffersEventWithSystemServiceType()
+    {
+        // Arrange — Redis backend required for buffering
+        var accountId = Guid.NewGuid();
+        var (storeFactory, mockEventBufferStore, mockEventBufferIndexStore, _) =
+            CreateRedisBackedStoreFactory();
+
+        // Capture saved buffered event
+        BufferedAnalyticsEvent? capturedEvent = null;
+        mockEventBufferStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<BufferedAnalyticsEvent>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, BufferedAnalyticsEvent, StateOptions?, CancellationToken>(
+                (_, evt, _, _) => capturedEvent = evt)
+            .ReturnsAsync("etag");
+
+        // Buffer count below threshold to skip flush
+        mockEventBufferIndexStore
+            .Setup(s => s.SortedSetCountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
+        var service = CreateRedisBackedService(storeFactory);
+
+        // Act
+        await service.HandleAuthLoginSuccessfulAsync(new AuthLoginSuccessfulEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            AccountId = accountId,
+            Username = "testuser",
+            SessionId = Guid.NewGuid()
+        });
+
+        // Assert — captured event uses System service type and auth service ID
+        Assert.NotNull(capturedEvent);
+        Assert.Equal(AnalyticsServiceType.System, capturedEvent.ServiceType);
+        Assert.Equal("auth", capturedEvent.ServiceId);
+        Assert.Equal(EntityType.Account, capturedEvent.EntityType);
+        Assert.Equal(accountId, capturedEvent.EntityId);
+        Assert.Equal("auth.login.successful", capturedEvent.EventType);
+        Assert.Equal(1, capturedEvent.Value);
+    }
+
+    [Fact]
+    public async Task HandleAuthLoginFailedAsync_WithAccountId_BuffersEvent()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var (storeFactory, mockEventBufferStore, mockEventBufferIndexStore, _) =
+            CreateRedisBackedStoreFactory();
+
+        BufferedAnalyticsEvent? capturedEvent = null;
+        mockEventBufferStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<BufferedAnalyticsEvent>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, BufferedAnalyticsEvent, StateOptions?, CancellationToken>(
+                (_, evt, _, _) => capturedEvent = evt)
+            .ReturnsAsync("etag");
+
+        mockEventBufferIndexStore
+            .Setup(s => s.SortedSetCountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
+        var service = CreateRedisBackedService(storeFactory);
+
+        // Act
+        await service.HandleAuthLoginFailedAsync(new AuthLoginFailedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            Username = "testuser",
+            Reason = AuthLoginFailedReason.InvalidCredentials,
+            AccountId = accountId
+        });
+
+        // Assert — event buffered with the account ID
+        Assert.NotNull(capturedEvent);
+        Assert.Equal(AnalyticsServiceType.System, capturedEvent.ServiceType);
+        Assert.Equal("auth", capturedEvent.ServiceId);
+        Assert.Equal(accountId, capturedEvent.EntityId);
+        Assert.Equal("auth.login.failed", capturedEvent.EventType);
+    }
+
+    [Fact]
+    public async Task HandleAuthLoginFailedAsync_WithNullAccountId_DropsEvent()
+    {
+        // Arrange — null accountId means no target account (enumeration attempt)
+        var (storeFactory, mockEventBufferStore, mockEventBufferIndexStore, _) =
+            CreateRedisBackedStoreFactory();
+
+        BufferedAnalyticsEvent? capturedEvent = null;
+        mockEventBufferStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<BufferedAnalyticsEvent>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, BufferedAnalyticsEvent, StateOptions?, CancellationToken>(
+                (_, evt, _, _) => capturedEvent = evt)
+            .ReturnsAsync("etag");
+
+        mockEventBufferIndexStore
+            .Setup(s => s.SortedSetCountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
+        var service = CreateRedisBackedService(storeFactory);
+
+        // Act
+        await service.HandleAuthLoginFailedAsync(new AuthLoginFailedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            Username = "unknown_user",
+            Reason = AuthLoginFailedReason.AccountNotFound,
+            AccountId = null  // No account matched — drop from per-account aggregation
+        });
+
+        // Assert — event was NOT buffered (null accountId dropped)
+        Assert.Null(capturedEvent);
+    }
+
+    [Fact]
+    public async Task HandleAuthMfaEnabledAsync_BuffersEventWithCorrectEventType()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var (storeFactory, mockEventBufferStore, mockEventBufferIndexStore, _) =
+            CreateRedisBackedStoreFactory();
+
+        BufferedAnalyticsEvent? capturedEvent = null;
+        mockEventBufferStore
+            .Setup(s => s.SaveAsync(
+                It.IsAny<string>(), It.IsAny<BufferedAnalyticsEvent>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, BufferedAnalyticsEvent, StateOptions?, CancellationToken>(
+                (_, evt, _, _) => capturedEvent = evt)
+            .ReturnsAsync("etag");
+
+        mockEventBufferIndexStore
+            .Setup(s => s.SortedSetCountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
+        var service = CreateRedisBackedService(storeFactory);
+
+        // Act
+        await service.HandleAuthMfaEnabledAsync(new AuthMfaEnabledEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            AccountId = accountId
+        });
+
+        // Assert — correct event type for MFA enabled
+        Assert.NotNull(capturedEvent);
+        Assert.Equal("auth.mfa.enabled", capturedEvent.EventType);
+        Assert.Equal(accountId, capturedEvent.EntityId);
+        Assert.Equal(AnalyticsServiceType.System, capturedEvent.ServiceType);
     }
 
     #endregion

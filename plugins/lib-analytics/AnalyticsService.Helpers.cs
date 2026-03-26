@@ -674,7 +674,7 @@ public partial class AnalyticsService
             var eventsByEntity = new Dictionary<string, List<(string key, BufferedAnalyticsEvent evt)>>();
             foreach (var envelope in envelopes)
             {
-                var entityKey = BuildEntityKey(envelope.evt.GameServiceId, envelope.evt.EntityType, envelope.evt.EntityId);
+                var entityKey = BuildEntityKey(envelope.evt.ServiceType, envelope.evt.ServiceId, envelope.evt.EntityType, envelope.evt.EntityId);
                 if (!eventsByEntity.TryGetValue(entityKey, out var list))
                 {
                     list = new List<(string key, BufferedAnalyticsEvent evt)>();
@@ -696,7 +696,8 @@ public partial class AnalyticsService
                     {
                         EntityId = firstEvent.EntityId,
                         EntityType = firstEvent.EntityType,
-                        GameServiceId = firstEvent.GameServiceId,
+                        ServiceType = firstEvent.ServiceType,
+                        ServiceId = firstEvent.ServiceId,
                         FirstEventAt = firstEvent.Timestamp,
                         EventCounts = new Dictionary<string, long>(),
                         Aggregates = new Dictionary<string, double>()
@@ -709,7 +710,7 @@ public partial class AnalyticsService
                 }
 
                 var scoreEvents = new List<AnalyticsScoreUpdatedEvent>();
-                var milestoneChecks = new List<(Guid gameServiceId, Guid entityId, EntityType entityType, string scoreType, double previousValue, double newValue)>();
+                var milestoneChecks = new List<(AnalyticsServiceType serviceType, string serviceId, Guid entityId, EntityType entityType, string scoreType, double previousValue, double newValue)>();
 
                 foreach (var envelope in entityEvents)
                 {
@@ -737,7 +738,8 @@ public partial class AnalyticsService
                         {
                             EventId = Guid.NewGuid(),
                             Timestamp = DateTimeOffset.UtcNow,
-                            GameServiceId = bufferedEvent.GameServiceId,
+                            ServiceType = bufferedEvent.ServiceType,
+                            ServiceId = bufferedEvent.ServiceId,
                             EntityId = bufferedEvent.EntityId,
                             EntityType = bufferedEvent.EntityType,
                             ScoreType = bufferedEvent.EventType,
@@ -746,7 +748,7 @@ public partial class AnalyticsService
                             Delta = bufferedEvent.Value.Value,
                             SessionId = bufferedEvent.SessionId
                         });
-                        milestoneChecks.Add((bufferedEvent.GameServiceId, bufferedEvent.EntityId, bufferedEvent.EntityType, bufferedEvent.EventType, previousValue, newValue));
+                        milestoneChecks.Add((bufferedEvent.ServiceType, bufferedEvent.ServiceId, bufferedEvent.EntityId, bufferedEvent.EntityType, bufferedEvent.EventType, previousValue, newValue));
                     }
                 }
 
@@ -792,7 +794,8 @@ public partial class AnalyticsService
                         TelemetryComponents.Analytics,
                         TelemetryMetrics.AnalyticsScoreProcessed,
                         (long)scoreEvent.Delta,
-                        new KeyValuePair<string, object?>("game_service_id", scoreEvent.GameServiceId.ToString()),
+                        new KeyValuePair<string, object?>("service_type", scoreEvent.ServiceType.ToString()),
+                        new KeyValuePair<string, object?>("service_id", scoreEvent.ServiceId),
                         new KeyValuePair<string, object?>("entity_type", scoreEvent.EntityType.ToString()),
                         new KeyValuePair<string, object?>("score_type", scoreEvent.ScoreType));
                 }
@@ -800,7 +803,8 @@ public partial class AnalyticsService
                 foreach (var milestone in milestoneChecks)
                 {
                     await CheckAndPublishMilestoneAsync(
-                        milestone.gameServiceId,
+                        milestone.serviceType,
+                        milestone.serviceId,
                         milestone.entityId,
                         milestone.entityType,
                         milestone.scoreType,
@@ -814,7 +818,8 @@ public partial class AnalyticsService
                     TelemetryComponents.Analytics,
                     TelemetryMetrics.AnalyticsEventsProcessed,
                     entityEvents.Count,
-                    new KeyValuePair<string, object?>("game_service_id", summary.GameServiceId.ToString()));
+                    new KeyValuePair<string, object?>("service_type", summary.ServiceType.ToString()),
+                    new KeyValuePair<string, object?>("service_id", summary.ServiceId));
 
                 foreach (var envelope in entityEvents)
                 {
@@ -837,7 +842,8 @@ public partial class AnalyticsService
     /// once when the entity first reaches it, not on subsequent updates.
     /// </summary>
     private async Task CheckAndPublishMilestoneAsync(
-        Guid gameServiceId,
+        AnalyticsServiceType serviceType,
+        string serviceId,
         Guid entityId,
         EntityType entityType,
         string scoreType,
@@ -855,7 +861,8 @@ public partial class AnalyticsService
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    GameServiceId = gameServiceId,
+                    ServiceType = serviceType,
+                    ServiceId = serviceId,
                     EntityId = entityId,
                     EntityType = entityType,
                     MilestoneType = scoreType,

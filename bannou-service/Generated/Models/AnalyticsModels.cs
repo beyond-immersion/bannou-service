@@ -31,6 +31,23 @@ namespace BeyondImmersion.BannouService.Analytics;
 using System = global::System;
 
 /// <summary>
+/// Discriminator for service scope type. Game = GUID referencing a registered GameService entry. System = logical platform service name (e.g., "auth", "permission").
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AnalyticsServiceType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Game")]
+    Game = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"System")]
+    System = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Type of controller action
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -55,12 +72,22 @@ public partial class IngestEventRequest
 {
 
     /// <summary>
-    /// ID of the game service that generated this event
+    /// Service type discriminator — determines how serviceId is interpreted
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AnalyticsServiceType ServiceType { get; set; } = default!;
+
+    /// <summary>
+    /// Service scope identifier. For Game type, a GUID of the registered game service. For System type, a logical service name (e.g., "auth").
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    public string ServiceId { get; set; } = default!;
 
     /// <summary>
     /// Type of event (e.g., kill, death, score, action)
@@ -187,12 +214,22 @@ public partial class GetEntitySummaryRequest
 {
 
     /// <summary>
-    /// ID of the game service
+    /// Service type discriminator
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AnalyticsServiceType ServiceType { get; set; } = default!;
+
+    /// <summary>
+    /// Service scope identifier (GUID for Game, logical name for System)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    public string ServiceId { get; set; } = default!;
 
     /// <summary>
     /// ID of the entity
@@ -286,12 +323,22 @@ public partial class QueryEntitySummariesRequest
 {
 
     /// <summary>
-    /// ID of the game service
+    /// Service type discriminator
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AnalyticsServiceType ServiceType { get; set; } = default!;
+
+    /// <summary>
+    /// Service scope identifier (GUID for Game, logical name for System)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    public string ServiceId { get; set; } = default!;
 
     /// <summary>
     /// Optional filter by entity type
@@ -374,12 +421,22 @@ public partial class GetSkillRatingRequest
 {
 
     /// <summary>
-    /// ID of the game service
+    /// Service type discriminator
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AnalyticsServiceType ServiceType { get; set; } = default!;
+
+    /// <summary>
+    /// Service scope identifier (GUID for Game, logical name for System)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    public string ServiceId { get; set; } = default!;
 
     /// <summary>
     /// ID of the entity
@@ -483,12 +540,22 @@ public partial class UpdateSkillRatingRequest
 {
 
     /// <summary>
-    /// ID of the game service
+    /// Service type discriminator
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AnalyticsServiceType ServiceType { get; set; } = default!;
+
+    /// <summary>
+    /// Service scope identifier (GUID for Game, logical name for System)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    public string ServiceId { get; set; } = default!;
 
     /// <summary>
     /// Type of rating to update
@@ -626,12 +693,22 @@ public partial class RecordControllerEventRequest
 {
 
     /// <summary>
-    /// ID of the game service
+    /// Service type discriminator
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AnalyticsServiceType ServiceType { get; set; } = default!;
+
+    /// <summary>
+    /// Service scope identifier (GUID for Game, logical name for System)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    public string ServiceId { get; set; } = default!;
 
     /// <summary>
     /// ID of the account taking/releasing control
@@ -691,12 +768,22 @@ public partial class QueryControllerHistoryRequest
 {
 
     /// <summary>
-    /// ID of the game service
+    /// Service type discriminator
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AnalyticsServiceType ServiceType { get; set; } = default!;
+
+    /// <summary>
+    /// Service scope identifier (GUID for Game, logical name for System)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    public string ServiceId { get; set; } = default!;
 
     /// <summary>
     /// Filter by controlling account
@@ -848,10 +935,18 @@ public partial class CleanupControllerHistoryRequest
     public int? OlderThanDays { get; set; } = default!;
 
     /// <summary>
-    /// Limit cleanup to specific game service (null cleans all)
+    /// Filter cleanup to specific service type (null cleans all)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    public System.Guid? GameServiceId { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("serviceType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AnalyticsServiceType? ServiceType { get; set; } = default!;
+
+    /// <summary>
+    /// Filter cleanup to specific service (null cleans all). Must be provided with serviceType.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
+    [System.ComponentModel.DataAnnotations.StringLength(256)]
+    public string? ServiceId { get; set; } = default!;
 
 }
 

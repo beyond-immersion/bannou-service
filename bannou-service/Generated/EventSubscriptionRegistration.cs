@@ -53,6 +53,16 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<RealmLoreCreatedEvent>("realm-history.lore.created");
         EventSubscriptionRegistry.Register<RealmLoreUpdatedEvent>("realm-history.lore.updated");
         EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");
+        EventSubscriptionRegistry.Register<AuthLoginSuccessfulEvent>("auth.login.successful");
+        EventSubscriptionRegistry.Register<AuthLoginFailedEvent>("auth.login.failed");
+        EventSubscriptionRegistry.Register<AuthRegistrationSuccessfulEvent>("auth.registration.successful");
+        EventSubscriptionRegistry.Register<AuthOAuthLoginSuccessfulEvent>("auth.oauth.successful");
+        EventSubscriptionRegistry.Register<AuthSteamLoginSuccessfulEvent>("auth.steam.successful");
+        EventSubscriptionRegistry.Register<AuthPasswordResetSuccessfulEvent>("auth.password-reset.successful");
+        EventSubscriptionRegistry.Register<AuthMfaEnabledEvent>("auth.mfa.enabled");
+        EventSubscriptionRegistry.Register<AuthMfaDisabledEvent>("auth.mfa.disabled");
+        EventSubscriptionRegistry.Register<AuthMfaVerifiedEvent>("auth.mfa.verified");
+        EventSubscriptionRegistry.Register<AuthMfaFailedEvent>("auth.mfa.failed");
         EventSubscriptionRegistry.Register<CharacterUpdatedEvent>("character.updated");
         EventSubscriptionRegistry.Register<RealmUpdatedEvent>("realm.updated");
 

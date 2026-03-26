@@ -176,24 +176,24 @@ public partial class AnalyticsService : IAnalyticsService
 
     /// <summary>
     /// Builds a composite key for entity data using polymorphic pattern.
-    /// Format: {ENTITY_KEY_PREFIX}{gameServiceId}:{entityType}:{entityId}
+    /// Format: {ENTITY_KEY_PREFIX}{serviceType}:{serviceId}:{entityType}:{entityId}
     /// </summary>
-    internal static string BuildEntityKey(Guid gameServiceId, EntityType entityType, Guid entityId)
-        => $"{ENTITY_KEY_PREFIX}{gameServiceId}:{entityType}:{entityId}";
+    internal static string BuildEntityKey(AnalyticsServiceType serviceType, string serviceId, EntityType entityType, Guid entityId)
+        => $"{ENTITY_KEY_PREFIX}{serviceType}:{serviceId}:{entityType}:{entityId}";
 
     /// <summary>
     /// Builds a key for skill rating data.
-    /// Format: {RATING_KEY_PREFIX}{gameServiceId}:{ratingType}:{entityType}:{entityId}
+    /// Format: {RATING_KEY_PREFIX}{serviceType}:{serviceId}:{ratingType}:{entityType}:{entityId}
     /// </summary>
-    internal static string BuildRatingKey(Guid gameServiceId, string ratingType, EntityType entityType, Guid entityId)
-        => $"{RATING_KEY_PREFIX}{gameServiceId}:{ratingType}:{entityType}:{entityId}";
+    internal static string BuildRatingKey(AnalyticsServiceType serviceType, string serviceId, string ratingType, EntityType entityType, Guid entityId)
+        => $"{RATING_KEY_PREFIX}{serviceType}:{serviceId}:{ratingType}:{entityType}:{entityId}";
 
     /// <summary>
     /// Builds a key for controller history.
-    /// Format: {CONTROLLER_KEY_PREFIX}{gameServiceId}:{accountId}:{timestamp}
+    /// Format: {CONTROLLER_KEY_PREFIX}{serviceType}:{serviceId}:{accountId}:{timestamp}
     /// </summary>
-    internal static string BuildControllerKey(Guid gameServiceId, Guid accountId, DateTimeOffset timestamp)
-        => $"{CONTROLLER_KEY_PREFIX}{gameServiceId}:{accountId}:{timestamp:o}";
+    internal static string BuildControllerKey(AnalyticsServiceType serviceType, string serviceId, Guid accountId, DateTimeOffset timestamp)
+        => $"{CONTROLLER_KEY_PREFIX}{serviceType}:{serviceId}:{accountId}:{timestamp:o}";
 
     /// <summary>
     /// Implementation of IngestEvent operation.
@@ -207,7 +207,8 @@ public partial class AnalyticsService : IAnalyticsService
             var bufferedEvent = new BufferedAnalyticsEvent
             {
                 EventId = Guid.NewGuid(),
-                GameServiceId = body.GameServiceId,
+                ServiceType = body.ServiceType,
+                ServiceId = body.ServiceId,
                 EntityId = body.EntityId,
                 EntityType = body.EntityType,
                 EventType = body.EventType,
@@ -249,7 +250,8 @@ public partial class AnalyticsService : IAnalyticsService
                 var bufferedEvent = new BufferedAnalyticsEvent
                 {
                     EventId = Guid.NewGuid(),
-                    GameServiceId = evt.GameServiceId,
+                    ServiceType = evt.ServiceType,
+                    ServiceId = evt.ServiceId,
                     EntityId = evt.EntityId,
                     EntityType = evt.EntityType,
                     EventType = evt.EventType,
@@ -302,7 +304,7 @@ public partial class AnalyticsService : IAnalyticsService
         _logger.LogDebug("Getting entity summary for {EntityType}:{EntityId}", body.EntityType, body.EntityId);
 
         {
-            var entityKey = BuildEntityKey(body.GameServiceId, body.EntityType, body.EntityId);
+            var entityKey = BuildEntityKey(body.ServiceType, body.ServiceId, body.EntityType, body.EntityId);
 
             var summary = await _summaryDataStore.GetAsync(entityKey, cancellationToken);
             if (summary == null)
@@ -329,7 +331,7 @@ public partial class AnalyticsService : IAnalyticsService
     /// </summary>
     public async Task<(StatusCodes, QueryEntitySummariesResponse?)> QueryEntitySummariesAsync(QueryEntitySummariesRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Querying entity summaries for game service {GameServiceId}", body.GameServiceId);
+        _logger.LogDebug("Querying entity summaries for service {ServiceType}:{ServiceId}", body.ServiceType, body.ServiceId);
 
         {
             if (body.Limit <= 0)
@@ -367,9 +369,15 @@ public partial class AnalyticsService : IAnalyticsService
             {
                 new QueryCondition
                 {
-                    Path = "$.GameServiceId",
+                    Path = "$.ServiceType",
                     Operator = QueryOperator.Equals,
-                    Value = body.GameServiceId.ToString()
+                    Value = body.ServiceType.ToString()
+                },
+                new QueryCondition
+                {
+                    Path = "$.ServiceId",
+                    Operator = QueryOperator.Equals,
+                    Value = body.ServiceId
                 }
             };
 
@@ -457,7 +465,7 @@ public partial class AnalyticsService : IAnalyticsService
         _logger.LogDebug("Getting skill rating for {EntityType}:{EntityId}, type {RatingType}",
             body.EntityType, body.EntityId, body.RatingType);
 
-        var ratingKey = BuildRatingKey(body.GameServiceId, body.RatingType, body.EntityType, body.EntityId);
+        var ratingKey = BuildRatingKey(body.ServiceType, body.ServiceId, body.RatingType, body.EntityType, body.EntityId);
 
         var rating = await _ratingStore.GetAsync(ratingKey, cancellationToken);
         if (rating == null)
@@ -510,7 +518,7 @@ public partial class AnalyticsService : IAnalyticsService
         var now = DateTimeOffset.UtcNow;
 
         // Acquire distributed lock to serialize rating updates for this game+type combination
-        var lockResourceId = $"rating-update:{body.GameServiceId}:{body.RatingType}";
+        var lockResourceId = $"rating-update:{body.ServiceType}:{body.ServiceId}:{body.RatingType}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.AnalyticsRating,
             lockResourceId,
@@ -529,14 +537,15 @@ public partial class AnalyticsService : IAnalyticsService
         var currentRatings = new Dictionary<string, SkillRatingData>();
         foreach (var result in body.Results)
         {
-            var key = BuildRatingKey(body.GameServiceId, body.RatingType, result.EntityType, result.EntityId);
+            var key = BuildRatingKey(body.ServiceType, body.ServiceId, body.RatingType, result.EntityType, result.EntityId);
             var rating = await _ratingStore.GetAsync(key, cancellationToken);
             currentRatings[key] = rating ?? new SkillRatingData
             {
                 EntityId = result.EntityId,
                 EntityType = result.EntityType,
                 RatingType = body.RatingType,
-                GameServiceId = body.GameServiceId,
+                ServiceType = body.ServiceType,
+                ServiceId = body.ServiceId,
                 Rating = _configuration.Glicko2DefaultRating,
                 RatingDeviation = _configuration.Glicko2DefaultDeviation,
                 Volatility = _configuration.Glicko2DefaultVolatility,
@@ -553,7 +562,7 @@ public partial class AnalyticsService : IAnalyticsService
         var calculatedResults = new List<(string Key, MatchResult Result, double NewRating, double NewRD, double NewVolatility, double PreviousRating)>();
         foreach (var result in body.Results)
         {
-            var key = BuildRatingKey(body.GameServiceId, body.RatingType, result.EntityType, result.EntityId);
+            var key = BuildRatingKey(body.ServiceType, body.ServiceId, body.RatingType, result.EntityType, result.EntityId);
             var playerRating = currentRatings[key];
             var previousRating = playerRating.Rating;
 
@@ -561,7 +570,7 @@ public partial class AnalyticsService : IAnalyticsService
             var opponents = body.Results.Where(r => r.EntityId != result.EntityId).ToList();
             var opponentData = opponents.Select(o =>
             {
-                var oppKey = BuildRatingKey(body.GameServiceId, body.RatingType, o.EntityType, o.EntityId);
+                var oppKey = BuildRatingKey(body.ServiceType, body.ServiceId, body.RatingType, o.EntityType, o.EntityId);
                 var oppOriginal = originalRatings[oppKey];
                 var opponentSnapshot = new SkillRatingData
                 {
@@ -622,7 +631,8 @@ public partial class AnalyticsService : IAnalyticsService
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
-                GameServiceId = body.GameServiceId,
+                ServiceType = body.ServiceType,
+                ServiceId = body.ServiceId,
                 EntityId = result.EntityId,
                 EntityType = result.EntityType,
                 RatingType = body.RatingType,
@@ -651,12 +661,13 @@ public partial class AnalyticsService : IAnalyticsService
             body.Action, body.AccountId, body.TargetEntityType, body.TargetEntityId);
 
         var eventId = Guid.NewGuid();
-        var key = BuildControllerKey(body.GameServiceId, body.AccountId, body.Timestamp);
+        var key = BuildControllerKey(body.ServiceType, body.ServiceId, body.AccountId, body.Timestamp);
 
         var historyEvent = new ControllerHistoryData
         {
             EventId = eventId,
-            GameServiceId = body.GameServiceId,
+            ServiceType = body.ServiceType,
+            ServiceId = body.ServiceId,
             AccountId = body.AccountId,
             TargetEntityId = body.TargetEntityId,
             TargetEntityType = body.TargetEntityType,
@@ -671,7 +682,8 @@ public partial class AnalyticsService : IAnalyticsService
         {
             EventId = eventId,
             Timestamp = body.Timestamp,
-            GameServiceId = body.GameServiceId,
+            ServiceType = body.ServiceType,
+            ServiceId = body.ServiceId,
             AccountId = body.AccountId,
             TargetEntityId = body.TargetEntityId,
             TargetEntityType = body.TargetEntityType,
@@ -689,7 +701,7 @@ public partial class AnalyticsService : IAnalyticsService
     /// </summary>
     public async Task<(StatusCodes, QueryControllerHistoryResponse?)> QueryControllerHistoryAsync(QueryControllerHistoryRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Querying controller history for game service {GameServiceId}", body.GameServiceId);
+        _logger.LogDebug("Querying controller history for service {ServiceType}:{ServiceId}", body.ServiceType, body.ServiceId);
 
         {
             if (body.Limit <= 0)
@@ -715,9 +727,15 @@ public partial class AnalyticsService : IAnalyticsService
             {
                 new QueryCondition
                 {
-                    Path = "$.GameServiceId",
+                    Path = "$.ServiceType",
                     Operator = QueryOperator.Equals,
-                    Value = body.GameServiceId.ToString()
+                    Value = body.ServiceType.ToString()
+                },
+                new QueryCondition
+                {
+                    Path = "$.ServiceId",
+                    Operator = QueryOperator.Equals,
+                    Value = body.ServiceId
                 }
             };
 
@@ -807,8 +825,8 @@ public partial class AnalyticsService : IAnalyticsService
     public async Task<(StatusCodes, CleanupControllerHistoryResponse?)> CleanupControllerHistoryAsync(
         CleanupControllerHistoryRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Cleaning up controller history (dryRun={DryRun}, olderThanDays={OlderThanDays}, gameServiceId={GameServiceId})",
-            body.DryRun, body.OlderThanDays, body.GameServiceId);
+        _logger.LogDebug("Cleaning up controller history (dryRun={DryRun}, olderThanDays={OlderThanDays}, serviceType={ServiceType}, serviceId={ServiceId})",
+            body.DryRun, body.OlderThanDays, body.ServiceType, body.ServiceId);
 
         var retentionDays = body.OlderThanDays ?? _configuration.ControllerHistoryRetentionDays;
         if (retentionDays <= 0)
@@ -832,13 +850,19 @@ public partial class AnalyticsService : IAnalyticsService
                 }
             };
 
-        if (body.GameServiceId.HasValue)
+        if (body.ServiceType.HasValue && body.ServiceId != null)
         {
             conditions.Add(new QueryCondition
             {
-                Path = "$.GameServiceId",
+                Path = "$.ServiceType",
                 Operator = QueryOperator.Equals,
-                Value = body.GameServiceId.Value.ToString()
+                Value = body.ServiceType.Value.ToString()
+            });
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.ServiceId",
+                Operator = QueryOperator.Equals,
+                Value = body.ServiceId
             });
         }
 

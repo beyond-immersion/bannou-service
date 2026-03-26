@@ -47,12 +47,22 @@ public partial class AnalyticsScoreUpdatedEvent : BaseServiceEvent
     public override string EventName { get; set; } = "analytics.score.updated";
 
     /// <summary>
-    /// ID of the game service
+    /// Service type discriminator (Game or System)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AnalyticsServiceType ServiceType { get; set; } = default!;
+
+    /// <summary>
+    /// Service scope identifier (GUID for Game, logical name for System)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    public string ServiceId { get; set; } = default!;
 
     /// <summary>
     /// ID of the entity whose score changed
@@ -122,12 +132,22 @@ public partial class AnalyticsRatingUpdatedEvent : BaseServiceEvent
     public override string EventName { get; set; } = "analytics.rating.updated";
 
     /// <summary>
-    /// ID of the game service
+    /// Service type discriminator (Game or System)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AnalyticsServiceType ServiceType { get; set; } = default!;
+
+    /// <summary>
+    /// Service scope identifier (GUID for Game, logical name for System)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    public string ServiceId { get; set; } = default!;
 
     /// <summary>
     /// ID of the entity whose rating changed
@@ -205,12 +225,22 @@ public partial class AnalyticsMilestoneReachedEvent : BaseServiceEvent
     public override string EventName { get; set; } = "analytics.milestone.reached";
 
     /// <summary>
-    /// ID of the game service
+    /// Service type discriminator (Game or System)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AnalyticsServiceType ServiceType { get; set; } = default!;
+
+    /// <summary>
+    /// Service scope identifier (GUID for Game, logical name for System)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    public string ServiceId { get; set; } = default!;
 
     /// <summary>
     /// ID of the entity that reached the milestone
@@ -269,12 +299,22 @@ public partial class AnalyticsControllerRecordedEvent : BaseServiceEvent
     public override string EventName { get; set; } = "analytics.controller.recorded";
 
     /// <summary>
-    /// ID of the game service
+    /// Service type discriminator (Game or System)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.Text.Json.Serialization.JsonPropertyName("serviceType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AnalyticsServiceType ServiceType { get; set; } = default!;
+
+    /// <summary>
+    /// Service scope identifier (GUID for Game, logical name for System)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    public string ServiceId { get; set; } = default!;
 
     /// <summary>
     /// ID of the account that possessed or released control

@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Analytics;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
@@ -50,7 +51,12 @@ public partial class AchievementService
         try
         {
             using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.HandleScoreUpdatedAsync");
-            var definitions = await LoadAchievementDefinitionsAsync(evt.GameServiceId, CancellationToken.None);
+
+            // System analytics (e.g., auth) don't trigger game-scoped achievements
+            if (evt.ServiceType != AnalyticsServiceType.Game) return;
+            var gameServiceId = Guid.Parse(evt.ServiceId);
+
+            var definitions = await LoadAchievementDefinitionsAsync(gameServiceId, CancellationToken.None);
             if (definitions.Count == 0)
             {
                 return;
@@ -115,7 +121,7 @@ public partial class AchievementService
 
                 var (status, _) = await UpdateAchievementProgressAsync(new UpdateAchievementProgressRequest
                 {
-                    GameServiceId = evt.GameServiceId,
+                    GameServiceId = gameServiceId,
                     AchievementId = definition.AchievementId,
                     EntityId = evt.EntityId,
                     EntityType = entityType,
@@ -179,7 +185,12 @@ public partial class AchievementService
         try
         {
             using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.HandleMilestoneReachedAsync");
-            var definitions = await LoadAchievementDefinitionsAsync(evt.GameServiceId, CancellationToken.None);
+
+            // System analytics (e.g., auth) don't trigger game-scoped achievements
+            if (evt.ServiceType != AnalyticsServiceType.Game) return;
+            var gameServiceId = Guid.Parse(evt.ServiceId);
+
+            var definitions = await LoadAchievementDefinitionsAsync(gameServiceId, CancellationToken.None);
             if (definitions.Count == 0)
             {
                 return;
@@ -230,7 +241,7 @@ public partial class AchievementService
 
                 var (status, _) = await UnlockAchievementAsync(new UnlockAchievementRequest
                 {
-                    GameServiceId = evt.GameServiceId,
+                    GameServiceId = gameServiceId,
                     AchievementId = definition.AchievementId,
                     EntityId = evt.EntityId,
                     EntityType = entityType

@@ -27,17 +27,23 @@ public partial class AnalyticsController
             "description": "Request to ingest a single analytics event",
             "additionalProperties": false,
             "required": [
-                "gameServiceId",
+                "serviceType",
+                "serviceId",
                 "eventType",
                 "entityId",
                 "entityType",
                 "timestamp"
             ],
             "properties": {
-                "gameServiceId": {
+                "serviceType": {
+                    "$ref": "#/$defs/AnalyticsServiceType",
+                    "description": "Service type discriminator \u2014 determines how serviceId is interpreted"
+                },
+                "serviceId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the game service that generated this event"
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Service scope identifier. For Game type, a GUID of the registered game service. For System type, a logical service name (e.g., \"auth\")."
                 },
                 "eventType": {
                     "type": "string",
@@ -78,6 +84,14 @@ public partial class AnalyticsController
                     "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
+        },
+        "AnalyticsServiceType": {
+            "type": "string",
+            "description": "Discriminator for service scope type. Game = GUID referencing a registered GameService entry. System = logical platform service name (e.g., \"auth\", \"permission\").",
+            "enum": [
+                "Game",
+                "System"
+            ]
         }
     }
 }
@@ -192,17 +206,23 @@ public partial class AnalyticsController
             "description": "Request to ingest a single analytics event",
             "additionalProperties": false,
             "required": [
-                "gameServiceId",
+                "serviceType",
+                "serviceId",
                 "eventType",
                 "entityId",
                 "entityType",
                 "timestamp"
             ],
             "properties": {
-                "gameServiceId": {
+                "serviceType": {
+                    "$ref": "#/$defs/AnalyticsServiceType",
+                    "description": "Service type discriminator \u2014 determines how serviceId is interpreted"
+                },
+                "serviceId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the game service that generated this event"
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Service scope identifier. For Game type, a GUID of the registered game service. For System type, a logical service name (e.g., \"auth\")."
                 },
                 "eventType": {
                     "type": "string",
@@ -243,6 +263,14 @@ public partial class AnalyticsController
                     "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
+        },
+        "AnalyticsServiceType": {
+            "type": "string",
+            "description": "Discriminator for service scope type. Game = GUID referencing a registered GameService entry. System = logical platform service name (e.g., \"auth\", \"permission\").",
+            "enum": [
+                "Game",
+                "System"
+            ]
         }
     }
 }
@@ -350,15 +378,21 @@ public partial class AnalyticsController
             "description": "Request to get statistics for an entity",
             "additionalProperties": false,
             "required": [
-                "gameServiceId",
+                "serviceType",
+                "serviceId",
                 "entityId",
                 "entityType"
             ],
             "properties": {
-                "gameServiceId": {
+                "serviceType": {
+                    "$ref": "#/$defs/AnalyticsServiceType",
+                    "description": "Service type discriminator"
+                },
+                "serviceId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the game service"
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Service scope identifier (GUID for Game, logical name for System)"
                 },
                 "entityId": {
                     "type": "string",
@@ -370,6 +404,14 @@ public partial class AnalyticsController
                     "description": "Entity type to summarize"
                 }
             }
+        },
+        "AnalyticsServiceType": {
+            "type": "string",
+            "description": "Discriminator for service scope type. Game = GUID referencing a registered GameService entry. System = logical platform service name (e.g., \"auth\", \"permission\").",
+            "enum": [
+                "Game",
+                "System"
+            ]
         }
     }
 }
@@ -507,13 +549,19 @@ public partial class AnalyticsController
             "description": "Request to query multiple entity summaries",
             "additionalProperties": false,
             "required": [
-                "gameServiceId"
+                "serviceType",
+                "serviceId"
             ],
             "properties": {
-                "gameServiceId": {
+                "serviceType": {
+                    "$ref": "#/$defs/AnalyticsServiceType",
+                    "description": "Service type discriminator"
+                },
+                "serviceId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the game service"
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Service scope identifier (GUID for Game, logical name for System)"
                 },
                 "entityType": {
                     "type": "object",
@@ -556,6 +604,14 @@ public partial class AnalyticsController
                     "description": "Number of results to skip"
                 }
             }
+        },
+        "AnalyticsServiceType": {
+            "type": "string",
+            "description": "Discriminator for service scope type. Game = GUID referencing a registered GameService entry. System = logical platform service name (e.g., \"auth\", \"permission\").",
+            "enum": [
+                "Game",
+                "System"
+            ]
         }
     }
 }
@@ -717,16 +773,22 @@ public partial class AnalyticsController
             "description": "Request to get skill rating for an entity",
             "additionalProperties": false,
             "required": [
-                "gameServiceId",
+                "serviceType",
+                "serviceId",
                 "entityId",
                 "entityType",
                 "ratingType"
             ],
             "properties": {
-                "gameServiceId": {
+                "serviceType": {
+                    "$ref": "#/$defs/AnalyticsServiceType",
+                    "description": "Service type discriminator"
+                },
+                "serviceId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the game service"
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Service scope identifier (GUID for Game, logical name for System)"
                 },
                 "entityId": {
                     "type": "string",
@@ -744,6 +806,14 @@ public partial class AnalyticsController
                     "description": "Type of rating (e.g., overall, ranked, casual)"
                 }
             }
+        },
+        "AnalyticsServiceType": {
+            "type": "string",
+            "description": "Discriminator for service scope type. Game = GUID referencing a registered GameService entry. System = logical platform service name (e.g., \"auth\", \"permission\").",
+            "enum": [
+                "Game",
+                "System"
+            ]
         }
     }
 }
@@ -881,16 +951,22 @@ public partial class AnalyticsController
             "description": "Request to update skill ratings after a match",
             "additionalProperties": false,
             "required": [
-                "gameServiceId",
+                "serviceType",
+                "serviceId",
                 "ratingType",
                 "matchId",
                 "results"
             ],
             "properties": {
-                "gameServiceId": {
+                "serviceType": {
+                    "$ref": "#/$defs/AnalyticsServiceType",
+                    "description": "Service type discriminator"
+                },
+                "serviceId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the game service"
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Service scope identifier (GUID for Game, logical name for System)"
                 },
                 "ratingType": {
                     "type": "string",
@@ -912,6 +988,14 @@ public partial class AnalyticsController
                     "description": "Results for all participants (min 2)"
                 }
             }
+        },
+        "AnalyticsServiceType": {
+            "type": "string",
+            "description": "Discriminator for service scope type. Game = GUID referencing a registered GameService entry. System = logical platform service name (e.g., \"auth\", \"permission\").",
+            "enum": [
+                "Game",
+                "System"
+            ]
         },
         "MatchResult": {
             "type": "object",
@@ -1081,7 +1165,8 @@ public partial class AnalyticsController
             "description": "Request to record a controller possession/release event",
             "additionalProperties": false,
             "required": [
-                "gameServiceId",
+                "serviceType",
+                "serviceId",
                 "accountId",
                 "targetEntityId",
                 "targetEntityType",
@@ -1089,10 +1174,15 @@ public partial class AnalyticsController
                 "timestamp"
             ],
             "properties": {
-                "gameServiceId": {
+                "serviceType": {
+                    "$ref": "#/$defs/AnalyticsServiceType",
+                    "description": "Service type discriminator"
+                },
+                "serviceId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the game service"
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Service scope identifier (GUID for Game, logical name for System)"
                 },
                 "accountId": {
                     "type": "string",
@@ -1124,6 +1214,14 @@ public partial class AnalyticsController
                     "description": "Game session ID (if applicable)"
                 }
             }
+        },
+        "AnalyticsServiceType": {
+            "type": "string",
+            "description": "Discriminator for service scope type. Game = GUID referencing a registered GameService entry. System = logical platform service name (e.g., \"auth\", \"permission\").",
+            "enum": [
+                "Game",
+                "System"
+            ]
         },
         "ControllerAction": {
             "type": "string",
@@ -1207,13 +1305,19 @@ public partial class AnalyticsController
             "description": "Request to query controller history",
             "additionalProperties": false,
             "required": [
-                "gameServiceId"
+                "serviceType",
+                "serviceId"
             ],
             "properties": {
-                "gameServiceId": {
+                "serviceType": {
+                    "$ref": "#/$defs/AnalyticsServiceType",
+                    "description": "Service type discriminator"
+                },
+                "serviceId": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the game service"
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Service scope identifier (GUID for Game, logical name for System)"
                 },
                 "accountId": {
                     "type": "string",
@@ -1258,6 +1362,14 @@ public partial class AnalyticsController
                     "description": "Number of results to skip for pagination"
                 }
             }
+        },
+        "AnalyticsServiceType": {
+            "type": "string",
+            "description": "Discriminator for service scope type. Game = GUID referencing a registered GameService entry. System = logical platform service name (e.g., \"auth\", \"permission\").",
+            "enum": [
+                "Game",
+                "System"
+            ]
         }
     }
 }
@@ -1423,13 +1535,26 @@ public partial class AnalyticsController
                     "minimum": 1,
                     "description": "Override configured retention period (null uses ControllerHistoryRetentionDays config)"
                 },
-                "gameServiceId": {
-                    "type": "string",
-                    "format": "uuid",
+                "serviceType": {
+                    "$ref": "#/$defs/AnalyticsServiceType",
                     "nullable": true,
-                    "description": "Limit cleanup to specific game service (null cleans all)"
+                    "description": "Filter cleanup to specific service type (null cleans all)"
+                },
+                "serviceId": {
+                    "type": "string",
+                    "maxLength": 256,
+                    "nullable": true,
+                    "description": "Filter cleanup to specific service (null cleans all). Must be provided with serviceType."
                 }
             }
+        },
+        "AnalyticsServiceType": {
+            "type": "string",
+            "description": "Discriminator for service scope type. Game = GUID referencing a registered GameService entry. System = logical platform service name (e.g., \"auth\", \"permission\").",
+            "enum": [
+                "Game",
+                "System"
+            ]
         }
     }
 }
