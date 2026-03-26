@@ -20,6 +20,7 @@
 #
 # This script generates auto-maintained documentation files into docs/generated/:
 # - docs/generated/GENERATED-STATE-STORES.md - State store components reference
+# - docs/generated/GENERATED-TELEMETRY-METRICS.md - Telemetry metric definitions reference
 # - docs/generated/GENERATED-VARIABLE-PROVIDERS.md - Variable provider reference
 # - docs/generated/GENERATED-LOCALIZATION-CATEGORIES.md - Localization category reference
 # - docs/generated/GENERATED-EVENTS.md - Event schemas reference
@@ -45,6 +46,10 @@ mkdir -p "$REPO_ROOT/docs"
 # Generate state store documentation (from schemas/state-stores.yaml)
 echo "  → Generating state store reference..."
 python3 "$SCRIPT_DIR/generate-state-stores.py"
+
+# Generate telemetry metric documentation (from schemas/telemetry-metrics.yaml)
+echo "  → Generating telemetry metrics reference..."
+python3 "$SCRIPT_DIR/generate-telemetry-metrics.py"
 
 # Generate variable provider documentation (from schemas/variable-providers.yaml)
 echo "  → Generating variable provider reference..."
