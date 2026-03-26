@@ -60,6 +60,16 @@ else
 fi
 echo ""
 
+# Generate telemetry metric definitions from schema
+echo -e "${BLUE}📊 Generating telemetry metric definitions from schema...${NC}"
+if python3 "$SCRIPT_DIR/generate-telemetry-metrics.py"; then
+    echo -e "${GREEN}✅ Telemetry metric definitions generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate telemetry metric definitions${NC}"
+    exit 1
+fi
+echo ""
+
 # Generate variable provider definitions from schema
 echo -e "${BLUE}🔌 Generating variable provider definitions from schema...${NC}"
 if python3 "$SCRIPT_DIR/generate-variable-providers.py"; then

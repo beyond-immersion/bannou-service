@@ -123,6 +123,14 @@ public class StructuralTests
 
     // ⛔ FROZEN — Do not modify without explicit user permission.
     [Theory]
+    [MemberData(nameof(AllServiceTypes))]
+    public void Service_ReferencesItsTelemetryMetrics(Type serviceType)
+    {
+        TelemetryMetricValidator.ValidateMetricReferences(serviceType);
+    }
+
+    // ⛔ FROZEN — Do not modify without explicit user permission.
+    [Theory]
     [MemberData(nameof(AllHelperServiceTypes))]
     public void HelperService_HasValidConstructor(Type helperType)
     {

@@ -789,7 +789,7 @@ public partial class AnalyticsService
 
                     // Per-score metric: enables rate/increase queries in Prometheus (e.g., kills per hour, gold per day)
                     _telemetryProvider.RecordCounter(
-                        "bannou.analytics",
+                        TelemetryComponents.Analytics,
                         TelemetryMetrics.AnalyticsScoreProcessed,
                         (long)scoreEvent.Delta,
                         new KeyValuePair<string, object?>("game_service_id", scoreEvent.GameServiceId.ToString()),
@@ -811,7 +811,7 @@ public partial class AnalyticsService
 
                 // Per-entity batch throughput metric: enables event ingestion rate monitoring
                 _telemetryProvider.RecordCounter(
-                    "bannou.analytics",
+                    TelemetryComponents.Analytics,
                     TelemetryMetrics.AnalyticsEventsProcessed,
                     entityEvents.Count,
                     new KeyValuePair<string, object?>("game_service_id", summary.GameServiceId.ToString()));

@@ -1,0 +1,243 @@
+# Bannou Telemetry Metric Definitions
+#
+# This file defines all telemetry components and metric names used by Bannou services.
+# Generated code provides typed constants and metadata for structural validation.
+#
+# SCHEMA MODIFICATION GATE: STOP. Before modifying this schema, you MUST:
+# 1. Read docs/reference/SCHEMA-RULES.md
+# 2. State which section applies to your change
+# 3. Only then proceed with edits
+# Edits without stating the applicable rule are FORBIDDEN.
+#
+# Schema:
+#   x-telemetry-components: Named telemetry component scopes
+#     - name: Metric component name (e.g., "bannou.state")
+#     - service: PascalCase service name that owns this component
+#     - description: Human-readable description
+#
+#   x-telemetry-metrics: Named metric definitions
+#     - component: Reference to x-telemetry-components key
+#     - type: counter | histogram | gauge
+#     - service: PascalCase service name that emits this metric
+#     - description: Human-readable description
+#     - tags: Optional list of { name, description } tag dimensions
+#
+# Generated artifacts:
+#   - bannou-service/Generated/TelemetryMetrics.cs
+#   - docs/generated/GENERATED-TELEMETRY-METRICS.md
+
+openapi: 3.0.4
+info:
+  title: Bannou Telemetry Metric Definitions
+  version: 1.0.0
+  description: |
+    Defines all telemetry components and metric names used by Bannou services.
+    This schema is the single source of truth for metric constants.
+
+x-telemetry-components:
+  # ============================================================================
+  # Infrastructure Components (L0)
+  # ============================================================================
+
+  state:
+    name: bannou.state
+    service: Telemetry
+    description: State store operations (lib-state)
+
+  messaging:
+    name: bannou.messaging
+    service: Messaging
+    description: Messaging operations (lib-messaging)
+
+  mesh:
+    name: bannou.mesh
+    service: Mesh
+    description: Service mesh operations (lib-mesh)
+
+  telemetry:
+    name: bannou.telemetry
+    service: Telemetry
+    description: Telemetry service operations (lib-telemetry)
+
+  # ============================================================================
+  # Service Components (L4+)
+  # ============================================================================
+
+  analytics:
+    name: bannou.analytics
+    service: Analytics
+    description: Analytics event processing and metric emission
+
+x-telemetry-metrics:
+  # ============================================================================
+  # State Store Metrics (emitted by lib-telemetry instrumentation wrappers)
+  # ============================================================================
+
+  bannou.state.operations:
+    component: state
+    type: counter
+    service: Telemetry
+    description: Counter for state store operations
+    tags:
+      - { name: operation, description: "Store operation type (get, save, delete, etc.)" }
+      - { name: store_name, description: "State store name" }
+      - { name: backend, description: "Backend type (redis, mysql, memory)" }
+
+  bannou.state.duration_seconds:
+    constant-name: StateDuration
+    component: state
+    type: histogram
+    service: Telemetry
+    description: Histogram for state store operation durations
+    tags:
+      - { name: operation, description: "Store operation type" }
+      - { name: store_name, description: "State store name" }
+      - { name: backend, description: "Backend type" }
+
+  # ============================================================================
+  # Messaging Metrics (emitted by lib-messaging)
+  # ============================================================================
+
+  bannou.messaging.published:
+    component: messaging
+    type: counter
+    service: Messaging
+    description: Counter for published messages
+    tags:
+      - { name: topic, description: "Event topic" }
+      - { name: status, description: "Publish outcome" }
+
+  bannou.messaging.consumed:
+    component: messaging
+    type: counter
+    service: Messaging
+    description: Counter for consumed messages
+    tags:
+      - { name: topic, description: "Event topic" }
+
+  bannou.messaging.publish_duration_seconds:
+    constant-name: MessagingPublishDuration
+    component: messaging
+    type: histogram
+    service: Messaging
+    description: Histogram for message publish durations
+    tags:
+      - { name: topic, description: "Event topic" }
+
+  bannou.messaging.consume_duration_seconds:
+    constant-name: MessagingConsumeDuration
+    component: messaging
+    type: histogram
+    service: Messaging
+    description: Histogram for message consume durations
+    tags:
+      - { name: topic, description: "Event topic" }
+
+  bannou.messaging.retry_buffer_depth:
+    component: messaging
+    type: gauge
+    service: Messaging
+    description: Gauge for retry buffer depth (current number of messages awaiting retry)
+
+  bannou.messaging.retry_buffer_fill_ratio:
+    component: messaging
+    type: gauge
+    service: Messaging
+    description: Gauge for retry buffer fill ratio (0.0-1.0 relative to max size)
+
+  bannou.messaging.channel_pool_active:
+    component: messaging
+    type: gauge
+    service: Messaging
+    description: Gauge for active channels in the channel pool
+
+  bannou.messaging.channel_pool_available:
+    component: messaging
+    type: gauge
+    service: Messaging
+    description: Gauge for available (pooled) channels in the channel pool
+
+  bannou.messaging.retry_attempts:
+    component: messaging
+    type: counter
+    service: Messaging
+    description: Counter for retry buffer processing outcomes (tagged by status)
+    tags:
+      - { name: status, description: "Outcome: processed, failed, discarded, deferred" }
+
+  # ============================================================================
+  # Mesh Metrics (emitted by lib-mesh)
+  # ============================================================================
+
+  bannou.mesh.invocations:
+    component: mesh
+    type: counter
+    service: Mesh
+    description: Counter for mesh invocations
+    tags:
+      - { name: target_service, description: "Target service name" }
+      - { name: status, description: "HTTP status code" }
+
+  bannou.mesh.duration_seconds:
+    constant-name: MeshDuration
+    component: mesh
+    type: histogram
+    service: Mesh
+    description: Histogram for mesh invocation durations
+    tags:
+      - { name: target_service, description: "Target service name" }
+      - { name: status, description: "HTTP status code" }
+
+  bannou.mesh.circuit_breaker_state:
+    component: mesh
+    type: gauge
+    service: Mesh
+    description: Gauge for circuit breaker state
+
+  bannou.mesh.circuit_breaker_state_changes:
+    component: mesh
+    type: counter
+    service: Mesh
+    description: Counter for circuit breaker state changes
+    tags:
+      - { name: service, description: "Target service name" }
+      - { name: new_state, description: "New circuit breaker state" }
+
+  bannou.mesh.retries:
+    component: mesh
+    type: counter
+    service: Mesh
+    description: Counter for mesh retries
+    tags:
+      - { name: target_service, description: "Target service name" }
+
+  bannou.mesh.raw_invocations:
+    component: mesh
+    type: counter
+    service: Mesh
+    description: Counter for raw mesh invocations (no circuit breaker participation)
+    tags:
+      - { name: target_service, description: "Target service name" }
+      - { name: status, description: "HTTP status code" }
+
+  # ============================================================================
+  # Analytics Metrics (emitted by lib-analytics during buffer flush)
+  # ============================================================================
+
+  bannou.analytics.score.processed:
+    component: analytics
+    type: counter
+    service: Analytics
+    description: Counter for analytics score deltas processed during buffer flush
+    tags:
+      - { name: game_service_id, description: "Game service ID scope" }
+      - { name: entity_type, description: "Entity type (EntityType enum)" }
+      - { name: score_type, description: "Score/event type string" }
+
+  bannou.analytics.events.processed:
+    component: analytics
+    type: counter
+    service: Analytics
+    description: Counter for raw analytics events processed per entity batch during buffer flush
+    tags:
+      - { name: game_service_id, description: "Game service ID scope" }

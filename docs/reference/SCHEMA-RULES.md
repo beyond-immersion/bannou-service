@@ -41,6 +41,7 @@ Each service can have up to 4 schema files in `/schemas/`:
 - `common-events.yaml` - Base event schemas (BaseServiceEvent)
 - `common-client-events.yaml` - Base client event schemas (BaseClientEvent)
 - `state-stores.yaml` - State store definitions → `StateStoreDefinitions.cs`
+- `telemetry-metrics.yaml` - Telemetry metric definitions → `TelemetryMetrics.cs`
 - `variable-providers.yaml` - Variable provider definitions → `VariableProviderDefinitions.cs`
 
 ---
@@ -51,7 +52,8 @@ Run `make generate` or `scripts/generate-all-services.sh` to execute the full pi
 
 | Step | Source | Generated Output |
 |------|--------|------------------|
-| 1. State Stores | `state-stores.yaml` | `lib-state/Generated/StateStoreDefinitions.cs` |
+| 1. State Stores | `state-stores.yaml` | `bannou-service/Generated/StateStoreDefinitions.cs` |
+| 1a. Telemetry Metrics | `telemetry-metrics.yaml` | `bannou-service/Generated/TelemetryMetrics.cs` |
 | 2. Variable Providers | `variable-providers.yaml` | `bannou-service/Generated/VariableProviderDefinitions.cs` |
 | 3. Lifecycle Events | `x-lifecycle` in events.yaml | `schemas/Generated/{service}-service-lifecycle-events.yaml` |
 | 4. Common Events | `common-events.yaml` | `bannou-service/Generated/Events/CommonEventsModels.cs` |
@@ -840,6 +842,52 @@ x-state-stores:
 | `enableSearch` | No | Enable RedisSearch full-text indexing (redis only, default false) |
 
 **Generated output**: `bannou-service/Generated/StateStoreDefinitions.cs` — static class with string constants for each store name, plus `docs/generated/GENERATED-STATE-STORES.md`.
+
+### Telemetry Metric Definition Format
+
+Telemetry metrics are defined in `schemas/telemetry-metrics.yaml` under two extension keys: `x-telemetry-components` for component scopes and `x-telemetry-metrics` for individual metric names.
+
+```yaml
+x-telemetry-components:
+  analytics:
+    name: bannou.analytics
+    service: Analytics
+    description: Analytics event processing and metric emission
+
+x-telemetry-metrics:
+  bannou.analytics.score.processed:
+    component: analytics
+    type: counter
+    service: Analytics
+    description: Counter for analytics score deltas processed during buffer flush
+    tags:
+      - { name: game_service_id, description: "Game service ID scope" }
+      - { name: entity_type, description: "Entity type (EntityType enum)" }
+      - { name: score_type, description: "Score/event type string" }
+```
+
+**Component entry key**: Short kebab-case name (e.g., `state`, `messaging`, `analytics`). Transformed into PascalCase constant in `TelemetryComponents`.
+
+| Property | Required | Description |
+|----------|----------|-------------|
+| `name` | Yes | Full component name string (e.g., `bannou.analytics`) |
+| `service` | Yes | Owning service name (PascalCase) |
+| `description` | Yes | Human-readable description |
+
+**Metric entry key**: Full dotted metric name (e.g., `bannou.analytics.score.processed`). This IS the metric name string value. The constant name is derived by stripping the `bannou.` prefix and PascalCasing each segment.
+
+| Property | Required | Description |
+|----------|----------|-------------|
+| `component` | Yes | Reference to `x-telemetry-components` key |
+| `type` | Yes | `counter`, `histogram`, or `gauge` |
+| `service` | Yes | PascalCase service name that emits this metric |
+| `description` | Yes | Human-readable description |
+| `tags` | No | List of `{ name, description }` tag dimensions (documentation only) |
+| `constant-name` | No | Override for auto-derived C# constant name (use when derivation doesn't match established names) |
+
+**Generated output**: `bannou-service/Generated/TelemetryMetrics.cs` — `TelemetryComponents` and `TelemetryMetrics` static classes with string constants, plus `docs/generated/GENERATED-TELEMETRY-METRICS.md`.
+
+**Structural validation**: `TelemetryMetricValidator` checks that services declaring metrics in the schema inject `ITelemetryProvider`.
 
 ---
 
