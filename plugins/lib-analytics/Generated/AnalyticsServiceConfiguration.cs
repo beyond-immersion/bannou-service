@@ -192,6 +192,20 @@ public class AnalyticsServiceConfiguration : BaseServiceConfiguration
     public int ControllerHistoryCleanupIntervalSeconds { get; set; } = 3600;
 
     /// <summary>
+    /// Number of summary records to delete per iteration during reset operations
+    /// Environment variable: ANALYTICS_SUMMARY_RESET_BATCH_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10000)]
+    public int SummaryResetBatchSize { get; set; } = 100;
+
+    /// <summary>
+    /// Distributed lock expiry time in seconds for summary reset operations
+    /// Environment variable: ANALYTICS_SUMMARY_RESET_LOCK_EXPIRY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 600)]
+    public int SummaryResetLockExpirySeconds { get; set; } = 60;
+
+    /// <summary>
     /// Maximum optimistic concurrency retry attempts for rating reverse index operations
     /// Environment variable: ANALYTICS_RATING_INDEX_MAX_RETRIES
     /// </summary>

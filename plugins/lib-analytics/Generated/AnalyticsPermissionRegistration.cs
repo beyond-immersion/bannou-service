@@ -77,6 +77,21 @@ public static class AnalyticsPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/analytics/summary/reset",
+            Method = ServiceEndpointMethod.Post,
+            Description = "resetEntitySummaries",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/analytics/rating/get",
             Method = ServiceEndpointMethod.Post,
             Description = "getSkillRating",

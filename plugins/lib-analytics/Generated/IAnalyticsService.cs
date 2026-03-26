@@ -50,6 +50,11 @@ public partial interface IAnalyticsService : IBannouService
         Task<(StatusCodes, QueryEntitySummariesResponse?)> QueryEntitySummariesAsync(QueryEntitySummariesRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// ResetEntitySummaries operation
+        /// </summary>
+        Task<(StatusCodes, ResetEntitySummariesResponse?)> ResetEntitySummariesAsync(ResetEntitySummariesRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// GetSkillRating operation
         /// </summary>
         Task<(StatusCodes, SkillRatingResponse?)> GetSkillRatingAsync(GetSkillRatingRequest body, CancellationToken cancellationToken = default(CancellationToken));

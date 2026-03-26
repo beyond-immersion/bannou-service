@@ -171,6 +171,21 @@ x-service-configuration:
       description: Interval in seconds between controller history cleanup cycles
       default: 3600
       env: ANALYTICS_CONTROLLER_HISTORY_CLEANUP_INTERVAL_SECONDS
+    # Summary Reset Configuration
+    SummaryResetBatchSize:
+      type: integer
+      minimum: 1
+      maximum: 10000
+      description: Number of summary records to delete per iteration during reset operations
+      default: 100
+      env: ANALYTICS_SUMMARY_RESET_BATCH_SIZE
+    SummaryResetLockExpirySeconds:
+      type: integer
+      minimum: 10
+      maximum: 600
+      description: Distributed lock expiry time in seconds for summary reset operations
+      default: 60
+      env: ANALYTICS_SUMMARY_RESET_LOCK_EXPIRY_SECONDS
     # Rating Index Configuration
     RatingIndexMaxRetries:
       type: integer

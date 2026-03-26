@@ -125,6 +125,36 @@ paths:
               schema:
                 $ref: '#/components/schemas/QueryEntitySummariesResponse'
 
+  /analytics/summary/reset:
+    post:
+      summary: Reset entity summaries for corruption recovery
+      description: |
+        Deletes entity summaries for a given service scope, allowing them to rebuild
+        naturally as new events are ingested. Practical recovery mechanism for corrupted
+        summary data. Supports optional entity type and entity ID filters.
+        Dry-run mode (default: true) counts matching records without deleting.
+        Uses a distributed lock to prevent concurrent reset operations.
+      operationId: resetEntitySummaries
+      tags:
+      - Statistics
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetEntitySummariesRequest'
+      responses:
+        '200':
+          description: Reset completed (or dry-run count returned)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetEntitySummariesResponse'
+        '409':
+          description: Concurrent reset operation in progress
+
   /analytics/rating/get:
     post:
       summary: Get entity Glicko-2 skill rating
@@ -514,6 +544,49 @@ components:
           format: int64
           minimum: 0
           description: Total number of matching entities
+
+    ResetEntitySummariesRequest:
+      type: object
+      description: Request to reset entity summaries for a service scope. Summaries rebuild naturally as new events arrive.
+      additionalProperties: false
+      required:
+      - serviceType
+      - serviceId
+      properties:
+        serviceType:
+          $ref: '#/components/schemas/AnalyticsServiceType'
+          description: Service type discriminator
+        serviceId:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Service scope identifier (GUID for Game, logical name for System)
+        entityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
+          description: Filter to specific entity type (null resets all entity types in scope)
+        entityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter to specific entity (null resets all entities in scope)
+        dryRun:
+          type: boolean
+          default: true
+          description: Count matching summaries without deleting (default true for safety)
+
+    ResetEntitySummariesResponse:
+      type: object
+      description: Result of entity summary reset operation
+      additionalProperties: false
+      required:
+      - deletedCount
+      properties:
+        deletedCount:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Number of summary records deleted (or would be deleted if dry run)
 
     # ============================================
     # Skill Ratings (Glicko-2)

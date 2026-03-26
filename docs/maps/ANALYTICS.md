@@ -15,7 +15,7 @@
 |-------|-------|
 | Plugin | lib-analytics |
 | Layer | L4 GameFeatures |
-| Endpoints | 9 (9 generated) |
+| Endpoints | 10 (10 generated) |
 | State Stores | analytics-summary (Redis), analytics-summary-data (MySQL), analytics-rating (Redis), analytics-history-data (MySQL) |
 | Events Published | 4 (`analytics.score.updated`, `analytics.rating.updated`, `analytics.milestone.reached`, `analytics.controller.recorded`) |
 | Events Consumed | 12 (implemented), 10 planned (auth audit events — [#142](https://github.com/beyond-immersion/bannou-service/issues/142)) |
@@ -161,6 +161,7 @@ Auth event handlers use `serviceType: System, serviceId: "auth"` — no game ser
 | RecordControllerEvent | POST /analytics/controller-history/record | generated | [] | history | analytics.controller.recorded |
 | QueryControllerHistory | POST /analytics/controller-history/query | generated | [admin] | - | - |
 | CleanupControllerHistory | POST /analytics/controller-history/cleanup | generated | [admin] | history | - |
+| ResetEntitySummaries | POST /analytics/summary/reset | generated | [admin] | summary-data | - |
 
 ---
 
@@ -317,6 +318,34 @@ WHILE totalDeleted < config.ControllerHistoryCleanupBatchSize
     DELETE history-data:analytics-controller:{item.Key}
     totalDeleted++
 RETURN (200, CleanupControllerHistoryResponse { RecordsDeleted=totalDeleted })
+```
+
+### ResetEntitySummaries
+POST /analytics/summary/reset | Roles: [admin]
+
+```
+LOCK analytics-summary-data:"summary-reset:{serviceType}:{serviceId}"
+  -> 409 if lock fails (expiry: config.SummaryResetLockExpirySeconds)
+
+conditions = [$.ServiceType = serviceType, $.ServiceId = serviceId]
+IF entityType: conditions += [$.EntityType = entityType]
+IF entityId: conditions += [$.EntityId = entityId]
+
+IF dryRun (default: true):
+  COUNT summary-data WHERE conditions
+  RETURN (200, ResetEntitySummariesResponse { DeletedCount = count })
+
+// Actual deletion in batched loop with per-item error isolation (T7)
+totalDeleted = 0
+LOOP:
+  batch = QUERY summary-data WHERE conditions PAGED(0, config.SummaryResetBatchSize)
+  IF batch empty: BREAK
+  FOREACH item IN batch (per-item try-catch):
+    DELETE summary-data:{item.Key}
+    totalDeleted++
+
+LOG Information "Summary reset completed: {DeletedCount} summaries deleted for {ServiceType}:{ServiceId}"
+RETURN (200, ResetEntitySummariesResponse { DeletedCount = totalDeleted })
 ```
 
 ---

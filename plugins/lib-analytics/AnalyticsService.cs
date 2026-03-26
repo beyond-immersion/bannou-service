@@ -905,6 +905,116 @@ public partial class AnalyticsService : IAnalyticsService
         });
     }
 
+    /// <summary>
+    /// Implementation of ResetEntitySummaries operation.
+    /// Deletes entity summaries for a service scope, allowing them to rebuild
+    /// naturally as new events are ingested. Practical corruption recovery mechanism.
+    /// </summary>
+    public async Task<(StatusCodes, ResetEntitySummariesResponse?)> ResetEntitySummariesAsync(
+        ResetEntitySummariesRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation(
+            "Resetting entity summaries for {ServiceType}:{ServiceId} (entityType={EntityType}, entityId={EntityId}, dryRun={DryRun})",
+            body.ServiceType, body.ServiceId, body.EntityType, body.EntityId, body.DryRun);
+
+        // Acquire distributed lock to prevent concurrent reset operations
+        var lockResourceId = $"summary-reset:{body.ServiceType}:{body.ServiceId}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.AnalyticsSummaryData,
+            lockResourceId,
+            Guid.NewGuid().ToString(),
+            _configuration.SummaryResetLockExpirySeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Failed to acquire summary reset lock for {ResourceId}", lockResourceId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var conditions = new List<QueryCondition>
+        {
+            new QueryCondition
+            {
+                Path = "$.ServiceType",
+                Operator = QueryOperator.Equals,
+                Value = body.ServiceType.ToString()
+            },
+            new QueryCondition
+            {
+                Path = "$.ServiceId",
+                Operator = QueryOperator.Equals,
+                Value = body.ServiceId
+            }
+        };
+
+        if (body.EntityType.HasValue)
+        {
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.EntityType",
+                Operator = QueryOperator.Equals,
+                Value = (int)body.EntityType.Value
+            });
+        }
+
+        if (body.EntityId.HasValue)
+        {
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.EntityId",
+                Operator = QueryOperator.Equals,
+                Value = body.EntityId.Value.ToString()
+            });
+        }
+
+        if (body.DryRun)
+        {
+            var count = await _summaryDataQueryStore.JsonCountAsync(conditions, cancellationToken);
+            _logger.LogInformation("Summary reset dry run: {Count} summaries would be deleted for {ServiceType}:{ServiceId}",
+                count, body.ServiceType, body.ServiceId);
+            return (StatusCodes.OK, new ResetEntitySummariesResponse
+            {
+                DeletedCount = count
+            });
+        }
+
+        var totalDeleted = 0L;
+        var batchSize = _configuration.SummaryResetBatchSize;
+
+        while (true)
+        {
+            var batch = await _summaryDataQueryStore.JsonQueryPagedAsync(
+                conditions, 0, batchSize, null, cancellationToken);
+
+            if (batch.Items.Count == 0)
+            {
+                break;
+            }
+
+            foreach (var item in batch.Items)
+            {
+                try
+                {
+                    await _summaryDataStore.DeleteAsync(item.Key, cancellationToken);
+                    totalDeleted++;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to delete summary {SummaryKey}, continuing", item.Key);
+                }
+            }
+        }
+
+        _logger.LogInformation("Summary reset completed: {DeletedCount} summaries deleted for {ServiceType}:{ServiceId}",
+            totalDeleted, body.ServiceType, body.ServiceId);
+
+        return (StatusCodes.OK, new ResetEntitySummariesResponse
+        {
+            DeletedCount = totalDeleted
+        });
+    }
+
     #region Glicko-2 Algorithm Implementation
 
     /// <summary>

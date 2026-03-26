@@ -945,4 +945,214 @@ public class AnalyticsServiceTests
     }
 
     #endregion
+
+    #region ResetEntitySummaries Tests (#707)
+
+    [Fact]
+    public async Task ResetEntitySummariesAsync_LockFails_ReturnsConflict()
+    {
+        // Arrange — default mock setup has lock returning failure
+        var service = CreateService();
+        var request = new ResetEntitySummariesRequest
+        {
+            ServiceType = AnalyticsServiceType.Game,
+            ServiceId = Guid.NewGuid().ToString(),
+            DryRun = false
+        };
+
+        // Act
+        var (status, _) = await service.ResetEntitySummariesAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+    }
+
+    [Fact]
+    public async Task ResetEntitySummariesAsync_DryRun_ReturnsCountWithoutDeleting()
+    {
+        // Arrange — lock succeeds, JsonCountAsync returns 42
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        mockLockResponse.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider
+            .Setup(p => p.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
+
+        var mockJsonQueryStore = new Mock<IJsonQueryableStateStore<EntitySummaryData>>();
+        mockJsonQueryStore
+            .Setup(s => s.JsonCountAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(42);
+        // Also need the paged query setup (used by constructor via SetupMinimalMocks)
+        mockJsonQueryStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(), It.IsAny<int>(), It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<EntitySummaryData>(
+                new List<JsonQueryResult<EntitySummaryData>>(), 0, 0, 10));
+        _mockStateStoreFactory
+            .Setup(f => f.GetJsonQueryableStore<EntitySummaryData>(It.IsAny<string>()))
+            .Returns(mockJsonQueryStore.Object);
+
+        // Capture query conditions to verify filters
+        IReadOnlyList<QueryCondition>? capturedConditions = null;
+        mockJsonQueryStore
+            .Setup(s => s.JsonCountAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(), It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyList<QueryCondition>?, CancellationToken>((cond, _) => capturedConditions = cond)
+            .ReturnsAsync(42);
+
+        var service = CreateService();
+        var serviceId = Guid.NewGuid().ToString();
+        var request = new ResetEntitySummariesRequest
+        {
+            ServiceType = AnalyticsServiceType.Game,
+            ServiceId = serviceId,
+            DryRun = true // Default, but explicit for clarity
+        };
+
+        // Act
+        var (status, response) = await service.ResetEntitySummariesAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert — returns count without deleting
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(42, response.DeletedCount);
+
+        // Assert — query conditions include serviceType and serviceId
+        Assert.NotNull(capturedConditions);
+        Assert.Equal(2, capturedConditions.Count);
+        Assert.Equal("$.ServiceType", capturedConditions[0].Path);
+        Assert.Equal("$.ServiceId", capturedConditions[1].Path);
+    }
+
+    [Fact]
+    public async Task ResetEntitySummariesAsync_DryRunWithFilters_IncludesEntityTypeAndEntityIdConditions()
+    {
+        // Arrange — lock succeeds
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        mockLockResponse.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider
+            .Setup(p => p.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
+
+        var mockJsonQueryStore = new Mock<IJsonQueryableStateStore<EntitySummaryData>>();
+        IReadOnlyList<QueryCondition>? capturedConditions = null;
+        mockJsonQueryStore
+            .Setup(s => s.JsonCountAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(), It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyList<QueryCondition>?, CancellationToken>((cond, _) => capturedConditions = cond)
+            .ReturnsAsync(1);
+        mockJsonQueryStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(), It.IsAny<int>(), It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<EntitySummaryData>(
+                new List<JsonQueryResult<EntitySummaryData>>(), 0, 0, 10));
+        _mockStateStoreFactory
+            .Setup(f => f.GetJsonQueryableStore<EntitySummaryData>(It.IsAny<string>()))
+            .Returns(mockJsonQueryStore.Object);
+
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var request = new ResetEntitySummariesRequest
+        {
+            ServiceType = AnalyticsServiceType.System,
+            ServiceId = "auth",
+            EntityType = EntityType.Account,
+            EntityId = entityId,
+            DryRun = true
+        };
+
+        // Act
+        var (status, response) = await service.ResetEntitySummariesAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert — 4 conditions: serviceType, serviceId, entityType, entityId
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(capturedConditions);
+        Assert.Equal(4, capturedConditions.Count);
+        Assert.Equal("$.ServiceType", capturedConditions[0].Path);
+        Assert.Equal("$.ServiceId", capturedConditions[1].Path);
+        Assert.Equal("$.EntityType", capturedConditions[2].Path);
+        Assert.Equal("$.EntityId", capturedConditions[3].Path);
+    }
+
+    [Fact]
+    public async Task ResetEntitySummariesAsync_NotDryRun_DeletesMatchingRecords()
+    {
+        // Arrange — lock succeeds
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        mockLockResponse.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider
+            .Setup(p => p.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
+
+        // Setup query to return 2 items on first call, then 0 items on second call
+        var mockJsonQueryStore = new Mock<IJsonQueryableStateStore<EntitySummaryData>>();
+        var callCount = 0;
+        var summaryKey1 = "analytics-entity:Game:svc1:Character:id1";
+        var summaryKey2 = "analytics-entity:Game:svc1:Character:id2";
+        mockJsonQueryStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(), It.IsAny<int>(), It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                callCount++;
+                if (callCount == 1)
+                {
+                    return new JsonPagedResult<EntitySummaryData>(
+                        new List<JsonQueryResult<EntitySummaryData>>
+                        {
+                            new(summaryKey1, new EntitySummaryData { EntityId = Guid.NewGuid(), EntityType = EntityType.Character }),
+                            new(summaryKey2, new EntitySummaryData { EntityId = Guid.NewGuid(), EntityType = EntityType.Character })
+                        }, 0, 0, 100);
+                }
+                return new JsonPagedResult<EntitySummaryData>(
+                    new List<JsonQueryResult<EntitySummaryData>>(), 0, 0, 100);
+            });
+        _mockStateStoreFactory
+            .Setup(f => f.GetJsonQueryableStore<EntitySummaryData>(It.IsAny<string>()))
+            .Returns(mockJsonQueryStore.Object);
+
+        // Track delete calls
+        var deletedKeys = new List<string>();
+        var mockSummaryDataStore = new Mock<IStateStore<EntitySummaryData>>();
+        mockSummaryDataStore
+            .Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CancellationToken>((key, _) => deletedKeys.Add(key))
+            .ReturnsAsync(true);
+        _mockStateStoreFactory
+            .Setup(f => f.GetStore<EntitySummaryData>(It.IsAny<string>()))
+            .Returns(mockSummaryDataStore.Object);
+
+        var service = CreateService();
+        var request = new ResetEntitySummariesRequest
+        {
+            ServiceType = AnalyticsServiceType.Game,
+            ServiceId = "svc1",
+            DryRun = false
+        };
+
+        // Act
+        var (status, response) = await service.ResetEntitySummariesAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert — 2 records deleted
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.DeletedCount);
+        Assert.Equal(2, deletedKeys.Count);
+        Assert.Contains(summaryKey1, deletedKeys);
+        Assert.Contains(summaryKey2, deletedKeys);
+    }
+
+    #endregion
 }
