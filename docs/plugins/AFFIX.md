@@ -74,6 +74,8 @@ Enchantment -- the technology of Arcadia -- is the art of manipulating logos pat
 
 **NPC item evaluation**: The `${affix.*}` variable provider feeds NPC GOAP decisions about item quality: "This sword has weak fire logos" or "This ring already carries three stable inscriptions." NPC crafting decisions (what to inscribe, what to improve) are driven by lib-craft's `${craft.*}` variable provider, which consults lib-affix data as part of its workflow. See [CRAFT.md](CRAFT.md) for the enchanting workflow integration.
 
+**Intent-channeling enchantments (charms and curses)**: The Logos Inscription Model above describes **self-augmenting** enchantments — logos patterns that reinforce the item's own properties (Type 1). A second category, **intent-channeling** enchantments (Type 2), inscribes logos patterns that describe effects on the *wielder* rather than the item. These use `slotType: "charm"` or `"curse"` and channel environmental pneuma through the wielder via wavelength synchronization, producing Status effects rather than item stat modifications. Curses channel more aggressively than charms, producing faster personality drift and higher detectability. See [EQUIPMENT-ENCHANTMENT-DUALITY.md](../planning/EQUIPMENT-ENCHANTMENT-DUALITY.md) for the full design, including incidental enchanting (all crafters unconsciously imbue trace intent), environmental mana tiers, personality drift mechanics, and immune individuals who redirect intent-channeled mana as raw fuel.
+
 ---
 
 ## Core Concepts

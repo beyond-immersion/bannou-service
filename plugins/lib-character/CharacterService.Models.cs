@@ -43,6 +43,9 @@ internal class CharacterModel
     public Guid SpeciesId { get; set; }
     public CharacterStatus Status { get; set; } = CharacterStatus.Alive;
 
+    /// <summary>Opaque deity code identifying this character's patron deity (null if none).</summary>
+    public string? PatronDeityCode { get; set; }
+
     // Store as DateTimeOffset directly - lib-state handles serialization
     public DateTimeOffset BirthDate { get; set; }
     public DateTimeOffset? DeathDate { get; set; }

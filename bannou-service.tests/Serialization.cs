@@ -647,4 +647,152 @@ public class Serialization : IClassFixture<CollectionFixture>
     }
 
     #endregion
+
+    #region Nullable Field 3-State Tests (absent vs explicit-null vs value)
+
+    /// <summary>
+    /// Model mimicking an Update request with nullable fields that may need clearing.
+    /// </summary>
+    private class NullableUpdateModel
+    {
+        public Guid Id { get; set; }
+        public string? Name { get; set; }
+        public string? Code { get; set; }
+        public int? Count { get; set; }
+    }
+
+    [Fact]
+    public void NullableField_AbsentFromJson_DeserializesToNull()
+    {
+        // Field not present in JSON at all
+        var json = """{"Id": "11111111-1111-1111-1111-111111111111"}""";
+        var result = BannouJson.Deserialize<NullableUpdateModel>(json);
+
+        Assert.NotNull(result);
+        Assert.Null(result.Name);
+        Assert.Null(result.Code);
+        Assert.Null(result.Count);
+    }
+
+    [Fact]
+    public void NullableField_ExplicitNullInJson_DeserializesToNull()
+    {
+        // Field explicitly set to null in JSON
+        var json = """{"Id": "11111111-1111-1111-1111-111111111111", "Name": null, "Code": null, "Count": null}""";
+        var result = BannouJson.Deserialize<NullableUpdateModel>(json);
+
+        Assert.NotNull(result);
+        Assert.Null(result.Name);
+        Assert.Null(result.Code);
+        Assert.Null(result.Count);
+    }
+
+    [Fact]
+    public void NullableField_AbsentAndExplicitNull_AreIndistinguishable()
+    {
+        // THIS TEST DOCUMENTS THE SYSTEMIC LIMITATION:
+        // System.Text.Json cannot distinguish "field absent" from "field: null"
+        // Both produce null on the C# model. There is no way to detect which case occurred.
+        var absentJson = """{"Id": "11111111-1111-1111-1111-111111111111"}""";
+        var nullJson = """{"Id": "11111111-1111-1111-1111-111111111111", "Code": null}""";
+
+        var absent = BannouJson.Deserialize<NullableUpdateModel>(absentJson);
+        var explicitNull = BannouJson.Deserialize<NullableUpdateModel>(nullJson);
+
+        Assert.NotNull(absent);
+        Assert.NotNull(explicitNull);
+
+        // Both are null — indistinguishable at the model level
+        Assert.Null(absent.Code);
+        Assert.Null(explicitNull.Code);
+        Assert.Equal(absent.Code, explicitNull.Code);
+    }
+
+    [Fact]
+    public void NullableField_SetToValue_IsDistinguishable()
+    {
+        var json = """{"Id": "11111111-1111-1111-1111-111111111111", "Code": "SOLAR"}""";
+        var result = BannouJson.Deserialize<NullableUpdateModel>(json);
+
+        Assert.NotNull(result);
+        Assert.Equal("SOLAR", result.Code);
+    }
+
+    [Fact]
+    public void Serialization_WhenWritingNull_OmitsNullProperties()
+    {
+        // BannouJson uses WhenWritingNull — null properties are stripped from serialized output
+        var model = new NullableUpdateModel
+        {
+            Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            Name = null,
+            Code = null,
+            Count = null
+        };
+
+        var json = BannouJson.Serialize(model);
+
+        // Null properties should be omitted entirely
+        Assert.DoesNotContain("Name", json);
+        Assert.DoesNotContain("Code", json);
+        Assert.DoesNotContain("Count", json);
+        Assert.Contains("Id", json);
+    }
+
+    [Fact]
+    public void Serialization_WhenWritingNull_CollapsesSenderDistinction()
+    {
+        // THIS TEST DOCUMENTS THE SERIALIZATION-SIDE LIMITATION:
+        // A generated client that doesn't set a property and one that explicitly
+        // sets it to null produce IDENTICAL JSON output due to WhenWritingNull.
+        var notSet = new NullableUpdateModel { Id = Guid.NewGuid() };
+        var setToNull = new NullableUpdateModel { Id = notSet.Id, Code = null };
+
+        var jsonNotSet = BannouJson.Serialize(notSet);
+        var jsonSetToNull = BannouJson.Serialize(setToNull);
+
+        // Both produce identical JSON — the distinction is lost at serialization
+        Assert.Equal(jsonNotSet, jsonSetToNull);
+    }
+
+    [Fact]
+    public void JsonNode_CanDistinguishAbsentFromNull()
+    {
+        // JsonNode/JsonDocument CAN detect absent vs null at the raw JSON level.
+        // This proves the information EXISTS in the wire format for WebSocket clients
+        // that include "field": null explicitly — it is only lost during model deserialization.
+        var absentJson = """{"Id": "11111111-1111-1111-1111-111111111111"}""";
+        var nullJson = """{"Id": "11111111-1111-1111-1111-111111111111", "Code": null}""";
+
+        var nodeAbsent = System.Text.Json.Nodes.JsonNode.Parse(absentJson)!.AsObject();
+        var nodeNull = System.Text.Json.Nodes.JsonNode.Parse(nullJson)!.AsObject();
+
+        // JsonNode can detect whether the key exists at all
+        Assert.False(nodeAbsent.ContainsKey("Code"));
+        Assert.True(nodeNull.ContainsKey("Code"));
+
+        // And when present, can detect that the value is null
+        Assert.Null(nodeNull["Code"]);
+    }
+
+    [Fact]
+    public void JsonDocument_CanDistinguishAbsentFromNull()
+    {
+        // JsonDocument also detects absent vs null — confirming the information
+        // is in the JSON wire format, just lost by typed deserialization.
+        var absentJson = """{"Id": "11111111-1111-1111-1111-111111111111"}""";
+        var nullJson = """{"Id": "11111111-1111-1111-1111-111111111111", "Code": null}""";
+
+        using var docAbsent = JsonDocument.Parse(absentJson);
+        using var docNull = JsonDocument.Parse(nullJson);
+
+        // TryGetProperty returns false for absent, true for present (even if null)
+        Assert.False(docAbsent.RootElement.TryGetProperty("Code", out _));
+        Assert.True(docNull.RootElement.TryGetProperty("Code", out var codeElement));
+
+        // Present-but-null has ValueKind.Null
+        Assert.Equal(JsonValueKind.Null, codeElement.ValueKind);
+    }
+
+    #endregion
 }

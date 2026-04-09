@@ -351,6 +351,8 @@ Shrine keepers are the spiritual equivalent of urban planners -- they deliberate
    - Emotional memento of devotion: item gains a protective property for the bearer's loved ones
 4. The item's provenance records the memento source -- "Forged at the site where Commander Aldric fell, imbued with his final defiance"
 
+> **Relationship to Incidental Enchanting**: Memento consumption is the *explicit* path — a crafter deliberately uses spiritual residue as crafting input. The *implicit* path is incidental enchanting: all crafters unconsciously imbue trace intent through the act of creation itself, shaped by their personality and emotional state. Additionally, mementos at the crafting location contribute ambient pneuma to the crafting process — the environmental spiritual ecology influences what gets imbued. See [EQUIPMENT-ENCHANTMENT-DUALITY.md](../planning/EQUIPMENT-ENCHANTMENT-DUALITY.md) for the full design of how crafter personality flows into items and how environmental pneuma (including memento-sourced residue) modulates the effect.
+
 ---
 
 ## NPC Autonomous Behavior

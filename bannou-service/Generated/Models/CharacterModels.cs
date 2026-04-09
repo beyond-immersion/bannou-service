@@ -97,6 +97,13 @@ public partial class CreateCharacterRequest
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public CharacterStatus Status { get; set; } = BeyondImmersion.BannouService.Character.CharacterStatus.Alive;
 
+    /// <summary>
+    /// Opaque deity code identifying this character's patron deity. Set by Divine service, Character Lifecycle (generational inheritance), or game extensions. Nullable — not every character has a patron.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("patronDeityCode")]
+    public string? PatronDeityCode { get; set; } = default!;
+
 }
 
 /// <summary>
@@ -156,6 +163,13 @@ public partial class UpdateCharacterRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deathDate")]
     public System.DateTimeOffset? DeathDate { get; set; } = default!;
+
+    /// <summary>
+    /// Opaque deity code identifying this character's patron deity. Set to null to clear patron. When changed, Divine auto-bonds/rebonds character domain seeds to the patron deity's seeds.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("patronDeityCode")]
+    public string? PatronDeityCode { get; set; } = default!;
 
 }
 
@@ -352,6 +366,13 @@ public partial class CharacterResponse
     public CharacterStatus Status { get; set; } = default!;
 
     /// <summary>
+    /// Opaque deity code identifying this character's patron deity. Null if the character has no patron.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("patronDeityCode")]
+    public string? PatronDeityCode { get; set; } = default!;
+
+    /// <summary>
     /// Real-world creation timestamp
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
@@ -519,6 +540,13 @@ public partial class EnrichedCharacterResponse
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public CharacterStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Opaque deity code identifying this character's patron deity. Null if the character has no patron.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("patronDeityCode")]
+    public string? PatronDeityCode { get; set; } = default!;
 
     /// <summary>
     /// Real-world creation timestamp

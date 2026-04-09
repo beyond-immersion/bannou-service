@@ -91,10 +91,13 @@ paths:
         \   \"description\": \"In-game birth timestamp\"\n                },\n                \"status\": {\n            \
         \        \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/CharacterStatus\"\
         \n                        }\n                    ],\n                    \"default\": \"alive\",\n               \
-        \     \"description\": \"Initial lifecycle status for the character\"\n                }\n            }\n        },\n\
-        \        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle
-        status\",\n            \"enum\": [\n                \"Alive\",\n                \"Dead\",\n                \"Dormant\"\
-        \n            ]\n        }\n    }\n}"
+        \     \"description\": \"Initial lifecycle status for the character\"\n                },\n                \"patronDeityCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Opaque deity code identifying this character's patron deity. Set by Divine service, Character Lifecycle (generational
+        inheritance), or game extensions. Nullable \\u2014 not every character has a patron.\\n\"\n                }\n   \
+        \         }\n        },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Character lifecycle status\",\n            \"enum\": [\n                \"Alive\",\n                \"Dead\",\n\
+        \                \"Dormant\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterResponse\"\
         ,\n    \"$defs\": {\n        \"CharacterResponse\": {\n            \"description\": \"Complete character data returned
         from character operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
@@ -114,14 +117,16 @@ paths:
         : true,\n                    \"description\": \"In-game death timestamp\"\n                },\n                \"\
         status\": {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"\
         #/$defs/CharacterStatus\"\n                        }\n                    ],\n                    \"description\"\
-        : \"Current lifecycle status of the character\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Real-world creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
-        \                 \"description\": \"Real-world last update timestamp\"\n                }\n            }\n      \
-        \  },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character
-        lifecycle status\",\n            \"enum\": [\n                \"Alive\",\n                \"Dead\",\n            \
-        \    \"Dormant\"\n            ]\n        }\n    }\n}"
+        : \"Current lifecycle status of the character\"\n                },\n                \"patronDeityCode\": {\n    \
+        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Opaque deity code identifying this character's patron deity. Null if the character has no patron.\\n\"\n     \
+        \           },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"description\": \"Real-world creation timestamp\"\n               \
+        \ },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Real-world last
+        update timestamp\"\n                }\n            }\n        },\n        \"CharacterStatus\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Character lifecycle status\",\n            \"enum\": [\n           \
+        \     \"Alive\",\n                \"Dead\",\n                \"Dormant\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create new character\",\n    \"description\": \"\",\n    \"tags\": [\n\
         \        \"Character Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createCharacter\"\n}"
   /character/get:
@@ -173,14 +178,16 @@ paths:
         : true,\n                    \"description\": \"In-game death timestamp\"\n                },\n                \"\
         status\": {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"\
         #/$defs/CharacterStatus\"\n                        }\n                    ],\n                    \"description\"\
-        : \"Current lifecycle status of the character\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Real-world creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
-        \                 \"description\": \"Real-world last update timestamp\"\n                }\n            }\n      \
-        \  },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character
-        lifecycle status\",\n            \"enum\": [\n                \"Alive\",\n                \"Dead\",\n            \
-        \    \"Dormant\"\n            ]\n        }\n    }\n}"
+        : \"Current lifecycle status of the character\"\n                },\n                \"patronDeityCode\": {\n    \
+        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Opaque deity code identifying this character's patron deity. Null if the character has no patron.\\n\"\n     \
+        \           },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"description\": \"Real-world creation timestamp\"\n               \
+        \ },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Real-world last
+        update timestamp\"\n                }\n            }\n        },\n        \"CharacterStatus\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Character lifecycle status\",\n            \"enum\": [\n           \
+        \     \"Alive\",\n                \"Dead\",\n                \"Dormant\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get character by ID\",\n    \"description\": \"\",\n    \"tags\": [\n \
         \       \"Character Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getCharacter\"\n}"
   /character/update:
@@ -224,9 +231,12 @@ paths:
         \ \"description\": \"New lifecycle status for the character\"\n                },\n                \"deathDate\":
         {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                   \
         \ \"nullable\": true,\n                    \"description\": \"In-game death timestamp (sets status to dead)\"\n  \
-        \              }\n            }\n        },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n \
-        \           \"description\": \"Character lifecycle status\",\n            \"enum\": [\n                \"Alive\",\n\
-        \                \"Dead\",\n                \"Dormant\"\n            ]\n        }\n    }\n}"
+        \              },\n                \"patronDeityCode\": {\n                    \"type\": \"string\",\n           \
+        \         \"nullable\": true,\n                    \"description\": \"Opaque deity code identifying this character's
+        patron deity. Set to null to clear patron. When changed, Divine auto-bonds/rebonds character domain seeds to the patron
+        deity's seeds.\\n\"\n                }\n            }\n        },\n        \"CharacterStatus\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Character lifecycle status\",\n            \"enum\": [\n     \
+        \           \"Alive\",\n                \"Dead\",\n                \"Dormant\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterResponse\"\
         ,\n    \"$defs\": {\n        \"CharacterResponse\": {\n            \"description\": \"Complete character data returned
         from character operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
@@ -246,14 +256,16 @@ paths:
         : true,\n                    \"description\": \"In-game death timestamp\"\n                },\n                \"\
         status\": {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"\
         #/$defs/CharacterStatus\"\n                        }\n                    ],\n                    \"description\"\
-        : \"Current lifecycle status of the character\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Real-world creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
-        \                 \"description\": \"Real-world last update timestamp\"\n                }\n            }\n      \
-        \  },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character
-        lifecycle status\",\n            \"enum\": [\n                \"Alive\",\n                \"Dead\",\n            \
-        \    \"Dormant\"\n            ]\n        }\n    }\n}"
+        : \"Current lifecycle status of the character\"\n                },\n                \"patronDeityCode\": {\n    \
+        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Opaque deity code identifying this character's patron deity. Null if the character has no patron.\\n\"\n     \
+        \           },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"description\": \"Real-world creation timestamp\"\n               \
+        \ },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Real-world last
+        update timestamp\"\n                }\n            }\n        },\n        \"CharacterStatus\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Character lifecycle status\",\n            \"enum\": [\n           \
+        \     \"Alive\",\n                \"Dead\",\n                \"Dormant\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update character\",\n    \"description\": \"\",\n    \"tags\": [\n    \
         \    \"Character Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateCharacter\"\n}"
   /character/delete:
@@ -360,14 +372,16 @@ paths:
         : true,\n                    \"description\": \"In-game death timestamp\"\n                },\n                \"\
         status\": {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"\
         #/$defs/CharacterStatus\"\n                        }\n                    ],\n                    \"description\"\
-        : \"Current lifecycle status of the character\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Real-world creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
-        \                 \"description\": \"Real-world last update timestamp\"\n                }\n            }\n      \
-        \  },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character
-        lifecycle status\",\n            \"enum\": [\n                \"Alive\",\n                \"Dead\",\n            \
-        \    \"Dormant\"\n            ]\n        }\n    }\n}"
+        : \"Current lifecycle status of the character\"\n                },\n                \"patronDeityCode\": {\n    \
+        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Opaque deity code identifying this character's patron deity. Null if the character has no patron.\\n\"\n     \
+        \           },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"description\": \"Real-world creation timestamp\"\n               \
+        \ },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Real-world last
+        update timestamp\"\n                }\n            }\n        },\n        \"CharacterStatus\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Character lifecycle status\",\n            \"enum\": [\n           \
+        \     \"Alive\",\n                \"Dead\",\n                \"Dormant\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List characters with filtering\",\n    \"description\": \"\",\n    \"tags\"\
         : [\n        \"Character Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listCharacters\"\
         \n}"
@@ -428,51 +442,54 @@ paths:
         In-game death timestamp\"\n                },\n                \"status\": {\n                    \"allOf\": [\n \
         \                       {\n                            \"$ref\": \"#/$defs/CharacterStatus\"\n                   \
         \     }\n                    ],\n                    \"description\": \"Current lifecycle status of the character\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Real-world creation timestamp\"\n      \
-        \          },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Real-world
-        last update timestamp\"\n                },\n                \"familyTree\": {\n                    \"$ref\": \"#/$defs/FamilyTreeResponse\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Family relationships (included
-        if includeFamilyTree=true)\"\n                }\n            }\n        },\n        \"CharacterStatus\": {\n     \
-        \       \"type\": \"string\",\n            \"description\": \"Character lifecycle status\",\n            \"enum\"\
-        : [\n                \"Alive\",\n                \"Dead\",\n                \"Dormant\"\n            ]\n        },\n\
-        \        \"FamilyTreeResponse\": {\n            \"description\": \"Family relationships for a character\",\n     \
-        \       \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n       \
-        \         \"parents\",\n                \"children\",\n                \"siblings\",\n                \"spouses\"\
-        ,\n                \"pastLives\"\n            ],\n            \"properties\": {\n                \"parents\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
-        #/$defs/FamilyMember\"\n                    },\n                    \"description\": \"Parent relationships (biological
-        and adoptive)\"\n                },\n                \"children\": {\n                    \"type\": \"array\",\n \
-        \                   \"items\": {\n                        \"$ref\": \"#/$defs/FamilyMember\"\n                   \
-        \ },\n                    \"description\": \"Child relationships\"\n                },\n                \"siblings\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/FamilyMember\"\n                    },\n                    \"description\": \"Sibling relationships (including
-        half-siblings)\"\n                },\n                \"spouses\": {\n                    \"type\": \"array\",\n \
-        \                   \"items\": {\n                        \"$ref\": \"#/$defs/FamilyMember\"\n                   \
-        \ },\n                    \"description\": \"Spousal relationships (spouse, husband, wife)\"\n                },\n\
-        \                \"pastLives\": {\n                    \"type\": \"array\",\n                    \"items\": {\n  \
-        \                      \"$ref\": \"#/$defs/PastLifeReference\"\n                    },\n                    \"description\"\
-        : \"Previous incarnations (if reincarnation tracked)\"\n                }\n            }\n        },\n        \"FamilyMember\"\
-        : {\n            \"description\": \"Reference to a family member\",\n            \"type\": \"object\",\n         \
-        \   \"additionalProperties\": false,\n            \"required\": [\n                \"characterId\",\n            \
-        \    \"relationshipType\",\n                \"isAlive\"\n            ],\n            \"properties\": {\n         \
-        \       \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
-        \                    \"description\": \"ID of the related character\"\n                },\n                \"name\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Display name (if available)\"\n                },\n                \"relationshipType\": {\n                 \
-        \   \"type\": \"string\",\n                    \"description\": \"Specific relationship type (MOTHER, FATHER, SON,
-        DAUGHTER, etc.)\"\n                },\n                \"isAlive\": {\n                    \"type\": \"boolean\",\n\
-        \                    \"description\": \"Whether the related character is alive\"\n                }\n            }\n\
-        \        },\n        \"PastLifeReference\": {\n            \"description\": \"Reference to a past incarnation\",\n\
+        \n                },\n                \"patronDeityCode\": {\n                    \"type\": \"string\",\n        \
+        \            \"nullable\": true,\n                    \"description\": \"Opaque deity code identifying this character's
+        patron deity. Null if the character has no patron.\\n\"\n                },\n                \"createdAt\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Real-world creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Real-world last update timestamp\"\n                },\n                \"familyTree\"\
+        : {\n                    \"$ref\": \"#/$defs/FamilyTreeResponse\",\n                    \"nullable\": true,\n    \
+        \                \"description\": \"Family relationships (included if includeFamilyTree=true)\"\n                }\n\
+        \            }\n        },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Character lifecycle status\",\n            \"enum\": [\n                \"Alive\",\n                \"Dead\",\n\
+        \                \"Dormant\"\n            ]\n        },\n        \"FamilyTreeResponse\": {\n            \"description\"\
+        : \"Family relationships for a character\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"parents\",\n                \"children\",\n             \
+        \   \"siblings\",\n                \"spouses\",\n                \"pastLives\"\n            ],\n            \"properties\"\
+        : {\n                \"parents\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"$ref\": \"#/$defs/FamilyMember\"\n                    },\n                    \"description\"\
+        : \"Parent relationships (biological and adoptive)\"\n                },\n                \"children\": {\n      \
+        \              \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/FamilyMember\"\
+        \n                    },\n                    \"description\": \"Child relationships\"\n                },\n     \
+        \           \"siblings\": {\n                    \"type\": \"array\",\n                    \"items\": {\n        \
+        \                \"$ref\": \"#/$defs/FamilyMember\"\n                    },\n                    \"description\":
+        \"Sibling relationships (including half-siblings)\"\n                },\n                \"spouses\": {\n        \
+        \            \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/FamilyMember\"\
+        \n                    },\n                    \"description\": \"Spousal relationships (spouse, husband, wife)\"\n\
+        \                },\n                \"pastLives\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"$ref\": \"#/$defs/PastLifeReference\"\n                    },\n     \
+        \               \"description\": \"Previous incarnations (if reincarnation tracked)\"\n                }\n       \
+        \     }\n        },\n        \"FamilyMember\": {\n            \"description\": \"Reference to a family member\",\n\
         \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n  \
-        \              \"characterId\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"ID of the previous incarnation\"\n                },\n                \"name\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Display name of the
-        past life\"\n                },\n                \"deathDate\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When the past life ended\"\n                }\n            }\n        }\n    }\n}"
+        \              \"characterId\",\n                \"relationshipType\",\n                \"isAlive\"\n            ],\n\
+        \            \"properties\": {\n                \"characterId\": {\n                    \"type\": \"string\",\n  \
+        \                  \"format\": \"uuid\",\n                    \"description\": \"ID of the related character\"\n \
+        \               },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Display name (if available)\"\n                },\n    \
+        \            \"relationshipType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Specific relationship type (MOTHER, FATHER, SON, DAUGHTER, etc.)\"\n                },\n                \"isAlive\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the related character
+        is alive\"\n                }\n            }\n        },\n        \"PastLifeReference\": {\n            \"description\"\
+        : \"Reference to a past incarnation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n   \
+        \             \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"ID of the previous incarnation\"\n                },\n                \"\
+        name\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Display name of the past life\"\n                },\n                \"deathDate\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"When the past life ended\"\n                }\n            }\n   \
+        \     }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get character with optional related data (personality, backstory, family)\"\
         ,\n    \"description\": \"Retrieves a character with optional include flags for related data.\\nUse this endpoint
         when you need aggregated character data from multiple services.\\nEach included dataset is fetched from its respective
@@ -753,14 +770,16 @@ paths:
         : true,\n                    \"description\": \"In-game death timestamp\"\n                },\n                \"\
         status\": {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"\
         #/$defs/CharacterStatus\"\n                        }\n                    ],\n                    \"description\"\
-        : \"Current lifecycle status of the character\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Real-world creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
-        \                 \"description\": \"Real-world last update timestamp\"\n                }\n            }\n      \
-        \  },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character
-        lifecycle status\",\n            \"enum\": [\n                \"Alive\",\n                \"Dead\",\n            \
-        \    \"Dormant\"\n            ]\n        }\n    }\n}"
+        : \"Current lifecycle status of the character\"\n                },\n                \"patronDeityCode\": {\n    \
+        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Opaque deity code identifying this character's patron deity. Null if the character has no patron.\\n\"\n     \
+        \           },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"description\": \"Real-world creation timestamp\"\n               \
+        \ },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Real-world last
+        update timestamp\"\n                }\n            }\n        },\n        \"CharacterStatus\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Character lifecycle status\",\n            \"enum\": [\n           \
+        \     \"Alive\",\n                \"Dead\",\n                \"Dormant\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get all characters in a realm (primary query pattern)\",\n    \"description\"\
         : \"\",\n    \"tags\": [\n        \"Character Lookup\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
         getCharactersByRealm\"\n}"
@@ -823,14 +842,16 @@ paths:
         : true,\n                    \"description\": \"In-game death timestamp\"\n                },\n                \"\
         status\": {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"\
         #/$defs/CharacterStatus\"\n                        }\n                    ],\n                    \"description\"\
-        : \"Current lifecycle status of the character\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Real-world creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
-        \                 \"description\": \"Real-world last update timestamp\"\n                }\n            }\n      \
-        \  },\n        \"CharacterStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Character
-        lifecycle status\",\n            \"enum\": [\n                \"Alive\",\n                \"Dead\",\n            \
-        \    \"Dormant\"\n            ]\n        }\n    }\n}"
+        : \"Current lifecycle status of the character\"\n                },\n                \"patronDeityCode\": {\n    \
+        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Opaque deity code identifying this character's patron deity. Null if the character has no patron.\\n\"\n     \
+        \           },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"description\": \"Real-world creation timestamp\"\n               \
+        \ },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Real-world last
+        update timestamp\"\n                }\n            }\n        },\n        \"CharacterStatus\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Character lifecycle status\",\n            \"enum\": [\n           \
+        \     \"Alive\",\n                \"Dead\",\n                \"Dormant\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Transfer character to a different realm\",\n    \"description\": \"Moves
         a character from their current realm to a new target realm.\\nUpdates all indexes, validates the target realm exists
         and is active,\\nand publishes realm transition events.\\n\",\n    \"tags\": [\n        \"Character Management\"\n\
@@ -998,6 +1019,13 @@ components:
           - $ref: '#/components/schemas/CharacterStatus'
           default: alive
           description: Initial lifecycle status for the character
+        patronDeityCode:
+          type: string
+          nullable: true
+          description: >
+            Opaque deity code identifying this character's patron deity.
+            Set by Divine service, Character Lifecycle (generational inheritance),
+            or game extensions. Nullable — not every character has a patron.
     GetCharacterRequest:
       description: Request payload for retrieving a single character by ID
       type: object
@@ -1041,6 +1069,13 @@ components:
           format: date-time
           nullable: true
           description: In-game death timestamp (sets status to dead)
+        patronDeityCode:
+          type: string
+          nullable: true
+          description: >
+            Opaque deity code identifying this character's patron deity.
+            Set to null to clear patron. When changed, Divine auto-bonds/rebonds
+            character domain seeds to the patron deity's seeds.
     DeleteCharacterRequest:
       description: Request payload for permanently deleting a character
       type: object
@@ -1173,6 +1208,12 @@ components:
           allOf:
           - $ref: '#/components/schemas/CharacterStatus'
           description: Current lifecycle status of the character
+        patronDeityCode:
+          type: string
+          nullable: true
+          description: >
+            Opaque deity code identifying this character's patron deity.
+            Null if the character has no patron.
         createdAt:
           type: string
           format: date-time
@@ -1280,6 +1321,12 @@ components:
           allOf:
           - $ref: '#/components/schemas/CharacterStatus'
           description: Current lifecycle status of the character
+        patronDeityCode:
+          type: string
+          nullable: true
+          description: >
+            Opaque deity code identifying this character's patron deity.
+            Null if the character has no patron.
         createdAt:
           type: string
           format: date-time

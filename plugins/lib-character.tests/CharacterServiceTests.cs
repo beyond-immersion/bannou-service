@@ -468,6 +468,200 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    [Fact]
+    public async Task UpdateCharacterAsync_WithPatronDeityCode_ShouldUpdateAndIncludeInChangedFields()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var request = new UpdateCharacterRequest
+        {
+            CharacterId = characterId,
+            PatronDeityCode = "SOLAR"
+        };
+
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmId.ToString());
+
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId,
+                Name = "Test",
+                RealmId = realmId,
+                SpeciesId = Guid.NewGuid(),
+                Status = CharacterStatus.Alive,
+                PatronDeityCode = null,
+                BirthDate = DateTimeOffset.UtcNow,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Capture saved model
+        CharacterModel? savedModel = null;
+        _mockCharacterStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<CharacterModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, CharacterModel, StateOptions?, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag");
+
+        // Capture published event
+        CharacterUpdatedEvent? capturedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                "character.updated",
+                It.IsAny<CharacterUpdatedEvent>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, CharacterUpdatedEvent, CancellationToken>((_, e, _) => capturedEvent = e)
+            .ReturnsAsync(true);
+
+        // Act
+        var (status, response) = await service.UpdateCharacterAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert - Response includes patronDeityCode
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("SOLAR", response.PatronDeityCode);
+
+        // Assert - State saved with patronDeityCode
+        Assert.NotNull(savedModel);
+        Assert.Equal("SOLAR", savedModel.PatronDeityCode);
+
+        // Assert - Event includes patronDeityCode in changedFields
+        Assert.NotNull(capturedEvent);
+        Assert.Contains("patronDeityCode", capturedEvent.ChangedFields);
+        Assert.Equal("SOLAR", capturedEvent.PatronDeityCode);
+    }
+
+    [Fact]
+    public async Task UpdateCharacterAsync_WithSamePatronDeityCode_ShouldNotPublishEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var request = new UpdateCharacterRequest
+        {
+            CharacterId = characterId,
+            PatronDeityCode = "SOLAR"
+        };
+
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmId.ToString());
+
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId,
+                Name = "Test",
+                RealmId = realmId,
+                SpeciesId = Guid.NewGuid(),
+                Status = CharacterStatus.Alive,
+                PatronDeityCode = "SOLAR",
+                BirthDate = DateTimeOffset.UtcNow,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Act
+        var (status, response) = await service.UpdateCharacterAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert - No event published (no actual change)
+        Assert.Equal(StatusCodes.OK, status);
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "character.updated",
+            It.IsAny<CharacterUpdatedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateCharacterAsync_WithNullPatronDeityCode_ShouldNotChangeExistingPatron()
+    {
+        // null in request = "not provided" per current pattern (clearing awaits #722)
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var request = new UpdateCharacterRequest
+        {
+            CharacterId = characterId
+            // PatronDeityCode not set (null)
+        };
+
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmId.ToString());
+
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId,
+                Name = "Test",
+                RealmId = realmId,
+                SpeciesId = Guid.NewGuid(),
+                Status = CharacterStatus.Alive,
+                PatronDeityCode = "LUNAR",
+                BirthDate = DateTimeOffset.UtcNow,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Act
+        var (status, response) = await service.UpdateCharacterAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert - patronDeityCode unchanged
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("LUNAR", response.PatronDeityCode);
+
+        // Assert - No event (no changes)
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "character.updated",
+            It.IsAny<CharacterUpdatedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetCharacterAsync_WithPatronDeityCode_ShouldReturnPatronInResponse()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var request = new GetCharacterRequest { CharacterId = characterId };
+
+        _mockStringStore
+            .Setup(s => s.GetAsync($"character-global-index:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(realmId.ToString());
+
+        _mockCharacterStore
+            .Setup(s => s.GetAsync($"{CHARACTER_KEY_PREFIX}{realmId}:{characterId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CharacterModel
+            {
+                CharacterId = characterId,
+                Name = "Devout Warrior",
+                RealmId = realmId,
+                SpeciesId = Guid.NewGuid(),
+                Status = CharacterStatus.Alive,
+                PatronDeityCode = "STORM_LORD",
+                BirthDate = DateTimeOffset.UtcNow,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Act
+        var (status, response) = await service.GetCharacterAsync(request, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("STORM_LORD", response.PatronDeityCode);
+    }
+
     #endregion
 
     #region ListCharacters Tests

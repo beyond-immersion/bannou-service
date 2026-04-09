@@ -20254,6 +20254,12 @@ components:
           allOf:
           - $ref: '#/components/schemas/CharacterStatus'
           description: Current lifecycle status of the character
+        patronDeityCode:
+          type: string
+          nullable: true
+          description: >
+            Opaque deity code identifying this character's patron deity.
+            Null if the character has no patron.
         createdAt:
           type: string
           format: date-time
@@ -27921,6 +27927,12 @@ components:
           allOf:
           - $ref: '#/components/schemas/CharacterStatus'
           description: Current lifecycle status of the character
+        patronDeityCode:
+          type: string
+          nullable: true
+          description: >
+            Opaque deity code identifying this character's patron deity.
+            Null if the character has no patron.
         createdAt:
           type: string
           format: date-time

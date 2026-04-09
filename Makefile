@@ -1328,5 +1328,20 @@ clean-unreal-sdk: ## Clean Unreal SDK generated files
 # DEVELOPER TOOLS
 # =============================================================================
 
-claude: ## Launch Claude Code with max effort
-	claude --effort max --agent bannou-dev
+claude: ## Launch Claude Code with max effort. Usage: make claude [BUCKET=1..5]
+	@if echo "$(BUCKET)" | grep -qE '^[1-5]$$'; then \
+		BANNOU_MCP_BUCKET=$(BUCKET) claude --effort max --agent bannou-dev --name 'Agent$(BUCKET)'; \
+	else \
+		echo "❌ Error: BUCKET must be 1-5 (got: $(BUCKET))"; \
+		exit 1; \
+	fi
+
+BUCKET ?= 1
+claude-tmux: ## Launch Claude Code in a named tmux session with MCP bucket. Usage: make claude-tmux [BUCKET=1..5]
+	@if echo "$(BUCKET)" | grep -qE '^[1-5]$$'; then \
+		echo "🚀 Launching Claude Code in tmux session 'bucket-$(BUCKET)' (MCP bucket $(BUCKET))..."; \
+		tmux new-session -s "bucket-$(BUCKET)" "BANNOU_MCP_BUCKET=$(BUCKET) claude --effort max --agent bannou-dev --name 'Agent$(BUCKET)'"; \
+	else \
+		echo "❌ Error: BUCKET must be 1-5 (got: $(BUCKET))"; \
+		exit 1; \
+	fi

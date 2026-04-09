@@ -458,10 +458,13 @@ Chest opened (game engine):
 ## Stubs & Unimplemented Features
 
 1. **Growth flush worker (`GenesisGrowthFlushWorkerService`)**: Specified in the implementation map but not implemented. No `BackgroundService` class exists. Config properties `GrowthFlushIntervalSeconds` and `StartupDelaySeconds` are defined but unreferenced. The worker would drain the in-memory growth accumulator and batch-call `ISeedClient.RecordGrowthBatchAsync` per entity, reducing lock contention from one-per-credit to one-per-entity-per-flush.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-26:https://github.com/beyond-immersion/bannou-service/issues/720 -->
 
 2. **`ICurrencyTransactionListener` implementation**: Specified in the implementation map but no listener class exists. This is the microsecond-fast filtering path that checks an in-memory `ConcurrentDictionary<walletId, WalletMapping>` to determine whether a wallet credit/debit belongs to a genesis entity, then buffers the credit in the growth accumulator for the flush worker.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-26:https://github.com/beyond-immersion/bannou-service/issues/720 -->
 
 3. **`ISeedEvolutionListener` implementation**: Specified in the implementation map but no listener class exists. This handles the Dormant → EventBrain → CharacterBrain cognitive stage transitions: spawning actors, creating characters in system realms, binding actors to characters, and creating deferred bond Relationships.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-26:https://github.com/beyond-immersion/bannou-service/issues/720 -->
 
 4. **`IVariableProviderFactory` implementation (`GenesisVariableProviderFactory`)**: Specified in the implementation map but no provider class exists. Would provide `${genesis.*}` variables to the Actor runtime for ABML behavior execution (entity state, wallet balances, inventory counts, capabilities, bond state).
 
@@ -473,7 +476,7 @@ Chest opened (game engine):
 
 ## Potential Extensions
 
-- **Environment-modulated autogain rates**: Currency autogain provides the base rate, but environmental factors (leyline density, biome type, sacred site proximity) could modulate the effective rate. This could be implemented as a `IAutogainRateModifierProvider` DI interface that Genesis (or Currency) discovers, with Environment (L4) providing the modifier. Without Environment, the base rate applies unmodified.
+- **Environment-modulated autogain rates**: Currency autogain provides the base rate, but environmental factors (leyline density, biome type, sacred site proximity) could modulate the effective rate. This could be implemented as a `IAutogainRateModifierProvider` DI interface that Genesis (or Currency) discovers, with Environment (L4) providing the modifier. Without Environment, the base rate applies unmodified. The same `pneuma_density` environmental axis that modulates autogain rates also gates equipment enchantment effectiveness — see [EQUIPMENT-ENCHANTMENT-DUALITY.md](../planning/EQUIPMENT-ENCHANTMENT-DUALITY.md) for the discrete mana tier system (dead/thin/normal/rich).
 
 - **Dungeon core as treasure chest spawner**: A dungeon core's ABML behavior could call `Genesis.CreateEntity(template: "treasure_chest")` to spawn treasure chests within its domain, then credit the chest's mana wallet from the dungeon's own mana reserves. The dungeon decides where to place treasure, how much mana to invest, and what loot tables to associate — all through ABML behavior, not service code.
 
@@ -533,4 +536,12 @@ Chest opened (game engine):
 
 ## Work Tracking
 
-*(All items from 2026-03-20 maintenance resolved — no active work.)*
+### Active
+
+- [#720](https://github.com/beyond-immersion/bannou-service/issues/720): **Runtime growth pipeline** — ICurrencyTransactionListener + GenesisGrowthFlushWorkerService + ISeedEvolutionListener (Stubs #1-#3). The critical path for the wallet-as-universal-counter pattern. Without this, wallet credits don't become seed growth and entities never awaken. Blocks: Divine divinity generation, entity cognitive progression, wallet-driven Quest objectives.
+- [#714](https://github.com/beyond-immersion/bannou-service/issues/714): External seed adoption (nullable seedId on entity create). Prerequisite for Divine deity creation with seed bond capability.
+
+### Pending
+
+- **Stub #4**: `GenesisVariableProviderFactory` (`${genesis.*}` variables for Actor runtime) — no GH issue yet
+- **Stub #5**: Plugin lifecycle hooks (startup wallet map population, seed type re-registration, resource callback registration) — no GH issue yet

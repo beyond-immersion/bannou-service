@@ -510,9 +510,9 @@ Mana absorption enriches the content flywheel at every stage:
 
 The `AbsorptionResistanceFloor` (default 50%) ensures absorption alone cannot kill. This is a deliberate design choice: the drain creates urgency and funds the dungeon, but actual killing requires combat, traps, or environmental hazards. A dungeon that relies purely on drain would starve adventurers of mana but never finish them off -- unless it combines drain with monsters or traps. The two systems are complementary, not substitutes.
 
-### 2. PvP Implications
+### 2. PvP and Equipment Implications
 
-If player characters have mana wallets (via Currency), mana absorption could theoretically drain PvP opponents. This is out of scope for the dungeon mechanic (the absorption field is dungeon-domain-specific, not a combat ability), but the pneuma surface tension model could be extended to PvP contexts via the Status service (a "Mana Siphon" spell that works on the same physics).
+If player characters have mana wallets (via Currency), mana absorption could theoretically drain PvP opponents. This is out of scope for the dungeon mechanic (the absorption field is dungeon-domain-specific, not a combat ability), but the pneuma surface tension model could be extended to PvP contexts via the Status service (a "Mana Siphon" spell that works on the same physics). The same pneuma physics also grounds the equipment enchantment duality system — equipment intent-channeling enchantments use wavelength synchronization to bypass the surface tension barrier, entering the wielder's pneuma shell at resonant frequency. See [EQUIPMENT-ENCHANTMENT-DUALITY.md](EQUIPMENT-ENCHANTMENT-DUALITY.md) for how the surface tension model extends to equipment-to-wielder pneuma flow.
 
 ### 3. Dungeon Entry Pricing
 

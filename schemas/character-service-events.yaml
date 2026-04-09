@@ -74,6 +74,10 @@ x-lifecycle:
           - $ref: 'character-api.yaml#/components/schemas/CharacterStatus'
         required: true
         description: Current lifecycle status of the character (alive, dead, dormant)
+      patronDeityCode:
+        type: string
+        nullable: true
+        description: Opaque deity code identifying this character's patron deity (null if none)
     resource_mapping:
       resource_type: character
       # resource_id_field defaults to characterId (primary key)

@@ -16,7 +16,7 @@ Designs a gradient activation system for equipment where affixes have experienti
 > **Author**: Lysander (design) + Claude (analysis)
 > **Category**: Cross-cutting mechanic (behavioral + Affix extension)
 > **Related Services**: Affix (L4), Loot (L4), Item (L2), Inventory (L2), Collection (L2), Seed (L2), Actor (L2), Puppetmaster (L4), Character-Encounter (L4), Character-Personality (L4), Character-History (L4), Quest (L2), Music (L4), Divine (L4)
-> **Related Plans**: [MEMENTO-INVENTORIES.md](MEMENTO-INVENTORIES.md), [DEATH-AND-PLOT-ARMOR.md](DEATH-AND-PLOT-ARMOR.md), [COMPRESSION-GAMEPLAY-PATTERNS.md](COMPRESSION-GAMEPLAY-PATTERNS.md), [DUNGEON-EXTENSIONS-NOTES.md](DUNGEON-EXTENSIONS-NOTES.md)
+> **Related Plans**: [MEMENTO-INVENTORIES.md](MEMENTO-INVENTORIES.md), [DEATH-AND-PLOT-ARMOR.md](DEATH-AND-PLOT-ARMOR.md), [COMPRESSION-GAMEPLAY-PATTERNS.md](COMPRESSION-GAMEPLAY-PATTERNS.md), [DUNGEON-EXTENSIONS-NOTES.md](DUNGEON-EXTENSIONS-NOTES.md), [EQUIPMENT-ENCHANTMENT-DUALITY.md](EQUIPMENT-ENCHANTMENT-DUALITY.md)
 > **Related Docs**: [ORCHESTRATION-PATTERNS.md](../reference/ORCHESTRATION-PATTERNS.md), [VISION.md](../reference/VISION.md), [PLAYER-VISION.md](../reference/PLAYER-VISION.md)
 > **Related Deep Dives**: [AFFIX.md](../plugins/AFFIX.md), [LOOT.md](../plugins/LOOT.md), [ITEM.md](../plugins/ITEM.md), [SEED.md](../plugins/SEED.md)
 > **Related Issues**: [#490](https://github.com/beyond-immersion/bannou-service/issues/490) (Affix system), [#308](https://github.com/beyond-immersion/bannou-service/issues/308) (additionalProperties cleanup)
@@ -242,6 +242,8 @@ construct_resonance_item:
 The Affix deep dive documents `requiredInfluences` on affix definitions -- these gate which affixes CAN APPEAR on an item based on what influences the item carries. An item with `influences: ["shaper"]` can roll shaper-exclusive affixes. This is an **item-side** requirement evaluated at generation time.
 
 ### The Extension: Character-Side Activation
+
+> **Relationship to Enchantment Duality**: Logos resonance items have activation prerequisites (character-side power scaling). [EQUIPMENT-ENCHANTMENT-DUALITY.md](EQUIPMENT-ENCHANTMENT-DUALITY.md) introduces the enchantment *category* distinction: Type 1 affixes (self-augmenting, modify item stats) vs. Type 2 affixes (intent-channeling, produce Status effects on wielder). These systems are complementary — a logos resonance item can have both Type 1 affixes with activation prerequisites AND Type 2 charm/curse affixes with activation prerequisites. The activation fidelity model applies equally to both types.
 
 Logos resonance items need a second dimension: **activation prerequisites** evaluated against the **wielder** at runtime. An affix is always present on the item (visible, inspectable), but its stat grants only contribute when the wielder meets its activation prerequisites.
 

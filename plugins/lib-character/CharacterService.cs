@@ -155,6 +155,7 @@ public partial class CharacterService : ICharacterService
             SpeciesId = body.SpeciesId,
             BirthDate = body.BirthDate,
             Status = body.Status,
+            PatronDeityCode = body.PatronDeityCode,
             // Auto-set DeathDate when created with Dead status (ensures compression eligibility)
             DeathDate = body.Status == CharacterStatus.Dead ? now : null,
             CreatedAt = now,
@@ -273,6 +274,13 @@ public partial class CharacterService : ICharacterService
         {
             changedFields.Add("speciesId");
             character.SpeciesId = body.SpeciesId.Value;
+        }
+
+        // Handle patron deity changes (opaque string — null in request = not provided)
+        if (body.PatronDeityCode != null && body.PatronDeityCode != character.PatronDeityCode)
+        {
+            changedFields.Add("patronDeityCode");
+            character.PatronDeityCode = body.PatronDeityCode;
         }
 
         character.UpdatedAt = DateTimeOffset.UtcNow;
@@ -650,6 +658,7 @@ public partial class CharacterService : ICharacterService
             BirthDate = character.BirthDate,
             DeathDate = character.DeathDate,
             Status = character.Status,
+            PatronDeityCode = character.PatronDeityCode,
             CreatedAt = character.CreatedAt,
             UpdatedAt = character.UpdatedAt
         };

@@ -58,6 +58,10 @@ components:
           allOf:
           - $ref: '../character-api.yaml#/components/schemas/CharacterStatus'
           description: Current lifecycle status of the character (alive, dead, dormant)
+        patronDeityCode: &id008
+          type: string
+          nullable: true
+          description: Opaque deity code identifying this character's patron deity (null if none)
         createdAt:
           type: string
           format: date-time
@@ -102,6 +106,7 @@ components:
         birthDate: *id005
         deathDate: *id006
         status: *id007
+        patronDeityCode: *id008
         createdAt:
           type: string
           format: date-time
@@ -150,6 +155,7 @@ components:
         birthDate: *id005
         deathDate: *id006
         status: *id007
+        patronDeityCode: *id008
         createdAt:
           type: string
           format: date-time

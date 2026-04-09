@@ -28,7 +28,7 @@
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `character:{realmId}:{characterId}` | `CharacterModel` | Full character data (realm-partitioned) |
+| `character:{realmId}:{characterId}` | `CharacterModel` | Full character data (realm-partitioned, includes patronDeityCode) |
 | `realm-index:{realmId}` | `List<string>` | Character IDs in a realm (for index management) |
 | `character-global-index:{characterId}` | `string` | Character ID to realm ID mapping (for ID-only lookups) |
 | `archive:{characterId}` | `CharacterArchiveModel` | Compressed character text summaries |
@@ -128,12 +128,12 @@ POST /character/create | Roles: [admin]
 CALL IRealmClient.RealmExistsAsync(realmId)           -> 400 if not found or deprecated
 CALL ISpeciesClient.GetSpeciesAsync(speciesId)         -> 400 if not found or not in realm
 // Auto-set DeathDate if Status=Dead and no DeathDate provided
-WRITE character:{realmId}:{characterId} <- new CharacterModel from request
+WRITE character:{realmId}:{characterId} <- new CharacterModel from request (includes patronDeityCode if provided)
 // AddCharacterToRealmIndex (ETag retry loop up to RealmIndexUpdateMaxRetries):
 READ realm-index:{realmId} [with ETag]
 ETAG-WRITE realm-index:{realmId} <- list with characterId added
 WRITE character-global-index:{characterId} <- realmId
-PUBLISH character.created { characterId, name, realmId, speciesId, birthDate, status }
+PUBLISH character.created { characterId, name, realmId, speciesId, birthDate, status, patronDeityCode }
 PUBLISH character.realm.joined { characterId, realmId, previousRealmId: null }
 RETURN (200, CharacterResponse)
 ```
@@ -157,9 +157,10 @@ READ character-global-index:{characterId}              -> 404 if null
 READ character:{realmId}:{characterId}                 -> 404 if null
 // Apply partial update: only fields present in request
 // DeathDate set -> auto-set Status=Dead; Status=Dead -> auto-set DeathDate
+// PatronDeityCode: track in changedFields when provided and value differs (null clears patron)
 WRITE character:{realmId}:{characterId} <- mutated CharacterModel
 IF changedFields.Count > 0
-  PUBLISH character.updated { characterId, name, realmId, speciesId, status, changedFields }
+  PUBLISH character.updated { characterId, name, realmId, speciesId, status, patronDeityCode, changedFields }
   PUSH character.updated to entity sessions { characterId, changedFields, name?, status?, deathDate? }
 RETURN (200, CharacterResponse)
 ```

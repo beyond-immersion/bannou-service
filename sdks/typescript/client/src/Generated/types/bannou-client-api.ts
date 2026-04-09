@@ -15133,6 +15133,8 @@ export interface components {
       deathDate?: string | null;
       /** @description Current lifecycle status of the character */
       status: components['schemas']['CharacterStatus'];
+      /** @description Opaque deity code identifying this character's patron deity. Null if the character has no patron. */
+      patronDeityCode?: string | null;
       /**
        * Format: date-time
        * @description Real-world creation timestamp
@@ -19809,6 +19811,8 @@ export interface components {
       deathDate?: string | null;
       /** @description Current lifecycle status of the character */
       status: components['schemas']['CharacterStatus'];
+      /** @description Opaque deity code identifying this character's patron deity. Null if the character has no patron. */
+      patronDeityCode?: string | null;
       /**
        * Format: date-time
        * @description Real-world creation timestamp

@@ -62,6 +62,11 @@ public partial class CharacterController
                     ],
                     "default": "alive",
                     "description": "Initial lifecycle status for the character"
+                },
+                "patronDeityCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Opaque deity code identifying this character's patron deity. Set by Divine service, Character Lifecycle (generational inheritance), or game extensions. Nullable \u2014 not every character has a patron.\n"
                 }
             }
         },
@@ -134,6 +139,11 @@ public partial class CharacterController
                         }
                     ],
                     "description": "Current lifecycle status of the character"
+                },
+                "patronDeityCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Opaque deity code identifying this character's patron deity. Null if the character has no patron.\n"
                 },
                 "createdAt": {
                     "type": "string",
@@ -298,6 +308,11 @@ public partial class CharacterController
                     ],
                     "description": "Current lifecycle status of the character"
                 },
+                "patronDeityCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Opaque deity code identifying this character's patron deity. Null if the character has no patron.\n"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -425,6 +440,11 @@ public partial class CharacterController
                     "format": "date-time",
                     "nullable": true,
                     "description": "In-game death timestamp (sets status to dead)"
+                },
+                "patronDeityCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Opaque deity code identifying this character's patron deity. Set to null to clear patron. When changed, Divine auto-bonds/rebonds character domain seeds to the patron deity's seeds.\n"
                 }
             }
         },
@@ -497,6 +517,11 @@ public partial class CharacterController
                         }
                     ],
                     "description": "Current lifecycle status of the character"
+                },
+                "patronDeityCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Opaque deity code identifying this character's patron deity. Null if the character has no patron.\n"
                 },
                 "createdAt": {
                     "type": "string",
@@ -824,6 +849,11 @@ public partial class CharacterController
                     ],
                     "description": "Current lifecycle status of the character"
                 },
+                "patronDeityCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Opaque deity code identifying this character's patron deity. Null if the character has no patron.\n"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -991,6 +1021,11 @@ public partial class CharacterController
                         }
                     ],
                     "description": "Current lifecycle status of the character"
+                },
+                "patronDeityCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Opaque deity code identifying this character's patron deity. Null if the character has no patron.\n"
                 },
                 "createdAt": {
                     "type": "string",
@@ -1812,6 +1847,11 @@ public partial class CharacterController
                     ],
                     "description": "Current lifecycle status of the character"
                 },
+                "patronDeityCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Opaque deity code identifying this character's patron deity. Null if the character has no patron.\n"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -1980,6 +2020,11 @@ public partial class CharacterController
                         }
                     ],
                     "description": "Current lifecycle status of the character"
+                },
+                "patronDeityCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Opaque deity code identifying this character's patron deity. Null if the character has no patron.\n"
                 },
                 "createdAt": {
                     "type": "string",

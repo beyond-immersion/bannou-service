@@ -103,7 +103,7 @@ Fidelity is continuous, not binary. A character with `melee.sword` depth 4.0 has
 
 ## Magic Is Not a Plugin
 
-Arcadia's magic is metaphysically grounded — thermodynamic pneuma control with six-stage spellcasting. The mechanical representation maps identically to skills:
+Arcadia's magic is metaphysically grounded — thermodynamic pneuma control with six-stage spellcasting. Equipment enchantment follows the same physics: items draw environmental pneuma and channel it through inscribed logos patterns, either reinforcing the item itself (Type 1: self-augmentation) or influencing the wielder via wavelength synchronization (Type 2: intent-channeling). See [EQUIPMENT-ENCHANTMENT-DUALITY.md](../planning/EQUIPMENT-ENCHANTMENT-DUALITY.md) for the full design. The mechanical representation of magic maps identically to skills:
 
 - **Spell proficiency** -> Seed domain depths (`magic.fire`, `magic.pneuma_control`, `magic.divination`)
 - **Spell unlocks** -> License board nodes or Collection entries

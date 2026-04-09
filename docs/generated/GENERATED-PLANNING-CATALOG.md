@@ -109,6 +109,12 @@ Explores dungeon system extensions beyond the core DUNGEON deep dive, including 
 
 Designs a mana absorption mechanic where dungeons continuously sap mana from intruders who cross their domain boundary, creating a natural time limit on exploration, an economic cost for dungeon diving, and a non-lethal income stream that fuels the dungeon's own mana economy. The mechanic scales with dungeon cognitive stage (Dormant through Ancient) and composes entirely from existing Bannou primitives (Currency, Status, Seed, Actor, Environment) with no new services required. Inspired by Solo Leveling gate mechanics and Dungeon Core LitRPG, with formal grounding in Arcadia's pneuma thermodynamics.
 
+### Equipment Enchantment Duality: Intent-Channeled Pneuma and the Unified Theory of Arcadian Technology {#equipment-enchantment-duality}
+
+**Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-04-01 | **North Stars**: #1, #2, #5 | [Full Document](../planning/EQUIPMENT-ENCHANTMENT-DUALITY.md)
+
+Designs a dual enchantment system grounded in Arcadia's pneuma/logos metaphysics where equipment draws environmental mana (active pneuma) and channels it through inscribed logos patterns. **Type 1 (self-augmenting)** enchantments direct pneuma inward to reinforce the item's own physical properties — sharper edges, harder material, greater durability. These are standard affixes in the existing Affix system. **Type 2 (intent-channeling)** enchantments direct pneuma outward through the wielder via wavelength synchronization, carrying the crafter's imbued intent as a subconscious influence — steadier hands, sharper focus, combat instincts, behavioral nudges. This establishes that **all crafting in a mana-rich world is inherently an act of enchantment** — every crafter unconsciously imbues trace intent through the act of creation, with magnitude scaling from imperceptible (novice) to powerful (grandmaster). Environmental mana availability is modeled as discrete tiers (dead/thin/normal/rich) producing Status effects rather than continuous recalculation. Prolonged exposure to strong intent enchantments produces slow personality drift via Character Personality's experience-driven trait evolution. Rare individuals immune to intent channeling can redirect all equipment mana as raw pneuma fuel. Composes entirely from existing service primitives with zero new plugins required.
+
 ### Information Economy: Knowledge as Commodity in Living Worlds {#information-economy}
 
 **Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-03-13 | **North Stars**: #1, #2, #5 | [Full Document](../planning/INFORMATION-ECONOMY.md)
@@ -235,7 +241,7 @@ The MCP (Model Context Protocol) server is a new L3 App Features plugin that exp
 
 ## Summary
 
-- **Documents in catalog**: 35
+- **Documents in catalog**: 36
 
 ---
 

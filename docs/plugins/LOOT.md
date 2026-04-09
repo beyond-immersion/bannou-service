@@ -61,6 +61,8 @@ In Arcadia's metaphysics, most dungeon creatures are pneuma echoes -- not truly 
 | **Currency drops** | Mana condensation | Raw pneuma that didn't attach to logos, usable as currency |
 | **Quality tier** | Echo fidelity | How complete the logos seed was -- higher fidelity echoes leave richer fragments |
 | **Loot modifier (luck)** | Logos attunement | Character's affinity for perceiving and attracting logos patterns |
+
+> **Enchantment duality on generated loot**: Items produced by loot generation carry Type 1 (self-augmenting) affixes from the standard generation pipeline. Items created during formative events by god-actors (per [LOGOS-RESONANCE-ITEMS.md](../planning/LOGOS-RESONANCE-ITEMS.md)) may additionally carry Type 2 (intent-channeling) affixes — the god-actor's intent crystallizing alongside the dying pneuma. The god's personality shapes the intent pattern: a war-domain god's resonance artifacts carry combat-focus charms, while a death-domain god's carry mortality-awareness effects. See [EQUIPMENT-ENCHANTMENT-DUALITY.md](../planning/EQUIPMENT-ENCHANTMENT-DUALITY.md) for the full enchantment duality design.
 | **Pity system** | Divine attention | A watching god notices the character's persistent effort and intervenes |
 | **Loot table** | Species logos template | The inherited pattern of what a creature type can produce when dispersed |
 | **Context modifier** | Leyline influence | Local pneuma density, divine attention, seasonal factors |

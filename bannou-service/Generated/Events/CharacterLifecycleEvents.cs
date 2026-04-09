@@ -102,6 +102,12 @@ public partial class CharacterCreatedEvent : BaseServiceEvent
     public CharacterStatus Status { get; set; } = default!;
 
     /// <summary>
+    /// Opaque deity code identifying this character's patron deity (null if none)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("patronDeityCode")]
+    public string? PatronDeityCode { get; set; } = default!;
+
+    /// <summary>
     /// Timestamp when the character was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
@@ -188,6 +194,12 @@ public partial class CharacterUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public CharacterStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Opaque deity code identifying this character's patron deity (null if none)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("patronDeityCode")]
+    public string? PatronDeityCode { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the character was created
@@ -284,6 +296,12 @@ public partial class CharacterDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public CharacterStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Opaque deity code identifying this character's patron deity (null if none)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("patronDeityCode")]
+    public string? PatronDeityCode { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the character was created

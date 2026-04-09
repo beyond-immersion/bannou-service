@@ -5980,6 +5980,10 @@ struct FCharacterResponse
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> Status;
 
+    /** Opaque deity code identifying this character's patron deity. Null if the character has no patron. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString PatronDeityCode;
+
     /** Real-world creation timestamp */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FDateTime CreatedAt;
@@ -13237,6 +13241,10 @@ struct FEnrichedCharacterResponse
     /** Current lifecycle status of the character */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> Status;
+
+    /** Opaque deity code identifying this character's patron deity. Null if the character has no patron. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString PatronDeityCode;
 
     /** Real-world creation timestamp */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")

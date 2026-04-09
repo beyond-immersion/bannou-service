@@ -440,6 +440,13 @@ components:
           - $ref: '#/components/schemas/CharacterStatus'
           default: alive
           description: Initial lifecycle status for the character
+        patronDeityCode:
+          type: string
+          nullable: true
+          description: >
+            Opaque deity code identifying this character's patron deity.
+            Set by Divine service, Character Lifecycle (generational inheritance),
+            or game extensions. Nullable — not every character has a patron.
 
     GetCharacterRequest:
       description: Request payload for retrieving a single character by ID
@@ -485,6 +492,13 @@ components:
           format: date-time
           nullable: true
           description: In-game death timestamp (sets status to dead)
+        patronDeityCode:
+          type: string
+          nullable: true
+          description: >
+            Opaque deity code identifying this character's patron deity.
+            Set to null to clear patron. When changed, Divine auto-bonds/rebonds
+            character domain seeds to the patron deity's seeds.
 
     DeleteCharacterRequest:
       description: Request payload for permanently deleting a character
@@ -623,6 +637,12 @@ components:
           allOf:
           - $ref: '#/components/schemas/CharacterStatus'
           description: Current lifecycle status of the character
+        patronDeityCode:
+          type: string
+          nullable: true
+          description: >
+            Opaque deity code identifying this character's patron deity.
+            Null if the character has no patron.
         createdAt:
           type: string
           format: date-time
@@ -737,6 +757,12 @@ components:
           allOf:
           - $ref: '#/components/schemas/CharacterStatus'
           description: Current lifecycle status of the character
+        patronDeityCode:
+          type: string
+          nullable: true
+          description: >
+            Opaque deity code identifying this character's patron deity.
+            Null if the character has no patron.
         createdAt:
           type: string
           format: date-time

@@ -6,6 +6,7 @@
 > **Last Updated**: 2026-03-09
 > **North Stars**: #1, #2
 > **Related Plugins**: Actor, Divine, Dungeon, Seed, Collection, Character, Relationship, Item, Status, Puppetmaster
+> **Related Plans**: [EQUIPMENT-ENCHANTMENT-DUALITY.md](EQUIPMENT-ENCHANTMENT-DUALITY.md) (§ Living Weapon Enchantment Awareness, § Pre-Sentience personality shaping)
 
 ---
 
@@ -260,6 +261,7 @@ Living weapons require **no new Bannou plugin**. They compose entirely from exis
 | History | **lib-character-history** | Forging origin, previous wielders, legendary deeds |
 | Bond | **lib-relationship** | Wielder bond (weapon-character relationship type) |
 | Combat effects | **lib-status** (optional) | Buffs/effects the weapon grants its wielder based on seed capabilities |
+| Intent enchantments | **lib-affix** + **lib-status** | Pre-sentient weapons may carry Type 2 intent-channeling enchantments (charms/curses) that influence wielders via wavelength-synchronized pneuma. Awakened weapons may become aware of and manipulate their own enchantments. See [EQUIPMENT-ENCHANTMENT-DUALITY.md](EQUIPMENT-ENCHANTMENT-DUALITY.md) |
 
 The game engine / SDK drives the growth events. The services handle everything else.
 

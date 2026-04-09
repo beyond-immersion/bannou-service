@@ -678,6 +678,7 @@ public partial class CharacterService
             BirthDate = model.BirthDate,
             DeathDate = model.DeathDate,
             Status = model.Status,
+            PatronDeityCode = model.PatronDeityCode,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt
         };
@@ -704,6 +705,7 @@ public partial class CharacterService
             BirthDate = character.BirthDate,
             DeathDate = character.DeathDate,
             Status = character.Status,
+            PatronDeityCode = character.PatronDeityCode,
             CreatedAt = character.CreatedAt,
             UpdatedAt = character.UpdatedAt
         };
@@ -729,6 +731,7 @@ public partial class CharacterService
             BirthDate = character.BirthDate,
             DeathDate = character.DeathDate,
             Status = character.Status,
+            PatronDeityCode = character.PatronDeityCode,
             CreatedAt = character.CreatedAt,
             UpdatedAt = character.UpdatedAt,
             ChangedFields = changedFields.ToList()
@@ -755,6 +758,7 @@ public partial class CharacterService
             BirthDate = character.BirthDate,
             DeathDate = character.DeathDate,
             Status = character.Status,
+            PatronDeityCode = character.PatronDeityCode,
             CreatedAt = character.CreatedAt,
             UpdatedAt = character.UpdatedAt,
             DeletedReason = deletedReason
