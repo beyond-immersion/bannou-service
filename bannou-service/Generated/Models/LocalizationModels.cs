@@ -182,34 +182,65 @@ public partial class ListCategoriesRequest
 public partial class UpdateCategoryRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _categoryId = default!;
     /// <summary>
     /// Category to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("categoryId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CategoryId { get; set; } = default!;
+    public System.Guid CategoryId { get => _categoryId; set { _categoryId = value; _TrackChange("categoryId"); } }
 
+    private string? _description = default!;
     /// <summary>
     /// Updated description (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? Description { get; set; } = default!;
+    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
+    private ValidationMode? _validationMode = default!;
     /// <summary>
     /// Updated validation mode (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("validationMode")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ValidationMode? ValidationMode { get; set; } = default!;
+    public ValidationMode? ValidationMode { get => _validationMode; set { _validationMode = value; _TrackChange("validationMode"); } }
 
+    private string? _defaultLanguage = default!;
     /// <summary>
     /// Updated default language (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("defaultLanguage")]
     [System.ComponentModel.DataAnnotations.StringLength(35)]
-    public string? DefaultLanguage { get; set; } = default!;
+    public string? DefaultLanguage { get => _defaultLanguage; set { _defaultLanguage = value; _TrackChange("defaultLanguage"); } }
 
 }
 
@@ -365,14 +396,43 @@ public partial class ListCategoriesResponse
 public partial class SetEntryRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _categoryId = default!;
     /// <summary>
     /// Category this entry belongs to
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("categoryId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CategoryId { get; set; } = default!;
+    public System.Guid CategoryId { get => _categoryId; set { _categoryId = value; _TrackChange("categoryId"); } }
 
+    private string _key = default!;
     /// <summary>
     /// Dot-separated entry key (e.g., "direwolf.name", "rescue-princess.title")
     /// </summary>
@@ -381,8 +441,9 @@ public partial class SetEntryRequest
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9._-]*$")]
-    public string Key { get; set; } = default!;
+    public string Key { get => _key; set { _key = value; _TrackChange("key"); } }
 
+    private string _language = default!;
     /// <summary>
     /// BCP 47 language tag (e.g., "en", "ja-JP", "fr-FR")
     /// </summary>
@@ -390,8 +451,9 @@ public partial class SetEntryRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(35, MinimumLength = 2)]
-    public string Language { get; set; } = default!;
+    public string Language { get => _language; set { _language = value; _TrackChange("language"); } }
 
+    private string _text = default!;
     /// <summary>
     /// Translated text value (supports {0} parameter placeholders)
     /// </summary>
@@ -399,20 +461,22 @@ public partial class SetEntryRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(10000, MinimumLength = 1)]
-    public string Text { get; set; } = default!;
+    public string Text { get => _text; set { _text = value; _TrackChange("text"); } }
 
+    private string? _pronunciation = default!;
     /// <summary>
     /// IPA phoneme transcription for TTS engines (e.g., "ˈdaɪ.ɚ.wʊlf")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pronunciation")]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? Pronunciation { get; set; } = default!;
+    public string? Pronunciation { get => _pronunciation; set { _pronunciation = value; _TrackChange("pronunciation"); } }
 
+    private System.Collections.Generic.ICollection<RubyAnnotation>? _ruby = default!;
     /// <summary>
     /// CJK ruby text annotations for furigana/pinyin display
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ruby")]
-    public System.Collections.Generic.ICollection<RubyAnnotation>? Ruby { get; set; } = default!;
+    public System.Collections.Generic.ICollection<RubyAnnotation>? Ruby { get => _ruby; set { _ruby = value; _TrackChange("ruby"); } }
 
 }
 

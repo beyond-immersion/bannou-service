@@ -395,14 +395,43 @@ public partial class ListAchievementDefinitionsResponse
 public partial class UpdateAchievementDefinitionRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _gameServiceId = default!;
     /// <summary>
     /// ID of the game service
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
+    public System.Guid GameServiceId { get => _gameServiceId; set { _gameServiceId = value; _TrackChange("gameServiceId"); } }
 
+    private string _achievementId = default!;
     /// <summary>
     /// ID of the achievement to update
     /// </summary>
@@ -410,81 +439,92 @@ public partial class UpdateAchievementDefinitionRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
-    public string AchievementId { get; set; } = default!;
+    public string AchievementId { get => _achievementId; set { _achievementId = value; _TrackChange("achievementId"); } }
 
+    private string? _displayName = default!;
     /// <summary>
     /// New display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
-    public string? DisplayName { get; set; } = default!;
+    public string? DisplayName { get => _displayName; set { _displayName = value; _TrackChange("displayName"); } }
 
+    private string? _description = default!;
     /// <summary>
     /// New description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? Description { get; set; } = default!;
+    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
+    private string? _category = default!;
     /// <summary>
     /// New category for UI grouping
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
-    public string? Category { get; set; } = default!;
+    public string? Category { get => _category; set { _category = value; _TrackChange("category"); } }
 
+    private bool? _isActive = default!;
     /// <summary>
     /// New active status
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
-    public bool? IsActive { get; set; } = default!;
+    public bool? IsActive { get => _isActive; set { _isActive = value; _TrackChange("isActive"); } }
 
+    private System.Collections.Generic.ICollection<PlatformMapping>? _platformMappings = default!;
     /// <summary>
     /// Updated platform ID mappings
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("platformMappings")]
-    public System.Collections.Generic.ICollection<PlatformMapping>? PlatformMappings { get; set; } = default!;
+    public System.Collections.Generic.ICollection<PlatformMapping>? PlatformMappings { get => _platformMappings; set { _platformMappings = value; _TrackChange("platformMappings"); } }
 
+    private string? _scoreType = default!;
     /// <summary>
     /// Score type code for matching analytics.score.updated events (progressive achievements)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scoreType")]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
-    public string? ScoreType { get; set; } = default!;
+    public string? ScoreType { get => _scoreType; set { _scoreType = value; _TrackChange("scoreType"); } }
 
+    private string? _milestoneType = default!;
     /// <summary>
     /// Milestone type code for matching analytics.milestone.reached events
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("milestoneType")]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
-    public string? MilestoneType { get; set; } = default!;
+    public string? MilestoneType { get => _milestoneType; set { _milestoneType = value; _TrackChange("milestoneType"); } }
 
+    private double? _milestoneValue = default!;
     /// <summary>
     /// Expected milestone value for matching analytics.milestone.reached events
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("milestoneValue")]
-    public double? MilestoneValue { get; set; } = default!;
+    public double? MilestoneValue { get => _milestoneValue; set { _milestoneValue = value; _TrackChange("milestoneValue"); } }
 
+    private string? _milestoneName = default!;
     /// <summary>
     /// Expected milestone name for matching analytics.milestone.reached events
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("milestoneName")]
     [System.ComponentModel.DataAnnotations.StringLength(200)]
-    public string? MilestoneName { get; set; } = default!;
+    public string? MilestoneName { get => _milestoneName; set { _milestoneName = value; _TrackChange("milestoneName"); } }
 
+    private string? _leaderboardId = default!;
     /// <summary>
     /// Leaderboard ID for matching leaderboard.rank.changed events
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("leaderboardId")]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
-    public string? LeaderboardId { get; set; } = default!;
+    public string? LeaderboardId { get => _leaderboardId; set { _leaderboardId = value; _TrackChange("leaderboardId"); } }
 
+    private long? _rankThreshold = default!;
     /// <summary>
     /// Rank threshold for leaderboard achievements (unlock when rank &lt;= threshold)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("rankThreshold")]
     [System.ComponentModel.DataAnnotations.Range(1L, long.MaxValue)]
-    public long? RankThreshold { get; set; } = default!;
+    public long? RankThreshold { get => _rankThreshold; set { _rankThreshold = value; _TrackChange("rankThreshold"); } }
 
 }
 
@@ -842,14 +882,43 @@ public partial class AchievementProgress
 public partial class UpdateAchievementProgressRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _gameServiceId = default!;
     /// <summary>
     /// ID of the game service
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
+    public System.Guid GameServiceId { get => _gameServiceId; set { _gameServiceId = value; _TrackChange("gameServiceId"); } }
 
+    private string _achievementId = default!;
     /// <summary>
     /// ID of the achievement
     /// </summary>
@@ -857,16 +926,18 @@ public partial class UpdateAchievementProgressRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
-    public string AchievementId { get; set; } = default!;
+    public string AchievementId { get => _achievementId; set { _achievementId = value; _TrackChange("achievementId"); } }
 
+    private System.Guid _entityId = default!;
     /// <summary>
     /// ID of the entity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EntityId { get; set; } = default!;
+    public System.Guid EntityId { get => _entityId; set { _entityId = value; _TrackChange("entityId"); } }
 
+    private EntityType _entityType = default!;
     /// <summary>
     /// Entity type receiving the progress increment
     /// </summary>
@@ -874,14 +945,15 @@ public partial class UpdateAchievementProgressRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EntityType EntityType { get; set; } = default!;
+    public EntityType EntityType { get => _entityType; set { _entityType = value; _TrackChange("entityType"); } }
 
+    private int _increment = default!;
     /// <summary>
     /// Amount to increment progress
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("increment")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
-    public int Increment { get; set; } = default!;
+    public int Increment { get => _increment; set { _increment = value; _TrackChange("increment"); } }
 
 }
 

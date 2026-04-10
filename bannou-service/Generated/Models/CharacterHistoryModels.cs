@@ -532,14 +532,43 @@ public partial class GetBackstoryRequest
 public partial class SetBackstoryRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _characterId = default!;
     /// <summary>
     /// ID of the character to set backstory for
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public System.Guid CharacterId { get => _characterId; set { _characterId = value; _TrackChange("characterId"); } }
 
+    private System.Collections.Generic.ICollection<BackstoryElement> _elements = new System.Collections.ObjectModel.Collection<BackstoryElement>();
     /// <summary>
     /// Backstory elements to set
     /// </summary>
@@ -547,15 +576,16 @@ public partial class SetBackstoryRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.MinLength(1)]
-    public System.Collections.Generic.ICollection<BackstoryElement> Elements { get; set; } = new System.Collections.ObjectModel.Collection<BackstoryElement>();
+    public System.Collections.Generic.ICollection<BackstoryElement> Elements { get => _elements; set { _elements = value; _TrackChange("elements"); } }
 
+    private bool _replaceExisting = false;
     /// <summary>
     /// If true, replace all existing elements.
     /// <br/>If false, merge with existing (update matching type+key pairs).
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("replaceExisting")]
-    public bool ReplaceExisting { get; set; } = false;
+    public bool ReplaceExisting { get => _replaceExisting; set { _replaceExisting = value; _TrackChange("replaceExisting"); } }
 
 }
 

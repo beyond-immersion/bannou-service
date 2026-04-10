@@ -524,78 +524,116 @@ public partial class ListContainersRequest
 public partial class UpdateContainerRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _containerId = default!;
     /// <summary>
     /// Container ID to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("containerId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContainerId { get; set; } = default!;
+    public System.Guid ContainerId { get => _containerId; set { _containerId = value; _TrackChange("containerId"); } }
 
+    private int? _maxSlots = default!;
     /// <summary>
     /// New max slots
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxSlots")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
-    public int? MaxSlots { get; set; } = default!;
+    public int? MaxSlots { get => _maxSlots; set { _maxSlots = value; _TrackChange("maxSlots"); } }
 
+    private double? _maxWeight = default!;
     /// <summary>
     /// New max weight
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxWeight")]
     [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
-    public double? MaxWeight { get; set; } = default!;
+    public double? MaxWeight { get => _maxWeight; set { _maxWeight = value; _TrackChange("maxWeight"); } }
 
+    private int? _gridWidth = default!;
     /// <summary>
     /// New grid width
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gridWidth")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
-    public int? GridWidth { get; set; } = default!;
+    public int? GridWidth { get => _gridWidth; set { _gridWidth = value; _TrackChange("gridWidth"); } }
 
+    private int? _gridHeight = default!;
     /// <summary>
     /// New grid height
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gridHeight")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
-    public int? GridHeight { get; set; } = default!;
+    public int? GridHeight { get => _gridHeight; set { _gridHeight = value; _TrackChange("gridHeight"); } }
 
+    private double? _maxVolume = default!;
     /// <summary>
     /// New max volume
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxVolume")]
     [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
-    public double? MaxVolume { get; set; } = default!;
+    public double? MaxVolume { get => _maxVolume; set { _maxVolume = value; _TrackChange("maxVolume"); } }
 
+    private System.Collections.Generic.ICollection<string>? _allowedCategories = default!;
     /// <summary>
     /// New allowed categories
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("allowedCategories")]
-    public System.Collections.Generic.ICollection<string>? AllowedCategories { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? AllowedCategories { get => _allowedCategories; set { _allowedCategories = value; _TrackChange("allowedCategories"); } }
 
+    private System.Collections.Generic.ICollection<string>? _forbiddenCategories = default!;
     /// <summary>
     /// New forbidden categories
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("forbiddenCategories")]
-    public System.Collections.Generic.ICollection<string>? ForbiddenCategories { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? ForbiddenCategories { get => _forbiddenCategories; set { _forbiddenCategories = value; _TrackChange("forbiddenCategories"); } }
 
+    private System.Collections.Generic.ICollection<string>? _allowedTags = default!;
     /// <summary>
     /// New allowed tags
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("allowedTags")]
-    public System.Collections.Generic.ICollection<string>? AllowedTags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? AllowedTags { get => _allowedTags; set { _allowedTags = value; _TrackChange("allowedTags"); } }
 
+    private System.Collections.Generic.ICollection<string>? _tags = default!;
     /// <summary>
     /// New container tags
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Tags { get => _tags; set { _tags = value; _TrackChange("tags"); } }
 
+    private object? _metadata = default!;
     /// <summary>
     /// New game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
+    public object? Metadata { get => _metadata; set { _metadata = value; _TrackChange("metadata"); } }
 
 }
 

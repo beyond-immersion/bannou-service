@@ -1441,103 +1441,145 @@ public partial class ListModesRequest
 public partial class UpdateModeRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private string _code = default!;
     /// <summary>
     /// Mode code to update (identifier, not updatable)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Code { get; set; } = default!;
+    public string Code { get => _code; set { _code = value; _TrackChange("code"); } }
 
+    private string? _name = default!;
     /// <summary>
     /// Updated display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
-    public string? Name { get; set; } = default!;
+    public string? Name { get => _name; set { _name = value; _TrackChange("name"); } }
 
+    private string? _description = default!;
     /// <summary>
     /// Updated description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string? Description { get; set; } = default!;
+    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
+    private decimal? _baseSpeedKmPerGameHour = default!;
     /// <summary>
     /// Updated base speed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("baseSpeedKmPerGameHour")]
     [System.ComponentModel.DataAnnotations.Range(typeof(decimal), "0.1", "79228162514264337593543950335")]
-    public decimal? BaseSpeedKmPerGameHour { get; set; } = default!;
+    public decimal? BaseSpeedKmPerGameHour { get => _baseSpeedKmPerGameHour; set { _baseSpeedKmPerGameHour = value; _TrackChange("baseSpeedKmPerGameHour"); } }
 
+    private System.Collections.Generic.ICollection<TerrainSpeedModifier>? _terrainSpeedModifiers = default!;
     /// <summary>
     /// Updated per-terrain speed multipliers
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("terrainSpeedModifiers")]
-    public System.Collections.Generic.ICollection<TerrainSpeedModifier>? TerrainSpeedModifiers { get; set; } = default!;
+    public System.Collections.Generic.ICollection<TerrainSpeedModifier>? TerrainSpeedModifiers { get => _terrainSpeedModifiers; set { _terrainSpeedModifiers = value; _TrackChange("terrainSpeedModifiers"); } }
 
+    private int? _passengerCapacity = default!;
     /// <summary>
     /// Updated passenger capacity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("passengerCapacity")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
-    public int? PassengerCapacity { get; set; } = default!;
+    public int? PassengerCapacity { get => _passengerCapacity; set { _passengerCapacity = value; _TrackChange("passengerCapacity"); } }
 
+    private decimal? _cargoCapacityKg = default!;
     /// <summary>
     /// Updated cargo capacity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cargoCapacityKg")]
     [System.ComponentModel.DataAnnotations.Range(typeof(decimal), "0", "79228162514264337593543950335")]
-    public decimal? CargoCapacityKg { get; set; } = default!;
+    public decimal? CargoCapacityKg { get => _cargoCapacityKg; set { _cargoCapacityKg = value; _TrackChange("cargoCapacityKg"); } }
 
+    private decimal? _cargoSpeedPenaltyRate = default!;
     /// <summary>
     /// Updated per-mode cargo speed penalty rate
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cargoSpeedPenaltyRate")]
     [System.ComponentModel.DataAnnotations.Range(typeof(decimal), "0", "1")]
-    public decimal? CargoSpeedPenaltyRate { get; set; } = default!;
+    public decimal? CargoSpeedPenaltyRate { get => _cargoSpeedPenaltyRate; set { _cargoSpeedPenaltyRate = value; _TrackChange("cargoSpeedPenaltyRate"); } }
 
+    private System.Collections.Generic.ICollection<string>? _compatibleTerrainTypes = default!;
     /// <summary>
     /// Updated terrain compatibility list
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("compatibleTerrainTypes")]
-    public System.Collections.Generic.ICollection<string>? CompatibleTerrainTypes { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? CompatibleTerrainTypes { get => _compatibleTerrainTypes; set { _compatibleTerrainTypes = value; _TrackChange("compatibleTerrainTypes"); } }
 
+    private System.Collections.Generic.ICollection<string>? _validEntityTypes = default!;
     /// <summary>
     /// Updated entity type restrictions
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("validEntityTypes")]
-    public System.Collections.Generic.ICollection<string>? ValidEntityTypes { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? ValidEntityTypes { get => _validEntityTypes; set { _validEntityTypes = value; _TrackChange("validEntityTypes"); } }
 
+    private TransitModeRequirements? _requirements = default!;
     /// <summary>
     /// Updated mode requirements
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("requirements")]
-    public TransitModeRequirements? Requirements { get; set; } = default!;
+    public TransitModeRequirements? Requirements { get => _requirements; set { _requirements = value; _TrackChange("requirements"); } }
 
+    private decimal? _fatigueRatePerGameHour = default!;
     /// <summary>
     /// Updated fatigue rate
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("fatigueRatePerGameHour")]
     [System.ComponentModel.DataAnnotations.Range(typeof(decimal), "0", "79228162514264337593543950335")]
-    public decimal? FatigueRatePerGameHour { get; set; } = default!;
+    public decimal? FatigueRatePerGameHour { get => _fatigueRatePerGameHour; set { _fatigueRatePerGameHour = value; _TrackChange("fatigueRatePerGameHour"); } }
 
+    private decimal? _noiseLevelNormalized = default!;
     /// <summary>
     /// Updated noise level
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("noiseLevelNormalized")]
     [System.ComponentModel.DataAnnotations.Range(typeof(decimal), "0", "1")]
-    public decimal? NoiseLevelNormalized { get; set; } = default!;
+    public decimal? NoiseLevelNormalized { get => _noiseLevelNormalized; set { _noiseLevelNormalized = value; _TrackChange("noiseLevelNormalized"); } }
 
+    private System.Collections.Generic.ICollection<System.Guid>? _realmRestrictions = default!;
     /// <summary>
     /// Updated realm restrictions
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmRestrictions")]
-    public System.Collections.Generic.ICollection<System.Guid>? RealmRestrictions { get; set; } = default!;
+    public System.Collections.Generic.ICollection<System.Guid>? RealmRestrictions { get => _realmRestrictions; set { _realmRestrictions = value; _TrackChange("realmRestrictions"); } }
 
+    private System.Collections.Generic.ICollection<string>? _tags = default!;
     /// <summary>
     /// Updated tags
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Tags { get => _tags; set { _tags = value; _TrackChange("tags"); } }
 
 }
 
@@ -1846,75 +1888,113 @@ public partial class QueryConnectionsRequest
 public partial class UpdateConnectionRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _connectionId = default!;
     /// <summary>
     /// Connection to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("connectionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ConnectionId { get; set; } = default!;
+    public System.Guid ConnectionId { get => _connectionId; set { _connectionId = value; _TrackChange("connectionId"); } }
 
+    private decimal? _distanceKm = default!;
     /// <summary>
     /// Updated distance
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("distanceKm")]
     [System.ComponentModel.DataAnnotations.Range(typeof(decimal), "0.01", "79228162514264337593543950335")]
-    public decimal? DistanceKm { get; set; } = default!;
+    public decimal? DistanceKm { get => _distanceKm; set { _distanceKm = value; _TrackChange("distanceKm"); } }
 
+    private string? _terrainType = default!;
     /// <summary>
     /// Updated terrain type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("terrainType")]
-    public string? TerrainType { get; set; } = default!;
+    public string? TerrainType { get => _terrainType; set { _terrainType = value; _TrackChange("terrainType"); } }
 
+    private System.Collections.Generic.ICollection<string>? _compatibleModes = default!;
     /// <summary>
     /// Updated mode compatibility list
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("compatibleModes")]
-    public System.Collections.Generic.ICollection<string>? CompatibleModes { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? CompatibleModes { get => _compatibleModes; set { _compatibleModes = value; _TrackChange("compatibleModes"); } }
 
+    private System.Collections.Generic.ICollection<SeasonalAvailabilityEntry>? _seasonalAvailability = default!;
     /// <summary>
     /// Updated seasonal availability
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seasonalAvailability")]
-    public System.Collections.Generic.ICollection<SeasonalAvailabilityEntry>? SeasonalAvailability { get; set; } = default!;
+    public System.Collections.Generic.ICollection<SeasonalAvailabilityEntry>? SeasonalAvailability { get => _seasonalAvailability; set { _seasonalAvailability = value; _TrackChange("seasonalAvailability"); } }
 
+    private decimal? _baseRiskLevel = default!;
     /// <summary>
     /// Updated base risk level
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("baseRiskLevel")]
     [System.ComponentModel.DataAnnotations.Range(typeof(decimal), "0", "1")]
-    public decimal? BaseRiskLevel { get; set; } = default!;
+    public decimal? BaseRiskLevel { get => _baseRiskLevel; set { _baseRiskLevel = value; _TrackChange("baseRiskLevel"); } }
 
+    private string? _riskDescription = default!;
     /// <summary>
     /// Updated risk description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("riskDescription")]
-    public string? RiskDescription { get; set; } = default!;
+    public string? RiskDescription { get => _riskDescription; set { _riskDescription = value; _TrackChange("riskDescription"); } }
 
+    private bool? _discoverable = default!;
     /// <summary>
     /// Updated discoverability flag
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("discoverable")]
-    public bool? Discoverable { get; set; } = default!;
+    public bool? Discoverable { get => _discoverable; set { _discoverable = value; _TrackChange("discoverable"); } }
 
+    private string? _name = default!;
     /// <summary>
     /// Updated connection name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
-    public string? Name { get; set; } = default!;
+    public string? Name { get => _name; set { _name = value; _TrackChange("name"); } }
 
+    private string? _code = default!;
     /// <summary>
     /// Updated connection code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
-    public string? Code { get; set; } = default!;
+    public string? Code { get => _code; set { _code = value; _TrackChange("code"); } }
 
+    private System.Collections.Generic.ICollection<string>? _tags = default!;
     /// <summary>
     /// Updated tags
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Tags { get => _tags; set { _tags = value; _TrackChange("tags"); } }
 
 }
 
@@ -1925,21 +2005,51 @@ public partial class UpdateConnectionRequest
 public partial class UpdateConnectionStatusRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _connectionId = default!;
     /// <summary>
     /// Connection to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("connectionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ConnectionId { get; set; } = default!;
+    public System.Guid ConnectionId { get => _connectionId; set { _connectionId = value; _TrackChange("connectionId"); } }
 
+    private ConnectionStatus? _currentStatus = default!;
     /// <summary>
     /// What the caller believes the current status is. Required when forceUpdate is false. Ignored when forceUpdate is true.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentStatus")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ConnectionStatus? CurrentStatus { get; set; } = default!;
+    public ConnectionStatus? CurrentStatus { get => _currentStatus; set { _currentStatus = value; _TrackChange("currentStatus"); } }
 
+    private SettableConnectionStatus _newStatus = default!;
     /// <summary>
     /// Target status for the connection (seasonal_closed is excluded -- managed by the Seasonal Connection Worker)
     /// </summary>
@@ -1947,21 +2057,23 @@ public partial class UpdateConnectionStatusRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SettableConnectionStatus NewStatus { get; set; } = default!;
+    public SettableConnectionStatus NewStatus { get => _newStatus; set { _newStatus = value; _TrackChange("newStatus"); } }
 
+    private string _reason = default!;
     /// <summary>
     /// Why the status is changing
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Reason { get; set; } = default!;
+    public string Reason { get => _reason; set { _reason = value; _TrackChange("reason"); } }
 
+    private bool _forceUpdate = false;
     /// <summary>
     /// When true, currentStatus is ignored and the status is set unconditionally. Use for administrative overrides.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("forceUpdate")]
-    public bool ForceUpdate { get; set; } = false;
+    public bool ForceUpdate { get => _forceUpdate; set { _forceUpdate = value; _TrackChange("forceUpdate"); } }
 
 }
 

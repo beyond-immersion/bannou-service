@@ -283,66 +283,102 @@ public partial class CreateSpeciesRequest
 public partial class UpdateSpeciesRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _speciesId = default!;
     /// <summary>
     /// ID of the species to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SpeciesId { get; set; } = default!;
+    public System.Guid SpeciesId { get => _speciesId; set { _speciesId = value; _TrackChange("speciesId"); } }
 
+    private string? _name = default!;
     /// <summary>
     /// Display name for the species
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
-    public string? Name { get; set; } = default!;
+    public string? Name { get => _name; set { _name = value; _TrackChange("name"); } }
 
+    private string? _description = default!;
     /// <summary>
     /// Description of the species
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.StringLength(1000)]
-    public string? Description { get; set; } = default!;
+    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
+    private string? _category = default!;
     /// <summary>
     /// Category for grouping
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
-    public string? Category { get; set; } = default!;
+    public string? Category { get => _category; set { _category = value; _TrackChange("category"); } }
 
+    private bool? _isPlayable = default!;
     /// <summary>
     /// Whether players can create characters of this species
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isPlayable")]
-    public bool? IsPlayable { get; set; } = default!;
+    public bool? IsPlayable { get => _isPlayable; set { _isPlayable = value; _TrackChange("isPlayable"); } }
 
+    private int? _baseLifespan = default!;
     /// <summary>
     /// Base lifespan in game years
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("baseLifespan")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
-    public int? BaseLifespan { get; set; } = default!;
+    public int? BaseLifespan { get => _baseLifespan; set { _baseLifespan = value; _TrackChange("baseLifespan"); } }
 
+    private int? _maturityAge = default!;
     /// <summary>
     /// Age at which the species reaches maturity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maturityAge")]
     [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
-    public int? MaturityAge { get; set; } = default!;
+    public int? MaturityAge { get => _maturityAge; set { _maturityAge = value; _TrackChange("maturityAge"); } }
 
+    private object? _traitModifiers = default!;
     /// <summary>
     /// Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("traitModifiers")]
-    public object? TraitModifiers { get; set; } = default!;
+    public object? TraitModifiers { get => _traitModifiers; set { _traitModifiers = value; _TrackChange("traitModifiers"); } }
 
+    private object? _metadata = default!;
     /// <summary>
     /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
+    public object? Metadata { get => _metadata; set { _metadata = value; _TrackChange("metadata"); } }
 
 }
 

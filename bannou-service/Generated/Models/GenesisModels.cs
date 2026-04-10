@@ -703,6 +703,34 @@ public partial class ListTemplatesRequest
 public partial class UpdateTemplateRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private string _templateCode = default!;
     /// <summary>
     /// Template code to update
     /// </summary>
@@ -710,51 +738,58 @@ public partial class UpdateTemplateRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
-    public string TemplateCode { get; set; } = default!;
+    public string TemplateCode { get => _templateCode; set { _templateCode = value; _TrackChange("templateCode"); } }
 
+    private string? _displayName = default!;
     /// <summary>
     /// Updated human-readable template name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 1)]
-    public string? DisplayName { get; set; } = default!;
+    public string? DisplayName { get => _displayName; set { _displayName = value; _TrackChange("displayName"); } }
 
+    private string? _description = default!;
     /// <summary>
     /// Updated template description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.StringLength(2000, MinimumLength = 1)]
-    public string? Description { get; set; } = default!;
+    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
+    private GenesisSeedConfig? _seed = default!;
     /// <summary>
     /// Updated seed configuration
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seed")]
-    public GenesisSeedConfig? Seed { get; set; } = default!;
+    public GenesisSeedConfig? Seed { get => _seed; set { _seed = value; _TrackChange("seed"); } }
 
+    private GenesisEconomyConfig? _economy = default!;
     /// <summary>
     /// Updated economy configuration
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("economy")]
-    public GenesisEconomyConfig? Economy { get; set; } = default!;
+    public GenesisEconomyConfig? Economy { get => _economy; set { _economy = value; _TrackChange("economy"); } }
 
+    private GenesisStorageConfig? _storage = default!;
     /// <summary>
     /// Updated storage configuration
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("storage")]
-    public GenesisStorageConfig? Storage { get; set; } = default!;
+    public GenesisStorageConfig? Storage { get => _storage; set { _storage = value; _TrackChange("storage"); } }
 
+    private GenesisAwakeningConfig? _awakening = default!;
     /// <summary>
     /// Updated awakening configuration
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("awakening")]
-    public GenesisAwakeningConfig? Awakening { get; set; } = default!;
+    public GenesisAwakeningConfig? Awakening { get => _awakening; set { _awakening = value; _TrackChange("awakening"); } }
 
+    private GenesisBondConfig? _bond = default!;
     /// <summary>
     /// Updated bond configuration
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bond")]
-    public GenesisBondConfig? Bond { get; set; } = default!;
+    public GenesisBondConfig? Bond { get => _bond; set { _bond = value; _TrackChange("bond"); } }
 
 }
 

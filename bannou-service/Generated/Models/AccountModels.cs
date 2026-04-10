@@ -255,33 +255,64 @@ public partial class CreateAccountRequest
 public partial class UpdateAccountRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _accountId = default!;
     /// <summary>
     /// ID of the account to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid AccountId { get => _accountId; set { _accountId = value; _TrackChange("accountId"); } }
 
+    private string? _displayName = default!;
     /// <summary>
     /// New display name for the account
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
-    public string? DisplayName { get; set; } = default!;
+    public string? DisplayName { get => _displayName; set { _displayName = value; _TrackChange("displayName"); } }
 
+    private System.Collections.Generic.ICollection<string>? _roles = default!;
     /// <summary>
     /// Updated list of roles for the account (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
     [System.ComponentModel.DataAnnotations.MaxLength(20)]
-    public System.Collections.Generic.ICollection<string>? Roles { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Roles { get => _roles; set { _roles = value; _TrackChange("roles"); } }
 
+    private object? _metadata = default!;
     /// <summary>
     /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
+    public object? Metadata { get => _metadata; set { _metadata = value; _TrackChange("metadata"); } }
 
 }
 
@@ -292,26 +323,56 @@ public partial class UpdateAccountRequest
 public partial class UpdateProfileRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _accountId = default!;
     /// <summary>
     /// ID of the account to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid AccountId { get => _accountId; set { _accountId = value; _TrackChange("accountId"); } }
 
+    private string? _displayName = default!;
     /// <summary>
     /// New display name for the account
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
-    public string? DisplayName { get; set; } = default!;
+    public string? DisplayName { get => _displayName; set { _displayName = value; _TrackChange("displayName"); } }
 
+    private object? _metadata = default!;
     /// <summary>
     /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
+    public object? Metadata { get => _metadata; set { _metadata = value; _TrackChange("metadata"); } }
 
 }
 
@@ -322,14 +383,43 @@ public partial class UpdateProfileRequest
 public partial class UpdatePasswordRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _accountId = default!;
     /// <summary>
     /// ID of the account to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid AccountId { get => _accountId; set { _accountId = value; _TrackChange("accountId"); } }
 
+    private string _passwordHash = default!;
     /// <summary>
     /// New pre-hashed password from Auth service
     /// </summary>
@@ -337,7 +427,7 @@ public partial class UpdatePasswordRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(255)]
-    public string PasswordHash { get; set; } = default!;
+    public string PasswordHash { get => _passwordHash; set { _passwordHash = value; _TrackChange("passwordHash"); } }
 
 }
 
@@ -348,31 +438,62 @@ public partial class UpdatePasswordRequest
 public partial class UpdateMfaRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _accountId = default!;
     /// <summary>
     /// ID of the account to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid AccountId { get => _accountId; set { _accountId = value; _TrackChange("accountId"); } }
 
+    private bool _mfaEnabled = default!;
     /// <summary>
     /// Whether to enable or disable MFA
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("mfaEnabled")]
-    public bool MfaEnabled { get; set; } = default!;
+    public bool MfaEnabled { get => _mfaEnabled; set { _mfaEnabled = value; _TrackChange("mfaEnabled"); } }
 
+    private string? _mfaSecret = default!;
     /// <summary>
     /// Encrypted TOTP secret (set when enabling, null when disabling)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("mfaSecret")]
-    public string? MfaSecret { get; set; } = default!;
+    public string? MfaSecret { get => _mfaSecret; set { _mfaSecret = value; _TrackChange("mfaSecret"); } }
 
+    private System.Collections.Generic.ICollection<string>? _mfaRecoveryCodes = default!;
     /// <summary>
     /// BCrypt-hashed recovery codes (set when enabling, null when disabling)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("mfaRecoveryCodes")]
-    public System.Collections.Generic.ICollection<string>? MfaRecoveryCodes { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? MfaRecoveryCodes { get => _mfaRecoveryCodes; set { _mfaRecoveryCodes = value; _TrackChange("mfaRecoveryCodes"); } }
 
 }
 
@@ -383,19 +504,48 @@ public partial class UpdateMfaRequest
 public partial class UpdateVerificationRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _accountId = default!;
     /// <summary>
     /// ID of the account to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid AccountId { get => _accountId; set { _accountId = value; _TrackChange("accountId"); } }
 
+    private bool _emailVerified = default!;
     /// <summary>
     /// New email verification status
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("emailVerified")]
-    public bool EmailVerified { get; set; } = default!;
+    public bool EmailVerified { get => _emailVerified; set { _emailVerified = value; _TrackChange("emailVerified"); } }
 
 }
 
@@ -406,14 +556,43 @@ public partial class UpdateVerificationRequest
 public partial class UpdateEmailRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _accountId = default!;
     /// <summary>
     /// ID of the account to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
+    public System.Guid AccountId { get => _accountId; set { _accountId = value; _TrackChange("accountId"); } }
 
+    private string _newEmail = default!;
     /// <summary>
     /// New email address for the account
     /// </summary>
@@ -421,7 +600,7 @@ public partial class UpdateEmailRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(254)]
-    public string NewEmail { get; set; } = default!;
+    public string NewEmail { get => _newEmail; set { _newEmail = value; _TrackChange("newEmail"); } }
 
 }
 
@@ -774,6 +953,34 @@ public partial class CountAccountsRequest
 public partial class BulkUpdateRolesRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Collections.Generic.ICollection<System.Guid> _accountIds = new System.Collections.ObjectModel.Collection<System.Guid>();
     /// <summary>
     /// List of account IDs to update (max 100)
     /// </summary>
@@ -782,19 +989,21 @@ public partial class BulkUpdateRolesRequest
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.MinLength(1)]
     [System.ComponentModel.DataAnnotations.MaxLength(100)]
-    public System.Collections.Generic.ICollection<System.Guid> AccountIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
+    public System.Collections.Generic.ICollection<System.Guid> AccountIds { get => _accountIds; set { _accountIds = value; _TrackChange("accountIds"); } }
 
+    private System.Collections.Generic.ICollection<string>? _addRoles = default!;
     /// <summary>
     /// Roles to add to all specified accounts (null to skip)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("addRoles")]
-    public System.Collections.Generic.ICollection<string>? AddRoles { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? AddRoles { get => _addRoles; set { _addRoles = value; _TrackChange("addRoles"); } }
 
+    private System.Collections.Generic.ICollection<string>? _removeRoles = default!;
     /// <summary>
     /// Roles to remove from all specified accounts (null to skip)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("removeRoles")]
-    public System.Collections.Generic.ICollection<string>? RemoveRoles { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? RemoveRoles { get => _removeRoles; set { _removeRoles = value; _TrackChange("removeRoles"); } }
 
 }
 

@@ -601,6 +601,34 @@ public partial class SkillRatingResponse
 public partial class UpdateSkillRatingRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private AnalyticsServiceType _serviceType = default!;
     /// <summary>
     /// Service type discriminator
     /// </summary>
@@ -608,8 +636,9 @@ public partial class UpdateSkillRatingRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AnalyticsServiceType ServiceType { get; set; } = default!;
+    public AnalyticsServiceType ServiceType { get => _serviceType; set { _serviceType = value; _TrackChange("serviceType"); } }
 
+    private string _serviceId = default!;
     /// <summary>
     /// Service scope identifier (GUID for Game, logical name for System)
     /// </summary>
@@ -617,8 +646,9 @@ public partial class UpdateSkillRatingRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
-    public string ServiceId { get; set; } = default!;
+    public string ServiceId { get => _serviceId; set { _serviceId = value; _TrackChange("serviceId"); } }
 
+    private string _ratingType = default!;
     /// <summary>
     /// Type of rating to update
     /// </summary>
@@ -626,16 +656,18 @@ public partial class UpdateSkillRatingRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
-    public string RatingType { get; set; } = default!;
+    public string RatingType { get => _ratingType; set { _ratingType = value; _TrackChange("ratingType"); } }
 
+    private System.Guid _matchId = default!;
     /// <summary>
     /// Unique identifier for this match
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("matchId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid MatchId { get; set; } = default!;
+    public System.Guid MatchId { get => _matchId; set { _matchId = value; _TrackChange("matchId"); } }
 
+    private System.Collections.Generic.ICollection<MatchResult> _results = new System.Collections.ObjectModel.Collection<MatchResult>();
     /// <summary>
     /// Results for all participants (min 2)
     /// </summary>
@@ -643,7 +675,7 @@ public partial class UpdateSkillRatingRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.MinLength(2)]
-    public System.Collections.Generic.ICollection<MatchResult> Results { get; set; } = new System.Collections.ObjectModel.Collection<MatchResult>();
+    public System.Collections.Generic.ICollection<MatchResult> Results { get => _results; set { _results = value; _TrackChange("results"); } }
 
 }
 

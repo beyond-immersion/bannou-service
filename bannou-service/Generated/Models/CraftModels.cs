@@ -1339,111 +1339,155 @@ public partial class ListRecipesRequest
 public partial class UpdateRecipeRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _recipeId = default!;
     /// <summary>
     /// Recipe to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("recipeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RecipeId { get; set; } = default!;
+    public System.Guid RecipeId { get => _recipeId; set { _recipeId = value; _TrackChange("recipeId"); } }
 
+    private string? _category = default!;
     /// <summary>
     /// Updated category
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
-    public string? Category { get; set; } = default!;
+    public string? Category { get => _category; set { _category = value; _TrackChange("category"); } }
 
+    private System.Collections.Generic.ICollection<string>? _tags = default!;
     /// <summary>
     /// Updated tags
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Tags { get => _tags; set { _tags = value; _TrackChange("tags"); } }
 
+    private System.Collections.Generic.ICollection<RecipeInput>? _inputs = default!;
     /// <summary>
     /// Updated material inputs
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("inputs")]
-    public System.Collections.Generic.ICollection<RecipeInput>? Inputs { get; set; } = default!;
+    public System.Collections.Generic.ICollection<RecipeInput>? Inputs { get => _inputs; set { _inputs = value; _TrackChange("inputs"); } }
 
+    private System.Collections.Generic.ICollection<CurrencyCost>? _currencyCosts = default!;
     /// <summary>
     /// Updated currency costs
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currencyCosts")]
-    public System.Collections.Generic.ICollection<CurrencyCost>? CurrencyCosts { get; set; } = default!;
+    public System.Collections.Generic.ICollection<CurrencyCost>? CurrencyCosts { get => _currencyCosts; set { _currencyCosts = value; _TrackChange("currencyCosts"); } }
 
+    private TargetRequirements? _targetRequirements = default!;
     /// <summary>
     /// Updated target requirements
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetRequirements")]
-    public TargetRequirements? TargetRequirements { get; set; } = default!;
+    public TargetRequirements? TargetRequirements { get => _targetRequirements; set { _targetRequirements = value; _TrackChange("targetRequirements"); } }
 
+    private AffixOperationType? _affixOperation = default!;
     /// <summary>
     /// Updated affix operation type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("affixOperation")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AffixOperationType? AffixOperation { get; set; } = default!;
+    public AffixOperationType? AffixOperation { get => _affixOperation; set { _affixOperation = value; _TrackChange("affixOperation"); } }
 
+    private AffixOperationConfig? _affixOperationConfig = default!;
     /// <summary>
     /// Updated affix operation config
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("affixOperationConfig")]
-    public AffixOperationConfig? AffixOperationConfig { get; set; } = default!;
+    public AffixOperationConfig? AffixOperationConfig { get => _affixOperationConfig; set { _affixOperationConfig = value; _TrackChange("affixOperationConfig"); } }
 
+    private System.Collections.Generic.ICollection<RecipeStep>? _steps = default!;
     /// <summary>
     /// Updated steps
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("steps")]
-    public System.Collections.Generic.ICollection<RecipeStep>? Steps { get; set; } = default!;
+    public System.Collections.Generic.ICollection<RecipeStep>? Steps { get => _steps; set { _steps = value; _TrackChange("steps"); } }
 
+    private System.Collections.Generic.ICollection<RecipeOutput>? _outputs = default!;
     /// <summary>
     /// Updated outputs
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("outputs")]
-    public System.Collections.Generic.ICollection<RecipeOutput>? Outputs { get; set; } = default!;
+    public System.Collections.Generic.ICollection<RecipeOutput>? Outputs { get => _outputs; set { _outputs = value; _TrackChange("outputs"); } }
 
+    private System.Collections.Generic.ICollection<ExtractionOutput>? _extractionOutputs = default!;
     /// <summary>
     /// Updated extraction outputs
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("extractionOutputs")]
-    public System.Collections.Generic.ICollection<ExtractionOutput>? ExtractionOutputs { get; set; } = default!;
+    public System.Collections.Generic.ICollection<ExtractionOutput>? ExtractionOutputs { get => _extractionOutputs; set { _extractionOutputs = value; _TrackChange("extractionOutputs"); } }
 
+    private System.Collections.Generic.ICollection<ProficiencyRequirement>? _proficiencyRequirements = default!;
     /// <summary>
     /// Updated proficiency requirements
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("proficiencyRequirements")]
-    public System.Collections.Generic.ICollection<ProficiencyRequirement>? ProficiencyRequirements { get; set; } = default!;
+    public System.Collections.Generic.ICollection<ProficiencyRequirement>? ProficiencyRequirements { get => _proficiencyRequirements; set { _proficiencyRequirements = value; _TrackChange("proficiencyRequirements"); } }
 
+    private QualityWeights? _qualityWeights = default!;
     /// <summary>
     /// Updated quality weights
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("qualityWeights")]
-    public QualityWeights? QualityWeights { get; set; } = default!;
+    public QualityWeights? QualityWeights { get => _qualityWeights; set { _qualityWeights = value; _TrackChange("qualityWeights"); } }
 
+    private System.Collections.Generic.ICollection<ExperienceGrant>? _experienceGrants = default!;
     /// <summary>
     /// Updated experience grants
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("experienceGrants")]
-    public System.Collections.Generic.ICollection<ExperienceGrant>? ExperienceGrants { get; set; } = default!;
+    public System.Collections.Generic.ICollection<ExperienceGrant>? ExperienceGrants { get => _experienceGrants; set { _experienceGrants = value; _TrackChange("experienceGrants"); } }
 
+    private bool? _isDiscoverable = default!;
     /// <summary>
     /// Updated discoverability
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isDiscoverable")]
-    public bool? IsDiscoverable { get; set; } = default!;
+    public bool? IsDiscoverable { get => _isDiscoverable; set { _isDiscoverable = value; _TrackChange("isDiscoverable"); } }
 
+    private System.Collections.Generic.ICollection<string>? _discoveryHints = default!;
     /// <summary>
     /// Updated discovery hints
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("discoveryHints")]
-    public System.Collections.Generic.ICollection<string>? DiscoveryHints { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? DiscoveryHints { get => _discoveryHints; set { _discoveryHints = value; _TrackChange("discoveryHints"); } }
 
+    private System.Collections.Generic.ICollection<string>? _prerequisiteRecipeCodes = default!;
     /// <summary>
     /// Updated prerequisite recipe codes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("prerequisiteRecipeCodes")]
-    public System.Collections.Generic.ICollection<string>? PrerequisiteRecipeCodes { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? PrerequisiteRecipeCodes { get => _prerequisiteRecipeCodes; set { _prerequisiteRecipeCodes = value; _TrackChange("prerequisiteRecipeCodes"); } }
 
 }
 
@@ -1787,14 +1831,43 @@ public partial class GrantExperienceRequest
 public partial class SetProficiencyRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _entityId = default!;
     /// <summary>
     /// Entity to set proficiency for
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entityId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EntityId { get; set; } = default!;
+    public System.Guid EntityId { get => _entityId; set { _entityId = value; _TrackChange("entityId"); } }
 
+    private EntityType _entityType = default!;
     /// <summary>
     /// Type of the entity
     /// </summary>
@@ -1802,8 +1875,9 @@ public partial class SetProficiencyRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EntityType EntityType { get; set; } = default!;
+    public EntityType EntityType { get => _entityType; set { _entityType = value; _TrackChange("entityType"); } }
 
+    private string _domain = default!;
     /// <summary>
     /// Proficiency domain code
     /// </summary>
@@ -1811,14 +1885,15 @@ public partial class SetProficiencyRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
-    public string Domain { get; set; } = default!;
+    public string Domain { get => _domain; set { _domain = value; _TrackChange("domain"); } }
 
+    private double _targetValue = default!;
     /// <summary>
     /// Target proficiency value to set
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetValue")]
     [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
-    public double TargetValue { get; set; } = default!;
+    public double TargetValue { get => _targetValue; set { _targetValue = value; _TrackChange("targetValue"); } }
 
 }
 

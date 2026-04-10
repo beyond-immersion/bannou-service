@@ -539,39 +539,71 @@ public partial class ListContractTemplatesRequest
 public partial class UpdateContractTemplateRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _templateId = default!;
     /// <summary>
     /// Template ID to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TemplateId { get; set; } = default!;
+    public System.Guid TemplateId { get => _templateId; set { _templateId = value; _TrackChange("templateId"); } }
 
+    private string? _name = default!;
     /// <summary>
     /// New template name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.StringLength(200)]
-    public string? Name { get; set; } = default!;
+    public string? Name { get => _name; set { _name = value; _TrackChange("name"); } }
 
+    private string? _description = default!;
     /// <summary>
     /// New description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.StringLength(2000)]
-    public string? Description { get; set; } = default!;
+    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
+    private bool? _isActive = default!;
     /// <summary>
     /// Active status
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
-    public bool? IsActive { get; set; } = default!;
+    public bool? IsActive { get => _isActive; set { _isActive = value; _TrackChange("isActive"); } }
 
+    private object? _gameMetadata = default!;
     /// <summary>
     /// Client-only game metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameMetadata")]
-    public object? GameMetadata { get; set; } = default!;
+    public object? GameMetadata { get => _gameMetadata; set { _gameMetadata = value; _TrackChange("gameMetadata"); } }
 
 }
 
@@ -2103,14 +2135,43 @@ public partial class BreachSummary
 public partial class UpdateContractMetadataRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _contractId = default!;
     /// <summary>
     /// Contract instance ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contractId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContractId { get; set; } = default!;
+    public System.Guid ContractId { get => _contractId; set { _contractId = value; _TrackChange("contractId"); } }
 
+    private MetadataType _metadataType = default!;
     /// <summary>
     /// Which metadata to update
     /// </summary>
@@ -2118,15 +2179,16 @@ public partial class UpdateContractMetadataRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public MetadataType MetadataType { get; set; } = default!;
+    public MetadataType MetadataType { get => _metadataType; set { _metadataType = value; _TrackChange("metadataType"); } }
 
+    private object _data = new object();
     /// <summary>
     /// Client-only metadata payload. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("data")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public object Data { get; set; } = new object();
+    public object Data { get => _data; set { _data = value; _TrackChange("data"); } }
 
 }
 
@@ -2806,21 +2868,50 @@ public partial class ListClauseTypesResponse
 public partial class SetTemplateValuesRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _contractInstanceId = default!;
     /// <summary>
     /// Contract instance ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contractInstanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContractInstanceId { get; set; } = default!;
+    public System.Guid ContractInstanceId { get => _contractInstanceId; set { _contractInstanceId = value; _TrackChange("contractInstanceId"); } }
 
+    private System.Collections.Generic.IDictionary<string, string> _templateValues = new System.Collections.Generic.Dictionary<string, string>();
     /// <summary>
     /// Key-value pairs for template substitution (keys follow pattern EscrowId, PartyA_EscrowWalletId, etc.)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateValues")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.IDictionary<string, string> TemplateValues { get; set; } = new System.Collections.Generic.Dictionary<string, string>();
+    public System.Collections.Generic.IDictionary<string, string> TemplateValues { get => _templateValues; set { _templateValues = value; _TrackChange("templateValues"); } }
 
 }
 

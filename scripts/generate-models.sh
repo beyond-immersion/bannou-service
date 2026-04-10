@@ -148,6 +148,12 @@ if [ $? -eq 0 ] && [ -f "$OUTPUT_FILE" ]; then
     echo -e "${YELLOW}🔄 Post-processing: Converting enum names to PascalCase...${NC}"
     postprocess_enum_pascalcase "$OUTPUT_FILE"
 
+    # Post-process: Add change-tracking to Update/Modify/Set request models (Issue #722)
+    # Transforms auto-properties into tracked properties with backing fields,
+    # enabling servers to distinguish "field absent" from "field explicitly null"
+    echo -e "${YELLOW}🔄 Post-processing: Adding change-tracking to update requests...${NC}"
+    python3 "$SCRIPT_DIR/postprocess-change-tracking.py" "$OUTPUT_FILE"
+
     FILE_SIZE=$(wc -l < "$OUTPUT_FILE" 2>/dev/null || echo "0")
     echo -e "${GREEN}✅ Generated models ($FILE_SIZE lines)${NC}"
 else

@@ -298,25 +298,55 @@ public partial class ListRelationshipsByTypeRequest
 public partial class UpdateRelationshipRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _relationshipId = default!;
     /// <summary>
     /// ID of the relationship to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RelationshipId { get; set; } = default!;
+    public System.Guid RelationshipId { get => _relationshipId; set { _relationshipId = value; _TrackChange("relationshipId"); } }
 
+    private System.Guid? _relationshipTypeId = default!;
     /// <summary>
     /// Update relationship type (used for type merge migrations)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
-    public System.Guid? RelationshipTypeId { get; set; } = default!;
+    public System.Guid? RelationshipTypeId { get => _relationshipTypeId; set { _relationshipTypeId = value; _TrackChange("relationshipTypeId"); } }
 
+    private object? _metadata = default!;
     /// <summary>
     /// Updated client-provided relationship data. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
+    public object? Metadata { get => _metadata; set { _metadata = value; _TrackChange("metadata"); } }
 
 }
 
@@ -739,59 +769,94 @@ public partial class CreateRelationshipTypeRequest
 public partial class UpdateRelationshipTypeRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _relationshipTypeId = default!;
     /// <summary>
     /// ID of the relationship type to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RelationshipTypeId { get; set; } = default!;
+    public System.Guid RelationshipTypeId { get => _relationshipTypeId; set { _relationshipTypeId = value; _TrackChange("relationshipTypeId"); } }
 
+    private string? _name = default!;
     /// <summary>
     /// Display name for the relationship type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
-    public string? Name { get; set; } = default!;
+    public string? Name { get => _name; set { _name = value; _TrackChange("name"); } }
 
+    private string? _description = default!;
     /// <summary>
     /// Description of the relationship type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? Description { get; set; } = default!;
+    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
+    private string? _category = default!;
     /// <summary>
     /// Category for grouping
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
-    public string? Category { get; set; } = default!;
+    public string? Category { get => _category; set { _category = value; _TrackChange("category"); } }
 
+    private System.Guid? _parentTypeId = default!;
     /// <summary>
     /// Parent type ID for hierarchy
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentTypeId")]
-    public System.Guid? ParentTypeId { get; set; } = default!;
+    public System.Guid? ParentTypeId { get => _parentTypeId; set { _parentTypeId = value; _TrackChange("parentTypeId"); } }
 
+    private string? _inverseTypeCode = default!;
     /// <summary>
     /// Code of the inverse relationship
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("inverseTypeCode")]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
-    public string? InverseTypeCode { get; set; } = default!;
+    public string? InverseTypeCode { get => _inverseTypeCode; set { _inverseTypeCode = value; _TrackChange("inverseTypeCode"); } }
 
+    private bool? _isBidirectional = default!;
     /// <summary>
     /// Whether the relationship is bidirectional
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isBidirectional")]
-    public bool? IsBidirectional { get; set; } = default!;
+    public bool? IsBidirectional { get => _isBidirectional; set { _isBidirectional = value; _TrackChange("isBidirectional"); } }
 
+    private object? _metadata = default!;
     /// <summary>
     /// Updated client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
+    public object? Metadata { get => _metadata; set { _metadata = value; _TrackChange("metadata"); } }
 
 }
 

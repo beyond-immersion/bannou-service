@@ -970,6 +970,34 @@ public partial class CreateDocumentResponse
 public partial class UpdateDocumentRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private string _namespace = default!;
     /// <summary>
     /// Documentation namespace containing the document
     /// </summary>
@@ -978,70 +1006,80 @@ public partial class UpdateDocumentRequest
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
-    public string Namespace { get; set; } = default!;
+    public string Namespace { get => _namespace; set { _namespace = value; _TrackChange("namespace"); } }
 
+    private System.Guid _documentId = default!;
     /// <summary>
     /// Unique identifier of the document to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid DocumentId { get; set; } = default!;
+    public System.Guid DocumentId { get => _documentId; set { _documentId = value; _TrackChange("documentId"); } }
 
+    private string? _slug = default!;
     /// <summary>
     /// New URL-friendly slug for the document (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slug")]
-    public string? Slug { get; set; } = default!;
+    public string? Slug { get => _slug; set { _slug = value; _TrackChange("slug"); } }
 
+    private string? _title = default!;
     /// <summary>
     /// New display title for the document (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("title")]
-    public string? Title { get; set; } = default!;
+    public string? Title { get => _title; set { _title = value; _TrackChange("title"); } }
 
+    private DocumentCategory? _category = default!;
     /// <summary>
     /// New category for the document (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DocumentCategory? Category { get; set; } = default!;
+    public DocumentCategory? Category { get => _category; set { _category = value; _TrackChange("category"); } }
 
+    private string? _content = default!;
     /// <summary>
     /// New markdown content for the document (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("content")]
-    public string? Content { get; set; } = default!;
+    public string? Content { get => _content; set { _content = value; _TrackChange("content"); } }
 
+    private string? _summary = default!;
     /// <summary>
     /// New text summary for the document (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("summary")]
-    public string? Summary { get; set; } = default!;
+    public string? Summary { get => _summary; set { _summary = value; _TrackChange("summary"); } }
 
+    private string? _voiceSummary = default!;
     /// <summary>
     /// New voice-optimized summary for the document (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("voiceSummary")]
-    public string? VoiceSummary { get; set; } = default!;
+    public string? VoiceSummary { get => _voiceSummary; set { _voiceSummary = value; _TrackChange("voiceSummary"); } }
 
+    private System.Collections.Generic.ICollection<string>? _tags = default!;
     /// <summary>
     /// New set of tags for the document (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Tags { get => _tags; set { _tags = value; _TrackChange("tags"); } }
 
+    private System.Collections.Generic.ICollection<System.Guid>? _relatedDocuments = default!;
     /// <summary>
     /// New set of related document IDs (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relatedDocuments")]
-    public System.Collections.Generic.ICollection<System.Guid>? RelatedDocuments { get; set; } = default!;
+    public System.Collections.Generic.ICollection<System.Guid>? RelatedDocuments { get => _relatedDocuments; set { _relatedDocuments = value; _TrackChange("relatedDocuments"); } }
 
+    private object? _metadata = default!;
     /// <summary>
     /// Updated client-provided custom metadata (null to keep unchanged). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
+    public object? Metadata { get => _metadata; set { _metadata = value; _TrackChange("metadata"); } }
 
 }
 
@@ -1193,6 +1231,34 @@ public partial class RecoverDocumentResponse
 public partial class BulkUpdateRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private string _namespace = default!;
     /// <summary>
     /// Documentation namespace containing the documents
     /// </summary>
@@ -1201,34 +1267,38 @@ public partial class BulkUpdateRequest
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
-    public string Namespace { get; set; } = default!;
+    public string Namespace { get => _namespace; set { _namespace = value; _TrackChange("namespace"); } }
 
+    private System.Collections.Generic.ICollection<System.Guid> _documentIds = new System.Collections.ObjectModel.Collection<System.Guid>();
     /// <summary>
     /// List of document IDs to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("documentIds")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<System.Guid> DocumentIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
+    public System.Collections.Generic.ICollection<System.Guid> DocumentIds { get => _documentIds; set { _documentIds = value; _TrackChange("documentIds"); } }
 
+    private DocumentCategory? _category = default!;
     /// <summary>
     /// New category to apply to all documents (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DocumentCategory? Category { get; set; } = default!;
+    public DocumentCategory? Category { get => _category; set { _category = value; _TrackChange("category"); } }
 
+    private System.Collections.Generic.ICollection<string>? _addTags = default!;
     /// <summary>
     /// Tags to add to all documents (null to skip adding)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("addTags")]
-    public System.Collections.Generic.ICollection<string>? AddTags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? AddTags { get => _addTags; set { _addTags = value; _TrackChange("addTags"); } }
 
+    private System.Collections.Generic.ICollection<string>? _removeTags = default!;
     /// <summary>
     /// Tags to remove from all documents (null to skip removing)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("removeTags")]
-    public System.Collections.Generic.ICollection<string>? RemoveTags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? RemoveTags { get => _removeTags; set { _removeTags = value; _TrackChange("removeTags"); } }
 
 }
 
@@ -2569,6 +2639,34 @@ public partial class ListRepositoryBindingsResponse
 public partial class UpdateRepositoryBindingRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private string _namespace = default!;
     /// <summary>
     /// Documentation namespace of the binding to update
     /// </summary>
@@ -2577,57 +2675,65 @@ public partial class UpdateRepositoryBindingRequest
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9-]+$")]
-    public string Namespace { get; set; } = default!;
+    public string Namespace { get => _namespace; set { _namespace = value; _TrackChange("namespace"); } }
 
+    private bool _syncEnabled = default!;
     /// <summary>
     /// Enable or disable automatic syncing
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("syncEnabled")]
-    public bool SyncEnabled { get; set; } = default!;
+    public bool SyncEnabled { get => _syncEnabled; set { _syncEnabled = value; _TrackChange("syncEnabled"); } }
 
+    private int _syncIntervalMinutes = default!;
     /// <summary>
     /// New sync interval in minutes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("syncIntervalMinutes")]
     [System.ComponentModel.DataAnnotations.Range(5, 1440)]
-    public int SyncIntervalMinutes { get; set; } = default!;
+    public int SyncIntervalMinutes { get => _syncIntervalMinutes; set { _syncIntervalMinutes = value; _TrackChange("syncIntervalMinutes"); } }
 
+    private System.Collections.Generic.ICollection<string>? _filePatterns = default!;
     /// <summary>
     /// New glob patterns for files to include (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("filePatterns")]
-    public System.Collections.Generic.ICollection<string>? FilePatterns { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? FilePatterns { get => _filePatterns; set { _filePatterns = value; _TrackChange("filePatterns"); } }
 
+    private System.Collections.Generic.ICollection<string>? _excludePatterns = default!;
     /// <summary>
     /// New glob patterns for files to exclude (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("excludePatterns")]
-    public System.Collections.Generic.ICollection<string>? ExcludePatterns { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? ExcludePatterns { get => _excludePatterns; set { _excludePatterns = value; _TrackChange("excludePatterns"); } }
 
+    private System.Collections.Generic.IDictionary<string, DocumentCategory>? _categoryMapping = default!;
     /// <summary>
     /// New directory-to-category mapping (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("categoryMapping")]
-    public System.Collections.Generic.IDictionary<string, DocumentCategory>? CategoryMapping { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, DocumentCategory>? CategoryMapping { get => _categoryMapping; set { _categoryMapping = value; _TrackChange("categoryMapping"); } }
 
+    private DocumentCategory? _defaultCategory = default!;
     /// <summary>
     /// New default category for unmapped documents (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("defaultCategory")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DocumentCategory? DefaultCategory { get; set; } = default!;
+    public DocumentCategory? DefaultCategory { get => _defaultCategory; set { _defaultCategory = value; _TrackChange("defaultCategory"); } }
 
+    private bool _archiveEnabled = default!;
     /// <summary>
     /// Enable or disable archive functionality
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("archiveEnabled")]
-    public bool ArchiveEnabled { get; set; } = default!;
+    public bool ArchiveEnabled { get => _archiveEnabled; set { _archiveEnabled = value; _TrackChange("archiveEnabled"); } }
 
+    private bool _archiveOnSync = default!;
     /// <summary>
     /// Enable or disable archiving after each sync
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("archiveOnSync")]
-    public bool ArchiveOnSync { get; set; } = default!;
+    public bool ArchiveOnSync { get => _archiveOnSync; set { _archiveOnSync = value; _TrackChange("archiveOnSync"); } }
 
 }
 

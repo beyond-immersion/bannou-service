@@ -313,39 +313,71 @@ public partial class GetBoardTemplateRequest
 public partial class UpdateBoardTemplateRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _boardTemplateId = default!;
     /// <summary>
     /// Board template to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("boardTemplateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid BoardTemplateId { get; set; } = default!;
+    public System.Guid BoardTemplateId { get => _boardTemplateId; set { _boardTemplateId = value; _TrackChange("boardTemplateId"); } }
 
+    private string? _name = default!;
     /// <summary>
     /// Updated display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
-    public string? Name { get; set; } = default!;
+    public string? Name { get => _name; set { _name = value; _TrackChange("name"); } }
 
+    private string? _description = default!;
     /// <summary>
     /// Updated description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string? Description { get; set; } = default!;
+    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
+    private bool? _isActive = default!;
     /// <summary>
     /// Whether the template is active (can create new board instances)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
-    public bool? IsActive { get; set; } = default!;
+    public bool? IsActive { get => _isActive; set { _isActive = value; _TrackChange("isActive"); } }
 
+    private System.Collections.Generic.ICollection<EntityType>? _allowedOwnerTypes = default!;
     /// <summary>
     /// Updated allowed owner types. Narrowing checks for existing boards with removed types.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("allowedOwnerTypes")]
     // TODO(system.text.json): Add string enum item converter
     [System.ComponentModel.DataAnnotations.MinLength(1)]
-    public System.Collections.Generic.ICollection<EntityType>? AllowedOwnerTypes { get; set; } = default!;
+    public System.Collections.Generic.ICollection<EntityType>? AllowedOwnerTypes { get => _allowedOwnerTypes; set { _allowedOwnerTypes = value; _TrackChange("allowedOwnerTypes"); } }
 
 }
 
@@ -699,46 +731,79 @@ public partial class GetLicenseDefinitionRequest
 public partial class UpdateLicenseDefinitionRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _boardTemplateId = default!;
     /// <summary>
     /// Board template containing the definition
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("boardTemplateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid BoardTemplateId { get; set; } = default!;
+    public System.Guid BoardTemplateId { get => _boardTemplateId; set { _boardTemplateId = value; _TrackChange("boardTemplateId"); } }
 
+    private string _code = default!;
     /// <summary>
     /// License code to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Code { get; set; } = default!;
+    public string Code { get => _code; set { _code = value; _TrackChange("code"); } }
 
+    private int? _lpCost = default!;
     /// <summary>
     /// Updated LP cost
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lpCost")]
     [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
-    public int? LpCost { get; set; } = default!;
+    public int? LpCost { get => _lpCost; set { _lpCost = value; _TrackChange("lpCost"); } }
 
+    private System.Collections.Generic.ICollection<string>? _prerequisites = default!;
     /// <summary>
     /// Updated prerequisite license codes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("prerequisites")]
-    public System.Collections.Generic.ICollection<string>? Prerequisites { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Prerequisites { get => _prerequisites; set { _prerequisites = value; _TrackChange("prerequisites"); } }
 
+    private string? _description = default!;
     /// <summary>
     /// Updated description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string? Description { get; set; } = default!;
+    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
+    private object? _metadata = default!;
     /// <summary>
     /// Updated game-specific metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
+    public object? Metadata { get => _metadata; set { _metadata = value; _TrackChange("metadata"); } }
 
 }
 

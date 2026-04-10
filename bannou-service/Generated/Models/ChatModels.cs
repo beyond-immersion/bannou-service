@@ -401,73 +401,111 @@ public partial class ListRoomTypesRequest
 public partial class UpdateRoomTypeRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private string _code = default!;
     /// <summary>
     /// Room type code to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Code { get; set; } = default!;
+    public string Code { get => _code; set { _code = value; _TrackChange("code"); } }
 
+    private System.Guid? _gameServiceId = default!;
     /// <summary>
     /// Game service scope for the type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    public System.Guid? GameServiceId { get; set; } = default!;
+    public System.Guid? GameServiceId { get => _gameServiceId; set { _gameServiceId = value; _TrackChange("gameServiceId"); } }
 
+    private string? _displayName = default!;
     /// <summary>
     /// Updated display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    public string? DisplayName { get; set; } = default!;
+    public string? DisplayName { get => _displayName; set { _displayName = value; _TrackChange("displayName"); } }
 
+    private string? _description = default!;
     /// <summary>
     /// Updated description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string? Description { get; set; } = default!;
+    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
+    private ValidatorConfig? _validatorConfig = default!;
     /// <summary>
     /// Updated validation rules
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("validatorConfig")]
-    public ValidatorConfig? ValidatorConfig { get; set; } = default!;
+    public ValidatorConfig? ValidatorConfig { get => _validatorConfig; set { _validatorConfig = value; _TrackChange("validatorConfig"); } }
 
+    private int? _defaultMaxParticipants = default!;
     /// <summary>
     /// Updated default participant limit
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("defaultMaxParticipants")]
-    public int? DefaultMaxParticipants { get; set; } = default!;
+    public int? DefaultMaxParticipants { get => _defaultMaxParticipants; set { _defaultMaxParticipants = value; _TrackChange("defaultMaxParticipants"); } }
 
+    private int? _retentionDays = default!;
     /// <summary>
     /// Updated message retention in days
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("retentionDays")]
-    public int? RetentionDays { get; set; } = default!;
+    public int? RetentionDays { get => _retentionDays; set { _retentionDays = value; _TrackChange("retentionDays"); } }
 
+    private System.Guid? _defaultContractTemplateId = default!;
     /// <summary>
     /// Updated default contract template
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("defaultContractTemplateId")]
-    public System.Guid? DefaultContractTemplateId { get; set; } = default!;
+    public System.Guid? DefaultContractTemplateId { get => _defaultContractTemplateId; set { _defaultContractTemplateId = value; _TrackChange("defaultContractTemplateId"); } }
 
+    private bool? _allowAnonymousSenders = default!;
     /// <summary>
     /// Updated anonymous sender policy
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("allowAnonymousSenders")]
-    public bool? AllowAnonymousSenders { get; set; } = default!;
+    public bool? AllowAnonymousSenders { get => _allowAnonymousSenders; set { _allowAnonymousSenders = value; _TrackChange("allowAnonymousSenders"); } }
 
+    private int? _rateLimitPerMinute = default!;
     /// <summary>
     /// Updated rate limit
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("rateLimitPerMinute")]
-    public int? RateLimitPerMinute { get; set; } = default!;
+    public int? RateLimitPerMinute { get => _rateLimitPerMinute; set { _rateLimitPerMinute = value; _TrackChange("rateLimitPerMinute"); } }
 
+    private string? _metadata = default!;
     /// <summary>
     /// Updated JSON metadata
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public string? Metadata { get; set; } = default!;
+    public string? Metadata { get => _metadata; set { _metadata = value; _TrackChange("metadata"); } }
 
 }
 
@@ -801,33 +839,64 @@ public partial class ListRoomsRequest
 public partial class UpdateRoomRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _roomId = default!;
     /// <summary>
     /// Room ID to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roomId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RoomId { get; set; } = default!;
+    public System.Guid RoomId { get => _roomId; set { _roomId = value; _TrackChange("roomId"); } }
 
+    private string? _displayName = default!;
     /// <summary>
     /// Updated room name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.StringLength(200)]
-    public string? DisplayName { get; set; } = default!;
+    public string? DisplayName { get => _displayName; set { _displayName = value; _TrackChange("displayName"); } }
 
+    private int? _maxParticipants = default!;
     /// <summary>
     /// Updated participant limit
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxParticipants")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
-    public int? MaxParticipants { get; set; } = default!;
+    public int? MaxParticipants { get => _maxParticipants; set { _maxParticipants = value; _TrackChange("maxParticipants"); } }
 
+    private string? _metadata = default!;
     /// <summary>
     /// Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public string? Metadata { get; set; } = default!;
+    public string? Metadata { get => _metadata; set { _metadata = value; _TrackChange("metadata"); } }
 
 }
 

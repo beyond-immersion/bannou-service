@@ -562,73 +562,110 @@ public partial class ListStatusTemplatesRequest
 public partial class UpdateStatusTemplateRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _statusTemplateId = default!;
     /// <summary>
     /// Status template to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("statusTemplateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid StatusTemplateId { get; set; } = default!;
+    public System.Guid StatusTemplateId { get => _statusTemplateId; set { _statusTemplateId = value; _TrackChange("statusTemplateId"); } }
 
+    private string? _displayName = default!;
     /// <summary>
     /// Updated display name (null means no change)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.StringLength(256)]
-    public string? DisplayName { get; set; } = default!;
+    public string? DisplayName { get => _displayName; set { _displayName = value; _TrackChange("displayName"); } }
 
+    private string? _description = default!;
     /// <summary>
     /// Updated description (null means no change)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.StringLength(2000)]
-    public string? Description { get; set; } = default!;
+    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
+    private StatusCategory? _category = default!;
     /// <summary>
     /// Updated status category (null means no change)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public StatusCategory? Category { get; set; } = default!;
+    public StatusCategory? Category { get => _category; set { _category = value; _TrackChange("category"); } }
 
+    private bool? _stackable = default!;
     /// <summary>
     /// Updated stackable flag (null means no change)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stackable")]
-    public bool? Stackable { get; set; } = default!;
+    public bool? Stackable { get => _stackable; set { _stackable = value; _TrackChange("stackable"); } }
 
+    private int? _maxStacks = default!;
     /// <summary>
     /// Updated maximum stack count (null means no change)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxStacks")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
-    public int? MaxStacks { get; set; } = default!;
+    public int? MaxStacks { get => _maxStacks; set { _maxStacks = value; _TrackChange("maxStacks"); } }
 
+    private StackBehavior? _stackBehavior = default!;
     /// <summary>
     /// Updated stacking behavior (null means no change)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stackBehavior")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public StackBehavior? StackBehavior { get; set; } = default!;
+    public StackBehavior? StackBehavior { get => _stackBehavior; set { _stackBehavior = value; _TrackChange("stackBehavior"); } }
 
+    private System.Guid? _contractTemplateId = default!;
     /// <summary>
     /// Updated contract template reference (null means no change)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contractTemplateId")]
-    public System.Guid? ContractTemplateId { get; set; } = default!;
+    public System.Guid? ContractTemplateId { get => _contractTemplateId; set { _contractTemplateId = value; _TrackChange("contractTemplateId"); } }
 
+    private int? _defaultDurationSeconds = default!;
     /// <summary>
     /// Updated default duration in seconds (null means no change)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("defaultDurationSeconds")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
-    public int? DefaultDurationSeconds { get; set; } = default!;
+    public int? DefaultDurationSeconds { get => _defaultDurationSeconds; set { _defaultDurationSeconds = value; _TrackChange("defaultDurationSeconds"); } }
 
+    private System.Guid? _iconAssetId = default!;
     /// <summary>
     /// Updated icon asset reference (null means no change)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("iconAssetId")]
-    public System.Guid? IconAssetId { get; set; } = default!;
+    public System.Guid? IconAssetId { get => _iconAssetId; set { _iconAssetId = value; _TrackChange("iconAssetId"); } }
 
 }
 

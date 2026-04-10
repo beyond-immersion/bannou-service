@@ -589,66 +589,102 @@ public partial class CreateLocationRequest
 public partial class UpdateLocationRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _locationId = default!;
     /// <summary>
     /// ID of the location to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("locationId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid LocationId { get; set; } = default!;
+    public System.Guid LocationId { get => _locationId; set { _locationId = value; _TrackChange("locationId"); } }
 
+    private string? _name = default!;
     /// <summary>
     /// Display name for the location
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 1)]
-    public string? Name { get; set; } = default!;
+    public string? Name { get => _name; set { _name = value; _TrackChange("name"); } }
 
+    private string? _description = default!;
     /// <summary>
     /// Description of the location
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.StringLength(2000)]
-    public string? Description { get; set; } = default!;
+    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
+    private LocationType? _locationType = default!;
     /// <summary>
     /// Type of location
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("locationType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public LocationType? LocationType { get; set; } = default!;
+    public LocationType? LocationType { get => _locationType; set { _locationType = value; _TrackChange("locationType"); } }
 
+    private BoundingBox3D? _bounds = default!;
     /// <summary>
     /// Optional spatial extent in world coordinates
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bounds")]
-    public BoundingBox3D? Bounds { get; set; } = default!;
+    public BoundingBox3D? Bounds { get => _bounds; set { _bounds = value; _TrackChange("bounds"); } }
 
+    private BoundsPrecision? _boundsPrecision = default!;
     /// <summary>
     /// Precision level of spatial bounds
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("boundsPrecision")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public BoundsPrecision? BoundsPrecision { get; set; } = default!;
+    public BoundsPrecision? BoundsPrecision { get => _boundsPrecision; set { _boundsPrecision = value; _TrackChange("boundsPrecision"); } }
 
+    private CoordinateMode? _coordinateMode = default!;
     /// <summary>
     /// How this location's coordinate system relates to its parent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("coordinateMode")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CoordinateMode? CoordinateMode { get; set; } = default!;
+    public CoordinateMode? CoordinateMode { get => _coordinateMode; set { _coordinateMode = value; _TrackChange("coordinateMode"); } }
 
+    private Position3D? _localOrigin = default!;
     /// <summary>
     /// Origin point for local or inherited coordinate systems
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("localOrigin")]
-    public Position3D? LocalOrigin { get; set; } = default!;
+    public Position3D? LocalOrigin { get => _localOrigin; set { _localOrigin = value; _TrackChange("localOrigin"); } }
 
+    private object? _metadata = default!;
     /// <summary>
     /// Updated client-provided location metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
+    public object? Metadata { get => _metadata; set { _metadata = value; _TrackChange("metadata"); } }
 
 }
 
@@ -659,21 +695,50 @@ public partial class UpdateLocationRequest
 public partial class SetLocationParentRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _locationId = default!;
     /// <summary>
     /// ID of the location to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("locationId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid LocationId { get; set; } = default!;
+    public System.Guid LocationId { get => _locationId; set { _locationId = value; _TrackChange("locationId"); } }
 
+    private System.Guid _parentLocationId = default!;
     /// <summary>
     /// ID of the new parent location (must be in same realm)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentLocationId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ParentLocationId { get; set; } = default!;
+    public System.Guid ParentLocationId { get => _parentLocationId; set { _parentLocationId = value; _TrackChange("parentLocationId"); } }
 
 }
 

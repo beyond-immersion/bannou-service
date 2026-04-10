@@ -182,58 +182,93 @@ public partial class CreateRealmRequest
 public partial class UpdateRealmRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _realmId = default!;
     /// <summary>
     /// ID of the realm to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
+    public System.Guid RealmId { get => _realmId; set { _realmId = value; _TrackChange("realmId"); } }
 
+    private System.Guid? _gameServiceId = default!;
     /// <summary>
     /// ID of the game service this realm belongs to
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    public System.Guid? GameServiceId { get; set; } = default!;
+    public System.Guid? GameServiceId { get => _gameServiceId; set { _gameServiceId = value; _TrackChange("gameServiceId"); } }
 
+    private string? _name = default!;
     /// <summary>
     /// Display name for the realm
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
-    public string? Name { get; set; } = default!;
+    public string? Name { get => _name; set { _name = value; _TrackChange("name"); } }
 
+    private string? _description = default!;
     /// <summary>
     /// Description of the realm
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.StringLength(2000)]
-    public string? Description { get; set; } = default!;
+    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
+    private string? _category = default!;
     /// <summary>
     /// Category for grouping
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.StringLength(50, MinimumLength = 1)]
-    public string? Category { get; set; } = default!;
+    public string? Category { get => _category; set { _category = value; _TrackChange("category"); } }
 
+    private bool? _isActive = default!;
     /// <summary>
     /// Whether the realm is currently active
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
-    public bool? IsActive { get; set; } = default!;
+    public bool? IsActive { get => _isActive; set { _isActive = value; _TrackChange("isActive"); } }
 
+    private bool? _isSystemType = default!;
     /// <summary>
     /// Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isSystemType")]
-    public bool? IsSystemType { get; set; } = default!;
+    public bool? IsSystemType { get => _isSystemType; set { _isSystemType = value; _TrackChange("isSystemType"); } }
 
+    private object? _metadata = default!;
     /// <summary>
     /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
+    public object? Metadata { get => _metadata; set { _metadata = value; _TrackChange("metadata"); } }
 
 }
 

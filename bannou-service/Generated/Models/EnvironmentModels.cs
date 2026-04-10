@@ -673,69 +673,106 @@ public partial class ListClimatesRequest
 public partial class UpdateClimateRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _templateId = default!;
     /// <summary>
     /// Climate template to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TemplateId { get; set; } = default!;
+    public System.Guid TemplateId { get => _templateId; set { _templateId = value; _TrackChange("templateId"); } }
 
+    private string? _displayName = default!;
     /// <summary>
     /// Updated display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
-    public string? DisplayName { get; set; } = default!;
+    public string? DisplayName { get => _displayName; set { _displayName = value; _TrackChange("displayName"); } }
 
+    private string? _description = default!;
     /// <summary>
     /// Updated description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.StringLength(2000)]
-    public string? Description { get; set; } = default!;
+    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
+    private System.Collections.Generic.ICollection<TemperatureCurve>? _temperatureCurves = default!;
     /// <summary>
     /// Updated temperature curves (replaces all curves)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("temperatureCurves")]
-    public System.Collections.Generic.ICollection<TemperatureCurve>? TemperatureCurves { get; set; } = default!;
+    public System.Collections.Generic.ICollection<TemperatureCurve>? TemperatureCurves { get => _temperatureCurves; set { _temperatureCurves = value; _TrackChange("temperatureCurves"); } }
 
+    private System.Collections.Generic.ICollection<WeatherDistributionSeason>? _weatherDistributions = default!;
     /// <summary>
     /// Updated weather distributions (replaces all distributions)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("weatherDistributions")]
-    public System.Collections.Generic.ICollection<WeatherDistributionSeason>? WeatherDistributions { get; set; } = default!;
+    public System.Collections.Generic.ICollection<WeatherDistributionSeason>? WeatherDistributions { get => _weatherDistributions; set { _weatherDistributions = value; _TrackChange("weatherDistributions"); } }
 
+    private System.Collections.Generic.ICollection<AtmosphericBaselineSeason>? _atmosphericBaselines = default!;
     /// <summary>
     /// Updated atmospheric baselines (replaces all baselines)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("atmosphericBaselines")]
-    public System.Collections.Generic.ICollection<AtmosphericBaselineSeason>? AtmosphericBaselines { get; set; } = default!;
+    public System.Collections.Generic.ICollection<AtmosphericBaselineSeason>? AtmosphericBaselines { get => _atmosphericBaselines; set { _atmosphericBaselines = value; _TrackChange("atmosphericBaselines"); } }
 
+    private System.Collections.Generic.ICollection<ResourceAvailabilitySeason>? _resourceAvailability = default!;
     /// <summary>
     /// Updated resource availability (replaces all entries)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("resourceAvailability")]
-    public System.Collections.Generic.ICollection<ResourceAvailabilitySeason>? ResourceAvailability { get; set; } = default!;
+    public System.Collections.Generic.ICollection<ResourceAvailabilitySeason>? ResourceAvailability { get => _resourceAvailability; set { _resourceAvailability = value; _TrackChange("resourceAvailability"); } }
 
+    private double? _altitudeTemperatureRate = default!;
     /// <summary>
     /// Updated altitude temperature rate
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("altitudeTemperatureRate")]
-    public double? AltitudeTemperatureRate { get; set; } = default!;
+    public double? AltitudeTemperatureRate { get => _altitudeTemperatureRate; set { _altitudeTemperatureRate = value; _TrackChange("altitudeTemperatureRate"); } }
 
+    private double? _depthTemperatureRate = default!;
     /// <summary>
     /// Updated depth temperature rate
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("depthTemperatureRate")]
-    public double? DepthTemperatureRate { get; set; } = default!;
+    public double? DepthTemperatureRate { get => _depthTemperatureRate; set { _depthTemperatureRate = value; _TrackChange("depthTemperatureRate"); } }
 
+    private double? _heatThreshold = default!;
     /// <summary>
     /// Updated heat threshold
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("heatThreshold")]
-    public double? HeatThreshold { get; set; } = default!;
+    public double? HeatThreshold { get => _heatThreshold; set { _heatThreshold = value; _TrackChange("heatThreshold"); } }
 
 }
 
@@ -1344,38 +1381,70 @@ public partial class GetClimateBindingRequest
 public partial class UpdateClimateBindingRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _locationId = default!;
     /// <summary>
     /// Location whose binding to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("locationId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid LocationId { get; set; } = default!;
+    public System.Guid LocationId { get => _locationId; set { _locationId = value; _TrackChange("locationId"); } }
 
+    private string? _biomeCode = default!;
     /// <summary>
     /// Updated biome code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("biomeCode")]
     [System.ComponentModel.DataAnnotations.StringLength(128)]
-    public string? BiomeCode { get; set; } = default!;
+    public string? BiomeCode { get => _biomeCode; set { _biomeCode = value; _TrackChange("biomeCode"); } }
 
+    private double? _altitude = default!;
     /// <summary>
     /// Updated altitude
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("altitude")]
-    public double? Altitude { get; set; } = default!;
+    public double? Altitude { get => _altitude; set { _altitude = value; _TrackChange("altitude"); } }
 
+    private double? _depth = default!;
     /// <summary>
     /// Updated depth
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("depth")]
-    public double? Depth { get; set; } = default!;
+    public double? Depth { get => _depth; set { _depth = value; _TrackChange("depth"); } }
 
+    private bool? _isIndoor = default!;
     /// <summary>
     /// Updated indoor flag
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isIndoor")]
-    public bool? IsIndoor { get; set; } = default!;
+    public bool? IsIndoor { get => _isIndoor; set { _isIndoor = value; _TrackChange("isIndoor"); } }
 
 }
 
@@ -1478,22 +1547,52 @@ public partial class BulkSeedBindingEntry
 public partial class SetRealmConfigRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _realmId = default!;
     /// <summary>
     /// Realm to configure
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
+    public System.Guid RealmId { get => _realmId; set { _realmId = value; _TrackChange("realmId"); } }
 
+    private System.Guid _gameServiceId = default!;
     /// <summary>
     /// Game service for biome code validation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
+    public System.Guid GameServiceId { get => _gameServiceId; set { _gameServiceId = value; _TrackChange("gameServiceId"); } }
 
+    private string _defaultBiomeCode = default!;
     /// <summary>
     /// Default biome code for locations without explicit bindings
     /// </summary>
@@ -1501,7 +1600,7 @@ public partial class SetRealmConfigRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
-    public string DefaultBiomeCode { get; set; } = default!;
+    public string DefaultBiomeCode { get => _defaultBiomeCode; set { _defaultBiomeCode = value; _TrackChange("defaultBiomeCode"); } }
 
 }
 

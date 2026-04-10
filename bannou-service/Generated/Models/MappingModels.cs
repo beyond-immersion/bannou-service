@@ -1702,45 +1702,78 @@ public partial class ListDefinitionsResponse
 public partial class UpdateDefinitionRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _definitionId = default!;
     /// <summary>
     /// Definition ID to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("definitionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid DefinitionId { get; set; } = default!;
+    public System.Guid DefinitionId { get => _definitionId; set { _definitionId = value; _TrackChange("definitionId"); } }
 
+    private string? _name = default!;
     /// <summary>
     /// New name (optional)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
-    public string? Name { get; set; } = default!;
+    public string? Name { get => _name; set { _name = value; _TrackChange("name"); } }
 
+    private string? _description = default!;
     /// <summary>
     /// New description (optional)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.StringLength(2048)]
-    public string? Description { get; set; } = default!;
+    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
+    private System.Collections.Generic.ICollection<LayerDefinition>? _layers = default!;
     /// <summary>
     /// New layer configurations (replaces existing)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("layers")]
-    public System.Collections.Generic.ICollection<LayerDefinition>? Layers { get; set; } = default!;
+    public System.Collections.Generic.ICollection<LayerDefinition>? Layers { get => _layers; set { _layers = value; _TrackChange("layers"); } }
 
+    private Bounds? _defaultBounds = default!;
     /// <summary>
     /// New default bounds
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("defaultBounds")]
-    public Bounds? DefaultBounds { get; set; } = default!;
+    public Bounds? DefaultBounds { get => _defaultBounds; set { _defaultBounds = value; _TrackChange("defaultBounds"); } }
 
+    private object? _metadata = default!;
     /// <summary>
     /// Updated client-provided definition metadata (replaces existing). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
+    public object? Metadata { get => _metadata; set { _metadata = value; _TrackChange("metadata"); } }
 
 }
 

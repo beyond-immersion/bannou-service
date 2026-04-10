@@ -312,57 +312,92 @@ public partial class ListActorTemplatesResponse
 public partial class UpdateActorTemplateRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _templateId = default!;
     /// <summary>
     /// ID of the template to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TemplateId { get; set; } = default!;
+    public System.Guid TemplateId { get => _templateId; set { _templateId = value; _TrackChange("templateId"); } }
 
+    private string? _behaviorRef = default!;
     /// <summary>
     /// New behavior reference (triggers behavior.updated subscription)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorRef")]
-    public string? BehaviorRef { get; set; } = default!;
+    public string? BehaviorRef { get => _behaviorRef; set { _behaviorRef = value; _TrackChange("behaviorRef"); } }
 
+    private object? _configuration = default!;
     /// <summary>
     /// Updated game-specific configuration for ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("configuration")]
-    public object? Configuration { get; set; } = default!;
+    public object? Configuration { get => _configuration; set { _configuration = value; _TrackChange("configuration"); } }
 
+    private AutoSpawnConfig? _autoSpawn = default!;
     /// <summary>
     /// Updated auto-spawn configuration
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autoSpawn")]
-    public AutoSpawnConfig? AutoSpawn { get; set; } = default!;
+    public AutoSpawnConfig? AutoSpawn { get => _autoSpawn; set { _autoSpawn = value; _TrackChange("autoSpawn"); } }
 
+    private int? _tickIntervalMs = default!;
     /// <summary>
     /// Updated tick interval in milliseconds
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tickIntervalMs")]
-    public int? TickIntervalMs { get; set; } = default!;
+    public int? TickIntervalMs { get => _tickIntervalMs; set { _tickIntervalMs = value; _TrackChange("tickIntervalMs"); } }
 
+    private int? _autoSaveIntervalSeconds = default!;
     /// <summary>
     /// Updated auto-save interval in seconds
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autoSaveIntervalSeconds")]
-    public int? AutoSaveIntervalSeconds { get; set; } = default!;
+    public int? AutoSaveIntervalSeconds { get => _autoSaveIntervalSeconds; set { _autoSaveIntervalSeconds = value; _TrackChange("autoSaveIntervalSeconds"); } }
 
+    private string? _cognitionTemplateId = default!;
     /// <summary>
     /// Updated cognition template ID. Set to override the cognition pipeline
     /// <br/>for actors created from this template.
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cognitionTemplateId")]
-    public string? CognitionTemplateId { get; set; } = default!;
+    public string? CognitionTemplateId { get => _cognitionTemplateId; set { _cognitionTemplateId = value; _TrackChange("cognitionTemplateId"); } }
 
+    private object? _cognitionOverrides = default!;
     /// <summary>
     /// Updated cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cognitionOverrides")]
-    public object? CognitionOverrides { get; set; } = default!;
+    public object? CognitionOverrides { get => _cognitionOverrides; set { _cognitionOverrides = value; _TrackChange("cognitionOverrides"); } }
 
 }
 
@@ -1766,21 +1801,50 @@ public partial class StartEncounterResponse
 public partial class UpdateEncounterPhaseRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private string _actorId = default!;
     /// <summary>
     /// ID of the Event Brain actor managing the encounter
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public string ActorId { get; set; } = default!;
+    public string ActorId { get => _actorId; set { _actorId = value; _TrackChange("actorId"); } }
 
+    private string _phase = default!;
     /// <summary>
     /// New phase name for the encounter
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("phase")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Phase { get; set; } = default!;
+    public string Phase { get => _phase; set { _phase = value; _TrackChange("phase"); } }
 
 }
 

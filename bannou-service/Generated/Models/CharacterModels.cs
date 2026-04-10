@@ -130,46 +130,79 @@ public partial class GetCharacterRequest
 public partial class UpdateCharacterRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _characterId = default!;
     /// <summary>
     /// ID of the character to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public System.Guid CharacterId { get => _characterId; set { _characterId = value; _TrackChange("characterId"); } }
 
+    private string? _name = default!;
     /// <summary>
     /// New name for the character
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
-    public string? Name { get; set; } = default!;
+    public string? Name { get => _name; set { _name = value; _TrackChange("name"); } }
 
+    private System.Guid? _speciesId = default!;
     /// <summary>
     /// Update character's species (used for species merge migrations)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
-    public System.Guid? SpeciesId { get; set; } = default!;
+    public System.Guid? SpeciesId { get => _speciesId; set { _speciesId = value; _TrackChange("speciesId"); } }
 
+    private CharacterStatus? _status = default!;
     /// <summary>
     /// New lifecycle status for the character
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CharacterStatus? Status { get; set; } = default!;
+    public CharacterStatus? Status { get => _status; set { _status = value; _TrackChange("status"); } }
 
+    private System.DateTimeOffset? _deathDate = default!;
     /// <summary>
     /// In-game death timestamp (sets status to dead)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deathDate")]
-    public System.DateTimeOffset? DeathDate { get; set; } = default!;
+    public System.DateTimeOffset? DeathDate { get => _deathDate; set { _deathDate = value; _TrackChange("deathDate"); } }
 
+    private string? _patronDeityCode = default!;
     /// <summary>
     /// Opaque deity code identifying this character's patron deity. Set to null to clear patron. When changed, Divine auto-bonds/rebonds character domain seeds to the patron deity's seeds.
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("patronDeityCode")]
-    public string? PatronDeityCode { get; set; } = default!;
+    public string? PatronDeityCode { get => _patronDeityCode; set { _patronDeityCode = value; _TrackChange("patronDeityCode"); } }
 
 }
 

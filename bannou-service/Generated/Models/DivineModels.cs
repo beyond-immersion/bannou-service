@@ -483,44 +483,77 @@ public partial class ListDeitiesRequest
 public partial class UpdateDeityRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _deityId = default!;
     /// <summary>
     /// Deity to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deityId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid DeityId { get; set; } = default!;
+    public System.Guid DeityId { get => _deityId; set { _deityId = value; _TrackChange("deityId"); } }
 
+    private string? _displayName = default!;
     /// <summary>
     /// Updated display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    public string? DisplayName { get; set; } = default!;
+    public string? DisplayName { get => _displayName; set { _displayName = value; _TrackChange("displayName"); } }
 
+    private string? _description = default!;
     /// <summary>
     /// Updated description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string? Description { get; set; } = default!;
+    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
+    private System.Collections.Generic.ICollection<DomainInfluence>? _domains = default!;
     /// <summary>
     /// Updated domain influences (replaces entire list)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("domains")]
-    public System.Collections.Generic.ICollection<DomainInfluence>? Domains { get; set; } = default!;
+    public System.Collections.Generic.ICollection<DomainInfluence>? Domains { get => _domains; set { _domains = value; _TrackChange("domains"); } }
 
+    private DivineAffectations? _divineAffectations = default!;
     /// <summary>
     /// Updated personality traits
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("divineAffectations")]
-    public DivineAffectations? DivineAffectations { get; set; } = default!;
+    public DivineAffectations? DivineAffectations { get => _divineAffectations; set { _divineAffectations = value; _TrackChange("divineAffectations"); } }
 
+    private int? _maxAttentionSlots = default!;
     /// <summary>
     /// Updated maximum attention slots
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxAttentionSlots")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
-    public int? MaxAttentionSlots { get; set; } = default!;
+    public int? MaxAttentionSlots { get => _maxAttentionSlots; set { _maxAttentionSlots = value; _TrackChange("maxAttentionSlots"); } }
 
 }
 

@@ -448,40 +448,72 @@ public partial class ListEncounterTypesRequest
 public partial class UpdateEncounterTypeRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private string _code = default!;
     /// <summary>
     /// Code of the type to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Code { get; set; } = default!;
+    public string Code { get => _code; set { _code = value; _TrackChange("code"); } }
 
+    private string? _name = default!;
     /// <summary>
     /// New display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
-    public string? Name { get; set; } = default!;
+    public string? Name { get => _name; set { _name = value; _TrackChange("name"); } }
 
+    private string? _description = default!;
     /// <summary>
     /// New description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? Description { get; set; } = default!;
+    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
+    private EmotionalImpact? _defaultEmotionalImpact = default!;
     /// <summary>
     /// New suggested emotional response
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("defaultEmotionalImpact")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EmotionalImpact? DefaultEmotionalImpact { get; set; } = default!;
+    public EmotionalImpact? DefaultEmotionalImpact { get => _defaultEmotionalImpact; set { _defaultEmotionalImpact = value; _TrackChange("defaultEmotionalImpact"); } }
 
+    private int? _sortOrder = default!;
     /// <summary>
     /// New display ordering
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sortOrder")]
-    public int? SortOrder { get; set; } = default!;
+    public int? SortOrder { get => _sortOrder; set { _sortOrder = value; _TrackChange("sortOrder"); } }
 
 }
 
@@ -922,49 +954,82 @@ public partial class GetPerspectiveRequest
 public partial class UpdatePerspectiveRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _encounterId = default!;
     /// <summary>
     /// Encounter to update perspective for
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EncounterId { get; set; } = default!;
+    public System.Guid EncounterId { get => _encounterId; set { _encounterId = value; _TrackChange("encounterId"); } }
 
+    private System.Guid _characterId = default!;
     /// <summary>
     /// Character whose perspective to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public System.Guid CharacterId { get => _characterId; set { _characterId = value; _TrackChange("characterId"); } }
 
+    private EmotionalImpact? _emotionalImpact = default!;
     /// <summary>
     /// New emotional impact
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("emotionalImpact")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EmotionalImpact? EmotionalImpact { get; set; } = default!;
+    public EmotionalImpact? EmotionalImpact { get => _emotionalImpact; set { _emotionalImpact = value; _TrackChange("emotionalImpact"); } }
 
+    private float? _impactIntensity = default!;
     /// <summary>
     /// New impact intensity (0.0-1.0)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("impactIntensity")]
     [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
-    public float? ImpactIntensity { get; set; } = default!;
+    public float? ImpactIntensity { get => _impactIntensity; set { _impactIntensity = value; _TrackChange("impactIntensity"); } }
 
+    private float? _sentimentShift = default!;
     /// <summary>
     /// New sentiment shift
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sentimentShift")]
     [System.ComponentModel.DataAnnotations.Range(-1.0F, 1.0F)]
-    public float? SentimentShift { get; set; } = default!;
+    public float? SentimentShift { get => _sentimentShift; set { _sentimentShift = value; _TrackChange("sentimentShift"); } }
 
+    private string? _rememberedAs = default!;
     /// <summary>
     /// New memory description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("rememberedAs")]
     [System.ComponentModel.DataAnnotations.StringLength(200)]
-    public string? RememberedAs { get; set; } = default!;
+    public string? RememberedAs { get => _rememberedAs; set { _rememberedAs = value; _TrackChange("rememberedAs"); } }
 
 }
 

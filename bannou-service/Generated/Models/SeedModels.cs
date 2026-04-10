@@ -392,25 +392,55 @@ public partial class ListSeedsRequest
 public partial class UpdateSeedRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _seedId = default!;
     /// <summary>
     /// The seed to update.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SeedId { get; set; } = default!;
+    public System.Guid SeedId { get => _seedId; set { _seedId = value; _TrackChange("seedId"); } }
 
+    private string? _displayName = default!;
     /// <summary>
     /// New display name.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    public string? DisplayName { get; set; } = default!;
+    public string? DisplayName { get => _displayName; set { _displayName = value; _TrackChange("displayName"); } }
 
+    private object? _metadata = default!;
     /// <summary>
     /// Client-provided metadata fields to merge (set key to null to delete). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
+    public object? Metadata { get => _metadata; set { _metadata = value; _TrackChange("metadata"); } }
 
 }
 
@@ -845,75 +875,113 @@ public partial class ListSeedTypesRequest
 public partial class UpdateSeedTypeRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private string _seedTypeCode = default!;
     /// <summary>
     /// The seed type to update.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public string SeedTypeCode { get; set; } = default!;
+    public string SeedTypeCode { get => _seedTypeCode; set { _seedTypeCode = value; _TrackChange("seedTypeCode"); } }
 
+    private System.Guid? _gameServiceId = default!;
     /// <summary>
     /// The game service scope. Null for cross-game seed types.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    public System.Guid? GameServiceId { get; set; } = default!;
+    public System.Guid? GameServiceId { get => _gameServiceId; set { _gameServiceId = value; _TrackChange("gameServiceId"); } }
 
+    private string? _displayName = default!;
     /// <summary>
     /// New display name.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    public string? DisplayName { get; set; } = default!;
+    public string? DisplayName { get => _displayName; set { _displayName = value; _TrackChange("displayName"); } }
 
+    private string? _description = default!;
     /// <summary>
     /// New description.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string? Description { get; set; } = default!;
+    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
+    private int? _maxPerOwner = default!;
     /// <summary>
     /// Updated maximum per owner.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxPerOwner")]
-    public int? MaxPerOwner { get; set; } = default!;
+    public int? MaxPerOwner { get => _maxPerOwner; set { _maxPerOwner = value; _TrackChange("maxPerOwner"); } }
 
+    private System.Collections.Generic.ICollection<GrowthPhaseDefinition>? _growthPhases = default!;
     /// <summary>
     /// Updated phase definitions.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("growthPhases")]
-    public System.Collections.Generic.ICollection<GrowthPhaseDefinition>? GrowthPhases { get; set; } = default!;
+    public System.Collections.Generic.ICollection<GrowthPhaseDefinition>? GrowthPhases { get => _growthPhases; set { _growthPhases = value; _TrackChange("growthPhases"); } }
 
+    private System.Collections.Generic.ICollection<CapabilityRule>? _capabilityRules = default!;
     /// <summary>
     /// Updated capability rules.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("capabilityRules")]
-    public System.Collections.Generic.ICollection<CapabilityRule>? CapabilityRules { get; set; } = default!;
+    public System.Collections.Generic.ICollection<CapabilityRule>? CapabilityRules { get => _capabilityRules; set { _capabilityRules = value; _TrackChange("capabilityRules"); } }
 
+    private bool? _growthDecayEnabled = default!;
     /// <summary>
     /// Whether unused growth domains decay over time for this seed type. Falls back to global config if null.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("growthDecayEnabled")]
-    public bool? GrowthDecayEnabled { get; set; } = default!;
+    public bool? GrowthDecayEnabled { get => _growthDecayEnabled; set { _growthDecayEnabled = value; _TrackChange("growthDecayEnabled"); } }
 
+    private float? _growthDecayRatePerDay = default!;
     /// <summary>
     /// Daily decay rate for unused domains of this seed type. Falls back to global config if null.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("growthDecayRatePerDay")]
-    public float? GrowthDecayRatePerDay { get; set; } = default!;
+    public float? GrowthDecayRatePerDay { get => _growthDecayRatePerDay; set { _growthDecayRatePerDay = value; _TrackChange("growthDecayRatePerDay"); } }
 
+    private float? _sameOwnerGrowthMultiplier = default!;
     /// <summary>
     /// Updated fraction of growth applied to other seeds of the same type owned by the same entity.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sameOwnerGrowthMultiplier")]
     [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
-    public float? SameOwnerGrowthMultiplier { get; set; } = default!;
+    public float? SameOwnerGrowthMultiplier { get => _sameOwnerGrowthMultiplier; set { _sameOwnerGrowthMultiplier = value; _TrackChange("sameOwnerGrowthMultiplier"); } }
 
+    private System.Collections.Generic.ICollection<CollectionGrowthMapping>? _collectionGrowthMappings = default!;
     /// <summary>
     /// Updated collection growth mappings. Null means no change, empty array removes all mappings.
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("collectionGrowthMappings")]
-    public System.Collections.Generic.ICollection<CollectionGrowthMapping>? CollectionGrowthMappings { get; set; } = default!;
+    public System.Collections.Generic.ICollection<CollectionGrowthMapping>? CollectionGrowthMappings { get => _collectionGrowthMappings; set { _collectionGrowthMappings = value; _TrackChange("collectionGrowthMappings"); } }
 
 }
 

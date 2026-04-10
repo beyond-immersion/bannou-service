@@ -1396,20 +1396,49 @@ public partial class QueryByBloodlineResponse
 public partial class SetNaturalDeathYearRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _characterId = default!;
     /// <summary>
     /// Character to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public System.Guid CharacterId { get => _characterId; set { _characterId = value; _TrackChange("characterId"); } }
 
+    private int _naturalDeathYear = default!;
     /// <summary>
     /// New projected natural death year
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("naturalDeathYear")]
     [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
-    public int NaturalDeathYear { get; set; } = default!;
+    public int NaturalDeathYear { get => _naturalDeathYear; set { _naturalDeathYear = value; _TrackChange("naturalDeathYear"); } }
 
 }
 

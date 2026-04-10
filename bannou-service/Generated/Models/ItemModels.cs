@@ -708,175 +708,229 @@ public partial class ListItemTemplatesRequest
 public partial class UpdateItemTemplateRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _templateId = default!;
     /// <summary>
     /// Template ID to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TemplateId { get; set; } = default!;
+    public System.Guid TemplateId { get => _templateId; set { _templateId = value; _TrackChange("templateId"); } }
 
+    private string? _name = default!;
     /// <summary>
     /// New display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.StringLength(128)]
-    public string? Name { get; set; } = default!;
+    public string? Name { get => _name; set { _name = value; _TrackChange("name"); } }
 
+    private string? _description = default!;
     /// <summary>
     /// New description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.StringLength(1000)]
-    public string? Description { get; set; } = default!;
+    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
+    private string? _subcategory = default!;
     /// <summary>
     /// New subcategory
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("subcategory")]
     [System.ComponentModel.DataAnnotations.StringLength(64)]
-    public string? Subcategory { get; set; } = default!;
+    public string? Subcategory { get => _subcategory; set { _subcategory = value; _TrackChange("subcategory"); } }
 
+    private System.Collections.Generic.ICollection<string>? _tags = default!;
     /// <summary>
     /// New tags (replaces existing)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Tags { get => _tags; set { _tags = value; _TrackChange("tags"); } }
 
+    private ItemRarity? _rarity = default!;
     /// <summary>
     /// New rarity tier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("rarity")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ItemRarity? Rarity { get; set; } = default!;
+    public ItemRarity? Rarity { get => _rarity; set { _rarity = value; _TrackChange("rarity"); } }
 
+    private double? _weight = default!;
     /// <summary>
     /// New weight value
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("weight")]
-    public double? Weight { get; set; } = default!;
+    public double? Weight { get => _weight; set { _weight = value; _TrackChange("weight"); } }
 
+    private double? _volume = default!;
     /// <summary>
     /// New volume value
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("volume")]
-    public double? Volume { get; set; } = default!;
+    public double? Volume { get => _volume; set { _volume = value; _TrackChange("volume"); } }
 
+    private int? _gridWidth = default!;
     /// <summary>
     /// New grid width
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gridWidth")]
-    public int? GridWidth { get; set; } = default!;
+    public int? GridWidth { get => _gridWidth; set { _gridWidth = value; _TrackChange("gridWidth"); } }
 
+    private int? _gridHeight = default!;
     /// <summary>
     /// New grid height
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gridHeight")]
-    public int? GridHeight { get; set; } = default!;
+    public int? GridHeight { get => _gridHeight; set { _gridHeight = value; _TrackChange("gridHeight"); } }
 
+    private bool? _canRotate = default!;
     /// <summary>
     /// New rotation setting
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("canRotate")]
-    public bool? CanRotate { get; set; } = default!;
+    public bool? CanRotate { get => _canRotate; set { _canRotate = value; _TrackChange("canRotate"); } }
 
+    private double? _baseValue = default!;
     /// <summary>
     /// New base value
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("baseValue")]
-    public double? BaseValue { get; set; } = default!;
+    public double? BaseValue { get => _baseValue; set { _baseValue = value; _TrackChange("baseValue"); } }
 
+    private bool? _tradeable = default!;
     /// <summary>
     /// New tradeable setting
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tradeable")]
-    public bool? Tradeable { get; set; } = default!;
+    public bool? Tradeable { get => _tradeable; set { _tradeable = value; _TrackChange("tradeable"); } }
 
+    private bool? _destroyable = default!;
     /// <summary>
     /// New destroyable setting
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("destroyable")]
-    public bool? Destroyable { get; set; } = default!;
+    public bool? Destroyable { get => _destroyable; set { _destroyable = value; _TrackChange("destroyable"); } }
 
+    private int? _maxDurability = default!;
     /// <summary>
     /// New max durability
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxDurability")]
-    public int? MaxDurability { get; set; } = default!;
+    public int? MaxDurability { get => _maxDurability; set { _maxDurability = value; _TrackChange("maxDurability"); } }
 
+    private System.Collections.Generic.ICollection<System.Guid>? _availableRealms = default!;
     /// <summary>
     /// New available realms
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("availableRealms")]
-    public System.Collections.Generic.ICollection<System.Guid>? AvailableRealms { get; set; } = default!;
+    public System.Collections.Generic.ICollection<System.Guid>? AvailableRealms { get => _availableRealms; set { _availableRealms = value; _TrackChange("availableRealms"); } }
 
+    private object? _stats = default!;
     /// <summary>
     /// New stats. Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stats")]
-    public object? Stats { get; set; } = default!;
+    public object? Stats { get => _stats; set { _stats = value; _TrackChange("stats"); } }
 
+    private object? _effects = default!;
     /// <summary>
     /// New effects. Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("effects")]
-    public object? Effects { get; set; } = default!;
+    public object? Effects { get => _effects; set { _effects = value; _TrackChange("effects"); } }
 
+    private object? _requirements = default!;
     /// <summary>
     /// New requirements. Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("requirements")]
-    public object? Requirements { get; set; } = default!;
+    public object? Requirements { get => _requirements; set { _requirements = value; _TrackChange("requirements"); } }
 
+    private object? _display = default!;
     /// <summary>
     /// New display properties. Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("display")]
-    public object? Display { get; set; } = default!;
+    public object? Display { get => _display; set { _display = value; _TrackChange("display"); } }
 
+    private object? _metadata = default!;
     /// <summary>
     /// New metadata. Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
+    public object? Metadata { get => _metadata; set { _metadata = value; _TrackChange("metadata"); } }
 
+    private bool? _isActive = default!;
     /// <summary>
     /// Active status
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
-    public bool? IsActive { get; set; } = default!;
+    public bool? IsActive { get => _isActive; set { _isActive = value; _TrackChange("isActive"); } }
 
+    private System.Guid? _useBehaviorContractTemplateId = default!;
     /// <summary>
     /// Contract template ID for executable item behavior (null to clear)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("useBehaviorContractTemplateId")]
-    public System.Guid? UseBehaviorContractTemplateId { get; set; } = default!;
+    public System.Guid? UseBehaviorContractTemplateId { get => _useBehaviorContractTemplateId; set { _useBehaviorContractTemplateId = value; _TrackChange("useBehaviorContractTemplateId"); } }
 
+    private System.Guid? _canUseBehaviorContractTemplateId = default!;
     /// <summary>
     /// Contract template for pre-use validation (null to clear)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("canUseBehaviorContractTemplateId")]
-    public System.Guid? CanUseBehaviorContractTemplateId { get; set; } = default!;
+    public System.Guid? CanUseBehaviorContractTemplateId { get => _canUseBehaviorContractTemplateId; set { _canUseBehaviorContractTemplateId = value; _TrackChange("canUseBehaviorContractTemplateId"); } }
 
+    private System.Guid? _onUseFailedBehaviorContractTemplateId = default!;
     /// <summary>
     /// Contract template for use failure handling (null to clear)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("onUseFailedBehaviorContractTemplateId")]
-    public System.Guid? OnUseFailedBehaviorContractTemplateId { get; set; } = default!;
+    public System.Guid? OnUseFailedBehaviorContractTemplateId { get => _onUseFailedBehaviorContractTemplateId; set { _onUseFailedBehaviorContractTemplateId = value; _TrackChange("onUseFailedBehaviorContractTemplateId"); } }
 
+    private ItemUseBehavior? _itemUseBehavior = default!;
     /// <summary>
     /// How the item should behave when used
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("itemUseBehavior")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ItemUseBehavior? ItemUseBehavior { get; set; } = default!;
+    public ItemUseBehavior? ItemUseBehavior { get => _itemUseBehavior; set { _itemUseBehavior = value; _TrackChange("itemUseBehavior"); } }
 
+    private CanUseBehavior? _canUseBehavior = default!;
     /// <summary>
     /// How CanUse validation failures should be handled
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("canUseBehavior")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CanUseBehavior? CanUseBehavior { get; set; } = default!;
+    public CanUseBehavior? CanUseBehavior { get => _canUseBehavior; set { _canUseBehavior = value; _TrackChange("canUseBehavior"); } }
 
 }
 
@@ -1363,74 +1417,112 @@ public partial class GetItemInstanceRequest
 public partial class ModifyItemInstanceRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _instanceId = default!;
     /// <summary>
     /// Instance ID to modify
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid InstanceId { get; set; } = default!;
+    public System.Guid InstanceId { get => _instanceId; set { _instanceId = value; _TrackChange("instanceId"); } }
 
+    private int? _durabilityDelta = default!;
     /// <summary>
     /// Change to durability (positive to repair, negative for damage)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("durabilityDelta")]
-    public int? DurabilityDelta { get; set; } = default!;
+    public int? DurabilityDelta { get => _durabilityDelta; set { _durabilityDelta = value; _TrackChange("durabilityDelta"); } }
 
+    private object? _customStats = default!;
     /// <summary>
     /// New custom stats (merges with existing). Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("customStats")]
-    public object? CustomStats { get; set; } = default!;
+    public object? CustomStats { get => _customStats; set { _customStats = value; _TrackChange("customStats"); } }
 
+    private string? _customName = default!;
     /// <summary>
     /// New custom name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("customName")]
     [System.ComponentModel.DataAnnotations.StringLength(128)]
-    public string? CustomName { get; set; } = default!;
+    public string? CustomName { get => _customName; set { _customName = value; _TrackChange("customName"); } }
 
+    private double? _quantityDelta = default!;
     /// <summary>
     /// Change to quantity (positive to add, negative to subtract). Only valid for stackable items.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("quantityDelta")]
-    public double? QuantityDelta { get; set; } = default!;
+    public double? QuantityDelta { get => _quantityDelta; set { _quantityDelta = value; _TrackChange("quantityDelta"); } }
 
+    private object? _instanceMetadata = default!;
     /// <summary>
     /// New instance metadata (merges with existing). Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("instanceMetadata")]
-    public object? InstanceMetadata { get; set; } = default!;
+    public object? InstanceMetadata { get => _instanceMetadata; set { _instanceMetadata = value; _TrackChange("instanceMetadata"); } }
 
+    private System.Guid? _newContainerId = default!;
     /// <summary>
     /// Move item to a different container. Used by inventory service for item movement.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newContainerId")]
-    public System.Guid? NewContainerId { get; set; } = default!;
+    public System.Guid? NewContainerId { get => _newContainerId; set { _newContainerId = value; _TrackChange("newContainerId"); } }
 
+    private bool? _clearContainerId = default!;
     /// <summary>
     /// When true, removes the item from its current container (clears container reference and index). Mutually exclusive with newContainerId.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("clearContainerId")]
-    public bool? ClearContainerId { get; set; } = default!;
+    public bool? ClearContainerId { get => _clearContainerId; set { _clearContainerId = value; _TrackChange("clearContainerId"); } }
 
+    private int? _newSlotIndex = default!;
     /// <summary>
     /// New slot index within the container
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newSlotIndex")]
-    public int? NewSlotIndex { get; set; } = default!;
+    public int? NewSlotIndex { get => _newSlotIndex; set { _newSlotIndex = value; _TrackChange("newSlotIndex"); } }
 
+    private int? _newSlotX = default!;
     /// <summary>
     /// New X position for grid-based containers
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newSlotX")]
-    public int? NewSlotX { get; set; } = default!;
+    public int? NewSlotX { get => _newSlotX; set { _newSlotX = value; _TrackChange("newSlotX"); } }
 
+    private int? _newSlotY = default!;
     /// <summary>
     /// New Y position for grid-based containers
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newSlotY")]
-    public int? NewSlotY { get; set; } = default!;
+    public int? NewSlotY { get => _newSlotY; set { _newSlotY = value; _TrackChange("newSlotY"); } }
 
 }
 

@@ -338,85 +338,125 @@ public partial class ListEntryTemplatesRequest
 public partial class UpdateEntryTemplateRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _entryTemplateId = default!;
     /// <summary>
     /// Entry template to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entryTemplateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EntryTemplateId { get; set; } = default!;
+    public System.Guid EntryTemplateId { get => _entryTemplateId; set { _entryTemplateId = value; _TrackChange("entryTemplateId"); } }
 
+    private string? _displayName = default!;
     /// <summary>
     /// Updated display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    public string? DisplayName { get; set; } = default!;
+    public string? DisplayName { get => _displayName; set { _displayName = value; _TrackChange("displayName"); } }
 
+    private string? _category = default!;
     /// <summary>
     /// Updated category
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string? Category { get; set; } = default!;
+    public string? Category { get => _category; set { _category = value; _TrackChange("category"); } }
 
+    private System.Collections.Generic.ICollection<string>? _tags = default!;
     /// <summary>
     /// Updated tags
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Tags { get => _tags; set { _tags = value; _TrackChange("tags"); } }
 
+    private string? _assetId = default!;
     /// <summary>
     /// Updated primary asset identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
-    public string? AssetId { get; set; } = default!;
+    public string? AssetId { get => _assetId; set { _assetId = value; _TrackChange("assetId"); } }
 
+    private string? _thumbnailAssetId = default!;
     /// <summary>
     /// Updated thumbnail asset identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("thumbnailAssetId")]
-    public string? ThumbnailAssetId { get; set; } = default!;
+    public string? ThumbnailAssetId { get => _thumbnailAssetId; set { _thumbnailAssetId = value; _TrackChange("thumbnailAssetId"); } }
 
+    private string? _unlockHint = default!;
     /// <summary>
     /// Updated unlock hint text
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("unlockHint")]
-    public string? UnlockHint { get; set; } = default!;
+    public string? UnlockHint { get => _unlockHint; set { _unlockHint = value; _TrackChange("unlockHint"); } }
 
+    private bool? _hideWhenLocked = default!;
     /// <summary>
     /// Updated spoiler protection flag
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("hideWhenLocked")]
-    public bool? HideWhenLocked { get; set; } = default!;
+    public bool? HideWhenLocked { get => _hideWhenLocked; set { _hideWhenLocked = value; _TrackChange("hideWhenLocked"); } }
 
+    private System.Collections.Generic.ICollection<DiscoveryLevel>? _discoveryLevels = default!;
     /// <summary>
     /// Updated discovery levels
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("discoveryLevels")]
-    public System.Collections.Generic.ICollection<DiscoveryLevel>? DiscoveryLevels { get; set; } = default!;
+    public System.Collections.Generic.ICollection<DiscoveryLevel>? DiscoveryLevels { get => _discoveryLevels; set { _discoveryLevels = value; _TrackChange("discoveryLevels"); } }
 
+    private System.Collections.Generic.ICollection<string>? _themes = default!;
     /// <summary>
     /// Updated theme tags for music entries
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("themes")]
-    public System.Collections.Generic.ICollection<string>? Themes { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Themes { get => _themes; set { _themes = value; _TrackChange("themes"); } }
 
+    private string? _duration = default!;
     /// <summary>
     /// Updated duration
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("duration")]
-    public string? Duration { get; set; } = default!;
+    public string? Duration { get => _duration; set { _duration = value; _TrackChange("duration"); } }
 
+    private string? _loopPoint = default!;
     /// <summary>
     /// Updated loop point
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("loopPoint")]
-    public string? LoopPoint { get; set; } = default!;
+    public string? LoopPoint { get => _loopPoint; set { _loopPoint = value; _TrackChange("loopPoint"); } }
 
+    private string? _composer = default!;
     /// <summary>
     /// Updated composer name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("composer")]
-    public string? Composer { get; set; } = default!;
+    public string? Composer { get => _composer; set { _composer = value; _TrackChange("composer"); } }
 
 }
 
@@ -1174,14 +1214,43 @@ public partial class UnlockedEntryResponse
 public partial class UpdateEntryMetadataRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _collectionId = default!;
     /// <summary>
     /// Collection containing the entry
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("collectionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CollectionId { get; set; } = default!;
+    public System.Guid CollectionId { get => _collectionId; set { _collectionId = value; _TrackChange("collectionId"); } }
 
+    private string _entryCode = default!;
     /// <summary>
     /// Entry code to update metadata for
     /// </summary>
@@ -1189,37 +1258,42 @@ public partial class UpdateEntryMetadataRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
-    public string EntryCode { get; set; } = default!;
+    public string EntryCode { get => _entryCode; set { _entryCode = value; _TrackChange("entryCode"); } }
 
+    private int? _playCount = default!;
     /// <summary>
     /// Updated play count (replaces current value)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("playCount")]
-    public int? PlayCount { get; set; } = default!;
+    public int? PlayCount { get => _playCount; set { _playCount = value; _TrackChange("playCount"); } }
 
+    private int? _killCount = default!;
     /// <summary>
     /// Updated kill count (replaces current value)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("killCount")]
-    public int? KillCount { get; set; } = default!;
+    public int? KillCount { get => _killCount; set { _killCount = value; _TrackChange("killCount"); } }
 
+    private bool? _favorited = default!;
     /// <summary>
     /// Updated favorite status
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("favorited")]
-    public bool? Favorited { get; set; } = default!;
+    public bool? Favorited { get => _favorited; set { _favorited = value; _TrackChange("favorited"); } }
 
+    private int? _discoveryLevel = default!;
     /// <summary>
     /// Updated discovery level
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("discoveryLevel")]
-    public int? DiscoveryLevel { get; set; } = default!;
+    public int? DiscoveryLevel { get => _discoveryLevel; set { _discoveryLevel = value; _TrackChange("discoveryLevel"); } }
 
+    private object? _customData = default!;
     /// <summary>
     /// Updated custom data (merged with existing). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("customData")]
-    public object? CustomData { get; set; } = default!;
+    public object? CustomData { get => _customData; set { _customData = value; _TrackChange("customData"); } }
 
 }
 
@@ -1448,6 +1522,34 @@ public partial class ContentSelectionResponse
 public partial class SetAreaContentConfigRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private string _areaCode = default!;
     /// <summary>
     /// Area code to configure (unique per game service and collection type)
     /// </summary>
@@ -1455,24 +1557,27 @@ public partial class SetAreaContentConfigRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
-    public string AreaCode { get; set; } = default!;
+    public string AreaCode { get => _areaCode; set { _areaCode = value; _TrackChange("areaCode"); } }
 
+    private System.Guid _gameServiceId = default!;
     /// <summary>
     /// Game service this area config belongs to
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
+    public System.Guid GameServiceId { get => _gameServiceId; set { _gameServiceId = value; _TrackChange("gameServiceId"); } }
 
+    private string _collectionType = default!;
     /// <summary>
     /// Type of collection this area config applies to
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("collectionType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string CollectionType { get; set; } = default!;
+    public string CollectionType { get => _collectionType; set { _collectionType = value; _TrackChange("collectionType"); } }
 
+    private System.Collections.Generic.ICollection<string> _themes = new System.Collections.ObjectModel.Collection<string>();
     /// <summary>
     /// Theme tags for this area (matched against collection entry themes)
     /// </summary>
@@ -1480,8 +1585,9 @@ public partial class SetAreaContentConfigRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.MinLength(1)]
-    public System.Collections.Generic.ICollection<string> Themes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+    public System.Collections.Generic.ICollection<string> Themes { get => _themes; set { _themes = value; _TrackChange("themes"); } }
 
+    private string _defaultEntryCode = default!;
     /// <summary>
     /// Default entry code to use when no matches are found
     /// </summary>
@@ -1489,7 +1595,7 @@ public partial class SetAreaContentConfigRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
-    public string DefaultEntryCode { get; set; } = default!;
+    public string DefaultEntryCode { get => _defaultEntryCode; set { _defaultEntryCode = value; _TrackChange("defaultEntryCode"); } }
 
 }
 

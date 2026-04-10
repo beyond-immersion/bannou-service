@@ -376,14 +376,43 @@ public partial class GetPersonalityRequest
 public partial class SetPersonalityRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _characterId = default!;
     /// <summary>
     /// ID of the character to set personality for
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public System.Guid CharacterId { get => _characterId; set { _characterId = value; _TrackChange("characterId"); } }
 
+    private System.Collections.Generic.ICollection<TraitValue> _traits = new System.Collections.ObjectModel.Collection<TraitValue>();
     /// <summary>
     /// Initial trait values. All 8 trait axes should be provided.
     /// <br/>Missing axes will default to 0.0 (neutral).
@@ -393,13 +422,14 @@ public partial class SetPersonalityRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.MinLength(1)]
-    public System.Collections.Generic.ICollection<TraitValue> Traits { get; set; } = new System.Collections.ObjectModel.Collection<TraitValue>();
+    public System.Collections.Generic.ICollection<TraitValue> Traits { get => _traits; set { _traits = value; _TrackChange("traits"); } }
 
+    private string? _archetypeHint = default!;
     /// <summary>
     /// Optional archetype code for behavior optimization
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("archetypeHint")]
-    public string? ArchetypeHint { get; set; } = default!;
+    public string? ArchetypeHint { get => _archetypeHint; set { _archetypeHint = value; _TrackChange("archetypeHint"); } }
 
 }
 
@@ -693,21 +723,50 @@ public partial class GetCombatPreferencesRequest
 public partial class SetCombatPreferencesRequest
 {
 
+    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
+    private System.Collections.Generic.HashSet<string>? _changeFields;
+
+    /// <summary>
+    /// Fields explicitly set on this request. Populated automatically by property
+    /// setters. When serialized, enables the server to distinguish "field not
+    /// provided" from "field explicitly set to null" for nullable properties.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
+    public System.Collections.Generic.ICollection<string>? ChangeFields
+    {
+        get => _changeFields?.Count > 0 ? _changeFields : null;
+        set
+        {
+            if (value != null)
+            {
+                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
+                foreach (var f in value)
+                    _changeFields.Add(f);
+            }
+        }
+    }
+
+    private void _TrackChange(string fieldName)
+        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
+
+
+    private System.Guid _characterId = default!;
     /// <summary>
     /// ID of the character to set combat preferences for
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public System.Guid CharacterId { get => _characterId; set { _characterId = value; _TrackChange("characterId"); } }
 
+    private CombatPreferences _preferences = new CombatPreferences();
     /// <summary>
     /// The combat preferences to set
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("preferences")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public CombatPreferences Preferences { get; set; } = new CombatPreferences();
+    public CombatPreferences Preferences { get => _preferences; set { _preferences = value; _TrackChange("preferences"); } }
 
 }
 
