@@ -1491,17 +1491,10 @@ public partial class ModifyItemInstanceRequest
 
     private System.Guid? _newContainerId = default!;
     /// <summary>
-    /// Move item to a different container. Used by inventory service for item movement.
+    /// New container for the item. Set to a container ID to move it, or set explicitly to null (via changeFields) to remove the item from all containers (unplaced). Used by inventory service for item movement. Uses ChangeFields 3-state semantics: absent means no change, explicit null means clear (Issue #722).
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newContainerId")]
     public System.Guid? NewContainerId { get => _newContainerId; set { _newContainerId = value; _TrackChange("newContainerId"); } }
-
-    private bool? _clearContainerId = default!;
-    /// <summary>
-    /// When true, removes the item from its current container (clears container reference and index). Mutually exclusive with newContainerId.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("clearContainerId")]
-    public bool? ClearContainerId { get => _clearContainerId; set { _clearContainerId = value; _TrackChange("clearContainerId"); } }
 
     private int? _newSlotIndex = default!;
     /// <summary>

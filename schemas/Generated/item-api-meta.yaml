@@ -1332,13 +1332,12 @@ paths:
         true,\n                    \"description\": \"New instance metadata (merges with existing). Opaque to Bannou; no plugin
         reads keys by convention.\"\n                },\n                \"newContainerId\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Move item to a different container. Used by inventory service for item movement.\"\n   \
-        \             },\n                \"clearContainerId\": {\n                    \"type\": \"boolean\",\n          \
-        \          \"nullable\": true,\n                    \"description\": \"When true, removes the item from its current
-        container (clears container reference and index). Mutually exclusive with newContainerId.\"\n                },\n\
-        \                \"newSlotIndex\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"New slot index within the container\"\n                },\n      \
-        \          \"newSlotX\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \      \"description\": \"New container for the item. Set to a container ID to move it, or set explicitly to null
+        (via changeFields) to remove the item from all containers (unplaced). Used by inventory service for item movement.
+        Uses ChangeFields 3-state semantics: absent means no change, explicit null means clear (Issue #722).\"\n         \
+        \       },\n                \"newSlotIndex\": {\n                    \"type\": \"integer\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"New slot index within the container\"\n                },\n\
+        \                \"newSlotX\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
         \                    \"description\": \"New X position for grid-based containers\"\n                },\n         \
         \       \"newSlotY\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n   \
         \                 \"description\": \"New Y position for grid-based containers\"\n                }\n            }\n\
@@ -2980,12 +2979,11 @@ components:
           type: string
           format: uuid
           nullable: true
-          description: Move item to a different container. Used by inventory service for item movement.
-        clearContainerId:
-          type: boolean
-          nullable: true
-          description: When true, removes the item from its current container (clears container reference and index). 
-            Mutually exclusive with newContainerId.
+          description: >-
+            New container for the item. Set to a container ID to move it, or set explicitly
+            to null (via changeFields) to remove the item from all containers (unplaced).
+            Used by inventory service for item movement. Uses ChangeFields 3-state semantics:
+            absent means no change, explicit null means clear (Issue #722).
         newSlotIndex:
           type: integer
           nullable: true

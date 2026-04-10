@@ -284,18 +284,17 @@ public partial class AccountService : IAccountService
             return (StatusCodes.NotFound, null);
         }
 
-        // Track changes for event publishing
+        // Track changes for event publishing. Uses ChangeFields from the request (Issue #722)
+        // to distinguish "field absent" from "field explicitly null".
         var changedFields = new List<string>();
 
-        // Update fields if provided
-        if (body.DisplayName != null && body.DisplayName != account.DisplayName)
+        if (body.ChangeFields.IsFieldSet("displayName") && body.DisplayName != account.DisplayName)
         {
             changedFields.Add("displayName");
             account.DisplayName = body.DisplayName;
         }
 
-        // Handle roles update if provided
-        if (body.Roles != null)
+        if (body.ChangeFields.IsFieldSet("roles") && body.Roles != null)
         {
             var newRoles = body.Roles.ToList();
 
@@ -321,18 +320,23 @@ public partial class AccountService : IAccountService
             }
         }
 
-        // Handle metadata update if provided
-        if (body.Metadata != null)
+        if (body.ChangeFields.IsFieldSet("metadata"))
         {
-            var newMetadata = ConvertToMetadataDictionary(body.Metadata);
+            var newMetadata = body.Metadata != null ? ConvertToMetadataDictionary(body.Metadata) : null;
+            var currentMetadata = account.Metadata ?? new Dictionary<string, object>();
             if (newMetadata != null)
             {
-                var currentMetadata = account.Metadata ?? new Dictionary<string, object>();
                 if (!MetadataEquals(currentMetadata, newMetadata))
                 {
                     changedFields.Add("metadata");
                     account.Metadata = newMetadata;
                 }
+            }
+            else if (account.Metadata != null)
+            {
+                // Explicit null — clear the metadata
+                changedFields.Add("metadata");
+                account.Metadata = null;
             }
         }
 
@@ -643,29 +647,31 @@ public partial class AccountService : IAccountService
             return (StatusCodes.NotFound, null);
         }
 
-        // Track changed fields for event publication
+        // Track changed fields for event publication (Issue #722 ChangeFields semantics)
         var changedFields = new List<string>();
 
-        // Update profile fields
-        if (body.DisplayName != null && body.DisplayName != account.DisplayName)
+        if (body.ChangeFields.IsFieldSet("displayName") && body.DisplayName != account.DisplayName)
         {
             account.DisplayName = body.DisplayName;
             changedFields.Add("displayName");
         }
 
-        // Handle metadata update if provided
-        if (body.Metadata != null)
+        if (body.ChangeFields.IsFieldSet("metadata"))
         {
-            var newMetadata = ConvertToMetadataDictionary(body.Metadata);
+            var newMetadata = body.Metadata != null ? ConvertToMetadataDictionary(body.Metadata) : null;
             if (newMetadata != null)
             {
-                // If existing metadata is null or differs from new metadata, update
                 var hasChanged = account.Metadata == null || !MetadataEquals(account.Metadata, newMetadata);
                 if (hasChanged)
                 {
                     account.Metadata = newMetadata;
                     changedFields.Add("metadata");
                 }
+            }
+            else if (account.Metadata != null)
+            {
+                account.Metadata = null;
+                changedFields.Add("metadata");
             }
         }
 
@@ -905,9 +911,14 @@ public partial class AccountService : IAccountService
             return StatusCodes.NotFound;
         }
 
+        // MfaEnabled is required, always applied
         account.MfaEnabled = body.MfaEnabled;
-        account.MfaSecret = body.MfaSecret;
-        account.MfaRecoveryCodes = body.MfaRecoveryCodes?.ToList();
+        // mfaSecret and mfaRecoveryCodes use ChangeFields 3-state semantics (Issue #722):
+        // absent = unchanged, null = clear, value = set
+        if (body.ChangeFields.IsFieldSet("mfaSecret"))
+            account.MfaSecret = body.MfaSecret;
+        if (body.ChangeFields.IsFieldSet("mfaRecoveryCodes"))
+            account.MfaRecoveryCodes = body.MfaRecoveryCodes?.ToList();
         account.UpdatedAt = DateTimeOffset.UtcNow;
 
         // GetWithETagAsync returns non-null etag for existing records;
@@ -1245,9 +1256,11 @@ public partial class AccountService : IAccountService
         BulkUpdateRolesRequest body,
         CancellationToken cancellationToken = default)
     {
-        // Validate that at least one operation is specified
-        var hasAddRoles = body.AddRoles != null && body.AddRoles.Count > 0;
-        var hasRemoveRoles = body.RemoveRoles != null && body.RemoveRoles.Count > 0;
+        // Validate that at least one operation is specified.
+        // Uses ChangeFields 3-state semantics (Issue #722) — listing a role array in
+        // ChangeFields indicates intent to apply that operation, even if the list is empty.
+        var hasAddRoles = body.ChangeFields.IsFieldSet("addRoles") && body.AddRoles != null && body.AddRoles.Count > 0;
+        var hasRemoveRoles = body.ChangeFields.IsFieldSet("removeRoles") && body.RemoveRoles != null && body.RemoveRoles.Count > 0;
 
         if (!hasAddRoles && !hasRemoveRoles)
         {

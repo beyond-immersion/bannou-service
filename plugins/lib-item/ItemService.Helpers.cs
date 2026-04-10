@@ -115,13 +115,16 @@ public partial class ItemService
 
         var now = DateTimeOffset.UtcNow;
 
-        // Capture old container ID for index updates (must be captured before modification)
+        // Capture old container ID for index updates (must be captured before modification).
+        // Uses ChangeFields 3-state semantics (Issue #722): setting newContainerId to a value
+        // moves the item, setting it explicitly to null clears the container (unplaced item).
         var oldContainerId = model.ContainerId;
-        var containerCleared = body.ClearContainerId == true && oldContainerId.HasValue;
-        var containerChanged = body.NewContainerId.HasValue && body.NewContainerId.Value != oldContainerId;
+        var containerExplicitlySet = body.ChangeFields.IsFieldSet("newContainerId");
+        var containerCleared = containerExplicitlySet && !body.NewContainerId.HasValue && oldContainerId.HasValue;
+        var containerChanged = containerExplicitlySet && body.NewContainerId.HasValue && body.NewContainerId.Value != oldContainerId;
 
-        // Apply modifications
-        if (body.DurabilityDelta.HasValue && model.CurrentDurability.HasValue)
+        // Apply modifications — every field checks ChangeFields so absent means "no change"
+        if (body.ChangeFields.IsFieldSet("durabilityDelta") && body.DurabilityDelta.HasValue && model.CurrentDurability.HasValue)
         {
             var newDurability = Math.Max(0, model.CurrentDurability.Value + body.DurabilityDelta.Value);
 
@@ -137,44 +140,44 @@ public partial class ItemService
 
             model.CurrentDurability = newDurability;
         }
-        if (body.QuantityDelta.HasValue)
+        if (body.ChangeFields.IsFieldSet("quantityDelta") && body.QuantityDelta.HasValue)
         {
             model.Quantity = Math.Max(0, model.Quantity + body.QuantityDelta.Value);
         }
-        if (body.CustomStats is not null)
+        if (body.ChangeFields.IsFieldSet("customStats"))
         {
-            model.CustomStats = BannouJson.Serialize(body.CustomStats);
+            model.CustomStats = body.CustomStats is not null ? BannouJson.Serialize(body.CustomStats) : null;
         }
-        if (body.CustomName is not null)
+        if (body.ChangeFields.IsFieldSet("customName"))
         {
             model.CustomName = body.CustomName;
         }
-        if (body.InstanceMetadata is not null)
+        if (body.ChangeFields.IsFieldSet("instanceMetadata"))
         {
-            model.InstanceMetadata = BannouJson.Serialize(body.InstanceMetadata);
+            model.InstanceMetadata = body.InstanceMetadata is not null ? BannouJson.Serialize(body.InstanceMetadata) : null;
         }
-        if (body.ClearContainerId == true)
+        if (containerCleared)
         {
             model.ContainerId = null;
             model.SlotIndex = null;
             model.SlotX = null;
             model.SlotY = null;
         }
-        else if (body.NewContainerId.HasValue)
+        else if (containerChanged)
         {
-            model.ContainerId = body.NewContainerId.Value;
+            model.ContainerId = body.NewContainerId!.Value;
         }
-        if (body.NewSlotIndex.HasValue)
+        if (body.ChangeFields.IsFieldSet("newSlotIndex"))
         {
-            model.SlotIndex = body.NewSlotIndex.Value;
+            model.SlotIndex = body.NewSlotIndex;
         }
-        if (body.NewSlotX.HasValue)
+        if (body.ChangeFields.IsFieldSet("newSlotX"))
         {
-            model.SlotX = body.NewSlotX.Value;
+            model.SlotX = body.NewSlotX;
         }
-        if (body.NewSlotY.HasValue)
+        if (body.ChangeFields.IsFieldSet("newSlotY"))
         {
-            model.SlotY = body.NewSlotY.Value;
+            model.SlotY = body.NewSlotY;
         }
         model.ModifiedAt = now;
 

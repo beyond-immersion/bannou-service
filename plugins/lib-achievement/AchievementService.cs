@@ -297,65 +297,64 @@ public partial class AchievementService : IAchievementService, ICleanDeprecatedE
             return (StatusCodes.NotFound, null);
         }
 
-        // Track which fields are being updated
+        // Track which fields are being updated (Issue #722 ChangeFields semantics)
         var changedFields = new List<string>();
 
-        // Apply updates
-        if (!string.IsNullOrEmpty(body.DisplayName) && body.DisplayName != definition.DisplayName)
+        if (body.ChangeFields.IsFieldSet("displayName") && !string.IsNullOrEmpty(body.DisplayName) && body.DisplayName != definition.DisplayName)
         {
             definition.DisplayName = body.DisplayName;
             changedFields.Add("displayName");
         }
-        if (body.Description != null && body.Description != definition.Description)
+        if (body.ChangeFields.IsFieldSet("description") && body.Description != null && body.Description != definition.Description)
         {
             definition.Description = body.Description;
             changedFields.Add("description");
         }
-        if (body.Category != null && body.Category != definition.Category)
+        if (body.ChangeFields.IsFieldSet("category") && body.Category != definition.Category)
         {
             definition.Category = body.Category;
             changedFields.Add("category");
         }
-        if (body.IsActive.HasValue && body.IsActive.Value != definition.IsActive)
+        if (body.ChangeFields.IsFieldSet("isActive") && body.IsActive.HasValue && body.IsActive.Value != definition.IsActive)
         {
             definition.IsActive = body.IsActive.Value;
             changedFields.Add("isActive");
         }
-        if (body.PlatformMappings != null)
+        if (body.ChangeFields.IsFieldSet("platformMappings"))
         {
-            definition.PlatformMappings = body.PlatformMappings.Select(m => new PlatformMappingData
+            definition.PlatformMappings = body.PlatformMappings?.Select(m => new PlatformMappingData
             {
                 Platform = m.Platform,
                 PlatformAchievementId = m.PlatformAchievementId
             }).ToList();
             changedFields.Add("platformMappings");
         }
-        if (body.ScoreType != null && body.ScoreType != definition.ScoreType)
+        if (body.ChangeFields.IsFieldSet("scoreType") && body.ScoreType != definition.ScoreType)
         {
             definition.ScoreType = body.ScoreType;
             changedFields.Add("scoreType");
         }
-        if (body.MilestoneType != null && body.MilestoneType != definition.MilestoneType)
+        if (body.ChangeFields.IsFieldSet("milestoneType") && body.MilestoneType != definition.MilestoneType)
         {
             definition.MilestoneType = body.MilestoneType;
             changedFields.Add("milestoneType");
         }
-        if (body.MilestoneValue.HasValue && body.MilestoneValue != definition.MilestoneValue)
+        if (body.ChangeFields.IsFieldSet("milestoneValue") && body.MilestoneValue != definition.MilestoneValue)
         {
             definition.MilestoneValue = body.MilestoneValue;
             changedFields.Add("milestoneValue");
         }
-        if (body.MilestoneName != null && body.MilestoneName != definition.MilestoneName)
+        if (body.ChangeFields.IsFieldSet("milestoneName") && body.MilestoneName != definition.MilestoneName)
         {
             definition.MilestoneName = body.MilestoneName;
             changedFields.Add("milestoneName");
         }
-        if (body.LeaderboardId != null && body.LeaderboardId != definition.LeaderboardId)
+        if (body.ChangeFields.IsFieldSet("leaderboardId") && body.LeaderboardId != definition.LeaderboardId)
         {
             definition.LeaderboardId = body.LeaderboardId;
             changedFields.Add("leaderboardId");
         }
-        if (body.RankThreshold.HasValue && body.RankThreshold != definition.RankThreshold)
+        if (body.ChangeFields.IsFieldSet("rankThreshold") && body.RankThreshold != definition.RankThreshold)
         {
             definition.RankThreshold = body.RankThreshold;
             changedFields.Add("rankThreshold");

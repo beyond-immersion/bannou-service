@@ -1421,11 +1421,11 @@ components:
           type: string
           format: uuid
           nullable: true
-          description: Move item to a different container. Used by inventory service for item movement.
-        clearContainerId:
-          type: boolean
-          nullable: true
-          description: When true, removes the item from its current container (clears container reference and index). Mutually exclusive with newContainerId.
+          description: >-
+            New container for the item. Set to a container ID to move it, or set explicitly
+            to null (via changeFields) to remove the item from all containers (unplaced).
+            Used by inventory service for item movement. Uses ChangeFields 3-state semantics:
+            absent means no change, explicit null means clear (Issue #722).
         newSlotIndex:
           type: integer
           nullable: true

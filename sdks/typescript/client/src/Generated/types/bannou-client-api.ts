@@ -26776,11 +26776,9 @@ export interface components {
       instanceMetadata?: Record<string, never> | null;
       /**
        * Format: uuid
-       * @description Move item to a different container. Used by inventory service for item movement.
+       * @description New container for the item. Set to a container ID to move it, or set explicitly to null (via changeFields) to remove the item from all containers (unplaced). Used by inventory service for item movement. Uses ChangeFields 3-state semantics: absent means no change, explicit null means clear (Issue #722).
        */
       newContainerId?: string | null;
-      /** @description When true, removes the item from its current container (clears container reference and index). Mutually exclusive with newContainerId. */
-      clearContainerId?: boolean | null;
       /** @description New slot index within the container */
       newSlotIndex?: number | null;
       /** @description New X position for grid-based containers */

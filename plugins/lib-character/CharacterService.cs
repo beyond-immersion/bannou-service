@@ -232,37 +232,38 @@ public partial class CharacterService : ICharacterService
             return (StatusCodes.NotFound, null);
         }
 
-        // Track changes for event
+        // Track changes for event. Uses ChangeFields from the request to distinguish
+        // "field absent" from "field explicitly null" — enables clients to clear
+        // nullable fields like PatronDeityCode (Issue #722, #715).
         var changedFields = new List<string>();
 
-        // Update fields if provided
-        if (body.Name != null && body.Name != character.Name)
+        if (body.ChangeFields.IsFieldSet("name") && body.Name != character.Name)
         {
             changedFields.Add("name");
-            character.Name = body.Name;
+            character.Name = body.Name!;
         }
 
-        if (body.Status.HasValue && body.Status.Value != character.Status)
+        if (body.ChangeFields.IsFieldSet("status") && body.Status.HasValue && body.Status.Value != character.Status)
         {
             changedFields.Add("status");
             character.Status = body.Status.Value;
 
             // Auto-set DeathDate when status transitions to Dead (mirrors DeathDate→Dead auto-set)
-            // Skip if DeathDate is also provided in this request (handled below)
-            if (body.Status.Value == CharacterStatus.Dead && !character.DeathDate.HasValue && !body.DeathDate.HasValue)
+            // Skip if DeathDate is also explicitly provided in this request (handled below)
+            if (body.Status.Value == CharacterStatus.Dead && !character.DeathDate.HasValue && !body.ChangeFields.IsFieldSet("deathDate"))
             {
                 changedFields.Add("deathDate");
                 character.DeathDate = DateTimeOffset.UtcNow;
             }
         }
 
-        if (body.DeathDate.HasValue)
+        if (body.ChangeFields.IsFieldSet("deathDate"))
         {
             changedFields.Add("deathDate");
-            character.DeathDate = body.DeathDate.Value;
+            character.DeathDate = body.DeathDate;  // may be null (clearing) or a value
 
-            // If death date is set, also set status to dead
-            if (character.Status != CharacterStatus.Dead)
+            // If death date is being set to a value, also set status to dead
+            if (body.DeathDate.HasValue && character.Status != CharacterStatus.Dead)
             {
                 changedFields.Add("status");
                 character.Status = CharacterStatus.Dead;
@@ -270,17 +271,17 @@ public partial class CharacterService : ICharacterService
         }
 
         // Handle species migration (used for species merge operations)
-        if (body.SpeciesId.HasValue && body.SpeciesId.Value != character.SpeciesId)
+        if (body.ChangeFields.IsFieldSet("speciesId") && body.SpeciesId.HasValue && body.SpeciesId.Value != character.SpeciesId)
         {
             changedFields.Add("speciesId");
             character.SpeciesId = body.SpeciesId.Value;
         }
 
-        // Handle patron deity changes (opaque string — null in request = not provided)
-        if (body.PatronDeityCode != null && body.PatronDeityCode != character.PatronDeityCode)
+        // Handle patron deity changes — null explicitly clears patron (Issue #722 / #715)
+        if (body.ChangeFields.IsFieldSet("patronDeityCode") && body.PatronDeityCode != character.PatronDeityCode)
         {
             changedFields.Add("patronDeityCode");
-            character.PatronDeityCode = body.PatronDeityCode;
+            character.PatronDeityCode = body.PatronDeityCode;  // may be null (clearing patron)
         }
 
         character.UpdatedAt = DateTimeOffset.UtcNow;

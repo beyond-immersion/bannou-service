@@ -351,36 +351,36 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
 
         var now = DateTimeOffset.UtcNow;
 
-        // Update mutable fields, tracking which fields changed
+        // Update mutable fields using ChangeFields 3-state semantics (Issue #722).
+        // Fields explicitly set — including to null — are applied; absent fields are skipped.
         var changedFields = new List<string>();
-        if (!string.IsNullOrEmpty(body.Name)) { model.Name = body.Name; changedFields.Add("name"); }
-        if (body.Description is not null) { model.Description = body.Description; changedFields.Add("description"); }
-        if (body.Subcategory is not null) { model.Subcategory = body.Subcategory; changedFields.Add("subcategory"); }
-        if (body.Tags is not null) { model.Tags = body.Tags.ToList(); changedFields.Add("tags"); }
-        if (body.Rarity.HasValue) { model.Rarity = body.Rarity.Value; changedFields.Add("rarity"); }
-        if (body.Weight.HasValue) { model.Weight = body.Weight; changedFields.Add("weight"); }
-        if (body.Volume.HasValue) { model.Volume = body.Volume; changedFields.Add("volume"); }
-        if (body.GridWidth.HasValue) { model.GridWidth = body.GridWidth; changedFields.Add("gridWidth"); }
-        if (body.GridHeight.HasValue) { model.GridHeight = body.GridHeight; changedFields.Add("gridHeight"); }
-        if (body.CanRotate.HasValue) { model.CanRotate = body.CanRotate; changedFields.Add("canRotate"); }
-        if (body.BaseValue.HasValue) { model.BaseValue = body.BaseValue; changedFields.Add("baseValue"); }
-        if (body.Tradeable.HasValue) { model.Tradeable = body.Tradeable.Value; changedFields.Add("tradeable"); }
-        if (body.Destroyable.HasValue) { model.Destroyable = body.Destroyable.Value; changedFields.Add("destroyable"); }
-        if (body.MaxDurability.HasValue) { model.MaxDurability = body.MaxDurability; changedFields.Add("maxDurability"); }
-        if (body.AvailableRealms is not null) { model.AvailableRealms = body.AvailableRealms.ToList(); changedFields.Add("availableRealms"); }
-        if (body.Stats is not null) { model.Stats = BannouJson.Serialize(body.Stats); changedFields.Add("stats"); }
-        if (body.Effects is not null) { model.Effects = BannouJson.Serialize(body.Effects); changedFields.Add("effects"); }
-        if (body.Requirements is not null) { model.Requirements = BannouJson.Serialize(body.Requirements); changedFields.Add("requirements"); }
-        if (body.Display is not null) { model.Display = BannouJson.Serialize(body.Display); changedFields.Add("display"); }
-        if (body.Metadata is not null) { model.Metadata = BannouJson.Serialize(body.Metadata); changedFields.Add("metadata"); }
-        // Contract template IDs: null in request means "don't change", explicit value updates it
-        // To clear, caller must pass the null GUID explicitly via a separate endpoint or admin action
-        if (body.UseBehaviorContractTemplateId.HasValue) { model.UseBehaviorContractTemplateId = body.UseBehaviorContractTemplateId; changedFields.Add("useBehaviorContractTemplateId"); }
-        if (body.CanUseBehaviorContractTemplateId.HasValue) { model.CanUseBehaviorContractTemplateId = body.CanUseBehaviorContractTemplateId; changedFields.Add("canUseBehaviorContractTemplateId"); }
-        if (body.OnUseFailedBehaviorContractTemplateId.HasValue) { model.OnUseFailedBehaviorContractTemplateId = body.OnUseFailedBehaviorContractTemplateId; changedFields.Add("onUseFailedBehaviorContractTemplateId"); }
-        if (body.ItemUseBehavior.HasValue) { model.ItemUseBehavior = body.ItemUseBehavior.Value; changedFields.Add("itemUseBehavior"); }
-        if (body.CanUseBehavior.HasValue) { model.CanUseBehavior = body.CanUseBehavior.Value; changedFields.Add("canUseBehavior"); }
-        if (body.IsActive.HasValue) { model.IsActive = body.IsActive.Value; changedFields.Add("isActive"); }
+        if (body.ChangeFields.IsFieldSet("name") && !string.IsNullOrEmpty(body.Name)) { model.Name = body.Name; changedFields.Add("name"); }
+        if (body.ChangeFields.IsFieldSet("description")) { model.Description = body.Description; changedFields.Add("description"); }
+        if (body.ChangeFields.IsFieldSet("subcategory")) { model.Subcategory = body.Subcategory; changedFields.Add("subcategory"); }
+        if (body.ChangeFields.IsFieldSet("tags")) { model.Tags = body.Tags?.ToList() ?? new List<string>(); changedFields.Add("tags"); }
+        if (body.ChangeFields.IsFieldSet("rarity") && body.Rarity.HasValue) { model.Rarity = body.Rarity.Value; changedFields.Add("rarity"); }
+        if (body.ChangeFields.IsFieldSet("weight")) { model.Weight = body.Weight; changedFields.Add("weight"); }
+        if (body.ChangeFields.IsFieldSet("volume")) { model.Volume = body.Volume; changedFields.Add("volume"); }
+        if (body.ChangeFields.IsFieldSet("gridWidth")) { model.GridWidth = body.GridWidth; changedFields.Add("gridWidth"); }
+        if (body.ChangeFields.IsFieldSet("gridHeight")) { model.GridHeight = body.GridHeight; changedFields.Add("gridHeight"); }
+        if (body.ChangeFields.IsFieldSet("canRotate")) { model.CanRotate = body.CanRotate; changedFields.Add("canRotate"); }
+        if (body.ChangeFields.IsFieldSet("baseValue")) { model.BaseValue = body.BaseValue; changedFields.Add("baseValue"); }
+        if (body.ChangeFields.IsFieldSet("tradeable") && body.Tradeable.HasValue) { model.Tradeable = body.Tradeable.Value; changedFields.Add("tradeable"); }
+        if (body.ChangeFields.IsFieldSet("destroyable") && body.Destroyable.HasValue) { model.Destroyable = body.Destroyable.Value; changedFields.Add("destroyable"); }
+        if (body.ChangeFields.IsFieldSet("maxDurability")) { model.MaxDurability = body.MaxDurability; changedFields.Add("maxDurability"); }
+        if (body.ChangeFields.IsFieldSet("availableRealms")) { model.AvailableRealms = body.AvailableRealms?.ToList(); changedFields.Add("availableRealms"); }
+        if (body.ChangeFields.IsFieldSet("stats")) { model.Stats = body.Stats is not null ? BannouJson.Serialize(body.Stats) : null; changedFields.Add("stats"); }
+        if (body.ChangeFields.IsFieldSet("effects")) { model.Effects = body.Effects is not null ? BannouJson.Serialize(body.Effects) : null; changedFields.Add("effects"); }
+        if (body.ChangeFields.IsFieldSet("requirements")) { model.Requirements = body.Requirements is not null ? BannouJson.Serialize(body.Requirements) : null; changedFields.Add("requirements"); }
+        if (body.ChangeFields.IsFieldSet("display")) { model.Display = body.Display is not null ? BannouJson.Serialize(body.Display) : null; changedFields.Add("display"); }
+        if (body.ChangeFields.IsFieldSet("metadata")) { model.Metadata = body.Metadata is not null ? BannouJson.Serialize(body.Metadata) : null; changedFields.Add("metadata"); }
+        // Contract template IDs: null now genuinely clears them (3-state semantics)
+        if (body.ChangeFields.IsFieldSet("useBehaviorContractTemplateId")) { model.UseBehaviorContractTemplateId = body.UseBehaviorContractTemplateId; changedFields.Add("useBehaviorContractTemplateId"); }
+        if (body.ChangeFields.IsFieldSet("canUseBehaviorContractTemplateId")) { model.CanUseBehaviorContractTemplateId = body.CanUseBehaviorContractTemplateId; changedFields.Add("canUseBehaviorContractTemplateId"); }
+        if (body.ChangeFields.IsFieldSet("onUseFailedBehaviorContractTemplateId")) { model.OnUseFailedBehaviorContractTemplateId = body.OnUseFailedBehaviorContractTemplateId; changedFields.Add("onUseFailedBehaviorContractTemplateId"); }
+        if (body.ChangeFields.IsFieldSet("itemUseBehavior") && body.ItemUseBehavior.HasValue) { model.ItemUseBehavior = body.ItemUseBehavior.Value; changedFields.Add("itemUseBehavior"); }
+        if (body.ChangeFields.IsFieldSet("canUseBehavior") && body.CanUseBehavior.HasValue) { model.CanUseBehavior = body.CanUseBehavior.Value; changedFields.Add("canUseBehavior"); }
+        if (body.ChangeFields.IsFieldSet("isActive") && body.IsActive.HasValue) { model.IsActive = body.IsActive.Value; changedFields.Add("isActive"); }
         model.UpdatedAt = now;
 
         await _templateStore.SaveAsync($"{TPL_PREFIX}{body.TemplateId}", model, cancellationToken: cancellationToken);
@@ -612,8 +612,10 @@ public partial class ItemService : IItemService, ICleanDeprecatedEntity
         ModifyItemInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
-        // Container changes require a lock to prevent race conditions on index updates
-        if (body.NewContainerId.HasValue || body.ClearContainerId == true)
+        // Container changes require a lock to prevent race conditions on index updates.
+        // Uses ChangeFields 3-state semantics: setting newContainerId explicitly (to a value
+        // or null) indicates intent to change containers (Issue #722 / replaces #721 workaround).
+        if (body.ChangeFields.IsFieldSet("newContainerId"))
         {
             return await ModifyItemInstanceWithLockAsync(body, cancellationToken);
         }

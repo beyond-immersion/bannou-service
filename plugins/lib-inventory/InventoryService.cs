@@ -416,16 +416,18 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
 
         var now = DateTimeOffset.UtcNow;
 
-        if (body.MaxSlots.HasValue) model.MaxSlots = body.MaxSlots.Value;
-        if (body.MaxWeight.HasValue) model.MaxWeight = body.MaxWeight.Value;
-        if (body.GridWidth.HasValue) model.GridWidth = body.GridWidth.Value;
-        if (body.GridHeight.HasValue) model.GridHeight = body.GridHeight.Value;
-        if (body.MaxVolume.HasValue) model.MaxVolume = body.MaxVolume.Value;
-        if (body.AllowedCategories is not null) model.AllowedCategories = body.AllowedCategories.ToList();
-        if (body.ForbiddenCategories is not null) model.ForbiddenCategories = body.ForbiddenCategories.ToList();
-        if (body.AllowedTags is not null) model.AllowedTags = body.AllowedTags.ToList();
-        if (body.Tags is not null) model.Tags = body.Tags.ToList();
-        if (body.Metadata is not null) model.Metadata = BannouJson.Serialize(body.Metadata);
+        // Uses ChangeFields 3-state semantics (Issue #722): fields explicitly set —
+        // including to null — are applied; absent fields are skipped.
+        if (body.ChangeFields.IsFieldSet("maxSlots") && body.MaxSlots.HasValue) model.MaxSlots = body.MaxSlots.Value;
+        if (body.ChangeFields.IsFieldSet("maxWeight") && body.MaxWeight.HasValue) model.MaxWeight = body.MaxWeight.Value;
+        if (body.ChangeFields.IsFieldSet("gridWidth")) model.GridWidth = body.GridWidth;
+        if (body.ChangeFields.IsFieldSet("gridHeight")) model.GridHeight = body.GridHeight;
+        if (body.ChangeFields.IsFieldSet("maxVolume")) model.MaxVolume = body.MaxVolume;
+        if (body.ChangeFields.IsFieldSet("allowedCategories")) model.AllowedCategories = body.AllowedCategories?.ToList();
+        if (body.ChangeFields.IsFieldSet("forbiddenCategories")) model.ForbiddenCategories = body.ForbiddenCategories?.ToList();
+        if (body.ChangeFields.IsFieldSet("allowedTags")) model.AllowedTags = body.AllowedTags?.ToList();
+        if (body.ChangeFields.IsFieldSet("tags")) model.Tags = body.Tags?.ToList() ?? new List<string>();
+        if (body.ChangeFields.IsFieldSet("metadata")) model.Metadata = body.Metadata is not null ? BannouJson.Serialize(body.Metadata) : null;
         model.ModifiedAt = now;
 
         // Save with cache write-through
@@ -871,14 +873,17 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
         // Save with cache write-through
         await SaveContainerWithCacheAsync(container, cancellationToken);
 
-        // Clear the item's container reference in item service (removes from container index)
+        // Clear the item's container reference in item service (removes from container index).
+        // Explicitly setting NewContainerId = null uses ChangeFields 3-state semantics —
+        // the setter marks "newContainerId" as set, enabling the server to distinguish
+        // "clear container" from "not changing container" (Issue #722, replaces #721 workaround).
         try
         {
             await _itemClient.ModifyItemInstanceAsync(
                 new ModifyItemInstanceRequest
                 {
                     InstanceId = body.InstanceId,
-                    ClearContainerId = true
+                    NewContainerId = null
                 }, cancellationToken);
         }
         catch (ApiException ex)

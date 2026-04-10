@@ -26,6 +26,7 @@
 14. [Miscellaneous Helpers](#14-miscellaneous-helpers)
 15. [Category B Deprecation Template](#15-category-b-deprecation-template)
 16. [Plugin Loading System](#16-plugin-loading-system)
+17. [ChangeFields Pattern for Update Requests](#17-changefields-pattern-for-update-requests)
 
 ---
 
@@ -1440,6 +1441,126 @@ Most plugins inherit `StandardServicePlugin<TService>` and override nothing. The
 
 ---
 
+## 17. ChangeFields Pattern for Update Requests
+
+> **Background**: See [GitHub Issue #722](https://github.com/) for the full design. This section documents the pattern developers use in service code.
+
+### The Problem
+
+OpenAPI schemas can declare properties as `nullable: true` AND not `required`, which creates three distinct wire states for any Update request field:
+
+1. **Field absent from JSON** → "don't change this value"
+2. **Field explicitly `null` in JSON** → "clear this value"
+3. **Field set to a value** → "update to this value"
+
+System.Text.Json collapses states 1 and 2 — both produce `null` on the deserialized C# model. Before this pattern, services used `if (body.Foo != null)` to detect "was it provided", which silently ignored explicit-null clears. This meant nullable fields like `patronDeityCode` could never be cleared via an Update request.
+
+### How ChangeFields Works
+
+Every `Update*Request`, `Modify*Request`, and `Set*Request` model is post-processed by `scripts/postprocess-change-tracking.py` (invoked from `generate-models.sh`) into a **tracked property** form:
+
+**Before** (NSwag auto-property):
+```csharp
+public string? PatronDeityCode { get; set; } = default!;
+```
+
+**After** (post-processed tracked property):
+```csharp
+private string? _patronDeityCode = default!;
+[System.Text.Json.Serialization.JsonPropertyName("patronDeityCode")]
+public string? PatronDeityCode
+{
+    get => _patronDeityCode;
+    set { _patronDeityCode = value; _TrackChange("patronDeityCode"); }
+}
+```
+
+Each request class also gains a `ChangeFields` collection and a private `_TrackChange` helper. Every time a property setter fires — whether from C# code (`request.PatronDeityCode = null`) or from STJ deserialization of raw WebSocket JSON — the field name is added to `ChangeFields`. For serialization, `ChangeFields` is a real JSON property (`"changeFields": ["patronDeityCode"]`) that survives `WhenWritingNull`, so both WebSocket clients and generated C# service clients can communicate the 3-state intent.
+
+**The key insight**: STJ calls property setters during deserialization, so setter-based tracking works automatically for both paths — WebSocket clients sending raw JSON and C# service clients serializing/deserializing tracked models. Raw WebSocket clients do not need to send `changeFields` explicitly; the server's deserialization populates it via setter tracking.
+
+### IsFieldSet Helper
+
+**File**: `bannou-service/Helpers/ChangeFieldsExtensions.cs`
+
+```csharp
+public static bool IsFieldSet(this ICollection<string>? changeFields, string fieldName)
+```
+
+Extension method on `ICollection<string>?` — case-insensitive, null-safe. Returns `true` when the named field was explicitly set on the request, `false` otherwise.
+
+### Usage in Service Update Methods
+
+```csharp
+public async Task<(StatusCodes, CharacterResponse?)> UpdateCharacterAsync(
+    UpdateCharacterRequest body, CancellationToken ct)
+{
+    var character = await _characterStore.GetAsync(key, ct);
+    if (character == null) return (StatusCodes.NotFound, null);
+
+    var changedFields = new List<string>();
+
+    // Reference/string nullable fields — use IsFieldSet and assign directly
+    if (body.ChangeFields.IsFieldSet("name") && body.Name != character.Name)
+    {
+        changedFields.Add("name");
+        character.Name = body.Name!;
+    }
+
+    // The clear-to-null case — this is the whole point of the pattern
+    if (body.ChangeFields.IsFieldSet("patronDeityCode") && body.PatronDeityCode != character.PatronDeityCode)
+    {
+        changedFields.Add("patronDeityCode");
+        character.PatronDeityCode = body.PatronDeityCode;  // may be null (clearing)
+    }
+
+    // Value-type nullables (int?, Guid?, enum?) — combine IsFieldSet with HasValue when the stored field is non-nullable
+    if (body.ChangeFields.IsFieldSet("speciesId") && body.SpeciesId.HasValue && body.SpeciesId.Value != character.SpeciesId)
+    {
+        changedFields.Add("speciesId");
+        character.SpeciesId = body.SpeciesId.Value;
+    }
+
+    // ... save and publish changedFields event
+}
+```
+
+### Migration from the `!= null` Pattern
+
+| Old pattern | New pattern |
+|---|---|
+| `if (body.Name != null)` | `if (body.ChangeFields.IsFieldSet("name"))` |
+| `if (body.Foo.HasValue)` | `if (body.ChangeFields.IsFieldSet("foo") && body.Foo.HasValue)` *(when stored field is non-nullable)* |
+| `if (body.Foo.HasValue)` | `if (body.ChangeFields.IsFieldSet("foo"))` *(when stored field is nullable — allow clearing)* |
+| `if (!string.IsNullOrEmpty(body.Name))` | `if (body.ChangeFields.IsFieldSet("name") && !string.IsNullOrEmpty(body.Name))` |
+
+The field name passed to `IsFieldSet` is always the **camelCase** property name matching the JSON wire format and the `[JsonPropertyName]` attribute — NSwag's post-processing extracts this from the attribute and bakes it into the setter. Do not use PascalCase C# names in `IsFieldSet` calls.
+
+### Generation Pipeline Integration
+
+1. **NSwag** generates the initial model with standard auto-properties
+2. **`scripts/postprocess-change-tracking.py`** (called from `generate-models.sh`) transforms auto-properties on `Update*Request` / `Modify*Request` / `Set*Request` classes into tracked properties with backing fields and injects `ChangeFields` infrastructure
+3. **Runtime** — every setter call adds to `ChangeFields`, both during C# code construction and STJ deserialization
+
+The post-processing script matches class names via regex: `^(Update|Modify|BulkUpdate)\w*Request$` or `^Set[A-Z]\w*Request$`. Classes not matching these patterns are not transformed. Properties with `[JsonExtensionData]` or `[JsonIgnore]` attributes are skipped.
+
+### Structural Test Enforcement
+
+**Test**: `ChangeFieldsCoverageTests.LifecycleNullableFields_HaveIsFieldSetCoverageInPlugin`
+**File**: `structural-tests/ChangeFieldsCoverageTests.cs`
+
+For every nullable field on an x-lifecycle entity, the test verifies that the owning plugin's source code (excluding `Generated/`) contains at least one `IsFieldSet("fieldName")` call for that field. Auto-injected fields (`createdAt`, `updatedAt`, `isDeprecated`, `deprecatedAt`, `deprecationReason`) are excluded.
+
+This is a **mechanical check** with no exceptions list and no informational-test gating — every violation is a real gap that must be closed by implementing the missing IsFieldSet handling. The test reports a grouped-by-service list of uncovered fields on failure, making it trivial to iterate through.
+
+**When this test fails**: Either (a) the plugin has an Update method that needs migration from `!= null` to `ChangeFields.IsFieldSet`, or (b) the lifecycle field should not be nullable in the first place. Both are fixes that resolve the violation; there is no third option.
+
+### Test Reference
+
+`bannou-service.tests/ChangeFieldsTracking.cs` contains 47 unit tests validating the pattern end-to-end — setter tracking, deserialization paths, serialization with `WhenWritingNull`, the merge behavior on the `ChangeFields` setter, legacy client compatibility, and service-side update logic. Use this file as the reference for what the pattern is supposed to do.
+
+---
+
 ## Quick Reference: "I need to..."
 
 | Task | Helper/Pattern | Location |
@@ -1475,6 +1596,8 @@ Most plugins inherit `StandardServicePlugin<TService>` and override nothing. The
 | Flush multiple batchers per cycle | `EventBatcherWorker` + `IFlushable` | `Services/EventBatcherWorker.cs` |
 | Validate batch lifecycle publications | `BatchLifecycleEntities_HaveBatchEventPublications` | `structural-tests/` |
 | Batch endpoint request/response models | `BatchOperationRequest`/`BatchOperationResponse` | `common-api.yaml` shared models |
+| Handle nullable fields on update requests | `body.ChangeFields.IsFieldSet("fieldName")` | `bannou-service/Helpers/ChangeFieldsExtensions.cs` (§ 17) |
+| Validate ChangeFields coverage | `ChangeFieldsCoverageTests.LifecycleNullableFields_HaveIsFieldSetCoverageInPlugin` | `structural-tests/ChangeFieldsCoverageTests.cs` |
 
 ---
 

@@ -24274,13 +24274,9 @@ struct FModifyItemInstanceRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TMap<FString, FString> InstanceMetadata;
 
-    /** Move item to a different container. Used by inventory service for item movement. */
+    /** New container for the item. Set to a container ID to move it, or set explicitly to null (via changeFields) to remove the item from all containers (unplaced). Used by inventory service for item movement. Uses ChangeFields 3-state semantics: absent means no change, explicit null means clear (Issue #722). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     TOptional<FGuid> NewContainerId;
-
-    /** When true, removes the item from its current container (clears container reference and index). Mutually exclusive with newContainerId. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
-    bool ClearContainerId = false;
 
     /** New slot index within the container */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
