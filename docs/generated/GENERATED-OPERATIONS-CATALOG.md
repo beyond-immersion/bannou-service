@@ -41,6 +41,12 @@ NuGet publishing setup for the Bannou SDK ecosystem covering package architectur
 
 Release procedures for the Bannou platform and SDKs covering two independent version tracks: platform releases (triggered by VERSION file changes on master) and SDK releases (triggered by PR labels and manual workflow dispatch). Covers semantic versioning guidelines, changelog maintenance, the prepare-release and release-commit Makefile workflow, TypeScript and Unreal SDK generation, and troubleshooting for common CI release failures.
 
+## Research API Reference {#research-apis}
+
+[Full Document](../operations/RESEARCH-APIS.md)
+
+{One-paragraph overview}
+
 ## Bannou Testing Documentation {#testing}
 
 **Last Updated**: 2026-03-13 | **Scope**: Test commands, CI/CD pipeline integration, Docker Compose test configurations, and testing workflows for all tiers (unit, HTTP integration, WebSocket edge, infrastructure). | [Full Document](../operations/TESTING.md)
@@ -49,7 +55,7 @@ User-facing testing operations document covering test commands, CI/CD pipeline i
 
 ## Summary
 
-- **Documents in catalog**: 7
+- **Documents in catalog**: 8
 
 ---
 

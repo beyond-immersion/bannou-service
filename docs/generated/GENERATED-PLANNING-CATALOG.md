@@ -71,6 +71,14 @@ Proposes a MusicComposer SDK providing structural template workbench tooling for
 
 Designs a distributed knowledge puzzle system where NPC characters autonomously discover world secrets by accumulating clues from multiple sources (mementos, item affixes, rumors, documents) and generating hypotheses when their Lexicon discovery tiers cross association visibility thresholds. Composes entirely from existing services (Lexicon, Hearsay, Collection, Seed, Disposition, Actor) with three small extensions: a Hearsay inference channel, skill-gated Lexicon tier offsets, and Discovery Templates as seeded configuration. No prerequisite services are implemented yet; Lexicon, Hearsay, and Disposition are all aspirational.
 
+### Dark Revelry: A Compositional Style Objective for Assisted Authoring {#dark-revelry-style-objective}
+
+**Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-04-03 | **North Stars**: #5 | [Full Document](../planning/DARK-REVELRY-STYLE-OBJECTIVE.md)
+
+Defines "dark revelry" as a compositional style objective for the MusicComposer SDK's assisted authoring features. Dark revelry is a convergent aesthetic — identified across multiple independent musical genres and character archetypes — where darkness, villainy, or moral transgression is presented as delight, glamour, or celebration rather than suffering or aggression. This document codifies the aesthetic into EmotionalState targets, YAML style parameters, GOAP planning constraints, and assisted authoring guidance so that both the procedural Storyteller and the human-composer workbench can produce or guide composition toward this specific emotional configuration.
+
+The aesthetic occupies a unique and counterintuitive position in the EmotionalState space: **high tension with positive valence, high energy with low brightness**. Most music cognition frameworks treat tension and positive valence as inversely correlated. Dark revelry specifically inhabits the quadrant where both are simultaneously elevated — the musical equivalent of a villain who is having the time of their life.
+
 ### Death & Plot Armor System {#death-and-plot-armor}
 
 **Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #2, #5 | [Full Document](../planning/DEATH-AND-PLOT-ARMOR.md)
@@ -233,6 +241,14 @@ Records the results of a full cross-service architectural audit comparing VISION
 
 ## Other
 
+### In-Game Cinematic Series: The Ledger and the Sword {#in-game-cinematic-series}
+
+**Type**: Creative Design + Technical Architecture | **Status**: Concept | **Last Updated**: 2026-04-03 | **North Stars**: #1, #4, #5 | [Full Document](../planning/IN-GAME-CINEMATIC-SERIES.md)
+
+Designs a framework for producing **episodic in-game cinematic series** — short-form narrative content rendered entirely using Bannou's real-time cinematic infrastructure and in-game assets. The first series, "The Ledger and the Sword," follows a covert guild operative disguised as a middling adventurer, using an episodic structure inspired by Kino's Journey to explore the institutional, political, and human realities of an adventurer's guild that fiction almost never examines. This document covers the narrative concept in depth, then maps it onto Bannou's Video Director, Compositional Cinematics, Storyline, and ABML behavior systems for production.
+
+This is not animation. It is not pre-rendered. Every frame is produced by the same systems that drive live gameplay — ABML behaviors, GOAP-composed choreography, procedural camera direction, and music-synchronized editing. The series is both entertainment content and a proof-of-concept demonstration that Bannou's compositional architecture can produce authored narrative experiences indistinguishable from traditionally directed content.
+
 ### Plan: Implement MCP Server Service (L3 App Features) {#mcp-server}
 
 **Status**: Phase 1 complete | [Full Document](../planning/MCP-SERVER.md)
@@ -241,7 +257,7 @@ The MCP (Model Context Protocol) server is a new L3 App Features plugin that exp
 
 ## Summary
 
-- **Documents in catalog**: 36
+- **Documents in catalog**: 38
 
 ---
 
