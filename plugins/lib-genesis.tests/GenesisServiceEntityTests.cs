@@ -107,7 +107,7 @@ public class GenesisServiceEntityTests : ServiceTestBase<GenesisServiceConfigura
             Configuration, _mockTelemetryProvider.Object, _mockResourceClient.Object, _mockSeedClient.Object,
             _mockCurrencyClient.Object, _mockCharacterClient.Object, _mockActorClient.Object, _mockInventoryClient.Object,
             _mockItemClient.Object, _mockRelationshipClient.Object, _mockRealmClient.Object, _mockSpeciesClient.Object,
-            _mockGameServiceClient.Object, _mockEventConsumer.Object);
+            _mockGameServiceClient.Object, _mockEventConsumer.Object, new GenesisGrowthState());
     }
 
     private static GenesisTemplateModel CreateTestTemplate(string templateCode = "test_template")

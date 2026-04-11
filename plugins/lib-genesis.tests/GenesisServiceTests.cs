@@ -126,7 +126,8 @@ public class GenesisServiceTemplateTests : ServiceTestBase<GenesisServiceConfigu
             _mockRealmClient.Object,
             _mockSpeciesClient.Object,
             _mockGameServiceClient.Object,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            new GenesisGrowthState());
     }
 
     private static GenesisTemplateModel CreateTestTemplate(string templateCode = "test_template")

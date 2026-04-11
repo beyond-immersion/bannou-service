@@ -420,6 +420,21 @@ public partial class CurrencyService
             TransactionType = TransactionType.Autogain
         }, ct);
 
+        // Dispatch DI listener notification for co-located L2 consumers (e.g., Genesis growth pipeline)
+        await CurrencyTransactionDispatcher.DispatchCreditedAsync(
+            _transactionListeners,
+            new CurrencyTransactionNotification(
+                WalletId: balance.WalletId,
+                OwnerId: wallet.OwnerId,
+                OwnerType: wallet.OwnerType,
+                CurrencyDefinitionId: balance.CurrencyDefinitionId,
+                CurrencyCode: definition.Code,
+                Amount: gain,
+                NewBalance: balance.Amount,
+                TransactionType: TransactionType.Autogain,
+                OccurredAt: now),
+            _telemetryProvider, _logger, ct);
+
         return balance;
     }
 

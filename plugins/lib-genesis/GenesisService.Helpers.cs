@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Genesis;
@@ -237,6 +238,10 @@ public partial class GenesisService
         // Cache entries
         await _entityCacheStore.DeleteAsync(BuildEntityCacheKey(entity.EntityId), cancellationToken);
         await _capsCacheStore.DeleteAsync(BuildCapsCacheKey(entity.EntityId), cancellationToken);
+
+        // Remove this entity's wallets from the in-memory wallet map on this node.
+        // Other nodes receive the same cleanup via the genesis.entity.deleted event handler.
+        RemoveFromWalletMap(entity);
     }
 
     /// <summary>
@@ -403,5 +408,104 @@ public partial class GenesisService
         var results = await _entityQueryStore.QueryAsync(
             e => e.RealmId == realmId, cancellationToken);
         return results.ToList();
+    }
+
+    /// <summary>
+    /// Populates the in-memory wallet map on this node with mappings for every wallet owned by
+    /// the given entity. Called immediately after entity creation/restoration to avoid depending
+    /// on the event round-trip for same-node mutations.
+    /// </summary>
+    /// <remarks>
+    /// This method is synchronous (no telemetry span — it's a pure in-memory dictionary mutation
+    /// that never awaits). The canonical populate path for remote-created entities is
+    /// <see cref="HandleGenesisEntityCreatedAsync"/>, which runs on every node via event fan-out.
+    /// </remarks>
+    internal void PopulateWalletMap(GenesisEntityModel entity, GenesisTemplateModel template)
+    {
+        var growthMappings = template.Economy.GrowthMappings.ToList();
+        foreach (var (walletCode, walletId) in entity.WalletIds)
+        {
+            _growthState.WalletMap[walletId] = new GenesisWalletMapping(
+                EntityId: entity.EntityId,
+                TemplateCode: entity.TemplateCode,
+                WalletCode: walletCode,
+                GrowthMappings: growthMappings);
+        }
+    }
+
+    /// <summary>
+    /// Removes wallet map entries for the given entity's wallets. Called when the entity is
+    /// destroyed so subsequent currency mutations for reused wallet IDs (if any) are not
+    /// misattributed.
+    /// </summary>
+    internal void RemoveFromWalletMap(GenesisEntityModel entity)
+    {
+        foreach (var walletId in entity.WalletIds.Values)
+            _growthState.WalletMap.TryRemove(walletId, out _);
+    }
+
+    /// <summary>
+    /// Creates actor templates for every phase in the request that requires an actor
+    /// (EventBrain/CharacterBrain with a behaviorRef), storing the resolved template IDs in
+    /// <see cref="GenesisGrowthState.ActorTemplateMap"/>. Failures are logged and skipped —
+    /// if actor template creation fails here, the subsequent phase transition will publish a
+    /// transition-failed event instead of silently losing the transition.
+    /// </summary>
+    private async Task EnsureActorTemplatesForRegistrationAsync(
+        RegisterTemplateRequest body, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.genesis", "GenesisService.EnsureActorTemplatesForRegistration");
+
+        foreach (var phase in body.Seed.Phases)
+        {
+            if (phase.CognitiveStage == CognitiveStage.Dormant) continue;
+            if (string.IsNullOrWhiteSpace(phase.BehaviorRef)) continue;
+
+            var mapKey = GenesisSeedEvolutionListener.BuildActorTemplateKey(body.TemplateCode, phase.PhaseName);
+            if (_growthState.ActorTemplateMap.ContainsKey(mapKey)) continue;
+
+            var category = $"genesis:{body.TemplateCode}:{phase.PhaseName}";
+            Guid actorTemplateId;
+            try
+            {
+                var response = await _actorClient.CreateActorTemplateAsync(
+                    new CreateActorTemplateRequest
+                    {
+                        Category = category,
+                        BehaviorRef = phase.BehaviorRef!,
+                    }, cancellationToken);
+                actorTemplateId = response.TemplateId;
+            }
+            catch (ApiException ex) when (ex.StatusCode == 409)
+            {
+                // Template for this category already exists — resolve it
+                try
+                {
+                    var existing = await _actorClient.GetActorTemplateAsync(
+                        new GetActorTemplateRequest { Category = category }, cancellationToken);
+                    actorTemplateId = existing.TemplateId;
+                }
+                catch (ApiException lookupEx)
+                {
+                    _logger.LogWarning(lookupEx,
+                        "Actor template for category {Category} reported conflict but could not be resolved",
+                        category);
+                    continue;
+                }
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex,
+                    "Actor template creation failed for {Category}, skipping — phase transitions will publish transition-failed",
+                    category);
+                continue;
+            }
+
+            _growthState.ActorTemplateMap[mapKey] = actorTemplateId;
+            _logger.LogDebug(
+                "Registered actor template {ActorTemplateId} for genesis template {TemplateCode} phase {PhaseName}",
+                actorTemplateId, body.TemplateCode, phase.PhaseName);
+        }
     }
 }

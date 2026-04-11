@@ -521,6 +521,20 @@ generate-services-diff:
 	git diff --exit-code || (echo "❌ Service generation created changes" && exit 1)
 	@echo "✅ Service generation is consistent"
 
+# Documentation generation consistency check
+# Runs the documentation generators and fails if the output in docs/generated/
+# differs from the committed state. This catches the case where a schema or
+# source file changed but generate-docs was never run to refresh the generated
+# references. Scoped to docs/generated/ specifically so unrelated dirty-tree
+# changes in other directories (schemas, plugins, etc.) do not cause false
+# positives when run locally against an in-progress working tree.
+generate-docs-diff:
+	@echo "🔍 Testing documentation generation consistency..."
+	$(MAKE) generate-docs
+	@git diff --exit-code docs/generated/ || \
+		(echo "❌ Documentation generation produced changes in docs/generated/ — regenerate and commit the updated files" && exit 1)
+	@echo "✅ Documentation generation is consistent"
+
 # Comprehensive unit testing - all service test projects
 # Usage: make test [PLUGIN=plugin-name] - if PLUGIN is specified, only tests that plugin
 test:

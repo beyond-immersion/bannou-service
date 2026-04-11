@@ -64,6 +64,9 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
     private readonly ISpeciesClient _speciesClient;
     private readonly IGameServiceClient _gameServiceClient;
 
+    // Shared runtime pipeline state
+    private readonly GenesisGrowthState _growthState;
+
     /// <summary>
     /// Initializes a new instance of <see cref="GenesisService"/>.
     /// </summary>
@@ -85,7 +88,8 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         IRealmClient realmClient,
         ISpeciesClient speciesClient,
         IGameServiceClient gameServiceClient,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        GenesisGrowthState growthState)
     {
         // Primary data stores
         _templateStore = stateStoreFactory.GetStore<GenesisTemplateModel>(StateStoreDefinitions.GenesisTemplates);
@@ -118,6 +122,7 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         _realmClient = realmClient;
         _speciesClient = speciesClient;
         _gameServiceClient = gameServiceClient;
+        _growthState = growthState;
 
         RegisterEventConsumers(eventConsumer);
     }
@@ -204,6 +209,12 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             _logger.LogWarning(ex, "Failed to register seed type {SeedTypeCode}", body.Seed.SeedTypeCode);
             return (StatusCodes.BadRequest, null);
         }
+
+        // Register actor templates for each phase that requires an actor (EventBrain/CharacterBrain with
+        // a behaviorRef). Failure here is logged and skipped: phase transitions will publish
+        // transition-failed events when they can't find the actor template in the state map. This keeps
+        // RegisterTemplate resilient against transient Actor service unavailability.
+        await EnsureActorTemplatesForRegistrationAsync(body, cancellationToken);
 
         var now = DateTimeOffset.UtcNow;
         var template = new GenesisTemplateModel
@@ -596,6 +607,12 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             _configuration.ListOperationMaxRetries,
             _logger,
             cancellationToken);
+
+        // Populate the in-memory wallet map on this node immediately so credits/debits for
+        // the new entity's wallets are matched by GenesisCurrencyTransactionListener without
+        // waiting for the genesis.entity.created event round-trip. Other nodes learn about
+        // the new entity via the broadcast event handler below.
+        PopulateWalletMap(entity, template);
 
         await _messageBus.PublishEntityCreatedAsync(new EntityCreatedEvent
         {
@@ -1185,6 +1202,9 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
                 _configuration.ListOperationMaxRetries,
                 _logger,
                 cancellationToken);
+
+            // Populate the in-memory wallet map for the restored entity's wallets
+            PopulateWalletMap(entity, template);
 
             await _messageBus.PublishEntityCreatedAsync(new EntityCreatedEvent
             {

@@ -4,6 +4,7 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Worldstate;
 using Microsoft.Extensions.DependencyInjection;
@@ -117,6 +118,9 @@ public class CurrencyAutogainTaskService : BackgroundService
         var balanceStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyBalances);
         var walletStore = stateStoreFactory.GetStore<WalletModel>(StateStoreDefinitions.CurrencyWallets);
 
+        // Resolve transaction listeners once per cycle for DI dispatch after each autogain application
+        var transactionListeners = scope.ServiceProvider.GetServices<ICurrencyTransactionListener>().ToList();
+
         // Get all definition IDs
         var allDefsJson = await defStringStore.GetAsync(ALL_DEFS_KEY, cancellationToken);
         if (string.IsNullOrEmpty(allDefsJson))
@@ -137,7 +141,7 @@ public class CurrencyAutogainTaskService : BackgroundService
                 continue;
 
             var processed = await ProcessAutogainForCurrencyAsync(
-                definition, balanceStore, balanceStringStore, walletStore, messageBus, lockProvider, worldstateClient, cancellationToken);
+                definition, balanceStore, balanceStringStore, walletStore, messageBus, lockProvider, worldstateClient, transactionListeners, cancellationToken);
             totalProcessed += processed;
         }
 
@@ -163,6 +167,7 @@ public class CurrencyAutogainTaskService : BackgroundService
         IMessageBus messageBus,
         IDistributedLockProvider lockProvider,
         IWorldstateClient worldstateClient,
+        IReadOnlyList<ICurrencyTransactionListener> transactionListeners,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyAutogainTaskService.ProcessAutogainForCurrencyAsync");
@@ -185,7 +190,7 @@ public class CurrencyAutogainTaskService : BackgroundService
             var batch = walletIds.Skip(i).Take(_configuration.AutogainBatchSize);
             var tasks = batch.Select(walletId =>
                 ProcessSingleBalanceAutogainAsync(
-                    walletId, definition, balanceStore, walletStore, messageBus, lockProvider, worldstateClient, cancellationToken));
+                    walletId, definition, balanceStore, walletStore, messageBus, lockProvider, worldstateClient, transactionListeners, cancellationToken));
 
             var results = await Task.WhenAll(tasks);
             processed += results.Count(r => r);
@@ -206,6 +211,7 @@ public class CurrencyAutogainTaskService : BackgroundService
         IMessageBus messageBus,
         IDistributedLockProvider lockProvider,
         IWorldstateClient worldstateClient,
+        IReadOnlyList<ICurrencyTransactionListener> transactionListeners,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyAutogainTaskService.ProcessSingleBalanceAutogainAsync");
@@ -353,6 +359,21 @@ public class CurrencyAutogainTaskService : BackgroundService
                 PeriodsFrom = periodsFrom,
                 PeriodsTo = balance.LastAutogainAt.Value
             }, cancellationToken);
+
+            // Dispatch DI listener notification for co-located L2 consumers (e.g., Genesis growth pipeline)
+            await CurrencyTransactionDispatcher.DispatchCreditedAsync(
+                transactionListeners,
+                new CurrencyTransactionNotification(
+                    WalletId: balance.WalletId,
+                    OwnerId: wallet.OwnerId,
+                    OwnerType: wallet.OwnerType,
+                    CurrencyDefinitionId: balance.CurrencyDefinitionId,
+                    CurrencyCode: definition.Code,
+                    Amount: gain,
+                    NewBalance: balance.Amount,
+                    TransactionType: TransactionType.Autogain,
+                    OccurredAt: now),
+                _telemetryProvider, _logger, cancellationToken);
 
             return true;
         }

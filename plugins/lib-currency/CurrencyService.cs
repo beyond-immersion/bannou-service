@@ -34,6 +34,7 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
     private readonly IEntitySessionRegistry _entitySessionRegistry;
     private readonly ICurrencyDataCache _currencyCache;
     private readonly IWorldstateClient _worldstateClient;
+    private readonly IReadOnlyList<ICurrencyTransactionListener> _transactionListeners;
 
     /// <summary>State store for currency definition models (MySQL-backed).</summary>
     private readonly IStateStore<CurrencyDefinitionModel> _definitionStore;
@@ -90,7 +91,8 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
         IEntitySessionRegistry entitySessionRegistry,
         ICurrencyDataCache currencyCache,
         IEventConsumer eventConsumer,
-        IWorldstateClient worldstateClient)
+        IWorldstateClient worldstateClient,
+        IEnumerable<ICurrencyTransactionListener> transactionListeners)
     {
         _messageBus = messageBus;
         _logger = logger;
@@ -100,6 +102,7 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
         _entitySessionRegistry = entitySessionRegistry;
         _currencyCache = currencyCache;
         _worldstateClient = worldstateClient;
+        _transactionListeners = transactionListeners.ToList();
 
         _definitionStore = stateStoreFactory.GetStore<CurrencyDefinitionModel>(StateStoreDefinitions.CurrencyDefinitions);
         _definitionStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyDefinitions);
@@ -920,6 +923,21 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
         // Publish balance lifecycle event (created for first-ever balance, updated for existing)
         await PublishBalanceLifecycleEventAsync(balance, wallet, definition, isNewBalance, cancellationToken);
 
+        // Dispatch DI listener notification for co-located L2 consumers (e.g., Genesis growth pipeline)
+        await CurrencyTransactionDispatcher.DispatchCreditedAsync(
+            _transactionListeners,
+            new CurrencyTransactionNotification(
+                WalletId: body.WalletId,
+                OwnerId: wallet.OwnerId,
+                OwnerType: wallet.OwnerType,
+                CurrencyDefinitionId: body.CurrencyDefinitionId,
+                CurrencyCode: definition.Code,
+                Amount: creditAmount,
+                NewBalance: balance.Amount,
+                TransactionType: body.TransactionType,
+                OccurredAt: DateTimeOffset.UtcNow),
+            _telemetryProvider, _logger, cancellationToken);
+
         return (StatusCodes.OK, new CreditCurrencyResponse
         {
             Transaction = MapTransactionToRecord(transaction),
@@ -1015,6 +1033,21 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
 
         // Publish balance lifecycle updated event
         await PublishBalanceLifecycleEventAsync(balance, wallet, definition, false, cancellationToken);
+
+        // Dispatch DI listener notification for co-located L2 consumers (e.g., Genesis growth pipeline)
+        await CurrencyTransactionDispatcher.DispatchDebitedAsync(
+            _transactionListeners,
+            new CurrencyTransactionNotification(
+                WalletId: body.WalletId,
+                OwnerId: wallet.OwnerId,
+                OwnerType: wallet.OwnerType,
+                CurrencyDefinitionId: body.CurrencyDefinitionId,
+                CurrencyCode: definition.Code,
+                Amount: body.Amount,
+                NewBalance: balance.Amount,
+                TransactionType: body.TransactionType,
+                OccurredAt: DateTimeOffset.UtcNow),
+            _telemetryProvider, _logger, cancellationToken);
 
         return (StatusCodes.OK, new DebitCurrencyResponse
         {
@@ -1164,6 +1197,38 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
         // Publish balance lifecycle events for both sides of the transfer
         await PublishBalanceLifecycleEventAsync(sourceBalance, sourceWallet, definition, false, cancellationToken);
         await PublishBalanceLifecycleEventAsync(targetBalance, targetWallet, definition, isNewTargetBalance, cancellationToken);
+
+        // Dispatch DI listener notifications for co-located L2 consumers (e.g., Genesis growth pipeline)
+        // Source side: debit of body.Amount (magnitude before target-cap clamping)
+        // Target side: credit of creditAmount (post-cap, what actually landed in the target)
+        var transferOccurredAt = DateTimeOffset.UtcNow;
+        await CurrencyTransactionDispatcher.DispatchDebitedAsync(
+            _transactionListeners,
+            new CurrencyTransactionNotification(
+                WalletId: body.SourceWalletId,
+                OwnerId: sourceWallet.OwnerId,
+                OwnerType: sourceWallet.OwnerType,
+                CurrencyDefinitionId: body.CurrencyDefinitionId,
+                CurrencyCode: definition.Code,
+                Amount: body.Amount,
+                NewBalance: sourceBalance.Amount,
+                TransactionType: body.TransactionType,
+                OccurredAt: transferOccurredAt),
+            _telemetryProvider, _logger, cancellationToken);
+
+        await CurrencyTransactionDispatcher.DispatchCreditedAsync(
+            _transactionListeners,
+            new CurrencyTransactionNotification(
+                WalletId: body.TargetWalletId,
+                OwnerId: targetWallet.OwnerId,
+                OwnerType: targetWallet.OwnerType,
+                CurrencyDefinitionId: body.CurrencyDefinitionId,
+                CurrencyCode: definition.Code,
+                Amount: creditAmount,
+                NewBalance: targetBalance.Amount,
+                TransactionType: body.TransactionType,
+                OccurredAt: transferOccurredAt),
+            _telemetryProvider, _logger, cancellationToken);
 
         return (StatusCodes.OK, new TransferCurrencyResponse
         {

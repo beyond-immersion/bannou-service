@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Currency.Services;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Worldstate;
@@ -101,6 +102,11 @@ public class CurrencyAutogainTaskServiceTests
             .Returns(_mockLockProvider.Object);
         _mockScopedProvider.Setup(sp => sp.GetService(typeof(IWorldstateClient)))
             .Returns(_mockWorldstateClient.Object);
+
+        // Currency transaction listeners: empty collection for these tests.
+        // GetServices<T>() resolves via GetService(typeof(IEnumerable<T>)).
+        _mockScopedProvider.Setup(sp => sp.GetService(typeof(IEnumerable<ICurrencyTransactionListener>)))
+            .Returns(Enumerable.Empty<ICurrencyTransactionListener>());
 
         // Wire up state store factory
         _mockStateStoreFactory.Setup(f => f.GetStore<CurrencyDefinitionModel>(StateStoreDefinitions.CurrencyDefinitions))

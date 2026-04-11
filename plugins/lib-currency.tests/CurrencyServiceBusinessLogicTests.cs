@@ -266,7 +266,8 @@ public class CurrencyServiceBusinessLogicTests
             _mockEntitySessionRegistry.Object,
             _mockCurrencyCache.Object,
             _mockEventConsumer.Object,
-            Mock.Of<IWorldstateClient>());
+            Mock.Of<IWorldstateClient>(),
+            Enumerable.Empty<ICurrencyTransactionListener>());
     }
 
     /// <summary>
