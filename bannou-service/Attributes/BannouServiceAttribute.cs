@@ -13,7 +13,7 @@ namespace BeyondImmersion.BannouService.Attributes;
 /// The <see cref="Layer"/> property is set via <c>x-service-layer</c> in the schema.
 /// </para>
 /// </remarks>
-[AttributeUsage(validOn: AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
+[AttributeUsage(validOn: AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
 public class BannouServiceAttribute : BaseServiceAttribute
 {
     /// <summary>

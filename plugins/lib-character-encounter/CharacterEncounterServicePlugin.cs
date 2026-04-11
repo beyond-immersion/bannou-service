@@ -59,7 +59,16 @@ public class CharacterEncounterServicePlugin : StandardServicePlugin<ICharacterE
             Logger?.LogWarning("Failed to register character-encounter compression callback with lib-resource");
         }
 
-        // Register event templates for emit_event: ABML action (generated from x-event-template)
+        await RegisterEventTemplatesAsync();
+    }
+
+    /// <summary>
+    /// Registers character-encounter event templates with the optional <see cref="IEventTemplateRegistry"/>.
+    /// Extracted from <see cref="OnRunningAsync"/> so the best-effort catch is scoped to the
+    /// registration step and does not swallow unrelated lifecycle exceptions from the outer override.
+    /// </summary>
+    private Task RegisterEventTemplatesAsync()
+    {
         try
         {
             using var scope = ServiceProvider!.CreateScope();
@@ -78,5 +87,6 @@ public class CharacterEncounterServicePlugin : StandardServicePlugin<ICharacterE
         {
             Logger?.LogWarning(ex, "Failed to register event templates");
         }
+        return Task.CompletedTask;
     }
 }

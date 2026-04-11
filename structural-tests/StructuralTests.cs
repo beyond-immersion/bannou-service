@@ -1477,19 +1477,23 @@ public class StructuralTests
 
     /// <summary>
     /// Scans event schema files for <c>deprecation: true</c> and returns the set of
-    /// service names that have at least one deprecated entity.
+    /// service names that have at least one deprecated entity. Service names are derived
+    /// by stripping <c>-service-events</c> from the file name so they match the
+    /// <see cref="BannouServiceAttribute.Name"/> used by <see cref="FindServiceTypeByName"/>.
     /// </summary>
     private static HashSet<string> DiscoverServicesWithDeprecation(string schemasDir)
     {
         var services = new HashSet<string>(StringComparer.Ordinal);
 
-        foreach (var file in Directory.GetFiles(schemasDir, "*-events.yaml"))
+        foreach (var file in Directory.GetFiles(schemasDir, "*-service-events.yaml"))
         {
             var fileName = Path.GetFileNameWithoutExtension(file);
-            if (!fileName.EndsWith("-events", StringComparison.Ordinal))
+            if (!fileName.EndsWith("-service-events", StringComparison.Ordinal))
                 continue;
 
-            var serviceName = fileName[..^"-events".Length];
+            // Strip "-service-events" so the remainder matches BannouServiceAttribute.Name
+            // (e.g. "genesis-service-events.yaml" -> "genesis", matching [BannouService("genesis", ...)]).
+            var serviceName = fileName[..^"-service-events".Length];
 
             // Line-based scan — no YAML library needed
             foreach (var line in File.ReadLines(file))

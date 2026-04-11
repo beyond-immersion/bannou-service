@@ -60,7 +60,7 @@ public class GenesisCurrencyTransactionListener : ICurrencyTransactionListener
     public Task OnCurrencyCreditedAsync(CurrencyTransactionNotification notification, CancellationToken ct)
     {
         // Fast path: in-memory map lookup. The overwhelming majority of wallets are non-genesis.
-        if (!_state.WalletMap.TryGetValue(notification.WalletId, out var mapping))
+        if (!_state.TryGetWalletMapping(notification.WalletId, out var mapping))
             return Task.CompletedTask;
 
         _state.BufferGrowth(
@@ -80,7 +80,7 @@ public class GenesisCurrencyTransactionListener : ICurrencyTransactionListener
     /// <inheritdoc />
     public Task OnCurrencyDebitedAsync(CurrencyTransactionNotification notification, CancellationToken ct)
     {
-        if (!_state.WalletMap.TryGetValue(notification.WalletId, out var mapping))
+        if (!_state.TryGetWalletMapping(notification.WalletId, out var mapping))
             return Task.CompletedTask;
 
         _state.BufferGrowth(

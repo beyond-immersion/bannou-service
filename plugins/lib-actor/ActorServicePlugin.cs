@@ -92,6 +92,21 @@ public class ActorServicePlugin : StandardServicePlugin<IActorService>
     {
         Logger?.LogInformation("Shutting down Actor service");
 
+        await StopAllRunningActorsAsync();
+
+        await base.OnShutdownAsync();
+    }
+
+    /// <summary>
+    /// Best-effort stop-all helper invoked during <see cref="OnShutdownAsync"/>. Per-actor failures
+    /// are logged and skipped so one misbehaving actor cannot block shutdown of its peers
+    /// (IMPLEMENTATION TENETS T7 — per-item error isolation). The outer catch handles registry
+    /// resolution failures so the plugin still runs base shutdown. This logic lives in a helper
+    /// method (not directly in the override) so the per-item and outer catches remain scoped
+    /// to actor cleanup and do not swallow lifecycle-level exceptions from other startup paths.
+    /// </summary>
+    private async Task StopAllRunningActorsAsync()
+    {
         try
         {
             // Stop all running actors via the singleton registry (not scoped service)
@@ -117,7 +132,5 @@ public class ActorServicePlugin : StandardServicePlugin<IActorService>
         {
             Logger?.LogWarning(ex, "Exception during Actor service actor cleanup");
         }
-
-        await base.OnShutdownAsync();
     }
 }

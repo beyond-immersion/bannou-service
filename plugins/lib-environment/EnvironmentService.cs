@@ -111,8 +111,9 @@ public partial class EnvironmentService : IEnvironmentService
         // await stateStore.DeleteAsync(key, cancellationToken);
         // return StatusCodes.NoContent;
         //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+        // For event publishing (lib-messaging): always use the generated typed extension methods
+        // from EnvironmentEventPublisher.cs (e.g. _messageBus.PublishEnvironmentConditionsChangedAsync(evt, ct)).
+        // Inline topic strings are forbidden per FOUNDATION TENETS (Event-Driven Architecture).
     }
 
     /// <summary>

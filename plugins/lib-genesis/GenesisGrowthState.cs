@@ -1,4 +1,6 @@
 using System.Collections.Concurrent;
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Genesis;
 
@@ -32,21 +34,65 @@ namespace BeyondImmersion.BannouService.Genesis;
 /// the flush worker on the same node.
 /// </para>
 /// </remarks>
+[BannouHelperService("genesis-growth-state", typeof(IGenesisService), lifetime: ServiceLifetime.Singleton, DependencyMode = DependencyRegistrationMode.Concrete)]
 public class GenesisGrowthState
 {
     /// <summary>
     /// Maps <c>walletId → GenesisWalletMapping</c> for microsecond-fast filtering of currency mutations
     /// by <see cref="GenesisCurrencyTransactionListener"/>. Non-genesis wallets miss the lookup and return
-    /// immediately without network I/O.
+    /// immediately without network I/O. Private backing — consumers go through <see cref="SetWalletMapping"/>,
+    /// <see cref="TryRemoveWalletMapping"/>, and <see cref="TryGetWalletMapping"/>.
     /// </summary>
-    public ConcurrentDictionary<Guid, GenesisWalletMapping> WalletMap { get; } = new();
+    private readonly ConcurrentDictionary<Guid, GenesisWalletMapping> _walletMap = new();
 
     /// <summary>
     /// Pre-resolved actor template IDs for phase transitions, keyed by
-    /// <c>"{templateCode}:{phaseName}"</c>. Populated during template registration and plugin startup;
-    /// read by <see cref="GenesisSeedEvolutionListener"/> at the EventBrain transition point.
+    /// <c>"{ACTOR_TEMPLATE_KEY_PREFIX}{templateCode}:{phaseName}"</c>. Populated during template registration
+    /// and plugin startup; read by <see cref="GenesisSeedEvolutionListener"/> at the EventBrain transition
+    /// point. Private backing — consumers go through <see cref="ContainsActorTemplate"/>,
+    /// <see cref="SetActorTemplate"/>, and <see cref="TryGetActorTemplate"/>.
     /// </summary>
-    public ConcurrentDictionary<string, Guid> ActorTemplateMap { get; } = new();
+    private readonly ConcurrentDictionary<string, Guid> _actorTemplateMap = new();
+
+    /// <summary>
+    /// Sets or replaces the wallet mapping for a given wallet ID. Thread-safe.
+    /// </summary>
+    public void SetWalletMapping(Guid walletId, GenesisWalletMapping mapping)
+        => _walletMap[walletId] = mapping;
+
+    /// <summary>
+    /// Removes the wallet mapping for the given wallet ID, if present. Returns <c>true</c> if a
+    /// mapping was removed. Thread-safe.
+    /// </summary>
+    public bool TryRemoveWalletMapping(Guid walletId)
+        => _walletMap.TryRemove(walletId, out _);
+
+    /// <summary>
+    /// Looks up a wallet mapping by wallet ID. Returns <c>true</c> and sets <paramref name="mapping"/>
+    /// when found; returns <c>false</c> otherwise. Thread-safe.
+    /// </summary>
+    public bool TryGetWalletMapping(Guid walletId, out GenesisWalletMapping mapping)
+        => _walletMap.TryGetValue(walletId, out mapping!);
+
+    /// <summary>
+    /// Returns <c>true</c> when an actor template ID has already been registered for the given
+    /// composite key. Thread-safe.
+    /// </summary>
+    public bool ContainsActorTemplate(string key)
+        => _actorTemplateMap.ContainsKey(key);
+
+    /// <summary>
+    /// Sets or replaces the actor template ID for the given composite key. Thread-safe.
+    /// </summary>
+    public void SetActorTemplate(string key, Guid templateId)
+        => _actorTemplateMap[key] = templateId;
+
+    /// <summary>
+    /// Looks up a pre-resolved actor template ID by composite key. Returns <c>true</c> and sets
+    /// <paramref name="templateId"/> when found; returns <c>false</c> otherwise. Thread-safe.
+    /// </summary>
+    public bool TryGetActorTemplate(string key, out Guid templateId)
+        => _actorTemplateMap.TryGetValue(key, out templateId);
 
     /// <summary>
     /// Buffered growth credits pending flush, keyed by entity ID. Replaced atomically on drain via

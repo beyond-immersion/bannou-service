@@ -80,13 +80,24 @@ public class TestingServicePlugin : StandardServicePlugin<ITestingService>
 
         Logger?.LogDebug("Service running");
 
+        // Call base for standard IBannouService lifecycle first — propagate any base failure.
+        await base.OnRunningAsync();
+
+        // Run a periodic test in a helper method so the best-effort catch is scoped to the test
+        // execution and cannot swallow lifecycle exceptions from base.OnRunningAsync above.
+        await RunStartupHealthTestAsync();
+    }
+
+    /// <summary>
+    /// Executes a single startup health test against the service. Failures are logged at Warning
+    /// and do not propagate — this is a best-effort diagnostic, not a lifecycle gate. Extracted
+    /// into a helper so the catch stays out of the <see cref="OnRunningAsync"/> override.
+    /// </summary>
+    private async Task RunStartupHealthTestAsync()
+    {
         try
         {
-            // Call base for standard IBannouService lifecycle
-            await base.OnRunningAsync();
-
-            // Run a periodic test
-            var runningTestResult = await Service.RunTestAsync("plugin-running-test");
+            var runningTestResult = await Service!.RunTestAsync("plugin-running-test");
             if (runningTestResult.Item1 == StatusCodes.OK)
             {
                 Logger?.LogDebug("Testing service running test passed");

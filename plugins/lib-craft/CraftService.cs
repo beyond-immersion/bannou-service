@@ -111,8 +111,9 @@ public partial class CraftService : ICraftService
         // await stateStore.DeleteAsync(key, cancellationToken);
         // return StatusCodes.NoContent;
         //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
+        // For event publishing (lib-messaging): always use the generated typed extension methods
+        // from CraftEventPublisher.cs (e.g. _messageBus.PublishCraftRecipeDiscoveredAsync(evt, ct)).
+        // Inline topic strings are forbidden per FOUNDATION TENETS (Event-Driven Architecture).
     }
 
     /// <summary>

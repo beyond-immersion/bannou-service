@@ -425,11 +425,11 @@ public partial class GenesisService
         var growthMappings = template.Economy.GrowthMappings.ToList();
         foreach (var (walletCode, walletId) in entity.WalletIds)
         {
-            _growthState.WalletMap[walletId] = new GenesisWalletMapping(
+            _growthState.SetWalletMapping(walletId, new GenesisWalletMapping(
                 EntityId: entity.EntityId,
                 TemplateCode: entity.TemplateCode,
                 WalletCode: walletCode,
-                GrowthMappings: growthMappings);
+                GrowthMappings: growthMappings));
         }
     }
 
@@ -441,7 +441,7 @@ public partial class GenesisService
     internal void RemoveFromWalletMap(GenesisEntityModel entity)
     {
         foreach (var walletId in entity.WalletIds.Values)
-            _growthState.WalletMap.TryRemove(walletId, out _);
+            _growthState.TryRemoveWalletMapping(walletId);
     }
 
     /// <summary>
@@ -463,7 +463,7 @@ public partial class GenesisService
             if (string.IsNullOrWhiteSpace(phase.BehaviorRef)) continue;
 
             var mapKey = GenesisSeedEvolutionListener.BuildActorTemplateKey(body.TemplateCode, phase.PhaseName);
-            if (_growthState.ActorTemplateMap.ContainsKey(mapKey)) continue;
+            if (_growthState.ContainsActorTemplate(mapKey)) continue;
 
             var category = $"genesis:{body.TemplateCode}:{phase.PhaseName}";
             Guid actorTemplateId;
@@ -502,7 +502,7 @@ public partial class GenesisService
                 continue;
             }
 
-            _growthState.ActorTemplateMap[mapKey] = actorTemplateId;
+            _growthState.SetActorTemplate(mapKey, actorTemplateId);
             _logger.LogDebug(
                 "Registered actor template {ActorTemplateId} for genesis template {TemplateCode} phase {PhaseName}",
                 actorTemplateId, body.TemplateCode, phase.PhaseName);

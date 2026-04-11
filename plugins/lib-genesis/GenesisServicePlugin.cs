@@ -33,17 +33,9 @@ public class GenesisServicePlugin : StandardServicePlugin<IGenesisService>
     public override string PluginName => "genesis";
     public override string DisplayName => "Genesis Service";
 
-    /// <inheritdoc/>
-    public override void ConfigureServices(IServiceCollection services)
-    {
-        base.ConfigureServices(services);
-
-        // GenesisGrowthState is the shared substrate between the currency transaction listener,
-        // the growth flush worker, the seed evolution listener, and the self-subscription event
-        // handlers. Singleton because it holds the in-memory wallet map and growth accumulator,
-        // and because the listener + worker are both Singletons.
-        services.AddSingleton<GenesisGrowthState>();
-    }
+    // GenesisGrowthState is registered as a singleton helper via its [BannouHelperService]
+    // attribute with DependencyRegistrationMode.Concrete — PluginLoader handles registration.
+    // No ConfigureServices override needed here; the base class sets up everything else.
 
     /// <inheritdoc/>
     protected override async Task<bool> OnStartAsync()
@@ -60,6 +52,24 @@ public class GenesisServicePlugin : StandardServicePlugin<IGenesisService>
 
         Logger?.LogInformation("Populating wallet map from MySQL for currency transaction fast-path");
 
+        await PopulateWalletMapFromMySqlAsync(entityQueryStore, templateStore, state);
+
+        return true;
+    }
+
+    /// <summary>
+    /// Populates the in-memory wallet map from MySQL by iterating active genesis entities.
+    /// Best-effort per-entity isolation means a single corrupt entity cannot block the rest.
+    /// The outer catch intentionally does NOT propagate — the wallet map is a performance
+    /// cache that is also kept current via self-subscription to genesis.entity.created events.
+    /// Extracted into a helper so the per-item and outer catches stay out of the
+    /// <see cref="OnStartAsync"/> override and cannot mask lifecycle failures from other paths.
+    /// </summary>
+    private async Task PopulateWalletMapFromMySqlAsync(
+        IQueryableStateStore<GenesisEntityModel> entityQueryStore,
+        IStateStore<GenesisTemplateModel> templateStore,
+        GenesisGrowthState state)
+    {
         try
         {
             var activeEntities = await entityQueryStore.QueryAsync(
@@ -83,11 +93,11 @@ public class GenesisServicePlugin : StandardServicePlugin<IGenesisService>
 
                     foreach (var (walletCode, walletId) in entity.WalletIds)
                     {
-                        state.WalletMap[walletId] = new GenesisWalletMapping(
+                        state.SetWalletMapping(walletId, new GenesisWalletMapping(
                             EntityId: entity.EntityId,
                             TemplateCode: entity.TemplateCode,
                             WalletCode: walletCode,
-                            GrowthMappings: template.Economy.GrowthMappings.ToList());
+                            GrowthMappings: template.Economy.GrowthMappings.ToList()));
                         walletCount++;
                     }
                     entityCount++;
@@ -110,8 +120,6 @@ public class GenesisServicePlugin : StandardServicePlugin<IGenesisService>
             // are created (via self-subscription to genesis.entity.created events). Currency mutations
             // for pre-existing entities until the next template update will simply miss the listener.
         }
-
-        return true;
     }
 
     /// <inheritdoc/>
@@ -142,6 +150,24 @@ public class GenesisServicePlugin : StandardServicePlugin<IGenesisService>
         // that predate the current deployment's code (e.g., registered under an older version
         // that didn't create actor templates).
         var templateQueryStore = stateStoreFactory.GetQueryableStore<GenesisTemplateModel>(StateStoreDefinitions.GenesisTemplates);
+        await RegisterPreExistingTemplatesAsync(templateQueryStore, seedClient, actorClient, state);
+    }
+
+    /// <summary>
+    /// Re-registers seed types and actor templates for all pre-existing genesis templates.
+    /// Per-template failures (either seed type or actor template registration) are logged
+    /// and skipped so one broken template cannot block the others. The outer catch handles
+    /// query-level failures and does not propagate — Seed and Actor are separate services
+    /// and a failure to re-register is survivable (the service continues running). Extracted
+    /// into a helper so the per-template and outer catches stay out of the
+    /// <see cref="OnRunningAsync"/> override.
+    /// </summary>
+    private async Task RegisterPreExistingTemplatesAsync(
+        IQueryableStateStore<GenesisTemplateModel> templateQueryStore,
+        ISeedClient seedClient,
+        IActorClient actorClient,
+        GenesisGrowthState state)
+    {
         try
         {
             var allTemplates = await templateQueryStore.QueryAsync(_ => true, CancellationToken.None);
@@ -241,7 +267,7 @@ public class GenesisServicePlugin : StandardServicePlugin<IGenesisService>
             if (string.IsNullOrWhiteSpace(phase.BehaviorRef)) continue;
 
             var mapKey = GenesisSeedEvolutionListener.BuildActorTemplateKey(template.TemplateCode, phase.PhaseName);
-            if (state.ActorTemplateMap.ContainsKey(mapKey))
+            if (state.ContainsActorTemplate(mapKey))
             {
                 count++;
                 continue;
@@ -267,7 +293,7 @@ public class GenesisServicePlugin : StandardServicePlugin<IGenesisService>
                 actorTemplateId = existing.TemplateId;
             }
 
-            state.ActorTemplateMap[mapKey] = actorTemplateId;
+            state.SetActorTemplate(mapKey, actorTemplateId);
             count++;
         }
         return count;

@@ -73,11 +73,11 @@ public partial class GenesisService
             var growthMappings = template.Economy.GrowthMappings.ToList();
             foreach (var (walletCode, walletId) in evt.WalletIds)
             {
-                _growthState.WalletMap[walletId] = new GenesisWalletMapping(
+                _growthState.SetWalletMapping(walletId, new GenesisWalletMapping(
                     EntityId: evt.EntityId,
                     TemplateCode: evt.TemplateCode,
                     WalletCode: walletCode,
-                    GrowthMappings: growthMappings);
+                    GrowthMappings: growthMappings));
             }
 
             _logger.LogDebug(
@@ -111,7 +111,7 @@ public partial class GenesisService
         try
         {
             foreach (var walletId in evt.WalletIds.Values)
-                _growthState.WalletMap.TryRemove(walletId, out _);
+                _growthState.TryRemoveWalletMapping(walletId);
 
             _logger.LogDebug(
                 "Wallet map cleaned for entity {EntityId}: {WalletCount} mappings removed",

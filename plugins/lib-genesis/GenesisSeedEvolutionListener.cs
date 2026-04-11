@@ -64,6 +64,11 @@ namespace BeyondImmersion.BannouService.Genesis;
 [BannouHelperService("genesis-seed-evolution", typeof(IGenesisService), typeof(ISeedEvolutionListener), lifetime: ServiceLifetime.Singleton)]
 public class GenesisSeedEvolutionListener : ISeedEvolutionListener
 {
+    // Key prefix for the ActorTemplateMap composite key. The map is an in-memory dictionary,
+    // not a state store, but the FOUNDATION TENETS key-builder pattern (const prefix + Build*Key
+    // method) is enforced uniformly via StateStoreKeyValidator and makes the format discoverable.
+    private const string ACTOR_TEMPLATE_KEY_PREFIX = "actor-tpl:";
+
     // State stores
     private readonly IStateStore<GenesisEntityModel> _entityStore;
     private readonly IQueryableStateStore<GenesisEntityModel> _entityQueryStore;
@@ -181,17 +186,11 @@ public class GenesisSeedEvolutionListener : ISeedEvolutionListener
             return;
         }
 
-        // No cognitive transition required — phase changed but stage stayed the same
-        if (targetPhase.CognitiveStage == entity.CognitiveStage)
-        {
-            _logger.LogDebug(
-                "Phase change for entity {EntityId} to {PhaseName} keeps cognitive stage {Stage}, updating phase only",
-                entity.EntityId, notification.NewPhase, targetPhase.CognitiveStage);
-            await UpdateEntityPhaseOnlyAsync(entity, notification.NewPhase, ct);
-            return;
-        }
-
-        // Cognitive transition required — acquire distributed lock
+        // Acquire distributed lock before ANY state-store writes. Both the phase-only
+        // branch and the cognitive-transition branch write to the genesis entity store,
+        // so both must execute under the transition lock. This matches the method's
+        // [RequiresDistributedLock("transition:{entityId}")] annotation and prevents
+        // concurrent writes from multiple nodes observing the same phase-change dispatch.
         var lockOwner = $"transition-{Guid.NewGuid():N}";
         await using var lockHandle = await _lockProvider.LockAsync(
             StateStoreDefinitions.GenesisLock,
@@ -217,12 +216,16 @@ public class GenesisSeedEvolutionListener : ISeedEvolutionListener
             return;
         }
 
-        // Re-check: another node may have already performed the transition
+        // No cognitive transition required — phase changed but stage stayed the same.
+        // Also handles the "another node already transitioned" case when this code runs
+        // after a peer completed the cognitive transition: the re-read entity now has the
+        // new cognitive stage, so this branch executes the phase-only update.
         if (targetPhase.CognitiveStage == entity.CognitiveStage)
         {
             _logger.LogDebug(
-                "Entity {EntityId} already at target cognitive stage {Stage}, skipping duplicate transition",
-                entity.EntityId, targetPhase.CognitiveStage);
+                "Phase change for entity {EntityId} to {PhaseName} keeps cognitive stage {Stage}, updating phase only",
+                entity.EntityId, notification.NewPhase, targetPhase.CognitiveStage);
+            await UpdateEntityPhaseOnlyAsync(entity, notification.NewPhase, ct);
             return;
         }
 
@@ -297,7 +300,7 @@ public class GenesisSeedEvolutionListener : ISeedEvolutionListener
 
         // Resolve the pre-registered actor template for this phase
         var actorTemplateKey = BuildActorTemplateKey(entity.TemplateCode, newPhase);
-        if (!_state.ActorTemplateMap.TryGetValue(actorTemplateKey, out var actorTemplateId))
+        if (!_state.TryGetActorTemplate(actorTemplateKey, out var actorTemplateId))
         {
             _logger.LogWarning(
                 "Entity {EntityId}: no actor template pre-registered for phase {Phase} (key {Key})",
@@ -308,11 +311,12 @@ public class GenesisSeedEvolutionListener : ISeedEvolutionListener
         }
 
         // Spawn the actor. Actor API uses a string actorId; we pass the entity GUID formatted as string
-        // so the actor is unambiguously tied to this genesis entity.
-        ActorInstanceResponse spawnResponse;
+        // so the actor is unambiguously tied to this genesis entity. Since we generate the actorId
+        // from entity.EntityId, we store entity.EntityId directly rather than parsing the response —
+        // Actor echoes the request actorId verbatim, so parsing would round-trip the same GUID we sent.
         try
         {
-            spawnResponse = await _actorClient.SpawnActorAsync(
+            await _actorClient.SpawnActorAsync(
                 new SpawnActorRequest
                 {
                     TemplateId = actorTemplateId,
@@ -331,19 +335,9 @@ public class GenesisSeedEvolutionListener : ISeedEvolutionListener
             return;
         }
 
-        // The actor API treats actorId as a string; Genesis stores it as a Guid (matches entity ID)
-        if (!Guid.TryParse(spawnResponse.ActorId, out var actorGuid))
-        {
-            _logger.LogError(
-                "Actor spawn returned non-Guid actorId {ActorId} for entity {EntityId}",
-                spawnResponse.ActorId, entity.EntityId);
-            await PublishTransitionFailedAsync(entity, newPhase, CognitiveStage.EventBrain,
-                $"Actor returned non-Guid actorId: {spawnResponse.ActorId}", ct);
-            return;
-        }
-
-        // Update entity and persist
-        entity.ActorId = actorGuid;
+        // Update entity and persist. ActorId tracks the entity's GUID — Actor's string actorId
+        // is the same value round-trip (see SpawnActorRequest.ActorId above).
+        entity.ActorId = entity.EntityId;
         entity.CognitiveStage = CognitiveStage.EventBrain;
         entity.CurrentPhase = newPhase;
         entity.UpdatedAt = DateTimeOffset.UtcNow;
@@ -642,8 +636,9 @@ public class GenesisSeedEvolutionListener : ISeedEvolutionListener
     }
 
     /// <summary>
-    /// Builds the composite key for the actor template map: <c>{templateCode}:{phaseName}</c>.
+    /// Builds the composite key for the actor template map:
+    /// <c>{ACTOR_TEMPLATE_KEY_PREFIX}{templateCode}:{phaseName}</c>.
     /// </summary>
     internal static string BuildActorTemplateKey(string templateCode, string phaseName)
-        => $"{templateCode}:{phaseName}";
+        => $"{ACTOR_TEMPLATE_KEY_PREFIX}{templateCode}:{phaseName}";
 }
