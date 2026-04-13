@@ -18,6 +18,7 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 /// Provides local event fan-out within the same process.
 /// </summary>
 [BannouHelperService("in-memory-message-bus", typeof(IMessagingService), lifetime: ServiceLifetime.Singleton)]
+[TelemetrySpanExempt("L0 infrastructure backend — messaging operations instrumented via middleware layer")]
 public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
 {
     private readonly ILogger<InMemoryMessageBus> _logger;

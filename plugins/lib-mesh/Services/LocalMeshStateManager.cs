@@ -14,6 +14,7 @@ namespace BeyondImmersion.BannouService.Mesh.Services;
 /// All service calls route to "bannou" (the omnipotent default).
 /// </summary>
 [BannouHelperService("local-mesh-state", typeof(IMeshService), typeof(IMeshStateManager), lifetime: ServiceLifetime.Singleton)]
+[TelemetrySpanExempt("L0 infrastructure backend — mesh operations instrumented via invocation wrapper")]
 public sealed class LocalMeshStateManager : IMeshStateManager
 {
     private readonly ILogger<LocalMeshStateManager> _logger;

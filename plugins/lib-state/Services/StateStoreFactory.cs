@@ -1,5 +1,6 @@
 #nullable enable
 
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
@@ -119,6 +120,7 @@ public delegate Task StateErrorPublisherAsync(
 /// Factory for creating typed state stores.
 /// Manages Redis connections and MySQL DbContext options.
 /// </summary>
+[TelemetrySpanExempt("L0 infrastructure backend — state operations instrumented via WrapStateStore decorator")]
 public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
 {
     private readonly StateStoreFactoryConfiguration _configuration;

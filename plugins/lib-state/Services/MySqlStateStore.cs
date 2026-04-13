@@ -1,6 +1,7 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -20,6 +21,7 @@ namespace BeyondImmersion.BannouService.State.Services;
 /// Creates a new DbContext per operation for thread-safety with concurrent requests.
 /// </summary>
 /// <typeparam name="TValue">Value type stored.</typeparam>
+[TelemetrySpanExempt("L0 infrastructure backend — state operations instrumented via WrapStateStore decorator")]
 public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     where TValue : class
 {

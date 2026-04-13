@@ -17,6 +17,7 @@ namespace BeyondImmersion.BannouService.Collection;
 /// A single <see cref="EventBatcherWorker"/> flushes both batchers per cycle.
 /// </remarks>
 [BannouHelperService("collection-instance-batcher", typeof(ICollectionService), lifetime: ServiceLifetime.Singleton, DependencyMode = DependencyRegistrationMode.Concrete)]
+[TelemetrySpanExempt("EventBatcher flush callbacks — single publish call per flush, nested under EventBatcherWorker per-cycle span")]
 public class CollectionInstanceEventBatcher
 {
     private readonly EventBatcher<CollectionBatchEntry> _created;

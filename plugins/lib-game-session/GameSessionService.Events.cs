@@ -40,6 +40,7 @@ public partial class GameSessionService
     /// <param name="evt">The event data.</param>
     public async Task HandleSessionConnectedAsync(SessionConnectedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.game-session", "GameSessionService.HandleSessionConnected");
         await HandleSessionConnectedInternalAsync(evt.SessionId, evt.AccountId);
     }
 
@@ -50,6 +51,7 @@ public partial class GameSessionService
     /// <param name="evt">The event data.</param>
     public async Task HandleSessionDisconnectedAsync(SessionDisconnectedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.game-session", "GameSessionService.HandleSessionDisconnected");
         await HandleSessionDisconnectedInternalAsync(evt.SessionId, evt.AccountId);
     }
 
@@ -60,6 +62,7 @@ public partial class GameSessionService
     /// <param name="evt">The event data.</param>
     public async Task HandleSessionReconnectedAsync(SessionReconnectedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.game-session", "GameSessionService.HandleSessionReconnected");
         // Reconnection is treated the same as a new connection for shortcut publishing
         await HandleSessionConnectedInternalAsync(evt.SessionId, evt.AccountId);
     }
@@ -71,6 +74,7 @@ public partial class GameSessionService
     /// <param name="evt">The event data.</param>
     public async Task HandleSubscriptionUpdatedAsync(SubscriptionUpdatedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.game-session", "GameSessionService.HandleSubscriptionUpdated");
         await HandleSubscriptionUpdatedInternalAsync(
             evt.AccountId,
             evt.StubName,

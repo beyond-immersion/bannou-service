@@ -14,11 +14,13 @@ public partial class ConnectController : ConnectControllerBase
 {
     private readonly IConnectService _connectService;
     private readonly ILogger<ConnectController> _logger;
+    private readonly BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
     public ConnectController(IConnectService connectService, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider, ILogger<ConnectController> logger) : base(connectService, telemetryProvider)
     {
         _connectService = connectService;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -26,6 +28,7 @@ public partial class ConnectController : ConnectControllerBase
     /// </summary>
     public override async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocket([Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection connection, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade upgrade, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string authorization, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectController.ConnectWebSocket");
         return await HandleWebSocketConnectionAsync(authorization, cancellationToken);
     }
 
@@ -34,6 +37,7 @@ public partial class ConnectController : ConnectControllerBase
     /// </summary>
     public override async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocketPost([Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection2 connection, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade2 upgrade, [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string authorization, [Microsoft.AspNetCore.Mvc.FromBody] ConnectRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectController.ConnectWebSocketPost");
         return await HandleWebSocketConnectionAsync(authorization, cancellationToken);
     }
 
@@ -47,6 +51,7 @@ public partial class ConnectController : ConnectControllerBase
         [Microsoft.AspNetCore.Mvc.FromHeader(Name = "X-Service-Token")] string? x_Service_Token,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectController.BroadcastWebSocket");
         if (!HttpContext.WebSockets.IsWebSocketRequest)
         {
             return BadRequest("WebSocket upgrade required");
@@ -83,6 +88,7 @@ public partial class ConnectController : ConnectControllerBase
         string authorization,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectController.HandleWebSocketConnectionAsync");
         try
         {
             // Validate WebSocket upgrade request

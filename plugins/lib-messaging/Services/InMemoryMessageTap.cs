@@ -25,6 +25,7 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 /// </para>
 /// </remarks>
 [BannouHelperService("in-memory-message-tap", typeof(IMessagingService), lifetime: ServiceLifetime.Singleton)]
+[TelemetrySpanExempt("L0 infrastructure backend — messaging operations instrumented via middleware layer")]
 public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
 {
     private readonly IMessageBus _messageBus;

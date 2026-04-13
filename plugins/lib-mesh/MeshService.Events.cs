@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
@@ -9,6 +10,7 @@ namespace BeyondImmersion.BannouService.Mesh;
 /// Event handler implementations for MeshService.
 /// Handles ServiceHeartbeatEvent and MeshMappingsUpdatedEvent subscriptions.
 /// </summary>
+[TelemetrySpanExempt("L0 infrastructure backend — mesh operations instrumented via invocation wrapper")]
 public partial class MeshService
 {
     /// <summary>

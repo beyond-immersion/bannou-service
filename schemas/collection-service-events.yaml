@@ -46,14 +46,6 @@ info:
     - topic: collection.batch-created
       event: CollectionBatchCreatedEvent
       description: Batch event containing accumulated collection instance creations
-    - topic: collection.batch-modified
-      event: CollectionBatchModifiedEvent
-      description: |
-        Batch event containing accumulated collection instance modifications.
-        Declared for schema completeness (batch: true requires all three publications
-        per BatchLifecycleEntities_HaveBatchEventPublications). Collections are
-        effectively immutable after creation, so this publisher is rarely invoked
-        at runtime — empty batches are not flushed.
     - topic: collection.batch-destroyed
       event: CollectionBatchDestroyedEvent
       description: Batch event containing accumulated collection instance destructions

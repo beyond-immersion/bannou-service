@@ -22,6 +22,7 @@ namespace BeyondImmersion.BannouService.CharacterHistory.Caching;
 public sealed class BackstoryCache : IBackstoryCache
 {
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly VariableProviderCacheBucket<Guid, BackstoryResponse> _backstoryBucket;
 
     /// <summary>
@@ -34,6 +35,7 @@ public sealed class BackstoryCache : IBackstoryCache
         ITelemetryProvider telemetryProvider)
     {
         _scopeFactory = scopeFactory;
+        _telemetryProvider = telemetryProvider;
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _backstoryBucket = new VariableProviderCacheBucket<Guid, BackstoryResponse>(
             TimeSpan.FromMinutes(config.BackstoryCacheTtlMinutes),
@@ -43,6 +45,7 @@ public sealed class BackstoryCache : IBackstoryCache
     /// <inheritdoc/>
     public async Task<BackstoryResponse?> GetOrLoadAsync(Guid characterId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-history", "BackstoryCache.GetOrLoad");
         return await _backstoryBucket.GetOrLoadAsync(characterId, async loadCt =>
         {
             using var scope = _scopeFactory.CreateScope();

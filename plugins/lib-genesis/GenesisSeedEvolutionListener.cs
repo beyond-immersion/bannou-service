@@ -186,11 +186,7 @@ public class GenesisSeedEvolutionListener : ISeedEvolutionListener
             return;
         }
 
-        // Acquire distributed lock before ANY state-store writes. Both the phase-only
-        // branch and the cognitive-transition branch write to the genesis entity store,
-        // so both must execute under the transition lock. This matches the method's
-        // [RequiresDistributedLock("transition:{entityId}")] annotation and prevents
-        // concurrent writes from multiple nodes observing the same phase-change dispatch.
+        // Acquire distributed lock — both phase-only and cognitive-transition paths write state
         var lockOwner = $"transition-{Guid.NewGuid():N}";
         await using var lockHandle = await _lockProvider.LockAsync(
             StateStoreDefinitions.GenesisLock,
@@ -202,7 +198,7 @@ public class GenesisSeedEvolutionListener : ISeedEvolutionListener
         if (!lockHandle.Success)
         {
             _logger.LogDebug(
-                "Could not acquire transition lock for entity {EntityId} — another node is handling the transition",
+                "Could not acquire transition lock for entity {EntityId} — another node is handling it",
                 entity.EntityId);
             return;
         }
@@ -216,12 +212,18 @@ public class GenesisSeedEvolutionListener : ISeedEvolutionListener
             return;
         }
 
-        // No cognitive transition required — phase changed but stage stayed the same.
-        // Also handles the "another node already transitioned" case when this code runs
-        // after a peer completed the cognitive transition: the re-read entity now has the
-        // new cognitive stage, so this branch executes the phase-only update.
+        // No cognitive transition required — phase changed but stage stayed the same
         if (targetPhase.CognitiveStage == entity.CognitiveStage)
         {
+            // Another node may have already updated the phase under the same lock
+            if (entity.CurrentPhase == notification.NewPhase)
+            {
+                _logger.LogDebug(
+                    "Entity {EntityId} already at phase {PhaseName}, skipping duplicate phase-only update",
+                    entity.EntityId, notification.NewPhase);
+                return;
+            }
+
             _logger.LogDebug(
                 "Phase change for entity {EntityId} to {PhaseName} keeps cognitive stage {Stage}, updating phase only",
                 entity.EntityId, notification.NewPhase, targetPhase.CognitiveStage);
@@ -311,12 +313,11 @@ public class GenesisSeedEvolutionListener : ISeedEvolutionListener
         }
 
         // Spawn the actor. Actor API uses a string actorId; we pass the entity GUID formatted as string
-        // so the actor is unambiguously tied to this genesis entity. Since we generate the actorId
-        // from entity.EntityId, we store entity.EntityId directly rather than parsing the response —
-        // Actor echoes the request actorId verbatim, so parsing would round-trip the same GUID we sent.
+        // so the actor is unambiguously tied to this genesis entity.
+        ActorInstanceResponse spawnResponse;
         try
         {
-            await _actorClient.SpawnActorAsync(
+            spawnResponse = await _actorClient.SpawnActorAsync(
                 new SpawnActorRequest
                 {
                     TemplateId = actorTemplateId,
@@ -335,9 +336,19 @@ public class GenesisSeedEvolutionListener : ISeedEvolutionListener
             return;
         }
 
-        // Update entity and persist. ActorId tracks the entity's GUID — Actor's string actorId
-        // is the same value round-trip (see SpawnActorRequest.ActorId above).
-        entity.ActorId = entity.EntityId;
+        // The actor API treats actorId as a string; Genesis stores it as a Guid (matches entity ID)
+        if (!Guid.TryParse(spawnResponse.ActorId, out var actorGuid))
+        {
+            _logger.LogError(
+                "Actor spawn returned non-Guid actorId {ActorId} for entity {EntityId}",
+                spawnResponse.ActorId, entity.EntityId);
+            await PublishTransitionFailedAsync(entity, newPhase, CognitiveStage.EventBrain,
+                $"Actor returned non-Guid actorId: {spawnResponse.ActorId}", ct);
+            return;
+        }
+
+        // Update entity and persist
+        entity.ActorId = actorGuid;
         entity.CognitiveStage = CognitiveStage.EventBrain;
         entity.CurrentPhase = newPhase;
         entity.UpdatedAt = DateTimeOffset.UtcNow;

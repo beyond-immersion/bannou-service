@@ -21,14 +21,17 @@ namespace BeyondImmersion.BannouService.Location.Providers;
 public sealed class LocationContextProviderFactory : IVariableProviderFactory
 {
     private readonly ILocationDataCache _cache;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new location context provider factory.
     /// </summary>
     /// <param name="cache">The location data cache for loading context data.</param>
-    public LocationContextProviderFactory(ILocationDataCache cache)
+    /// <param name="telemetryProvider">Telemetry provider for distributed tracing spans.</param>
+    public LocationContextProviderFactory(ILocationDataCache cache, ITelemetryProvider telemetryProvider)
     {
         _cache = cache;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -37,6 +40,8 @@ public sealed class LocationContextProviderFactory : IVariableProviderFactory
     /// <inheritdoc/>
     public async Task<IVariableProvider> CreateAsync(Guid? characterId, Guid realmId, Guid? locationId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.location", "LocationContextProviderFactory.Create");
+
         if (!characterId.HasValue)
         {
             return LocationContextProvider.Empty;

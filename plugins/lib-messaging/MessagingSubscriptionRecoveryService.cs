@@ -10,6 +10,7 @@ namespace BeyondImmersion.BannouService.Messaging;
 /// Also periodically refreshes TTL on persisted subscriptions to keep them alive.
 /// </summary>
 [BannouHelperService("messaging-subscription-recovery", typeof(IMessagingService), lifetime: ServiceLifetime.Singleton)]
+[TelemetrySpanExempt("L0 infrastructure backend — messaging operations instrumented via middleware layer")]
 public sealed class MessagingSubscriptionRecoveryService : BackgroundService
 {
     private readonly ILogger<MessagingSubscriptionRecoveryService> _logger;

@@ -1,5 +1,6 @@
 #nullable enable
 
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
@@ -10,6 +11,7 @@ namespace BeyondImmersion.BannouService.State.Services;
 /// Redis implementation of low-level operations.
 /// Shares the ConnectionMultiplexer with StateStoreFactory for efficiency.
 /// </summary>
+[TelemetrySpanExempt("L0 infrastructure backend — state operations instrumented via WrapStateStore decorator")]
 internal sealed class RedisOperations : IRedisOperations
 {
     private readonly IDatabase _database;

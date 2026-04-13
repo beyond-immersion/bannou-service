@@ -4,6 +4,7 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Behavior;
 
 namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;
@@ -18,6 +19,7 @@ namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;
 /// - speak: { sound_id: "greeting_01" }
 /// </code>
 /// </remarks>
+[TelemetrySpanExempt("Pure synchronous ABML action parameter mapping — async interface contract only, no I/O")]
 public sealed class SpeakEmitter : BaseIntentEmitter
 {
     /// <inheritdoc/>
@@ -59,6 +61,7 @@ public sealed class SpeakEmitter : BaseIntentEmitter
 /// - shout: { alert_type: "danger" }
 /// </code>
 /// </remarks>
+[TelemetrySpanExempt("Pure synchronous ABML action parameter mapping — async interface contract only, no I/O")]
 public sealed class ShoutEmitter : BaseIntentEmitter
 {
     /// <inheritdoc/>

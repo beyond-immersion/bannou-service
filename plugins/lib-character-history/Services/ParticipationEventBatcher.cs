@@ -17,6 +17,7 @@ namespace BeyondImmersion.BannouService.CharacterHistory;
 /// A single <see cref="EventBatcherWorker"/> flushes both batchers per cycle.
 /// </remarks>
 [BannouHelperService("participation-batcher", typeof(ICharacterHistoryService), lifetime: ServiceLifetime.Singleton, DependencyMode = DependencyRegistrationMode.Concrete)]
+[TelemetrySpanExempt("EventBatcher flush callbacks — single publish call per flush, nested under EventBatcherWorker per-cycle span")]
 public class ParticipationEventBatcher
 {
     private readonly EventBatcher<ParticipationBatchEntry> _created;

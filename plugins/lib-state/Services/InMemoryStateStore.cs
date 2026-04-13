@@ -1,6 +1,7 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -123,6 +124,7 @@ internal static class InMemoryStoreData
 /// Implements ICacheableStateStore for Set and Sorted Set operations.
 /// </summary>
 /// <typeparam name="TValue">Value type stored.</typeparam>
+[TelemetrySpanExempt("L0 infrastructure backend — state operations instrumented via WrapStateStore decorator")]
 public sealed class InMemoryStateStore<TValue> : ICacheableStateStore<TValue>
     where TValue : class
 {

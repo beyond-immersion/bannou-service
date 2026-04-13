@@ -4,6 +4,7 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Behavior;
 
 namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;
@@ -18,6 +19,7 @@ namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;
 /// - look_at: { position: [10, 0, 5] }
 /// </code>
 /// </remarks>
+[TelemetrySpanExempt("Pure synchronous ABML action parameter mapping — async interface contract only, no I/O")]
 public sealed class LookAtEmitter : BaseIntentEmitter
 {
     /// <inheritdoc/>
@@ -55,6 +57,7 @@ public sealed class LookAtEmitter : BaseIntentEmitter
 /// - track: { target: "${enemy}", duration: 5.0 }
 /// </code>
 /// </remarks>
+[TelemetrySpanExempt("Pure synchronous ABML action parameter mapping — async interface contract only, no I/O")]
 public sealed class TrackEmitter : BaseIntentEmitter
 {
     /// <inheritdoc/>

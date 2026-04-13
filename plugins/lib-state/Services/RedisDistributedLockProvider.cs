@@ -14,6 +14,7 @@ namespace BeyondImmersion.BannouService.State.Services;
 /// with in-memory fallback for testing/minimal infrastructure.
 /// </summary>
 [BannouHelperService("redis-distributed-lock-provider", typeof(StateService), typeof(IDistributedLockProvider), ServiceLifetime.Singleton)]
+[TelemetrySpanExempt("L0 infrastructure backend — state operations instrumented via WrapStateStore decorator")]
 public sealed class RedisDistributedLockProvider : IDistributedLockProvider, IAsyncDisposable
 {
     private readonly IStateStoreFactory _stateStoreFactory;

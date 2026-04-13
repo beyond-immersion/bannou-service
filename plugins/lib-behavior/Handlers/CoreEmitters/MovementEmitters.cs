@@ -4,6 +4,7 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Behavior;
 
 namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;
@@ -19,6 +20,7 @@ namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;
 /// - walk_to: { mark: "waypoint_1" }
 /// </code>
 /// </remarks>
+[TelemetrySpanExempt("Pure synchronous ABML action parameter mapping — async interface contract only, no I/O")]
 public sealed class WalkToEmitter : BaseIntentEmitter
 {
     /// <inheritdoc/>
@@ -56,6 +58,7 @@ public sealed class WalkToEmitter : BaseIntentEmitter
 /// - run_to: { target: "${pos}", urgency: 0.8 }
 /// </code>
 /// </remarks>
+[TelemetrySpanExempt("Pure synchronous ABML action parameter mapping — async interface contract only, no I/O")]
 public sealed class RunToEmitter : BaseIntentEmitter
 {
     /// <inheritdoc/>
@@ -93,6 +96,7 @@ public sealed class RunToEmitter : BaseIntentEmitter
 /// - stop: { urgency: 1.0 }
 /// </code>
 /// </remarks>
+[TelemetrySpanExempt("Pure synchronous ABML action parameter mapping — async interface contract only, no I/O")]
 public sealed class StopEmitter : BaseIntentEmitter
 {
     /// <inheritdoc/>

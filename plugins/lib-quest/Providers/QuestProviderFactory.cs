@@ -21,13 +21,15 @@ namespace BeyondImmersion.BannouService.Quest.Providers;
 public sealed class QuestProviderFactory : IVariableProviderFactory
 {
     private readonly IQuestDataCache _cache;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new quest provider factory.
     /// </summary>
-    public QuestProviderFactory(IQuestDataCache cache)
+    public QuestProviderFactory(IQuestDataCache cache, ITelemetryProvider telemetryProvider)
     {
         _cache = cache;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -36,6 +38,8 @@ public sealed class QuestProviderFactory : IVariableProviderFactory
     /// <inheritdoc/>
     public async Task<IVariableProvider> CreateAsync(Guid? characterId, Guid realmId, Guid? locationId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.quest", "QuestProviderFactory.Create");
+
         if (!characterId.HasValue)
         {
             return QuestProvider.Empty;

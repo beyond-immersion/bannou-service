@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
@@ -24,6 +25,7 @@ namespace BeyondImmersion.BannouService.Mesh.Services;
 /// <c>mesh.mappings.updated</c> event propagates the update to all other nodes.
 /// </para>
 /// </remarks>
+[TelemetrySpanExempt("L0 infrastructure backend — mesh operations instrumented via invocation wrapper")]
 public class MeshServiceMappingReceiver : IServiceMappingReceiver
 {
     private readonly IServiceAppMappingResolver _mappingResolver;

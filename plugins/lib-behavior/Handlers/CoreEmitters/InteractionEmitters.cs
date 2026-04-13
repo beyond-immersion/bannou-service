@@ -4,6 +4,7 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Behavior;
 
 namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;
@@ -18,6 +19,7 @@ namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;
 /// - use: { item: "${inventory_item}", target: "${door}" }
 /// </code>
 /// </remarks>
+[TelemetrySpanExempt("Pure synchronous ABML action parameter mapping — async interface contract only, no I/O")]
 public sealed class UseEmitter : BaseIntentEmitter
 {
     /// <inheritdoc/>
@@ -55,6 +57,7 @@ public sealed class UseEmitter : BaseIntentEmitter
 /// - pick_up: { target: "${item}" }
 /// </code>
 /// </remarks>
+[TelemetrySpanExempt("Pure synchronous ABML action parameter mapping — async interface contract only, no I/O")]
 public sealed class PickUpEmitter : BaseIntentEmitter
 {
     /// <inheritdoc/>
@@ -89,6 +92,7 @@ public sealed class PickUpEmitter : BaseIntentEmitter
 /// - talk_to: { target: "${npc}" }
 /// </code>
 /// </remarks>
+[TelemetrySpanExempt("Pure synchronous ABML action parameter mapping — async interface contract only, no I/O")]
 public sealed class TalkToEmitter : BaseIntentEmitter
 {
     /// <inheritdoc/>

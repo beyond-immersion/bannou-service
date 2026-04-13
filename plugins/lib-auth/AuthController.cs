@@ -9,6 +9,7 @@ namespace BeyondImmersion.BannouService.Auth;
 public partial class AuthController : AuthControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Passes through to the base class constructor and stores service reference
@@ -20,6 +21,7 @@ public partial class AuthController : AuthControllerBase
         : base(implementation, telemetryProvider)
     {
         _authService = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -33,6 +35,7 @@ public partial class AuthController : AuthControllerBase
         [FromQuery] string? state,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "AuthController.InitOAuth");
         // Cast to concrete implementation to access InitOAuthAsync (not on interface due to x-controller-only)
         var authService = (AuthService)_authService;
         var (statusCode, result) = await authService.InitOAuthAsync(provider, redirectUri, state, cancellationToken);

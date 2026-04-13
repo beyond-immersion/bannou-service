@@ -17,6 +17,7 @@ namespace BeyondImmersion.BannouService.Item;
 /// A single <see cref="EventBatcherWorker"/> flushes all three batchers per cycle.
 /// </remarks>
 [BannouHelperService("item-instance-batcher", typeof(IItemService), lifetime: ServiceLifetime.Singleton, DependencyMode = DependencyRegistrationMode.Concrete)]
+[TelemetrySpanExempt("EventBatcher flush callbacks — single publish call per flush, nested under EventBatcherWorker per-cycle span")]
 public class ItemInstanceEventBatcher
 {
     private readonly EventBatcher<ItemInstanceBatchEntry> _created;

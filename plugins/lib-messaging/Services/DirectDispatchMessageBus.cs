@@ -21,6 +21,7 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 /// Environment variable: MESSAGING_USE_DIRECT_DISPATCH=true
 /// </summary>
 [BannouHelperService("direct-dispatch-message-bus", typeof(IMessagingService), lifetime: ServiceLifetime.Singleton)]
+[TelemetrySpanExempt("L0 infrastructure backend — messaging operations instrumented via middleware layer")]
 public sealed class DirectDispatchMessageBus : IMessageBus, IMessageSubscriber
 {
     private readonly IEventConsumer _eventConsumer;

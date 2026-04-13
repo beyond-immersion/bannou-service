@@ -22,6 +22,7 @@ namespace BeyondImmersion.BannouService.CharacterPersonality.Caching;
 public sealed class PersonalityDataCache : IPersonalityDataCache
 {
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly VariableProviderCacheBucket<Guid, PersonalityResponse> _personalityBucket;
     private readonly VariableProviderCacheBucket<Guid, CombatPreferencesResponse> _combatBucket;
 
@@ -35,6 +36,7 @@ public sealed class PersonalityDataCache : IPersonalityDataCache
         ITelemetryProvider telemetryProvider)
     {
         _scopeFactory = scopeFactory;
+        _telemetryProvider = telemetryProvider;
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
 
         var ttl = TimeSpan.FromMinutes(config.PersonalityCacheTtlMinutes);
@@ -47,6 +49,7 @@ public sealed class PersonalityDataCache : IPersonalityDataCache
     /// <inheritdoc/>
     public async Task<PersonalityResponse?> GetOrLoadPersonalityAsync(Guid characterId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-personality", "PersonalityDataCache.GetOrLoadPersonality");
         return await _personalityBucket.GetOrLoadAsync(characterId, async loadCt =>
         {
             using var scope = _scopeFactory.CreateScope();
@@ -60,6 +63,7 @@ public sealed class PersonalityDataCache : IPersonalityDataCache
     /// <inheritdoc/>
     public async Task<CombatPreferencesResponse?> GetOrLoadCombatPreferencesAsync(Guid characterId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-personality", "PersonalityDataCache.GetOrLoadCombatPreferences");
         return await _combatBucket.GetOrLoadAsync(characterId, async loadCt =>
         {
             using var scope = _scopeFactory.CreateScope();

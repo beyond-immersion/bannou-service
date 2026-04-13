@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Connect.Protocol;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
@@ -19,6 +20,7 @@ public class WebSocketConnectionManager : IDisposable, IAsyncDisposable
     private readonly int _connectionShutdownTimeoutSeconds;
     private readonly int _inactiveConnectionTimeoutMinutes;
     private readonly ILogger? _logger;
+    private readonly ITelemetryProvider? _telemetryProvider;
 
     // Outbound payload compression settings
     private readonly bool _compressionEnabled;
@@ -32,13 +34,15 @@ public class WebSocketConnectionManager : IDisposable, IAsyncDisposable
         ILogger? logger = null,
         bool compressionEnabled = false,
         int compressionThresholdBytes = 1024,
-        int compressionQuality = 1)
+        int compressionQuality = 1,
+        ITelemetryProvider? telemetryProvider = null)
     {
         _connections = new ConcurrentDictionary<string, WebSocketConnection>();
         _peerGuidToSessionId = new ConcurrentDictionary<Guid, string>();
         _connectionShutdownTimeoutSeconds = connectionShutdownTimeoutSeconds;
         _inactiveConnectionTimeoutMinutes = inactiveConnectionTimeoutMinutes;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
         _compressionEnabled = compressionEnabled;
         _compressionThresholdBytes = compressionThresholdBytes;
         _compressionQuality = compressionQuality;
@@ -179,6 +183,7 @@ public class WebSocketConnectionManager : IDisposable, IAsyncDisposable
     /// <returns>True if the message was sent successfully.</returns>
     public virtual async Task<bool> SendMessageToPeerAsync(Guid peerGuid, BinaryMessage message, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.connect", "WebSocketConnectionManager.SendMessageToPeer");
         if (!_peerGuidToSessionId.TryGetValue(peerGuid, out var sessionId))
         {
             return false;
@@ -212,6 +217,7 @@ public class WebSocketConnectionManager : IDisposable, IAsyncDisposable
     /// </summary>
     public virtual async Task<bool> SendMessageAsync(string sessionId, BinaryMessage message, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.connect", "WebSocketConnectionManager.SendMessage");
         var connection = GetConnection(sessionId);
         if (connection?.WebSocket.State != WebSocketState.Open)
         {
@@ -288,6 +294,7 @@ public class WebSocketConnectionManager : IDisposable, IAsyncDisposable
     /// </summary>
     public async Task BroadcastMessageAsync(BinaryMessage message, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.connect", "WebSocketConnectionManager.BroadcastMessage");
         var tasks = new List<Task<bool>>();
         foreach (var sessionId in GetActiveSessionIds())
         {
@@ -303,6 +310,7 @@ public class WebSocketConnectionManager : IDisposable, IAsyncDisposable
     /// </summary>
     public async Task<int> SendToAdminsAsync(BinaryMessage message, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.connect", "WebSocketConnectionManager.SendToAdmins");
         var adminConnections = _connections.Values
             .Where(c => c.WebSocket.State == WebSocketState.Open &&
                         c.ConnectionState.UserRoles?.Any(r =>
@@ -370,6 +378,7 @@ public class WebSocketConnectionManager : IDisposable, IAsyncDisposable
     /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.connect", "WebSocketConnectionManager.DisposeAsync");
         if (_disposed) return;
         _disposed = true;
 

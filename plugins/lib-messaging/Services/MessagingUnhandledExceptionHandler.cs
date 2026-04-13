@@ -25,6 +25,7 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 /// </para>
 /// </remarks>
 [BannouHelperService("messaging-unhandled-exception", typeof(IMessagingService), typeof(IUnhandledExceptionHandler), lifetime: ServiceLifetime.Singleton)]
+[TelemetrySpanExempt("L0 infrastructure backend — messaging operations instrumented via middleware layer")]
 public sealed class MessagingUnhandledExceptionHandler : IUnhandledExceptionHandler
 {
     private static readonly AsyncLocal<bool> _isPublishing = new();

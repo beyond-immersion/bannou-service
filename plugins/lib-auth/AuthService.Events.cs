@@ -32,6 +32,7 @@ public partial class AuthService
     /// <param name="evt">The event data.</param>
     public async Task HandleAccountDeletedAsync(AccountDeletedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "AuthService.HandleAccountDeleted");
         _logger.LogInformation("Processing account.deleted event for AccountId: {AccountId}", evt.AccountId);
 
         await InvalidateAccountSessionsAsync(evt.AccountId);
@@ -48,6 +49,7 @@ public partial class AuthService
     /// <param name="evt">The event data.</param>
     public async Task HandleAccountUpdatedAsync(AccountUpdatedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "AuthService.HandleAccountUpdated");
         _logger.LogInformation("Processing account.updated event for AccountId: {AccountId}, ChangedFields: {ChangedFields}",
             evt.AccountId, string.Join(", ", evt.ChangedFields ?? new List<string>()));
 

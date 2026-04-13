@@ -18,6 +18,7 @@ public partial class DocumentationController
     [Produces("text/html")]
     public async Task<IActionResult> ViewDocumentBySlug(string slug, [FromQuery] string? ns, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationController.ViewDocumentBySlug");
         // Cast to concrete implementation to access ViewDocumentBySlugAsync (not on interface due to x-manual-implementation)
         var documentationService = (DocumentationService)_implementation;
         var (statusCode, html) = await documentationService.ViewDocumentBySlugAsync(slug, ns, cancellationToken);
@@ -43,6 +44,7 @@ public partial class DocumentationController
     [Produces("text/markdown")]
     public async Task<IActionResult> RawDocumentBySlug(string slug, [FromQuery] string? ns, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationController.RawDocumentBySlug");
         var (statusCode, result) = await _implementation.GetDocumentAsync(
             new GetDocumentRequest { Slug = slug, Namespace = ns ?? "bannou" },
             cancellationToken);

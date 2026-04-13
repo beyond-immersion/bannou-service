@@ -12,6 +12,7 @@ namespace BeyondImmersion.BannouService.Affix;
 /// Flushed by EventBatcherWorker on a configurable interval.
 /// </summary>
 [BannouHelperService("affix-instance-event-batcher", typeof(AffixService), lifetime: ServiceLifetime.Singleton)]
+[TelemetrySpanExempt("EventBatcher flush callbacks — single publish call per flush, nested under EventBatcherWorker per-cycle span")]
 public class AffixInstanceEventBatcher
 {
     private readonly EventBatcher<AffixInstanceBatchEntry> _created;

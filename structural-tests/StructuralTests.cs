@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.TestUtilities;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.StructuralTests;
@@ -2044,12 +2045,42 @@ public class StructuralTests
     /// service file, plugin file, and models file. If a file contains any async method
     /// signature (async Task or async ValueTask), it must also contain StartActivity.
     /// Files in the exclusion list are exempt (e.g., pure data mapping helpers).
+    /// Types with <see cref="TelemetrySpanExemptAttribute"/> are also exempt — the companion
+    /// informational test <c>TelemetrySpanExempt_AuditInventory</c> inventories all exempt types.
     /// </remarks>
     [Fact]
     public void Services_HelperFiles_ContainTelemetryInstrumentation()
     {
         EnsureAssembliesLoaded();
         var failures = new List<string>();
+
+        // Build a set of type names with [TelemetrySpanExempt] for attribute-based exclusion.
+        // This replaces hardcoded exclusion lists with a discoverable, auditable attribute.
+        var exemptTypeNames = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            var assemblyName = assembly.GetName().Name;
+            if (assemblyName == null || !assemblyName.StartsWith("lib-", StringComparison.Ordinal))
+                continue;
+            if (assemblyName.EndsWith(".tests", StringComparison.Ordinal))
+                continue;
+
+            Type[] types;
+            try { types = assembly.GetTypes(); }
+            catch (ReflectionTypeLoadException) { continue; }
+
+            foreach (var type in types)
+            {
+                if (type.GetCustomAttribute<TelemetrySpanExemptAttribute>() != null)
+                {
+                    // Strip generic arity suffix (e.g., "RedisStateStore`1" → "RedisStateStore")
+                    // so the source-code match ("class RedisStateStore<TValue>") works correctly.
+                    var name = type.Name;
+                    var backtickIndex = name.IndexOf('`');
+                    exemptTypeNames.Add(backtickIndex > 0 ? name[..backtickIndex] : name);
+                }
+            }
+        }
 
         foreach (var serviceType in DiscoverAttributedTypes<BannouServiceAttribute>())
         {
@@ -2060,12 +2091,30 @@ public class StructuralTests
             var pluginDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "plugins", $"lib-{serviceName}");
             if (!Directory.Exists(pluginDir)) continue;
 
+            // Build set of method names called from the generated controller.
+            // Methods invoked as _implementation.MethodAsync() have controller-level
+            // telemetry wrapping and do not need their own StartActivity spans.
+            var controllerCalledMethods = new HashSet<string>(StringComparer.Ordinal);
+            var generatedControllerPath = Path.Combine(pluginDir, "Generated",
+                ServiceNameToPascalCase(serviceName) + "Controller.cs");
+            if (File.Exists(generatedControllerPath))
+            {
+                var controllerSource = File.ReadAllText(generatedControllerPath);
+                foreach (Match match in Regex.Matches(
+                    controllerSource, @"_implementation\.(\w+Async)\s*\("))
+                {
+                    controllerCalledMethods.Add(match.Groups[1].Value);
+                }
+            }
+
             // Find all non-generated .cs files
             var allSourceFiles = Directory.GetFiles(pluginDir, "*.cs", SearchOption.AllDirectories)
                 .Where(f => !f.Contains(Path.Combine("Generated", ""), StringComparison.Ordinal) &&
                             !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar, StringComparison.Ordinal) &&
                             !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar, StringComparison.Ordinal))
                 .ToList();
+
+            var pascalServiceName = ServiceNameToPascalCase(serviceName);
 
             foreach (var sourceFile in allSourceFiles)
             {
@@ -2076,7 +2125,7 @@ public class StructuralTests
                 // - Plugin registration file (infrastructure, not business logic)
                 // - Models file (no async methods, pure data)
                 // - AssemblyInfo.cs, GlobalUsings.cs (infrastructure)
-                var primaryFileName = ServiceNameToPascalCase(serviceName) + "Service.cs";
+                var primaryFileName = pascalServiceName + "Service.cs";
                 if (fileName.Equals(primaryFileName, StringComparison.Ordinal) ||
                     fileName.EndsWith("Plugin.cs", StringComparison.Ordinal) ||
                     fileName.EndsWith("Models.cs", StringComparison.Ordinal) ||
@@ -2092,6 +2141,37 @@ public class StructuralTests
                     continue;
 
                 var content = File.ReadAllText(sourceFile);
+
+                // Check for [TelemetrySpanExempt] attribute-based exclusion via reflection.
+                // Match "class TypeName" in source to find the declared type, then check
+                // if that type name is in the exempt set built from loaded assemblies.
+                var isExemptByAttribute = exemptTypeNames.Any(typeName =>
+                    content.Contains($"class {typeName}", StringComparison.Ordinal));
+                if (isExemptByAttribute)
+                    continue;
+
+                // Exempt dot-notation partial class files where ALL public async methods
+                // are controller-called interface implementations. These methods are already
+                // wrapped by the generated controller's telemetry span — adding StartActivity
+                // would double-instrument. Only applies to {Service}Service.{Domain}.cs files
+                // (dot-notation signals partial class extension of the main service).
+                var servicePrefix = pascalServiceName + "Service.";
+                if (fileName.StartsWith(servicePrefix, StringComparison.Ordinal) &&
+                    fileName.EndsWith(".cs", StringComparison.Ordinal) &&
+                    controllerCalledMethods.Count > 0)
+                {
+                    var asyncMethodNames = Regex.Matches(
+                            content, @"public\s+async\s+.*?(\w+Async)\s*\(")
+                        .Cast<Match>()
+                        .Select(m => m.Groups[1].Value)
+                        .ToHashSet(StringComparer.Ordinal);
+
+                    if (asyncMethodNames.Count > 0 &&
+                        asyncMethodNames.All(controllerCalledMethods.Contains))
+                    {
+                        continue;
+                    }
+                }
 
                 // Only check files that actually contain async methods
                 if (!content.Contains("async Task", StringComparison.Ordinal) &&
@@ -2116,6 +2196,72 @@ public class StructuralTests
             failures.Count == 0,
             $"Helper files with async methods must contain telemetry instrumentation:\n" +
             string.Join("\n", failures));
+    }
+
+    /// <summary>
+    /// Informational audit test that inventories all types and methods with
+    /// <see cref="TelemetrySpanExemptAttribute"/>. Produces a report showing
+    /// assembly, type, reason, and async method count for each exempt type.
+    /// Use to audit for misuse (agents bypassing legitimate spans) or drift
+    /// (classes that grew beyond trivial delegation and now need spans).
+    /// </summary>
+    [Fact]
+    public void TelemetrySpanExempt_AuditInventory()
+    {
+        SkipUnless.InformationalTest("Produces audit inventory of all [TelemetrySpanExempt] types");
+        EnsureAssembliesLoaded();
+
+        var entries = new List<string>();
+
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            var assemblyName = assembly.GetName().Name;
+            if (assemblyName == null || !assemblyName.StartsWith("lib-", StringComparison.Ordinal))
+                continue;
+            if (assemblyName.EndsWith(".tests", StringComparison.Ordinal))
+                continue;
+
+            Type[] types;
+            try { types = assembly.GetTypes(); }
+            catch (ReflectionTypeLoadException) { continue; }
+
+            foreach (var type in types)
+            {
+                var classAttr = type.GetCustomAttribute<TelemetrySpanExemptAttribute>();
+                if (classAttr != null)
+                {
+                    var asyncMethodCount = type.GetMethods(
+                            BindingFlags.Public | BindingFlags.NonPublic |
+                            BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                        .Count(m => m.ReturnType.Name.StartsWith("Task", StringComparison.Ordinal) ||
+                                    m.ReturnType.Name.StartsWith("ValueTask", StringComparison.Ordinal));
+
+                    entries.Add(
+                        $"{assemblyName}: {type.Name} (class-level, {asyncMethodCount} async method(s)) — {classAttr.Reason}");
+                }
+
+                // Also check method-level attributes
+                foreach (var method in type.GetMethods(
+                    BindingFlags.Public | BindingFlags.NonPublic |
+                    BindingFlags.Instance | BindingFlags.DeclaredOnly))
+                {
+                    var methodAttr = method.GetCustomAttribute<TelemetrySpanExemptAttribute>();
+                    if (methodAttr != null)
+                    {
+                        entries.Add(
+                            $"{assemblyName}: {type.Name}.{method.Name} (method-level) — {methodAttr.Reason}");
+                    }
+                }
+            }
+        }
+
+        if (entries.Count == 0)
+            return; // No exempt types — nothing to report
+
+        Assert.Fail(
+            $"[TelemetrySpanExempt] audit inventory — {entries.Count} exemption(s) across plugin assemblies. " +
+            $"Review each to verify the exemption is still appropriate:\n" +
+            string.Join("\n", entries.Select(e => $"  - {e}")));
     }
 
     /// <summary>

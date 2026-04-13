@@ -24,6 +24,7 @@ public sealed class EncounterDataCache : IEncounterDataCache
     private const string PAIR_KEY_PREFIX = "pair:";
 
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly int _maxEncounterResultsPerQuery;
 
     private readonly VariableProviderCacheBucket<Guid, EncounterListResponse> _encounterListBucket;
@@ -41,6 +42,7 @@ public sealed class EncounterDataCache : IEncounterDataCache
         ITelemetryProvider telemetryProvider)
     {
         _scopeFactory = scopeFactory;
+        _telemetryProvider = telemetryProvider;
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _maxEncounterResultsPerQuery = configuration.EncounterCacheMaxResultsPerQuery;
 
@@ -58,6 +60,7 @@ public sealed class EncounterDataCache : IEncounterDataCache
     /// <inheritdoc/>
     public async Task<EncounterListResponse?> GetEncountersOrLoadAsync(Guid characterId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "EncounterDataCache.GetEncountersOrLoad");
         return await _encounterListBucket.GetOrLoadAsync(characterId, async loadCt =>
         {
             using var scope = _scopeFactory.CreateScope();
@@ -75,6 +78,7 @@ public sealed class EncounterDataCache : IEncounterDataCache
     /// <inheritdoc/>
     public async Task<SentimentResponse?> GetSentimentOrLoadAsync(Guid characterId, Guid targetCharacterId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "EncounterDataCache.GetSentimentOrLoad");
         var cacheKey = BuildPairKey(characterId, targetCharacterId);
         return await _sentimentBucket.GetOrLoadAsync(cacheKey, async loadCt =>
         {
@@ -93,6 +97,7 @@ public sealed class EncounterDataCache : IEncounterDataCache
     /// <inheritdoc/>
     public async Task<HasMetResponse?> HasMetOrLoadAsync(Guid characterId, Guid targetCharacterId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "EncounterDataCache.HasMetOrLoad");
         var cacheKey = BuildPairKey(characterId, targetCharacterId);
         return await _hasMetBucket.GetOrLoadAsync(cacheKey, async loadCt =>
         {
@@ -111,6 +116,7 @@ public sealed class EncounterDataCache : IEncounterDataCache
     /// <inheritdoc/>
     public async Task<EncounterListResponse?> GetEncountersBetweenOrLoadAsync(Guid characterIdA, Guid characterIdB, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "EncounterDataCache.GetEncountersBetweenOrLoad");
         var cacheKey = BuildPairKey(characterIdA, characterIdB);
         return await _pairEncounterBucket.GetOrLoadAsync(cacheKey, async loadCt =>
         {

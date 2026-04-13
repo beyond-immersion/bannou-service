@@ -6,6 +6,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
@@ -21,6 +22,7 @@ public sealed class QuestDataCache : IQuestDataCache
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<QuestDataCache> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ConcurrentDictionary<Guid, CachedQuests> _cache = new();
     private readonly TimeSpan _cacheTtl;
 
@@ -30,16 +32,20 @@ public sealed class QuestDataCache : IQuestDataCache
     public QuestDataCache(
         IServiceScopeFactory scopeFactory,
         ILogger<QuestDataCache> logger,
-        QuestServiceConfiguration configuration)
+        QuestServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
         _cacheTtl = TimeSpan.FromSeconds(configuration.QuestDataCacheTtlSeconds);
     }
 
     /// <inheritdoc/>
     public async Task<ListQuestsResponse> GetActiveQuestsOrLoadAsync(Guid characterId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.quest", "QuestDataCache.GetActiveQuestsOrLoad");
+
         // Check cache first
         if (_cache.TryGetValue(characterId, out var cached) && !cached.IsExpired)
         {

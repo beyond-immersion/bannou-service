@@ -4,6 +4,7 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Extensions;
 
@@ -34,6 +35,7 @@ namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;
 /// </code>
 /// </para>
 /// </remarks>
+[TelemetrySpanExempt("Pure synchronous ABML action parameter mapping — async interface contract only, no I/O")]
 public sealed class EmitIntentEmitter : BaseIntentEmitter
 {
     /// <inheritdoc/>
@@ -122,6 +124,7 @@ public sealed class EmitIntentEmitter : BaseIntentEmitter
 ///         urgency: 0.7
 /// </code>
 /// </remarks>
+[TelemetrySpanExempt("Pure synchronous ABML action parameter mapping — async interface contract only, no I/O")]
 public sealed class MultiEmitEmitter : BaseIntentEmitter
 {
     /// <inheritdoc/>

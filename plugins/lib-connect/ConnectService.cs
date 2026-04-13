@@ -144,7 +144,8 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
             _logger,
             configuration.CompressionEnabled,
             configuration.CompressionThresholdBytes,
-            configuration.CompressionQuality);
+            configuration.CompressionQuality,
+            _telemetryProvider);
 
         // Server salt from configuration - REQUIRED (fail-fast for production safety)
         // All service instances must share the same salt for session shortcuts to work correctly

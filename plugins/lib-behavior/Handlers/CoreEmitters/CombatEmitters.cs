@@ -4,6 +4,7 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
+using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Behavior;
 
 namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;
@@ -18,6 +19,7 @@ namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;
 /// - attack: { type: "light", direction: "forward" }
 /// </code>
 /// </remarks>
+[TelemetrySpanExempt("Pure synchronous ABML action parameter mapping — async interface contract only, no I/O")]
 public sealed class AttackEmitter : BaseIntentEmitter
 {
     /// <inheritdoc/>
@@ -56,6 +58,7 @@ public sealed class AttackEmitter : BaseIntentEmitter
 /// - block: {}
 /// </code>
 /// </remarks>
+[TelemetrySpanExempt("Pure synchronous ABML action parameter mapping — async interface contract only, no I/O")]
 public sealed class BlockEmitter : BaseIntentEmitter
 {
     /// <inheritdoc/>
@@ -91,6 +94,7 @@ public sealed class BlockEmitter : BaseIntentEmitter
 /// - dodge: { direction: "back", urgency: 0.9 }
 /// </code>
 /// </remarks>
+[TelemetrySpanExempt("Pure synchronous ABML action parameter mapping — async interface contract only, no I/O")]
 public sealed class DodgeEmitter : BaseIntentEmitter
 {
     /// <inheritdoc/>
