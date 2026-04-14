@@ -108,14 +108,14 @@ public class GenesisGrowthStateTests
     }
 
     [Fact]
-    public void WalletMap_EmptyByDefault()
+    public void TryGetWalletMapping_FreshState_ReturnsFalse()
     {
         var state = new GenesisGrowthState();
-        Assert.Empty(state.WalletMap);
+        Assert.False(state.TryGetWalletMapping(Guid.NewGuid(), out _));
     }
 
     [Fact]
-    public void WalletMap_AllowsMappingLookupByWalletId()
+    public void SetWalletMapping_StoresAndAllowsLookup()
     {
         var state = new GenesisGrowthState();
         var walletId = Guid.NewGuid();
@@ -126,31 +126,51 @@ public class GenesisGrowthStateTests
             WalletCode: "mana",
             GrowthMappings: new List<GenesisGrowthMapping>());
 
-        state.WalletMap[walletId] = mapping;
+        state.SetWalletMapping(walletId, mapping);
 
-        Assert.True(state.WalletMap.TryGetValue(walletId, out var result));
+        Assert.True(state.TryGetWalletMapping(walletId, out var result));
         Assert.Equal(entityId, result.EntityId);
         Assert.Equal("treasure_chest", result.TemplateCode);
         Assert.Equal("mana", result.WalletCode);
     }
 
     [Fact]
-    public void ActorTemplateMap_EmptyByDefault()
+    public void TryRemoveWalletMapping_RemovesEntry()
     {
         var state = new GenesisGrowthState();
-        Assert.Empty(state.ActorTemplateMap);
+        var walletId = Guid.NewGuid();
+        state.SetWalletMapping(walletId, new GenesisWalletMapping(
+            EntityId: Guid.NewGuid(),
+            TemplateCode: "treasure_chest",
+            WalletCode: "mana",
+            GrowthMappings: new List<GenesisGrowthMapping>()));
+
+        Assert.True(state.TryRemoveWalletMapping(walletId));
+        Assert.False(state.TryGetWalletMapping(walletId, out _));
+        // Idempotent — second remove returns false
+        Assert.False(state.TryRemoveWalletMapping(walletId));
     }
 
     [Fact]
-    public void ActorTemplateMap_AllowsKeyedStorage()
+    public void TryGetActorTemplate_FreshState_ReturnsFalse()
+    {
+        var state = new GenesisGrowthState();
+        Assert.False(state.TryGetActorTemplate("any-key", out _));
+        Assert.False(state.ContainsActorTemplate("any-key"));
+    }
+
+    [Fact]
+    public void SetActorTemplate_StoresAndAllowsLookup()
     {
         var state = new GenesisGrowthState();
         var templateId = Guid.NewGuid();
         var key = GenesisSeedEvolutionListener.BuildActorTemplateKey("treasure_chest", "Stirring");
 
-        state.ActorTemplateMap[key] = templateId;
+        state.SetActorTemplate(key, templateId);
 
-        Assert.Equal(templateId, state.ActorTemplateMap[key]);
+        Assert.True(state.ContainsActorTemplate(key));
+        Assert.True(state.TryGetActorTemplate(key, out var actual));
+        Assert.Equal(templateId, actual);
     }
 
     [Fact]

@@ -150,8 +150,7 @@ public class GenesisServiceEventHandlerTests : ServiceTestBase<GenesisServiceCon
 
         await service.HandleGenesisEntityCreatedAsync(evt);
 
-        Assert.True(_growthState.WalletMap.ContainsKey(walletId));
-        var mapping = _growthState.WalletMap[walletId];
+        Assert.True(_growthState.TryGetWalletMapping(walletId, out var mapping));
         Assert.Equal(entityId, mapping.EntityId);
         Assert.Equal("treasure_chest", mapping.TemplateCode);
         Assert.Equal("mana", mapping.WalletCode);
@@ -187,7 +186,7 @@ public class GenesisServiceEventHandlerTests : ServiceTestBase<GenesisServiceCon
 
         await service.HandleGenesisEntityCreatedAsync(evt);
 
-        Assert.False(_growthState.WalletMap.ContainsKey(walletId));
+        Assert.False(_growthState.TryGetWalletMapping(walletId, out _));
     }
 
     [Fact]
@@ -227,9 +226,10 @@ public class GenesisServiceEventHandlerTests : ServiceTestBase<GenesisServiceCon
 
         await service.HandleGenesisEntityCreatedAsync(evt);
 
-        Assert.Equal(2, _growthState.WalletMap.Count);
-        Assert.Equal("mana", _growthState.WalletMap[manaWalletId].WalletCode);
-        Assert.Equal("experience", _growthState.WalletMap[expWalletId].WalletCode);
+        Assert.True(_growthState.TryGetWalletMapping(manaWalletId, out var manaMapping));
+        Assert.Equal("mana", manaMapping.WalletCode);
+        Assert.True(_growthState.TryGetWalletMapping(expWalletId, out var expMapping));
+        Assert.Equal("experience", expMapping.WalletCode);
     }
 
     [Fact]
@@ -238,11 +238,11 @@ public class GenesisServiceEventHandlerTests : ServiceTestBase<GenesisServiceCon
         var service = CreateService();
         var entityId = Guid.NewGuid();
         var walletId = Guid.NewGuid();
-        _growthState.WalletMap[walletId] = new GenesisWalletMapping(
+        _growthState.SetWalletMapping(walletId, new GenesisWalletMapping(
             EntityId: entityId,
             TemplateCode: "treasure_chest",
             WalletCode: "mana",
-            GrowthMappings: new List<GenesisGrowthMapping>());
+            GrowthMappings: new List<GenesisGrowthMapping>()));
 
         var evt = new EntityDeletedEvent
         {
@@ -264,7 +264,7 @@ public class GenesisServiceEventHandlerTests : ServiceTestBase<GenesisServiceCon
 
         await service.HandleGenesisEntityDeletedAsync(evt);
 
-        Assert.False(_growthState.WalletMap.ContainsKey(walletId));
+        Assert.False(_growthState.TryGetWalletMapping(walletId, out _));
     }
 
     [Fact]

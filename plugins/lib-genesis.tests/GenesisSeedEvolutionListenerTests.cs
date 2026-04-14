@@ -218,7 +218,7 @@ public class GenesisSeedEvolutionListenerTests : ServiceTestBase<GenesisServiceC
             .Setup(s => s.GetAsync(GenesisService.BuildTemplateKey("treasure_chest"), It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
 
-        _state.ActorTemplateMap[GenesisSeedEvolutionListener.BuildActorTemplateKey("treasure_chest", "Stirring")] = actorTemplateId;
+        _state.SetActorTemplate(GenesisSeedEvolutionListener.BuildActorTemplateKey("treasure_chest", "Stirring"), actorTemplateId);
 
         _mockActorClient
             .Setup(a => a.SpawnActorAsync(It.IsAny<SpawnActorRequest>(), It.IsAny<CancellationToken>()))
@@ -334,7 +334,7 @@ public class GenesisSeedEvolutionListenerTests : ServiceTestBase<GenesisServiceC
         _mockTemplateStore
             .Setup(s => s.GetAsync(GenesisService.BuildTemplateKey("treasure_chest"), It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
-        _state.ActorTemplateMap[GenesisSeedEvolutionListener.BuildActorTemplateKey("treasure_chest", "Stirring")] = actorTemplateId;
+        _state.SetActorTemplate(GenesisSeedEvolutionListener.BuildActorTemplateKey("treasure_chest", "Stirring"), actorTemplateId);
 
         _mockActorClient
             .Setup(a => a.SpawnActorAsync(It.IsAny<SpawnActorRequest>(), It.IsAny<CancellationToken>()))

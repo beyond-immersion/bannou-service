@@ -52,11 +52,11 @@ public class GenesisCurrencyTransactionListenerTests
         var listener = CreateListener();
         var walletId = Guid.NewGuid();
         var entityId = Guid.NewGuid();
-        _state.WalletMap[walletId] = new GenesisWalletMapping(
+        _state.SetWalletMapping(walletId, new GenesisWalletMapping(
             EntityId: entityId,
             TemplateCode: "treasure_chest",
             WalletCode: "mana",
-            GrowthMappings: new List<GenesisGrowthMapping>());
+            GrowthMappings: new List<GenesisGrowthMapping>()));
 
         var notification = CreateNotification(walletId, amount: 42.0);
 
@@ -89,11 +89,11 @@ public class GenesisCurrencyTransactionListenerTests
         var listener = CreateListener();
         var walletId = Guid.NewGuid();
         var entityId = Guid.NewGuid();
-        _state.WalletMap[walletId] = new GenesisWalletMapping(
+        _state.SetWalletMapping(walletId, new GenesisWalletMapping(
             EntityId: entityId,
             TemplateCode: "treasure_chest",
             WalletCode: "mana",
-            GrowthMappings: new List<GenesisGrowthMapping>());
+            GrowthMappings: new List<GenesisGrowthMapping>()));
 
         var notification = CreateNotification(walletId, amount: 15.0);
 
@@ -113,11 +113,11 @@ public class GenesisCurrencyTransactionListenerTests
         var listener = CreateListener();
         var walletId = Guid.NewGuid();
         var entityId = Guid.NewGuid();
-        _state.WalletMap[walletId] = new GenesisWalletMapping(
+        _state.SetWalletMapping(walletId, new GenesisWalletMapping(
             EntityId: entityId,
             TemplateCode: "treasure_chest",
             WalletCode: "mana",
-            GrowthMappings: new List<GenesisGrowthMapping>());
+            GrowthMappings: new List<GenesisGrowthMapping>()));
 
         await listener.OnCurrencyCreditedAsync(CreateNotification(walletId, amount: 10.0), CancellationToken.None);
         await listener.OnCurrencyCreditedAsync(CreateNotification(walletId, amount: 20.0), CancellationToken.None);
@@ -137,11 +137,11 @@ public class GenesisCurrencyTransactionListenerTests
         var knownWallet = Guid.NewGuid();
         var unknownWallet = Guid.NewGuid();
         var entityId = Guid.NewGuid();
-        _state.WalletMap[knownWallet] = new GenesisWalletMapping(
+        _state.SetWalletMapping(knownWallet, new GenesisWalletMapping(
             EntityId: entityId,
             TemplateCode: "treasure_chest",
             WalletCode: "mana",
-            GrowthMappings: new List<GenesisGrowthMapping>());
+            GrowthMappings: new List<GenesisGrowthMapping>()));
 
         await listener.OnCurrencyCreditedAsync(CreateNotification(unknownWallet, amount: 100.0), CancellationToken.None);
         await listener.OnCurrencyCreditedAsync(CreateNotification(knownWallet, amount: 50.0), CancellationToken.None);

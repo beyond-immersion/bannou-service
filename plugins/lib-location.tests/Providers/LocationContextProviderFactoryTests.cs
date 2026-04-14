@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Location.Caching;
 using BeyondImmersion.BannouService.Location.Providers;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.Location.Tests.Providers;
 
@@ -13,7 +14,7 @@ public class LocationContextProviderFactoryTests
     public void ProviderName_ReturnsLocation()
     {
         var mockCache = new Mock<ILocationDataCache>();
-        var factory = new LocationContextProviderFactory(mockCache.Object);
+        var factory = new LocationContextProviderFactory(mockCache.Object, Mock.Of<ITelemetryProvider>());
         Assert.Equal("location", factory.ProviderName);
     }
 
@@ -21,7 +22,7 @@ public class LocationContextProviderFactoryTests
     public async Task CreateAsync_NullEntityId_ReturnsEmptyProvider()
     {
         var mockCache = new Mock<ILocationDataCache>();
-        var factory = new LocationContextProviderFactory(mockCache.Object);
+        var factory = new LocationContextProviderFactory(mockCache.Object, Mock.Of<ITelemetryProvider>());
 
         var provider = await factory.CreateAsync(null, Guid.NewGuid(), null, TestContext.Current.CancellationToken);
 
@@ -51,7 +52,7 @@ public class LocationContextProviderFactoryTests
         mockCache.Setup(c => c.GetOrLoadLocationContextAsync(characterId, realmId, locationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(contextData);
 
-        var factory = new LocationContextProviderFactory(mockCache.Object);
+        var factory = new LocationContextProviderFactory(mockCache.Object, Mock.Of<ITelemetryProvider>());
 
         var provider = await factory.CreateAsync(characterId, realmId, locationId, TestContext.Current.CancellationToken);
 
@@ -72,7 +73,7 @@ public class LocationContextProviderFactoryTests
         mockCache.Setup(c => c.GetOrLoadLocationContextAsync(characterId, realmId, It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((LocationContextData?)null);
 
-        var factory = new LocationContextProviderFactory(mockCache.Object);
+        var factory = new LocationContextProviderFactory(mockCache.Object, Mock.Of<ITelemetryProvider>());
 
         var provider = await factory.CreateAsync(characterId, realmId, null, TestContext.Current.CancellationToken);
 
