@@ -712,7 +712,9 @@ using var activity = _telemetryProvider.StartActivity(
 
 Spans nest automatically via `Activity.Current` (no parameter passing needed). Returns null when telemetry is disabled (all `?.SetTag` calls no-op). See T30 in IMPLEMENTATION-BEHAVIOR.md for scope rules and naming conventions.
 
-**When NOT to add spans**: Primary interface methods in `*Service.cs` (generated controller already wraps these), pure synchronous methods, and trivial property accessors.
+**When NOT to add spans**: Primary interface methods in `*Service.cs` (generated controller already wraps these), pure synchronous methods, trivial property accessors, and classes marked with `[TelemetrySpanExempt]` (see [§ 12 Attributes](#telemetryspanexemptattribute)).
+
+**Decomposed partial class files**: The structural test `Services_HelperFiles_ContainTelemetryInstrumentation` auto-exempts dot-notation partial class files (e.g., `EscrowService.Lifecycle.cs`) where ALL public async methods are controller-called interface implementations. These methods are already wrapped by the generated controller's telemetry span. Files containing a mix of interface methods and helpers will still be flagged for the helper methods.
 
 ### NullTelemetryProvider
 
@@ -830,6 +832,28 @@ Generated onto service classes that declare `x-references` in their API schema. 
 **File**: `bannou-service/Attributes/ParameterizedTopicAttribute.cs`
 
 Generated onto parameterized event publisher overloads.
+
+### TelemetrySpanExemptAttribute
+
+**File**: `bannou-service/Attributes/TelemetrySpanExemptAttribute.cs`
+
+Declares that a class or method is exempt from the structural test `Services_HelperFiles_ContainTelemetryInstrumentation`. Requires a `reason` string that surfaces in the companion `TelemetrySpanExempt_AuditInventory` informational test.
+
+```csharp
+[TelemetrySpanExempt("L0 infrastructure backend — state operations instrumented via WrapStateStore decorator")]
+public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue> { }
+```
+
+**When to use (class-level):**
+- L0 infrastructure backend implementations (lib-state, lib-messaging, lib-mesh) — already instrumented at the factory/wrapper level; adding `StartActivity` would double-instrument every operation
+- Pure synchronous data transformation classes with async interface contracts (e.g., behavior CoreEmitters that only `await Task.CompletedTask`)
+
+**When NOT to use:**
+- Helper DI services that perform state store operations, inter-service calls, or any I/O — those need spans per T30
+- Classes with async methods that represent meaningful units of work (network I/O, cache loading, event processing)
+- Manual controllers or event handlers — these are entry points that need their own spans
+
+**The test**: "Does this class do real async work that a span would help diagnose?" If yes → add spans, not the attribute. If no (infrastructure wrapper, pure data mapping) → attribute is appropriate.
 
 ### Configuration Validation Attributes
 
@@ -1574,6 +1598,7 @@ This is a **mechanical check** with no exceptions list and no informational-test
 | Paginate a list | `PaginationHelper.Paginate` | `History/PaginationHelper.cs` |
 | Decompress JSON from archives | `CompressionHelper.DecompressJsonData` | `History/CompressionHelper.cs` |
 | Add a telemetry span | `_telemetryProvider.StartActivity(...)` | N/A (pattern, not helper) |
+| Exempt a class from telemetry span requirement | `[TelemetrySpanExempt("reason")]` | `Attributes/TelemetrySpanExemptAttribute.cs` (§ 12) |
 | Validate constructor pattern | `ServiceConstructorValidator` | `test-utilities/` → centralized in `structural-tests/` |
 | Validate key builders | `StateStoreKeyValidator` | `test-utilities/` → centralized in `structural-tests/` |
 | Validate hierarchy | `ServiceHierarchyValidator` | `test-utilities/` → centralized in `structural-tests/` |

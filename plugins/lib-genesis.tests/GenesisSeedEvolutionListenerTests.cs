@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Actor;
@@ -14,6 +13,7 @@ using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Linq.Expressions;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Genesis.Tests;

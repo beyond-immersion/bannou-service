@@ -1,8 +1,8 @@
+using BeyondImmersion.BannouService.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Reflection;
-using BeyondImmersion.BannouService.Attributes;
-using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.StructuralTests;

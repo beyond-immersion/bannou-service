@@ -5,6 +5,20 @@
 
 Pure-computation SDK deep dives covering Bannou's creative and infrastructure libraries.
 
+## Sprite
+
+### Sprite Theory SDK Deep Dive {#sprite-theory}
+
+**Layer**: Theory | **Status**: Aspirational — no code exists. | **Dependencies**: None (pure .NET BCL only) | **Consumers**: sprite-composer, sprite-composer-stride, future SpriteBatcher | [Implementation Map](../sdks/maps/SPRITE-THEORY.md) | [Full Deep Dive](../sdks/SPRITE-THEORY.md)
+
+*Camera math, atlas packing, mirror optimization, normal maps, and sprite sheet JSON metadata*
+
+sprite-theory is the theory-layer SDK for the sprite domain. It provides pure-computation primitives for defining camera rigs, computing orthographic projections, sampling animation frames, packing frames into atlas layouts (MaxRects bin-packing), generating mirror metadata from source angles, converting depth buffers to tangent-space normal maps (Sobel filtering), and serializing sprite sheet metadata to a canonical JSON format.
+
+It follows the same pattern as music-theory, storyline-theory, and voxel-core: pure computation, zero service dependencies, deterministic, usable on both client and server. Any code that needs to define capture configurations, compute atlas layouts, generate mirror metadata, produce normal maps from depth data, or read/write sprite sheet metadata depends on this SDK.
+
+**The theory-layer role**: sprite-theory does NOT render anything — it has no engine dependency and no pixel capture capability. It computes WHERE frames go in an atlas, WHICH angles produce mirrors, HOW depth data converts to normals, and WHAT the metadata format looks like. The actual rendering, model loading, and frame capture happen in the engine bridge (sprite-composer-stride). sprite-theory produces the mathematics and data structures that the bridge and orchestrator consume.
+
 ## Voxel
 
 ### Voxel Core SDK Deep Dive {#voxel-core}
@@ -77,9 +91,9 @@ Unity's `Mesh` API uses separate attribute arrays (like Godot, unlike Stride's i
 
 ## Summary
 
-- **SDKs in catalog**: 6
-- **Domains**: Voxel
-- **Implementation maps**: 5
+- **SDKs in catalog**: 7
+- **Domains**: Sprite, Voxel
+- **Implementation maps**: 6
 
 ---
 

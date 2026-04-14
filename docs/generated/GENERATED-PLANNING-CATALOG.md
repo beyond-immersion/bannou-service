@@ -165,6 +165,16 @@ Designs two complementary sacred geography systems composed from existing Bannou
 
 Designs how Bannou ships as a local dedicated server alongside a game client for single-player or LAN multiplayer experiences. The existing architecture (plugin loading, in-memory infrastructure backends, environment-driven service selection, lazy evaluation) already supports this deployment mode with zero code changes. The SQLite state store backend has been implemented, removing the primary infrastructure gap. Remaining investments are SDK convenience layers, in-process mesh routing for embedded .NET engines, and documentation.
 
+### Sprite Composer SDK: 3D-to-2D Sprite Sheet Pipeline {#sprite-composer-sdk}
+
+**Type**: Design | **Status**: Active | **Last Updated**: 2026-04-13 | **North Stars**: #4 (Ship Games Fast), #5 (Emergent Over Authored) | [Full Document](../planning/SPRITE-COMPOSER-SDK.md)
+
+Designs a new creative SDK domain — **Sprite** — that captures 3D models as 2D sprite sheet assets for games that use pre-rendered sprites at runtime. The SDK family follows the established Theory/Composer pattern: `sprite-theory` provides pure-computation primitives (camera mathematics, atlas packing, animation sampling, mirror optimization), `sprite-composer` provides the engine-agnostic interactive editor core (capture sessions, project management, preview, undo/redo), and `sprite-composer-stride` implements the Stride engine bridge (FBX model loading, skeletal animation, render-to-texture frame capture, depth buffer extraction for normal maps).
+
+The immediate consumer is **Defenders of Ba'gata**, which needs every playable character, troop, enemy, and boss rendered as sprite sheets from two orientations — side-view for brawler/attack phases and 55° top-down for defense and boss arena phases — with all animations captured in both. Equipment variants (Synty modular armor/weapons) multiply the combinatorial space. Without purpose-built tooling, this is the single most labor-intensive aspect of the game. With the Sprite Composer, it becomes a configuration-driven capture session.
+
+No implementation exists yet.
+
 ### Video Director: Dynamic Cinematic Generation from Game Data {#video-director}
 
 **Type**: Design | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #5 | [Full Document](../planning/VIDEO-DIRECTOR.md)
@@ -257,7 +267,7 @@ The MCP (Model Context Protocol) server is a new L3 App Features plugin that exp
 
 ## Summary
 
-- **Documents in catalog**: 38
+- **Documents in catalog**: 39
 
 ---
 

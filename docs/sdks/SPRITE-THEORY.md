@@ -4,22 +4,54 @@
 > **Location**: `sdks/sprite-theory/` (planned)
 > **Layer**: Theory
 > **Domain**: Sprite
-> **Dependencies**: None (pure .NET, zero external dependencies)
+> **Dependencies**: None (pure .NET BCL only)
 > **Status**: Aspirational — no code exists.
 > **Implementation Map**: [docs/sdks/maps/SPRITE-THEORY.md](maps/SPRITE-THEORY.md)
 > **Planning Document**: [docs/planning/SPRITE-COMPOSER-SDK.md](../planning/SPRITE-COMPOSER-SDK.md)
-> **Consumers**: sprite-composer (capture orchestration), sprite-composer-stride (Stride bridge), future SpriteBatcher (batch automation)
-> **Short**: Camera mathematics, atlas packing, animation frame sampling, mirror optimization, normal map generation, and the sprite sheet JSON metadata format — the foundation for all sprite SDKs
+> **Consumers**: sprite-composer, sprite-composer-stride, future SpriteBatcher
+> **Short**: Camera math, atlas packing, mirror optimization, normal maps, and sprite sheet JSON metadata
 
 ---
 
 ## Overview
 
-sprite-theory is the theory-layer SDK for the sprite domain. It provides pure-computation primitives for camera rig definitions, orthographic projection setup, animation frame sampling, atlas bin-packing (MaxRects), mirror optimization, depth-to-normal-map conversion, and the canonical sprite sheet metadata format (JSON + PNG).
+sprite-theory is the theory-layer SDK for the sprite domain. It provides pure-computation primitives for defining camera rigs, computing orthographic projections, sampling animation frames, packing frames into atlas layouts (MaxRects bin-packing), generating mirror metadata from source angles, converting depth buffers to tangent-space normal maps (Sobel filtering), and serializing sprite sheet metadata to a canonical JSON format.
 
-It follows the same pattern as music-theory, storyline-theory, and voxel-core: pure computation, zero service dependencies, deterministic, usable on both client and server. Any code that needs to define camera rigs, compute atlas layouts, generate mirror metadata, convert depth buffers to normal maps, or serialize/deserialize sprite sheet metadata depends on this SDK.
+It follows the same pattern as music-theory, storyline-theory, and voxel-core: pure computation, zero service dependencies, deterministic, usable on both client and server. Any code that needs to define capture configurations, compute atlas layouts, generate mirror metadata, produce normal maps from depth data, or read/write sprite sheet metadata depends on this SDK.
 
-**The theory-layer role**: sprite-theory does NOT render anything — it has no engine dependency. It computes WHERE frames go in an atlas, WHICH angles can be mirrored, HOW depth data converts to normals, and WHAT the metadata format looks like. The actual rendering, model loading, and frame capture happen in the bridge (sprite-composer-stride). The theory layer produces the mathematics and data structures that the bridge and orchestrator consume.
+**The theory-layer role**: sprite-theory does NOT render anything — it has no engine dependency and no pixel capture capability. It computes WHERE frames go in an atlas, WHICH angles produce mirrors, HOW depth data converts to normals, and WHAT the metadata format looks like. The actual rendering, model loading, and frame capture happen in the engine bridge (sprite-composer-stride). sprite-theory produces the mathematics and data structures that the bridge and orchestrator consume.
+
+---
+
+## Established Patterns and Prior Art
+
+### MaxRects Bin Packing
+
+**Pattern**: Pack variable-sized rectangles into a fixed-size bin with minimal wasted space.
+**Source**: Jukka Jylänki, "A Thousand Ways to Pack the Bin — A Practical Approach to Two-Dimensional Rectangle Bin Packing" (2010). The definitive survey of 2D bin-packing algorithms for game development. The MaxRects-BSSF (Best Short Side Fit) variant provides near-optimal results with O(n²) time complexity in the number of free rectangles.
+**Alternatives considered**:
+- **Shelf packing** (simple row-by-row): Faster but wastes significant vertical space when frame sizes vary. Not suitable when TrimTransparent produces variable-height frames.
+- **Guillotine**: Splits free space with full-width or full-height cuts. Simpler to implement but produces worse packing ratios than MaxRects for rectangular sprite frames.
+- **Skyline**: Good for fixed-height rows but suboptimal when frames have padding and variable trim bounds.
+
+**Why MaxRects-BSSF**: Industry standard for sprite atlas packing. Used by TexturePacker, libGDX, Unity's Sprite Packer, and Godot's atlas import. Height-descending sort as the primary heuristic is validated across decades of production use. For uniform-sized frames (the common case in sprite capture), MaxRects degenerates to near-perfect grid packing.
+
+### Sobel Operator for Normal Map Generation
+
+**Pattern**: Estimate surface gradients from a depth image using a 3×3 convolution kernel to produce tangent-space normal maps.
+**Source**: Irwin Sobel and Gary Feldman, "A 3×3 Isotropic Gradient Operator for Image Processing" (presented at the Stanford AI Project, 1968). The Sobel operator is the standard first-derivative approximation for discrete images. Used universally in edge detection, normal map generation, and image processing.
+**Why Sobel over alternatives**:
+- **Central difference** (2-tap): Cheaper but noisier — no Gaussian smoothing component.
+- **Scharr** (optimized 3×3): Better rotational symmetry but negligible improvement for sprite-sized frames (128×128).
+- **Prewitt** (unweighted 3×3): Less noise suppression than Sobel's center-weighted kernel.
+
+**Dead Cells precedent**: Motion Twin used depth-buffer-derived normal maps on pre-rendered sprites to enable 2D dynamic lighting — the same technique this SDK implements. The normal map atlas shares the color atlas's layout, enabling same-UV sampling in the game's lighting shader.
+
+### Orthographic Projection for Sprite Capture
+
+**Pattern**: Use orthographic (parallel) projection to render 3D models as 2D sprites with no perspective foreshortening.
+**Source**: Standard computer graphics — orthographic projection preserves parallel lines and relative sizes regardless of depth, producing sprites that tile and animate consistently.
+**Why orthographic, not perspective**: Perspective projection introduces foreshortening — characters closer to the camera appear larger than those farther away. For sprites used in 2D gameplay, this distortion would cause inconsistent sizing between frames of the same animation (arms reaching toward camera would grow). Orthographic projection eliminates this entirely. Both Hades (Supergiant Games) and Dead Cells (Motion Twin) use orthographic capture for this reason.
 
 ---
 
@@ -27,7 +59,7 @@ It follows the same pattern as music-theory, storyline-theory, and voxel-core: p
 
 | Consumer | Type | Usage |
 |----------|------|-------|
-| sprite-composer | SDK | Uses CameraRig, AtlasPacker, MirrorOptimizer, SpriteSheetSerializer, DepthToNormal, and all metadata types for capture orchestration and export |
+| sprite-composer | SDK | Uses CameraRig, AtlasPacker, MirrorOptimizer, SpriteSheetSerializer, DepthToNormal, AtlasAssembler, and all metadata types for capture orchestration and export |
 | sprite-composer-stride | Bridge | Uses OrthographicSetup to configure Stride cameras, CaptureAngle for positioning, FrameCapture as the pixel data container |
 | Future SpriteBatcher | Tool | Uses CameraRigPresets for batch definitions, AtlasPacker for layout, SpriteSheetSerializer for output |
 | Game runtime | Consumer | Reads SpriteSheet JSON metadata to drive sprite animation, mirror flips, and normal map sampling |
@@ -41,77 +73,79 @@ It follows the same pattern as music-theory, storyline-theory, and voxel-core: p
 
 | Type | Kind | Purpose |
 |------|------|---------|
-| `CameraRig` | Record | Rig definition: projection type, angle list, frame size, padding, options |
-| `CaptureAngle` | Record | Single angle: name, yaw, pitch, canMirror, mirrorTarget, mirrorAxis |
-| `CameraRigPresets` | Static class | Built-in rig factories: `SideViewBrawler()`, `TopDown8Dir()`, `TopDown4Dir()`, `Custom()` |
+| `CameraRig` | Record | Rig definition: projection type, capture angles, frame size, padding, options |
+| `CaptureAngle` | Record | Single capture angle: name, yaw, pitch, optional mirror production metadata |
+| `CameraRigPresets` | Static class | Built-in rig factories: `SideViewBrawler()`, `TopDown8Dir()`, `TopDown4Dir()` |
 | `OrthographicSetup` | Static class | Compute orthographic camera parameters to fit a bounding box at a given angle |
-| `ProjectionType` | Enum | Orthographic, Perspective |
-| `BoundingBox` | Struct | Axis-aligned 3D bounding box (min/max Vector3) for model bounds |
+| `OrthographicParameters` | Record | Output of OrthographicSetup: camera position, direction, up, ortho dimensions, clip planes |
+| `ProjectionType` | Enum | `Orthographic`, `Perspective` |
+| `BoundingBox` | Struct | Axis-aligned 3D bounding box (min/max float3) for model bounds |
 
 ### Animation Subsystem
 
 | Type | Kind | Purpose |
 |------|------|---------|
-| `AnimationSampling` | Static class | Generate frame sequences from animation duration and config |
-| `FrameSequence` | Record | Ordered list of frame timestamps (normalized 0.0–1.0) for one animation |
-| `AnimationConfig` | Record | Per-animation capture settings: frame count, speed multiplier, trim start/end |
-| `AnimationInfo` | Record | Animation metadata from bridge: name, duration, frame count, is looping |
-| `LoopMode` | Enum | None, Loop, PingPong |
+| `AnimationSampling` | Static class | Generate frame timestamp sequences from animation duration and config |
+| `FrameSequence` | Record | Ordered list of normalized frame timestamps (0.0–1.0) for one animation capture |
+| `AnimationConfig` | Record | Per-animation capture settings: frame count, speed multiplier, trim start/end, loop mode |
+| `AnimationInfo` | Record | Animation metadata reported by the bridge: name, duration, frame count, is looping |
+| `LoopMode` | Enum | `None`, `Loop`, `PingPong` |
 
 ### Atlas Subsystem
 
 | Type | Kind | Purpose |
 |------|------|---------|
-| `AtlasPacker` | Static class | MaxRects bin-packing: frames → atlas layout |
-| `AtlasLayout` | Record | Result: frame positions, atlas dimensions, packing efficiency ratio |
-| `AtlasOptions` | Record | Configuration: max atlas size, padding, power-of-two, group-by-animation |
-| `MultiAtlasStrategy` | Static class | Overflow handling: split frames across multiple atlas images |
-| `PackedFrame` | Record | Single frame's position in the atlas: rect, atlas index |
+| `AtlasPacker` | Static class | MaxRects-BSSF bin-packing: frames → atlas layout. Handles multi-atlas overflow internally. |
+| `AtlasLayout` | Record | Packing result: per-frame placements, per-atlas dimensions, packing efficiency, atlas count |
+| `AtlasOptions` | Record | Configuration: max atlas size, padding, power-of-two rounding, group-by-animation |
+| `PackedFrame` | Record | Single frame's placement: atlas index, x, y, original width, original height |
 
 ### Mirror Subsystem
 
 | Type | Kind | Purpose |
 |------|------|---------|
-| `MirrorOptimizer` | Static class | Analyze CameraRig, compute which angles mirror, generate metadata |
-| `MirrorInfo` | Record | Per-frame mirror data: source angle, target angle, flip axis |
-| `MirrorAxis` | Enum | Horizontal, Vertical |
+| `MirrorOptimizer` | Static class | Analyze CameraRig angles, compute mirror relationships, generate mirror SpriteFrame entries |
+| `MirrorInfo` | Record | One mirror relationship: source angle name, target angle name, flip axis |
+| `MirrorAxis` | Enum | `Horizontal`, `Vertical` |
 
 ### Metadata Subsystem
 
 | Type | Kind | Purpose |
 |------|------|---------|
-| `SpriteSheet` | Record | Complete output: variant, rig, atlas layout, frames, animations, mirrors |
-| `SpriteFrame` | Record | Per-frame: rect in atlas, pivot, duration, angle, animation, mirror info |
-| `SpriteAnimation` | Record | Per-animation: name, loop mode, duration, frame indices per angle |
-| `CharacterVariant` | Record | Input definition: model path, equipment list, material overrides, scale |
-| `EquipmentSlot` | Record | Equipment slot: slot name, mesh path, bone name |
-| `CaptureManifest` | Record | Full capture job: variant + rigs + animations → expected frame count and atlas sizes |
-| `AnimationEvent` | Record | Optional per-frame event marker: hit frame, sound cue, effect trigger |
+| `SpriteSheet` | Record | Complete output metadata: variant, rig, atlases, frames (real + mirror), animations |
+| `SpriteFrame` | Record | Per-frame: atlas position, pivot, duration, angle, animation, mirror source if applicable |
+| `SpriteAnimation` | Record | Per-animation: name, loop mode, total duration, per-angle frame index lookup |
+| `AtlasInfo` | Record | Per-atlas image: index, filename, width, height |
+| `CharacterVariant` | Record | Capture input definition: model path, equipment list, material overrides, scale |
+| `EquipmentSlot` | Record | Single equipment attachment: slot name, mesh path, skeleton bone name |
+| `CaptureManifest` | Record | Pre-capture estimation: expected frame counts, atlas sizes, capture time per rig |
+| `RigManifest` | Record | Per-rig estimation within a CaptureManifest |
+| `AnimationEvent` | Record | Optional per-frame event marker: frame index, event type string, event data string |
 
 ### Normal Map Subsystem
 
 | Type | Kind | Purpose |
 |------|------|---------|
-| `DepthToNormal` | Static class | Sobel-filter conversion of depth buffer to tangent-space normal map |
-| `NormalMapOptions` | Record | Configuration: strength multiplier, blur radius, output format |
+| `DepthToNormal` | Static class | Sobel 3×3 convolution: depth buffer float[] → tangent-space normal map RGBA byte[] |
+| `NormalMapOptions` | Record | Configuration: strength multiplier, blur radius |
 
 ### Export Subsystem
 
 | Type | Kind | Purpose |
 |------|------|---------|
-| `SpriteSheetSerializer` | Static class | SpriteSheet ↔ JSON serialization (the canonical metadata format) |
-| `IPixelSource` | Interface | Engine-agnostic abstraction: raw RGBA pixel data + dimensions |
-| `IDepthSource` | Interface | Engine-agnostic abstraction: depth buffer float data + dimensions |
-| `AtlasAssembler` | Static class | Compose captured frames into atlas image from pixel sources |
+| `SpriteSheetSerializer` | Static class | SpriteSheet ↔ JSON serialization using System.Text.Json |
+| `IPixelSource` | Interface | Engine-agnostic abstraction for raw RGBA pixel data + dimensions |
+| `IDepthSource` | Interface | Engine-agnostic abstraction for depth buffer float data + dimensions |
+| `AtlasAssembler` | Static class | Compose captured FrameCapture pixel data into atlas RGBA byte arrays using AtlasLayout |
 
 ### Shared Types
 
 | Type | Kind | Purpose |
 |------|------|---------|
 | `Color` | Struct (4 bytes) | RGBA color, byte-valued (0–255 per channel) |
-| `Vector2` | Struct | 2D float vector (pivot points, UV coordinates) |
-| `Rectangle` | Struct | Integer rectangle (x, y, width, height) for atlas frame positions |
-| `FrameCapture` | Record | Single captured frame: RGBA pixels, depth data (optional), dimensions |
+| `Vector2` | Struct (8 bytes) | 2D float vector for pivot points |
+| `Rectangle` | Struct (16 bytes) | Integer rectangle (x, y, width, height) for atlas positions |
+| `FrameCapture` | Record | Bridge-produced capture data: RGBA pixels, optional depth, dimensions, source metadata |
 
 ---
 
@@ -119,122 +153,143 @@ It follows the same pattern as music-theory, storyline-theory, and voxel-core: p
 
 ### CameraRig
 
-The primary configuration type. Defines how a character is captured from one orientation.
+The primary configuration type. Defines how a character is captured from one orientation. **Every angle in the `Angles` list is captured (rendered).** Mirror targets are NOT in this list — they are computed externally by MirrorOptimizer.
 
 ```
 CameraRig
-├── Name: string                        // "SideView-Brawler", "TopDown-55deg", custom
+├── Name: string                        // "SideView-Brawler", "TopDown-8Dir", custom
 ├── Projection: ProjectionType          // Orthographic (standard) or Perspective (rare)
-├── Angles: IReadOnlyList<CaptureAngle> // All angles including mirrors
+├── Angles: IReadOnlyList<CaptureAngle> // ALL of these are rendered — NO mirror targets here
 ├── FrameSize: (int Width, int Height)  // Per-frame pixel dimensions (e.g., 128×128)
 ├── Padding: int                        // Pixels between frames in atlas (default: 2)
-├── BackgroundColor: Color              // Render clear color (default: transparent RGBA 0,0,0,0)
+├── BackgroundColor: Color              // Render clear color (default: Color.Transparent)
 ├── IncludeNormalMap: bool              // Also generate normal map atlas from depth buffer
-├── IncludeShadow: bool                 // Include shadow pass (future — not implemented)
 └── TrimTransparent: bool              // Trim transparent borders per frame (default: false)
 ```
 
-**Immutability**: CameraRig is a record — value equality and immutability by default. Changes produce new instances. This supports undo/redo in the composer (command stores before/after rig snapshots).
+**Key invariant**: `Angles` contains ONLY angles that will be rendered by the bridge. If the rig has 5 angles, the bridge renders 5 times per animation frame. Mirror targets (like "NW" generated from "NE") exist only in MirrorOptimizer's output and in the final SpriteSheet metadata — never in the rig definition.
+
+**Immutability**: CameraRig is a record — value equality and immutability by default. Changes produce new instances. This supports undo/redo in the composer (commands store before/after rig snapshots).
 
 ### CaptureAngle
 
-Individual angle within a rig. Angles that have `CanMirror = true` are NOT captured — their frames are generated as horizontal flips of their source angle.
+A single angle that the bridge will render from. Every CaptureAngle in a rig is captured. Optionally declares that it also produces a mirror.
 
 ```
 CaptureAngle
 ├── Name: string               // "right", "N", "NE", "SE", etc.
 ├── Yaw: float                 // Degrees rotation around Y axis (0 = north/forward)
 ├── Pitch: float               // Degrees from horizontal (0 = level, negative = looking down)
-├── CanMirror: bool            // If true, this angle is NOT captured — it's a mirror
-├── MirrorTargetName: string?  // Name of the generated mirror angle (e.g., "NE" → "NW")
-└── MirrorAxis: MirrorAxis     // Horizontal (flip X) or Vertical (flip Y)
+├── ProducesMirror: bool       // If true, MirrorOptimizer will generate a flipped counterpart
+├── MirrorTargetName: string?  // Name for the generated mirror (e.g., "NE" produces "NW")
+└── MirrorAxis: MirrorAxis     // Horizontal (default) or Vertical flip for the mirror
 ```
 
-**Mirror semantics**: When `CanMirror = true`, the CaptureAngle represents a CAPTURED angle whose output is used as the source for a mirror. The `MirrorTargetName` is the name of the mirror that will be generated FROM this capture. For example, if angle "NE" (Yaw=45°) has `CanMirror=true` and `MirrorTargetName="NW"`, then:
-- "NE" IS captured (5 render passes for 8-dir)
-- "NW" is NOT captured — its frames are metadata entries pointing to "NE" frames with horizontal flip
+**ProducesMirror semantics (CRITICAL)**: This boolean means "this angle IS captured AND ALSO generates a mirror." It does NOT mean "this angle is a mirror" or "this angle is not captured." Every CaptureAngle is always captured. `ProducesMirror` is purely additive metadata that MirrorOptimizer reads.
+
+**Example — TopDown8Dir**:
+- N (Yaw=0°, ProducesMirror=false) → captured, no mirror
+- NE (Yaw=45°, ProducesMirror=true, MirrorTargetName="NW") → captured AND produces "NW" mirror
+- E (Yaw=90°, ProducesMirror=true, MirrorTargetName="W") → captured AND produces "W" mirror
+- SE (Yaw=135°, ProducesMirror=true, MirrorTargetName="SW") → captured AND produces "SW" mirror
+- S (Yaw=180°, ProducesMirror=false) → captured, no mirror
+
+Result: 5 angles captured, 3 mirrors generated by MirrorOptimizer = 8 total directions.
+
+**Example — SideViewBrawler**:
+- right (Yaw=90°, ProducesMirror=true, MirrorTargetName="left") → captured AND produces "left" mirror
+
+Result: 1 angle captured, 1 mirror generated = 2 total directions.
 
 ### SpriteSheet (Output Metadata)
 
-The complete output of a capture session. Serializes to the canonical JSON format.
+The complete output of a capture session. Contains both real captured frames and mirror frame entries. Serializes to the canonical JSON format via SpriteSheetSerializer.
 
 ```
 SpriteSheet
 ├── Version: string                            // Schema version ("1.0")
 ├── Generator: string                          // "BeyondImmersion.Bannou.SpriteComposer"
 ├── GeneratedAt: DateTimeOffset                // Capture timestamp
-├── Variant: CharacterVariant                  // What was captured
-├── Rig: CameraRig                             // Camera rig used
-├── Atlases: IReadOnlyList<AtlasInfo>          // Atlas image filenames and dimensions
-├── Animations: IReadOnlyList<SpriteAnimation> // All captured animations
-├── Frames: IReadOnlyList<SpriteFrame>         // All frames (real + mirror)
-└── CustomProperties: Dictionary<string, string> // Game-specific metadata
+├── Variant: CharacterVariant                  // What was captured (model + equipment)
+├── Rig: CameraRig                             // Camera rig used (source angles only)
+├── Atlases: IReadOnlyList<AtlasInfo>          // Atlas image files (one or more if overflow)
+├── Animations: IReadOnlyList<SpriteAnimation> // All captured animations with per-angle frame maps
+├── Frames: IReadOnlyList<SpriteFrame>         // ALL frames — captured first, then mirrors appended
+└── CustomProperties: Dictionary<string, string>? // Game-specific opaque metadata (not read by SDK)
 ```
 
-**AtlasInfo**: When frames overflow a single atlas (MaxSize exceeded), multiple atlas images are generated. Each `AtlasInfo` has an `Index`, `Filename`, `Width`, and `Height`. Each `SpriteFrame` references its atlas by index.
+**CustomProperties**: Optional game-specific metadata embedded in the output JSON. Not read, validated, or interpreted by any SDK component. Example uses: game build version string, character class tag, content pipeline batch ID. Null when not provided.
+
+**Atlases**: When frames overflow a single atlas (exceeding AtlasOptions.MaxWidth × MaxHeight), AtlasPacker produces multiple atlas images. Each AtlasInfo has an `Index` (0-based), `Filename`, `Width`, and `Height`. Each SpriteFrame references its atlas by `AtlasIndex`.
 
 ### SpriteFrame
 
-Per-frame metadata. Frames with `IsMirror = true` do not have atlas pixels — the game engine flips the source frame at render time.
+Per-frame metadata. Frames with `IsMirror = true` have no unique atlas pixels — they reference a source frame that the game engine must flip horizontally at render time.
 
 ```
 SpriteFrame
-├── Index: int                  // Global frame index (0-based)
-├── AtlasIndex: int             // Which atlas image this frame is in (0 for single-atlas)
-├── AngleName: string           // Capture angle name ("right", "NE", etc.)
+├── Index: int                  // Global frame index (0-based, unique across all frames)
+├── AtlasIndex: int             // Which atlas image (0 for single-atlas, >0 for overflow)
+├── AngleName: string           // Angle name — source angle for real frames, mirror target for mirrors
 ├── AnimationName: string       // Animation name ("idle", "attack_light", etc.)
 ├── FrameInAnimation: int       // Frame number within the animation (0-based)
 ├── Rect: Rectangle             // Position and size in atlas (x, y, width, height)
-├── TrimmedRect: Rectangle?     // Actual content rect if TrimTransparent was enabled
-├── Pivot: Vector2              // Pivot point (0,0 = top-left; 0.5,0.85 = center-bottom default)
+├── TrimmedRect: Rectangle?     // Content bounds if TrimTransparent was enabled (null otherwise)
+├── Pivot: Vector2              // Pivot point normalized to frame (0,0 = top-left; default: 0.5, 0.85)
 ├── Duration: float             // Frame display duration in seconds
-├── IsMirror: bool              // True = horizontal flip of another frame (no atlas pixels)
-└── MirrorSourceIndex: int?     // Index of source frame (only when IsMirror = true)
+├── IsMirror: bool              // True = horizontal flip of MirrorSourceIndex frame
+└── MirrorSourceIndex: int?     // Source frame index (only set when IsMirror = true)
 ```
+
+**Frame ordering**: Captured frames come first (indices 0 through N-1), mirror frames are appended after (indices N through N+M-1). This ordering is deterministic and stable.
+
+**Default pivot (0.5, 0.85)**: Center-X, 85%-from-top Y. This anchors the sprite at a point near the character's feet, which is correct for humanoid characters standing on the ground. Non-humanoid characters (flying enemies, large bosses, quadrupeds) need per-variant pivot overrides.
 
 ### SpriteAnimation
 
-Groups frames by animation name, with per-angle frame index lookup.
+Groups frames by animation name with per-angle frame index lookup for game runtime use.
 
 ```
 SpriteAnimation
-├── Name: string                                 // Animation name (matches source clip)
+├── Name: string                                 // Animation name (matches source clip name)
 ├── LoopMode: LoopMode                           // None, Loop, PingPong
 ├── TotalDuration: float                         // Total animation duration in seconds
-├── AngleFrameMap: Dictionary<string, int[]>     // AngleName → frame indices in order
-└── Events: IReadOnlyList<AnimationEvent>?       // Optional hit frames, sound cues
+├── AngleFrameMap: Dictionary<string, int[]>     // AngleName → ordered frame indices
+└── Events: IReadOnlyList<AnimationEvent>?       // Optional hit frames, sound cues (null if none)
 ```
 
-**AngleFrameMap**: The primary lookup structure for game runtime. To play "idle" facing "NE", read `animation.AngleFrameMap["NE"]` → array of frame indices → look up each `SpriteFrame` by index for rect, duration, mirror info.
+**AngleFrameMap**: The primary runtime lookup. To play "idle" facing "NE", read `AngleFrameMap["NE"]` → array of frame indices → look up each SpriteFrame by index for rect, duration, and mirror info. Mirror angles (like "NW") are included in the map — they point to mirror SpriteFrame entries.
 
 ### CharacterVariant
 
-Input definition describing what to capture. Serializable as part of the SpriteSheet metadata and as part of SpriteProject files.
+Input definition describing what to capture. Serializable as part of SpriteSheet metadata and SpriteProject files.
 
 ```
 CharacterVariant
 ├── Name: string                                    // "warrior_plate_sword"
-├── ModelPath: string                               // Path to base character model
+├── ModelPath: string                               // Path to base character model (FBX)
 ├── Equipment: IReadOnlyList<EquipmentSlot>         // Attached equipment pieces
-├── MaterialOverrides: Dictionary<string, string>?  // Material/palette swaps
+├── MaterialOverrides: Dictionary<string, string>?  // Material/palette swaps (null if none)
 └── Scale: float                                    // Model scale factor (default: 1.0)
 ```
 
 ### FrameCapture
 
-Engine-agnostic container for captured pixel data. Created by the bridge, consumed by sprite-theory's assembler and normal map generator.
+Engine-agnostic container for captured pixel data. Created by the bridge after each frame render, consumed by AtlasAssembler and DepthToNormal.
 
 ```
 FrameCapture
-├── PixelData: byte[]      // RGBA pixels, 4 bytes per pixel, row-major
-├── DepthData: float[]?    // Depth buffer values (0.0–1.0), null if not captured
+├── PixelData: byte[]      // RGBA pixels, 4 bytes per pixel, row-major top-to-bottom
+├── DepthData: float[]?    // Depth values 0.0 (near) to 1.0 (far), null if not captured
 ├── Width: int             // Frame width in pixels
 ├── Height: int            // Frame height in pixels
-├── AngleName: string      // Which angle this was captured from
+├── AngleName: string      // Which CaptureAngle this was rendered from
 ├── AnimationName: string  // Which animation was playing
-├── FrameIndex: int        // Frame number within the animation
-└── NormalizedTime: float  // Animation time (0.0–1.0) when captured
+├── FrameIndex: int        // Frame number within the animation (0-based)
+└── NormalizedTime: float  // Animation time when captured (0.0–1.0)
 ```
+
+**DepthData normalization**: The bridge MUST normalize GPU depth values to the 0.0–1.0 range (0.0 = near plane, 1.0 = far plane) before creating a FrameCapture. Different graphics APIs store depth differently (0–1 vs -1–1, reversed vs non-reversed). Normalization is the bridge's responsibility; sprite-theory always sees linear 0.0–1.0.
 
 ---
 
@@ -242,268 +297,213 @@ FrameCapture
 
 ### Orthographic Camera Setup
 
+Given a CaptureAngle and a model's BoundingBox, computes the exact orthographic camera parameters that frame the model completely with no clipping.
+
 ```
-OrthographicSetup.Compute(angle: CaptureAngle, bounds: BoundingBox, frameSize: (int, int))
-  → OrthographicParameters
+Input:  CaptureAngle (yaw, pitch) + BoundingBox (model bounds) + frame size
+Output: OrthographicParameters (position, direction, up, ortho width/height, clip planes)
 
-  // 1. Compute camera position from angle
-  COMPUTE yawRad ← angle.Yaw * PI / 180
-  COMPUTE pitchRad ← angle.Pitch * PI / 180
-  COMPUTE direction ← (
-    sin(yawRad) * cos(pitchRad),
-    sin(pitchRad),
-    cos(yawRad) * cos(pitchRad)
-  )
-  COMPUTE center ← bounds.Center
-  COMPUTE radius ← bounds.Extents.Length    // half-diagonal of bounding box
-  COMPUTE distance ← radius * 2.0          // ensure model is fully visible
-  COMPUTE position ← center - direction * distance
-
-  // 2. Compute orthographic projection size to fit the model
-  // Project bounding box corners onto the camera's view plane
-  COMPUTE up ← (0, 1, 0) if |pitch| < 89° else (0, 0, -sign(pitch))
-  COMPUTE right ← normalize(cross(direction, up))
-  COMPUTE correctedUp ← cross(right, direction)
-
-  COMPUTE minU, maxU, minV, maxV ← project all 8 bbox corners onto (right, correctedUp) plane
-  COMPUTE orthoWidth ← (maxU - minU) * 1.1   // 10% padding for safety
-  COMPUTE orthoHeight ← (maxV - minV) * 1.1
-
-  // 3. Adjust for frame aspect ratio
-  COMPUTE frameAspect ← frameSize.Width / frameSize.Height
-  COMPUTE orthoAspect ← orthoWidth / orthoHeight
-  IF frameAspect > orthoAspect
-    orthoWidth ← orthoHeight * frameAspect
-  ELSE
-    orthoHeight ← orthoWidth / frameAspect
-
-  RETURN OrthographicParameters(position, direction, correctedUp, orthoWidth, orthoHeight, near: 0.01, far: distance * 3)
+Steps:
+1. Convert yaw/pitch to camera direction vector (spherical → Cartesian)
+2. Position camera along -direction from bounding box center (distance = 2.5× half-diagonal)
+3. Compute up vector (special case for near-vertical pitch > 89°)
+4. Build orthonormal basis: right = cross(direction, up), correctedUp = cross(right, direction)
+5. Project all 8 bounding box corners onto the camera's (right, correctedUp) plane
+6. Compute ortho dimensions from projected min/max with 10% safety margin
+7. Adjust for frame aspect ratio (expand width or height to match)
 ```
 
 ### Animation Frame Sampling
 
-```
-AnimationSampling.GenerateUniform(duration: float, frameCount: int) → FrameSequence
-
-  // Uniform spacing: frames evenly distributed across animation duration
-  CREATE timestamps ← new float[frameCount]
-  COMPUTE interval ← 1.0 / frameCount    // normalized interval
-  FOREACH i FROM 0 TO frameCount - 1
-    timestamps[i] ← i * interval + interval * 0.5   // center of each frame's time window
-  RETURN FrameSequence(timestamps, duration)
-```
-
-### Atlas Packing (MaxRects)
+Generates a sequence of normalized timestamps for capturing animation frames.
 
 ```
-AtlasPacker.Pack(frames: IReadOnlyList<(int width, int height)>, options: AtlasOptions)
-  → AtlasLayout
+Uniform sampling:
+  Input:  animation duration, frame count
+  Output: array of normalized times (0.0–1.0), each at the center of its time window
 
-  // Sort frames by height descending (best heuristic for MaxRects)
-  COMPUTE sorted ← frames.OrderByDescending(f => f.height).ThenByDescending(f => f.width)
+  Example: 8 frames → [0.0625, 0.1875, 0.3125, 0.4375, 0.5625, 0.6875, 0.8125, 0.9375]
 
-  // Initialize MaxRects with atlas dimensions
-  CREATE freeRects ← [Rectangle(0, 0, options.MaxWidth, options.MaxHeight)]
-  CREATE placements ← new List<PackedFrame>()
-  SET currentAtlas ← 0
-
-  FOREACH frame in sorted
-    COMPUTE paddedWidth ← frame.width + options.Padding
-    COMPUTE paddedHeight ← frame.height + options.Padding
-
-    // Find best position using Best Short Side Fit heuristic
-    COMPUTE bestRect ← null, bestShortSide ← MAX_INT, bestLongSide ← MAX_INT
-    FOREACH rect in freeRects
-      IF paddedWidth <= rect.Width AND paddedHeight <= rect.Height
-        COMPUTE shortSide ← min(rect.Width - paddedWidth, rect.Height - paddedHeight)
-        COMPUTE longSide ← max(rect.Width - paddedWidth, rect.Height - paddedHeight)
-        IF shortSide < bestShortSide OR (shortSide == bestShortSide AND longSide < bestLongSide)
-          bestRect ← rect; bestShortSide ← shortSide; bestLongSide ← longSide
-
-    IF bestRect is null
-      // Frame doesn't fit — start new atlas (MultiAtlasStrategy)
-      currentAtlas += 1
-      freeRects ← [Rectangle(0, 0, options.MaxWidth, options.MaxHeight)]
-      // Retry placement in new atlas
-      ...continue
-
-    // Place frame at bestRect position
-    placements.Add(PackedFrame(frame.index, currentAtlas, bestRect.X, bestRect.Y, frame.width, frame.height))
-
-    // Split remaining free space (MaxRects subdivision)
-    COMPUTE placed ← Rectangle(bestRect.X, bestRect.Y, paddedWidth, paddedHeight)
-    SplitFreeRects(freeRects, placed)
-    PruneFreeRects(freeRects)  // Remove rects fully contained by others
-
-  // Compute actual atlas dimensions (smallest power-of-two that fits all placements)
-  COMPUTE actualWidth ← options.PowerOfTwo ? nextPowerOfTwo(maxX) : maxX
-  COMPUTE actualHeight ← options.PowerOfTwo ? nextPowerOfTwo(maxY) : maxY
-  COMPUTE efficiency ← totalFrameArea / (actualWidth * actualHeight)
-
-  RETURN AtlasLayout(placements, actualWidth, actualHeight, efficiency, currentAtlas + 1)
+Config-based sampling:
+  Input:  AnimationInfo + AnimationConfig (with trim and speed)
+  Output: array of normalized times within [TrimStart, TrimEnd], scaled by SpeedMultiplier
 ```
 
-### Mirror Computation
+### Atlas Packing (MaxRects-BSSF)
+
+Packs frame rectangles into one or more atlas images using the MaxRects algorithm with Best Short Side Fit heuristic.
 
 ```
-MirrorOptimizer.GenerateMirrors(rig: CameraRig, capturedFrameCount: int)
-  → IReadOnlyList<MirrorInfo>
+Input:  list of (width, height, index) per frame + AtlasOptions
+Output: AtlasLayout with per-frame placements and per-atlas dimensions
 
-  CREATE mirrors ← new List<MirrorInfo>()
-
-  // Find all angles that have CanMirror = true
-  FOREACH angle in rig.Angles WHERE angle.CanMirror
-    // Find the corresponding mirror target angle
-    COMPUTE targetName ← angle.MirrorTargetName
-    // For each captured frame of this source angle, generate a mirror frame entry
-    // (actual frame indices are assigned by the caller — we just declare the relationship)
-    mirrors.Add(MirrorInfo(
-      sourceAngleName: angle.Name,
-      targetAngleName: targetName,
-      flipAxis: angle.MirrorAxis
-    ))
-
-  RETURN mirrors
+Steps:
+1. Sort frames by height descending, then width descending, then index (stable)
+2. Initialize free rectangle list with full atlas dimensions
+3. For each frame: find the free rectangle with smallest short-side remainder (BSSF)
+4. Place frame, subdivide remaining free space into up to 4 new rectangles
+5. Prune fully-contained free rectangles
+6. If no free rectangle fits: start a new atlas (multi-atlas overflow)
+7. Compute actual dimensions (power-of-two if enabled) and packing efficiency
 ```
 
-### Depth-to-Normal Conversion
+### Mirror Frame Generation
+
+Two-phase process: extract mirror relationships from the rig, then generate SpriteFrame entries.
 
 ```
-DepthToNormal.Generate(depth: float[], width: int, height: int, options: NormalMapOptions)
-  → byte[]   // RGBA normal map pixels
+Phase 1 — ComputeMirrors:
+  Input:  CameraRig
+  Output: list of MirrorInfo (source angle name, target angle name, flip axis)
+  
+  Scan all angles where ProducesMirror = true.
+  For each, create a MirrorInfo linking source to target.
 
-  CREATE normals ← new byte[width * height * 4]
+Phase 2 — GenerateMirrorFrames:
+  Input:  captured SpriteFrames + MirrorInfo list
+  Output: mirror SpriteFrame entries (IsMirror=true, MirrorSourceIndex set)
 
-  FOREACH y FROM 0 TO height - 1
-    FOREACH x FROM 0 TO width - 1
-      // Sobel 3×3 gradient estimation
-      COMPUTE dzdx ← (
-        sample(x+1, y-1) + 2*sample(x+1, y) + sample(x+1, y+1)
-        - sample(x-1, y-1) - 2*sample(x-1, y) - sample(x-1, y+1)
-      ) * options.Strength
+  For each MirrorInfo, find all captured frames with matching source angle.
+  Create a mirror SpriteFrame for each, with:
+    - AngleName = mirror target name
+    - Same Rect (no new atlas pixels — game engine flips at render time)
+    - Flipped Pivot (horizontal: X becomes 1-X)
+    - IsMirror = true, MirrorSourceIndex = source frame's index
+```
 
-      COMPUTE dzdy ← (
-        sample(x-1, y+1) + 2*sample(x, y+1) + sample(x+1, y+1)
-        - sample(x-1, y-1) - 2*sample(x, y-1) - sample(x+1, y-1)
-      ) * options.Strength
+### Depth-to-Normal Map Conversion
 
-      // Construct normal vector (tangent space: Z points outward)
-      COMPUTE normal ← normalize(-dzdx, -dzdy, 1.0)
+Converts per-frame depth buffer data to tangent-space normal map pixels using Sobel filtering.
 
-      // Encode to RGB: map [-1,1] → [0,255]
-      COMPUTE i ← (y * width + x) * 4
-      normals[i + 0] ← (byte)((normal.X * 0.5 + 0.5) * 255)   // R = X
-      normals[i + 1] ← (byte)((normal.Y * 0.5 + 0.5) * 255)   // G = Y
-      normals[i + 2] ← (byte)((normal.Z * 0.5 + 0.5) * 255)   // B = Z
-      normals[i + 3] ← 255                                       // A = opaque
+```
+Input:  depth float[] (0.0–1.0), frame dimensions, NormalMapOptions
+Output: RGBA byte[] normal map (same dimensions)
 
-  RETURN normals
-
-  // Helper: sample depth with clamped boundary
-  FUNCTION sample(x, y) → float
-    COMPUTE cx ← clamp(x, 0, width - 1)
-    COMPUTE cy ← clamp(y, 0, height - 1)
-    RETURN depth[cy * width + cx]
+Steps:
+1. Optionally blur depth with Gaussian kernel (if BlurRadius > 0)
+2. For each pixel, compute Sobel 3×3 gradients:
+   - dz/dx = weighted horizontal difference (right column minus left column)
+   - dz/dy = weighted vertical difference (bottom row minus top row)
+3. Construct normal vector: (-dzdx × strength, -dzdy × strength, 1.0), normalized
+4. Encode to RGB: map [-1,1] → [0,255] per component. A = 255 (opaque).
+5. Boundary pixels use clamped sampling (repeat edge values)
 ```
 
 ### Atlas Assembly
 
+Composites captured frame pixel data into atlas images at positions determined by AtlasPacker.
+
 ```
-AtlasAssembler.Assemble(
-  frames: IReadOnlyList<FrameCapture>,
-  layout: AtlasLayout,
-  backgroundColor: Color
-) → byte[][]   // One RGBA pixel array per atlas
+Input:  list of FrameCapture + AtlasLayout + background Color
+Output: one RGBA byte[] per atlas image
 
-  CREATE atlases ← new byte[layout.AtlasCount][]
-  FOREACH i FROM 0 TO layout.AtlasCount - 1
-    atlases[i] ← new byte[layout.Width * layout.Height * 4]
-    // Fill with background color
-    FOREACH pixel in atlases[i] (step 4)
-      SET backgroundColor RGBA
-
-  // Blit each captured frame into its atlas position
-  FOREACH placement in layout.Placements
-    COMPUTE frame ← frames[placement.FrameIndex]
-    COMPUTE atlas ← atlases[placement.AtlasIndex]
-    // Copy rows from frame pixel data to atlas at (placement.X, placement.Y)
-    FOREACH row FROM 0 TO frame.Height - 1
-      COMPUTE srcOffset ← row * frame.Width * 4
-      COMPUTE dstOffset ← ((placement.Y + row) * layout.Width + placement.X) * 4
-      Array.Copy(frame.PixelData, srcOffset, atlas, dstOffset, frame.Width * 4)
-
-  RETURN atlases
+Steps:
+1. Allocate atlas pixel arrays filled with background color
+2. For each placement in the layout, find the corresponding FrameCapture
+3. Blit frame pixels into the atlas at (placement.X, placement.Y) via row-by-row memcpy
 ```
 
 ---
 
 ## Determinism Contract
 
-All operations are deterministic. Same inputs produce identical outputs:
+All operations are deterministic. Same inputs → identical outputs.
 
-| Operation | Deterministic? | Notes |
-|-----------|---------------|-------|
+| Operation | Deterministic | Mechanism |
+|-----------|:---:|-----------|
 | OrthographicSetup.Compute | Yes | Pure trigonometry from angle + bounds |
 | AnimationSampling.GenerateUniform | Yes | Division arithmetic |
-| AtlasPacker.Pack | Yes | Deterministic sort + MaxRects with stable tie-breaking |
-| MirrorOptimizer.GenerateMirrors | Yes | Single pass over angle list |
-| DepthToNormal.Generate | Yes | Sobel convolution, per-pixel independent |
-| AtlasAssembler.Assemble | Yes | Pixel copy at deterministic positions |
+| AnimationSampling.GenerateFromConfig | Yes | Division arithmetic with trim/speed |
+| AtlasPacker.Pack | Yes | Deterministic sort (height → width → index) + MaxRects-BSSF with stable tie-breaking |
+| MirrorOptimizer.ComputeMirrors | Yes | Single iteration over angle list in order |
+| MirrorOptimizer.GenerateMirrorFrames | Yes | Iteration over mirrors × source frames, both in deterministic order |
+| DepthToNormal.Generate | Yes | Per-pixel independent Sobel convolution |
+| AtlasAssembler.Assemble | Yes | Pixel copy at deterministic atlas positions |
 | SpriteSheetSerializer.Serialize | Yes | Ordered JSON properties via System.Text.Json |
 | SpriteSheetSerializer.Deserialize | Yes | Standard JSON parsing |
-| CaptureManifest.Compute | Yes | Arithmetic from rig + animation config |
+| CaptureManifest.Compute | Yes | Arithmetic from rig angles × animation configs |
 
 ---
 
 ## Performance Targets
 
-| Operation | Target | Notes |
-|-----------|--------|-------|
-| OrthographicSetup.Compute | < 1 μs | Trigonometry + bounding box projection |
-| AnimationSampling.GenerateUniform | < 1 μs | Division arithmetic |
-| AtlasPacker.Pack (1000 frames, 128×128) | < 10 ms | MaxRects with height-sorted input |
-| MirrorOptimizer.GenerateMirrors (8-dir rig) | < 1 μs | Single pass over ~8 angles |
-| DepthToNormal.Generate (128×128 frame) | < 1 ms | 16K pixels × 9 samples per pixel |
-| AtlasAssembler.Assemble (1000 frames → 4096×4096) | < 100 ms | Pixel blit (memcpy per row) |
-| SpriteSheetSerializer.Serialize (1000 frames) | < 5 ms | System.Text.Json |
-| SpriteSheetSerializer.Deserialize (1000 frames) | < 5 ms | System.Text.Json |
-| CaptureManifest.Compute | < 1 μs | Arithmetic |
+| Operation | Target | Context | Notes |
+|-----------|--------|---------|-------|
+| OrthographicSetup.Compute | < 1 μs | Both | Trigonometry + 8-corner projection |
+| AnimationSampling.GenerateUniform | < 1 μs | Both | Division arithmetic |
+| AnimationSampling.GenerateFromConfig | < 1 μs | Both | Division arithmetic with trim |
+| AtlasPacker.Pack (1000 frames, 128×128) | < 10 ms | Both | MaxRects-BSSF, height-sorted input |
+| MirrorOptimizer.ComputeMirrors (8-dir rig) | < 1 μs | Both | Single pass over 5 angles |
+| MirrorOptimizer.GenerateMirrorFrames (3 mirrors × 160 frames) | < 1 ms | Both | 480 mirror frame entries |
+| DepthToNormal.Generate (128×128 frame) | < 1 ms | Both | 16K pixels × 9 samples per pixel |
+| AtlasAssembler.Assemble (960 frames → 4096² atlas) | < 100 ms | Both | Row-by-row memcpy per frame |
+| SpriteSheetSerializer.Serialize (960 frames) | < 5 ms | Both | System.Text.Json |
+| SpriteSheetSerializer.Deserialize (960 frames) | < 5 ms | Both | System.Text.Json |
+| CaptureManifest.Compute | < 1 μs | Both | Arithmetic |
+
+---
+
+## Format Support
+
+### Sprite Sheet Metadata (.json)
+
+**Direction**: Both (read/write via SpriteSheetSerializer)
+
+The canonical output format for sprite sheet metadata. Engine-agnostic JSON produced by `SpriteSheetSerializer.Serialize()` and consumed by any game runtime via `SpriteSheetSerializer.Deserialize()` or direct JSON parsing in any language.
+
+**Key properties**: `version`, `generator`, `generatedAt`, `variant` (model + equipment), `rig` (camera config), `atlases` (image files), `animations` (per-angle frame maps), `frames` (real + mirror entries with atlas positions, pivots, durations).
+
+See the planning document ([SPRITE-COMPOSER-SDK.md](../planning/SPRITE-COMPOSER-SDK.md) § JSON Metadata Schema) for a complete JSON example.
+
+### Atlas Images (.png)
+
+**Direction**: Write only (sprite-theory produces raw RGBA byte[] via AtlasAssembler; PNG encoding is the consumer's responsibility)
+
+One or more atlas images containing all captured frames packed via MaxRects-BSSF. Normal map atlases (when `IncludeNormalMap = true`) share the same layout as color atlases, enabling same-UV sampling.
+
+No custom binary format. No import capability.
 
 ---
 
 ## Known Quirks & Caveats
 
+#### Bugs (Fix Immediately)
+
+None — SDK is pre-implementation.
+
 #### Intentional Quirks (Documented Behavior)
 
-- **Mirror angles are NOT captured — they are generated metadata.** When a CaptureAngle has `CanMirror = true`, sprite-composer skips rendering for the mirror target angle entirely. The mirror frames exist only as SpriteFrame entries with `IsMirror = true` and `MirrorSourceIndex` pointing to the actual captured frame. The game engine must flip horizontally at render time. This halves the capture work for side-view (50% savings) and reduces it by 37.5% for 8-directional top-down.
+- **CameraRig.Angles contains ONLY rendered angles, never mirror targets.** Mirror targets like "NW" or "left" do not exist in the rig definition. They are created by MirrorOptimizer from the `ProducesMirror`/`MirrorTargetName` metadata on source angles. This means `rig.Angles.Count` equals the number of render passes per frame, which is exactly what the bridge needs to iterate.
 
-- **CanMirror on the SOURCE angle, not the target.** The CaptureAngle named "NE" is what gets RENDERED. Its `MirrorTargetName = "NW"` means "when generating the mirror set, create a 'NW' entry that flips 'NE'." This is counterintuitive (the mirror metadata lives on the source, not the target) but correct — the source is the one that needs to declare what it produces.
+- **ProducesMirror is additive, not exclusive.** An angle with `ProducesMirror = true` IS rendered AND ALSO generates a mirror. It does NOT mean "this is a mirror" or "skip rendering this." The boolean was named `ProducesMirror` (not `CanMirror` or `IsMirror`) specifically to prevent this misreading.
 
-- **Atlas packing uses height-descending sort as the primary heuristic.** This is the standard MaxRects heuristic validated across decades of bin-packing literature. Frame ordering within the same height group is by frame index (stable). Alternative sort orders (area-descending, width-descending) are not exposed as options — the height-descending heuristic produces optimal or near-optimal results for the uniform-sized frames typical of sprite capture.
+- **Mirror frames share atlas Rect with their source.** A mirror SpriteFrame points to the same atlas rectangle as its source. No duplicate pixels exist in the atlas — the game engine applies horizontal flip at render time using the `IsMirror` flag. This means the atlas size reflects only captured frames, not total directions.
 
-- **Normal maps are tangent-space, not object-space.** The Sobel-filter output assumes the camera is looking straight at the surface. This is correct for 2D sprites where the "surface" is always the sprite plane facing the camera. Object-space normals would require knowledge of the 3D geometry's actual orientation, which is lost once captured as a 2D image.
+- **Default pivot (0.5, 0.85) assumes standing humanoid.** The 85%-from-top anchor places the pivot near the character's feet. Flying enemies, bosses with non-standard proportions, or quadrupeds need per-CharacterVariant or per-CameraRig pivot overrides. Auto-detection from bounding box is a future enhancement (see Open Questions).
 
-- **FrameCapture.DepthData uses 0.0–1.0 range (near to far).** The bridge must normalize the GPU depth buffer to this range before creating a FrameCapture. Different graphics APIs store depth differently (0–1 vs -1–1, reversed vs non-reversed). Normalization is the bridge's responsibility; sprite-theory always sees 0.0 = near, 1.0 = far.
+- **Normal maps are tangent-space, not object-space.** The Sobel-filter output assumes the camera is looking straight at the sprite plane. This is correct for 2D sprites where the "surface" always faces the camera. Object-space normals would require 3D geometry knowledge that is lost after 2D capture.
 
-- **Default pivot is (0.5, 0.85) — center-bottom biased.** This works for humanoid characters standing on the ground. The feet anchor point is at ~85% of the frame height from top. Non-humanoid characters (flying enemies, large bosses, quadrupeds) need custom pivots configured per CharacterVariant or per CameraRig.
+- **FrameCapture.DepthData uses normalized 0.0–1.0 range.** The bridge must normalize GPU depth to this range (0.0 = near, 1.0 = far) before creating FrameCapture. Different graphics APIs store depth differently (0–1, -1–1, reversed). Normalization is the bridge's responsibility.
+
+- **AtlasPacker handles multi-atlas overflow internally.** When frames exceed a single atlas's MaxWidth × MaxHeight, the packer starts a new atlas transparently. There is no separate MultiAtlasStrategy class — the overflow logic is part of AtlasPacker.Pack. The AtlasLayout result contains the atlas count and per-atlas dimensions.
 
 #### Design Considerations (Requires Planning)
 
-- **PNG encoding dependency**: AtlasAssembler produces raw RGBA pixel arrays. Converting to PNG requires either a library (SixLabors.ImageSharp, SkiaSharp) or a minimal custom PNG writer. The choice affects the "zero external dependencies" claim. Options: (a) add ImageSharp as the sole dependency (Apache 2.0, pure .NET, industry standard), (b) write a minimal PNG encoder (deflate + chunk headers — ~200 lines), (c) defer PNG encoding to the consumer (sprite-composer handles it). **Recommendation**: Option (c) — sprite-theory produces raw pixel arrays, the consumer writes PNG. This keeps the theory layer dependency-free.
+- **PNG encoding is the consumer's responsibility.** sprite-theory produces raw RGBA byte[] arrays via AtlasAssembler. Converting to PNG files requires either a library (SixLabors.ImageSharp — Apache 2.0, pure .NET) or a minimal custom encoder. This conversion belongs in sprite-composer (the orchestrator), not sprite-theory (the computation layer). This keeps sprite-theory at zero external dependencies.
 
-- **Multi-atlas sprite sheets**: When frames overflow a single 4096×4096 atlas, MultiAtlasStrategy splits across multiple images. The JSON metadata supports this (each SpriteFrame has `AtlasIndex`), but game-side consumers must handle texture switching during animation playback. This is documented as a consumer concern, not an SDK concern.
+- **Transparent trimming and uniform frame sizing.** When `TrimTransparent = true`, each frame's content rect varies (some frames have more transparency). SpriteFrame stores both `Rect` (full allocated space in atlas) and `TrimmedRect` (actual content bounds). Game engines can use `Rect` for uniform sprite sizing or `TrimmedRect` for tighter collision bounds. The atlas packer uses trimmed sizes to pack more efficiently but allocates full `FrameSize` space to maintain uniform grid alignment when `TrimTransparent = false`.
 
-- **Transparent trimming precision**: When `TrimTransparent = true`, frame content rects vary per frame (some frames have more transparency than others). The `TrimmedRect` on SpriteFrame captures the actual content bounds within the standard `Rect`. Game engines can use the full Rect for uniform sprite sizing or TrimmedRect for tighter collision bounds.
+- **Shadow capture (future).** A drop shadow improves sprite readability, especially at the 55° top-down angle. Options include a shadow pass with directional light + ground plane, a silhouette with reduced opacity, or game-engine-side shadows. This is deferred until the base capture pipeline is working. When implemented, it would add an `IncludeShadow` boolean to CameraRig and produce a separate shadow atlas (like normal maps).
 
 ---
 
 ## Open Questions
 
-1. **PNG encoding location**: Should sprite-theory include a PNG encoder, or should raw pixel arrays be the output? See Design Considerations above. Current recommendation: raw pixel arrays (dependency-free theory layer).
+1. **Pivot auto-detection from bounding box**: Should OrthographicSetup compute a default pivot point from the character's projected bounding box (feet position at the bottom center of the projected bounds)? This would provide reasonable defaults for humanoid characters. **Recommendation**: Compute auto-pivot as the default, allow per-CharacterVariant override. The auto-pivot computation projects the bounding box minimum Y coordinate onto the frame to find the feet position.
 
-2. **Animation event format**: `AnimationEvent` markers (hit frames, sound cues) are optional in SpriteAnimation. The exact schema for these events depends on what the Defenders runtime needs. Current design: simple `(FrameIndex, EventType, EventData)` triple. May need refinement based on game integration.
+2. **Animation event schema**: `AnimationEvent` markers (hit frames, sound cues) are optional in SpriteAnimation. The format is currently a simple `(FrameIndex: int, EventType: string, EventData: string)` triple. The exact schema depends on Defenders' runtime needs. This is sufficient for initial implementation; refinement can happen during game integration.
 
-3. **Pivot auto-detection**: Should OrthographicSetup compute a pivot point from the character's bounding box (feet position at the bottom center of the projected bounds)? This would provide reasonable defaults without manual configuration. **Recommendation**: Yes, compute auto-pivot as default with per-variant override.
+3. **GroupByAnimation atlas layout**: When `AtlasOptions.GroupByAnimation = true`, the packer should keep frames from the same animation in visual rows for human readability when inspecting atlas images. The current MaxRects algorithm doesn't enforce this — it optimizes for packing efficiency. A future enhancement could add row-constrained packing as an option, at the cost of slightly lower packing efficiency.
 
 ---
 

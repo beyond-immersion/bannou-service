@@ -239,7 +239,7 @@ public class GenesisSeedEvolutionListener : ISeedEvolutionListener
                 await TransitionToEventBrainAsync(entity, template, notification.NewPhase, ct);
             }
             else if (targetPhase.CognitiveStage == CognitiveStage.CharacterBrain &&
-                     entity.CognitiveStage == CognitiveStage.EventBrain)
+                    entity.CognitiveStage == CognitiveStage.EventBrain)
             {
                 await TransitionToCharacterBrainAsync(entity, template, notification.NewPhase, ct);
             }
