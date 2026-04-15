@@ -149,7 +149,9 @@ Declares role and state requirements for WebSocket client access. **All endpoint
 
 Defined in `{service}-service-events.yaml`, generates CRUD lifecycle events automatically. **NEVER manually define `*CreatedEvent`, `*UpdatedEvent`, `*DeletedEvent`** — use `x-lifecycle` instead.
 
-> **Full specification**: [X-LIFECYCLE.md](specifications/X-LIFECYCLE.md) — complete syntax, topic derivation, deprecation, instanceEntity, resource_mapping, batch mode, generated output, and structural tests.
+> **Full specification**: [X-LIFECYCLE.md](specifications/X-LIFECYCLE.md) — complete syntax, topic derivation, deprecation, instanceEntity, resource_mapping, batch mode, **immutable mode**, generated output, and structural tests.
+
+**Per-entity flags** (see the full spec for each): `deprecation` (auto-inject deprecation fields for Category A/B templates), `instanceEntity` (Category B template→instance pairing), `batch` (generate only batch event variants for high-frequency NPC-scale entities), `immutable` (suppress `*UpdatedEvent` / `*BatchModifiedEvent` when the entity has no update path — used by Collection and LicenseBoard).
 
 ```yaml
 x-lifecycle:
@@ -335,6 +337,25 @@ Defined on **schema objects** in `{service}-api.yaml`, maps an OpenAPI schema ty
 > **Full specification**: [X-SDK-TYPE.md](specifications/X-SDK-TYPE.md) — complete syntax, restriction to Core SDK types, generated behavior, and examples.
 
 **Restriction: Core SDK types only.** Domain-specific SDKs must define their own types and map at the plugin boundary. Generated behavior: `extract-sdk-types.py` produces exclusion lists consumed by `generate-models.sh` and `generate-config.sh`.
+
+### x-polymorphic-type-properties (Intentionally-Polymorphic String Fields)
+
+Defined under `info:` in `{service}-api.yaml` or `{service}-service-events.yaml`, lists camelCase property names whose generated C# properties should receive a `[PolymorphicType]` attribute. The marker exempts those properties from the T25 structural check that flags `Guid.Parse` / `int.Parse` calls on generated properties (the check assumes the schema type is wrong when a consumer must parse; the attribute documents that the parse is expected).
+
+> **Full specification**: [X-POLYMORPHIC-TYPE.md](specifications/X-POLYMORPHIC-TYPE.md) — complete syntax, decision tree, canonical vs forbidden patterns, generator behavior, and examples.
+
+**When to use**: The property is a `string` in the schema (not `format: uuid`), the string typing is a **deliberate design choice** (discriminated union like `serviceId` on Analytics events, or an intentionally string-typed identifier like Actor `actorId` that Genesis/Puppetmaster consumers parse to `Guid`), and a specific consumer legitimately needs to parse the string. Do NOT use to silence T25 for fields that should just be `format: uuid`.
+
+```yaml
+# analytics-api.yaml
+info:
+  title: Analytics Service API
+  version: 1.0.0
+  x-polymorphic-type-properties:
+    - serviceId   # GUID when serviceType == Game; service name when serviceType == System
+```
+
+**Generated output**: `[BeyondImmersion.BannouService.Attributes.PolymorphicType]` attribute added to each matching property by `scripts/postprocess-polymorphic-type.py` after NSwag generation. The attribute has no runtime behavior — it is a test-time / generation-time marker only.
 
 ---
 
@@ -670,6 +691,54 @@ save.load.save-slot.created            # ← "save" is not a service
 **How to tell the difference**: Check `plugins/lib-{name}/`. If `lib-character-history` exists as a plugin directory, then `character-history` is the service name and the hyphen is preserved. Pattern B only applies when a single-word service name (like `transit`, `actor`, `chat`) is concatenated with an entity name via hyphen.
 
 **All parts use kebab-case** (lowercase with hyphens for multi-word segments). No underscores in topic strings.
+
+#### Pattern C Entity Class Naming (Bimodal — Both Conventions Are Valid)
+
+In Pattern C services, the **topic format** `{service}.{entity-segment}.{action}` is consistent, but the **entity class name** follows one of two conventions depending on whether the natural entity name needs the service prefix for clarity. Both are valid — choose based on the guidance below.
+
+**Convention C.1 — Entity class includes the service name as its first word** (used when the natural entity name is too generic on its own):
+
+| Service | Entity Class | Topic Entity Segment | Example Topic |
+|---------|--------------|----------------------|---------------|
+| actor | `ActorTemplate`, `ActorInstance` | `template`, `instance` | `actor.template.created` |
+| quest | `QuestDefinition`, `QuestInstance` | `definition`, `instance` | `quest.instance.updated` |
+| item | `ItemTemplate`, `ItemInstance` | `template`, `instance` | `item.instance.batch-modified` |
+| craft | `CraftRecipe`, `CraftSession` | `recipe`, `session` | `craft.session.updated` |
+| affix | `AffixDefinition`, `AffixInstance` | `definition`, `instance` | `affix.instance.batch-modified` |
+| license | `LicenseBoardTemplate`, `LicenseBoard` | `board-template`, `board` | `license.board-template.updated` |
+
+The topic's entity segment is the kebab-case of the entity name AFTER stripping the service-name prefix. Consumer code sees unambiguous class names (`QuestInstanceUpdatedEvent`, not `InstanceUpdatedEvent`).
+
+**Convention C.2 — Entity class does NOT include the service name** (used when the natural entity name is already specific and adding the prefix would stutter or be redundant):
+
+| Service | Entity Class | Topic Entity Segment | Example Topic |
+|---------|--------------|----------------------|---------------|
+| broadcast | `PlatformLink`, `PlatformSession`, `Output` | `platform-link`, `platform-session`, `output` | `broadcast.platform-link.updated` |
+| character-lifecycle | `LifecycleTemplate`, `HeritableTraitTemplate`, ... | `lifecycle-template`, ... | `character-lifecycle.lifecycle-template.updated` |
+| character-encounter | `EncounterType`, `EncounterRecord` | `encounter-type`, `encounter-record` | `character-encounter.encounter-type.updated` |
+| save-load | `SaveSlot` | `save-slot` | `save-load.save-slot.updated` |
+| gardener | `ScenarioTemplate`, `ScenarioInstance` | `scenario-template`, `scenario-instance` | `gardener.scenario-template.updated` |
+| divine | `Deity` | `deity` | `divine.deity.updated` |
+
+The topic's entity segment is the full kebab-case of the entity name. This convention is **structurally required for hyphenated service names** (`CharacterLifecycleLifecycleTemplate` would be unusable stutter).
+
+**How to choose**:
+
+1. **Hyphenated service name** (`character-encounter`, `save-load`, `character-lifecycle`, etc.) → Use C.2. Never prefix.
+2. **Single-word service + natural entity name is specific on its own** (`PlatformLink`, `Deity`, `SaveSlot`) → Use C.2. Prefix would be redundant.
+3. **Single-word service + natural entity name would be too generic** (`Template`, `Instance`, `Definition`, `Recipe`, `Session`) → Use C.1. Prefix with the service name to avoid cross-service clashes (e.g., `Template` exists in many services; `ActorTemplate` is unambiguous).
+
+**The litmus test**: Would the entity class name be ambiguous or clash with names used by other services if the service prefix were removed? If yes → include the prefix (C.1). If no → omit the prefix (C.2).
+
+**Topic segment construction** (identical in both conventions):
+
+1. Start with the entity class name in PascalCase.
+2. Strip any leading service-name word (only applies to C.1 — for C.2 there's nothing to strip).
+3. Convert the remainder to kebab-case.
+
+This is why `ActorTemplate` → topic segment `template`, `LicenseBoardTemplate` → topic segment `board-template`, `PlatformLink` → topic segment `platform-link`.
+
+**Structural test**: `LifecycleEntities_ImmutableFlagMatchesMutationSurface` accepts both conventions via a three-strategy topic-to-entity matcher: (a) full-path kebab→PascalCase match (handles C.1); (b) last-segment kebab→PascalCase match (handles C.2); (c) sibling `event:` field name match (handles any non-standard topic segment form that still uses `{EntityName}UpdatedEvent` as the event class name).
 
 ### Client Events vs Service Events
 
@@ -1145,6 +1214,8 @@ Before submitting schema changes, verify:
 
 **Events**: Only canonical definitions (no cross-service `$ref`). Lifecycle events via `x-lifecycle`. Custom events MUST use `allOf` with `BaseServiceEvent` (produces C# inheritance, `IBannouEvent`, `EventName`). Custom events MUST include `eventName` with `default:` value. Subscriptions via `x-event-subscriptions`. All published events listed in `x-event-publications` (lifecycle + custom). Parameterized topics (with `{placeholder}` in routing key) MUST have `topic-params` with name/type for each placeholder.
 
+**x-lifecycle flags**: `deprecation: true` entities declare `instanceEntity` (Category B) and do NOT manually define `isDeprecated`/`deprecatedAt`/`deprecationReason` in the model block (auto-injected). `batch: true` entities declare `batch-created`/`batch-destroyed` publications and (unless also `immutable: true`) `batch-modified`. `immutable: true` entities MUST NOT list `{entity}.updated` or `{entity}.batch-modified` in `x-event-publications` — the generator does not produce those event types. `immutable: true` MUST NOT be set on an entity with an Update/Modify/Set endpoint in its API schema.
+
 **Enum Values**: ALL enum values use PascalCase (`TwoParty`, not `two_party`, `TWO_PARTY`, `twoParty`, or `two-party`). No exceptions.
 
 **Type References**: ALL enums/complex objects use `$ref` to `-api.yaml`. x-lifecycle model fields use `$ref` for objects/enums. All `$ref` paths sibling-relative in hand-written schemas (no `../`; Generated/ schemas use `../` by design).
@@ -1160,5 +1231,7 @@ Before submitting schema changes, verify:
 **x-event-template**: `name` is unique across services. Plugin calls generated `*EventTemplates.RegisterAll()`. No manual `EventTemplate` definitions remain.
 
 **x-constraint-groups**: Every `constraint-group` reference on a property matches a defined group. Every group has at least 2 member properties. Sum constraints only on numeric properties. Presence constraints only on nullable properties. `value` set for sum constraints, absent for presence constraints. `tolerance` only on `sum-equals`.
+
+**x-polymorphic-type-properties**: Entries in `info.x-polymorphic-type-properties` are camelCase property names that exist in the schema. Used ONLY for fields where `string` typing is a deliberate design choice (discriminated unions, intentionally string-typed identifiers whose consumers parse to `Guid`). NOT a substitute for `format: uuid` when the schema is just wrong.
 
 **Metadata Bags**: Any property with `additionalProperties: true` includes description stating "Client-only metadata. No Bannou plugin reads specific keys from this field by convention." No cross-service data contracts via metadata bags. No documentation specifying convention-based keys for other services to read.

@@ -548,6 +548,20 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
             Reason = body.Reason
         }, cancellationToken);
 
+        await _messageBus.PublishCurrencyWalletUpdatedAsync(new CurrencyWalletUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            WalletId = wallet.WalletId,
+            OwnerId = wallet.OwnerId,
+            OwnerType = wallet.OwnerType,
+            RealmId = wallet.RealmId,
+            Status = wallet.Status,
+            CreatedAt = wallet.CreatedAt,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            ChangedFields = new List<string> { "status" },
+        }, cancellationToken);
+
         await PublishClientEventToWalletOwnerAsync(wallet.OwnerId,
             new CurrencyWalletFrozenClientEvent
             {
@@ -590,6 +604,20 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
             Timestamp = DateTimeOffset.UtcNow,
             WalletId = body.WalletId,
             OwnerId = wallet.OwnerId
+        }, cancellationToken);
+
+        await _messageBus.PublishCurrencyWalletUpdatedAsync(new CurrencyWalletUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            WalletId = wallet.WalletId,
+            OwnerId = wallet.OwnerId,
+            OwnerType = wallet.OwnerType,
+            RealmId = wallet.RealmId,
+            Status = wallet.Status,
+            CreatedAt = wallet.CreatedAt,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            ChangedFields = new List<string> { "status" },
         }, cancellationToken);
 
         await PublishClientEventToWalletOwnerAsync(wallet.OwnerId,
@@ -678,6 +706,20 @@ public partial class CurrencyService : ICurrencyService, ICleanDeprecatedEntity,
             WalletId = body.WalletId,
             OwnerId = wallet.OwnerId,
             BalancesTransferredTo = body.TransferRemainingTo
+        }, cancellationToken);
+
+        await _messageBus.PublishCurrencyWalletUpdatedAsync(new CurrencyWalletUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            WalletId = wallet.WalletId,
+            OwnerId = wallet.OwnerId,
+            OwnerType = wallet.OwnerType,
+            RealmId = wallet.RealmId,
+            Status = wallet.Status,
+            CreatedAt = wallet.CreatedAt,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            ChangedFields = new List<string> { "status" },
         }, cancellationToken);
 
         return (StatusCodes.OK, new CloseWalletResponse

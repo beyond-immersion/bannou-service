@@ -17,6 +17,6 @@ public partial class CraftRecipeCreatedEvent : ILifecycleCreatedEvent, IDeprecat
 public partial class CraftRecipeUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
 public partial class CraftRecipeDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }
 
-public partial class CraftingSessionCreatedEvent : ILifecycleCreatedEvent { }
-public partial class CraftingSessionUpdatedEvent : ILifecycleUpdatedEvent { }
-public partial class CraftingSessionDeletedEvent : ILifecycleDeletedEvent { }
+public partial class CraftSessionCreatedEvent : ILifecycleCreatedEvent { }
+public partial class CraftSessionUpdatedEvent : ILifecycleUpdatedEvent { }
+public partial class CraftSessionDeletedEvent : ILifecycleDeletedEvent { }

@@ -48,7 +48,6 @@ x-lifecycle:
       resource_id_field: templateId
       source_type: myservice
   InstanceEntity:
-    immutable: true   # No update path — UpdatedEvent/BatchModifiedEvent suppressed
     model:
       instanceId: { type: string, format: uuid, primary: true, required: true }
       templateId: { type: string, format: uuid, required: true }

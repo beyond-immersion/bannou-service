@@ -130,7 +130,7 @@ public class GenesisServiceEventHandlerTests : ServiceTestBase<GenesisServiceCon
             .Setup(s => s.GetAsync(GenesisService.BuildTemplateKey("treasure_chest"), It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
 
-        var evt = new EntityCreatedEvent
+        var evt = new GenesisEntityCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -166,7 +166,7 @@ public class GenesisServiceEventHandlerTests : ServiceTestBase<GenesisServiceCon
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((GenesisTemplateModel?)null);
 
-        var evt = new EntityCreatedEvent
+        var evt = new GenesisEntityCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -202,7 +202,7 @@ public class GenesisServiceEventHandlerTests : ServiceTestBase<GenesisServiceCon
             .Setup(s => s.GetAsync(GenesisService.BuildTemplateKey("treasure_chest"), It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
 
-        var evt = new EntityCreatedEvent
+        var evt = new GenesisEntityCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -244,7 +244,7 @@ public class GenesisServiceEventHandlerTests : ServiceTestBase<GenesisServiceCon
             WalletCode: "mana",
             GrowthMappings: new List<GenesisGrowthMapping>()));
 
-        var evt = new EntityDeletedEvent
+        var evt = new GenesisEntityDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -271,7 +271,7 @@ public class GenesisServiceEventHandlerTests : ServiceTestBase<GenesisServiceCon
     public async Task HandleGenesisEntityDeletedAsync_UnknownWallet_NoError()
     {
         var service = CreateService();
-        var evt = new EntityDeletedEvent
+        var evt = new GenesisEntityDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,

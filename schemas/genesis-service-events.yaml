@@ -14,31 +14,31 @@ info:
   version: 1.0.0
   x-event-subscriptions:
     - topic: genesis.entity.created
-      event: EntityCreatedEvent
+      event: GenesisEntityCreatedEvent
       handler: HandleGenesisEntityCreated
     - topic: genesis.entity.deleted
-      event: EntityDeletedEvent
+      event: GenesisEntityDeletedEvent
       handler: HandleGenesisEntityDeleted
   x-event-publications:
     # Template lifecycle events (auto-generated from x-lifecycle)
     - topic: genesis.template.created
-      event: TemplateCreatedEvent
+      event: GenesisTemplateCreatedEvent
       description: Published when a new genesis template is registered
     - topic: genesis.template.updated
-      event: TemplateUpdatedEvent
+      event: GenesisTemplateUpdatedEvent
       description: Published when a genesis template is updated (including deprecation via changedFields)
     - topic: genesis.template.deleted
-      event: TemplateDeletedEvent
+      event: GenesisTemplateDeletedEvent
       description: Published by clean-deprecated sweep when removing a deprecated template with zero remaining entities
     # Entity lifecycle events (auto-generated from x-lifecycle)
     - topic: genesis.entity.created
-      event: EntityCreatedEvent
+      event: GenesisEntityCreatedEvent
       description: Published when a new genesis entity is created (includes provisioned walletIds and inventoryIds)
     - topic: genesis.entity.updated
-      event: EntityUpdatedEvent
+      event: GenesisEntityUpdatedEvent
       description: Published when a genesis entity is updated (bind physical form, status changes)
     - topic: genesis.entity.deleted
-      event: EntityDeletedEvent
+      event: GenesisEntityDeletedEvent
       description: Published when a genesis entity is destroyed
     # Custom events
     - topic: genesis.entity.phase-changed
@@ -56,7 +56,7 @@ info:
 
 x-lifecycle:
   topic_prefix: genesis
-  Template:
+  GenesisTemplate:
     deprecation: true
     model:
       templateCode: { type: string, primary: true, required: true, minLength: 1, description: "Unique template identifier" }
@@ -65,8 +65,8 @@ x-lifecycle:
       description: { type: string, required: true, minLength: 1, description: "Template description" }
       physicalFormType: { $ref: 'genesis-api.yaml#/components/schemas/PhysicalFormType', required: true, description: "Physical form type for entities of this template" }
     sensitive: [seed, economy, storage, awakening, bond]
-    instanceEntity: Entity
-  Entity:
+    instanceEntity: GenesisEntity
+  GenesisEntity:
     model:
       entityId: { type: string, format: uuid, primary: true, required: true, description: "Unique entity identifier" }
       templateCode: { type: string, required: true, minLength: 1, description: "Template code this entity was created from" }

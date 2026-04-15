@@ -147,9 +147,9 @@ public partial class GenesisService
     };
 
     /// <summary>
-    /// Builds an EntityDeletedEvent from an entity model.
+    /// Builds a GenesisEntityDeletedEvent from an entity model.
     /// </summary>
-    private static EntityDeletedEvent BuildEntityDeletedEvent(GenesisEntityModel entity) => new()
+    private static GenesisEntityDeletedEvent BuildGenesisEntityDeletedEvent(GenesisEntityModel entity) => new()
     {
         EntityId = entity.EntityId,
         TemplateCode = entity.TemplateCode,
@@ -201,7 +201,7 @@ public partial class GenesisService
         catch (ApiException ex) { _logger.LogWarning(ex, "Failed resource cleanup for entity {EntityId}", entity.EntityId); }
 
         await DeleteEntityRecordsAsync(entity, cancellationToken);
-        await _messageBus.PublishEntityDeletedAsync(BuildEntityDeletedEvent(entity), cancellationToken);
+        await _messageBus.PublishGenesisEntityDeletedAsync(BuildGenesisEntityDeletedEvent(entity), cancellationToken);
     }
 
     /// <summary>

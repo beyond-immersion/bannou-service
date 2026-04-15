@@ -65,6 +65,14 @@ Generates CRUD lifecycle events (created, updated, deleted) automatically from e
 
 Declares role and state requirements for WebSocket client access on API endpoints. The Permission service compiles per-session capability manifests from registered permission matrices. Every API endpoint must declare x-permissions; the value controls whether the endpoint appears in WebSocket capability manifests and which roles can access it. Use on every operation in a service API schema to define its access level.
 
+## x-polymorphic-type {#x-polymorphic-type}
+
+**Version**: 1.0 | **Status**: Implemented | **Last Updated**: 2026-04-15 | **Schema Scope**: `*-api.yaml`, `*-service-events.yaml` | [Full Specification](../reference/specifications/X-POLYMORPHIC-TYPE.md)
+
+Marks a generated property as intentionally polymorphic — the schema-level type is deliberately broader than the runtime type used by some consumers, and specific callers legitimately parse the string into a stronger type (e.g., a `Guid`). The marker emits a `[PolymorphicType]` attribute on the generated C# property, which exempts the property from the structural test `Services_NoParseOnGeneratedResponseProperties` (T25 enforcement).
+
+This is NOT a license to widen typing without cause. It is a narrow exception for fields whose schema-level `string` typing is a deliberate design choice (discriminated unions, intentionally string-typed identifiers allowing non-GUID values, etc.) rather than an oversight that should be tightened to `format: uuid`.
+
 ## x-references / x-resource-lifecycle {#x-references}
 
 **Version**: 1.0 | **Status**: Implemented | **Last Updated**: 2026-03-16 | **Schema Scope**: `*-api.yaml` | [Full Specification](../reference/specifications/X-REFERENCES.md)
@@ -97,7 +105,7 @@ Declares a service's position in the six-layer hierarchy, controlling plugin loa
 
 ## Summary
 
-- **Specifications in catalog**: 15
+- **Specifications in catalog**: 16
 
 ---
 

@@ -42,25 +42,25 @@ public static class CraftEventPublisher
         => messageBus.TryPublishAsync(CraftPublishedTopics.CraftRecipeDeleted, eventData, cancellationToken);
 
     /// <summary>Published when a crafting session record is created.</summary>
-    public static Task<bool> PublishCraftingSessionCreatedAsync(
+    public static Task<bool> PublishCraftSessionCreatedAsync(
         this IMessageBus messageBus,
-        CraftingSessionCreatedEvent eventData,
+        CraftSessionCreatedEvent eventData,
         CancellationToken cancellationToken = default)
-        => messageBus.TryPublishAsync(CraftPublishedTopics.CraftingSessionCreated, eventData, cancellationToken);
+        => messageBus.TryPublishAsync(CraftPublishedTopics.CraftSessionCreated, eventData, cancellationToken);
 
     /// <summary>Published when a crafting session record is updated.</summary>
-    public static Task<bool> PublishCraftingSessionUpdatedAsync(
+    public static Task<bool> PublishCraftSessionUpdatedAsync(
         this IMessageBus messageBus,
-        CraftingSessionUpdatedEvent eventData,
+        CraftSessionUpdatedEvent eventData,
         CancellationToken cancellationToken = default)
-        => messageBus.TryPublishAsync(CraftPublishedTopics.CraftingSessionUpdated, eventData, cancellationToken);
+        => messageBus.TryPublishAsync(CraftPublishedTopics.CraftSessionUpdated, eventData, cancellationToken);
 
     /// <summary>Published when a crafting session record is deleted.</summary>
-    public static Task<bool> PublishCraftingSessionDeletedAsync(
+    public static Task<bool> PublishCraftSessionDeletedAsync(
         this IMessageBus messageBus,
-        CraftingSessionDeletedEvent eventData,
+        CraftSessionDeletedEvent eventData,
         CancellationToken cancellationToken = default)
-        => messageBus.TryPublishAsync(CraftPublishedTopics.CraftingSessionDeleted, eventData, cancellationToken);
+        => messageBus.TryPublishAsync(CraftPublishedTopics.CraftSessionDeleted, eventData, cancellationToken);
 
     /// <summary>Published when a crafting session begins with validated prerequisites.</summary>
     public static Task<bool> PublishCraftSessionStartedAsync(

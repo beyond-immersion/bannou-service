@@ -25,6 +25,21 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Events;
 
@@ -137,6 +152,122 @@ public partial class CraftRecipeCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string? DeprecationReason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published to craft.recipe.deleted when a craftrecipe is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CraftRecipeDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: craft.recipe.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "craft.recipe.deleted";
+
+    /// <summary>
+    /// Unique recipe identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("recipeId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RecipeId { get; set; } = default!;
+
+    /// <summary>
+    /// Game service this recipe belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique recipe code within the game service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Code { get; set; } = default!;
+
+    /// <summary>
+    /// Recipe paradigm (e.g., production, modification, extraction)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("recipeType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string RecipeType { get; set; } = default!;
+
+    /// <summary>
+    /// Proficiency domain
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("domain")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Domain { get; set; } = default!;
+
+    /// <summary>
+    /// Broad classification for filtering
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("category")]
+    public string? Category { get; set; } = default!;
+
+    /// <summary>
+    /// Tags for filtering and discovery
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tags")]
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this recipe can be discovered through experimentation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDiscoverable")]
+    public bool IsDiscoverable { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the craft recipe was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the craft recipe was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this craft recipe is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the craft recipe was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
 
 }
 
@@ -259,22 +390,30 @@ public partial class CraftRecipeUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to craft.recipe.deleted when a craftrecipe is deleted
+/// Published to craft.session.created when a craftsession is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CraftRecipeDeletedEvent : BaseServiceEvent
+public partial class CraftSessionCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: craft.recipe.deleted
+    /// Event type identifier: craft.session.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "craft.recipe.deleted";
+    public override string EventName { get; set; } = "craft.session.created";
 
     /// <summary>
-    /// Unique recipe identifier
+    /// Session identifier (equals contractInstanceId)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Recipe being crafted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("recipeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -282,57 +421,38 @@ public partial class CraftRecipeDeletedEvent : BaseServiceEvent
     public System.Guid RecipeId { get; set; } = default!;
 
     /// <summary>
-    /// Game service this recipe belongs to
+    /// Primary entity performing the craft
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
+    public System.Guid EntityId { get; set; } = default!;
 
     /// <summary>
-    /// Unique recipe code within the game service
+    /// Type of the primary entity
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Code { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
-    /// Recipe paradigm (e.g., production, modification, extraction)
+    /// Code of the next step to complete
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("recipeType")]
+    [System.Text.Json.Serialization.JsonPropertyName("currentStepCode")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string RecipeType { get; set; } = default!;
+    public string CurrentStepCode { get; set; } = default!;
 
     /// <summary>
-    /// Proficiency domain
+    /// Quality accumulated from completed steps
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("domain")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Domain { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("accumulatedQuality")]
+    public double AccumulatedQuality { get; set; } = default!;
 
     /// <summary>
-    /// Broad classification for filtering
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string? Category { get; set; } = default!;
-
-    /// <summary>
-    /// Tags for filtering and discovery
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this recipe can be discovered through experimentation
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isDiscoverable")]
-    public bool IsDiscoverable { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the craft recipe was created
+    /// Timestamp when the craft session was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -340,31 +460,92 @@ public partial class CraftRecipeDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the craft recipe was last updated (set to createdAt on creation)
+    /// Timestamp when the craft session was last updated (set to createdAt on creation)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
-    /// <summary>
-    /// Whether this craft recipe is deprecated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
-    public bool IsDeprecated { get; set; } = default!;
+}
+
+/// <summary>
+/// Published to craft.session.deleted when a craftsession is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CraftSessionDeletedEvent : BaseServiceEvent
+{
 
     /// <summary>
-    /// When the craft recipe was deprecated (null if not deprecated)
+    /// Event type identifier: craft.session.deleted
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "craft.session.deleted";
 
     /// <summary>
-    /// Reason for deprecation (null if not deprecated)
+    /// Session identifier (equals contractInstanceId)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? DeprecationReason { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Recipe being crafted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("recipeId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RecipeId { get; set; } = default!;
+
+    /// <summary>
+    /// Primary entity performing the craft
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EntityId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of the primary entity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
+
+    /// <summary>
+    /// Code of the next step to complete
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currentStepCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CurrentStepCode { get; set; } = default!;
+
+    /// <summary>
+    /// Quality accumulated from completed steps
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accumulatedQuality")]
+    public double AccumulatedQuality { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the craft session was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the craft session was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")
@@ -375,19 +556,19 @@ public partial class CraftRecipeDeletedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to craft.crafting-session.created when a craftingsession is created
+/// Published to craft.session.updated when a craftsession is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CraftingSessionCreatedEvent : BaseServiceEvent
+public partial class CraftSessionUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: craft.crafting-session.created
+    /// Event type identifier: craft.session.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "craft.crafting-session.created";
+    public override string EventName { get; set; } = "craft.session.updated";
 
     /// <summary>
     /// Session identifier (equals contractInstanceId)
@@ -437,7 +618,7 @@ public partial class CraftingSessionCreatedEvent : BaseServiceEvent
     public double AccumulatedQuality { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the crafting session was created
+    /// Timestamp when the craft session was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -445,87 +626,7 @@ public partial class CraftingSessionCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the crafting session was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Published to craft.crafting-session.updated when a craftingsession is updated
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CraftingSessionUpdatedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: craft.crafting-session.updated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "craft.crafting-session.updated";
-
-    /// <summary>
-    /// Session identifier (equals contractInstanceId)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Recipe being crafted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("recipeId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RecipeId { get; set; } = default!;
-
-    /// <summary>
-    /// Primary entity performing the craft
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EntityId { get; set; } = default!;
-
-    /// <summary>
-    /// Type of the primary entity
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entityType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EntityType EntityType { get; set; } = default!;
-
-    /// <summary>
-    /// Code of the next step to complete
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("currentStepCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string CurrentStepCode { get; set; } = default!;
-
-    /// <summary>
-    /// Quality accumulated from completed steps
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accumulatedQuality")]
-    public double AccumulatedQuality { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the crafting session was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the crafting session was last updated (set to createdAt on creation)
+    /// Timestamp when the craft session was last updated (set to createdAt on creation)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -539,92 +640,6 @@ public partial class CraftingSessionUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to craft.crafting-session.deleted when a craftingsession is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CraftingSessionDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: craft.crafting-session.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "craft.crafting-session.deleted";
-
-    /// <summary>
-    /// Session identifier (equals contractInstanceId)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Recipe being crafted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("recipeId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RecipeId { get; set; } = default!;
-
-    /// <summary>
-    /// Primary entity performing the craft
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EntityId { get; set; } = default!;
-
-    /// <summary>
-    /// Type of the primary entity
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entityType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EntityType EntityType { get; set; } = default!;
-
-    /// <summary>
-    /// Code of the next step to complete
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("currentStepCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string CurrentStepCode { get; set; } = default!;
-
-    /// <summary>
-    /// Quality accumulated from completed steps
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accumulatedQuality")]
-    public double AccumulatedQuality { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the crafting session was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the crafting session was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

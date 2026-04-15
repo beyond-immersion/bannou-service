@@ -48,6 +48,13 @@ public static class ActorEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(ActorPublishedTopics.ActorInstanceCreated, eventData, cancellationToken);
 
+    /// <summary>Published when an actor instance's control plane fields change (status, characterId, nodeId). Dual-publishes alongside semantic action events per FOUNDATION TENETS T5.</summary>
+    public static Task<bool> PublishActorInstanceUpdatedAsync(
+        this IMessageBus messageBus,
+        ActorInstanceUpdatedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(ActorPublishedTopics.ActorInstanceUpdated, eventData, cancellationToken);
+
     /// <summary>Published when an actor instance is stopped and removed.</summary>
     public static Task<bool> PublishActorInstanceDeletedAsync(
         this IMessageBus messageBus,

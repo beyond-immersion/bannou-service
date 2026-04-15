@@ -110,16 +110,17 @@ No members. Exist for type safety at the composer/bridge boundary.
 | Field | Type | Purpose |
 |-------|------|---------|
 | `Name` | `string` | Project identifier (often matches variant name) |
-| `Variant` | `CharacterVariant` | Model path, equipment list, material overrides, scale (from sprite-theory) |
+| `Variant` | `CharacterVariant` | Model path, equipment list, material overrides, scale, `PivotOverride` (from sprite-theory) |
 | `Rigs` | `IReadOnlyList<CameraRig>` | Camera rigs to capture with (from sprite-theory) |
 | `SelectedAnimationNames` | `IReadOnlyList<string>` | Explicit capture-list (stored sorted alphabetically for deterministic iteration) |
 | `AnimationConfigs` | `IReadOnlyDictionary<string, AnimationConfig>` | Per-animation overrides keyed by animation name (from sprite-theory) |
 | `DefaultAnimationConfig` | `AnimationConfig` | Defaults when no per-animation override exists |
 | `ExportOptions` | `ExportOptions` | Output paths, filenames, encoder |
 | `NormalMapOptions` | `NormalMapOptions?` | Null = use sprite-theory defaults |
-| `PivotOverride` | `Vector2?` | Null = use sprite-theory default (0.5, 0.85); otherwise overrides all frame pivots |
-| `CustomProperties` | `Dictionary<string, string>?` | Game-specific opaque metadata (propagates to SpriteSheet) |
+| `CustomProperties` | `IReadOnlyDictionary<string, string>?` | Game-specific opaque metadata (propagates to SpriteSheet) |
 | `SchemaVersion` | `string` | "1.0" (project file format version) |
+
+**Pivot policy**: Per-variant pivot override lives on `CharacterVariant.PivotOverride` (sprite-theory), not on `SpriteProject`. `BuildSpriteFrames` resolves per-frame pivot as `project.Variant.PivotOverride ?? PivotComputer.ComputeFromBounds(bounds, cameraParams)` with `PivotComputer.DefaultHumanoidPivot` as the terminal fallback.
 
 ### ExportOptions
 
@@ -518,14 +519,13 @@ CloseProject()
 // Build empty project with defaults
 SET Project ← new SpriteProject(
     Name: variant.Name,
-    Variant: variant,
+    Variant: variant,                                  // variant.PivotOverride is the single source of truth
     Rigs: rigs,
     SelectedAnimationNames: new List<string>(),
     AnimationConfigs: new Dictionary<string, AnimationConfig>(),
     DefaultAnimationConfig: new AnimationConfig(),     // sprite-theory defaults
     ExportOptions: ExportOptions.Default,
     NormalMapOptions: null,
-    PivotOverride: null,
     CustomProperties: null,
     SchemaVersion: "1.0")
 SET IsDirty ← false
@@ -904,8 +904,16 @@ FOREACH rig IN project.Rigs
       GroupByAnimation: true)
   COMPUTE atlasLayout ← AtlasPacker.Pack(packInputs, atlasOptions)     // sprite-theory
 
+  // Resolve pivot once per rig (bounds + camera params are rig/angle-stable):
+  //   1. variant.PivotOverride if explicitly set (subjects with non-humanoid proportions)
+  //   2. else PivotComputer.ComputeFromBounds for auto-derivation from model geometry
+  //   3. else PivotComputer.DefaultHumanoidPivot as terminal fallback (handled inside PivotComputer)
+  COMPUTE modelBounds ← capturesByRig[rig].First().InternalModelBounds     // cached at capture time
+  COMPUTE rigOrthoParams ← OrthographicSetup.Compute(rig.Angles[0], modelBounds, rig.FrameSize)   // sprite-theory
+  COMPUTE resolvedPivot ← project.Variant.PivotOverride
+                           ?? PivotComputer.ComputeFromBounds(modelBounds, rigOrthoParams)        // sprite-theory
+
   // Build captured SpriteFrames
-  COMPUTE defaultPivot ← project.PivotOverride ?? new Vector2(0.5f, 0.85f)
   COMPUTE capturedSpriteFrames ← new List<SpriteFrame>()
   ITERATE i FROM 0 TO rigFrames.Count - 1
     COMPUTE c ← rigFrames[i]
@@ -923,7 +931,7 @@ FOREACH rig IN project.Rigs
         FrameInAnimation: c.FrameIndex,
         Rect: new Rectangle(placement.X, placement.Y, placement.Width, placement.Height),
         TrimmedRect: null,                           // Trimming not yet implemented
-        Pivot: defaultPivot,
+        Pivot: resolvedPivot,
         Duration: duration,
         IsMirror: false,
         MirrorSourceIndex: null)

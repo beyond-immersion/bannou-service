@@ -282,6 +282,10 @@ public sealed class ActorRunner : IActorRunner
             Category = Category
         }, cancellationToken);
 
+        // Dual-publish lifecycle updated per FOUNDATION TENETS T5
+        await PublishActorInstanceUpdatedEventAsync(
+            new[] { "status", "nodeId", "startedAt" }, cancellationToken);
+
         // If spawned with a characterId already set, emit bound event so consumers
         // always see a character-bound event regardless of spawn-bound vs hot-swap
         if (CharacterId.HasValue)
@@ -295,6 +299,10 @@ public sealed class ActorRunner : IActorRunner
                 RealmId = RealmId,
                 PreviousCharacterId = null
             }, cancellationToken);
+
+            // Dual-publish lifecycle updated per FOUNDATION TENETS T5
+            await PublishActorInstanceUpdatedEventAsync(
+                new[] { "characterId" }, cancellationToken);
         }
     }
 
@@ -394,6 +402,10 @@ public sealed class ActorRunner : IActorRunner
             RealmId = RealmId,
             PreviousCharacterId = previousCharacterId
         }, cancellationToken);
+
+        // Dual-publish lifecycle updated per FOUNDATION TENETS T5
+        await PublishActorInstanceUpdatedEventAsync(
+            new[] { "characterId" }, cancellationToken);
 
         _logger.LogInformation("Actor {ActorId} bound to character {CharacterId}", ActorId, characterId);
     }
@@ -1569,6 +1581,29 @@ public sealed class ActorRunner : IActorRunner
         merged.AddRange(instanceOverrides.Overrides);
 
         return new CognitionOverrides { Overrides = merged };
+    }
+
+    /// <summary>
+    /// Publishes an ActorInstanceUpdatedEvent with the current full state and the specified changed fields.
+    /// Used for dual-publishing alongside semantic action events per FOUNDATION TENETS T5.
+    /// </summary>
+    private async Task PublishActorInstanceUpdatedEventAsync(
+        string[] changedFields, CancellationToken ct)
+    {
+        await _messageBus.PublishActorInstanceUpdatedAsync(new ActorInstanceUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ActorId = ActorId,
+            TemplateId = TemplateId,
+            CharacterId = CharacterId,
+            NodeId = NodeId,
+            Status = Status,
+            StartedAt = _startedAt,
+            CreatedAt = _startedAt,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            ChangedFields = changedFields,
+        }, ct);
     }
 
     /// <summary>

@@ -343,11 +343,11 @@ The canonical output format. Engine-agnostic, parseable by any language:
     "frameSize": { "width": 96, "height": 96 },
     "padding": 2,
     "angles": [
-      { "name": "N", "yaw": 0, "pitch": -55, "canMirror": false },
-      { "name": "NE", "yaw": 45, "pitch": -55, "canMirror": true, "mirrorTarget": "NW" },
-      { "name": "E", "yaw": 90, "pitch": -55, "canMirror": true, "mirrorTarget": "W" },
-      { "name": "SE", "yaw": 135, "pitch": -55, "canMirror": true, "mirrorTarget": "SW" },
-      { "name": "S", "yaw": 180, "pitch": -55, "canMirror": false }
+      { "name": "N", "yaw": 0, "pitch": -55, "producesMirror": false },
+      { "name": "NE", "yaw": 45, "pitch": -55, "producesMirror": true, "mirrorTargetName": "NW" },
+      { "name": "E", "yaw": 90, "pitch": -55, "producesMirror": true, "mirrorTargetName": "W" },
+      { "name": "SE", "yaw": 135, "pitch": -55, "producesMirror": true, "mirrorTargetName": "SW" },
+      { "name": "S", "yaw": 180, "pitch": -55, "producesMirror": false }
     ]
   },
   "atlasWidth": 2048,
@@ -544,7 +544,7 @@ The `CaptureSession` orchestrates the full capture workflow:
 CaptureSession.ExecuteAsync(project, bridge, progress, ct)
 
   FOR EACH rig IN project.Rigs:
-    FOR EACH captureAngle IN rig.Angles WHERE NOT angle.CanMirror:
+    FOR EACH captureAngle IN rig.Angles:   // Every angle IS rendered; ProducesMirror is additive metadata
       bridge.ConfigureCamera(captureAngle, modelBounds, rig.FrameSize)
 
       FOR EACH animation IN project.Animations:
@@ -590,13 +590,13 @@ A `SpriteProject` captures the complete configuration for reproducible captures:
 ```
 SpriteProject
 ├── Name: string                                # "Warrior"
-├── Variant: CharacterVariant                   # Model + equipment definition
+├── Variant: CharacterVariant                   # Model + equipment + PivotOverride (see § Part 3)
 ├── Rigs: IReadOnlyList<CameraRig>              # Camera rigs to capture with
-├── AnimationConfigs: Dictionary<string, AnimationConfig>  # Per-animation overrides
+├── AnimationConfigs: IReadOnlyDictionary<string, AnimationConfig>  # Per-animation overrides
 ├── DefaultAnimationConfig: AnimationConfig     # Defaults for unconfigured animations
-├── ExportOptions: ExportOptions                # Output paths and naming
-├── NormalMapOptions: NormalMapOptions?          # Normal map generation settings
-└── Metadata: Dictionary<string, string>        # Game-specific metadata to embed in output
+├── ExportOptions: ExportOptions                # Output paths, filenames, IAtlasEncoder (see § Part 10)
+├── NormalMapOptions: NormalMapOptions?         # Normal map generation settings
+└── Metadata: IReadOnlyDictionary<string, string>  # Game-specific metadata to embed in output
 ```
 
 Projects serialize to JSON and can be shared across team members or stored in version control. This is the input format that a future SpriteBatcher would consume.
@@ -921,14 +921,19 @@ Pure computation. Zero dependencies. Fully unit-testable.
 2. `OrthographicSetup` — compute ortho camera parameters from character bounds + angle
 3. `AnimationSampling`, `FrameSequence` — uniform and keyframe-aligned frame timing
 4. `AtlasPacker` with MaxRects — bin-packing with configurable options
-5. `MirrorOptimizer` — compute which angles mirror, generate metadata
-6. `SpriteSheet`, `SpriteFrame`, `SpriteAnimation`, `CharacterVariant` — output metadata types
-7. `SpriteSheetSerializer` — JSON serialization/deserialization of the metadata schema
-8. `DepthToNormal` — Sobel-based normal map generation from depth data
-9. `IPixelSource`, `IDepthSource` — engine-agnostic raw data abstractions
-10. Comprehensive unit tests for all of the above
+5. `MultiAtlasStrategy` — overflow handling when frames exceed a single atlas's MaxSize
+6. `MirrorOptimizer` — compute which angles produce mirrors, generate derived frame metadata
+7. `PivotComputer` — auto-derive pivots from bounds + camera (feet-on-ground projection)
+8. `SpriteSheet`, `SpriteFrame`, `SpriteAnimation`, `CharacterVariant` — output metadata types
+9. `SpriteSheetSerializer` — JSON serialization/deserialization of the metadata schema
+10. `DepthToNormal` — Sobel-based normal map generation from depth data
+11. `IPixelSource`, `IDepthSource` — engine-agnostic raw data abstractions
+12. `AtlasAssembler` — compose captured frames into atlas RGBA byte arrays (PNG encoding is the consumer's responsibility — see § Part 10)
+13. Comprehensive unit tests for all of the above
 
 **Directory**: `sdks/sprite-theory/` + `sdks/sprite-theory.tests/`
+
+**Status**: Phase 1 implemented on 2026-04-15 (87 unit tests, 0 warnings, 0 errors). See `docs/sdks/SPRITE-THEORY.md` for the deep dive and `docs/sdks/maps/SPRITE-THEORY.md` for the method-level map.
 
 ### Phase 2: sprite-composer (Week 2-3)
 
@@ -1003,6 +1008,7 @@ This follows the same pattern as a scene-composer project — a Stride game that
 3. **Output format** → Generic JSON + PNG. Engine-agnostic. sprite-theory defines the schema.
 4. **Scope** → Editor first, SpriteBatcher documented as future (Phase 2 in project lifecycle).
 5. **Normal maps** → Yes, via depth buffer capture. Dead Cells technique for 2D dynamic lighting.
+6. **Pivot point determination** (2026-04-15) → Auto-compute from bounding box with per-variant override. Implemented via `PivotComputer.ComputeFromBounds` (sprite-theory) and `CharacterVariant.PivotOverride`. Default fallback remains `(0.5, 0.85)` as a terminal when the camera basis is degenerate. See § Part 10 Resolved Decisions.
 
 ### Requires Investigation
 
@@ -1015,8 +1021,6 @@ This follows the same pattern as a scene-composer project — a Stride game that
 4. **FBX import without Game Studio**: For the standalone tool path (Option B), can Stride's Assimp pipeline be invoked programmatically at runtime? This would enable loading raw FBX files without pre-compiling through Game Studio. Not needed for Phase 3 (Defenders will use compiled assets), but affects the standalone tool story. **Investigation path**: `Stride.Importer.FBX`, `Stride.Assets.Models`.
 
 5. **Large atlas handling**: When a character variant produces more frames than fit in a single 4096×4096 atlas, `MultiAtlasStrategy` splits across multiple PNG files. How does the game engine consumer handle multi-atlas sprite sheets? The JSON metadata supports it (each frame references its atlas file), but the game-side sprite renderer needs to handle texture switching. **Resolution**: game-specific concern, not SDK concern — document the multi-atlas format and let consumers handle it.
-
-6. **Pivot point determination**: The default pivot (`0.5, 0.85` — center-bottom biased) works for humanoid characters standing on the ground. Characters with different proportions (flying enemies, tall bosses, quadrupeds) need different pivots. Should the bridge auto-detect the pivot from the character's bounding box, or should it be configured per variant? **Recommendation**: auto-compute from bounding box with per-variant override.
 
 ### Design Considerations
 
@@ -1056,6 +1060,76 @@ This follows the same pattern as a scene-composer project — a Stride game that
 2. **scene-composer**: Scene documents could reference sprite sheet assets for 2D entity placement in level editing.
 
 3. **The Defenders game project**: The runtime sprite rendering system (not part of this SDK) would consume the JSON metadata to drive sprite animation, handle mirror flips, and sample normal maps for dynamic lighting.
+
+---
+
+## Part 10: Resolved Decisions
+
+Decisions ratified during and after sprite-theory's Phase 1 implementation (2026-04-15). Each entry names the decision, what it supersedes in this planning document, and why. Downstream documents (deep dive, implementation map) reflect the resolved state.
+
+### 10.1: CaptureAngle uses `ProducesMirror` (additive), not `CanMirror` (skip-flag)
+
+**Supersedes**: The initial Part 3 CaptureAngle type listing showed `CanMirror: bool # If true, a mirrored version is generated instead of captured`, and the capture session pseudocode iterated `rig.Angles WHERE NOT angle.CanMirror`. Both are now incorrect.
+
+**Ratified design**: `ProducesMirror: bool` on `CaptureAngle` is additive metadata. **Every `CaptureAngle` in `rig.Angles` is rendered by the bridge.** When `ProducesMirror = true`, `MirrorOptimizer` additionally produces a derived `SpriteFrame` with `IsMirror = true`, `MirrorSourceIndex` pointing to the source, a flipped pivot, and the same atlas rect (no new pixels). Mirror target angles ("NW", "left", etc.) never appear in `rig.Angles` — they exist only in the `SpriteSheet.Frames` output.
+
+**Why**: Rigs expressing "what the bridge must render" is cleaner than rigs expressing "what the world conceptually contains with some entries marked skip-me." The additive design means rig enumeration = render count, with no filtering step. The preset factories (`SideViewBrawler`, `TopDown8Dir`, `TopDown4Dir`) produce 1, 5, and 3 angles respectively — all rendered — matching the "Captured" column of the Mirror Optimization table.
+
+**Code location**: `sdks/sprite-theory/Camera/CaptureAngle.cs`, `sdks/sprite-theory/Mirror/MirrorOptimizer.cs`, `sdks/sprite-theory/Camera/CameraRigPresets.cs`.
+
+### 10.2: PNG encoding is the consumer's responsibility, not sprite-theory's
+
+**Supersedes**: The initial Part 3 project structure listed `PngWriter.cs # Minimal PNG encoder (or use System.Drawing.Common / ImageSharp)`. The Phase 1 Deliverables list did not include it. The plan's parenthetical "or use library" hinted that the author hadn't fully settled the question.
+
+**Ratified design**: `AtlasAssembler.Assemble` returns raw RGBA `byte[][]` — one byte array per atlas. Sprite-theory does not ship a PNG encoder. The composer-layer introduces `IAtlasEncoder { byte[] EncodeRgba(byte[] rgba, int width, int height); }`, which engine bridges implement using their engine's native PNG encoder:
+
+| Engine | Native API |
+|--------|-----------|
+| Stride | `Stride.Graphics.Image.Save(stream, ImageFileType.Png)` via `Texture.GetDataAsImage()` |
+| Godot | `Godot.Image.save_png(path)` / `save_png_to_buffer()` |
+| Unity | `UnityEngine.ImageConversion.EncodeToPNG()` / `Texture2D.EncodeToPNG()` |
+
+**Why**: Every target engine bridges already ship a PNG encoder in their graphics package — the bridge pays zero additional dependency cost. Adding `SixLabors.ImageSharp` to sprite-theory (the other feasible path) creates a commercial licensing trap: ImageSharp's Apache 2.0 license is conditional on consumer annual revenue under $1M USD; above that threshold the Six Labors commercial license is required. This is incompatible with the "permissive licenses only" spirit of the Bannou licensing tenet and would propagate to every consumer of sprite-theory. A hand-rolled DEFLATE-based encoder in sprite-theory would duplicate functionality that every consumer already has, at the cost of maintaining compression code forever.
+
+**Code location**: `sdks/sprite-theory/Export/AtlasAssembler.cs` (returns `byte[][]`). The `IAtlasEncoder` surface is specified in the sprite-composer deep dive and map (awaiting implementation).
+
+### 10.3: `MultiAtlasStrategy` is a separate static class (as the plan's project structure showed)
+
+**Supersedes**: An interim implementation inlined the overflow logic into `AtlasPacker.Pack`. The plan's Part 3 project structure listed `MultiAtlasStrategy.cs` as a distinct file.
+
+**Ratified design**: `MultiAtlasStrategy.OpenNextAtlas` is a separate static class in `sdks/sprite-theory/Atlas/`. `AtlasPacker.Pack` delegates when `FindBestRect` returns null. `OpenNextAtlas` pre-validates that the padded frame can fit in a max-sized atlas (fails fast before mutating any state), clears the free rectangle list, and returns `(NewAtlasIndex, Placement)` — the single free rect on a fresh atlas covers the full atlas from origin, which is also the placement rect.
+
+**Why**: Matches the plan's structure listing and Bannou's "one static class per concept" pattern (see `AnimationSampling`, `MirrorOptimizer`, `PivotComputer`, `DepthToNormal` — each a separate static class for one concept). Makes the overflow concept independently testable and discoverable.
+
+**Code location**: `sdks/sprite-theory/Atlas/MultiAtlasStrategy.cs`.
+
+### 10.4: Projection math stays inline in `OrthographicSetup` (no separate `ProjectionMath.cs`)
+
+**Supersedes**: The initial Part 3 project structure listed `ProjectionMath.cs # Orthographic/perspective projection utilities`.
+
+**Ratified design**: All projection math lives inside `OrthographicSetup.Compute` (steps 1–7). No separate `ProjectionMath.cs` exists.
+
+**Why**: Every projection operation in sprite-theory is orthographic-specific and used by exactly one caller. The hypothetical shared utilities a `ProjectionMath` class might expose (perspective projection, generic spherical-to-Cartesian helpers) have no second consumer — perspective projection has no implementation and the spherical-to-Cartesian transform is bound to the camera's (yaw, pitch) input shape. Extracting thin wrappers over single-caller code would be speculative abstraction without a concrete use case. If perspective projection is added later (currently a `ProjectionType.Perspective` enum value with no implementation), `ProjectionMath` can be introduced then alongside a second caller.
+
+**Code location**: `sdks/sprite-theory/Camera/OrthographicSetup.cs`.
+
+### 10.5: `MotionAnalysis.cs` deferred (was already plan-tagged "future")
+
+**Supersedes**: The initial Part 3 project structure listed `MotionAnalysis.cs # Analyze animation to suggest optimal frame counts (future)`.
+
+**Ratified design**: Not in Phase 1. The plan already tagged this as future; the omission is plan-authorized, not a deviation. The project structure listing has been updated to remove the entry to avoid future audits flagging its absence.
+
+**Code location**: N/A (not implemented).
+
+### 10.6: Immutable collection interfaces on record fields
+
+**Supersedes**: The initial type listings showed `Dictionary<string, string>?` on `CharacterVariant.MaterialOverrides`, `SpriteSheet.CustomProperties`, and `SpriteAnimation.AngleFrameMap`.
+
+**Ratified design**: Those fields use `IReadOnlyDictionary<string, string>?` (or `IReadOnlyDictionary<string, int[]>` for `AngleFrameMap`). This matches the immutability contract the deep dive claims for SDK records and matches the existing pattern on sibling fields (`IReadOnlyList<EquipmentSlot> Equipment` on `CharacterVariant`, `IReadOnlyList<AtlasInfo> Atlases` on `SpriteSheet`).
+
+**Why**: Record types are reference-immutable but `Dictionary<,>` contents are mutable. A consumer holding a returned `SpriteSheet` could corrupt shared state by mutating its `CustomProperties`. `IReadOnlyDictionary<,>` is the interface that matches the record's immutability guarantee. System.Text.Json round-trips `IReadOnlyDictionary<string, T>` natively in .NET 6+ via a `Dictionary<,>` backing.
+
+**Code location**: `sdks/sprite-theory/Metadata/CharacterVariant.cs`, `sdks/sprite-theory/Metadata/SpriteSheet.cs`, `sdks/sprite-theory/Metadata/SpriteAnimation.cs`.
 
 ---
 

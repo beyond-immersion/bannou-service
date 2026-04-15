@@ -238,8 +238,8 @@ public class GenesisServiceTemplateTests : ServiceTestBase<GenesisServiceConfigu
         Assert.NotNull(savedModel);
         Assert.Equal(request.TemplateCode, savedModel.TemplateCode);
         Assert.False(savedModel.IsDeprecated);
-        Assert.Equal(GenesisPublishedTopics.TemplateCreated, capturedTopic);
-        var typedEvent = Assert.IsType<TemplateCreatedEvent>(capturedEvent);
+        Assert.Equal(GenesisPublishedTopics.GenesisTemplateCreated, capturedTopic);
+        var typedEvent = Assert.IsType<GenesisTemplateCreatedEvent>(capturedEvent);
         Assert.Equal(request.TemplateCode, typedEvent.TemplateCode);
     }
 
@@ -382,8 +382,8 @@ public class GenesisServiceTemplateTests : ServiceTestBase<GenesisServiceConfigu
         Assert.True(savedModel.IsDeprecated);
         Assert.NotNull(savedModel.DeprecatedAt);
         Assert.Equal("No longer needed", savedModel.DeprecationReason);
-        Assert.Equal(GenesisPublishedTopics.TemplateUpdated, capturedTopic);
-        var typedEvent = Assert.IsType<TemplateUpdatedEvent>(capturedEvent);
+        Assert.Equal(GenesisPublishedTopics.GenesisTemplateUpdated, capturedTopic);
+        var typedEvent = Assert.IsType<GenesisTemplateUpdatedEvent>(capturedEvent);
         Assert.Contains("IsDeprecated", typedEvent.ChangedFields);
     }
 

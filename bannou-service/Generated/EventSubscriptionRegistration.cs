@@ -153,8 +153,8 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<LocationEntityDepartedEvent>("location.entity-departed");
 
         // From genesis-service-events.yaml
-        EventSubscriptionRegistry.Register<EntityCreatedEvent>("genesis.entity.created");
-        EventSubscriptionRegistry.Register<EntityDeletedEvent>("genesis.entity.deleted");
+        EventSubscriptionRegistry.Register<GenesisEntityCreatedEvent>("genesis.entity.created");
+        EventSubscriptionRegistry.Register<GenesisEntityDeletedEvent>("genesis.entity.deleted");
 
         // From inventory-service-events.yaml
         EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");

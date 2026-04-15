@@ -30,15 +30,15 @@ info:
     - topic: craft.recipe.deleted
       event: CraftRecipeDeletedEvent
       description: Published when a deprecated recipe is permanently removed via clean-deprecated
-    # CraftingSession lifecycle events (auto-generated from x-lifecycle, required by instanceEntity)
+    # CraftSession lifecycle events (auto-generated from x-lifecycle, required by instanceEntity)
     - topic: craft.session.created
-      event: CraftingSessionCreatedEvent
+      event: CraftSessionCreatedEvent
       description: Published when a crafting session record is created
     - topic: craft.session.updated
-      event: CraftingSessionUpdatedEvent
+      event: CraftSessionUpdatedEvent
       description: Published when a crafting session record is updated
     - topic: craft.session.deleted
-      event: CraftingSessionDeletedEvent
+      event: CraftSessionDeletedEvent
       description: Published when a crafting session record is deleted
     # Custom events — Session
     - topic: craft.session.started
@@ -74,7 +74,7 @@ x-lifecycle:
   topic_prefix: craft
   CraftRecipe:
     deprecation: true
-    instanceEntity: CraftingSession
+    instanceEntity: CraftSession
     model:
       recipeId: { type: string, format: uuid, primary: true, required: true, description: "Unique recipe identifier" }
       gameServiceId: { type: string, format: uuid, required: true, description: "Game service this recipe belongs to" }
@@ -89,7 +89,7 @@ x-lifecycle:
           type: string
         description: "Tags for filtering and discovery"
       isDiscoverable: { type: boolean, required: true, description: "Whether this recipe can be discovered through experimentation" }
-  CraftingSession:
+  CraftSession:
     model:
       sessionId: { type: string, format: uuid, primary: true, required: true, description: "Session identifier (equals contractInstanceId)" }
       recipeId: { type: string, format: uuid, required: true, description: "Recipe being crafted" }

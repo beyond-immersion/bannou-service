@@ -13,10 +13,10 @@ using BeyondImmersion.Bannou.Core;
 
 namespace BeyondImmersion.BannouService.Events;
 
-public partial class TemplateCreatedEvent : ILifecycleCreatedEvent, IDeprecatableEntity { }
-public partial class TemplateUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
-public partial class TemplateDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }
+public partial class GenesisTemplateCreatedEvent : ILifecycleCreatedEvent, IDeprecatableEntity { }
+public partial class GenesisTemplateUpdatedEvent : ILifecycleUpdatedEvent, IDeprecatableEntity { }
+public partial class GenesisTemplateDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }
 
-public partial class EntityCreatedEvent : ILifecycleCreatedEvent { }
-public partial class EntityUpdatedEvent : ILifecycleUpdatedEvent { }
-public partial class EntityDeletedEvent : ILifecycleDeletedEvent { }
+public partial class GenesisEntityCreatedEvent : ILifecycleCreatedEvent { }
+public partial class GenesisEntityUpdatedEvent : ILifecycleUpdatedEvent { }
+public partial class GenesisEntityDeletedEvent : ILifecycleDeletedEvent { }

@@ -240,20 +240,21 @@ The complete configuration for a reproducible capture. Serializable, version-con
 
 ```
 SpriteProject
-├── Name: string                                           // "warrior" (often matches variant name)
-├── Variant: CharacterVariant                              // Model path, equipment, materials, scale (from sprite-theory)
-├── Rigs: IReadOnlyList<CameraRig>                         // Camera rigs to capture with (from sprite-theory)
-├── SelectedAnimationNames: IReadOnlyList<string>          // Explicit capture-list (sorted alphabetically for deterministic order)
-├── AnimationConfigs: Dictionary<string, AnimationConfig>  // Per-animation overrides keyed by animation name
-├── DefaultAnimationConfig: AnimationConfig                // Defaults for animations without explicit config
-├── ExportOptions: ExportOptions                           // Output paths, filenames, which rigs to export
-├── NormalMapOptions: NormalMapOptions?                    // Null = use sprite-theory defaults (Strength=1.0, BlurRadius=0)
-├── PivotOverride: Vector2?                                // Null = use sprite-theory default (0.5, 0.85)
-├── CustomProperties: Dictionary<string, string>?          // Game-specific opaque metadata (propagates to SpriteSheet output)
-└── SchemaVersion: string                                  // "1.0" — project file format version
+├── Name: string                                                        // "warrior" (often matches variant name)
+├── Variant: CharacterVariant                                           // Model path, equipment, materials, scale, PivotOverride (from sprite-theory)
+├── Rigs: IReadOnlyList<CameraRig>                                      // Camera rigs to capture with (from sprite-theory)
+├── SelectedAnimationNames: IReadOnlyList<string>                       // Explicit capture-list (sorted alphabetically for deterministic order)
+├── AnimationConfigs: IReadOnlyDictionary<string, AnimationConfig>      // Per-animation overrides keyed by animation name
+├── DefaultAnimationConfig: AnimationConfig                             // Defaults for animations without explicit config
+├── ExportOptions: ExportOptions                                        // Output paths, filenames, which rigs to export
+├── NormalMapOptions: NormalMapOptions?                                 // Null = use sprite-theory defaults (Strength=1.0, BlurRadius=0)
+├── CustomProperties: IReadOnlyDictionary<string, string>?              // Game-specific opaque metadata (propagates to SpriteSheet output)
+└── SchemaVersion: string                                               // "1.0" — project file format version
 ```
 
 **Animation config resolution**: During capture, for each animation X in `SelectedAnimationNames`, the composer resolves `AnimationConfigs[X] ?? DefaultAnimationConfig`. This lets projects set one default (e.g., `FrameCount=8, LoopMode=Loop`) and override only specific animations that need different treatment (e.g., `attack_heavy` with `FrameCount=16` and `LoopMode=None`).
+
+**Pivot resolution**: The per-variant pivot override lives on `CharacterVariant.PivotOverride` (sprite-theory), not on `SpriteProject`. During assembly, the composer resolves `SpriteFrame.Pivot` in order: `project.Variant.PivotOverride` if non-null → else `PivotComputer.ComputeFromBounds(modelBounds, orthographicParameters)` → else `PivotComputer.DefaultHumanoidPivot` `(0.5, 0.85)` as the terminal fallback. Mirror frames apply `FlipPivot` to the resolved pivot via `MirrorOptimizer.GenerateMirrorFrames`.
 
 **Why project-level rigs, not global presets**: Each project can define its own rigs (typically by calling `CameraRigPresets.TopDown8Dir()` + `CameraRigPresets.SideViewBrawler()`), but custom rigs are fully supported. A project for a flying enemy might use a top-down-only rig; a wall-mounted trap might use a fixed-angle single-view rig.
 
@@ -290,12 +291,14 @@ IAtlasEncoder
       Encode raw RGBA pixel data into the final file bytes (typically PNG).
 ```
 
-Reference implementations live outside sprite-composer:
-- **ImageSharp** (Apache 2.0) in a thin adapter — most projects
-- **Stride** has built-in PNG writing (the Stride bridge project supplies an encoder)
-- **System.Drawing.Common** — Windows-only fallback
+**Reference implementations** (engine bridges ship a default encoder using the engine's native PNG API):
+- **sprite-composer-stride** supplies a default `StrideAtlasEncoder` that uses `Stride.Graphics.Image.Save(stream, ImageFileType.Png)` — zero additional dependency beyond what the bridge already needs for render-to-texture.
+- **sprite-composer-godot** (planned) would use `Godot.Image.save_png_to_buffer()` or equivalent.
+- **sprite-composer-unity** (planned) would use `UnityEngine.ImageConversion.EncodeToPNG()`.
 
-Keeping the encoder out of sprite-composer preserves the SDK's minimal dependency profile (sprite-theory only) and lets different engine bridges supply their preferred encoder without cross-pollination.
+**ImageSharp is NOT a recommended fallback.** `SixLabors.ImageSharp` is dual-licensed: Apache 2.0 only for consumers with annual revenue under $1M USD (plus open-source projects and non-profits); above that threshold, the Six Labors commercial license applies. Adding ImageSharp as a default encoder would put consumers on a licensing trajectory where commercial success triggers a license obligation. Consumers who need a cross-engine encoder can still wire ImageSharp behind `IAtlasEncoder` themselves, accepting the licensing terms deliberately.
+
+Keeping the encoder out of sprite-composer preserves the SDK's minimal dependency profile (sprite-theory only) and lets each engine bridge supply its engine-native encoder without cross-pollination. See `docs/planning/SPRITE-COMPOSER-SDK.md` § Part 10.2 for the full ratification.
 
 ### CaptureSession
 
@@ -659,16 +662,9 @@ The core technical risk: can Stride's `AnimationProcessor` / `AnimationUpdater` 
 
 **Resolution**: This is a bridge-side concern that doesn't affect the composer's contract. The composer simply demands the guarantee; the bridge is responsible for fulfilling it. However, if no solution exists, it forces either a bridge-specific workaround (documented in sprite-composer-stride) or a composer-level accommodation (e.g., the composer could await multiple small delays between `SetAnimationTime` and `CaptureFrameAsync` to let the animation system settle — ugly, but a fallback).
 
-### 2. Pivot auto-detection
+### 2. Pivot auto-detection — RESOLVED 2026-04-15
 
-Sprite-theory's default pivot is `(0.5, 0.85)` — center-x, 85%-from-top — chosen for standing humanoids. For non-humanoid subjects, this is wrong (flying enemies have no "feet"; bosses may have different proportions; quadrupeds stand lower).
-
-**Options**:
-- **Per-variant override in `SpriteProject`** (current design): `PivotOverride: Vector2?` on the project. Explicit but requires user action. Default `null` = use sprite-theory's `(0.5, 0.85)`.
-- **Auto-compute from bounding box at capture time**: When `rig.AutoPivot = true`, the composer projects the model's bottom-most point onto the frame plane to derive a pivot. Works for most cases; fails for flying subjects (their "bottom" isn't meaningful).
-- **Per-rig override**: Some rigs might want foot-anchoring (TopDown8Dir), others might want center-anchoring (top-down-flat for flying units). Add `DefaultPivot: Vector2` to `CameraRig`. Means extending sprite-theory, not just sprite-composer.
-
-**Recommendation**: Start with per-variant override on `SpriteProject` as documented. Auto-computation is a future enhancement once the project format has at least one explicit-override data point to validate against.
+Resolved by sprite-theory's `PivotComputer.ComputeFromBounds` + `CharacterVariant.PivotOverride`. The composer's assembly pipeline resolves `SpriteFrame.Pivot` in order: `project.Variant.PivotOverride` if non-null → else `PivotComputer.ComputeFromBounds(bounds, cameraParams)` → else `PivotComputer.DefaultHumanoidPivot`. See `docs/planning/SPRITE-COMPOSER-SDK.md` § Part 10.1 for the ratified design and `docs/sdks/SPRITE-THEORY.md` for the PivotComputer contract. The previously-proposed `SpriteProject.PivotOverride` has been removed — the single source of truth is `CharacterVariant`.
 
 ### 3. Compound commands for continuous inputs
 

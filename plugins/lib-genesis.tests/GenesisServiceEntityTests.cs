@@ -246,7 +246,7 @@ public class GenesisServiceEntityTests : ServiceTestBase<GenesisServiceConfigura
         Assert.Contains("mana", response.WalletIds.Keys);
         Assert.Contains("loot", response.InventoryIds.Keys);
         _mockSeedClient.Verify(s => s.CreateSeedAsync(It.Is<CreateSeedRequest>(r => r.SeedTypeCode == template.Seed.SeedTypeCode), It.IsAny<CancellationToken>()), Times.Once);
-        Assert.Contains(capturedEvents, e => e.Topic == GenesisPublishedTopics.EntityCreated);
+        Assert.Contains(capturedEvents, e => e.Topic == GenesisPublishedTopics.GenesisEntityCreated);
     }
 
     // ===================================================================
@@ -408,7 +408,7 @@ public class GenesisServiceEntityTests : ServiceTestBase<GenesisServiceConfigura
         _mockRelationshipClient.Verify(r => r.EndRelationshipAsync(It.IsAny<EndRelationshipRequest>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockResourceClient.Verify(r => r.ExecuteCleanupAsync(It.IsAny<ExecuteCleanupRequest>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockEntityStore.Verify(s => s.DeleteAsync(GenesisService.BuildEntityKey(entityId), It.IsAny<CancellationToken>()), Times.Once);
-        Assert.Contains(GenesisPublishedTopics.EntityDeleted, capturedTopics);
+        Assert.Contains(GenesisPublishedTopics.GenesisEntityDeleted, capturedTopics);
     }
 
     // ===================================================================
@@ -480,8 +480,8 @@ public class GenesisServiceEntityTests : ServiceTestBase<GenesisServiceConfigura
         Assert.Equal(PhysicalFormType.Item, savedEntity.PhysicalFormType);
         Assert.Equal(physicalFormId, savedEntity.PhysicalFormId);
         _mockEntityCacheStore.Verify(s => s.DeleteAsync(GenesisService.BuildEntityCacheKey(entityId), It.IsAny<CancellationToken>()), Times.Once);
-        Assert.Equal(GenesisPublishedTopics.EntityUpdated, capturedTopic);
-        var typedEvent = Assert.IsType<EntityUpdatedEvent>(capturedEvent);
+        Assert.Equal(GenesisPublishedTopics.GenesisEntityUpdated, capturedTopic);
+        var typedEvent = Assert.IsType<GenesisEntityUpdatedEvent>(capturedEvent);
         Assert.Contains("PhysicalFormType", typedEvent.ChangedFields);
     }
 

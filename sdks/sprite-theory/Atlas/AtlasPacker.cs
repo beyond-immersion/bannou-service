@@ -54,24 +54,26 @@ public static class AtlasPacker
             // Best Short Side Fit: find free rect with smallest short-side remainder
             var bestRect = FindBestRect(freeRects, pw, ph);
 
+            Rectangle best;
             if (bestRect is null)
             {
-                // Multi-atlas overflow: start new atlas
-                currentAtlas++;
-                freeRects.Clear();
-                freeRects.Add(new Rectangle(0, 0, options.MaxWidth, options.MaxHeight));
-
-                // Retry BSSF on fresh atlas (guaranteed success for any frame <= MaxSize)
-                bestRect = FindBestRect(freeRects, pw, ph);
-
-                if (bestRect is null)
-                {
-                    throw new InvalidOperationException(
-                        $"Frame (index={frame.Index}, {frame.Width}x{frame.Height}) exceeds maximum atlas dimensions ({options.MaxWidth}x{options.MaxHeight}).");
-                }
+                // Multi-atlas overflow: delegate to MultiAtlasStrategy to validate + open next atlas.
+                // Strategy validates the frame fits, resets freeRects, and returns the placement
+                // rect (the only free rect in the fresh atlas starts at origin).
+                (currentAtlas, best) = MultiAtlasStrategy.OpenNextAtlas(
+                    currentAtlas,
+                    freeRects,
+                    options.MaxWidth,
+                    options.MaxHeight,
+                    pw, ph,
+                    frame.Index,
+                    frame.Width,
+                    frame.Height);
             }
-
-            var best = bestRect.Value;
+            else
+            {
+                best = bestRect.Value;
+            }
 
             // Place frame at bestRect position
             allPlacements.Add(new PackedFrame(

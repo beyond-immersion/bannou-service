@@ -27,6 +27,10 @@ info:
   - topic: actor.instance.created
     event: ActorInstanceCreatedEvent
     description: Published when an actor instance is created (control plane record)
+  - topic: actor.instance.updated
+    event: ActorInstanceUpdatedEvent
+    description: Published when an actor instance's control plane fields change (status, characterId, nodeId). 
+      Dual-publishes alongside semantic action events per FOUNDATION TENETS T5.
   - topic: actor.instance.deleted
     event: ActorInstanceDeletedEvent
     description: Published when an actor instance is stopped and removed

@@ -73,6 +73,9 @@ info:
     - topic: currency.wallet.created
       event: CurrencyWalletCreatedEvent
       description: Published when a new wallet is created
+    - topic: currency.wallet.updated
+      event: CurrencyWalletUpdatedEvent
+      description: Published when a CurrencyWallet's control plane state changes (status — frozen/unfrozen/closed). Dual-publishes alongside semantic action events per FOUNDATION TENETS T5.
     - topic: currency.wallet.frozen
       event: CurrencyWalletFrozenEvent
       description: Published when a wallet is frozen

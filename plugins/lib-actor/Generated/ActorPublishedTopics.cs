@@ -29,6 +29,9 @@ public static class ActorPublishedTopics
     /// <summary>Published when an actor instance is created (control plane record).</summary>
     public const string ActorInstanceCreated = "actor.instance.created";
 
+    /// <summary>Published when an actor instance's control plane fields change (status, characterId, nodeId). Dual-publishes alongside semantic action events per FOUNDATION TENETS T5.</summary>
+    public const string ActorInstanceUpdated = "actor.instance.updated";
+
     /// <summary>Published when an actor instance is stopped and removed.</summary>
     public const string ActorInstanceDeleted = "actor.instance.deleted";
 

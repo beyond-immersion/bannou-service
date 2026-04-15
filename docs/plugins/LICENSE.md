@@ -104,7 +104,7 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 | `license.unlocked` | `LicenseUnlockedEvent` | License successfully unlocked (includes boardId, ownerType, ownerId, licenseCode, position, itemInstanceId, contractInstanceId, lpCost) |
 | `license.unlock-failed` | `LicenseUnlockFailedEvent` | License unlock failed (includes boardId, ownerType, ownerId, licenseCode, reason enum) |
 
-**Note**: `license.board.updated` is NOT published — boards are immutable after creation. The `LicenseBoardUpdatedEvent` model exists as an unavoidable byproduct of `x-lifecycle` auto-generation but is intentionally excluded from `x-event-publications`.
+**Note**: `license.board.updated` is NOT published — boards are immutable after creation. `LicenseBoard`'s `x-lifecycle` entry declares `immutable: true`, which suppresses generation of `LicenseBoardUpdatedEvent`, its publisher, and its topic constant. See [X-LIFECYCLE.md § Immutable Entities](../reference/specifications/X-LIFECYCLE.md#immutable-entities) for the mechanism.
 
 ### Consumed Events
 
@@ -312,7 +312,7 @@ No known bugs at this time.
 
 - **CleanupByOwnerAsync does not acquire distributed locks**: The cleanup endpoint iterates through all boards for a deleted owner and deletes them without board-level locking. This is acceptable because cleanup is called during resource deletion coordination (the owner is already deleted, so no concurrent unlock operations should target these boards). A concurrent unlock attempt would fail at a prior step (board lookup or character validation) before reaching the lock phase.
 
-- **`LicenseBoardUpdatedEvent` model exists but is never published**: The `x-lifecycle` auto-generation creates Updated event models for all lifecycle entities. Since boards are immutable after creation, the `LicenseBoardUpdatedEvent` is intentionally excluded from `x-event-publications` and never published in code. The model remains as harmless dead code.
+- **LicenseBoard is marked `immutable: true`**: Boards have no update path — the only mutations are create, unlock (which modifies the inventory container, not the board record), and delete. `LicenseBoard`'s `x-lifecycle` entry declares `immutable: true`, so the generator does not produce `LicenseBoardUpdatedEvent`, `PublishLicenseBoardUpdatedAsync`, or the `LicenseBoardUpdated` topic constant. Only `LicenseBoardCreatedEvent` and `LicenseBoardDeletedEvent` exist.
 
 - **Reverse index for template→board instance mapping**: A string list reverse index (`tpl-brd:{boardTemplateId}`) maps each board template to its board instance IDs. Maintained via `AddToStringListAsync` on board creation (both `CreateBoardAsync` and `CloneBoardAsync`) and `RemoveFromStringListAsync` on board deletion (both `DeleteBoardAsync` and `CleanupByOwnerAsync`). Used by `CleanDeprecatedBoardTemplatesAsync` for O(1) instance existence checks via `HasStringListEntriesAsync`.
 

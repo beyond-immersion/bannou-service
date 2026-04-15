@@ -53,6 +53,9 @@ public static class CurrencyPublishedTopics
     /// <summary>Published when a new wallet is created.</summary>
     public const string CurrencyWalletCreated = "currency.wallet.created";
 
+    /// <summary>Published when a CurrencyWallet's control plane state changes (status — frozen/unfrozen/closed). Dual-publishes alongside semantic action events per FOUNDATION TENETS T5.</summary>
+    public const string CurrencyWalletUpdated = "currency.wallet.updated";
+
     /// <summary>Published when a wallet is frozen.</summary>
     public const string CurrencyWalletFrozen = "currency.wallet.frozen";
 

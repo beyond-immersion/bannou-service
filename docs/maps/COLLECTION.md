@@ -612,7 +612,7 @@ RETURN (200, CleanupByCharacterResponse { deletedCount })
 
 ### CollectionInstanceEventBatcher (via EventBatcherWorker)
 
-Manages batch event publishing for collection instance lifecycle events. Two Mode 1 (accumulating) batchers: created and destroyed. Collections are immutable after creation (no modified batcher needed). A single `EventBatcherWorker` flushes both batchers per cycle.
+Manages batch event publishing for collection instance lifecycle events. Two Mode 1 (accumulating) batchers: created and destroyed. Collections are immutable after creation — `Collection`'s `x-lifecycle` declares `immutable: true`, which suppresses generation of `CollectionBatchModifiedEvent`/`Entry`, so no modified batcher exists. A single `EventBatcherWorker` flushes both batchers per cycle.
 
 ```
 EVERY config.InstanceEventBatchIntervalSeconds:

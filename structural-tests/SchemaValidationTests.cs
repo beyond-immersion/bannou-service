@@ -1036,6 +1036,202 @@ public class SchemaValidationTests
     }
 
     /// <summary>
+    /// Enforces the bidirectional invariant: an x-lifecycle entity has <c>immutable: true</c> IFF
+    /// the service does not publish a modification event for that entity in <c>x-event-publications</c>.
+    /// Either direction is a bug — the flag must match the mutation surface.
+    /// <para>
+    /// <b>Violation A (flag lies)</b>: entity has <c>immutable: true</c> but the service declares
+    /// an <c>{entity}.updated</c> (or <c>{entity}.batch-modified</c>) topic in x-event-publications.
+    /// The generator will NOT produce the UpdatedEvent type, so publishing the topic would reference
+    /// a non-existent class at runtime.
+    /// </para>
+    /// <para>
+    /// <b>Violation B (missing flag)</b>: entity is not marked <c>immutable: true</c> but the service
+    /// does not declare any <c>{entity}.updated</c> / <c>{entity}.batch-modified</c> topic. The generator
+    /// is producing a <c>*UpdatedEvent</c> type, publisher, and topic constant that are never used —
+    /// dead code. Add <c>immutable: true</c> to suppress generation, or add the missing publication.
+    /// </para>
+    /// <para>
+    /// Detection uses x-event-publications (not API endpoints) as the mutation signal. This correctly
+    /// handles entities mutated via non-standard verbs (join, leave, start, end, complete, cancel,
+    /// accept, consent, etc.) — if the entity is mutated through any means, the service should publish
+    /// a modification event for it, and the event schema will list that topic. Endpoint-naming heuristics
+    /// produce false positives for services with custom action verbs (e.g., <c>joinGameSession</c>,
+    /// <c>acceptContract</c>, <c>completeMilestone</c>).
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void LifecycleEntities_ImmutableFlagMatchesMutationSurface()
+    {
+        var violations = new List<string>();
+
+        foreach (var eventsFile in SchemaParser.GetEventSchemaFiles())
+        {
+            var fileName = Path.GetFileNameWithoutExtension(eventsFile);
+            var lines = File.ReadAllLines(eventsFile);
+
+            foreach (var entity in SchemaParser.GetLifecycleEntities(eventsFile))
+            {
+                // Check for modification event publication (either .updated or .batch-modified).
+                // Topic format: {service}.{entity-segment}.{action} (Pattern C) or
+                // {entity-segment}.{action} (Pattern A). Pattern C is applied BIMODALLY across
+                // services in this codebase (see SCHEMA-RULES.md § Topic Naming Convention):
+                //
+                //   (a) Entity class INCLUDES the service name as a prefix word
+                //       e.g., ActorTemplate in service "actor", topic "actor.template.*"
+                //             LicenseBoardTemplate in service "license", topic "license.board-template.*"
+                //       Match via full-path: dots→hyphens, then PascalCase equals entity name.
+                //   (b) Entity class does NOT include the service name
+                //       e.g., PlatformLink in service "broadcast", topic "broadcast.platform-link.*"
+                //             SaveSlot in service "save-load", topic "save-load.save-slot.*"
+                //       Match via last-segment: take the last dot-segment, PascalCase equals entity name.
+                //
+                // Hyphenated services (character-encounter, save-load, ...) structurally must use
+                // convention (b) to avoid stutter like CharacterEncounterEncounterType.
+                //
+                // As a final fallback, match against the sibling `event:` field of the publication
+                // entry — if the declared event class is {EntityName}UpdatedEvent or
+                // {EntityName}BatchModifiedEvent, the publication is unambiguously for this entity
+                // regardless of how the topic segment happens to be named. This catches any future
+                // case where the topic segment uses an alternate form of the entity name.
+                var hasUpdatedPublication = false;
+                for (var lineIndex = 0; lineIndex < lines.Length; lineIndex++)
+                {
+                    var trimmed = lines[lineIndex].TrimStart();
+                    if (!trimmed.StartsWith("- topic:", StringComparison.Ordinal) &&
+                        !trimmed.StartsWith("topic:", StringComparison.Ordinal))
+                        continue;
+                    var colonIdx = trimmed.IndexOf(':');
+                    if (colonIdx < 0) continue;
+                    var topic = trimmed[(colonIdx + 1)..].Trim().Trim('"', '\'');
+                    var hashIdx = topic.IndexOf('#');
+                    if (hashIdx > 0) topic = topic[..hashIdx].TrimEnd();
+
+                    string? entityTopicPart;
+                    bool isBatchModified;
+                    if (topic.EndsWith(".updated", StringComparison.Ordinal))
+                    {
+                        entityTopicPart = topic[..^".updated".Length];
+                        isBatchModified = false;
+                    }
+                    else if (topic.EndsWith(".batch-modified", StringComparison.Ordinal))
+                    {
+                        entityTopicPart = topic[..^".batch-modified".Length];
+                        isBatchModified = true;
+                    }
+                    else
+                    {
+                        continue;
+                    }
+
+                    // Strategy 1: full-path match (Pattern C bimodal (a) — entity class includes service prefix).
+                    // Replace dots with hyphens to get a flat kebab representation, then convert to PascalCase.
+                    // e.g., "actor.template" → "actor-template" → "ActorTemplate" matches entity ActorTemplate.
+                    //       "license.board-template" → "license-board-template" → "LicenseBoardTemplate" matches
+                    //       entity LicenseBoardTemplate.
+                    var fullKebab = entityTopicPart.Replace('.', '-');
+                    var fullPascal = KebabToPascalCase(fullKebab);
+                    if (fullPascal.Equals(entity.EntityName, StringComparison.Ordinal))
+                    {
+                        hasUpdatedPublication = true;
+                        break;
+                    }
+
+                    // Strategy 2: last-segment match (Pattern C bimodal (b) — entity class does NOT include service prefix).
+                    // e.g., "broadcast.platform-link" → last segment "platform-link" → "PlatformLink" matches entity PlatformLink.
+                    //       "save-load.save-slot" → last segment "save-slot" → "SaveSlot" matches entity SaveSlot.
+                    var lastDotIdx = entityTopicPart.LastIndexOf('.');
+                    var lastSegment = lastDotIdx >= 0
+                        ? entityTopicPart[(lastDotIdx + 1)..]
+                        : entityTopicPart;
+                    var lastSegmentPascal = KebabToPascalCase(lastSegment);
+                    if (lastSegmentPascal.Equals(entity.EntityName, StringComparison.Ordinal))
+                    {
+                        hasUpdatedPublication = true;
+                        break;
+                    }
+
+                    // Strategy 3: event-name match (authoritative fallback via sibling `event:` field).
+                    // YAML layout: topic and event are sibling keys in a list entry. Scan forward
+                    // up to 10 lines or until the next list entry ("- " prefix) for a matching event.
+                    // This catches any case where the topic segment form is unusual but the declared
+                    // event class unambiguously identifies this entity.
+                    var expectedEventName = isBatchModified
+                        ? $"{entity.EntityName}BatchModifiedEvent"
+                        : $"{entity.EntityName}UpdatedEvent";
+                    var scanEnd = Math.Min(lineIndex + 10, lines.Length);
+                    for (var j = lineIndex + 1; j < scanEnd; j++)
+                    {
+                        var nextTrimmed = lines[j].TrimStart();
+                        if (nextTrimmed.StartsWith("- ", StringComparison.Ordinal))
+                            break; // reached next list entry
+                        if (!nextTrimmed.StartsWith("event:", StringComparison.Ordinal))
+                            continue;
+                        var eventValue = nextTrimmed["event:".Length..].Trim().Trim('"', '\'');
+                        var eventHashIdx = eventValue.IndexOf('#');
+                        if (eventHashIdx > 0) eventValue = eventValue[..eventHashIdx].TrimEnd();
+                        if (eventValue.Equals(expectedEventName, StringComparison.Ordinal))
+                        {
+                            hasUpdatedPublication = true;
+                            break;
+                        }
+                    }
+                    if (hasUpdatedPublication) break;
+                }
+
+                if (entity.IsImmutable && hasUpdatedPublication)
+                {
+                    violations.Add(
+                        $"{fileName}.yaml: {entity.EntityName} has immutable: true but " +
+                        $"x-event-publications declares a modification topic for it " +
+                        $"(.updated or .batch-modified). The generator will not produce the " +
+                        $"UpdatedEvent type, so publishing to this topic will reference a non-existent " +
+                        $"class. Remove immutable: true or remove the publication.");
+                }
+                else if (!entity.IsImmutable && !hasUpdatedPublication)
+                {
+                    violations.Add(
+                        $"{fileName}.yaml: {entity.EntityName} is not marked immutable: true but " +
+                        $"x-event-publications declares no modification topic for it. The generator " +
+                        $"is producing {entity.EntityName}UpdatedEvent, publisher, and topic constant " +
+                        $"that are never used — dead code. Add the missing `*.updated` publication " +
+                        $"alongside any existing mutation action events (FOUNDATION TENETS T5 " +
+                        $"dual-publish rule — see HELPERS-AND-COMMON-PATTERNS.md § Action + Lifecycle " +
+                        $"Dual Publishing), OR add `immutable: true` to x-lifecycle if the entity " +
+                        $"genuinely has no mutation path.");
+                }
+            }
+        }
+
+        var grouped = violations
+            .GroupBy(v => v.Split(':')[0])
+            .OrderBy(g => g.Key);
+
+        var report = string.Join("\n", grouped.Select(g =>
+            $"\n  [{g.Key}] ({g.Count()} violation(s)):\n" +
+            string.Join("\n", g.Select(v => $"    - {v}"))));
+
+        Assert.True(
+            violations.Count == 0,
+            $"Found {violations.Count} lifecycle immutability invariant violation(s) across " +
+            $"{grouped.Count()} schema file(s). The `immutable: true` flag must match the mutation " +
+            $"surface: present iff no {{entity}}.updated / {{entity}}.batch-modified topic is declared " +
+            $"in x-event-publications:{report}");
+    }
+
+    /// <summary>
+    /// Converts a kebab-case string to PascalCase
+    /// (e.g., "collection-entry-template" → "CollectionEntryTemplate").
+    /// Used by <see cref="LifecycleEntities_ImmutableFlagMatchesMutationSurface"/> to compare
+    /// topic entity segments against PascalCase entity names.
+    /// </summary>
+    private static string KebabToPascalCase(string kebab)
+    {
+        return string.Join("", kebab.Split('-')
+            .Select(part => part.Length == 0 ? part : char.ToUpperInvariant(part[0]) + part[1..]));
+    }
+
+    /// <summary>
     /// Informational test: surfaces x-lifecycle instance entities in services declaring
     /// x-references that do NOT use batch: true. Services with x-references store
     /// dependent data for entities owned by other services — structurally high-frequency

@@ -86,11 +86,11 @@ All dependencies are L0/L1/L2 — constructor injection per SERVICE-HIERARCHY.md
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `genesis.template.created` | `TemplateCreatedEvent` | RegisterTemplate |
-| `genesis.template.updated` | `TemplateUpdatedEvent` | UpdateTemplate, DeprecateTemplate (changedFields includes deprecation fields per IMPLEMENTATION TENETS) |
-| `genesis.entity.created` | `EntityCreatedEvent` | CreateEntity — includes entityId, templateCode, gameServiceId, realmId, walletIds, inventoryIds |
-| `genesis.entity.updated` | `EntityUpdatedEvent` | BindPhysicalForm, status changes |
-| `genesis.entity.deleted` | `EntityDeletedEvent` | DestroyEntity |
+| `genesis.template.created` | `GenesisTemplateCreatedEvent` | RegisterTemplate |
+| `genesis.template.updated` | `GenesisTemplateUpdatedEvent` | UpdateTemplate, DeprecateTemplate (changedFields includes deprecation fields per IMPLEMENTATION TENETS) |
+| `genesis.entity.created` | `GenesisEntityCreatedEvent` | CreateEntity — includes entityId, templateCode, gameServiceId, realmId, walletIds, inventoryIds |
+| `genesis.entity.updated` | `GenesisEntityUpdatedEvent` | BindPhysicalForm, status changes |
+| `genesis.entity.deleted` | `GenesisEntityDeletedEvent` | DestroyEntity |
 | `genesis.entity.phase-changed` | `GenesisEntityPhaseChangedEvent` | ISeedEvolutionListener cognitive stage transition — includes entityId, templateCode, phaseName, cognitiveStage, actorId (if spawned), characterId (if created) |
 | `genesis.entity.bond-created` | `GenesisEntityBondCreatedEvent` | CreateBond |
 | `genesis.entity.bond-dissolved` | `GenesisEntityBondDissolvedEvent` | DissolveBond |

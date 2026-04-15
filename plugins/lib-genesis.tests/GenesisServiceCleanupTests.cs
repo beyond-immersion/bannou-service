@@ -162,7 +162,7 @@ public class GenesisServiceCleanupTests : ServiceTestBase<GenesisServiceConfigur
         _mockActorClient.Verify(a => a.StopActorAsync(It.IsAny<StopActorRequest>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockRelationshipClient.Verify(r => r.EndRelationshipAsync(It.IsAny<EndRelationshipRequest>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockResourceClient.Verify(r => r.ExecuteCleanupAsync(It.IsAny<ExecuteCleanupRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
-        Assert.Equal(2, capturedTopics.Count(t => t == GenesisPublishedTopics.EntityDeleted));
+        Assert.Equal(2, capturedTopics.Count(t => t == GenesisPublishedTopics.GenesisEntityDeleted));
     }
 
     // ===================================================================
@@ -305,6 +305,6 @@ public class GenesisServiceCleanupTests : ServiceTestBase<GenesisServiceConfigur
         _mockCurrencyClient.Verify(c => c.CreateWalletAsync(It.IsAny<CreateWalletRequest>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockCurrencyClient.Verify(c => c.CreditCurrencyAsync(It.IsAny<CreditCurrencyRequest>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockInventoryClient.Verify(i => i.CreateContainerAsync(It.IsAny<CreateContainerRequest>(), It.IsAny<CancellationToken>()), Times.Once);
-        Assert.Contains(GenesisPublishedTopics.EntityCreated, capturedTopics);
+        Assert.Contains(GenesisPublishedTopics.GenesisEntityCreated, capturedTopics);
     }
 }

@@ -36,4 +36,4 @@ public record SpriteSheet(
     IReadOnlyList<AtlasInfo> Atlases,
     IReadOnlyList<SpriteAnimation> Animations,
     IReadOnlyList<SpriteFrame> Frames,
-    Dictionary<string, string>? CustomProperties);
+    IReadOnlyDictionary<string, string>? CustomProperties);

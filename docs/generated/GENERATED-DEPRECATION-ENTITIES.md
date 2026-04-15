@@ -26,13 +26,13 @@ need deprecation marker interfaces, and the current state of Category B complian
 | Chat | `ChatRoomType` | `ChatRoom` | OK |
 | Collection | `CollectionEntryTemplate` | `Collection` | OK |
 | Contract | `ContractTemplate` | `ContractInstance` | OK |
-| Craft | `CraftRecipe` | `CraftingSession` | OK |
+| Craft | `CraftRecipe` | `CraftSession` | OK |
 | Currency | `CurrencyDefinition` | `CurrencyBalance` | OK |
 | Divine | `Deity` | — | Missing |
 | Environment | `ClimateTemplate` | — | Missing |
 | Faction | `Faction` | — | Missing |
 | Gardener | `ScenarioTemplate` | `ScenarioInstance` | OK |
-| Genesis | `Template` | `Entity` | OK |
+| Genesis | `GenesisTemplate` | `GenesisEntity` | OK |
 | Item | `ItemTemplate` | `ItemInstance` | OK |
 | Leaderboard | `LeaderboardDefinition` | `LeaderboardEntry` | OK |
 | License | `LicenseBoardTemplate` | `LicenseBoard` | OK |
@@ -125,7 +125,7 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Service**: `craft`
 - **Schema**: `schemas/craft-service-events.yaml`
 - **Topic prefix**: `craft`
-- **Instance entity**: `CraftingSession`
+- **Instance entity**: `CraftSession`
 - **Model fields**: `recipeId`, `gameServiceId`, `code`, `recipeType`, `domain`, `category`, `tags`, `isDiscoverable`
 
 ### Currency: CurrencyDefinition
@@ -168,12 +168,12 @@ need deprecation marker interfaces, and the current state of Category B complian
 - **Instance entity**: `ScenarioInstance`
 - **Model fields**: `scenarioTemplateId`, `code`, `displayName`, `description`, `category`, `connectivityMode`, `status`
 
-### Genesis: Template
+### Genesis: GenesisTemplate
 
 - **Service**: `genesis`
 - **Schema**: `schemas/genesis-service-events.yaml`
 - **Topic prefix**: `genesis`
-- **Instance entity**: `Entity`
+- **Instance entity**: `GenesisEntity`
 - **Model fields**: `templateCode`, `gameServiceId`, `displayName`, `description`, `physicalFormType`
 
 ### Item: ItemTemplate

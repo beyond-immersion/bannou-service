@@ -78,6 +78,7 @@ It follows the same pattern as music-theory, storyline-theory, and voxel-core: p
 | `CameraRigPresets` | Static class | Built-in rig factories: `SideViewBrawler()`, `TopDown8Dir()`, `TopDown4Dir()` |
 | `OrthographicSetup` | Static class | Compute orthographic camera parameters to fit a bounding box at a given angle |
 | `OrthographicParameters` | Record | Output of OrthographicSetup: camera position, direction, up, ortho dimensions, clip planes |
+| `PivotComputer` | Static class | Auto-compute sprite pivot from bounding box + orthographic camera (feet-on-ground projection) |
 | `ProjectionType` | Enum | `Orthographic`, `Perspective` |
 | `BoundingBox` | Struct | Axis-aligned 3D bounding box (min/max float3) for model bounds |
 
@@ -95,7 +96,8 @@ It follows the same pattern as music-theory, storyline-theory, and voxel-core: p
 
 | Type | Kind | Purpose |
 |------|------|---------|
-| `AtlasPacker` | Static class | MaxRects-BSSF bin-packing: frames → atlas layout. Handles multi-atlas overflow internally. |
+| `AtlasPacker` | Static class | MaxRects-BSSF bin-packing: frames → atlas layout. Delegates multi-atlas overflow to `MultiAtlasStrategy`. |
+| `MultiAtlasStrategy` | Static class | Overflow handling when frames exceed single atlas size: validates fit, opens next atlas, returns placement rect |
 | `AtlasLayout` | Record | Packing result: per-frame placements, per-atlas dimensions, packing efficiency, atlas count |
 | `AtlasOptions` | Record | Configuration: max atlas size, padding, power-of-two rounding, group-by-animation |
 | `PackedFrame` | Record | Single frame's placement: atlas index, x, y, original width, original height |
@@ -243,7 +245,7 @@ SpriteFrame
 
 **Frame ordering**: Captured frames come first (indices 0 through N-1), mirror frames are appended after (indices N through N+M-1). This ordering is deterministic and stable.
 
-**Default pivot (0.5, 0.85)**: Center-X, 85%-from-top Y. This anchors the sprite at a point near the character's feet, which is correct for humanoid characters standing on the ground. Non-humanoid characters (flying enemies, large bosses, quadrupeds) need per-variant pivot overrides.
+**Pivot resolution**: Consumers assemble `SpriteFrame.Pivot` in this order — `CharacterVariant.PivotOverride` if non-null, otherwise `PivotComputer.ComputeFromBounds(bounds, orthographicParameters)` for a bounds-derived pivot, otherwise `PivotComputer.DefaultHumanoidPivot` `(0.5, 0.85)`. `PivotComputer` projects the bottom-center of the bounding box onto the camera's frame plane and clamps the result to `[0, 1]`.
 
 ### SpriteAnimation
 
@@ -266,12 +268,15 @@ Input definition describing what to capture. Serializable as part of SpriteSheet
 
 ```
 CharacterVariant
-├── Name: string                                    // "warrior_plate_sword"
-├── ModelPath: string                               // Path to base character model (FBX)
-├── Equipment: IReadOnlyList<EquipmentSlot>         // Attached equipment pieces
-├── MaterialOverrides: Dictionary<string, string>?  // Material/palette swaps (null if none)
-└── Scale: float                                    // Model scale factor (default: 1.0)
+├── Name: string                                            // "warrior_plate_sword"
+├── ModelPath: string                                       // Path to base character model (FBX)
+├── Equipment: IReadOnlyList<EquipmentSlot>                 // Attached equipment pieces
+├── MaterialOverrides: IReadOnlyDictionary<string, string>? // Material/palette swaps (null if none)
+├── Scale: float                                            // Model scale factor (default: 1.0)
+└── PivotOverride: Vector2?                                 // Per-variant pivot override (null = use PivotComputer auto-compute)
 ```
+
+**PivotOverride**: When non-null, every frame in the resulting SpriteSheet uses this pivot verbatim. When null, consumers call `PivotComputer.ComputeFromBounds` to derive a pivot from the model's bounds and the capture camera. Use the override for subjects where feet-projection is unreliable — flying enemies, asymmetric bosses, quadrupeds with unusual proportions.
 
 ### FrameCapture
 
@@ -371,6 +376,30 @@ Phase 2 — GenerateMirrorFrames:
     - IsMirror = true, MirrorSourceIndex = source frame's index
 ```
 
+### Pivot Computation
+
+The `PivotComputer` static class derives sprite pivots from the model's bounding box and the configured capture camera. Called by consumers (sprite-composer) when `CharacterVariant.PivotOverride` is null.
+
+```
+Input:  BoundingBox (model bounds) + OrthographicParameters (from OrthographicSetup.Compute)
+Output: Vector2 (normalized frame coords, (0,0) top-left, (1,1) bottom-right)
+
+Steps:
+1. Identify the "feet" point: (Center.X, Min.Y, Center.Z) in world space — bottom-center of bounds
+2. Transform to camera space: relP = feet - camera.Position
+3. Derive camera right axis: right = normalize(cross(camera.Direction, camera.Up))
+   (If the cross product has near-zero length, the camera basis is degenerate — return DefaultHumanoidPivot)
+4. Project relP onto (right, up) plane:
+     u = dot(relP, right)
+     v = dot(relP, camera.Up)
+5. Normalize to frame coords:
+     pivotX = 0.5 + u / orthoWidth
+     pivotY = 0.5 - v / orthoHeight   // Y flipped because pivot origin is top-left
+6. Clamp both to [0, 1] to guarantee the pivot stays inside the frame
+```
+
+Fallback to `DefaultHumanoidPivot` (0.5, 0.85) when the camera basis is degenerate (direction parallel to up) or the ortho dimensions are zero.
+
 ### Depth-to-Normal Map Conversion
 
 Converts per-frame depth buffer data to tangent-space normal map pixels using Sobel filtering.
@@ -417,6 +446,8 @@ All operations are deterministic. Same inputs → identical outputs.
 | AtlasPacker.Pack | Yes | Deterministic sort (height → width → index) + MaxRects-BSSF with stable tie-breaking |
 | MirrorOptimizer.ComputeMirrors | Yes | Single iteration over angle list in order |
 | MirrorOptimizer.GenerateMirrorFrames | Yes | Iteration over mirrors × source frames, both in deterministic order |
+| PivotComputer.ComputeFromBounds | Yes | Pure linear algebra on bounds + camera basis |
+| MultiAtlasStrategy.OpenNextAtlas | Yes | Pure arithmetic + list reset (identical inputs produce identical outputs) |
 | DepthToNormal.Generate | Yes | Per-pixel independent Sobel convolution |
 | AtlasAssembler.Assemble | Yes | Pixel copy at deterministic atlas positions |
 | SpriteSheetSerializer.Serialize | Yes | Ordered JSON properties via System.Text.Json |
@@ -475,11 +506,13 @@ None known.
 
 - **CameraRig.Angles contains ONLY rendered angles, never mirror targets.** Mirror targets like "NW" or "left" do not exist in the rig definition. They are created by MirrorOptimizer from the `ProducesMirror`/`MirrorTargetName` metadata on source angles. This means `rig.Angles.Count` equals the number of render passes per frame, which is exactly what the bridge needs to iterate.
 
-- **ProducesMirror is additive, not exclusive.** An angle with `ProducesMirror = true` IS rendered AND ALSO generates a mirror. It does NOT mean "this is a mirror" or "skip rendering this." The boolean was named `ProducesMirror` (not `CanMirror` or `IsMirror`) specifically to prevent this misreading.
+- **ProducesMirror is additive, not exclusive.** An angle with `ProducesMirror = true` IS rendered AND ALSO generates a mirror. It does NOT mean "this is a mirror" or "skip rendering this." This is a ratified deviation from the original planning document, which proposed a `CanMirror` skip-flag with mirror angles enumerated in `rig.Angles`. The ratified design keeps only source angles in `rig.Angles` and derives mirror metadata from `ProducesMirror`/`MirrorTargetName`; see `docs/planning/SPRITE-COMPOSER-SDK.md` § Resolved Decisions.
 
 - **Mirror frames share atlas Rect with their source.** A mirror SpriteFrame points to the same atlas rectangle as its source. No duplicate pixels exist in the atlas — the game engine applies horizontal flip at render time using the `IsMirror` flag. This means the atlas size reflects only captured frames, not total directions.
 
-- **Default pivot (0.5, 0.85) assumes standing humanoid.** The 85%-from-top anchor places the pivot near the character's feet. Flying enemies, bosses with non-standard proportions, or quadrupeds need per-CharacterVariant or per-CameraRig pivot overrides. Auto-detection from bounding box is a future enhancement (see Open Questions).
+- **Default pivot (0.5, 0.85) is the terminal fallback, not the primary computation.** Consumers should auto-derive pivots via `PivotComputer.ComputeFromBounds`, which projects the bottom-center of the bounding box onto the frame plane. The default applies only when (a) the per-variant `CharacterVariant.PivotOverride` is null AND the consumer has not invoked `PivotComputer`, or (b) `PivotComputer` detects a degenerate camera basis and falls back. For flying enemies, tall bosses, quadrupeds, and other subjects whose bottom-of-bounds is not their "feet", set `CharacterVariant.PivotOverride` explicitly to bypass auto-computation.
+
+- **PNG encoding is not part of sprite-theory.** `AtlasAssembler.Assemble` returns raw RGBA `byte[][]`; the sprite-theory SDK does not encode PNG. This is a ratified design decision (see `docs/planning/SPRITE-COMPOSER-SDK.md` § Resolved Decisions): every target engine bridges — Stride, Godot, Unity — ships native PNG encoding in its graphics package (`Stride.Graphics.Image.Save`, `Godot.Image.save_png`, `UnityEngine.ImageConversion.EncodeToPNG`). Each bridge uses its engine-native encoder, which avoids adding an external dependency to sprite-theory and avoids the Six Labors commercial-license trap that applies to `SixLabors.ImageSharp` for consumers with revenue above $1M USD. The encoder is supplied to the composer layer via `IAtlasEncoder` in sprite-composer.
 
 - **Normal maps are tangent-space, not object-space.** The Sobel-filter output assumes the camera is looking straight at the sprite plane. This is correct for 2D sprites where the "surface" always faces the camera. Object-space normals would require 3D geometry knowledge that is lost after 2D capture.
 
@@ -489,8 +522,6 @@ None known.
 
 #### Design Considerations (Requires Planning)
 
-- **PNG encoding is the consumer's responsibility.** sprite-theory produces raw RGBA byte[] arrays via AtlasAssembler. Converting to PNG files requires either a library (SixLabors.ImageSharp — Apache 2.0, pure .NET) or a minimal custom encoder. This conversion belongs in sprite-composer (the orchestrator), not sprite-theory (the computation layer). This keeps sprite-theory at zero external dependencies.
-
 - **Transparent trimming and uniform frame sizing.** When `TrimTransparent = true`, each frame's content rect varies (some frames have more transparency). SpriteFrame stores both `Rect` (full allocated space in atlas) and `TrimmedRect` (actual content bounds). Game engines can use `Rect` for uniform sprite sizing or `TrimmedRect` for tighter collision bounds. The atlas packer uses trimmed sizes to pack more efficiently but allocates full `FrameSize` space to maintain uniform grid alignment when `TrimTransparent = false`.
 
 - **Shadow capture (future).** A drop shadow improves sprite readability, especially at the 55° top-down angle. Options include a shadow pass with directional light + ground plane, a silhouette with reduced opacity, or game-engine-side shadows. This is deferred until the base capture pipeline is working. When implemented, it would add an `IncludeShadow` boolean to CameraRig and produce a separate shadow atlas (like normal maps).
@@ -499,11 +530,9 @@ None known.
 
 ## Open Questions
 
-1. **Pivot auto-detection from bounding box**: Should OrthographicSetup compute a default pivot point from the character's projected bounding box (feet position at the bottom center of the projected bounds)? This would provide reasonable defaults for humanoid characters. **Recommendation**: Compute auto-pivot as the default, allow per-CharacterVariant override. The auto-pivot computation projects the bounding box minimum Y coordinate onto the frame to find the feet position.
+1. **Animation event schema**: `AnimationEvent` markers (hit frames, sound cues) are optional in SpriteAnimation. The format is currently a simple `(FrameIndex: int, EventType: string, EventData: string)` triple. The exact schema depends on Defenders' runtime needs. This is sufficient for initial implementation; refinement can happen during game integration.
 
-2. **Animation event schema**: `AnimationEvent` markers (hit frames, sound cues) are optional in SpriteAnimation. The format is currently a simple `(FrameIndex: int, EventType: string, EventData: string)` triple. The exact schema depends on Defenders' runtime needs. This is sufficient for initial implementation; refinement can happen during game integration.
-
-3. **GroupByAnimation atlas layout**: When `AtlasOptions.GroupByAnimation = true`, the packer should keep frames from the same animation in visual rows for human readability when inspecting atlas images. The current MaxRects algorithm doesn't enforce this — it optimizes for packing efficiency. A future enhancement could add row-constrained packing as an option, at the cost of slightly lower packing efficiency.
+2. **GroupByAnimation atlas layout**: When `AtlasOptions.GroupByAnimation = true`, the packer should keep frames from the same animation in visual rows for human readability when inspecting atlas images. The current MaxRects algorithm doesn't enforce this — it optimizes for packing efficiency. A future enhancement could add row-constrained packing as an option, at the cost of slightly lower packing efficiency.
 
 ---
 
@@ -520,11 +549,19 @@ None known.
   - Targets net8.0 + net9.0, builds with 0 warnings (TreatWarningsAsErrors enabled)
   - Key algorithms: MaxRects-BSSF bin-packing (AtlasPacker), Sobel 3×3 normal map generation (DepthToNormal), 7-step orthographic camera setup (OrthographicSetup)
   - Defenders verification test confirms: TopDown8Dir + SideViewBrawler = 960 captured + 640 mirror = 1,600 total frames per variant
+  - `sdks/bannou-sdks.sln` updated to reference `sprite-theory` and `sprite-theory.tests`.
+
+- **2026-04-15**: Post-implementation audit remediation (Findings A, B, C, D, E, F from initial agent audit).
+  - **MultiAtlasStrategy** extracted from `AtlasPacker` into its own static class (`Atlas/MultiAtlasStrategy.cs`). Matches the planning doc's project structure and Bannou's "one static class per concept" pattern. Pre-validates frame-fits-in-atlas-max before resetting free rects.
+  - **PivotComputer** added (`Camera/PivotComputer.cs`) with `ComputeFromBounds(BoundingBox, OrthographicParameters) → Vector2`. Projects bottom-center of bounds onto the camera frame plane, clamped to `[0, 1]`. Exposes `DefaultHumanoidPivot` as the terminal fallback. 10 new tests in `PivotComputerTests.cs`.
+  - **CharacterVariant.PivotOverride: Vector2?** field added per the planning doc's original recommendation (auto-compute with per-variant override).
+  - `Dictionary<,>` fields on records changed to `IReadOnlyDictionary<,>` (`CharacterVariant.MaterialOverrides`, `SpriteSheet.CustomProperties`, `SpriteAnimation.AngleFrameMap`) to honor the documented immutability contract. STJ round-trips the interface natively in .NET 6+.
+  - Ratified the `ProducesMirror` semantic redesign (vs the plan's `CanMirror` skip-flag) in the Intentional Quirks section and cross-referenced the planning doc's Resolved Decisions.
+  - Ratified PNG-encoding-by-consumer (the `byte[][]` return from `AtlasAssembler`) in the Intentional Quirks section with the engine-native rationale and the Six Labors licensing rationale. The entry moved out of "Design Considerations (Requires Planning)" because it is now planned, not pending.
+  - Total tests: 87 passing. Public types: 40 (+2 new static classes, +1 new `PivotOverride` field on existing record). Public methods: 16 (+2).
 
 ### Pending
 
-- Add projects to `sdks/bannou-sdks.sln` (requires `dotnet sln add` — manual step)
 - Performance profiling against documented targets (< 10ms for 1000-frame atlas pack, < 1ms for normal map generation)
 - `GroupByAnimation` atlas layout hint (MaxRects currently optimizes for efficiency, not visual row grouping)
-- Pivot auto-detection from bounding box (Open Question #1)
 - Consumer SDKs: sprite-composer (engine-agnostic orchestrator), sprite-composer-stride (Stride engine bridge)

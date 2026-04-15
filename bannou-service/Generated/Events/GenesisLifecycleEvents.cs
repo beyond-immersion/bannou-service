@@ -26,16 +26,31 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Genesis;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Events;
 
 using System = global::System;
 
 /// <summary>
-/// Published to genesis.template.created when a template is created
+/// Published to genesis.template.created when a genesistemplate is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class TemplateCreatedEvent : BaseServiceEvent
+public partial class GenesisTemplateCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
@@ -88,7 +103,7 @@ public partial class TemplateCreatedEvent : BaseServiceEvent
     public PhysicalFormType PhysicalFormType { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the template was created
+    /// Timestamp when the genesis template was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -96,7 +111,7 @@ public partial class TemplateCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the template was last updated (set to createdAt on creation)
+    /// Timestamp when the genesis template was last updated (set to createdAt on creation)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -104,13 +119,13 @@ public partial class TemplateCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Whether this template is deprecated
+    /// Whether this genesis template is deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
     public bool IsDeprecated { get; set; } = default!;
 
     /// <summary>
-    /// When the template was deprecated (null if not deprecated)
+    /// When the genesis template was deprecated (null if not deprecated)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
     public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
@@ -125,111 +140,10 @@ public partial class TemplateCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to genesis.template.updated when a template is updated
+/// Published to genesis.template.deleted when a genesistemplate is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class TemplateUpdatedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: genesis.template.updated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "genesis.template.updated";
-
-    /// <summary>
-    /// Unique template identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string TemplateCode { get; set; } = default!;
-
-    /// <summary>
-    /// Game service this template is scoped to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable template name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string DisplayName { get; set; } = default!;
-
-    /// <summary>
-    /// Template description
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("description")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Description { get; set; } = default!;
-
-    /// <summary>
-    /// Physical form type for entities of this template
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("physicalFormType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PhysicalFormType PhysicalFormType { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the template was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the template was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this template is deprecated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
-    public bool IsDeprecated { get; set; } = default!;
-
-    /// <summary>
-    /// When the template was deprecated (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for deprecation (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? DeprecationReason { get; set; } = default!;
-
-    /// <summary>
-    /// List of field names that were modified
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changedFields")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to genesis.template.deleted when a template is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class TemplateDeletedEvent : BaseServiceEvent
+public partial class GenesisTemplateDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
@@ -282,7 +196,7 @@ public partial class TemplateDeletedEvent : BaseServiceEvent
     public PhysicalFormType PhysicalFormType { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the template was created
+    /// Timestamp when the genesis template was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -290,7 +204,7 @@ public partial class TemplateDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the template was last updated (set to createdAt on creation)
+    /// Timestamp when the genesis template was last updated (set to createdAt on creation)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -298,13 +212,13 @@ public partial class TemplateDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Whether this template is deprecated
+    /// Whether this genesis template is deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
     public bool IsDeprecated { get; set; } = default!;
 
     /// <summary>
-    /// When the template was deprecated (null if not deprecated)
+    /// When the genesis template was deprecated (null if not deprecated)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
     public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
@@ -325,10 +239,111 @@ public partial class TemplateDeletedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to genesis.entity.created when a entity is created
+/// Published to genesis.template.updated when a genesistemplate is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class EntityCreatedEvent : BaseServiceEvent
+public partial class GenesisTemplateUpdatedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: genesis.template.updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "genesis.template.updated";
+
+    /// <summary>
+    /// Unique template identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TemplateCode { get; set; } = default!;
+
+    /// <summary>
+    /// Game service this template is scoped to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable template name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// Template description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Description { get; set; } = default!;
+
+    /// <summary>
+    /// Physical form type for entities of this template
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("physicalFormType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public PhysicalFormType PhysicalFormType { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the genesis template was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the genesis template was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this genesis template is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the genesis template was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// List of field names that were modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changedFields")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
+/// <summary>
+/// Published to genesis.entity.created when a genesisentity is created
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GenesisEntityCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
@@ -453,7 +468,7 @@ public partial class EntityCreatedEvent : BaseServiceEvent
     public GenesisEntityStatus Status { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the entity was created
+    /// Timestamp when the genesis entity was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -461,7 +476,7 @@ public partial class EntityCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the entity was last updated (set to createdAt on creation)
+    /// Timestamp when the genesis entity was last updated (set to createdAt on creation)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -471,164 +486,10 @@ public partial class EntityCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to genesis.entity.updated when a entity is updated
+/// Published to genesis.entity.deleted when a genesisentity is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class EntityUpdatedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: genesis.entity.updated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "genesis.entity.updated";
-
-    /// <summary>
-    /// Unique entity identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EntityId { get; set; } = default!;
-
-    /// <summary>
-    /// Template code this entity was created from
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string TemplateCode { get; set; } = default!;
-
-    /// <summary>
-    /// Game service this entity belongs to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Realm this entity is scoped to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable entity code
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("code")]
-    public string? Code { get; set; } = default!;
-
-    /// <summary>
-    /// Entity display name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    public string? DisplayName { get; set; } = default!;
-
-    /// <summary>
-    /// Map of wallet codes to wallet IDs
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("walletIds")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.IDictionary<string, System.Guid> WalletIds { get; set; } = new System.Collections.Generic.Dictionary<string, System.Guid>();
-
-    /// <summary>
-    /// Map of inventory codes to container IDs
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("inventoryIds")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.IDictionary<string, System.Guid> InventoryIds { get; set; } = new System.Collections.Generic.Dictionary<string, System.Guid>();
-
-    /// <summary>
-    /// Current growth phase name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("currentPhase")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string CurrentPhase { get; set; } = default!;
-
-    /// <summary>
-    /// Current cognitive progression stage
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("cognitiveStage")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CognitiveStage CognitiveStage { get; set; } = default!;
-
-    /// <summary>
-    /// Actor ID (populated at EventBrain)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
-    public string? ActorId { get; set; } = default!;
-
-    /// <summary>
-    /// Character ID (populated at CharacterBrain)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    public System.Guid? CharacterId { get; set; } = default!;
-
-    /// <summary>
-    /// Type of physical form
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("physicalFormType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PhysicalFormType PhysicalFormType { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the bound physical form
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("physicalFormId")]
-    public System.Guid? PhysicalFormId { get; set; } = default!;
-
-    /// <summary>
-    /// Operational status
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("status")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GenesisEntityStatus Status { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the entity was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the entity was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// List of field names that were modified
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changedFields")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to genesis.entity.deleted when a entity is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class EntityDeletedEvent : BaseServiceEvent
+public partial class GenesisEntityDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
@@ -753,7 +614,7 @@ public partial class EntityDeletedEvent : BaseServiceEvent
     public GenesisEntityStatus Status { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the entity was created
+    /// Timestamp when the genesis entity was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -761,7 +622,7 @@ public partial class EntityDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp when the entity was last updated (set to createdAt on creation)
+    /// Timestamp when the genesis entity was last updated (set to createdAt on creation)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -773,6 +634,160 @@ public partial class EntityDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
     public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published to genesis.entity.updated when a genesisentity is updated
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GenesisEntityUpdatedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: genesis.entity.updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "genesis.entity.updated";
+
+    /// <summary>
+    /// Unique entity identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EntityId { get; set; } = default!;
+
+    /// <summary>
+    /// Template code this entity was created from
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TemplateCode { get; set; } = default!;
+
+    /// <summary>
+    /// Game service this entity belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Realm this entity is scoped to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable entity code
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    public string? Code { get; set; } = default!;
+
+    /// <summary>
+    /// Entity display name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    public string? DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// Map of wallet codes to wallet IDs
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("walletIds")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.IDictionary<string, System.Guid> WalletIds { get; set; } = new System.Collections.Generic.Dictionary<string, System.Guid>();
+
+    /// <summary>
+    /// Map of inventory codes to container IDs
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("inventoryIds")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.IDictionary<string, System.Guid> InventoryIds { get; set; } = new System.Collections.Generic.Dictionary<string, System.Guid>();
+
+    /// <summary>
+    /// Current growth phase name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currentPhase")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CurrentPhase { get; set; } = default!;
+
+    /// <summary>
+    /// Current cognitive progression stage
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("cognitiveStage")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CognitiveStage CognitiveStage { get; set; } = default!;
+
+    /// <summary>
+    /// Actor ID (populated at EventBrain)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
+    public string? ActorId { get; set; } = default!;
+
+    /// <summary>
+    /// Character ID (populated at CharacterBrain)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    public System.Guid? CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of physical form
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("physicalFormType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public PhysicalFormType PhysicalFormType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the bound physical form
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("physicalFormId")]
+    public System.Guid? PhysicalFormId { get; set; } = default!;
+
+    /// <summary>
+    /// Operational status
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public GenesisEntityStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the genesis entity was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the genesis entity was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// List of field names that were modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changedFields")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
 }
 

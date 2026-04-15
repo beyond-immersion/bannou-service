@@ -21,46 +21,46 @@ namespace BeyondImmersion.BannouService.Genesis;
 public static class GenesisEventPublisher
 {
     /// <summary>Published when a new genesis template is registered.</summary>
-    public static Task<bool> PublishTemplateCreatedAsync(
+    public static Task<bool> PublishGenesisTemplateCreatedAsync(
         this IMessageBus messageBus,
-        TemplateCreatedEvent eventData,
+        GenesisTemplateCreatedEvent eventData,
         CancellationToken cancellationToken = default)
-        => messageBus.TryPublishAsync(GenesisPublishedTopics.TemplateCreated, eventData, cancellationToken);
+        => messageBus.TryPublishAsync(GenesisPublishedTopics.GenesisTemplateCreated, eventData, cancellationToken);
 
     /// <summary>Published when a genesis template is updated (including deprecation via changedFields).</summary>
-    public static Task<bool> PublishTemplateUpdatedAsync(
+    public static Task<bool> PublishGenesisTemplateUpdatedAsync(
         this IMessageBus messageBus,
-        TemplateUpdatedEvent eventData,
+        GenesisTemplateUpdatedEvent eventData,
         CancellationToken cancellationToken = default)
-        => messageBus.TryPublishAsync(GenesisPublishedTopics.TemplateUpdated, eventData, cancellationToken);
+        => messageBus.TryPublishAsync(GenesisPublishedTopics.GenesisTemplateUpdated, eventData, cancellationToken);
 
     /// <summary>Published by clean-deprecated sweep when removing a deprecated template with zero remaining entities.</summary>
-    public static Task<bool> PublishTemplateDeletedAsync(
+    public static Task<bool> PublishGenesisTemplateDeletedAsync(
         this IMessageBus messageBus,
-        TemplateDeletedEvent eventData,
+        GenesisTemplateDeletedEvent eventData,
         CancellationToken cancellationToken = default)
-        => messageBus.TryPublishAsync(GenesisPublishedTopics.TemplateDeleted, eventData, cancellationToken);
+        => messageBus.TryPublishAsync(GenesisPublishedTopics.GenesisTemplateDeleted, eventData, cancellationToken);
 
     /// <summary>Published when a new genesis entity is created (includes provisioned walletIds and inventoryIds).</summary>
-    public static Task<bool> PublishEntityCreatedAsync(
+    public static Task<bool> PublishGenesisEntityCreatedAsync(
         this IMessageBus messageBus,
-        EntityCreatedEvent eventData,
+        GenesisEntityCreatedEvent eventData,
         CancellationToken cancellationToken = default)
-        => messageBus.TryPublishAsync(GenesisPublishedTopics.EntityCreated, eventData, cancellationToken);
+        => messageBus.TryPublishAsync(GenesisPublishedTopics.GenesisEntityCreated, eventData, cancellationToken);
 
     /// <summary>Published when a genesis entity is updated (bind physical form, status changes).</summary>
-    public static Task<bool> PublishEntityUpdatedAsync(
+    public static Task<bool> PublishGenesisEntityUpdatedAsync(
         this IMessageBus messageBus,
-        EntityUpdatedEvent eventData,
+        GenesisEntityUpdatedEvent eventData,
         CancellationToken cancellationToken = default)
-        => messageBus.TryPublishAsync(GenesisPublishedTopics.EntityUpdated, eventData, cancellationToken);
+        => messageBus.TryPublishAsync(GenesisPublishedTopics.GenesisEntityUpdated, eventData, cancellationToken);
 
     /// <summary>Published when a genesis entity is destroyed.</summary>
-    public static Task<bool> PublishEntityDeletedAsync(
+    public static Task<bool> PublishGenesisEntityDeletedAsync(
         this IMessageBus messageBus,
-        EntityDeletedEvent eventData,
+        GenesisEntityDeletedEvent eventData,
         CancellationToken cancellationToken = default)
-        => messageBus.TryPublishAsync(GenesisPublishedTopics.EntityDeleted, eventData, cancellationToken);
+        => messageBus.TryPublishAsync(GenesisPublishedTopics.GenesisEntityDeleted, eventData, cancellationToken);
 
     /// <summary>Published when a genesis entity transitions to a new cognitive stage via ISeedEvolutionListener.</summary>
     public static Task<bool> PublishGenesisEntityPhaseChangedAsync(

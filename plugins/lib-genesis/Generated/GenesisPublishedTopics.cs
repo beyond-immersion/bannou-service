@@ -18,22 +18,22 @@ namespace BeyondImmersion.BannouService.Genesis;
 public static class GenesisPublishedTopics
 {
     /// <summary>Published when a new genesis template is registered.</summary>
-    public const string TemplateCreated = "genesis.template.created";
+    public const string GenesisTemplateCreated = "genesis.template.created";
 
     /// <summary>Published when a genesis template is updated (including deprecation via changedFields).</summary>
-    public const string TemplateUpdated = "genesis.template.updated";
+    public const string GenesisTemplateUpdated = "genesis.template.updated";
 
     /// <summary>Published by clean-deprecated sweep when removing a deprecated template with zero remaining entities.</summary>
-    public const string TemplateDeleted = "genesis.template.deleted";
+    public const string GenesisTemplateDeleted = "genesis.template.deleted";
 
     /// <summary>Published when a new genesis entity is created (includes provisioned walletIds and inventoryIds).</summary>
-    public const string EntityCreated = "genesis.entity.created";
+    public const string GenesisEntityCreated = "genesis.entity.created";
 
     /// <summary>Published when a genesis entity is updated (bind physical form, status changes).</summary>
-    public const string EntityUpdated = "genesis.entity.updated";
+    public const string GenesisEntityUpdated = "genesis.entity.updated";
 
     /// <summary>Published when a genesis entity is destroyed.</summary>
-    public const string EntityDeleted = "genesis.entity.deleted";
+    public const string GenesisEntityDeleted = "genesis.entity.deleted";
 
     /// <summary>Published when a genesis entity transitions to a new cognitive stage via ISeedEvolutionListener.</summary>
     public const string GenesisEntityPhaseChanged = "genesis.entity.phase-changed";

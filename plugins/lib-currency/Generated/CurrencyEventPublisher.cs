@@ -104,6 +104,13 @@ public static class CurrencyEventPublisher
         CancellationToken cancellationToken = default)
         => messageBus.TryPublishAsync(CurrencyPublishedTopics.CurrencyWalletCreated, eventData, cancellationToken);
 
+    /// <summary>Published when a CurrencyWallet's control plane state changes (status — frozen/unfrozen/closed). Dual-publishes alongside semantic action events per FOUNDATION TENETS T5.</summary>
+    public static Task<bool> PublishCurrencyWalletUpdatedAsync(
+        this IMessageBus messageBus,
+        CurrencyWalletUpdatedEvent eventData,
+        CancellationToken cancellationToken = default)
+        => messageBus.TryPublishAsync(CurrencyPublishedTopics.CurrencyWalletUpdated, eventData, cancellationToken);
+
     /// <summary>Published when a wallet is frozen.</summary>
     public static Task<bool> PublishCurrencyWalletFrozenAsync(
         this IMessageBus messageBus,

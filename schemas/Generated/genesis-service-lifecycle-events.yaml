@@ -7,12 +7,12 @@ info:
 paths: {}
 components:
   schemas:
-    TemplateCreatedEvent:
+    GenesisTemplateCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to genesis.template.created when a template is created
+      description: Published to genesis.template.created when a genesistemplate is created
       required:
       - eventName
       - eventId
@@ -52,30 +52,30 @@ components:
         createdAt:
           type: string
           format: date-time
-          description: Timestamp when the template was created
+          description: Timestamp when the genesis template was created
         updatedAt:
           type: string
           format: date-time
-          description: Timestamp when the template was last updated (set to createdAt on creation)
+          description: Timestamp when the genesis template was last updated (set to createdAt on creation)
         isDeprecated:
           type: boolean
-          description: Whether this template is deprecated
+          description: Whether this genesis template is deprecated
         deprecatedAt:
           type: string
           format: date-time
           nullable: true
-          description: When the template was deprecated (null if not deprecated)
+          description: When the genesis template was deprecated (null if not deprecated)
         deprecationReason:
           type: string
           nullable: true
           maxLength: 500
           description: Reason for deprecation (null if not deprecated)
-    TemplateDeletedEvent:
+    GenesisTemplateDeletedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to genesis.template.deleted when a template is deleted
+      description: Published to genesis.template.deleted when a genesistemplate is deleted
       required:
       - eventName
       - eventId
@@ -101,19 +101,19 @@ components:
         createdAt:
           type: string
           format: date-time
-          description: Timestamp when the template was created
+          description: Timestamp when the genesis template was created
         updatedAt:
           type: string
           format: date-time
-          description: Timestamp when the template was last updated (set to createdAt on creation)
+          description: Timestamp when the genesis template was last updated (set to createdAt on creation)
         isDeprecated:
           type: boolean
-          description: Whether this template is deprecated
+          description: Whether this genesis template is deprecated
         deprecatedAt:
           type: string
           format: date-time
           nullable: true
-          description: When the template was deprecated (null if not deprecated)
+          description: When the genesis template was deprecated (null if not deprecated)
         deprecationReason:
           type: string
           nullable: true
@@ -123,12 +123,12 @@ components:
           type: string
           nullable: true
           description: Optional reason for deletion (e.g., "Merged into {targetId}")
-    TemplateUpdatedEvent:
+    GenesisTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to genesis.template.updated when a template is updated
+      description: Published to genesis.template.updated when a genesistemplate is updated
       required:
       - eventName
       - eventId
@@ -155,19 +155,19 @@ components:
         createdAt:
           type: string
           format: date-time
-          description: Timestamp when the template was created
+          description: Timestamp when the genesis template was created
         updatedAt:
           type: string
           format: date-time
-          description: Timestamp when the template was last updated (set to createdAt on creation)
+          description: Timestamp when the genesis template was last updated (set to createdAt on creation)
         isDeprecated:
           type: boolean
-          description: Whether this template is deprecated
+          description: Whether this genesis template is deprecated
         deprecatedAt:
           type: string
           format: date-time
           nullable: true
-          description: When the template was deprecated (null if not deprecated)
+          description: When the genesis template was deprecated (null if not deprecated)
         deprecationReason:
           type: string
           nullable: true
@@ -178,12 +178,12 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    EntityCreatedEvent:
+    GenesisEntityCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to genesis.entity.created when a entity is created
+      description: Published to genesis.entity.created when a genesisentity is created
       required:
       - eventName
       - eventId
@@ -266,22 +266,22 @@ components:
         createdAt:
           type: string
           format: date-time
-          description: Timestamp when the entity was created
+          description: Timestamp when the genesis entity was created
         updatedAt:
           type: string
           format: date-time
-          description: Timestamp when the entity was last updated (set to createdAt on creation)
+          description: Timestamp when the genesis entity was last updated (set to createdAt on creation)
       x-resource-mapping:
         resource_type: genesis-entity
         resource_id_field: entityId
         source_type: genesis-entity
         is_deletion: false
-    EntityDeletedEvent:
+    GenesisEntityDeletedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to genesis.entity.deleted when a entity is deleted
+      description: Published to genesis.entity.deleted when a genesisentity is deleted
       required:
       - eventName
       - eventId
@@ -321,11 +321,11 @@ components:
         createdAt:
           type: string
           format: date-time
-          description: Timestamp when the entity was created
+          description: Timestamp when the genesis entity was created
         updatedAt:
           type: string
           format: date-time
-          description: Timestamp when the entity was last updated (set to createdAt on creation)
+          description: Timestamp when the genesis entity was last updated (set to createdAt on creation)
         deletedReason:
           type: string
           nullable: true
@@ -335,12 +335,12 @@ components:
         resource_id_field: entityId
         source_type: genesis-entity
         is_deletion: true
-    EntityUpdatedEvent:
+    GenesisEntityUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to genesis.entity.updated when a entity is updated
+      description: Published to genesis.entity.updated when a genesisentity is updated
       required:
       - eventName
       - eventId
@@ -381,11 +381,11 @@ components:
         createdAt:
           type: string
           format: date-time
-          description: Timestamp when the entity was created
+          description: Timestamp when the genesis entity was created
         updatedAt:
           type: string
           format: date-time
-          description: Timestamp when the entity was last updated (set to createdAt on creation)
+          description: Timestamp when the genesis entity was last updated (set to createdAt on creation)
         changedFields:
           type: array
           items:

@@ -19,6 +19,18 @@ It follows the same pattern as music-theory, storyline-theory, and voxel-core: p
 
 **The theory-layer role**: sprite-theory does NOT render anything — it has no engine dependency and no pixel capture capability. It computes WHERE frames go in an atlas, WHICH angles produce mirrors, HOW depth data converts to normals, and WHAT the metadata format looks like. The actual rendering, model loading, and frame capture happen in the engine bridge (sprite-composer-stride). sprite-theory produces the mathematics and data structures that the bridge and orchestrator consume.
 
+### Sprite Composer SDK Deep Dive {#sprite-composer}
+
+**Layer**: Composer | **Status**: Aspirational — no code exists. | **Dependencies**: sprite-theory | **Consumers**: sprite-composer-stride (primary bridge), future sprite-composer-godot / sprite-composer-unity bridges, future SpriteBatcher automation tool, defenders-sprite-composer Stride project | [Implementation Map](../sdks/maps/SPRITE-COMPOSER.md) | [Full Deep Dive](../sdks/SPRITE-COMPOSER.md)
+
+*Engine-agnostic orchestrator for 3D-to-2D sprite capture — projects, capture sessions, equipment/animation configuration, preview, and atlas export*
+
+sprite-composer is the composer-layer SDK for the sprite domain. It sits between sprite-theory (pure computation) and engine-specific bridges (sprite-composer-stride, etc.), orchestrating the full 3D-to-2D sprite capture workflow: model loading, equipment attachment, animation discovery and configuration, camera rig management, frame capture, atlas assembly, preview playback, and project persistence.
+
+It follows the composer pattern established by scene-composer and voxel-builder: an engine-agnostic core with a command-based undo/redo stack, events for consumer integration, headless-mode support, and a pluggable engine bridge (`ISpriteComposerBridge`). The critical architectural distinction — and the reason sprite-composer is its own SDK rather than a slight variant of an existing composer — is the **bridge direction**. Scene-composer and voxel-builder push data TO the engine for display. Sprite-composer pulls rendered data FROM the engine. Every capture operation is a round-trip: configure the camera, set animation time, render to off-screen target, read pixels back.
+
+**The sprite-composer boundary is "where does the engine stop."** Anything that requires rendering, skeletal animation evaluation, or GPU access lives in the bridge. Anything that can be reasoned about without rendering — project configuration, capture planning, atlas assembly from captured pixel data, metadata export, preview frame selection — lives in sprite-composer itself. The result is an SDK that can fully validate projects, compute capture manifests, and assemble finished atlases offline, with the bridge as a pure "render N frames at these parameters" service.
+
 ## Voxel
 
 ### Voxel Core SDK Deep Dive {#voxel-core}
@@ -91,9 +103,9 @@ Unity's `Mesh` API uses separate attribute arrays (like Godot, unlike Stride's i
 
 ## Summary
 
-- **SDKs in catalog**: 7
+- **SDKs in catalog**: 8
 - **Domains**: Sprite, Voxel
-- **Implementation maps**: 6
+- **Implementation maps**: 7
 
 ---
 

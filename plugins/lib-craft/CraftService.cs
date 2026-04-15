@@ -45,7 +45,7 @@ namespace BeyondImmersion.BannouService.Craft;
 /// </para>
 /// </remarks>
 [BannouService("craft", typeof(ICraftService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFeatures)]
-public partial class CraftService : ICraftService
+public partial class CraftService : ICraftService, ICleanDeprecatedEntity
 {
     private readonly IMessageBus _messageBus;
     private readonly IStateStoreFactory _stateStoreFactory;

@@ -45,7 +45,7 @@ namespace BeyondImmersion.BannouService.Environment;
 /// </para>
 /// </remarks>
 [BannouService("environment", typeof(IEnvironmentService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFeatures)]
-public partial class EnvironmentService : IEnvironmentService
+public partial class EnvironmentService : IEnvironmentService, IDeprecateAndMergeEntity
 {
     private readonly IMessageBus _messageBus;
     private readonly IStateStoreFactory _stateStoreFactory;

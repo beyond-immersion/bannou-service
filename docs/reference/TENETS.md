@@ -171,7 +171,7 @@ Tenets are organized into categories based on when they're needed:
 | # | Name | Core Rule |
 |---|------|-----------|
 | **T4** | Infrastructure Libs Pattern | MUST use lib-state, lib-messaging, lib-mesh; direct DB/queue access forbidden; L0/L1/L2 dependencies are hard (fail at startup) |
-| **T5** | Event-Driven Architecture | All state changes publish typed events; no anonymous objects; use generated `Publish*Async` extension methods (parameterized overloads for dynamic topics) |
+| **T5** | Event-Driven Architecture | All state changes publish typed events; no anonymous objects; use generated `Publish*Async` extension methods (parameterized overloads for dynamic topics); user/service-action mutations MUST dual-publish the semantic action event AND the lifecycle `*.updated` event (background/system-driven changes publish only `*.updated`) |
 | **T6** | Service Implementation Pattern | Partial class structure with standardized dependencies; state store key builders with `Build*Key()` methods |
 | **T13** | X-Permissions Usage | All endpoints declare x-permissions; `[]` = service-only (no WebSocket); `role: anonymous` = pre-auth public. See [ENDPOINT-PERMISSION-GUIDELINES.md](ENDPOINT-PERMISSION-GUIDELINES.md) for the decision framework |
 | **T15** | Browser-Facing Endpoints | GET/path-params only for OAuth, Website, WebSocket upgrade (exceptional) |
@@ -257,6 +257,7 @@ Tenets are organized into categories based on when they're needed:
 | Inline topic string when generated publisher exists | T5 | Use `_messageBus.Publish*Async()` extension method |
 | Inline `$"topic.{param}"` for parameterized topic | T5 | Use generated parameterized overload with typed params |
 | Missing `topic-params` on parameterized `x-event-publications` entry | T1, T5 | Add `topic-params` with name/type for each `{placeholder}` |
+| Action event published without accompanying `*.updated` lifecycle event | T5 | Dual-publish: mutation action events MUST be paired with the lifecycle `*.updated` event (with `changedFields`) so infrastructure consumers react to state changes uniformly. If the entity genuinely has no mutation path, add `immutable: true` to its `x-lifecycle` to suppress `*UpdatedEvent` generation. See FOUNDATION.md § T5 "Action events vs. lifecycle events" |
 | Service class missing `partial` | T6 | Add `partial` keyword |
 | Inline `GetStore<T>()` calls in service method bodies | T4, T6 | Constructor-cache all store references as `readonly` fields |
 | Storing `IStateStoreFactory` as a field when only used in constructor | T4, T6 | Use constructor parameter directly; do not store as field |

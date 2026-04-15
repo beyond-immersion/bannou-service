@@ -13,8 +13,8 @@
 |-------|-------|
 | SDK | sprite-theory |
 | Layer | Theory |
-| Public Types | 38 (21 records, 8 static classes, 3 enums, 4 structs, 2 interfaces) |
-| Public Methods | 14 |
+| Public Types | 40 (21 records, 10 static classes, 3 enums, 4 structs, 2 interfaces) |
+| Public Methods | 16 |
 | Dependencies | None (pure .NET BCL: System.Text.Json, System.Numerics) |
 | Deterministic | Yes (all operations are pure) |
 | Allocation-Free Hot Paths | CaptureAngle construction, BoundingBox operations, Color operations, Vector2/Rectangle operations |
@@ -71,6 +71,25 @@
 | `OrthoHeight` | `float` | Orthographic viewport height in world units |
 | `NearPlane` | `float` | Near clip distance |
 | `FarPlane` | `float` | Far clip distance |
+
+### PivotComputer
+
+**Kind**: Static class (no instance state)
+**Thread Safety**: Thread-safe (pure)
+
+| Member | Type | Purpose |
+|--------|------|---------|
+| `DefaultHumanoidPivot` | `static readonly Vector2` | Terminal fallback pivot `(0.5, 0.85)` — center-X, 85% from top, for upright humanoids |
+| `ComputeFromBounds` | static method | Derives a pivot by projecting the bottom-center of a bounding box onto the camera frame plane, clamped to `[0, 1]` |
+
+### MultiAtlasStrategy
+
+**Kind**: Static class (no instance state)
+**Thread Safety**: Thread-safe (pure, though callers mutate the free rectangle list passed in)
+
+| Member | Type | Purpose |
+|--------|------|---------|
+| `OpenNextAtlas` | static method | Validates frame-fits-in-max then resets the free rectangle list to represent a fresh atlas; returns the new atlas index and the single full-atlas free rect for placement |
 
 ### BoundingBox
 
@@ -185,7 +204,7 @@
 | `Atlases` | `IReadOnlyList<AtlasInfo>` | Atlas image info (one or more) |
 | `Animations` | `IReadOnlyList<SpriteAnimation>` | All animations with per-angle frame maps |
 | `Frames` | `IReadOnlyList<SpriteFrame>` | All frames (captured + mirrors) |
-| `CustomProperties` | `Dictionary<string, string>?` | Game-specific opaque metadata |
+| `CustomProperties` | `IReadOnlyDictionary<string, string>?` | Game-specific opaque metadata |
 
 ### AtlasInfo
 
@@ -228,7 +247,7 @@
 | `Name` | `string` | Animation name |
 | `LoopMode` | `LoopMode` | None, Loop, PingPong |
 | `TotalDuration` | `float` | Total duration in seconds |
-| `AngleFrameMap` | `Dictionary<string, int[]>` | AngleName → ordered frame indices |
+| `AngleFrameMap` | `IReadOnlyDictionary<string, int[]>` | AngleName → ordered frame indices |
 | `Events` | `IReadOnlyList<AnimationEvent>?` | Optional per-frame events |
 
 ### CharacterVariant
@@ -241,8 +260,9 @@
 | `Name` | `string` | Variant identifier ("warrior_plate_sword") |
 | `ModelPath` | `string` | Path to base character model |
 | `Equipment` | `IReadOnlyList<EquipmentSlot>` | Attached equipment |
-| `MaterialOverrides` | `Dictionary<string, string>?` | Material/palette swaps |
+| `MaterialOverrides` | `IReadOnlyDictionary<string, string>?` | Material/palette swaps |
 | `Scale` | `float` | Model scale (default: 1.0) |
+| `PivotOverride` | `Vector2?` | Per-variant pivot override (null = PivotComputer.ComputeFromBounds auto-compute) |
 
 ### EquipmentSlot
 
@@ -373,6 +393,12 @@
 |--------|-----------|:----:|:----------:|-------|
 | `Compute` | `(CaptureAngle, BoundingBox, (int,int) frameSize) → OrthographicParameters` | Yes | Minimal | Returns one record |
 
+### PivotComputer
+
+| Method | Signature | Det. | Allocation | Notes |
+|--------|-----------|:----:|:----------:|-------|
+| `ComputeFromBounds` | `(BoundingBox, OrthographicParameters) → Vector2` | Yes | Free | Pure math; falls back to `DefaultHumanoidPivot` when camera basis is degenerate or ortho dimensions are zero |
+
 ### AnimationSampling
 
 | Method | Signature | Det. | Allocation | Notes |
@@ -384,7 +410,13 @@
 
 | Method | Signature | Det. | Allocation | Notes |
 |--------|-----------|:----:|:----------:|-------|
-| `Pack` | `(IReadOnlyList<(int w, int h, int index)>, AtlasOptions) → AtlasLayout` | Yes | Allocating | Free rect lists, placement list |
+| `Pack` | `(IReadOnlyList<(int w, int h, int index)>, AtlasOptions) → AtlasLayout` | Yes | Allocating | Free rect lists, placement list. Delegates overflow to `MultiAtlasStrategy.OpenNextAtlas`. |
+
+### MultiAtlasStrategy
+
+| Method | Signature | Det. | Allocation | Notes |
+|--------|-----------|:----:|:----------:|-------|
+| `OpenNextAtlas` | `(int currentAtlasIndex, List<Rectangle> freeRects, int maxW, int maxH, int pw, int ph, int frameIndex, int frameW, int frameH) → (int NewAtlasIndex, Rectangle Placement)` | Yes | Minimal | Mutates `freeRects` in place. Throws `InvalidOperationException` if padded frame exceeds max atlas dimensions. |
 
 ### MirrorOptimizer
 
@@ -553,6 +585,43 @@ RETURN OrthographicParameters(
 
 ---
 
+### PivotComputer.ComputeFromBounds
+`(bounds: BoundingBox, camera: OrthographicParameters) → Vector2`
+
+// Step 1: Feet world position = bottom-center of bounds (upright-humanoid convention)
+COMPUTE feetX ← (bounds.Min.X + bounds.Max.X) * 0.5f
+COMPUTE feetY ← bounds.Min.Y
+COMPUTE feetZ ← (bounds.Min.Z + bounds.Max.Z) * 0.5f
+
+// Step 2: Relative to camera
+COMPUTE rel ← (feetX - camera.Position.X, feetY - camera.Position.Y, feetZ - camera.Position.Z)
+
+// Step 3: Derive camera right axis from basis
+COMPUTE right ← cross(camera.Direction, camera.Up)
+COMPUTE rightLen ← length(right)
+IF rightLen < 1e-10f
+  // Degenerate basis (direction parallel to up) — no well-defined projection
+  RETURN DefaultHumanoidPivot
+COMPUTE right ← right / rightLen
+
+// Step 4: Project onto (right, up) plane
+COMPUTE u ← dot(rel, right)
+COMPUTE v ← dot(rel, camera.Up)
+
+// Step 5: Guard against invalid ortho dimensions
+IF camera.OrthoWidth <= 0f OR camera.OrthoHeight <= 0f
+  RETURN DefaultHumanoidPivot
+
+// Step 6: Map to normalized frame coords
+//   Pivot origin is top-left (Y grows downward), camera V is bottom-up, so flip Y.
+COMPUTE pivotX ← 0.5f + u / camera.OrthoWidth
+COMPUTE pivotY ← 0.5f - v / camera.OrthoHeight
+
+// Step 7: Clamp to [0, 1] so downstream consumers never see out-of-frame pivots
+RETURN Vector2(clamp01(pivotX), clamp01(pivotY))
+
+---
+
 ### AnimationSampling.GenerateUniform
 `(duration: float, frameCount: int) → FrameSequence`
 
@@ -616,20 +685,23 @@ FOREACH frame in sorted
       IF shortSide < bestShortSide OR (shortSide == bestShortSide AND longSide < bestLongSide)
         bestRect ← rect; bestShortSide ← shortSide; bestLongSide ← longSide
 
+  DECLARE best ← Rectangle
   IF bestRect is null
-    // Multi-atlas overflow: start new atlas
-    currentAtlas += 1
-    freeRects.Clear()
-    freeRects.Add(Rectangle(0, 0, options.MaxWidth, options.MaxHeight))
-    // Retry BSSF on fresh atlas (guaranteed success for any frame ≤ MaxSize)
-    REPEAT BSSF search → bestRect
+    // Multi-atlas overflow: delegate to MultiAtlasStrategy. Validates the frame fits
+    // in a max-sized atlas, resets freeRects, and returns the placement rect (the
+    // single free rect on a fresh atlas starts at origin).
+    (currentAtlas, best) ← MultiAtlasStrategy.OpenNextAtlas(
+      currentAtlas, freeRects, options.MaxWidth, options.MaxHeight,
+      pw, ph, frame.Index, frame.Width, frame.Height)
+  ELSE
+    best ← bestRect.Value
 
-  // Place frame at bestRect position
+  // Place frame at best position
   allPlacements.Add(PackedFrame(frame.Index, currentAtlas,
-    bestRect.X, bestRect.Y, frame.Width, frame.Height))
+    best.X, best.Y, frame.Width, frame.Height))
 
   // MaxRects subdivision: split remaining free space around placed rectangle
-  COMPUTE placed ← Rectangle(bestRect.X, bestRect.Y, pw, ph)
+  COMPUTE placed ← Rectangle(best.X, best.Y, pw, ph)
   CREATE newFreeRects ← new List<Rectangle>()
   FOREACH rect in freeRects
     IF NOT Intersects(rect, placed)
@@ -662,6 +734,26 @@ COMPUTE totalAtlasArea ← SUM(atlasWidths[i] * atlasHeights[i] for all i)
 COMPUTE efficiency ← (float)totalFrameArea / totalAtlasArea
 
 RETURN AtlasLayout(allPlacements, atlasWidths, atlasHeights, currentAtlas + 1, efficiency)
+
+---
+
+### MultiAtlasStrategy.OpenNextAtlas
+`(currentAtlasIndex: int, freeRects: List<Rectangle>, maxWidth: int, maxHeight: int, paddedFrameWidth: int, paddedFrameHeight: int, frameIndex: int, frameWidth: int, frameHeight: int) → (int NewAtlasIndex, Rectangle Placement)`
+
+// Step 1: Validate the frame can fit in any atlas at the configured max dimensions.
+// Done BEFORE mutating freeRects so callers with oversized frames fail fast.
+VALIDATE paddedFrameWidth <= maxWidth AND paddedFrameHeight <= maxHeight
+  → throw InvalidOperationException($"Frame (index={frameIndex}, {frameWidth}x{frameHeight}) exceeds maximum atlas dimensions ({maxWidth}x{maxHeight}).")
+
+// Step 2: Reset free rectangle list to a single rect covering the new atlas
+CREATE fullAtlas ← Rectangle(0, 0, maxWidth, maxHeight)
+freeRects.Clear()
+freeRects.Add(fullAtlas)
+
+// Step 3: Return the new atlas index and the placement rect. The single free rect
+// in a fresh atlas covers the whole atlas from origin — that IS the placement rect
+// (caller does not need to re-run BSSF because there's only one free rect).
+RETURN (currentAtlasIndex + 1, fullAtlas)
 
 ---
 

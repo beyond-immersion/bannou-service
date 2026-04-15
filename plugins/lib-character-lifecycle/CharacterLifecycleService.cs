@@ -26,7 +26,7 @@ namespace BeyondImmersion.BannouService.CharacterLifecycle;
 /// and cross-generational trait inheritance.
 /// </summary>
 [BannouService("character-lifecycle", typeof(ICharacterLifecycleService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFeatures)]
-public partial class CharacterLifecycleService : ICharacterLifecycleService
+public partial class CharacterLifecycleService : ICharacterLifecycleService, ICleanDeprecatedEntity
 {
     private readonly ILogger<CharacterLifecycleService> _logger;
     private readonly CharacterLifecycleServiceConfiguration _configuration;

@@ -32,12 +32,12 @@ public partial class GenesisService
     /// <param name="eventConsumer">The event consumer for registering handlers.</param>
     protected void RegisterEventConsumers(IEventConsumer eventConsumer)
     {
-        eventConsumer.RegisterHandler<IGenesisService, EntityCreatedEvent>(
-            GenesisPublishedTopics.EntityCreated,
+        eventConsumer.RegisterHandler<IGenesisService, GenesisEntityCreatedEvent>(
+            GenesisPublishedTopics.GenesisEntityCreated,
             async (svc, evt) => await ((GenesisService)svc).HandleGenesisEntityCreatedAsync(evt));
 
-        eventConsumer.RegisterHandler<IGenesisService, EntityDeletedEvent>(
-            GenesisPublishedTopics.EntityDeleted,
+        eventConsumer.RegisterHandler<IGenesisService, GenesisEntityDeletedEvent>(
+            GenesisPublishedTopics.GenesisEntityDeleted,
             async (svc, evt) => await ((GenesisService)svc).HandleGenesisEntityDeletedAsync(evt));
     }
 
@@ -46,7 +46,7 @@ public partial class GenesisService
     /// Reads the template to get growth mappings and populates the local wallet map for every
     /// wallet owned by the new entity.
     /// </summary>
-    public async Task HandleGenesisEntityCreatedAsync(EntityCreatedEvent evt)
+    public async Task HandleGenesisEntityCreatedAsync(GenesisEntityCreatedEvent evt)
     {
         using var activity = _telemetryProvider.StartActivity(
             "bannou.genesis", "GenesisService.HandleGenesisEntityCreated");
@@ -99,7 +99,7 @@ public partial class GenesisService
     /// Handles <c>genesis.entity.deleted</c> events for wallet map coherence across nodes.
     /// Removes the deleted entity's wallets from the local wallet map.
     /// </summary>
-    public async Task HandleGenesisEntityDeletedAsync(EntityDeletedEvent evt)
+    public async Task HandleGenesisEntityDeletedAsync(GenesisEntityDeletedEvent evt)
     {
         using var activity = _telemetryProvider.StartActivity(
             "bannou.genesis", "GenesisService.HandleGenesisEntityDeleted");

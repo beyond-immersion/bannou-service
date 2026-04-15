@@ -27,13 +27,13 @@ public static class CraftPublishedTopics
     public const string CraftRecipeDeleted = "craft.recipe.deleted";
 
     /// <summary>Published when a crafting session record is created.</summary>
-    public const string CraftingSessionCreated = "craft.session.created";
+    public const string CraftSessionCreated = "craft.session.created";
 
     /// <summary>Published when a crafting session record is updated.</summary>
-    public const string CraftingSessionUpdated = "craft.session.updated";
+    public const string CraftSessionUpdated = "craft.session.updated";
 
     /// <summary>Published when a crafting session record is deleted.</summary>
-    public const string CraftingSessionDeleted = "craft.session.deleted";
+    public const string CraftSessionDeleted = "craft.session.deleted";
 
     /// <summary>Published when a crafting session begins with validated prerequisites.</summary>
     public const string CraftSessionStarted = "craft.session.started";

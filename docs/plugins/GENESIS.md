@@ -496,7 +496,7 @@ Chest opened (game engine):
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Clean-deprecated sweep does not publish `genesis.template.deleted` event**~~: **FIXED** (2026-03-19) — Added `PublishTemplateDeletedAsync` call with full `TemplateDeletedEvent` construction in the `deleteAndPublishAsync` delegate of `CleanDeprecatedAsync`. The `*.deleted` lifecycle event is now published for each permanently removed deprecated template per IMPLEMENTATION TENETS (T31 B22).
+1. ~~**Clean-deprecated sweep does not publish `genesis.template.deleted` event**~~: **FIXED** (2026-03-19) — Added `PublishGenesisTemplateDeletedAsync` call with full `GenesisTemplateDeletedEvent` construction in the `deleteAndPublishAsync` delegate of `CleanDeprecatedAsync`. The `*.deleted` lifecycle event is now published for each permanently removed deprecated template per IMPLEMENTATION TENETS (T31 B22).
 
 2. ~~**CleanupByRealm does not batch — `CleanupBatchSize` config is dead**~~: **FIXED** (2026-03-19) — Refactored `CleanupByRealmAsync` to use `QueryPagedAsync` with `_configuration.CleanupBatchSize` per batch, always querying page 1 (entities are deleted as we go). `CleanupBatchSize` config is now referenced. Per IMPLEMENTATION TENETS (T21).
 

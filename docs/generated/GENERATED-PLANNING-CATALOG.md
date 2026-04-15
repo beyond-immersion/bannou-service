@@ -251,6 +251,22 @@ Records the results of a full cross-service architectural audit comparing VISION
 
 ## Other
 
+### Beyond Immersion Platform App: Multi-Game Publisher Shell with Embedded Bannou Instance {#beyond-immersion-app}
+
+**Status**: Planning — no implementation yet | [Full Document](../planning/BEYOND-IMMERSION-APP.md)
+
+This document specifies a multi-game publisher app architecture for Beyond Immersion that:
+
+1. Ships the Beyond Immersion app as a **Bannou embedded instance** on mobile (not a thin client to a remote server)
+2. Redesigns the **Website plugin** from a stubbed browser-CMS into a module-composable CMS where each account registration contributes modules (DI-style assembly), with a first-class `POST /website/navigation/handle` endpoint that routes any deep-link signal (including push notifications)
+3. Gates 18+ at the **account tier**, not the **app content tier** — preserves legal simplicity (COPPA avoidance, clean creator contracting, adult-only ToS binding) without forcing an 18+ content rating on the app
+4. Delivers **per-game companion modules** (chat, compendiums, message boards, game notifications, mini-games that impact in-game state) via CDN-delivered content packs
+5. Unifies **Beyond Immersion as both publisher brand and in-universe Omega hardware manufacturer** — deliberate fourth-wall trick where the real app and the diegetic Omega device are the same product
+6. Introduces a dedicated **lib-push plugin (L3)** with publisher/receiver modes, tapping entity-scoped client events via a new `IEntityEventObserver` DI interface so push delivery fires regardless of session state (the critical case: app is closed, no session, but the user still needs the notification)
+7. Uses **platform-native anonymous identity** (Game Center, Play Games, Steam) so individual games work without any Beyond Immersion account; account registration unlocks cross-platform features
+
+The document establishes 14 decisions, their rationale, the architecture that emerges, the plugin-level impact, and the open questions that remain.
+
 ### In-Game Cinematic Series: The Ledger and the Sword {#in-game-cinematic-series}
 
 **Type**: Creative Design + Technical Architecture | **Status**: Concept | **Last Updated**: 2026-04-03 | **North Stars**: #1, #4, #5 | [Full Document](../planning/IN-GAME-CINEMATIC-SERIES.md)
@@ -267,7 +283,7 @@ The MCP (Model Context Protocol) server is a new L3 App Features plugin that exp
 
 ## Summary
 
-- **Documents in catalog**: 39
+- **Documents in catalog**: 40
 
 ---
 

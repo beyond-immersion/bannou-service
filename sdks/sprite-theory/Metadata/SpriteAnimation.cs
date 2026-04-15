@@ -21,5 +21,5 @@ public record SpriteAnimation(
     string Name,
     LoopMode LoopMode,
     float TotalDuration,
-    Dictionary<string, int[]> AngleFrameMap,
+    IReadOnlyDictionary<string, int[]> AngleFrameMap,
     IReadOnlyList<AnimationEvent>? Events);

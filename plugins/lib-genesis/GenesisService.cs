@@ -243,7 +243,7 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         await _templateStore.SaveAsync(BuildTemplateKey(body.TemplateCode), template, cancellationToken: cancellationToken);
         await AddToTemplateGameIndexAsync(body.GameServiceId, body.TemplateCode, cancellationToken);
 
-        await _messageBus.PublishTemplateCreatedAsync(new TemplateCreatedEvent
+        await _messageBus.PublishGenesisTemplateCreatedAsync(new GenesisTemplateCreatedEvent
         {
             TemplateCode = template.TemplateCode,
             GameServiceId = template.GameServiceId,
@@ -360,7 +360,7 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         template.UpdatedAt = DateTimeOffset.UtcNow;
         await _templateStore.SaveAsync(BuildTemplateKey(body.TemplateCode), template, cancellationToken: cancellationToken);
 
-        await _messageBus.PublishTemplateUpdatedAsync(new TemplateUpdatedEvent
+        await _messageBus.PublishGenesisTemplateUpdatedAsync(new GenesisTemplateUpdatedEvent
         {
             TemplateCode = template.TemplateCode,
             GameServiceId = template.GameServiceId,
@@ -395,7 +395,7 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
 
         await _templateStore.SaveAsync(BuildTemplateKey(body.TemplateCode), template, cancellationToken: cancellationToken);
 
-        await _messageBus.PublishTemplateUpdatedAsync(new TemplateUpdatedEvent
+        await _messageBus.PublishGenesisTemplateUpdatedAsync(new GenesisTemplateUpdatedEvent
         {
             TemplateCode = template.TemplateCode,
             GameServiceId = template.GameServiceId,
@@ -433,7 +433,7 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             {
                 await _templateStore.DeleteAsync(BuildTemplateKey(t.TemplateCode), ct);
                 await RemoveFromTemplateGameIndexAsync(t.GameServiceId, t.TemplateCode, ct);
-                await _messageBus.PublishTemplateDeletedAsync(new TemplateDeletedEvent
+                await _messageBus.PublishGenesisTemplateDeletedAsync(new GenesisTemplateDeletedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
@@ -614,7 +614,7 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         // the new entity via the broadcast event handler below.
         PopulateWalletMap(entity, template);
 
-        await _messageBus.PublishEntityCreatedAsync(new EntityCreatedEvent
+        await _messageBus.PublishGenesisEntityCreatedAsync(new GenesisEntityCreatedEvent
         {
             EntityId = entityId,
             TemplateCode = body.TemplateCode,
@@ -814,7 +814,7 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         await _entityStore.SaveAsync(BuildEntityKey(body.EntityId), entity, cancellationToken: cancellationToken);
         await _entityCacheStore.DeleteAsync(BuildEntityCacheKey(body.EntityId), cancellationToken);
 
-        await _messageBus.PublishEntityUpdatedAsync(new EntityUpdatedEvent
+        await _messageBus.PublishGenesisEntityUpdatedAsync(new GenesisEntityUpdatedEvent
         {
             EntityId = entity.EntityId,
             TemplateCode = entity.TemplateCode,
@@ -987,7 +987,7 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
                 catch (ApiException ex) { _logger.LogWarning(ex, "Failed resource cleanup for entity {EntityId}", entity.EntityId); }
 
                 await DeleteEntityRecordsAsync(entity, cancellationToken);
-                await _messageBus.PublishEntityDeletedAsync(BuildEntityDeletedEvent(entity), cancellationToken);
+                await _messageBus.PublishGenesisEntityDeletedAsync(BuildGenesisEntityDeletedEvent(entity), cancellationToken);
             }
             catch (Exception ex)
             {
@@ -1051,7 +1051,7 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
                     catch (ApiException ex) { _logger.LogWarning(ex, "Failed resource cleanup for entity {EntityId}", entity.EntityId); }
 
                     await DeleteEntityRecordsAsync(entity, cancellationToken);
-                    await _messageBus.PublishEntityDeletedAsync(BuildEntityDeletedEvent(entity), cancellationToken);
+                    await _messageBus.PublishGenesisEntityDeletedAsync(BuildGenesisEntityDeletedEvent(entity), cancellationToken);
                 }
                 catch (Exception ex)
                 {
@@ -1206,7 +1206,7 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             // Populate the in-memory wallet map for the restored entity's wallets
             PopulateWalletMap(entity, template);
 
-            await _messageBus.PublishEntityCreatedAsync(new EntityCreatedEvent
+            await _messageBus.PublishGenesisEntityCreatedAsync(new GenesisEntityCreatedEvent
             {
                 EntityId = archived.EntityId,
                 TemplateCode = archived.TemplateCode,
