@@ -141,7 +141,7 @@ public class GenesisServiceCleanupTests : ServiceTestBase<GenesisServiceConfigur
         var service = CreateService();
         var characterId = Guid.NewGuid();
         var entity1 = CreateTestEntity(characterId: characterId);
-        entity1.ActorId = Guid.NewGuid();
+        entity1.ActorId = Guid.NewGuid().ToString();
         entity1.BondId = Guid.NewGuid();
         entity1.BondTargetEntityId = Guid.NewGuid();
         entity1.BondTargetEntityType = EntityType.Character;

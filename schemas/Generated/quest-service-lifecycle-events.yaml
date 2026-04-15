@@ -101,6 +101,71 @@ components:
           nullable: true
           maxLength: 500
           description: Reason for deprecation (null if not deprecated)
+    QuestDefinitionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to quest.definition.deleted when a questdefinition is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - definitionId
+      - contractTemplateId
+      - code
+      - name
+      - category
+      - difficulty
+      - repeatable
+      - maxQuestors
+      - gameServiceId
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: quest.definition.deleted
+          description: 'Event type identifier: quest.definition.deleted'
+        definitionId: *id001
+        contractTemplateId: *id002
+        code: *id003
+        name: *id004
+        description: *id005
+        category: *id006
+        difficulty: *id007
+        levelRequirement: *id008
+        repeatable: *id009
+        cooldownSeconds: *id010
+        deadlineSeconds: *id011
+        maxQuestors: *id012
+        gameServiceId: *id013
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this quest definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the quest definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     QuestDefinitionUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -168,71 +233,6 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    QuestDefinitionDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to quest.definition.deleted when a questdefinition is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - definitionId
-      - contractTemplateId
-      - code
-      - name
-      - category
-      - difficulty
-      - repeatable
-      - maxQuestors
-      - gameServiceId
-      - createdAt
-      - updatedAt
-      - isDeprecated
-      properties:
-        eventName:
-          type: string
-          default: quest.definition.deleted
-          description: 'Event type identifier: quest.definition.deleted'
-        definitionId: *id001
-        contractTemplateId: *id002
-        code: *id003
-        name: *id004
-        description: *id005
-        category: *id006
-        difficulty: *id007
-        levelRequirement: *id008
-        repeatable: *id009
-        cooldownSeconds: *id010
-        deadlineSeconds: *id011
-        maxQuestors: *id012
-        gameServiceId: *id013
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the quest definition was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the quest definition was last updated (set to createdAt on creation)
-        isDeprecated:
-          type: boolean
-          description: Whether this quest definition is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the quest definition was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     QuestInstanceCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -310,6 +310,54 @@ components:
           type: string
           format: date-time
           description: Timestamp when the quest instance was last updated (set to createdAt on creation)
+    QuestInstanceDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to quest.instance.deleted when a questinstance is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - questInstanceId
+      - definitionId
+      - contractInstanceId
+      - code
+      - name
+      - status
+      - gameServiceId
+      - acceptedAt
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: quest.instance.deleted
+          description: 'Event type identifier: quest.instance.deleted'
+        questInstanceId: *id014
+        definitionId: *id015
+        contractInstanceId: *id016
+        code: *id017
+        name: *id018
+        status: *id019
+        questGiverCharacterId: *id020
+        gameServiceId: *id021
+        acceptedAt: *id022
+        completedAt: *id023
+        deadline: *id024
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest instance was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the quest instance was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     QuestInstanceUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -360,51 +408,3 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    QuestInstanceDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to quest.instance.deleted when a questinstance is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - questInstanceId
-      - definitionId
-      - contractInstanceId
-      - code
-      - name
-      - status
-      - gameServiceId
-      - acceptedAt
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: quest.instance.deleted
-          description: 'Event type identifier: quest.instance.deleted'
-        questInstanceId: *id014
-        definitionId: *id015
-        contractInstanceId: *id016
-        code: *id017
-        name: *id018
-        status: *id019
-        questGiverCharacterId: *id020
-        gameServiceId: *id021
-        acceptedAt: *id022
-        completedAt: *id023
-        deadline: *id024
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the quest instance was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the quest instance was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")

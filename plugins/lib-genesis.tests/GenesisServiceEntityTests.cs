@@ -385,7 +385,7 @@ public class GenesisServiceEntityTests : ServiceTestBase<GenesisServiceConfigura
         var service = CreateService();
         var entityId = Guid.NewGuid();
         var entity = CreateTestEntity(entityId);
-        entity.ActorId = Guid.NewGuid();
+        entity.ActorId = Guid.NewGuid().ToString();
         entity.CharacterId = Guid.NewGuid();
         entity.BondId = Guid.NewGuid();
         entity.BondTargetEntityId = Guid.NewGuid();

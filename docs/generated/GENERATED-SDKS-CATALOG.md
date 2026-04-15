@@ -9,7 +9,7 @@ Pure-computation SDK deep dives covering Bannou's creative and infrastructure li
 
 ### Sprite Theory SDK Deep Dive {#sprite-theory}
 
-**Layer**: Theory | **Status**: Aspirational — no code exists. | **Dependencies**: None (pure .NET BCL only) | **Consumers**: sprite-composer, sprite-composer-stride, future SpriteBatcher | [Implementation Map](../sdks/maps/SPRITE-THEORY.md) | [Full Deep Dive](../sdks/SPRITE-THEORY.md)
+**Layer**: Theory | **Status**: Implemented — all types and methods from implementation map complete. 77 unit tests passing. | **Dependencies**: None (pure .NET BCL only) | **Consumers**: sprite-composer, sprite-composer-stride, future SpriteBatcher | [Implementation Map](../sdks/maps/SPRITE-THEORY.md) | [Full Deep Dive](../sdks/SPRITE-THEORY.md)
 
 *Camera math, atlas packing, mirror optimization, normal maps, and sprite sheet JSON metadata*
 

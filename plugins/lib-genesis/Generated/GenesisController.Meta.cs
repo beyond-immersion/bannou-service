@@ -4133,7 +4133,6 @@ public partial class GenesisController
                 },
                 "actorId": {
                     "type": "string",
-                    "format": "uuid",
                     "nullable": true,
                     "description": "Actor ID (populated at EventBrain stage, null when Dormant)"
                 },
@@ -4390,7 +4389,6 @@ public partial class GenesisController
                 },
                 "actorId": {
                     "type": "string",
-                    "format": "uuid",
                     "nullable": true,
                     "description": "Actor ID (populated at EventBrain stage, null when Dormant)"
                 },
@@ -4729,7 +4727,6 @@ public partial class GenesisController
                 },
                 "actorId": {
                     "type": "string",
-                    "format": "uuid",
                     "nullable": true,
                     "description": "Actor ID (populated at EventBrain stage, null when Dormant)"
                 },
@@ -5222,7 +5219,6 @@ public partial class GenesisController
                 },
                 "actorId": {
                     "type": "string",
-                    "format": "uuid",
                     "nullable": true,
                     "description": "Actor ID (populated at EventBrain stage, null when Dormant)"
                 },
@@ -5485,7 +5481,6 @@ public partial class GenesisController
                 },
                 "actorId": {
                     "type": "string",
-                    "format": "uuid",
                     "nullable": true,
                     "description": "Actor ID (populated at EventBrain stage, null when Dormant)"
                 },

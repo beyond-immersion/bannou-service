@@ -26,6 +26,21 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.License;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Events;
 
@@ -139,6 +154,123 @@ public partial class LicenseBoardTemplateCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string? DeprecationReason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published to license.board-template.deleted when a licenseboardtemplate is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class LicenseBoardTemplateDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: license.board-template.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "license.board-template.deleted";
+
+    /// <summary>
+    /// Unique board template identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boardTemplateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid BoardTemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Game service this template belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Display name for the board template
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Width of the board grid (columns)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gridWidth")]
+    public int GridWidth { get; set; } = default!;
+
+    /// <summary>
+    /// Height of the board grid (rows)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gridHeight")]
+    public int GridHeight { get; set; } = default!;
+
+    /// <summary>
+    /// Contract template that controls unlock behavior
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boardContractTemplateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid BoardContractTemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Grid traversal mode for this template
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("adjacencyMode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AdjacencyMode AdjacencyMode { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the template is active
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isActive")]
+    public bool IsActive { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the license board template was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the license board template was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this license board template is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the license board template was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
 
 }
 
@@ -262,123 +394,6 @@ public partial class LicenseBoardTemplateUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to license.board-template.deleted when a licenseboardtemplate is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class LicenseBoardTemplateDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: license.board-template.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "license.board-template.deleted";
-
-    /// <summary>
-    /// Unique board template identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("boardTemplateId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid BoardTemplateId { get; set; } = default!;
-
-    /// <summary>
-    /// Game service this template belongs to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Display name for the board template
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Name { get; set; } = default!;
-
-    /// <summary>
-    /// Width of the board grid (columns)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gridWidth")]
-    public int GridWidth { get; set; } = default!;
-
-    /// <summary>
-    /// Height of the board grid (rows)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gridHeight")]
-    public int GridHeight { get; set; } = default!;
-
-    /// <summary>
-    /// Contract template that controls unlock behavior
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("boardContractTemplateId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid BoardContractTemplateId { get; set; } = default!;
-
-    /// <summary>
-    /// Grid traversal mode for this template
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("adjacencyMode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AdjacencyMode AdjacencyMode { get; set; } = default!;
-
-    /// <summary>
-    /// Whether the template is active
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isActive")]
-    public bool IsActive { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the license board template was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the license board template was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this license board template is deprecated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
-    public bool IsDeprecated { get; set; } = default!;
-
-    /// <summary>
-    /// When the license board template was deprecated (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for deprecation (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? DeprecationReason { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Published to license.board.created when a licenseboard is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -463,102 +478,6 @@ public partial class LicenseBoardCreatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Published to license.board.updated when a licenseboard is updated
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class LicenseBoardUpdatedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: license.board.updated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "license.board.updated";
-
-    /// <summary>
-    /// Unique board instance identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("boardId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid BoardId { get; set; } = default!;
-
-    /// <summary>
-    /// Type of entity that owns this board
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EntityType OwnerType { get; set; } = default!;
-
-    /// <summary>
-    /// Entity that owns this board
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid OwnerId { get; set; } = default!;
-
-    /// <summary>
-    /// Realm context for this board
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    public System.Guid? RealmId { get; set; } = default!;
-
-    /// <summary>
-    /// Board template this instance was created from
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("boardTemplateId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid BoardTemplateId { get; set; } = default!;
-
-    /// <summary>
-    /// Game service this board belongs to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Inventory container holding unlocked license items
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("containerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContainerId { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the license board was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the license board was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// List of field names that were modified
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changedFields")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
 }
 

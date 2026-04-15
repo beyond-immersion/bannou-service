@@ -190,7 +190,7 @@ public partial class PuppetmasterService
     /// Injects a watch perception into an actor's bounded channel.
     /// </summary>
     private async Task InjectWatchPerceptionAsync(
-        Guid actorId,
+        string actorId,
         WatchPerception perception,
         CancellationToken ct)
     {
@@ -204,7 +204,7 @@ public partial class PuppetmasterService
 
             var request = new InjectPerceptionRequest
             {
-                ActorId = actorId.ToString(),
+                ActorId = actorId,
                 Perception = new PerceptionData
                 {
                     PerceptionType = perception.Type,
@@ -353,22 +353,13 @@ public partial class PuppetmasterService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "PuppetmasterService.HandleActorDeletedAsync");
 
-        if (!Guid.TryParse(evt.ActorId, out var actorId))
-        {
-            _logger.LogWarning(
-                "Invalid actor ID in actor.instance.deleted event: {ActorId}",
-                evt.ActorId);
-            await Task.CompletedTask;
-            return;
-        }
-
-        var removedCount = _watchRegistry.RemoveAllWatches(actorId);
+        var removedCount = _watchRegistry.RemoveAllWatches(evt.ActorId);
 
         if (removedCount > 0)
         {
             _logger.LogDebug(
                 "Cleaned up {Count} watches for deleted actor {ActorId}",
-                removedCount, actorId);
+                removedCount, evt.ActorId);
         }
 
         await Task.CompletedTask;

@@ -1413,7 +1413,7 @@ public partial class GenesisEntityResponse
     /// Actor ID (populated at EventBrain stage, null when Dormant)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
-    public System.Guid? ActorId { get; set; } = default!;
+    public string? ActorId { get; set; } = default!;
 
     /// <summary>
     /// Character ID (populated at CharacterBrain stage, null when Dormant or EventBrain)

@@ -108,7 +108,7 @@ internal class GenesisEntityModel
     public Dictionary<string, Guid> InventoryIds { get; set; } = new();
     public string CurrentPhase { get; set; } = string.Empty;
     public CognitiveStage CognitiveStage { get; set; }
-    public Guid? ActorId { get; set; }
+    public string? ActorId { get; set; }
     public Guid? CharacterId { get; set; }
     public PhysicalFormType PhysicalFormType { get; set; }
     public Guid? PhysicalFormId { get; set; }
@@ -144,7 +144,7 @@ internal class CachedGenesisEntity
     public Dictionary<string, Guid> InventoryIds { get; set; } = new();
     public string CurrentPhase { get; set; } = string.Empty;
     public CognitiveStage CognitiveStage { get; set; }
-    public Guid? ActorId { get; set; }
+    public string? ActorId { get; set; }
     public Guid? CharacterId { get; set; }
     public PhysicalFormType PhysicalFormType { get; set; }
     public Guid? PhysicalFormId { get; set; }

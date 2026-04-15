@@ -102,6 +102,70 @@ components:
           nullable: true
           maxLength: 500
           description: Reason for deprecation (null if not deprecated)
+    LocationDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to location.deleted when a location is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - locationId
+      - realmId
+      - code
+      - name
+      - locationType
+      - depth
+      - boundsPrecision
+      - coordinateMode
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: location.deleted
+          description: 'Event type identifier: location.deleted'
+        locationId: *id001
+        realmId: *id002
+        code: *id003
+        name: *id004
+        description: *id005
+        locationType: *id006
+        parentLocationId: *id007
+        depth: *id008
+        bounds: *id009
+        boundsPrecision: *id010
+        coordinateMode: *id011
+        localOrigin: *id012
+        metadata: *id013
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the location was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the location was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this location is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the location was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     LocationUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -168,67 +232,3 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    LocationDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to location.deleted when a location is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - locationId
-      - realmId
-      - code
-      - name
-      - locationType
-      - depth
-      - boundsPrecision
-      - coordinateMode
-      - createdAt
-      - updatedAt
-      - isDeprecated
-      properties:
-        eventName:
-          type: string
-          default: location.deleted
-          description: 'Event type identifier: location.deleted'
-        locationId: *id001
-        realmId: *id002
-        code: *id003
-        name: *id004
-        description: *id005
-        locationType: *id006
-        parentLocationId: *id007
-        depth: *id008
-        bounds: *id009
-        boundsPrecision: *id010
-        coordinateMode: *id011
-        localOrigin: *id012
-        metadata: *id013
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the location was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the location was last updated (set to createdAt on creation)
-        isDeprecated:
-          type: boolean
-          description: Whether this location is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the location was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")

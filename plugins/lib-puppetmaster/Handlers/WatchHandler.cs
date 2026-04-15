@@ -98,7 +98,7 @@ public sealed class WatchHandler : IActionHandler
                     "watch: This action can only be executed within an actor context");
             }
 
-            var actorId = context.ActorId.Value;
+            var actorId = context.ActorId.Value.ToString();
 
             // 3. Register watch in registry
             _registry.AddWatch(actorId, watchAction.ResourceType, resourceId, watchAction.Sources, watchAction.OnChange);

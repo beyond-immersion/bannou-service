@@ -1463,7 +1463,6 @@ components:
           description: Current cognitive progression stage
         actorId:
           type: string
-          format: uuid
           nullable: true
           description: Actor ID (populated at EventBrain stage, null when Dormant)
         characterId:

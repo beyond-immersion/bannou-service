@@ -1,3 +1,5 @@
+using BeyondImmersion.BannouService.Attributes;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using Xunit;
 
@@ -8,32 +10,40 @@ namespace BeyondImmersion.BannouService.StructuralTests;
 /// </summary>
 /// <remarks>
 /// <para>
-/// This test catches the specific anti-pattern where plugin code calls
-/// <c>Guid.TryParse</c>, <c>int.TryParse</c>, or similar string-to-primitive
-/// conversion methods on a property of a generated response or event model.
-/// Such calls indicate a schema type mismatch: the owning service declared the
-/// field as <c>string</c> in its OpenAPI schema, but a consumer expects a
-/// stronger type like <c>Guid</c>. The fix is to tighten the schema so NSwag
-/// generates the correct type on both sides — never paper over the mismatch
-/// with runtime parsing in plugin code.
+/// This test detects plugin code calling <c>Guid.TryParse</c>, <c>int.TryParse</c>,
+/// or similar string-to-primitive conversion methods on a property of a generated
+/// response or event model. Each occurrence means the owning schema declares the
+/// field as <c>string</c> while a consumer operates on it as a stronger primitive
+/// type (<c>Guid</c>, <c>int</c>, etc.). The detection is structural; the cause
+/// requires investigation — possible causes include a schema that should have
+/// declared a stronger format (e.g., <c>format: uuid</c>), a deliberately
+/// polymorphic identifier whose typing is intentional, or hierarchy-isolation
+/// string typing where the lower-layer owner cannot enumerate consumer types.
 /// </para>
 /// <para>
-/// <b>This is item #12 of issue #720's follow-up.</b> Genesis's
-/// <c>GenesisSeedEvolutionListener.OnPhaseChangedAsync</c> calls
-/// <c>Guid.TryParse(spawnResponse.ActorId, ...)</c> because Actor's schema
-/// declares <c>actorId</c> as <c>string</c> while Genesis stores <c>ActorId</c>
-/// as <c>Guid?</c>. Grepping the codebase for the same pattern reveals two
-/// additional instances: lib-puppetmaster and lib-leaderboard both call
-/// <c>Guid.(Try)?Parse(evt.XyzId, ...)</c> on event model properties that
-/// should have been declared as <c>uuid</c> in the source schema.
+/// <b>Added per issue #720 follow-up.</b> Known occurrences at time of
+/// introduction: Genesis's <c>GenesisSeedEvolutionListener.OnPhaseChangedAsync</c>
+/// calls <c>Guid.TryParse(spawnResponse.ActorId, ...)</c> against Actor's
+/// <c>actorId: string</c>; lib-puppetmaster and lib-leaderboard have similar
+/// call sites against event model string properties. Whether the correct
+/// resolution is a schema tightening, a schema split, or an acknowledged
+/// polymorphism is a per-site design decision.
+/// </para>
+/// <para>
+/// <b>Polymorphic type exemption:</b> Properties annotated with
+/// <see cref="PolymorphicTypeAttribute"/> (emitted from <c>x-polymorphic-type-properties</c>
+/// in the schema) are excluded from violation detection. The attribute declares that
+/// the string typing is intentional — the field carries different primitive types
+/// depending on a discriminator or context.
 /// </para>
 /// <para>
 /// <b>Detection rule:</b> For every line in a non-generated, non-test plugin
 /// source file that contains a call matching
 /// <c>(Guid|int|long|DateTimeOffset|DateTime).(Try)?Parse(</c>, if the first
 /// argument is a <b>member access on a suspicious-looking variable</b>, the
-/// call is flagged. A "suspicious variable" is one whose name matches
-/// conventional generated-response or generated-event naming:
+/// call is flagged — unless the accessed property has <c>[PolymorphicType]</c>.
+/// A "suspicious variable" is one whose name matches conventional generated-response
+/// or generated-event naming:
 /// </para>
 /// <list type="bullet">
 ///   <item>Exact name match (case-insensitive): <c>evt</c>, <c>ev</c>,
@@ -72,6 +82,8 @@ namespace BeyondImmersion.BannouService.StructuralTests;
 ///   <item>Infrastructure protocol parsing (RabbitMQ <c>MessageId</c>,
 ///     RtpEngine bencode lengths, etc.) — the source variable doesn't match
 ///     the suspicious pattern.</item>
+///   <item><c>[PolymorphicType]</c>-annotated properties — the schema explicitly
+///     declares these as intentionally polymorphic via <c>x-polymorphic-type-properties</c>.</item>
 /// </list>
 /// </remarks>
 public class TypeSafetyTests
@@ -79,9 +91,8 @@ public class TypeSafetyTests
     /// <summary>
     /// Regex matching any primitive parse call. Captures:
     /// <list type="bullet">
-    ///   <item>Group 1: the primitive type name (<c>Guid</c>, <c>int</c>, etc.)</item>
-    ///   <item>Group 2: <c>Try</c> if present, empty otherwise</item>
-    ///   <item>Group 3: the first-identifier portion of the argument</item>
+    ///   <item>Group "var": the variable name being accessed</item>
+    ///   <item>Group "prop": the property name being parsed</item>
     /// </list>
     /// The regex only matches when the argument starts with
     /// <c>identifier.</c> or <c>identifier?.</c> — i.e., a member access on
@@ -90,8 +101,15 @@ public class TypeSafetyTests
     /// </summary>
     private static readonly Regex ParseCallOnMemberAccessRegex = new(
         @"\b(Guid|int|long|DateTimeOffset|DateTime)\.(Try)?Parse\(\s*" +
-        @"(?<var>[a-zA-Z_][a-zA-Z0-9_]*)\s*\??\s*\.",
+        @"(?<var>[a-zA-Z_][a-zA-Z0-9_]*)\s*\??\s*\.(?<prop>[a-zA-Z_][a-zA-Z0-9_]*)",
         RegexOptions.Compiled);
+
+    /// <summary>
+    /// Property names that have <see cref="PolymorphicTypeAttribute"/> on any generated
+    /// model type. Properties in this set are intentionally polymorphic and should not
+    /// be flagged as type-safety violations. Built once via reflection at test startup.
+    /// </summary>
+    private static readonly Lazy<HashSet<string>> PolymorphicPropertyNames = new(BuildPolymorphicPropertySet);
 
     /// <summary>
     /// Variable names treated as suspicious regardless of casing (but case-insensitive
@@ -164,8 +182,9 @@ public class TypeSafetyTests
             violations.Count == 0,
             $"Found {violations.Count} primitive Parse/TryParse call(s) on properties of generated response or event models " +
             $"(per IMPLEMENTATION TENETS T25 — type safety across schema boundaries). " +
-            $"These indicate a schema type mismatch: the owning service declared the field as 'string' but " +
-            $"the consumer expects a stronger type. Fix the schema, not the consumer:\n" +
+            $"Each call parses a schema-declared string field to a stronger primitive type at runtime. " +
+            $"Investigate each occurrence — possible causes are schema tightening needed, deliberately " +
+            $"polymorphic typing, or hierarchy-isolation string typing:\n" +
             string.Join("\n", violations.Select(v => $"  - {v}")));
     }
 
@@ -175,6 +194,8 @@ public class TypeSafetyTests
 
     private static void ScanFileForParseViolations(string[] lines, string fileRelativePath, List<string> violations)
     {
+        var polymorphicNames = PolymorphicPropertyNames.Value;
+
         for (var i = 0; i < lines.Length; i++)
         {
             var line = lines[i];
@@ -194,9 +215,64 @@ public class TypeSafetyTests
             if (!IsSuspiciousVariableName(variableName))
                 continue;
 
+            // Skip properties marked with [PolymorphicType] in the schema.
+            // These are intentionally string-typed fields that consumers legitimately parse.
+            var propertyName = match.Groups["prop"].Value;
+            if (polymorphicNames.Contains(propertyName))
+                continue;
+
             var snippet = BuildSnippet(line);
             violations.Add($"{fileRelativePath}:{i + 1}: {snippet}");
         }
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // [PolymorphicType] attribute discovery
+    // ═════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Scans all loaded assemblies for properties with <see cref="PolymorphicTypeAttribute"/>
+    /// and returns a set of their PascalCase property names.
+    /// </summary>
+    private static HashSet<string> BuildPolymorphicPropertySet()
+    {
+        var names = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            // Scan assemblies that contain generated models: bannou-service (shared models/events)
+            // and lib-* plugin assemblies (plugin-specific models). The bannou-service assembly
+            // name is "bannou-service" (project name), not "BeyondImmersion.*".
+            var assemblyName = assembly.GetName().Name;
+            if (assemblyName == null)
+                continue;
+            if (assemblyName != "bannou-service"
+                && !assemblyName.StartsWith("lib-", StringComparison.Ordinal))
+                continue;
+
+            Type[] types;
+            try
+            {
+                types = assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                types = ex.Types.Where(t => t != null).Cast<Type>().ToArray();
+            }
+
+            foreach (var type in types)
+            {
+                foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    if (property.GetCustomAttribute<PolymorphicTypeAttribute>() != null)
+                    {
+                        names.Add(property.Name);
+                    }
+                }
+            }
+        }
+
+        return names;
     }
 
     private static bool IsSuspiciousVariableName(string name)

@@ -60,6 +60,45 @@ components:
           type: string
           format: date-time
           description: Timestamp when the platform link was last updated (set to createdAt on creation)
+    PlatformLinkDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to broadcast.platform-link.deleted when a platformlink is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - linkId
+      - accountId
+      - platform
+      - linkedAt
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: broadcast.platform-link.deleted
+          description: 'Event type identifier: broadcast.platform-link.deleted'
+        linkId: *id001
+        accountId: *id002
+        platform: *id003
+        tokenExpiresAt: *id004
+        displayName: *id005
+        linkedAt: *id006
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the platform link was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the platform link was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     PlatformLinkUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -101,45 +140,6 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    PlatformLinkDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to broadcast.platform-link.deleted when a platformlink is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - linkId
-      - accountId
-      - platform
-      - linkedAt
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: broadcast.platform-link.deleted
-          description: 'Event type identifier: broadcast.platform-link.deleted'
-        linkId: *id001
-        accountId: *id002
-        platform: *id003
-        tokenExpiresAt: *id004
-        displayName: *id005
-        linkedAt: *id006
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the platform link was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the platform link was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     PlatformSessionCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -219,6 +219,55 @@ components:
           type: string
           format: date-time
           description: Timestamp when the platform session was last updated (set to createdAt on creation)
+    PlatformSessionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to broadcast.platform-session.deleted when a platformsession is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - platformSessionId
+      - linkId
+      - accountId
+      - platform
+      - viewerCount
+      - peakViewerCount
+      - startTime
+      - state
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: broadcast.platform-session.deleted
+          description: 'Event type identifier: broadcast.platform-session.deleted'
+        platformSessionId: *id007
+        linkId: *id008
+        accountId: *id009
+        platform: *id010
+        platformStreamId: *id011
+        viewerCount: *id012
+        peakViewerCount: *id013
+        startTime: *id014
+        streamSessionId: *id015
+        state: *id016
+        endedAt: *id017
+        duration: *id018
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the platform session was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the platform session was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     PlatformSessionUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -270,55 +319,6 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    PlatformSessionDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to broadcast.platform-session.deleted when a platformsession is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - platformSessionId
-      - linkId
-      - accountId
-      - platform
-      - viewerCount
-      - peakViewerCount
-      - startTime
-      - state
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: broadcast.platform-session.deleted
-          description: 'Event type identifier: broadcast.platform-session.deleted'
-        platformSessionId: *id007
-        linkId: *id008
-        accountId: *id009
-        platform: *id010
-        platformStreamId: *id011
-        viewerCount: *id012
-        peakViewerCount: *id013
-        startTime: *id014
-        streamSessionId: *id015
-        state: *id016
-        endedAt: *id017
-        duration: *id018
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the platform session was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the platform session was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     OutputCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -382,6 +382,51 @@ components:
           type: string
           format: date-time
           description: Timestamp when the output was last updated (set to createdAt on creation)
+    OutputDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to broadcast.output.deleted when a output is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - broadcastId
+      - sourceType
+      - maskedRtmpUrl
+      - state
+      - owningInstanceId
+      - startedAt
+      - health
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: broadcast.output.deleted
+          description: 'Event type identifier: broadcast.output.deleted'
+        broadcastId: *id019
+        sourceType: *id020
+        sourceId: *id021
+        maskedRtmpUrl: *id022
+        state: *id023
+        currentVideoSource: *id024
+        owningInstanceId: *id025
+        startedAt: *id026
+        health: *id027
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the output was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the output was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     OutputUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -429,48 +474,3 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    OutputDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to broadcast.output.deleted when a output is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - broadcastId
-      - sourceType
-      - maskedRtmpUrl
-      - state
-      - owningInstanceId
-      - startedAt
-      - health
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: broadcast.output.deleted
-          description: 'Event type identifier: broadcast.output.deleted'
-        broadcastId: *id019
-        sourceType: *id020
-        sourceId: *id021
-        maskedRtmpUrl: *id022
-        state: *id023
-        currentVideoSource: *id024
-        owningInstanceId: *id025
-        startedAt: *id026
-        health: *id027
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the output was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the output was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")

@@ -113,6 +113,61 @@ components:
           type: string
           format: date-time
           description: Timestamp when the arbitration case was last updated (set to createdAt on creation)
+    ArbitrationCaseDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to arbitration.case.deleted when a arbitrationcase is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - caseId
+      - caseCode
+      - gameServiceId
+      - caseType
+      - status
+      - contractId
+      - templateCode
+      - jurisdictionChallenged
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: arbitration.case.deleted
+          description: 'Event type identifier: arbitration.case.deleted'
+        caseId: *id001
+        caseCode: *id002
+        gameServiceId: *id003
+        caseType: *id004
+        status: *id005
+        locationId: *id006
+        sovereignFactionId: *id007
+        petitionerEntityId: *id008
+        petitionerEntityType: *id009
+        respondentEntityId: *id010
+        respondentEntityType: *id011
+        arbiterEntityId: *id012
+        arbiterEntityType: *id013
+        contractId: *id014
+        templateCode: *id015
+        rulingId: *id016
+        jurisdictionChallenged: *id017
+        closedReason: *id018
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the arbitration case was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the arbitration case was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     ArbitrationCaseUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -170,58 +225,3 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    ArbitrationCaseDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to arbitration.case.deleted when a arbitrationcase is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - caseId
-      - caseCode
-      - gameServiceId
-      - caseType
-      - status
-      - contractId
-      - templateCode
-      - jurisdictionChallenged
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: arbitration.case.deleted
-          description: 'Event type identifier: arbitration.case.deleted'
-        caseId: *id001
-        caseCode: *id002
-        gameServiceId: *id003
-        caseType: *id004
-        status: *id005
-        locationId: *id006
-        sovereignFactionId: *id007
-        petitionerEntityId: *id008
-        petitionerEntityType: *id009
-        respondentEntityId: *id010
-        respondentEntityType: *id011
-        arbiterEntityId: *id012
-        arbiterEntityType: *id013
-        contractId: *id014
-        templateCode: *id015
-        rulingId: *id016
-        jurisdictionChallenged: *id017
-        closedReason: *id018
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the arbitration case was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the arbitration case was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")

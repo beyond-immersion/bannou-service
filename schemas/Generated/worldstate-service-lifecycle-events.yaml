@@ -81,6 +81,54 @@ components:
           type: string
           format: date-time
           description: Timestamp when the calendar template was last updated (set to createdAt on creation)
+    CalendarTemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to calendar-template.deleted when a calendartemplate is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateCode
+      - gameServiceId
+      - gameHoursPerDay
+      - dayPeriods
+      - months
+      - seasons
+      - daysPerYear
+      - monthsPerYear
+      - seasonsPerYear
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: calendar-template.deleted
+          description: 'Event type identifier: calendar-template.deleted'
+        templateCode: *id001
+        gameServiceId: *id002
+        gameHoursPerDay: *id003
+        dayPeriods: *id004
+        months: *id005
+        seasons: *id006
+        daysPerYear: *id007
+        monthsPerYear: *id008
+        seasonsPerYear: *id009
+        eraLabels: *id010
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the calendar template was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the calendar template was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     CalendarTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -131,54 +179,6 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    CalendarTemplateDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to calendar-template.deleted when a calendartemplate is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - templateCode
-      - gameServiceId
-      - gameHoursPerDay
-      - dayPeriods
-      - months
-      - seasons
-      - daysPerYear
-      - monthsPerYear
-      - seasonsPerYear
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: calendar-template.deleted
-          description: 'Event type identifier: calendar-template.deleted'
-        templateCode: *id001
-        gameServiceId: *id002
-        gameHoursPerDay: *id003
-        dayPeriods: *id004
-        months: *id005
-        seasons: *id006
-        daysPerYear: *id007
-        monthsPerYear: *id008
-        seasonsPerYear: *id009
-        eraLabels: *id010
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the calendar template was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the calendar template was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     RealmConfigCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -236,6 +236,49 @@ components:
           type: string
           format: date-time
           description: Timestamp when the realm config was last updated (set to createdAt on creation)
+    RealmConfigDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to realm-config.deleted when a realmconfig is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - realmId
+      - gameServiceId
+      - calendarTemplateCode
+      - currentTimeRatio
+      - downtimePolicy
+      - realmEpoch
+      - isActive
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: realm-config.deleted
+          description: 'Event type identifier: realm-config.deleted'
+        realmId: *id011
+        gameServiceId: *id012
+        calendarTemplateCode: *id013
+        currentTimeRatio: *id014
+        downtimePolicy: *id015
+        realmEpoch: *id016
+        isActive: *id017
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the realm config was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the realm config was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     RealmConfigUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -281,46 +324,3 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    RealmConfigDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to realm-config.deleted when a realmconfig is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - realmId
-      - gameServiceId
-      - calendarTemplateCode
-      - currentTimeRatio
-      - downtimePolicy
-      - realmEpoch
-      - isActive
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: realm-config.deleted
-          description: 'Event type identifier: realm-config.deleted'
-        realmId: *id011
-        gameServiceId: *id012
-        calendarTemplateCode: *id013
-        currentTimeRatio: *id014
-        downtimePolicy: *id015
-        realmEpoch: *id016
-        isActive: *id017
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the realm config was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the realm config was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")

@@ -18,5 +18,4 @@ public partial class LicenseBoardTemplateUpdatedEvent : ILifecycleUpdatedEvent, 
 public partial class LicenseBoardTemplateDeletedEvent : ILifecycleDeletedEvent, IDeprecatableEntity { }
 
 public partial class LicenseBoardCreatedEvent : ILifecycleCreatedEvent { }
-public partial class LicenseBoardUpdatedEvent : ILifecycleUpdatedEvent { }
 public partial class LicenseBoardDeletedEvent : ILifecycleDeletedEvent { }

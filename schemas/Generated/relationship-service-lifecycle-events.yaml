@@ -75,6 +75,51 @@ components:
           type: string
           format: date-time
           description: Timestamp when the relationship was last updated (set to createdAt on creation)
+    RelationshipDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to relationship.deleted when a relationship is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - relationshipId
+      - entity1Id
+      - entity1Type
+      - entity2Id
+      - entity2Type
+      - relationshipTypeId
+      - startedAt
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: relationship.deleted
+          description: 'Event type identifier: relationship.deleted'
+        relationshipId: *id001
+        entity1Id: *id002
+        entity1Type: *id003
+        entity2Id: *id004
+        entity2Type: *id005
+        relationshipTypeId: *id006
+        startedAt: *id007
+        endedAt: *id008
+        metadata: *id009
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the relationship was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the relationship was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     RelationshipUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -122,51 +167,6 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    RelationshipDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to relationship.deleted when a relationship is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - relationshipId
-      - entity1Id
-      - entity1Type
-      - entity2Id
-      - entity2Type
-      - relationshipTypeId
-      - startedAt
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: relationship.deleted
-          description: 'Event type identifier: relationship.deleted'
-        relationshipId: *id001
-        entity1Id: *id002
-        entity1Type: *id003
-        entity2Id: *id004
-        entity2Type: *id005
-        relationshipTypeId: *id006
-        startedAt: *id007
-        endedAt: *id008
-        metadata: *id009
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the relationship was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the relationship was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     RelationshipTypeCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -259,6 +259,66 @@ components:
           nullable: true
           maxLength: 500
           description: Reason for deprecation (null if not deprecated)
+    RelationshipTypeDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to relationship.type.deleted when a relationshiptype is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - relationshipTypeId
+      - code
+      - name
+      - isBidirectional
+      - depth
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: relationship.type.deleted
+          description: 'Event type identifier: relationship.type.deleted'
+        relationshipTypeId: *id010
+        code: *id011
+        name: *id012
+        description: *id013
+        category: *id014
+        parentTypeId: *id015
+        parentTypeCode: *id016
+        inverseTypeId: *id017
+        inverseTypeCode: *id018
+        isBidirectional: *id019
+        depth: *id020
+        metadata: *id021
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the relationship type was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the relationship type was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this relationship type is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the relationship type was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     RelationshipTypeUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -321,63 +381,3 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    RelationshipTypeDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to relationship.type.deleted when a relationshiptype is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - relationshipTypeId
-      - code
-      - name
-      - isBidirectional
-      - depth
-      - createdAt
-      - updatedAt
-      - isDeprecated
-      properties:
-        eventName:
-          type: string
-          default: relationship.type.deleted
-          description: 'Event type identifier: relationship.type.deleted'
-        relationshipTypeId: *id010
-        code: *id011
-        name: *id012
-        description: *id013
-        category: *id014
-        parentTypeId: *id015
-        parentTypeCode: *id016
-        inverseTypeId: *id017
-        inverseTypeCode: *id018
-        isBidirectional: *id019
-        depth: *id020
-        metadata: *id021
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the relationship type was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the relationship type was last updated (set to createdAt on creation)
-        isDeprecated:
-          type: boolean
-          description: Whether this relationship type is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the relationship type was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")

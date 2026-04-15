@@ -75,6 +75,54 @@ components:
         resource_id_field: characterId
         source_type: character
         is_deletion: false
+    CharacterDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to character.deleted when a character is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - characterId
+      - name
+      - realmId
+      - speciesId
+      - birthDate
+      - status
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: character.deleted
+          description: 'Event type identifier: character.deleted'
+        characterId: *id001
+        name: *id002
+        realmId: *id003
+        speciesId: *id004
+        birthDate: *id005
+        deathDate: *id006
+        status: *id007
+        patronDeityCode: *id008
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the character was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the character was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character
+        is_deletion: true
     CharacterUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -125,51 +173,3 @@ components:
         resource_id_field: characterId
         source_type: character
         is_deletion: false
-    CharacterDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to character.deleted when a character is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - characterId
-      - name
-      - realmId
-      - speciesId
-      - birthDate
-      - status
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: character.deleted
-          description: 'Event type identifier: character.deleted'
-        characterId: *id001
-        name: *id002
-        realmId: *id003
-        speciesId: *id004
-        birthDate: *id005
-        deathDate: *id006
-        status: *id007
-        patronDeityCode: *id008
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the character was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the character was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
-      x-resource-mapping:
-        resource_type: character
-        resource_id_field: characterId
-        source_type: character
-        is_deletion: true

@@ -29,10 +29,10 @@ namespace BeyondImmersion.BannouService.Puppetmaster.Watches;
 public sealed class WatchRegistry
 {
     // actorId -> { resourceKey -> WatchEntry }
-    private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<string, WatchEntry>> _actorWatches = new();
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, WatchEntry>> _actorWatches = new();
 
     // resourceKey -> { actorId -> dummy byte }
-    private readonly ConcurrentDictionary<string, ConcurrentDictionary<Guid, byte>> _resourceWatchers = new();
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, byte>> _resourceWatchers = new();
 
     /// <summary>
     /// Creates a composite key for a resource.
@@ -48,7 +48,7 @@ public sealed class WatchRegistry
     /// <param name="resourceId">Resource GUID.</param>
     /// <param name="sources">Optional list of source types to filter (null = all sources).</param>
     /// <param name="onChange">Optional flow name to invoke when the resource changes.</param>
-    public void AddWatch(Guid actorId, string resourceType, Guid resourceId, IReadOnlyList<string>? sources, string? onChange = null)
+    public void AddWatch(string actorId, string resourceType, Guid resourceId, IReadOnlyList<string>? sources, string? onChange = null)
     {
         var resourceKey = MakeResourceKey(resourceType, resourceId);
         var entry = new WatchEntry(resourceType, resourceId, sources, onChange);
@@ -58,7 +58,7 @@ public sealed class WatchRegistry
         actorWatches[resourceKey] = entry;
 
         // Add to resource's watcher set
-        var resourceWatchers = _resourceWatchers.GetOrAdd(resourceKey, _ => new ConcurrentDictionary<Guid, byte>());
+        var resourceWatchers = _resourceWatchers.GetOrAdd(resourceKey, _ => new ConcurrentDictionary<string, byte>());
         resourceWatchers[actorId] = 0;
     }
 
@@ -69,7 +69,7 @@ public sealed class WatchRegistry
     /// <param name="resourceType">Resource type.</param>
     /// <param name="resourceId">Resource GUID.</param>
     /// <returns>True if the watch was found and removed.</returns>
-    public bool RemoveWatch(Guid actorId, string resourceType, Guid resourceId)
+    public bool RemoveWatch(string actorId, string resourceType, Guid resourceId)
     {
         var resourceKey = MakeResourceKey(resourceType, resourceId);
 
@@ -107,7 +107,7 @@ public sealed class WatchRegistry
     /// </summary>
     /// <param name="actorId">The actor being stopped.</param>
     /// <returns>Number of watches removed.</returns>
-    public int RemoveAllWatches(Guid actorId)
+    public int RemoveAllWatches(string actorId)
     {
         if (!_actorWatches.TryRemove(actorId, out var actorWatches))
         {
@@ -143,7 +143,7 @@ public sealed class WatchRegistry
     /// <param name="resourceType">Resource type.</param>
     /// <param name="resourceId">Resource GUID.</param>
     /// <returns>List of watching actor IDs.</returns>
-    public IReadOnlyList<Guid> GetWatchers(string resourceType, Guid resourceId)
+    public IReadOnlyList<string> GetWatchers(string resourceType, Guid resourceId)
     {
         var resourceKey = MakeResourceKey(resourceType, resourceId);
 
@@ -163,7 +163,7 @@ public sealed class WatchRegistry
     /// <param name="resourceId">Resource GUID.</param>
     /// <param name="sourceType">The source type that changed.</param>
     /// <returns>True if the actor should be notified about this source change.</returns>
-    public bool HasMatchingWatch(Guid actorId, string resourceType, Guid resourceId, string sourceType)
+    public bool HasMatchingWatch(string actorId, string resourceType, Guid resourceId, string sourceType)
     {
         var resourceKey = MakeResourceKey(resourceType, resourceId);
 
@@ -194,7 +194,7 @@ public sealed class WatchRegistry
     /// <param name="resourceType">Resource type.</param>
     /// <param name="resourceId">Resource GUID.</param>
     /// <returns>The watch entry if found, null otherwise.</returns>
-    public WatchEntry? GetWatchEntry(Guid actorId, string resourceType, Guid resourceId)
+    public WatchEntry? GetWatchEntry(string actorId, string resourceType, Guid resourceId)
     {
         var resourceKey = MakeResourceKey(resourceType, resourceId);
 
@@ -212,7 +212,7 @@ public sealed class WatchRegistry
     /// </summary>
     /// <param name="actorId">The actor ID.</param>
     /// <returns>List of watch entries.</returns>
-    public IReadOnlyList<WatchEntry> GetWatchesForActor(Guid actorId)
+    public IReadOnlyList<WatchEntry> GetWatchesForActor(string actorId)
     {
         if (_actorWatches.TryGetValue(actorId, out var actorWatches))
         {

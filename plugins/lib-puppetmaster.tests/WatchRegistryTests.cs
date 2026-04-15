@@ -20,7 +20,7 @@ public class WatchRegistryTests
     public void AddWatch_SingleWatch_IncrementsCount()
     {
         // Arrange
-        var actorId = Guid.NewGuid();
+        var actorId = Guid.NewGuid().ToString();
         var resourceId = Guid.NewGuid();
 
         // Act
@@ -34,7 +34,7 @@ public class WatchRegistryTests
     public void AddWatch_DuplicateWatch_OverwritesEntry()
     {
         // Arrange
-        var actorId = Guid.NewGuid();
+        var actorId = Guid.NewGuid().ToString();
         var resourceId = Guid.NewGuid();
         _registry.AddWatch(actorId, "character", resourceId, null, null);
 
@@ -49,7 +49,7 @@ public class WatchRegistryTests
     public void AddWatch_SameActorDifferentResources_AddsAll()
     {
         // Arrange
-        var actorId = Guid.NewGuid();
+        var actorId = Guid.NewGuid().ToString();
         var resourceId1 = Guid.NewGuid();
         var resourceId2 = Guid.NewGuid();
 
@@ -66,8 +66,8 @@ public class WatchRegistryTests
     public void AddWatch_DifferentActorsSameResource_AddsAll()
     {
         // Arrange
-        var actorId1 = Guid.NewGuid();
-        var actorId2 = Guid.NewGuid();
+        var actorId1 = Guid.NewGuid().ToString();
+        var actorId2 = Guid.NewGuid().ToString();
         var resourceId = Guid.NewGuid();
 
         // Act
@@ -84,7 +84,7 @@ public class WatchRegistryTests
     public void AddWatch_WithSources_StoresSources()
     {
         // Arrange
-        var actorId = Guid.NewGuid();
+        var actorId = Guid.NewGuid().ToString();
         var resourceId = Guid.NewGuid();
         var sources = new List<string> { "character-personality", "character-history" };
 
@@ -101,7 +101,7 @@ public class WatchRegistryTests
     public void AddWatch_WithNullSources_MatchesAnything()
     {
         // Arrange
-        var actorId = Guid.NewGuid();
+        var actorId = Guid.NewGuid().ToString();
         var resourceId = Guid.NewGuid();
 
         // Act
@@ -120,7 +120,7 @@ public class WatchRegistryTests
     public void RemoveWatch_ExistingWatch_ReturnsTrue()
     {
         // Arrange
-        var actorId = Guid.NewGuid();
+        var actorId = Guid.NewGuid().ToString();
         var resourceId = Guid.NewGuid();
         _registry.AddWatch(actorId, "character", resourceId, null, null);
 
@@ -136,7 +136,7 @@ public class WatchRegistryTests
     public void RemoveWatch_NonexistentWatch_ReturnsFalse()
     {
         // Arrange
-        var actorId = Guid.NewGuid();
+        var actorId = Guid.NewGuid().ToString();
         var resourceId = Guid.NewGuid();
 
         // Act
@@ -150,7 +150,7 @@ public class WatchRegistryTests
     public void RemoveWatch_UpdatesBothIndexes()
     {
         // Arrange
-        var actorId = Guid.NewGuid();
+        var actorId = Guid.NewGuid().ToString();
         var resourceId = Guid.NewGuid();
         _registry.AddWatch(actorId, "character", resourceId, null, null);
 
@@ -171,7 +171,7 @@ public class WatchRegistryTests
     public void RemoveAllWatches_WithWatches_ReturnsCount()
     {
         // Arrange
-        var actorId = Guid.NewGuid();
+        var actorId = Guid.NewGuid().ToString();
         _registry.AddWatch(actorId, "character", Guid.NewGuid(), null, null);
         _registry.AddWatch(actorId, "character", Guid.NewGuid(), null, null);
         _registry.AddWatch(actorId, "realm", Guid.NewGuid(), null, null);
@@ -188,7 +188,7 @@ public class WatchRegistryTests
     public void RemoveAllWatches_NoWatches_ReturnsZero()
     {
         // Arrange
-        var actorId = Guid.NewGuid();
+        var actorId = Guid.NewGuid().ToString();
 
         // Act
         var removedCount = _registry.RemoveAllWatches(actorId);
@@ -201,8 +201,8 @@ public class WatchRegistryTests
     public void RemoveAllWatches_DoesNotAffectOtherActors()
     {
         // Arrange
-        var actorId1 = Guid.NewGuid();
-        var actorId2 = Guid.NewGuid();
+        var actorId1 = Guid.NewGuid().ToString();
+        var actorId2 = Guid.NewGuid().ToString();
         var resourceId = Guid.NewGuid();
         _registry.AddWatch(actorId1, "character", resourceId, null, null);
         _registry.AddWatch(actorId2, "character", resourceId, null, null);
@@ -225,8 +225,8 @@ public class WatchRegistryTests
     public void GetWatchers_WithWatchers_ReturnsActorIds()
     {
         // Arrange
-        var actorId1 = Guid.NewGuid();
-        var actorId2 = Guid.NewGuid();
+        var actorId1 = Guid.NewGuid().ToString();
+        var actorId2 = Guid.NewGuid().ToString();
         var resourceId = Guid.NewGuid();
         _registry.AddWatch(actorId1, "character", resourceId, null, null);
         _registry.AddWatch(actorId2, "character", resourceId, null, null);
@@ -257,7 +257,7 @@ public class WatchRegistryTests
     public void GetWatchers_DifferentResourceType_ReturnsEmpty()
     {
         // Arrange
-        var actorId = Guid.NewGuid();
+        var actorId = Guid.NewGuid().ToString();
         var resourceId = Guid.NewGuid();
         _registry.AddWatch(actorId, "character", resourceId, null, null);
 
@@ -276,7 +276,7 @@ public class WatchRegistryTests
     public void HasMatchingWatch_NoWatch_ReturnsFalse()
     {
         // Arrange
-        var actorId = Guid.NewGuid();
+        var actorId = Guid.NewGuid().ToString();
         var resourceId = Guid.NewGuid();
 
         // Act
@@ -290,7 +290,7 @@ public class WatchRegistryTests
     public void HasMatchingWatch_MatchingSource_ReturnsTrue()
     {
         // Arrange
-        var actorId = Guid.NewGuid();
+        var actorId = Guid.NewGuid().ToString();
         var resourceId = Guid.NewGuid();
         var sources = new List<string> { "character-personality" };
         _registry.AddWatch(actorId, "character", resourceId, sources, null);
@@ -306,7 +306,7 @@ public class WatchRegistryTests
     public void HasMatchingWatch_NonMatchingSource_ReturnsFalse()
     {
         // Arrange
-        var actorId = Guid.NewGuid();
+        var actorId = Guid.NewGuid().ToString();
         var resourceId = Guid.NewGuid();
         var sources = new List<string> { "character-personality" };
         _registry.AddWatch(actorId, "character", resourceId, sources, null);
@@ -335,8 +335,8 @@ public class WatchRegistryTests
     public void DiagnosticProperties_AfterOperations_Accurate()
     {
         // Arrange
-        var actor1 = Guid.NewGuid();
-        var actor2 = Guid.NewGuid();
+        var actor1 = Guid.NewGuid().ToString();
+        var actor2 = Guid.NewGuid().ToString();
         var resource1 = Guid.NewGuid();
         var resource2 = Guid.NewGuid();
 

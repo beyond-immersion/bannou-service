@@ -148,7 +148,8 @@ def generate_batch_events(
     model_props: dict,
     model_required_fields: list,
     has_deprecation: bool,
-    resource_mapping: dict
+    resource_mapping: dict,
+    is_immutable: bool = False
 ) -> Dict[str, Any]:
     """
     Generate BatchCreated, BatchModified, BatchDestroyed event schemas for a batch entity.
@@ -161,6 +162,11 @@ def generate_batch_events(
     createdAt/updatedAt (and deprecation fields if applicable). BatchModified entries
     include changedFields; BatchDestroyed entries include deletedReason.
 
+    When is_immutable is True, BatchModifiedEvent and BatchModifiedEntry are NOT generated
+    — immutable entities have no update path, so the modification event type does not
+    exist. Only BatchEntry/BatchCreatedEvent and BatchDestroyedEntry/BatchDestroyedEvent
+    are produced.
+
     Args:
         entity: Entity name in PascalCase (e.g., "ItemInstance")
         entity_lower: Human-readable lower case name (e.g., "item instance")
@@ -169,6 +175,7 @@ def generate_batch_events(
         model_required_fields: Required field names from the model
         has_deprecation: Whether deprecation fields should be injected
         resource_mapping: Optional resource mapping config for x-resource-mapping
+        is_immutable: Whether the entity is immutable (suppresses BatchModifiedEvent/Entry)
     """
 
     # --- Entry model properties (shared by all three entry types) ---
@@ -216,21 +223,25 @@ def generate_batch_events(
         'properties': {**base_entry_props}
     }
 
-    modified_entry_props = {
-        **base_entry_props,
-        'changedFields': {
-            'type': 'array',
-            'items': {'type': 'string'},
-            'description': 'List of field names that were modified'
+    # Modified entry is only produced when the entity has an update path.
+    # Immutable entities have no modification event — skip entirely.
+    modified_entry = None
+    if not is_immutable:
+        modified_entry_props = {
+            **base_entry_props,
+            'changedFields': {
+                'type': 'array',
+                'items': {'type': 'string'},
+                'description': 'List of field names that were modified'
+            }
         }
-    }
-    modified_entry = {
-        'type': 'object',
-        'description': f'Single {entity_lower} modification record within a batch event',
-        'additionalProperties': False,
-        'required': base_entry_required + ['changedFields'],
-        'properties': modified_entry_props
-    }
+        modified_entry = {
+            'type': 'object',
+            'description': f'Single {entity_lower} modification record within a batch event',
+            'additionalProperties': False,
+            'required': base_entry_required + ['changedFields'],
+            'properties': modified_entry_props
+        }
 
     destroyed_entry_props = {
         **base_entry_props,
@@ -297,16 +308,20 @@ def generate_batch_events(
 
         return event_schema
 
-    return {
+    schemas = {
         # Entry models
         f'{entity}BatchEntry': created_entry,
-        f'{entity}BatchModifiedEntry': modified_entry,
         f'{entity}BatchDestroyedEntry': destroyed_entry,
         # Batch event wrappers
         f'{entity}BatchCreatedEvent': build_batch_event('created', f'{entity}BatchEntry'),
-        f'{entity}BatchModifiedEvent': build_batch_event('modified', f'{entity}BatchModifiedEntry'),
         f'{entity}BatchDestroyedEvent': build_batch_event('destroyed', f'{entity}BatchDestroyedEntry', is_deletion=True),
     }
+
+    if modified_entry is not None:
+        schemas[f'{entity}BatchModifiedEntry'] = modified_entry
+        schemas[f'{entity}BatchModifiedEvent'] = build_batch_event('modified', f'{entity}BatchModifiedEntry')
+
+    return schemas
 
 
 def generate_events(entity: str, config: dict, topic_prefix: str = None) -> Dict[str, Any]:
@@ -485,27 +500,17 @@ def generate_events(entity: str, config: dict, topic_prefix: str = None) -> Dict
 
         return event_schema
 
-    # Check if this entity uses batch mode
+    # Check if this entity uses batch mode / is immutable
     is_batch = config.get('batch', False)
+    is_immutable = config.get('immutable', False)
 
     if is_batch:
         return generate_batch_events(entity, entity_lower, topic_base, model_props,
-                                     model_required_fields, has_deprecation, resource_mapping)
+                                     model_required_fields, has_deprecation, resource_mapping,
+                                     is_immutable=is_immutable)
 
     # CreatedEvent
     created = build_event('created')
-
-    # UpdatedEvent - adds changedFields
-    updated = build_event('updated',
-        extra_props={
-            'changedFields': {
-                'type': 'array',
-                'items': {'type': 'string'},
-                'description': 'List of field names that were modified'
-            }
-        },
-        extra_required=['changedFields']
-    )
 
     # DeletedEvent - adds deletedReason (optional)
     deleted = build_event('deleted',
@@ -519,11 +524,27 @@ def generate_events(entity: str, config: dict, topic_prefix: str = None) -> Dict
         is_deletion=True
     )
 
-    return {
+    schemas = {
         f'{entity}CreatedEvent': created,
-        f'{entity}UpdatedEvent': updated,
         f'{entity}DeletedEvent': deleted,
     }
+
+    # UpdatedEvent is only produced when the entity has an update path.
+    # Immutable entities (immutable: true) have no modification event — skip.
+    if not is_immutable:
+        updated = build_event('updated',
+            extra_props={
+                'changedFields': {
+                    'type': 'array',
+                    'items': {'type': 'string'},
+                    'description': 'List of field names that were modified'
+                }
+            },
+            extra_required=['changedFields']
+        )
+        schemas[f'{entity}UpdatedEvent'] = updated
+
+    return schemas
 
 
 def generate_lifecycle_events_file(
@@ -531,7 +552,7 @@ def generate_lifecycle_events_file(
     service_title: str,
     lifecycle_defs: Dict[str, Any],
     output_path: Path
-) -> Tuple[List[str], set, set]:
+) -> Tuple[List[str], set, set, set]:
     """
     Generate a complete lifecycle events schema file.
 
@@ -542,7 +563,8 @@ def generate_lifecycle_events_file(
         output_path: Path to write the generated file
 
     Returns:
-        Tuple of (list of entity names, set of deprecatable entity names, set of batch entity names)
+        Tuple of (list of entity names, set of deprecatable entity names,
+                  set of batch entity names, set of immutable entity names)
     """
     # Extract topic_prefix configuration (not an entity definition)
     topic_prefix = None
@@ -554,6 +576,7 @@ def generate_lifecycle_events_file(
     generated_entities = []
     deprecatable_entities = set()
     batch_entities = set()
+    immutable_entities = set()
 
     for entity_name, config in lifecycle_defs.items():
         # Skip configuration keys that aren't entity definitions
@@ -566,6 +589,8 @@ def generate_lifecycle_events_file(
             deprecatable_entities.add(entity_name)
         if config.get('batch', False):
             batch_entities.add(entity_name)
+        if config.get('immutable', False):
+            immutable_entities.add(entity_name)
 
     # Build the complete OpenAPI document
     doc = {
@@ -592,7 +617,7 @@ def generate_lifecycle_events_file(
     with open(output_path, 'w') as f:
         yaml.dump(doc, f)
 
-    return generated_entities, deprecatable_entities, batch_entities
+    return generated_entities, deprecatable_entities, batch_entities, immutable_entities
 
 
 def to_pascal_case(service_name: str) -> str:
@@ -605,6 +630,7 @@ def generate_lifecycle_interfaces_file(
     entities: List[str],
     deprecatable_entities: set,
     batch_entities: set,
+    immutable_entities: set,
     output_path: Path
 ) -> None:
     """
@@ -614,6 +640,9 @@ def generate_lifecycle_interfaces_file(
     For standard entities: interfaces go on the event classes (CreatedEvent, etc.).
     For batch entities: interfaces go on the entry models (BatchEntry, etc.),
     NOT on the batch event wrappers.
+
+    For immutable entities, the UpdatedEvent / BatchModifiedEntry is not generated,
+    so its ILifecycleUpdatedEvent declaration is omitted.
 
     The NSwag-generated partial classes already have the required properties
     (CreatedAt, UpdatedAt, ChangedFields, DeletedReason, and optionally
@@ -626,6 +655,8 @@ def generate_lifecycle_interfaces_file(
         entities: List of entity names in PascalCase (e.g., ["GameSession"])
         deprecatable_entities: Set of entity names that have deprecation: true
         batch_entities: Set of entity names that have batch: true
+        immutable_entities: Set of entity names that have immutable: true
+            (omits ILifecycleUpdatedEvent declaration; no UpdatedEvent/BatchModifiedEntry class is generated)
         output_path: Path to write the generated C# file
     """
     lines = [
@@ -648,16 +679,21 @@ def generate_lifecycle_interfaces_file(
 
     for entity in entities:
         deprecation_suffix = ', IDeprecatableEntity' if entity in deprecatable_entities else ''
+        is_immutable = entity in immutable_entities
 
         if entity in batch_entities:
             # Batch entities: interfaces on entry models, not on batch event wrappers
             lines.append(f'public partial class {entity}BatchEntry : ILifecycleCreatedEvent{deprecation_suffix} {{ }}')
-            lines.append(f'public partial class {entity}BatchModifiedEntry : ILifecycleUpdatedEvent{deprecation_suffix} {{ }}')
+            # Immutable entities do not have a BatchModifiedEntry — skip the interface line
+            if not is_immutable:
+                lines.append(f'public partial class {entity}BatchModifiedEntry : ILifecycleUpdatedEvent{deprecation_suffix} {{ }}')
             lines.append(f'public partial class {entity}BatchDestroyedEntry : ILifecycleDeletedEvent{deprecation_suffix} {{ }}')
         else:
             # Standard entities: interfaces on event classes
             lines.append(f'public partial class {entity}CreatedEvent : ILifecycleCreatedEvent{deprecation_suffix} {{ }}')
-            lines.append(f'public partial class {entity}UpdatedEvent : ILifecycleUpdatedEvent{deprecation_suffix} {{ }}')
+            # Immutable entities do not have an UpdatedEvent — skip the interface line
+            if not is_immutable:
+                lines.append(f'public partial class {entity}UpdatedEvent : ILifecycleUpdatedEvent{deprecation_suffix} {{ }}')
             lines.append(f'public partial class {entity}DeletedEvent : ILifecycleDeletedEvent{deprecation_suffix} {{ }}')
         lines.append('')
 
@@ -717,7 +753,7 @@ def main():
             service_pascal = to_pascal_case(service_name)
             output_file = generated_dir / f'{service_name}-service-lifecycle-events.yaml'
 
-            entities, deprecatable, batch = generate_lifecycle_events_file(
+            entities, deprecatable, batch, immutable = generate_lifecycle_events_file(
                 service_name,
                 service_title,
                 lifecycle_defs,
@@ -726,7 +762,8 @@ def main():
 
             # Generate companion C# file with interface implementations
             cs_output_file = cs_generated_dir / f'{service_pascal}LifecycleEvents.Interfaces.cs'
-            generate_lifecycle_interfaces_file(service_name, entities, deprecatable, batch, cs_output_file)
+            generate_lifecycle_interfaces_file(
+                service_name, entities, deprecatable, batch, immutable, cs_output_file)
 
             generated_files.append((output_file.name, entities))
             print(f"  Generated/{output_file.name}: Generated events for {', '.join(entities)}")

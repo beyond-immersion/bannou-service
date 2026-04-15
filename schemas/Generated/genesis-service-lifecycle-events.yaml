@@ -70,6 +70,59 @@ components:
           nullable: true
           maxLength: 500
           description: Reason for deprecation (null if not deprecated)
+    TemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to genesis.template.deleted when a template is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateCode
+      - gameServiceId
+      - displayName
+      - description
+      - physicalFormType
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: genesis.template.deleted
+          description: 'Event type identifier: genesis.template.deleted'
+        templateCode: *id001
+        gameServiceId: *id002
+        displayName: *id003
+        description: *id004
+        physicalFormType: *id005
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the template was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     TemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -125,59 +178,6 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    TemplateDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to genesis.template.deleted when a template is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - templateCode
-      - gameServiceId
-      - displayName
-      - description
-      - physicalFormType
-      - createdAt
-      - updatedAt
-      - isDeprecated
-      properties:
-        eventName:
-          type: string
-          default: genesis.template.deleted
-          description: 'Event type identifier: genesis.template.deleted'
-        templateCode: *id001
-        gameServiceId: *id002
-        displayName: *id003
-        description: *id004
-        physicalFormType: *id005
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the template was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the template was last updated (set to createdAt on creation)
-        isDeprecated:
-          type: boolean
-          description: Whether this template is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the template was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     EntityCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -245,7 +245,6 @@ components:
           description: "Current cognitive progression stage"
         actorId: &id016
           type: string
-          format: uuid
           nullable: true
           description: "Actor ID (populated at EventBrain)"
         characterId: &id017
@@ -272,67 +271,6 @@ components:
           type: string
           format: date-time
           description: Timestamp when the entity was last updated (set to createdAt on creation)
-      x-resource-mapping:
-        resource_type: genesis-entity
-        resource_id_field: entityId
-        source_type: genesis-entity
-        is_deletion: false
-    EntityUpdatedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to genesis.entity.updated when a entity is updated
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - entityId
-      - templateCode
-      - gameServiceId
-      - realmId
-      - walletIds
-      - inventoryIds
-      - currentPhase
-      - cognitiveStage
-      - physicalFormType
-      - status
-      - createdAt
-      - updatedAt
-      - changedFields
-      properties:
-        eventName:
-          type: string
-          default: genesis.entity.updated
-          description: 'Event type identifier: genesis.entity.updated'
-        entityId: *id006
-        templateCode: *id007
-        gameServiceId: *id008
-        realmId: *id009
-        code: *id010
-        displayName: *id011
-        walletIds: *id012
-        inventoryIds: *id013
-        currentPhase: *id014
-        cognitiveStage: *id015
-        actorId: *id016
-        characterId: *id017
-        physicalFormType: *id018
-        physicalFormId: *id019
-        status: *id020
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the entity was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the entity was last updated (set to createdAt on creation)
-        changedFields:
-          type: array
-          items:
-            type: string
-          description: List of field names that were modified
       x-resource-mapping:
         resource_type: genesis-entity
         resource_id_field: entityId
@@ -397,3 +335,64 @@ components:
         resource_id_field: entityId
         source_type: genesis-entity
         is_deletion: true
+    EntityUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to genesis.entity.updated when a entity is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entityId
+      - templateCode
+      - gameServiceId
+      - realmId
+      - walletIds
+      - inventoryIds
+      - currentPhase
+      - cognitiveStage
+      - physicalFormType
+      - status
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: genesis.entity.updated
+          description: 'Event type identifier: genesis.entity.updated'
+        entityId: *id006
+        templateCode: *id007
+        gameServiceId: *id008
+        realmId: *id009
+        code: *id010
+        displayName: *id011
+        walletIds: *id012
+        inventoryIds: *id013
+        currentPhase: *id014
+        cognitiveStage: *id015
+        actorId: *id016
+        characterId: *id017
+        physicalFormType: *id018
+        physicalFormId: *id019
+        status: *id020
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the entity was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the entity was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+      x-resource-mapping:
+        resource_type: genesis-entity
+        resource_id_field: entityId
+        source_type: genesis-entity
+        is_deletion: false

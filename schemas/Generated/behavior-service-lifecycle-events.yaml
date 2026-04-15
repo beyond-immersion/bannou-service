@@ -61,6 +61,46 @@ components:
           type: string
           format: date-time
           description: Timestamp when the behavior was last updated (set to createdAt on creation)
+    BehaviorDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to behavior.deleted when a behavior is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - behaviorId
+      - name
+      - category
+      - assetId
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: behavior.deleted
+          description: 'Event type identifier: behavior.deleted'
+        behaviorId: *id001
+        name: *id002
+        category: *id003
+        bundleId: *id004
+        assetId: *id005
+        bytecodeSize: *id006
+        schemaVersion: *id007
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the behavior was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the behavior was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     BehaviorUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -103,46 +143,6 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    BehaviorDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to behavior.deleted when a behavior is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - behaviorId
-      - name
-      - category
-      - assetId
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: behavior.deleted
-          description: 'Event type identifier: behavior.deleted'
-        behaviorId: *id001
-        name: *id002
-        category: *id003
-        bundleId: *id004
-        assetId: *id005
-        bytecodeSize: *id006
-        schemaVersion: *id007
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the behavior was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the behavior was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     BehaviorBundleCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -186,6 +186,42 @@ components:
           type: string
           format: date-time
           description: Timestamp when the behavior bundle was last updated (set to createdAt on creation)
+    BehaviorBundleDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to behavior.bundle.deleted when a behaviorbundle is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - bundleId
+      - name
+      - behaviorCount
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: behavior.bundle.deleted
+          description: 'Event type identifier: behavior.bundle.deleted'
+        bundleId: *id008
+        name: *id009
+        behaviorCount: *id010
+        totalBytecodeSize: *id011
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the behavior bundle was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the behavior bundle was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     BehaviorBundleUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -224,39 +260,3 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    BehaviorBundleDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to behavior.bundle.deleted when a behaviorbundle is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - bundleId
-      - name
-      - behaviorCount
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: behavior.bundle.deleted
-          description: 'Event type identifier: behavior.bundle.deleted'
-        bundleId: *id008
-        name: *id009
-        behaviorCount: *id010
-        totalBytecodeSize: *id011
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the behavior bundle was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the behavior bundle was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")

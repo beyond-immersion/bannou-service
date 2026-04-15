@@ -147,6 +147,80 @@ components:
           nullable: true
           maxLength: 500
           description: Reason for deprecation (null if not deprecated)
+    AchievementDefinitionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to achievement.definition.deleted when a achievementdefinition is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - gameServiceId
+      - achievementId
+      - displayName
+      - description
+      - achievementType
+      - points
+      - isActive
+      - earnedCount
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: achievement.definition.deleted
+          description: 'Event type identifier: achievement.definition.deleted'
+        gameServiceId: *id001
+        achievementId: *id002
+        displayName: *id003
+        description: *id004
+        hiddenDescription: *id005
+        category: *id006
+        achievementType: *id007
+        entityTypes: *id008
+        progressTarget: *id009
+        points: *id010
+        iconUrl: *id011
+        platforms: *id012
+        platformMappings: *id013
+        prerequisites: *id014
+        scoreType: *id015
+        milestoneType: *id016
+        milestoneValue: *id017
+        milestoneName: *id018
+        leaderboardId: *id019
+        rankThreshold: *id020
+        isActive: *id021
+        earnedCount: *id022
+        metadata: *id023
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the achievement definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the achievement definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this achievement definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the achievement definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     AchievementDefinitionUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -223,80 +297,6 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    AchievementDefinitionDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to achievement.definition.deleted when a achievementdefinition is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - gameServiceId
-      - achievementId
-      - displayName
-      - description
-      - achievementType
-      - points
-      - isActive
-      - earnedCount
-      - createdAt
-      - updatedAt
-      - isDeprecated
-      properties:
-        eventName:
-          type: string
-          default: achievement.definition.deleted
-          description: 'Event type identifier: achievement.definition.deleted'
-        gameServiceId: *id001
-        achievementId: *id002
-        displayName: *id003
-        description: *id004
-        hiddenDescription: *id005
-        category: *id006
-        achievementType: *id007
-        entityTypes: *id008
-        progressTarget: *id009
-        points: *id010
-        iconUrl: *id011
-        platforms: *id012
-        platformMappings: *id013
-        prerequisites: *id014
-        scoreType: *id015
-        milestoneType: *id016
-        milestoneValue: *id017
-        milestoneName: *id018
-        leaderboardId: *id019
-        rankThreshold: *id020
-        isActive: *id021
-        earnedCount: *id022
-        metadata: *id023
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the achievement definition was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the achievement definition was last updated (set to createdAt on creation)
-        isDeprecated:
-          type: boolean
-          description: Whether this achievement definition is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the achievement definition was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     AchievementProgressRecordCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -361,6 +361,51 @@ components:
           type: string
           format: date-time
           description: Timestamp when the achievement progress record was last updated (set to createdAt on creation)
+    AchievementProgressRecordDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to achievement.progress-record.deleted when a achievementprogressrecord is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - gameServiceId
+      - achievementId
+      - entityId
+      - entityType
+      - currentProgress
+      - isUnlocked
+      - points
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: achievement.progress-record.deleted
+          description: 'Event type identifier: achievement.progress-record.deleted'
+        gameServiceId: *id024
+        achievementId: *id025
+        entityId: *id026
+        entityType: *id027
+        currentProgress: *id028
+        targetProgress: *id029
+        isUnlocked: *id030
+        unlockedAt: *id031
+        points: *id032
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the achievement progress record was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the achievement progress record was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     AchievementProgressRecordUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -408,51 +453,6 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    AchievementProgressRecordDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to achievement.progress-record.deleted when a achievementprogressrecord is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - gameServiceId
-      - achievementId
-      - entityId
-      - entityType
-      - currentProgress
-      - isUnlocked
-      - points
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: achievement.progress-record.deleted
-          description: 'Event type identifier: achievement.progress-record.deleted'
-        gameServiceId: *id024
-        achievementId: *id025
-        entityId: *id026
-        entityType: *id027
-        currentProgress: *id028
-        targetProgress: *id029
-        isUnlocked: *id030
-        unlockedAt: *id031
-        points: *id032
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the achievement progress record was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the achievement progress record was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     Platform:
       type: string
       description: External platform for achievement sync

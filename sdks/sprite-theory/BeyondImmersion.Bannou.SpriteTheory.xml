@@ -1,0 +1,1650 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>BeyondImmersion.Bannou.SpriteTheory</name>
+    </assembly>
+    <members>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationConfig">
+            <summary>
+            Per-animation capture settings that control how frames are sampled from an animation clip.
+            </summary>
+            <remarks>
+            <para>
+            <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationConfig.TrimStart"/> and <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationConfig.TrimEnd"/> are normalized values (0.0–1.0)
+            that define a sub-range of the animation to capture. Combined with
+            <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationConfig.SpeedMultiplier"/>, this allows capturing only the interesting portion
+            of an animation at a modified playback speed.
+            </para>
+            </remarks>
+            <param name="FrameCount">Number of frames to capture from this animation. Defaults to 8.</param>
+            <param name="SpeedMultiplier">Playback speed override (1.0 = normal speed). Defaults to 1.0.</param>
+            <param name="TrimStart">Normalized start time — skip the beginning of the animation (0.0–1.0). Defaults to 0.0.</param>
+            <param name="TrimEnd">Normalized end time — skip the end of the animation (0.0–1.0). Defaults to 1.0.</param>
+            <param name="LoopMode">Loop mode for the output sprite animation metadata. Defaults to None.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationConfig.#ctor(System.Int32,System.Single,System.Single,System.Single,BeyondImmersion.Bannou.SpriteTheory.LoopMode)">
+            <summary>
+            Per-animation capture settings that control how frames are sampled from an animation clip.
+            </summary>
+            <remarks>
+            <para>
+            <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationConfig.TrimStart"/> and <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationConfig.TrimEnd"/> are normalized values (0.0–1.0)
+            that define a sub-range of the animation to capture. Combined with
+            <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationConfig.SpeedMultiplier"/>, this allows capturing only the interesting portion
+            of an animation at a modified playback speed.
+            </para>
+            </remarks>
+            <param name="FrameCount">Number of frames to capture from this animation. Defaults to 8.</param>
+            <param name="SpeedMultiplier">Playback speed override (1.0 = normal speed). Defaults to 1.0.</param>
+            <param name="TrimStart">Normalized start time — skip the beginning of the animation (0.0–1.0). Defaults to 0.0.</param>
+            <param name="TrimEnd">Normalized end time — skip the end of the animation (0.0–1.0). Defaults to 1.0.</param>
+            <param name="LoopMode">Loop mode for the output sprite animation metadata. Defaults to None.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationConfig.FrameCount">
+            <summary>Number of frames to capture from this animation. Defaults to 8.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationConfig.SpeedMultiplier">
+            <summary>Playback speed override (1.0 = normal speed). Defaults to 1.0.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationConfig.TrimStart">
+            <summary>Normalized start time — skip the beginning of the animation (0.0–1.0). Defaults to 0.0.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationConfig.TrimEnd">
+            <summary>Normalized end time — skip the end of the animation (0.0–1.0). Defaults to 1.0.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationConfig.LoopMode">
+            <summary>Loop mode for the output sprite animation metadata. Defaults to None.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationInfo">
+            <summary>
+            Animation metadata reported by the engine bridge after loading a 3D model.
+            Describes a single animation clip's properties as read from the source data (FBX/glTF).
+            </summary>
+            <param name="Name">Animation clip name (e.g., "idle", "attack_light", "run").</param>
+            <param name="Duration">Total animation duration in seconds.</param>
+            <param name="FrameCount">Source frame count from the animation data.</param>
+            <param name="IsLooping">Whether the source animation clip is configured to loop.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationInfo.#ctor(System.String,System.Single,System.Int32,System.Boolean)">
+            <summary>
+            Animation metadata reported by the engine bridge after loading a 3D model.
+            Describes a single animation clip's properties as read from the source data (FBX/glTF).
+            </summary>
+            <param name="Name">Animation clip name (e.g., "idle", "attack_light", "run").</param>
+            <param name="Duration">Total animation duration in seconds.</param>
+            <param name="FrameCount">Source frame count from the animation data.</param>
+            <param name="IsLooping">Whether the source animation clip is configured to loop.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationInfo.Name">
+            <summary>Animation clip name (e.g., "idle", "attack_light", "run").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationInfo.Duration">
+            <summary>Total animation duration in seconds.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationInfo.FrameCount">
+            <summary>Source frame count from the animation data.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationInfo.IsLooping">
+            <summary>Whether the source animation clip is configured to loop.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationSampling">
+            <summary>
+            Generates frame timestamp sequences for capturing animation frames at uniform intervals.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationSampling.GenerateUniform(System.Single,System.Int32)">
+            <summary>
+            Generates a uniform frame sequence spanning the full animation duration.
+            Each timestamp is placed at the center of its time window.
+            </summary>
+            <remarks>
+            For 8 frames, produces timestamps: [0.0625, 0.1875, 0.3125, 0.4375, 0.5625, 0.6875, 0.8125, 0.9375].
+            Center-of-window placement avoids capturing the exact start (often a T-pose) or exact end of animations.
+            </remarks>
+            <param name="duration">Total animation duration in seconds. Must be positive.</param>
+            <param name="frameCount">Number of frames to capture. Must be positive.</param>
+            <returns>A <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Animation.FrameSequence"/> with uniformly distributed timestamps.</returns>
+            <exception cref="T:System.ArgumentException">Thrown when <paramref name="frameCount"/> or <paramref name="duration"/> is not positive.</exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationSampling.GenerateFromConfig(BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationInfo,BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationConfig)">
+            <summary>
+            Generates a frame sequence from an animation info and capture configuration,
+            applying trim range and speed multiplier adjustments.
+            </summary>
+            <remarks>
+            Timestamps are distributed uniformly within the [TrimStart, TrimEnd] range.
+            The effective duration accounts for both the trim range and speed multiplier.
+            </remarks>
+            <param name="info">Animation metadata from the engine bridge.</param>
+            <param name="config">Per-animation capture configuration.</param>
+            <returns>A <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Animation.FrameSequence"/> with timestamps adjusted for trim and speed.</returns>
+            <exception cref="T:System.ArgumentException">
+            Thrown when <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationConfig.FrameCount"/> is not positive,
+            or <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationConfig.TrimEnd"/> is not greater than <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationConfig.TrimStart"/>.
+            </exception>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Animation.FrameSequence">
+            <summary>
+            An ordered list of normalized frame timestamps for one animation capture,
+            produced by <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationSampling"/>.
+            </summary>
+            <remarks>
+            Each timestamp is a normalized value (0.0–1.0) representing when within the
+            animation duration the frame should be captured. Timestamps are placed at the
+            center of each time window for uniform sampling.
+            </remarks>
+            <param name="Timestamps">Normalized times (0.0–1.0) for each frame to capture.</param>
+            <param name="Duration">Effective animation duration in seconds (after trim and speed adjustments).</param>
+            <param name="FrameCount">Number of frames in the sequence.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Animation.FrameSequence.#ctor(System.Collections.Generic.IReadOnlyList{System.Single},System.Single,System.Int32)">
+            <summary>
+            An ordered list of normalized frame timestamps for one animation capture,
+            produced by <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationSampling"/>.
+            </summary>
+            <remarks>
+            Each timestamp is a normalized value (0.0–1.0) representing when within the
+            animation duration the frame should be captured. Timestamps are placed at the
+            center of each time window for uniform sampling.
+            </remarks>
+            <param name="Timestamps">Normalized times (0.0–1.0) for each frame to capture.</param>
+            <param name="Duration">Effective animation duration in seconds (after trim and speed adjustments).</param>
+            <param name="FrameCount">Number of frames in the sequence.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Animation.FrameSequence.Timestamps">
+            <summary>Normalized times (0.0–1.0) for each frame to capture.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Animation.FrameSequence.Duration">
+            <summary>Effective animation duration in seconds (after trim and speed adjustments).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Animation.FrameSequence.FrameCount">
+            <summary>Number of frames in the sequence.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasLayout">
+            <summary>
+            The result of atlas packing via <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasPacker.Pack(System.Collections.Generic.IReadOnlyList{System.ValueTuple{System.Int32,System.Int32,System.Int32}},BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasOptions)"/>. Contains per-frame
+            placements, per-atlas dimensions, atlas count, and overall packing efficiency.
+            </summary>
+            <param name="Placements">Per-frame atlas positions, one entry per input frame.</param>
+            <param name="AtlasWidths">Width of each atlas image in pixels (one entry per atlas).</param>
+            <param name="AtlasHeights">Height of each atlas image in pixels (one entry per atlas).</param>
+            <param name="AtlasCount">Number of atlas images produced (1 unless frames overflowed a single atlas).</param>
+            <param name="Efficiency">Packing efficiency as a ratio of total frame area to total atlas area (0.0–1.0).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasLayout.#ctor(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.SpriteTheory.Atlas.PackedFrame},System.Collections.Generic.IReadOnlyList{System.Int32},System.Collections.Generic.IReadOnlyList{System.Int32},System.Int32,System.Single)">
+            <summary>
+            The result of atlas packing via <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasPacker.Pack(System.Collections.Generic.IReadOnlyList{System.ValueTuple{System.Int32,System.Int32,System.Int32}},BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasOptions)"/>. Contains per-frame
+            placements, per-atlas dimensions, atlas count, and overall packing efficiency.
+            </summary>
+            <param name="Placements">Per-frame atlas positions, one entry per input frame.</param>
+            <param name="AtlasWidths">Width of each atlas image in pixels (one entry per atlas).</param>
+            <param name="AtlasHeights">Height of each atlas image in pixels (one entry per atlas).</param>
+            <param name="AtlasCount">Number of atlas images produced (1 unless frames overflowed a single atlas).</param>
+            <param name="Efficiency">Packing efficiency as a ratio of total frame area to total atlas area (0.0–1.0).</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasLayout.Placements">
+            <summary>Per-frame atlas positions, one entry per input frame.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasLayout.AtlasWidths">
+            <summary>Width of each atlas image in pixels (one entry per atlas).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasLayout.AtlasHeights">
+            <summary>Height of each atlas image in pixels (one entry per atlas).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasLayout.AtlasCount">
+            <summary>Number of atlas images produced (1 unless frames overflowed a single atlas).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasLayout.Efficiency">
+            <summary>Packing efficiency as a ratio of total frame area to total atlas area (0.0–1.0).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasOptions">
+            <summary>
+            Configuration options for atlas packing via <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasPacker"/>.
+            Controls maximum atlas dimensions, inter-frame padding, power-of-two rounding,
+            and animation grouping hints.
+            </summary>
+            <param name="MaxWidth">Maximum atlas width in pixels.</param>
+            <param name="MaxHeight">Maximum atlas height in pixels.</param>
+            <param name="Padding">Pixels of spacing between frames in the atlas.</param>
+            <param name="PowerOfTwo">Whether to round atlas dimensions up to the next power of two for GPU compatibility.</param>
+            <param name="GroupByAnimation">Visual row grouping hint — best-effort, not enforced by the packer.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasOptions.#ctor(System.Int32,System.Int32,System.Int32,System.Boolean,System.Boolean)">
+            <summary>
+            Configuration options for atlas packing via <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasPacker"/>.
+            Controls maximum atlas dimensions, inter-frame padding, power-of-two rounding,
+            and animation grouping hints.
+            </summary>
+            <param name="MaxWidth">Maximum atlas width in pixels.</param>
+            <param name="MaxHeight">Maximum atlas height in pixels.</param>
+            <param name="Padding">Pixels of spacing between frames in the atlas.</param>
+            <param name="PowerOfTwo">Whether to round atlas dimensions up to the next power of two for GPU compatibility.</param>
+            <param name="GroupByAnimation">Visual row grouping hint — best-effort, not enforced by the packer.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasOptions.MaxWidth">
+            <summary>Maximum atlas width in pixels.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasOptions.MaxHeight">
+            <summary>Maximum atlas height in pixels.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasOptions.Padding">
+            <summary>Pixels of spacing between frames in the atlas.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasOptions.PowerOfTwo">
+            <summary>Whether to round atlas dimensions up to the next power of two for GPU compatibility.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasOptions.GroupByAnimation">
+            <summary>Visual row grouping hint — best-effort, not enforced by the packer.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasPacker">
+            <summary>
+            Packs variable-sized frame rectangles into one or more atlas images using the
+            MaxRects-BSSF (Best Short Side Fit) bin-packing algorithm.
+            </summary>
+            <remarks>
+            <para>
+            The algorithm maintains a list of free rectangles representing unoccupied atlas regions.
+            For each frame, the free rectangle with the smallest short-side remainder is selected (BSSF heuristic).
+            After placement, the free space is subdivided into up to four new rectangles, and
+            fully-contained duplicates are pruned.
+            </para>
+            <para>
+            When no free rectangle can fit the current frame, a new atlas is started transparently.
+            The result includes per-atlas dimensions (optionally rounded to power-of-two) and overall
+            packing efficiency.
+            </para>
+            <para>
+            Reference: Jukka Jylänki, "A Thousand Ways to Pack the Bin" (2010).
+            </para>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasPacker.Pack(System.Collections.Generic.IReadOnlyList{System.ValueTuple{System.Int32,System.Int32,System.Int32}},BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasOptions)">
+            <summary>
+            Packs a list of frames into one or more atlas images using MaxRects-BSSF.
+            </summary>
+            <param name="frames">
+            Input frames to pack. Each tuple contains the frame's width, height, and original index.
+            </param>
+            <param name="options">Atlas packing configuration (max size, padding, power-of-two, etc.).</param>
+            <returns>An <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasLayout"/> containing per-frame placements and per-atlas dimensions.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasPacker.FindBestRect(System.Collections.Generic.List{BeyondImmersion.Bannou.SpriteTheory.Rectangle},System.Int32,System.Int32)">
+            <summary>
+            Finds the free rectangle with the Best Short Side Fit for the given padded dimensions.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasPacker.PruneFreeRects(System.Collections.Generic.List{BeyondImmersion.Bannou.SpriteTheory.Rectangle})">
+            <summary>
+            Removes any free rectangle that is fully contained within another free rectangle.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasPacker.IsContainedIn(BeyondImmersion.Bannou.SpriteTheory.Rectangle,BeyondImmersion.Bannou.SpriteTheory.Rectangle)">
+            <summary>
+            Tests whether rectangle <paramref name="inner"/> is fully contained within rectangle <paramref name="outer"/>.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasPacker.Intersects(BeyondImmersion.Bannou.SpriteTheory.Rectangle,BeyondImmersion.Bannou.SpriteTheory.Rectangle)">
+            <summary>
+            Tests whether two rectangles overlap (share any area).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasPacker.NextPowerOfTwo(System.Int32)">
+            <summary>
+            Returns the smallest power of two that is greater than or equal to the given value.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Atlas.PackedFrame">
+            <summary>
+            Represents a single frame's placement within an atlas image, as determined by <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasPacker"/>.
+            </summary>
+            <param name="FrameIndex">Original frame index from the input list.</param>
+            <param name="AtlasIndex">Which atlas image this frame was placed in (0-based).</param>
+            <param name="X">Horizontal position of the frame's top-left corner in the atlas, in pixels.</param>
+            <param name="Y">Vertical position of the frame's top-left corner in the atlas, in pixels.</param>
+            <param name="Width">Frame width in pixels (without padding).</param>
+            <param name="Height">Frame height in pixels (without padding).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Atlas.PackedFrame.#ctor(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Represents a single frame's placement within an atlas image, as determined by <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasPacker"/>.
+            </summary>
+            <param name="FrameIndex">Original frame index from the input list.</param>
+            <param name="AtlasIndex">Which atlas image this frame was placed in (0-based).</param>
+            <param name="X">Horizontal position of the frame's top-left corner in the atlas, in pixels.</param>
+            <param name="Y">Vertical position of the frame's top-left corner in the atlas, in pixels.</param>
+            <param name="Width">Frame width in pixels (without padding).</param>
+            <param name="Height">Frame height in pixels (without padding).</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.PackedFrame.FrameIndex">
+            <summary>Original frame index from the input list.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.PackedFrame.AtlasIndex">
+            <summary>Which atlas image this frame was placed in (0-based).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.PackedFrame.X">
+            <summary>Horizontal position of the frame's top-left corner in the atlas, in pixels.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.PackedFrame.Y">
+            <summary>Vertical position of the frame's top-left corner in the atlas, in pixels.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.PackedFrame.Width">
+            <summary>Frame width in pixels (without padding).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.PackedFrame.Height">
+            <summary>Frame height in pixels (without padding).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.BoundingBox">
+            <summary>
+            Represents an axis-aligned 3D bounding box defined by minimum and maximum corners.
+            </summary>
+            <remarks>
+            Used to describe model bounds for orthographic camera setup. The bounding box
+            is axis-aligned — it does not account for rotation. The bridge provides this
+            from the loaded 3D model's geometry.
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.BoundingBox.Min">
+            <summary>Minimum corner of the bounding box (smallest X, Y, Z values).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.BoundingBox.Max">
+            <summary>Maximum corner of the bounding box (largest X, Y, Z values).</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.BoundingBox.#ctor(System.ValueTuple{System.Single,System.Single,System.Single},System.ValueTuple{System.Single,System.Single,System.Single})">
+            <summary>
+            Creates a new bounding box with the specified minimum and maximum corners.
+            </summary>
+            <param name="min">Minimum corner (smallest X, Y, Z).</param>
+            <param name="max">Maximum corner (largest X, Y, Z).</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.BoundingBox.Center">
+            <summary>Center point of the bounding box, computed as the midpoint of Min and Max.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.BoundingBox.Extents">
+            <summary>Half-size of the bounding box along each axis (distance from center to face).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.BoundingBox.Size">
+            <summary>Full size of the bounding box along each axis.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.BoundingBox.Equals(BeyondImmersion.Bannou.SpriteTheory.BoundingBox)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.BoundingBox.Equals(System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.BoundingBox.GetHashCode">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.BoundingBox.op_Equality(BeyondImmersion.Bannou.SpriteTheory.BoundingBox,BeyondImmersion.Bannou.SpriteTheory.BoundingBox)">
+            <summary>Equality operator.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.BoundingBox.op_Inequality(BeyondImmersion.Bannou.SpriteTheory.BoundingBox,BeyondImmersion.Bannou.SpriteTheory.BoundingBox)">
+            <summary>Inequality operator.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.BoundingBox.ToString">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig">
+            <summary>
+            Defines how a character is captured from one orientation. Contains the projection mode,
+            list of capture angles, frame dimensions, and rendering options.
+            </summary>
+            <remarks>
+            <para>
+            Every angle in <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig.Angles"/> is rendered by the bridge. Mirror targets
+            (like "NW" derived from "NE") are NOT in this list — they are computed by
+            MirrorOptimizer from <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle.ProducesMirror"/> metadata.
+            </para>
+            <para>
+            CameraRig is immutable (C# record). Changes produce new instances, supporting
+            undo/redo in the composer via before/after rig snapshots.
+            </para>
+            </remarks>
+            <param name="Name">Rig identifier (e.g., "SideView-Brawler", "TopDown-8Dir").</param>
+            <param name="Projection">Camera projection mode. Defaults to Orthographic.</param>
+            <param name="Angles">Angles to render — every angle IS captured.</param>
+            <param name="FrameSize">Per-frame pixel dimensions (Width, Height).</param>
+            <param name="Padding">Pixels between frames in atlas. Defaults to 2.</param>
+            <param name="BackgroundColor">Render clear color. Defaults to transparent.</param>
+            <param name="IncludeNormalMap">Whether to also generate a depth-to-normal atlas.</param>
+            <param name="TrimTransparent">Whether to trim transparent borders per frame.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig.#ctor(System.String,BeyondImmersion.Bannou.SpriteTheory.ProjectionType,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle},System.ValueTuple{System.Int32,System.Int32},System.Int32,BeyondImmersion.Bannou.SpriteTheory.Color,System.Boolean,System.Boolean)">
+            <summary>
+            Defines how a character is captured from one orientation. Contains the projection mode,
+            list of capture angles, frame dimensions, and rendering options.
+            </summary>
+            <remarks>
+            <para>
+            Every angle in <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig.Angles"/> is rendered by the bridge. Mirror targets
+            (like "NW" derived from "NE") are NOT in this list — they are computed by
+            MirrorOptimizer from <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle.ProducesMirror"/> metadata.
+            </para>
+            <para>
+            CameraRig is immutable (C# record). Changes produce new instances, supporting
+            undo/redo in the composer via before/after rig snapshots.
+            </para>
+            </remarks>
+            <param name="Name">Rig identifier (e.g., "SideView-Brawler", "TopDown-8Dir").</param>
+            <param name="Projection">Camera projection mode. Defaults to Orthographic.</param>
+            <param name="Angles">Angles to render — every angle IS captured.</param>
+            <param name="FrameSize">Per-frame pixel dimensions (Width, Height).</param>
+            <param name="Padding">Pixels between frames in atlas. Defaults to 2.</param>
+            <param name="BackgroundColor">Render clear color. Defaults to transparent.</param>
+            <param name="IncludeNormalMap">Whether to also generate a depth-to-normal atlas.</param>
+            <param name="TrimTransparent">Whether to trim transparent borders per frame.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig.Name">
+            <summary>Rig identifier (e.g., "SideView-Brawler", "TopDown-8Dir").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig.Projection">
+            <summary>Camera projection mode. Defaults to Orthographic.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig.Angles">
+            <summary>Angles to render — every angle IS captured.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig.FrameSize">
+            <summary>Per-frame pixel dimensions (Width, Height).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig.Padding">
+            <summary>Pixels between frames in atlas. Defaults to 2.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig.BackgroundColor">
+            <summary>Render clear color. Defaults to transparent.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig.IncludeNormalMap">
+            <summary>Whether to also generate a depth-to-normal atlas.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig.TrimTransparent">
+            <summary>Whether to trim transparent borders per frame.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRigPresets">
+            <summary>
+            Built-in camera rig factory methods for common sprite capture configurations.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRigPresets.SideViewBrawler(System.Int32,System.Int32)">
+            <summary>
+            Creates a side-view brawler rig with one capture angle (right) that produces
+            a horizontal mirror (left). Result: 1 rendered angle, 1 mirror = 2 total directions.
+            </summary>
+            <param name="frameWidth">Per-frame width in pixels. Defaults to 128.</param>
+            <param name="frameHeight">Per-frame height in pixels. Defaults to 128.</param>
+            <returns>A camera rig configured for side-view brawler sprite capture.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRigPresets.TopDown8Dir(System.Single,System.Int32,System.Int32)">
+            <summary>
+            Creates a top-down 8-direction rig with 5 capture angles (N, NE, E, SE, S)
+            where NE, E, and SE produce horizontal mirrors (NW, W, SW).
+            Result: 5 rendered angles, 3 mirrors = 8 total directions.
+            </summary>
+            <param name="pitch">Pitch angle in degrees (negative = looking down). Defaults to -55.</param>
+            <param name="frameWidth">Per-frame width in pixels. Defaults to 96.</param>
+            <param name="frameHeight">Per-frame height in pixels. Defaults to 96.</param>
+            <returns>A camera rig configured for top-down 8-directional sprite capture.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRigPresets.TopDown4Dir(System.Single,System.Int32,System.Int32)">
+            <summary>
+            Creates a top-down 4-direction rig with 3 capture angles (N, E, S)
+            where E produces a horizontal mirror (W).
+            Result: 3 rendered angles, 1 mirror = 4 total directions.
+            </summary>
+            <param name="pitch">Pitch angle in degrees (negative = looking down). Defaults to -55.</param>
+            <param name="frameWidth">Per-frame width in pixels. Defaults to 96.</param>
+            <param name="frameHeight">Per-frame height in pixels. Defaults to 96.</param>
+            <returns>A camera rig configured for top-down 4-directional sprite capture.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle">
+            <summary>
+            Defines a single capture angle for sprite rendering. Every CaptureAngle in a
+            <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig"/> is rendered by the bridge — this is never a skip flag.
+            </summary>
+            <remarks>
+            <para>
+            <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle.ProducesMirror"/> is additive: when true, MirrorOptimizer generates
+            a flipped counterpart in addition to the captured frame. The angle itself is
+            always captured regardless of this flag.
+            </para>
+            <para>
+            Yaw is measured in degrees around the Y axis (0 = north/forward).
+            Pitch is measured in degrees from horizontal (0 = level, negative = looking down).
+            </para>
+            </remarks>
+            <param name="Name">Angle identifier (e.g., "right", "N", "NE").</param>
+            <param name="Yaw">Degrees rotation around the Y axis (0 = north/forward).</param>
+            <param name="Pitch">Degrees from horizontal (0 = level, negative = looking down).</param>
+            <param name="ProducesMirror">If true, MirrorOptimizer generates a horizontally flipped counterpart.</param>
+            <param name="MirrorTargetName">Name for the generated mirror angle (e.g., "NW"). Null if no mirror.</param>
+            <param name="MirrorAxis">Flip axis for the generated mirror. Defaults to Horizontal.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle.#ctor(System.String,System.Single,System.Single,System.Boolean,System.String,BeyondImmersion.Bannou.SpriteTheory.MirrorAxis)">
+            <summary>
+            Defines a single capture angle for sprite rendering. Every CaptureAngle in a
+            <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig"/> is rendered by the bridge — this is never a skip flag.
+            </summary>
+            <remarks>
+            <para>
+            <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle.ProducesMirror"/> is additive: when true, MirrorOptimizer generates
+            a flipped counterpart in addition to the captured frame. The angle itself is
+            always captured regardless of this flag.
+            </para>
+            <para>
+            Yaw is measured in degrees around the Y axis (0 = north/forward).
+            Pitch is measured in degrees from horizontal (0 = level, negative = looking down).
+            </para>
+            </remarks>
+            <param name="Name">Angle identifier (e.g., "right", "N", "NE").</param>
+            <param name="Yaw">Degrees rotation around the Y axis (0 = north/forward).</param>
+            <param name="Pitch">Degrees from horizontal (0 = level, negative = looking down).</param>
+            <param name="ProducesMirror">If true, MirrorOptimizer generates a horizontally flipped counterpart.</param>
+            <param name="MirrorTargetName">Name for the generated mirror angle (e.g., "NW"). Null if no mirror.</param>
+            <param name="MirrorAxis">Flip axis for the generated mirror. Defaults to Horizontal.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle.Name">
+            <summary>Angle identifier (e.g., "right", "N", "NE").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle.Yaw">
+            <summary>Degrees rotation around the Y axis (0 = north/forward).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle.Pitch">
+            <summary>Degrees from horizontal (0 = level, negative = looking down).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle.ProducesMirror">
+            <summary>If true, MirrorOptimizer generates a horizontally flipped counterpart.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle.MirrorTargetName">
+            <summary>Name for the generated mirror angle (e.g., "NW"). Null if no mirror.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle.MirrorAxis">
+            <summary>Flip axis for the generated mirror. Defaults to Horizontal.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters">
+            <summary>
+            Output of <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicSetup.Compute(BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle,BeyondImmersion.Bannou.SpriteTheory.BoundingBox,System.ValueTuple{System.Int32,System.Int32})"/>: the complete set of camera parameters
+            needed to configure an orthographic camera that frames a bounding box from a given angle.
+            </summary>
+            <remarks>
+            All vectors use (float X, float Y, float Z) tuples. The bridge maps these to
+            engine-specific camera types (e.g., Stride's CameraComponent).
+            </remarks>
+            <param name="Position">Camera world position, placed along the negative direction from the bounding box center.</param>
+            <param name="Direction">Camera forward direction vector (normalized).</param>
+            <param name="Up">Camera up vector (normalized), accounting for gimbal lock near vertical angles.</param>
+            <param name="OrthoWidth">Orthographic viewport width in world units.</param>
+            <param name="OrthoHeight">Orthographic viewport height in world units.</param>
+            <param name="NearPlane">Near clip plane distance.</param>
+            <param name="FarPlane">Far clip plane distance.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters.#ctor(System.ValueTuple{System.Single,System.Single,System.Single},System.ValueTuple{System.Single,System.Single,System.Single},System.ValueTuple{System.Single,System.Single,System.Single},System.Single,System.Single,System.Single,System.Single)">
+            <summary>
+            Output of <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicSetup.Compute(BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle,BeyondImmersion.Bannou.SpriteTheory.BoundingBox,System.ValueTuple{System.Int32,System.Int32})"/>: the complete set of camera parameters
+            needed to configure an orthographic camera that frames a bounding box from a given angle.
+            </summary>
+            <remarks>
+            All vectors use (float X, float Y, float Z) tuples. The bridge maps these to
+            engine-specific camera types (e.g., Stride's CameraComponent).
+            </remarks>
+            <param name="Position">Camera world position, placed along the negative direction from the bounding box center.</param>
+            <param name="Direction">Camera forward direction vector (normalized).</param>
+            <param name="Up">Camera up vector (normalized), accounting for gimbal lock near vertical angles.</param>
+            <param name="OrthoWidth">Orthographic viewport width in world units.</param>
+            <param name="OrthoHeight">Orthographic viewport height in world units.</param>
+            <param name="NearPlane">Near clip plane distance.</param>
+            <param name="FarPlane">Far clip plane distance.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters.Position">
+            <summary>Camera world position, placed along the negative direction from the bounding box center.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters.Direction">
+            <summary>Camera forward direction vector (normalized).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters.Up">
+            <summary>Camera up vector (normalized), accounting for gimbal lock near vertical angles.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters.OrthoWidth">
+            <summary>Orthographic viewport width in world units.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters.OrthoHeight">
+            <summary>Orthographic viewport height in world units.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters.NearPlane">
+            <summary>Near clip plane distance.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters.FarPlane">
+            <summary>Far clip plane distance.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicSetup">
+            <summary>
+            Computes orthographic camera parameters to frame a 3D bounding box from a given capture angle
+            with no clipping or perspective foreshortening.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicSetup.Compute(BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle,BeyondImmersion.Bannou.SpriteTheory.BoundingBox,System.ValueTuple{System.Int32,System.Int32})">
+            <summary>
+            Computes the orthographic camera parameters that completely frame the given bounding box
+            when viewed from the specified capture angle.
+            </summary>
+            <remarks>
+            <para>
+            The algorithm performs spherical-to-Cartesian conversion for the camera direction,
+            positions the camera at 2.5× the bounding box half-diagonal to ensure no clipping,
+            handles gimbal lock for near-vertical pitch angles, builds an orthonormal basis,
+            projects all 8 bounding box corners onto the camera plane, applies a 10% safety margin,
+            and adjusts for the frame aspect ratio.
+            </para>
+            </remarks>
+            <param name="angle">The capture angle defining yaw and pitch.</param>
+            <param name="bounds">The axis-aligned bounding box of the model.</param>
+            <param name="frameSize">The output frame dimensions in pixels (Width, Height).</param>
+            <returns>Complete orthographic camera parameters for engine configuration.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Color">
+            <summary>
+            Represents an RGBA color with byte-valued channels (0–255 per channel).
+            </summary>
+            <remarks>
+            A 4-byte value type used for atlas background colors and render clear colors.
+            Provides static factory properties for common colors used in sprite capture.
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Color.R">
+            <summary>Red channel (0–255).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Color.G">
+            <summary>Green channel (0–255).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Color.B">
+            <summary>Blue channel (0–255).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Color.A">
+            <summary>Alpha channel (0–255), where 0 is fully transparent and 255 is fully opaque.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Color.#ctor(System.Byte,System.Byte,System.Byte,System.Byte)">
+            <summary>
+            Creates a new color with the specified RGBA channel values.
+            </summary>
+            <param name="r">Red channel (0–255).</param>
+            <param name="g">Green channel (0–255).</param>
+            <param name="b">Blue channel (0–255).</param>
+            <param name="a">Alpha channel (0–255).</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Color.Transparent">
+            <summary>Fully transparent (0, 0, 0, 0). Default atlas background for sprite capture.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Color.White">
+            <summary>Opaque white (255, 255, 255, 255).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Color.Black">
+            <summary>Opaque black (0, 0, 0, 255).</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Color.Equals(BeyondImmersion.Bannou.SpriteTheory.Color)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Color.Equals(System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Color.GetHashCode">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Color.op_Equality(BeyondImmersion.Bannou.SpriteTheory.Color,BeyondImmersion.Bannou.SpriteTheory.Color)">
+            <summary>Equality operator.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Color.op_Inequality(BeyondImmersion.Bannou.SpriteTheory.Color,BeyondImmersion.Bannou.SpriteTheory.Color)">
+            <summary>Inequality operator.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Color.ToString">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.ProjectionType">
+            <summary>
+            Camera projection mode for sprite capture.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.SpriteTheory.ProjectionType.Orthographic">
+            <summary>
+            Orthographic (parallel) projection — no perspective foreshortening.
+            Standard for sprite capture; preserves consistent sizing across depth.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.SpriteTheory.ProjectionType.Perspective">
+            <summary>
+            Perspective projection — objects closer to the camera appear larger.
+            Rarely used for sprite capture; may cause inconsistent frame sizing.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.LoopMode">
+            <summary>
+            Animation playback loop behavior for sprite animations.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.SpriteTheory.LoopMode.None">
+            <summary>Play once and stop on the last frame.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.SpriteTheory.LoopMode.Loop">
+            <summary>Loop from the beginning after reaching the last frame.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.SpriteTheory.LoopMode.PingPong">
+            <summary>Alternate between forward and reverse playback.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.MirrorAxis">
+            <summary>
+            Flip axis for mirror frame generation.
+            </summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.SpriteTheory.MirrorAxis.Horizontal">
+            <summary>Flip horizontally (left-right). Standard for character facing direction mirrors.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.SpriteTheory.MirrorAxis.Vertical">
+            <summary>Flip vertically (top-bottom). Rare; used for specialized projection effects.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Export.AtlasAssembler">
+            <summary>
+            Composites captured frame pixel data into atlas RGBA byte arrays at positions
+            determined by <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasPacker"/>. Each atlas is a flat RGBA byte array
+            (4 bytes per pixel, row-major) ready for PNG encoding by the consumer.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Export.AtlasAssembler.Assemble(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture},BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasLayout,BeyondImmersion.Bannou.SpriteTheory.Color)">
+            <summary>
+            Assembles captured frame pixel data into one or more atlas byte arrays using
+            the placement positions from an <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasLayout"/>.
+            </summary>
+            <remarks>
+            <para>
+            Each atlas is initialized with the specified background color, then frame pixels
+            are blitted in row-by-row using <see cref="M:System.Buffer.BlockCopy(System.Array,System.Int32,System.Array,System.Int32,System.Int32)"/> for efficiency.
+            </para>
+            <para>
+            Frame captures are matched to placements by <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.PackedFrame.FrameIndex"/>
+            via dictionary lookup, supporting any ordering of input frames.
+            </para>
+            </remarks>
+            <param name="frames">Captured frame pixel data from the engine bridge.</param>
+            <param name="layout">Atlas layout computed by <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasPacker.Pack(System.Collections.Generic.IReadOnlyList{System.ValueTuple{System.Int32,System.Int32,System.Int32}},BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasOptions)"/>.</param>
+            <param name="backgroundColor">Background color to fill each atlas with before blitting frames.</param>
+            <returns>Array of atlas byte arrays, one per atlas image. Each is RGBA (4 bytes/pixel, row-major).</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Export.IDepthSource">
+            <summary>
+            Engine-agnostic abstraction for depth buffer data. Implemented by engine bridges
+            to provide captured depth values without coupling sprite-theory to any rendering API.
+            </summary>
+            <remarks>
+            Depth values are normalized to 0.0 (near plane) through 1.0 (far plane).
+            The bridge is responsible for normalizing GPU depth to this range, as different
+            graphics APIs store depth differently. Total float count must equal
+            <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Export.IDepthSource.Width"/> × <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Export.IDepthSource.Height"/>.
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Export.IDepthSource.GetDepth">
+            <summary>
+            Gets the depth buffer data as normalized float values (0.0–1.0 per pixel).
+            </summary>
+            <returns>Depth array with length Width × Height.</returns>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Export.IDepthSource.Width">
+            <summary>
+            Gets the width of the depth data in pixels.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Export.IDepthSource.Height">
+            <summary>
+            Gets the height of the depth data in pixels.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Export.IPixelSource">
+            <summary>
+            Engine-agnostic abstraction for raw RGBA pixel data. Implemented by engine bridges
+            to provide captured frame pixels without coupling sprite-theory to any rendering API.
+            </summary>
+            <remarks>
+            Pixel data is RGBA (4 bytes per pixel), row-major from top-left to bottom-right.
+            Total byte count must equal <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Export.IPixelSource.Width"/> × <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Export.IPixelSource.Height"/> × 4.
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Export.IPixelSource.GetPixels">
+            <summary>
+            Gets the raw RGBA pixel data (4 bytes per pixel, row-major top-to-bottom).
+            </summary>
+            <returns>RGBA pixel array with length Width × Height × 4.</returns>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Export.IPixelSource.Width">
+            <summary>
+            Gets the width of the pixel data in pixels.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Export.IPixelSource.Height">
+            <summary>
+            Gets the height of the pixel data in pixels.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Export.SpriteSheetSerializer">
+            <summary>
+            Serializes and deserializes <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet"/> metadata to and from JSON.
+            Uses System.Text.Json with camelCase naming, indented output, and null-value omission.
+            </summary>
+            <remarks>
+            <para>
+            This is a standalone SDK — it uses System.Text.Json directly, not BannouJson,
+            because sprite-theory has no dependency on bannou-service.
+            </para>
+            <para>
+            The JSON format is the canonical output for sprite sheet metadata, consumed by
+            game runtimes in any language. Property names use camelCase to match JavaScript conventions.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Export.SpriteSheetSerializer.Serialize(BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet)">
+            <summary>
+            Serializes a <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet"/> to a JSON string with camelCase property names,
+            indented formatting, and null values omitted.
+            </summary>
+            <param name="spriteSheet">The sprite sheet metadata to serialize.</param>
+            <returns>A JSON string representation of the sprite sheet.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Export.SpriteSheetSerializer.Deserialize(System.String)">
+            <summary>
+            Deserializes a JSON string to a <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet"/> instance.
+            Property matching is case-insensitive.
+            </summary>
+            <param name="json">The JSON string to deserialize.</param>
+            <returns>The deserialized sprite sheet metadata.</returns>
+            <exception cref="T:System.Text.Json.JsonException">Thrown when the JSON is invalid or deserialization produces null.</exception>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.AnimationEvent">
+            <summary>
+            An optional per-frame event marker within a sprite animation.
+            Used for hit frames, sound cues, visual effects, or other frame-synchronized game events.
+            </summary>
+            <param name="FrameIndex">Which frame this event occurs on (0-based within the animation).</param>
+            <param name="EventType">Event category identifier (e.g., "hit", "sound", "effect").</param>
+            <param name="EventData">Event-specific payload data (interpretation is game-defined).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Metadata.AnimationEvent.#ctor(System.Int32,System.String,System.String)">
+            <summary>
+            An optional per-frame event marker within a sprite animation.
+            Used for hit frames, sound cues, visual effects, or other frame-synchronized game events.
+            </summary>
+            <param name="FrameIndex">Which frame this event occurs on (0-based within the animation).</param>
+            <param name="EventType">Event category identifier (e.g., "hit", "sound", "effect").</param>
+            <param name="EventData">Event-specific payload data (interpretation is game-defined).</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.AnimationEvent.FrameIndex">
+            <summary>Which frame this event occurs on (0-based within the animation).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.AnimationEvent.EventType">
+            <summary>Event category identifier (e.g., "hit", "sound", "effect").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.AnimationEvent.EventData">
+            <summary>Event-specific payload data (interpretation is game-defined).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.AtlasInfo">
+            <summary>
+            Describes a single atlas image within a sprite sheet. When frames overflow a single atlas
+            (exceeding <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasOptions.MaxWidth"/> x <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasOptions.MaxHeight"/>),
+            multiple atlas images are produced, each tracked by an AtlasInfo entry.
+            </summary>
+            <param name="Index">0-based atlas index. Corresponds to <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.AtlasIndex"/>.</param>
+            <param name="Filename">Output filename for this atlas image (e.g., "warrior_atlas_0.png").</param>
+            <param name="Width">Atlas width in pixels.</param>
+            <param name="Height">Atlas height in pixels.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Metadata.AtlasInfo.#ctor(System.Int32,System.String,System.Int32,System.Int32)">
+            <summary>
+            Describes a single atlas image within a sprite sheet. When frames overflow a single atlas
+            (exceeding <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasOptions.MaxWidth"/> x <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasOptions.MaxHeight"/>),
+            multiple atlas images are produced, each tracked by an AtlasInfo entry.
+            </summary>
+            <param name="Index">0-based atlas index. Corresponds to <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.AtlasIndex"/>.</param>
+            <param name="Filename">Output filename for this atlas image (e.g., "warrior_atlas_0.png").</param>
+            <param name="Width">Atlas width in pixels.</param>
+            <param name="Height">Atlas height in pixels.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.AtlasInfo.Index">
+            <summary>0-based atlas index. Corresponds to <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.AtlasIndex"/>.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.AtlasInfo.Filename">
+            <summary>Output filename for this atlas image (e.g., "warrior_atlas_0.png").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.AtlasInfo.Width">
+            <summary>Atlas width in pixels.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.AtlasInfo.Height">
+            <summary>Atlas height in pixels.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.CaptureManifest">
+            <summary>
+            Pre-capture estimation of expected frame counts, mirror counts, and estimated capture time.
+            Computed from a character variant, one or more camera rigs, and a list of animations with configs.
+            </summary>
+            <remarks>
+            <para>
+            Use <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Metadata.CaptureManifest.Compute(BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig},System.Collections.Generic.IReadOnlyList{System.ValueTuple{BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationInfo,BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationConfig}})"/> to generate a manifest before starting a capture session. This allows
+            progress tracking, resource estimation, and verification of expected output.
+            </para>
+            <para>
+            Estimated capture time assumes ~50ms per captured frame (render + readback). Mirror frames
+            are generated from captured data and do not require additional render passes.
+            </para>
+            </remarks>
+            <param name="Variant">The character variant that will be captured.</param>
+            <param name="Rigs">Per-rig breakdown of expected frame counts.</param>
+            <param name="TotalCapturedFrames">Total frames requiring render passes across all rigs.</param>
+            <param name="TotalMirrorFrames">Total mirror frames generated from captured frames across all rigs.</param>
+            <param name="TotalFrames">Sum of captured and mirror frames.</param>
+            <param name="EstimatedCaptureTimeMs">Estimated capture time in milliseconds (~50ms per captured frame).</param>
+            <param name="AnimationCount">Number of animations to capture.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Metadata.CaptureManifest.#ctor(BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.SpriteTheory.Metadata.RigManifest},System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Pre-capture estimation of expected frame counts, mirror counts, and estimated capture time.
+            Computed from a character variant, one or more camera rigs, and a list of animations with configs.
+            </summary>
+            <remarks>
+            <para>
+            Use <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Metadata.CaptureManifest.Compute(BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig},System.Collections.Generic.IReadOnlyList{System.ValueTuple{BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationInfo,BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationConfig}})"/> to generate a manifest before starting a capture session. This allows
+            progress tracking, resource estimation, and verification of expected output.
+            </para>
+            <para>
+            Estimated capture time assumes ~50ms per captured frame (render + readback). Mirror frames
+            are generated from captured data and do not require additional render passes.
+            </para>
+            </remarks>
+            <param name="Variant">The character variant that will be captured.</param>
+            <param name="Rigs">Per-rig breakdown of expected frame counts.</param>
+            <param name="TotalCapturedFrames">Total frames requiring render passes across all rigs.</param>
+            <param name="TotalMirrorFrames">Total mirror frames generated from captured frames across all rigs.</param>
+            <param name="TotalFrames">Sum of captured and mirror frames.</param>
+            <param name="EstimatedCaptureTimeMs">Estimated capture time in milliseconds (~50ms per captured frame).</param>
+            <param name="AnimationCount">Number of animations to capture.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CaptureManifest.Variant">
+            <summary>The character variant that will be captured.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CaptureManifest.Rigs">
+            <summary>Per-rig breakdown of expected frame counts.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CaptureManifest.TotalCapturedFrames">
+            <summary>Total frames requiring render passes across all rigs.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CaptureManifest.TotalMirrorFrames">
+            <summary>Total mirror frames generated from captured frames across all rigs.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CaptureManifest.TotalFrames">
+            <summary>Sum of captured and mirror frames.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CaptureManifest.EstimatedCaptureTimeMs">
+            <summary>Estimated capture time in milliseconds (~50ms per captured frame).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CaptureManifest.AnimationCount">
+            <summary>Number of animations to capture.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Metadata.CaptureManifest.Compute(BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig},System.Collections.Generic.IReadOnlyList{System.ValueTuple{BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationInfo,BeyondImmersion.Bannou.SpriteTheory.Animation.AnimationConfig}})">
+            <summary>
+            Computes a capture manifest from a character variant, camera rigs, and animation configurations.
+            </summary>
+            <remarks>
+            <para>
+            For each rig, every angle in <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig.Angles"/> is captured (rendered).
+            Angles with <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle.ProducesMirror"/> set to true additionally generate
+            mirror frames without requiring extra render passes.
+            </para>
+            <para>
+            Verification example (TopDown8Dir + SideViewBrawler, 20 animations x 8 frames):
+            TopDown8Dir has 5 angles (3 produce mirrors), SideViewBrawler has 1 angle (1 produces mirror).
+            Captured = (5 * 160) + (1 * 160) = 960, Mirror = (3 * 160) + (1 * 160) = 640, Total = 1600.
+            </para>
+            </remarks>
+            <param name="variant">The character variant to capture.</param>
+            <param name="rigs">Camera rigs defining capture angles and frame dimensions.</param>
+            <param name="animations">Animation info and config pairs defining what to capture.</param>
+            <returns>A manifest with per-rig breakdowns and totals.</returns>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant">
+            <summary>
+            Input definition describing a specific character configuration to capture.
+            Combines a base model with equipment, material overrides, and scale to define
+            a unique visual variant (e.g., "warrior_plate_sword").
+            </summary>
+            <remarks>
+            Serialized as part of <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet"/> metadata and sprite project files.
+            The variant fully describes what was captured, enabling reproducible batch captures.
+            </remarks>
+            <param name="Name">Variant identifier (e.g., "warrior_plate_sword").</param>
+            <param name="ModelPath">Path to the base character model (FBX/glTF).</param>
+            <param name="Equipment">Attached equipment pieces defining slot-to-mesh-to-bone mappings.</param>
+            <param name="MaterialOverrides">Material or palette swaps applied during capture. Null if no overrides.</param>
+            <param name="Scale">Model scale factor. Defaults to 1.0 (no scaling).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.#ctor(System.String,System.String,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.SpriteTheory.Metadata.EquipmentSlot},System.Collections.Generic.Dictionary{System.String,System.String},System.Single)">
+            <summary>
+            Input definition describing a specific character configuration to capture.
+            Combines a base model with equipment, material overrides, and scale to define
+            a unique visual variant (e.g., "warrior_plate_sword").
+            </summary>
+            <remarks>
+            Serialized as part of <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet"/> metadata and sprite project files.
+            The variant fully describes what was captured, enabling reproducible batch captures.
+            </remarks>
+            <param name="Name">Variant identifier (e.g., "warrior_plate_sword").</param>
+            <param name="ModelPath">Path to the base character model (FBX/glTF).</param>
+            <param name="Equipment">Attached equipment pieces defining slot-to-mesh-to-bone mappings.</param>
+            <param name="MaterialOverrides">Material or palette swaps applied during capture. Null if no overrides.</param>
+            <param name="Scale">Model scale factor. Defaults to 1.0 (no scaling).</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.Name">
+            <summary>Variant identifier (e.g., "warrior_plate_sword").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.ModelPath">
+            <summary>Path to the base character model (FBX/glTF).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.Equipment">
+            <summary>Attached equipment pieces defining slot-to-mesh-to-bone mappings.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.MaterialOverrides">
+            <summary>Material or palette swaps applied during capture. Null if no overrides.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.Scale">
+            <summary>Model scale factor. Defaults to 1.0 (no scaling).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.EquipmentSlot">
+            <summary>
+            Defines a single equipment attachment point on a character model.
+            Maps a named slot to a specific mesh and skeleton bone for attachment.
+            </summary>
+            <param name="SlotName">Slot identifier (e.g., "head", "weapon_r", "shield_l").</param>
+            <param name="MeshPath">Path to the equipment mesh asset.</param>
+            <param name="BoneName">Skeleton bone to attach the equipment mesh to.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Metadata.EquipmentSlot.#ctor(System.String,System.String,System.String)">
+            <summary>
+            Defines a single equipment attachment point on a character model.
+            Maps a named slot to a specific mesh and skeleton bone for attachment.
+            </summary>
+            <param name="SlotName">Slot identifier (e.g., "head", "weapon_r", "shield_l").</param>
+            <param name="MeshPath">Path to the equipment mesh asset.</param>
+            <param name="BoneName">Skeleton bone to attach the equipment mesh to.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.EquipmentSlot.SlotName">
+            <summary>Slot identifier (e.g., "head", "weapon_r", "shield_l").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.EquipmentSlot.MeshPath">
+            <summary>Path to the equipment mesh asset.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.EquipmentSlot.BoneName">
+            <summary>Skeleton bone to attach the equipment mesh to.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture">
+            <summary>
+            Engine-agnostic container for captured pixel data produced by the bridge after each frame render.
+            Contains RGBA pixel data, optional depth buffer data, and metadata identifying which angle,
+            animation, and frame this capture represents.
+            </summary>
+            <remarks>
+            <para>
+            <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.PixelData"/> contains RGBA pixels (4 bytes per pixel, row-major top-to-bottom).
+            </para>
+            <para>
+            <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.DepthData"/>, when present, contains depth values normalized to 0.0 (near plane)
+            through 1.0 (far plane). The bridge is responsible for normalizing GPU depth to this range,
+            as different graphics APIs store depth differently. Null if depth was not captured.
+            </para>
+            </remarks>
+            <param name="PixelData">RGBA pixels (4 bytes per pixel, row-major top-to-bottom).</param>
+            <param name="DepthData">Depth values 0.0–1.0 per pixel. Null if depth was not captured.</param>
+            <param name="Width">Frame width in pixels.</param>
+            <param name="Height">Frame height in pixels.</param>
+            <param name="AngleName">Which CaptureAngle this frame was rendered from.</param>
+            <param name="AnimationName">Which animation was playing during capture.</param>
+            <param name="FrameIndex">Frame number within the animation (0-based).</param>
+            <param name="NormalizedTime">Animation time when captured (0.0–1.0).</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.#ctor(System.Byte[],System.Single[],System.Int32,System.Int32,System.String,System.String,System.Int32,System.Single)">
+            <summary>
+            Engine-agnostic container for captured pixel data produced by the bridge after each frame render.
+            Contains RGBA pixel data, optional depth buffer data, and metadata identifying which angle,
+            animation, and frame this capture represents.
+            </summary>
+            <remarks>
+            <para>
+            <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.PixelData"/> contains RGBA pixels (4 bytes per pixel, row-major top-to-bottom).
+            </para>
+            <para>
+            <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.DepthData"/>, when present, contains depth values normalized to 0.0 (near plane)
+            through 1.0 (far plane). The bridge is responsible for normalizing GPU depth to this range,
+            as different graphics APIs store depth differently. Null if depth was not captured.
+            </para>
+            </remarks>
+            <param name="PixelData">RGBA pixels (4 bytes per pixel, row-major top-to-bottom).</param>
+            <param name="DepthData">Depth values 0.0–1.0 per pixel. Null if depth was not captured.</param>
+            <param name="Width">Frame width in pixels.</param>
+            <param name="Height">Frame height in pixels.</param>
+            <param name="AngleName">Which CaptureAngle this frame was rendered from.</param>
+            <param name="AnimationName">Which animation was playing during capture.</param>
+            <param name="FrameIndex">Frame number within the animation (0-based).</param>
+            <param name="NormalizedTime">Animation time when captured (0.0–1.0).</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.PixelData">
+            <summary>RGBA pixels (4 bytes per pixel, row-major top-to-bottom).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.DepthData">
+            <summary>Depth values 0.0–1.0 per pixel. Null if depth was not captured.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.Width">
+            <summary>Frame width in pixels.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.Height">
+            <summary>Frame height in pixels.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.AngleName">
+            <summary>Which CaptureAngle this frame was rendered from.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.AnimationName">
+            <summary>Which animation was playing during capture.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.FrameIndex">
+            <summary>Frame number within the animation (0-based).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.NormalizedTime">
+            <summary>Animation time when captured (0.0–1.0).</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.RigManifest">
+            <summary>
+            Per-rig breakdown within a <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.CaptureManifest"/>. Reports the expected number of
+            captured frames, mirror frames, rendered angles, and mirror angles for a single camera rig.
+            </summary>
+            <param name="RigName">Camera rig name (e.g., "TopDown-8Dir", "SideView-Brawler").</param>
+            <param name="CapturedFrames">Total frames requiring render passes for this rig.</param>
+            <param name="MirrorFrames">Total mirror frames generated from captured frames for this rig.</param>
+            <param name="AngleCount">Number of rendered angles in this rig.</param>
+            <param name="MirrorCount">Number of angles that produce mirrors in this rig.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Metadata.RigManifest.#ctor(System.String,System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Per-rig breakdown within a <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.CaptureManifest"/>. Reports the expected number of
+            captured frames, mirror frames, rendered angles, and mirror angles for a single camera rig.
+            </summary>
+            <param name="RigName">Camera rig name (e.g., "TopDown-8Dir", "SideView-Brawler").</param>
+            <param name="CapturedFrames">Total frames requiring render passes for this rig.</param>
+            <param name="MirrorFrames">Total mirror frames generated from captured frames for this rig.</param>
+            <param name="AngleCount">Number of rendered angles in this rig.</param>
+            <param name="MirrorCount">Number of angles that produce mirrors in this rig.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.RigManifest.RigName">
+            <summary>Camera rig name (e.g., "TopDown-8Dir", "SideView-Brawler").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.RigManifest.CapturedFrames">
+            <summary>Total frames requiring render passes for this rig.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.RigManifest.MirrorFrames">
+            <summary>Total mirror frames generated from captured frames for this rig.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.RigManifest.AngleCount">
+            <summary>Number of rendered angles in this rig.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.RigManifest.MirrorCount">
+            <summary>Number of angles that produce mirrors in this rig.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteAnimation">
+            <summary>
+            Groups frames by animation name with per-angle frame index lookup for game runtime use.
+            </summary>
+            <remarks>
+            <para>
+            <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteAnimation.AngleFrameMap"/> is the primary runtime lookup. To play an animation facing a
+            specific direction, read <c>AngleFrameMap[angleName]</c> to get an ordered array of frame
+            indices, then look up each <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame"/> by index for atlas rect, duration,
+            and mirror info. Mirror angles (e.g., "NW") are included in the map — they point to
+            mirror SpriteFrame entries.
+            </para>
+            </remarks>
+            <param name="Name">Animation clip name (matches source animation name).</param>
+            <param name="LoopMode">Playback loop behavior (None, Loop, or PingPong).</param>
+            <param name="TotalDuration">Total animation duration in seconds.</param>
+            <param name="AngleFrameMap">Angle name to ordered frame index array. Includes both captured and mirror angles.</param>
+            <param name="Events">Optional per-frame event markers (hit frames, sound cues). Null if no events.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteAnimation.#ctor(System.String,BeyondImmersion.Bannou.SpriteTheory.LoopMode,System.Single,System.Collections.Generic.Dictionary{System.String,System.Int32[]},System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.SpriteTheory.Metadata.AnimationEvent})">
+            <summary>
+            Groups frames by animation name with per-angle frame index lookup for game runtime use.
+            </summary>
+            <remarks>
+            <para>
+            <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteAnimation.AngleFrameMap"/> is the primary runtime lookup. To play an animation facing a
+            specific direction, read <c>AngleFrameMap[angleName]</c> to get an ordered array of frame
+            indices, then look up each <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame"/> by index for atlas rect, duration,
+            and mirror info. Mirror angles (e.g., "NW") are included in the map — they point to
+            mirror SpriteFrame entries.
+            </para>
+            </remarks>
+            <param name="Name">Animation clip name (matches source animation name).</param>
+            <param name="LoopMode">Playback loop behavior (None, Loop, or PingPong).</param>
+            <param name="TotalDuration">Total animation duration in seconds.</param>
+            <param name="AngleFrameMap">Angle name to ordered frame index array. Includes both captured and mirror angles.</param>
+            <param name="Events">Optional per-frame event markers (hit frames, sound cues). Null if no events.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteAnimation.Name">
+            <summary>Animation clip name (matches source animation name).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteAnimation.LoopMode">
+            <summary>Playback loop behavior (None, Loop, or PingPong).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteAnimation.TotalDuration">
+            <summary>Total animation duration in seconds.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteAnimation.AngleFrameMap">
+            <summary>Angle name to ordered frame index array. Includes both captured and mirror angles.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteAnimation.Events">
+            <summary>Optional per-frame event markers (hit frames, sound cues). Null if no events.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame">
+            <summary>
+            Per-frame metadata within a sprite sheet. Describes a single frame's position in an atlas,
+            its animation context, pivot point, and whether it is a mirror of another frame.
+            </summary>
+            <remarks>
+            <para>
+            Captured frames come first (indices 0 through N-1), mirror frames are appended after
+            (indices N through N+M-1). This ordering is deterministic and stable.
+            </para>
+            <para>
+            Mirror frames share their source frame's atlas <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.Rect"/> — no duplicate pixels
+            exist in the atlas. The game engine applies a horizontal or vertical flip at render time
+            using the <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.IsMirror"/> flag and <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.MirrorSourceIndex"/>.
+            </para>
+            </remarks>
+            <param name="Index">Global frame index (0-based, unique across all frames in the sprite sheet).</param>
+            <param name="AtlasIndex">Which atlas image this frame resides in (0 for single-atlas sheets).</param>
+            <param name="AngleName">Angle name — source angle for captured frames, mirror target name for mirrors.</param>
+            <param name="AnimationName">Animation clip name (e.g., "idle", "attack_light").</param>
+            <param name="FrameInAnimation">Frame number within the animation (0-based).</param>
+            <param name="Rect">Position and size in the atlas image.</param>
+            <param name="TrimmedRect">Content bounds within the frame if TrimTransparent was enabled. Null otherwise.</param>
+            <param name="Pivot">Pivot point normalized to frame dimensions (0,0 = top-left; default: 0.5, 0.85).</param>
+            <param name="Duration">Frame display duration in seconds.</param>
+            <param name="IsMirror">True if this frame is a horizontal/vertical flip of <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.MirrorSourceIndex"/>.</param>
+            <param name="MirrorSourceIndex">Source frame index when <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.IsMirror"/> is true. Null for captured frames.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.#ctor(System.Int32,System.Int32,System.String,System.String,System.Int32,BeyondImmersion.Bannou.SpriteTheory.Rectangle,System.Nullable{BeyondImmersion.Bannou.SpriteTheory.Rectangle},BeyondImmersion.Bannou.SpriteTheory.Vector2,System.Single,System.Boolean,System.Nullable{System.Int32})">
+            <summary>
+            Per-frame metadata within a sprite sheet. Describes a single frame's position in an atlas,
+            its animation context, pivot point, and whether it is a mirror of another frame.
+            </summary>
+            <remarks>
+            <para>
+            Captured frames come first (indices 0 through N-1), mirror frames are appended after
+            (indices N through N+M-1). This ordering is deterministic and stable.
+            </para>
+            <para>
+            Mirror frames share their source frame's atlas <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.Rect"/> — no duplicate pixels
+            exist in the atlas. The game engine applies a horizontal or vertical flip at render time
+            using the <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.IsMirror"/> flag and <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.MirrorSourceIndex"/>.
+            </para>
+            </remarks>
+            <param name="Index">Global frame index (0-based, unique across all frames in the sprite sheet).</param>
+            <param name="AtlasIndex">Which atlas image this frame resides in (0 for single-atlas sheets).</param>
+            <param name="AngleName">Angle name — source angle for captured frames, mirror target name for mirrors.</param>
+            <param name="AnimationName">Animation clip name (e.g., "idle", "attack_light").</param>
+            <param name="FrameInAnimation">Frame number within the animation (0-based).</param>
+            <param name="Rect">Position and size in the atlas image.</param>
+            <param name="TrimmedRect">Content bounds within the frame if TrimTransparent was enabled. Null otherwise.</param>
+            <param name="Pivot">Pivot point normalized to frame dimensions (0,0 = top-left; default: 0.5, 0.85).</param>
+            <param name="Duration">Frame display duration in seconds.</param>
+            <param name="IsMirror">True if this frame is a horizontal/vertical flip of <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.MirrorSourceIndex"/>.</param>
+            <param name="MirrorSourceIndex">Source frame index when <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.IsMirror"/> is true. Null for captured frames.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.Index">
+            <summary>Global frame index (0-based, unique across all frames in the sprite sheet).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.AtlasIndex">
+            <summary>Which atlas image this frame resides in (0 for single-atlas sheets).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.AngleName">
+            <summary>Angle name — source angle for captured frames, mirror target name for mirrors.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.AnimationName">
+            <summary>Animation clip name (e.g., "idle", "attack_light").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.FrameInAnimation">
+            <summary>Frame number within the animation (0-based).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.Rect">
+            <summary>Position and size in the atlas image.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.TrimmedRect">
+            <summary>Content bounds within the frame if TrimTransparent was enabled. Null otherwise.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.Pivot">
+            <summary>Pivot point normalized to frame dimensions (0,0 = top-left; default: 0.5, 0.85).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.Duration">
+            <summary>Frame display duration in seconds.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.IsMirror">
+            <summary>True if this frame is a horizontal/vertical flip of <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.MirrorSourceIndex"/>.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.MirrorSourceIndex">
+            <summary>Source frame index when <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame.IsMirror"/> is true. Null for captured frames.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet">
+            <summary>
+            Complete output metadata for a sprite capture session. Contains the variant that was captured,
+            the camera rig used, atlas image info, all animations with per-angle frame maps, and all frames
+            (both captured and mirror entries). Serializes to a canonical JSON format via SpriteSheetSerializer.
+            </summary>
+            <remarks>
+            <para>
+            The <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet.Frames"/> list contains captured frames first (indices 0 through N-1),
+            followed by mirror frames (indices N through N+M-1). This ordering is deterministic.
+            </para>
+            <para>
+            <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet.CustomProperties"/> is optional game-specific metadata embedded in the output JSON.
+            It is not read, validated, or interpreted by any SDK component. Example uses: game build version,
+            character class tag, content pipeline batch ID.
+            </para>
+            </remarks>
+            <param name="Version">Schema version (e.g., "1.0").</param>
+            <param name="Generator">Generator identifier (e.g., "BeyondImmersion.Bannou.SpriteComposer").</param>
+            <param name="GeneratedAt">Timestamp when the capture was performed.</param>
+            <param name="Variant">The character variant that was captured (model, equipment, materials, scale).</param>
+            <param name="Rig">Camera rig used for capture (source angles only, no mirror targets).</param>
+            <param name="Atlases">Atlas image descriptors (one or more if frames overflowed a single atlas).</param>
+            <param name="Animations">All captured animations with per-angle frame index maps.</param>
+            <param name="Frames">All frames — captured frames first, then mirror frames appended.</param>
+            <param name="CustomProperties">Optional game-specific opaque metadata. Null if not provided.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet.#ctor(System.String,System.String,System.DateTimeOffset,BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant,BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.SpriteTheory.Metadata.AtlasInfo},System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteAnimation},System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame},System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+            Complete output metadata for a sprite capture session. Contains the variant that was captured,
+            the camera rig used, atlas image info, all animations with per-angle frame maps, and all frames
+            (both captured and mirror entries). Serializes to a canonical JSON format via SpriteSheetSerializer.
+            </summary>
+            <remarks>
+            <para>
+            The <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet.Frames"/> list contains captured frames first (indices 0 through N-1),
+            followed by mirror frames (indices N through N+M-1). This ordering is deterministic.
+            </para>
+            <para>
+            <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet.CustomProperties"/> is optional game-specific metadata embedded in the output JSON.
+            It is not read, validated, or interpreted by any SDK component. Example uses: game build version,
+            character class tag, content pipeline batch ID.
+            </para>
+            </remarks>
+            <param name="Version">Schema version (e.g., "1.0").</param>
+            <param name="Generator">Generator identifier (e.g., "BeyondImmersion.Bannou.SpriteComposer").</param>
+            <param name="GeneratedAt">Timestamp when the capture was performed.</param>
+            <param name="Variant">The character variant that was captured (model, equipment, materials, scale).</param>
+            <param name="Rig">Camera rig used for capture (source angles only, no mirror targets).</param>
+            <param name="Atlases">Atlas image descriptors (one or more if frames overflowed a single atlas).</param>
+            <param name="Animations">All captured animations with per-angle frame index maps.</param>
+            <param name="Frames">All frames — captured frames first, then mirror frames appended.</param>
+            <param name="CustomProperties">Optional game-specific opaque metadata. Null if not provided.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet.Version">
+            <summary>Schema version (e.g., "1.0").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet.Generator">
+            <summary>Generator identifier (e.g., "BeyondImmersion.Bannou.SpriteComposer").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet.GeneratedAt">
+            <summary>Timestamp when the capture was performed.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet.Variant">
+            <summary>The character variant that was captured (model, equipment, materials, scale).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet.Rig">
+            <summary>Camera rig used for capture (source angles only, no mirror targets).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet.Atlases">
+            <summary>Atlas image descriptors (one or more if frames overflowed a single atlas).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet.Animations">
+            <summary>All captured animations with per-angle frame index maps.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet.Frames">
+            <summary>All frames — captured frames first, then mirror frames appended.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet.CustomProperties">
+            <summary>Optional game-specific opaque metadata. Null if not provided.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Mirror.MirrorInfo">
+            <summary>
+            Describes a single mirror relationship between a captured angle and its generated counterpart.
+            Produced by <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Mirror.MirrorOptimizer.ComputeMirrors(BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig)"/> from <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle"/>
+            metadata on the camera rig.
+            </summary>
+            <remarks>
+            Mirror frames share their source frame's atlas rectangle — no duplicate pixels exist in the atlas.
+            The game engine applies a flip at render time using the <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Mirror.MirrorInfo.FlipAxis"/> direction.
+            </remarks>
+            <param name="SourceAngleName">Name of the captured angle that produces this mirror (e.g., "NE").</param>
+            <param name="TargetAngleName">Name for the generated mirror angle (e.g., "NW").</param>
+            <param name="FlipAxis">Horizontal or Vertical flip direction for the mirror.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Mirror.MirrorInfo.#ctor(System.String,System.String,BeyondImmersion.Bannou.SpriteTheory.MirrorAxis)">
+            <summary>
+            Describes a single mirror relationship between a captured angle and its generated counterpart.
+            Produced by <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Mirror.MirrorOptimizer.ComputeMirrors(BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig)"/> from <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle"/>
+            metadata on the camera rig.
+            </summary>
+            <remarks>
+            Mirror frames share their source frame's atlas rectangle — no duplicate pixels exist in the atlas.
+            The game engine applies a flip at render time using the <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Mirror.MirrorInfo.FlipAxis"/> direction.
+            </remarks>
+            <param name="SourceAngleName">Name of the captured angle that produces this mirror (e.g., "NE").</param>
+            <param name="TargetAngleName">Name for the generated mirror angle (e.g., "NW").</param>
+            <param name="FlipAxis">Horizontal or Vertical flip direction for the mirror.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Mirror.MirrorInfo.SourceAngleName">
+            <summary>Name of the captured angle that produces this mirror (e.g., "NE").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Mirror.MirrorInfo.TargetAngleName">
+            <summary>Name for the generated mirror angle (e.g., "NW").</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Mirror.MirrorInfo.FlipAxis">
+            <summary>Horizontal or Vertical flip direction for the mirror.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Mirror.MirrorOptimizer">
+            <summary>
+            Analyzes camera rig angles to compute mirror relationships and generates mirror
+            <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame"/> entries from captured frames. Mirror frames share their
+            source frame's atlas rectangle — no duplicate pixels exist in the atlas.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Mirror.MirrorOptimizer.ComputeMirrors(BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig)">
+            <summary>
+            Extracts mirror relationships from a camera rig by scanning all angles
+            where <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle.ProducesMirror"/> is true and
+            <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle.MirrorTargetName"/> is not null.
+            </summary>
+            <param name="rig">Camera rig containing capture angles with optional mirror metadata.</param>
+            <returns>List of mirror relationships, one per angle that produces a mirror.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Mirror.MirrorOptimizer.GenerateMirrorFrames(System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame},System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.SpriteTheory.Mirror.MirrorInfo})">
+            <summary>
+            Generates mirror <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteFrame"/> entries from captured frames and mirror relationships.
+            Mirror frames share the source frame's atlas rectangle with a flipped pivot point.
+            </summary>
+            <remarks>
+            Mirror frame indices start at <paramref name="capturedFrames"/>.Count, maintaining
+            the deterministic ordering convention where captured frames come first.
+            </remarks>
+            <param name="capturedFrames">All captured (non-mirror) sprite frames from the capture session.</param>
+            <param name="mirrors">Mirror relationships computed by <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Mirror.MirrorOptimizer.ComputeMirrors(BeyondImmersion.Bannou.SpriteTheory.Camera.CameraRig)"/>.</param>
+            <returns>List of mirror sprite frames to append after captured frames.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Mirror.MirrorOptimizer.FlipPivot(BeyondImmersion.Bannou.SpriteTheory.Vector2,BeyondImmersion.Bannou.SpriteTheory.MirrorAxis)">
+            <summary>
+            Flips a pivot point along the specified axis.
+            Horizontal: X becomes 1-X. Vertical: Y becomes 1-Y.
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.NormalMap.DepthToNormal">
+            <summary>
+            Converts a depth buffer to a tangent-space normal map using Sobel 3x3 convolution.
+            </summary>
+            <remarks>
+            <para>
+            The Sobel operator estimates horizontal and vertical gradients of the depth field at each pixel.
+            These gradients are used to construct a surface normal vector pointing outward from the sprite plane
+            (positive Z in tangent space). The resulting normal map encodes each component from [-1, 1] to [0, 255].
+            </para>
+            <para>
+            Boundary pixels use clamped sampling — edge values are repeated rather than wrapped or zeroed,
+            preventing dark-border artifacts on normal maps.
+            </para>
+            <para>
+            Reference: Irwin Sobel and Gary Feldman, "A 3x3 Isotropic Gradient Operator for Image Processing"
+            (Stanford AI Project, 1968).
+            </para>
+            </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.NormalMap.DepthToNormal.Generate(System.Single[],System.Int32,System.Int32,BeyondImmersion.Bannou.SpriteTheory.NormalMap.NormalMapOptions)">
+            <summary>
+            Generates a tangent-space normal map from a depth buffer using Sobel 3x3 convolution.
+            </summary>
+            <param name="depth">
+            Depth values in the range 0.0 (near) to 1.0 (far). Must contain exactly
+            <paramref name="width"/> * <paramref name="height"/> elements.
+            </param>
+            <param name="width">Width of the depth buffer in pixels.</param>
+            <param name="height">Height of the depth buffer in pixels.</param>
+            <param name="options">Normal map generation options (strength, blur radius).</param>
+            <returns>
+            An RGBA byte array of size <paramref name="width"/> * <paramref name="height"/> * 4,
+            containing the tangent-space normal map with alpha set to 255 for all pixels.
+            </returns>
+            <exception cref="T:System.ArgumentException">
+            Thrown when <paramref name="depth"/> length does not equal <paramref name="width"/> * <paramref name="height"/>.
+            </exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.NormalMap.DepthToNormal.S(System.Single[],System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Samples the depth buffer at (x, y) with clamped boundary handling.
+            Edge values are repeated for out-of-bounds coordinates.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.NormalMap.DepthToNormal.GaussianBlur(System.Single[],System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Applies a separable Gaussian blur to the depth buffer.
+            The kernel is computed from the given radius using a standard Gaussian distribution.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.NormalMap.DepthToNormal.BuildGaussianKernel(System.Int32)">
+            <summary>
+            Builds a normalized 1D Gaussian kernel for the given radius.
+            Kernel size is (2 * radius + 1). Sigma is radius / 3.0 (covers ~99.7% of distribution).
+            </summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.NormalMap.NormalMapOptions">
+            <summary>
+            Configuration options for depth-to-normal-map conversion via <see cref="T:BeyondImmersion.Bannou.SpriteTheory.NormalMap.DepthToNormal"/>.
+            Controls normal map intensity and optional pre-blur smoothing of the depth buffer.
+            </summary>
+            <param name="Strength">Normal map intensity multiplier. Higher values produce more pronounced normals.</param>
+            <param name="BlurRadius">Gaussian blur radius applied to the depth buffer before Sobel convolution. 0 disables blur.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.NormalMap.NormalMapOptions.#ctor(System.Single,System.Int32)">
+            <summary>
+            Configuration options for depth-to-normal-map conversion via <see cref="T:BeyondImmersion.Bannou.SpriteTheory.NormalMap.DepthToNormal"/>.
+            Controls normal map intensity and optional pre-blur smoothing of the depth buffer.
+            </summary>
+            <param name="Strength">Normal map intensity multiplier. Higher values produce more pronounced normals.</param>
+            <param name="BlurRadius">Gaussian blur radius applied to the depth buffer before Sobel convolution. 0 disables blur.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.NormalMap.NormalMapOptions.Strength">
+            <summary>Normal map intensity multiplier. Higher values produce more pronounced normals.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.NormalMap.NormalMapOptions.BlurRadius">
+            <summary>Gaussian blur radius applied to the depth buffer before Sobel convolution. 0 disables blur.</summary>
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Rectangle">
+            <summary>
+            Represents an integer rectangle defined by position and size, used for atlas frame positions.
+            </summary>
+            <remarks>
+            A 16-byte value type (four ints). Position (X, Y) is the top-left corner.
+            Width and Height define the extent in pixels.
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Rectangle.X">
+            <summary>Horizontal position of the top-left corner in pixels.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Rectangle.Y">
+            <summary>Vertical position of the top-left corner in pixels.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Rectangle.Width">
+            <summary>Width in pixels.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Rectangle.Height">
+            <summary>Height in pixels.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Rectangle.#ctor(System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Creates a new rectangle with the specified position and dimensions.
+            </summary>
+            <param name="x">Horizontal position of the top-left corner.</param>
+            <param name="y">Vertical position of the top-left corner.</param>
+            <param name="width">Width in pixels.</param>
+            <param name="height">Height in pixels.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Rectangle.Equals(BeyondImmersion.Bannou.SpriteTheory.Rectangle)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Rectangle.Equals(System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Rectangle.GetHashCode">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Rectangle.op_Equality(BeyondImmersion.Bannou.SpriteTheory.Rectangle,BeyondImmersion.Bannou.SpriteTheory.Rectangle)">
+            <summary>Equality operator.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Rectangle.op_Inequality(BeyondImmersion.Bannou.SpriteTheory.Rectangle,BeyondImmersion.Bannou.SpriteTheory.Rectangle)">
+            <summary>Inequality operator.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Rectangle.ToString">
+            <inheritdoc />
+        </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.Vector2">
+            <summary>
+            Represents a 2D floating-point vector, used for pivot points and 2D positions.
+            </summary>
+            <remarks>
+            An 8-byte value type (two floats). This is the SDK's own Vector2 — do not confuse
+            with <c>System.Numerics.Vector2</c>, which is not used in this SDK.
+            </remarks>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Vector2.X">
+            <summary>The X component.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Vector2.Y">
+            <summary>The Y component.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Vector2.#ctor(System.Single,System.Single)">
+            <summary>
+            Creates a new 2D vector with the specified components.
+            </summary>
+            <param name="x">The X component.</param>
+            <param name="y">The Y component.</param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Vector2.Equals(BeyondImmersion.Bannou.SpriteTheory.Vector2)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Vector2.Equals(System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Vector2.GetHashCode">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Vector2.op_Equality(BeyondImmersion.Bannou.SpriteTheory.Vector2,BeyondImmersion.Bannou.SpriteTheory.Vector2)">
+            <summary>Equality operator.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Vector2.op_Inequality(BeyondImmersion.Bannou.SpriteTheory.Vector2,BeyondImmersion.Bannou.SpriteTheory.Vector2)">
+            <summary>Inequality operator.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Vector2.ToString">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>

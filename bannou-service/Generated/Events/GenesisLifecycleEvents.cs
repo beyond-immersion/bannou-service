@@ -420,7 +420,7 @@ public partial class EntityCreatedEvent : BaseServiceEvent
     /// Actor ID (populated at EventBrain)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
-    public System.Guid? ActorId { get; set; } = default!;
+    public string? ActorId { get; set; } = default!;
 
     /// <summary>
     /// Character ID (populated at CharacterBrain)
@@ -566,7 +566,7 @@ public partial class EntityUpdatedEvent : BaseServiceEvent
     /// Actor ID (populated at EventBrain)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
-    public System.Guid? ActorId { get; set; } = default!;
+    public string? ActorId { get; set; } = default!;
 
     /// <summary>
     /// Character ID (populated at CharacterBrain)
@@ -720,7 +720,7 @@ public partial class EntityDeletedEvent : BaseServiceEvent
     /// Actor ID (populated at EventBrain)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
-    public System.Guid? ActorId { get; set; } = default!;
+    public string? ActorId { get; set; } = default!;
 
     /// <summary>
     /// Character ID (populated at CharacterBrain)

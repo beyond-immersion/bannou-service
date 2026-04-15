@@ -181,7 +181,7 @@ public partial class GenesisService
 
         if (entity.ActorId != null)
         {
-            try { await _actorClient.StopActorAsync(new StopActorRequest { ActorId = entity.ActorId.Value.ToString() }, cancellationToken); }
+            try { await _actorClient.StopActorAsync(new StopActorRequest { ActorId = entity.ActorId }, cancellationToken); }
             catch (ApiException ex) { _logger.LogWarning(ex, "Failed to stop actor for entity {EntityId}", entity.EntityId); }
         }
 

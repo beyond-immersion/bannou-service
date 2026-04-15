@@ -14,6 +14,8 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+  x-polymorphic-type-properties:
+    - serviceId
   x-event-subscriptions:
     # Game session events for action tracking
     - topic: game-session.action.performed

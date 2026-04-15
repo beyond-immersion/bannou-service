@@ -111,6 +111,72 @@ components:
           nullable: true
           maxLength: 500
           description: Reason for deprecation (null if not deprecated)
+    DeityDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to divine.deity.deleted when a deity is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - deityId
+      - gameServiceId
+      - code
+      - displayName
+      - description
+      - domains
+      - status
+      - followerCount
+      - maxAttentionSlots
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: divine.deity.deleted
+          description: 'Event type identifier: divine.deity.deleted'
+        deityId: *id001
+        gameServiceId: *id002
+        code: *id003
+        displayName: *id004
+        description: *id005
+        domains: *id006
+        status: *id007
+        followerCount: *id008
+        maxAttentionSlots: *id009
+        actorId: *id010
+        seedId: *id011
+        genesisEntityId: *id012
+        currencyWalletId: *id013
+        realmId: *id014
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the deity was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the deity was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this deity is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the deity was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     DeityUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -179,69 +245,3 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    DeityDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to divine.deity.deleted when a deity is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - deityId
-      - gameServiceId
-      - code
-      - displayName
-      - description
-      - domains
-      - status
-      - followerCount
-      - maxAttentionSlots
-      - createdAt
-      - updatedAt
-      - isDeprecated
-      properties:
-        eventName:
-          type: string
-          default: divine.deity.deleted
-          description: 'Event type identifier: divine.deity.deleted'
-        deityId: *id001
-        gameServiceId: *id002
-        code: *id003
-        displayName: *id004
-        description: *id005
-        domains: *id006
-        status: *id007
-        followerCount: *id008
-        maxAttentionSlots: *id009
-        actorId: *id010
-        seedId: *id011
-        genesisEntityId: *id012
-        currencyWalletId: *id013
-        realmId: *id014
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the deity was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the deity was last updated (set to createdAt on creation)
-        isDeprecated:
-          type: boolean
-          description: Whether this deity is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the deity was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")

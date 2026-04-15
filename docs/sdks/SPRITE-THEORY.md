@@ -1,11 +1,11 @@
 # Sprite Theory SDK Deep Dive
 
-> **SDK**: sprite-theory (not yet created)
-> **Location**: `sdks/sprite-theory/` (planned)
+> **SDK**: sprite-theory
+> **Location**: `sdks/sprite-theory/`
 > **Layer**: Theory
 > **Domain**: Sprite
 > **Dependencies**: None (pure .NET BCL only)
-> **Status**: Aspirational — no code exists.
+> **Status**: Implemented — all types and methods from implementation map complete. 77 unit tests passing.
 > **Implementation Map**: [docs/sdks/maps/SPRITE-THEORY.md](maps/SPRITE-THEORY.md)
 > **Planning Document**: [docs/planning/SPRITE-COMPOSER-SDK.md](../planning/SPRITE-COMPOSER-SDK.md)
 > **Consumers**: sprite-composer, sprite-composer-stride, future SpriteBatcher
@@ -469,7 +469,7 @@ No custom binary format. No import capability.
 
 #### Bugs (Fix Immediately)
 
-None — SDK is pre-implementation.
+None known.
 
 #### Intentional Quirks (Documented Behavior)
 
@@ -509,4 +509,22 @@ None — SDK is pre-implementation.
 
 ## Work Tracking
 
-No work items yet — SDK is pre-implementation.
+### Completed
+
+- **2026-04-15**: Full implementation of sprite-theory SDK from implementation map.
+  - 36 source files (1,897 lines) across 7 subsystems: Camera, Animation, Atlas, Mirror, Metadata, NormalMap, Export
+  - 25 public types: 21 records, 4 structs, 3 enums, 2 interfaces
+  - 14 public methods: all methods from implementation map implemented
+  - 77 unit tests (1,477 lines) across 9 test files — all passing
+  - Zero external NuGet dependencies (pure .NET BCL)
+  - Targets net8.0 + net9.0, builds with 0 warnings (TreatWarningsAsErrors enabled)
+  - Key algorithms: MaxRects-BSSF bin-packing (AtlasPacker), Sobel 3×3 normal map generation (DepthToNormal), 7-step orthographic camera setup (OrthographicSetup)
+  - Defenders verification test confirms: TopDown8Dir + SideViewBrawler = 960 captured + 640 mirror = 1,600 total frames per variant
+
+### Pending
+
+- Add projects to `sdks/bannou-sdks.sln` (requires `dotnet sln add` — manual step)
+- Performance profiling against documented targets (< 10ms for 1000-frame atlas pack, < 1ms for normal map generation)
+- `GroupByAnimation` atlas layout hint (MaxRects currently optimizes for efficiency, not visual row grouping)
+- Pivot auto-detection from bounding box (Open Question #1)
+- Consumer SDKs: sprite-composer (engine-agnostic orchestrator), sprite-composer-stride (Stride engine bridge)

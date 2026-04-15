@@ -94,6 +94,64 @@ components:
           nullable: true
           maxLength: 500
           description: Reason for deprecation (null if not deprecated)
+    SpeciesDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to species.deleted when a species is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - speciesId
+      - code
+      - name
+      - isPlayable
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: species.deleted
+          description: 'Event type identifier: species.deleted'
+        speciesId: *id001
+        code: *id002
+        name: *id003
+        description: *id004
+        category: *id005
+        isPlayable: *id006
+        baseLifespan: *id007
+        maturityAge: *id008
+        traitModifiers: *id009
+        realmIds: *id010
+        metadata: *id011
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the species was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the species was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this species is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the species was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     SpeciesUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -154,61 +212,3 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    SpeciesDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to species.deleted when a species is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - speciesId
-      - code
-      - name
-      - isPlayable
-      - createdAt
-      - updatedAt
-      - isDeprecated
-      properties:
-        eventName:
-          type: string
-          default: species.deleted
-          description: 'Event type identifier: species.deleted'
-        speciesId: *id001
-        code: *id002
-        name: *id003
-        description: *id004
-        category: *id005
-        isPlayable: *id006
-        baseLifespan: *id007
-        maturityAge: *id008
-        traitModifiers: *id009
-        realmIds: *id010
-        metadata: *id011
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the species was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the species was last updated (set to createdAt on creation)
-        isDeprecated:
-          type: boolean
-          description: Whether this species is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the species was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")

@@ -75,6 +75,63 @@ components:
           nullable: true
           maxLength: 500
           description: Reason for deprecation (null if not deprecated)
+    ScenarioTemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to scenario-template.deleted when a scenariotemplate is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - scenarioTemplateId
+      - code
+      - displayName
+      - description
+      - category
+      - connectivityMode
+      - status
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: scenario-template.deleted
+          description: 'Event type identifier: scenario-template.deleted'
+        scenarioTemplateId: *id001
+        code: *id002
+        displayName: *id003
+        description: *id004
+        category: *id005
+        connectivityMode: *id006
+        status: *id007
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario template was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this scenario template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the scenario template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     ScenarioTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -134,63 +191,6 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    ScenarioTemplateDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to scenario-template.deleted when a scenariotemplate is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - scenarioTemplateId
-      - code
-      - displayName
-      - description
-      - category
-      - connectivityMode
-      - status
-      - createdAt
-      - updatedAt
-      - isDeprecated
-      properties:
-        eventName:
-          type: string
-          default: scenario-template.deleted
-          description: 'Event type identifier: scenario-template.deleted'
-        scenarioTemplateId: *id001
-        code: *id002
-        displayName: *id003
-        description: *id004
-        category: *id005
-        connectivityMode: *id006
-        status: *id007
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the scenario template was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the scenario template was last updated (set to createdAt on creation)
-        isDeprecated:
-          type: boolean
-          description: Whether this scenario template is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the scenario template was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     ScenarioInstanceCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -259,6 +259,52 @@ components:
           type: string
           format: date-time
           description: Timestamp when the scenario instance was last updated (set to createdAt on creation)
+    ScenarioInstanceDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to scenario-instance.deleted when a scenarioinstance is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - scenarioInstanceId
+      - scenarioTemplateId
+      - gameSessionId
+      - webSocketSessionId
+      - seedId
+      - status
+      - chainDepth
+      - startedAt
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: scenario-instance.deleted
+          description: 'Event type identifier: scenario-instance.deleted'
+        scenarioInstanceId: *id008
+        scenarioTemplateId: *id009
+        gameSessionId: *id010
+        webSocketSessionId: *id011
+        seedId: *id012
+        status: *id013
+        chainDepth: *id014
+        startedAt: *id015
+        completedAt: *id016
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario instance was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario instance was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     ScenarioInstanceUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -307,49 +353,3 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    ScenarioInstanceDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to scenario-instance.deleted when a scenarioinstance is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - scenarioInstanceId
-      - scenarioTemplateId
-      - gameSessionId
-      - webSocketSessionId
-      - seedId
-      - status
-      - chainDepth
-      - startedAt
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: scenario-instance.deleted
-          description: 'Event type identifier: scenario-instance.deleted'
-        scenarioInstanceId: *id008
-        scenarioTemplateId: *id009
-        gameSessionId: *id010
-        webSocketSessionId: *id011
-        seedId: *id012
-        status: *id013
-        chainDepth: *id014
-        startedAt: *id015
-        completedAt: *id016
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the scenario instance was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the scenario instance was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")

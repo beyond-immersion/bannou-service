@@ -65,6 +65,50 @@ components:
           type: string
           format: date-time
           description: Timestamp when the localization category was last updated (set to createdAt on creation)
+    LocalizationCategoryDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to localization.category.deleted when a localizationcategory is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - categoryId
+      - code
+      - description
+      - isSchemaDefinition
+      - validationMode
+      - defaultLanguage
+      - entryCount
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: localization.category.deleted
+          description: 'Event type identifier: localization.category.deleted'
+        categoryId: *id001
+        code: *id002
+        description: *id003
+        isSchemaDefinition: *id004
+        validationMode: *id005
+        defaultLanguage: *id006
+        entryCount: *id007
+        lastEntryUpdateLanguage: *id008
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the localization category was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the localization category was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     LocalizationCategoryUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -111,47 +155,3 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    LocalizationCategoryDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to localization.category.deleted when a localizationcategory is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - categoryId
-      - code
-      - description
-      - isSchemaDefinition
-      - validationMode
-      - defaultLanguage
-      - entryCount
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: localization.category.deleted
-          description: 'Event type identifier: localization.category.deleted'
-        categoryId: *id001
-        code: *id002
-        description: *id003
-        isSchemaDefinition: *id004
-        validationMode: *id005
-        defaultLanguage: *id006
-        entryCount: *id007
-        lastEntryUpdateLanguage: *id008
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the localization category was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the localization category was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")

@@ -562,6 +562,14 @@ generate_lifecycle_event_models() {
         echo -e "${YELLOW}🔄 Post-processing lifecycle events: Converting enum names to PascalCase...${NC}"
         postprocess_enum_pascalcase "$lifecycle_output_file"
 
+        # Post-process: Add [PolymorphicType] for x-polymorphic-type-properties schema annotations
+        # Read annotations from the ORIGINAL events schema (not the generated lifecycle YAML)
+        local original_events_schema="../schemas/${service_name}-service-events.yaml"
+        if [ -f "$original_events_schema" ]; then
+            echo -e "${YELLOW}🔄 Post-processing lifecycle events: Adding [PolymorphicType] attributes...${NC}"
+            python3 "$script_dir/postprocess-polymorphic-type.py" "$original_events_schema" "$lifecycle_output_file"
+        fi
+
         local lifecycle_file_size=$(wc -l < "$lifecycle_output_file" 2>/dev/null || echo "0")
         echo -e "${GREEN}✅ Generated lifecycle event models ($lifecycle_file_size lines)${NC}"
         return 0

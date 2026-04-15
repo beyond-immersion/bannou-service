@@ -45,6 +45,41 @@ components:
           type: string
           format: date-time
           description: Timestamp when the actor template was last updated (set to createdAt on creation)
+    ActorTemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to actor.template.deleted when a actortemplate is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateId
+      - category
+      - behaviorRef
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: actor.template.deleted
+          description: 'Event type identifier: actor.template.deleted'
+        templateId: *id001
+        category: *id002
+        behaviorRef: *id003
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the actor template was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the actor template was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     ActorTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -82,41 +117,6 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    ActorTemplateDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to actor.template.deleted when a actortemplate is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - templateId
-      - category
-      - behaviorRef
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: actor.template.deleted
-          description: 'Event type identifier: actor.template.deleted'
-        templateId: *id001
-        category: *id002
-        behaviorRef: *id003
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the actor template was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the actor template was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     ActorInstanceCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -169,6 +169,45 @@ components:
           type: string
           format: date-time
           description: Timestamp when the actor instance was last updated (set to createdAt on creation)
+    ActorInstanceDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to actor.instance.deleted when a actorinstance is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - actorId
+      - templateId
+      - status
+      - startedAt
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: actor.instance.deleted
+          description: 'Event type identifier: actor.instance.deleted'
+        actorId: *id004
+        templateId: *id005
+        characterId: *id006
+        nodeId: *id007
+        status: *id008
+        startedAt: *id009
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the actor instance was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the actor instance was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     ActorInstanceUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -210,42 +249,3 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    ActorInstanceDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to actor.instance.deleted when a actorinstance is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - actorId
-      - templateId
-      - status
-      - startedAt
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: actor.instance.deleted
-          description: 'Event type identifier: actor.instance.deleted'
-        actorId: *id004
-        templateId: *id005
-        characterId: *id006
-        nodeId: *id007
-        status: *id008
-        startedAt: *id009
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the actor instance was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the actor instance was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")

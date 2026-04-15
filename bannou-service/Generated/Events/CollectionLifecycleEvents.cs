@@ -26,6 +26,21 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Collection;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Events;
 
@@ -140,6 +155,124 @@ public partial class CollectionEntryTemplateCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string? DeprecationReason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published to collection.entry-template.deleted when a collectionentrytemplate is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CollectionEntryTemplateDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: collection.entry-template.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "collection.entry-template.deleted";
+
+    /// <summary>
+    /// Unique entry template identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entryTemplateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EntryTemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique code within collection type and game service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Code { get; set; } = default!;
+
+    /// <summary>
+    /// Type of collection this entry belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("collectionType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CollectionType { get; set; } = default!;
+
+    /// <summary>
+    /// Game service this entry template is scoped to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable display name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// Category within the collection type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("category")]
+    public string? Category { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this entry is hidden until unlocked
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("hideWhenLocked")]
+    public bool HideWhenLocked { get; set; } = default!;
+
+    /// <summary>
+    /// Item template used when granting this entry
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("itemTemplateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ItemTemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the collection entry template was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the collection entry template was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this collection entry template is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the collection entry template was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
 
 }
 
@@ -264,124 +397,6 @@ public partial class CollectionEntryTemplateUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to collection.entry-template.deleted when a collectionentrytemplate is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CollectionEntryTemplateDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: collection.entry-template.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "collection.entry-template.deleted";
-
-    /// <summary>
-    /// Unique entry template identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entryTemplateId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EntryTemplateId { get; set; } = default!;
-
-    /// <summary>
-    /// Unique code within collection type and game service
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Code { get; set; } = default!;
-
-    /// <summary>
-    /// Type of collection this entry belongs to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("collectionType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string CollectionType { get; set; } = default!;
-
-    /// <summary>
-    /// Game service this entry template is scoped to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable display name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string DisplayName { get; set; } = default!;
-
-    /// <summary>
-    /// Category within the collection type
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string? Category { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this entry is hidden until unlocked
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("hideWhenLocked")]
-    public bool HideWhenLocked { get; set; } = default!;
-
-    /// <summary>
-    /// Item template used when granting this entry
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("itemTemplateId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ItemTemplateId { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the collection entry template was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the collection entry template was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this collection entry template is deprecated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
-    public bool IsDeprecated { get; set; } = default!;
-
-    /// <summary>
-    /// When the collection entry template was deprecated (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for deprecation (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? DeprecationReason { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Published to collection.area-content-config.created when a collectionareacontentconfig is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -451,6 +466,85 @@ public partial class CollectionAreaContentConfigCreatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published to collection.area-content-config.deleted when a collectionareacontentconfig is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CollectionAreaContentConfigDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: collection.area-content-config.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "collection.area-content-config.deleted";
+
+    /// <summary>
+    /// Unique area content config identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("areaConfigId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AreaConfigId { get; set; } = default!;
+
+    /// <summary>
+    /// Area code this config applies to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("areaCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AreaCode { get; set; } = default!;
+
+    /// <summary>
+    /// Type of collection this config applies to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("collectionType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CollectionType { get; set; } = default!;
+
+    /// <summary>
+    /// Game service this config is scoped to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Default entry code when no matches found
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("defaultEntryCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string DefaultEntryCode { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the collection area content config was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the collection area content config was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
 
 }
 
@@ -536,85 +630,6 @@ public partial class CollectionAreaContentConfigUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to collection.area-content-config.deleted when a collectionareacontentconfig is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CollectionAreaContentConfigDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: collection.area-content-config.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "collection.area-content-config.deleted";
-
-    /// <summary>
-    /// Unique area content config identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("areaConfigId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AreaConfigId { get; set; } = default!;
-
-    /// <summary>
-    /// Area code this config applies to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("areaCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string AreaCode { get; set; } = default!;
-
-    /// <summary>
-    /// Type of collection this config applies to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("collectionType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string CollectionType { get; set; } = default!;
-
-    /// <summary>
-    /// Game service this config is scoped to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Default entry code when no matches found
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("defaultEntryCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string DefaultEntryCode { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the collection area content config was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the collection area content config was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Single collection creation record within a batch event
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -685,88 +700,6 @@ public partial class CollectionBatchEntry
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Single collection modification record within a batch event
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CollectionBatchModifiedEntry
-{
-
-    /// <summary>
-    /// Unique collection instance identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("collectionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CollectionId { get; set; } = default!;
-
-    /// <summary>
-    /// Entity that owns this collection
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid OwnerId { get; set; } = default!;
-
-    /// <summary>
-    /// Entity type discriminator
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EntityType OwnerType { get; set; } = default!;
-
-    /// <summary>
-    /// Type of collection
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("collectionType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string CollectionType { get; set; } = default!;
-
-    /// <summary>
-    /// Game service this collection is scoped to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Inventory container holding unlocked entry items
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("containerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContainerId { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the collection was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the collection was last updated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// List of field names that were modified
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changedFields")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
 }
 
@@ -872,45 +805,6 @@ public partial class CollectionBatchCreatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<CollectionBatchEntry> Entries { get; set; } = new System.Collections.ObjectModel.Collection<CollectionBatchEntry>();
-
-    /// <summary>
-    /// Number of entries in this batch
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("count")]
-    public int Count { get; set; } = default!;
-
-    /// <summary>
-    /// When the accumulation window started
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("windowStartedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset WindowStartedAt { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Batch event containing accumulated collection modified records
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CollectionBatchModifiedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: collection.batch-modified
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "collection.batch-modified";
-
-    /// <summary>
-    /// Individual modified records in this batch
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entries")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<CollectionBatchModifiedEntry> Entries { get; set; } = new System.Collections.ObjectModel.Collection<CollectionBatchModifiedEntry>();
 
     /// <summary>
     /// Number of entries in this batch

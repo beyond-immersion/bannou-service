@@ -663,10 +663,14 @@ public class StructuralTests
     /// Publisher methods that are intentionally never called. These are narrow,
     /// structurally legitimate exceptions.
     /// </summary>
+    /// <remarks>
+    /// Immutable entities should declare <c>immutable: true</c> in their <c>x-lifecycle</c>
+    /// block. The generator then suppresses the UpdatedEvent / BatchModifiedEvent and the
+    /// corresponding publisher method, removing the need to exempt it here.
+    /// </remarks>
     private static readonly HashSet<string> IntentionallyUncalledPublishers = new(StringComparer.Ordinal)
     {
-        // Immutable instance entities — never updated after creation
-        "PublishLicenseBoardUpdatedAsync",
+        // (none — immutable entities now use x-lifecycle immutable: true, which suppresses the publisher at generation time)
     };
 
     // ⛔ FROZEN — Do not modify without explicit user permission.
@@ -1077,6 +1081,13 @@ public class StructuralTests
                 for (var i = 0; i < lines.Length; i++)
                 {
                     var line = lines[i];
+
+                    // Skip comment-only lines (same pattern as Services_MustNotUseBlockingAsyncPatterns).
+                    // Commented-out code does not execute and cannot produce the runtime typo risk
+                    // that T5's inline-topic rule exists to prevent.
+                    if (line.TrimStart().StartsWith("//", StringComparison.Ordinal))
+                        continue;
+
                     // Match TryPublishAsync(" but NOT TryPublishErrorAsync("
                     // The pattern: TryPublishAsync followed by ( then optional whitespace then "
                     if (line.Contains("TryPublishAsync(\"", StringComparison.Ordinal) &&

@@ -48,6 +48,7 @@ x-lifecycle:
       resource_id_field: templateId
       source_type: myservice
   InstanceEntity:
+    immutable: true   # No update path — UpdatedEvent/BatchModifiedEvent suppressed
     model:
       instanceId: { type: string, format: uuid, primary: true, required: true }
       templateId: { type: string, format: uuid, required: true }
@@ -87,6 +88,7 @@ x-lifecycle:
 | `deprecation` | boolean | No | `false` | When `true`, auto-injects `isDeprecated`, `deprecatedAt`, `deprecationReason` fields |
 | `instanceEntity` | string | Conditional | -- | Required when `deprecation: true` (Category B). Names the x-lifecycle entity representing instances of this template. Must be an x-lifecycle entity in the same events file. |
 | `batch` | boolean | No | `false` | When `true`, generates batch event variants alongside single-entity events |
+| `immutable` | boolean | No | `false` | When `true`, the entity has no update path. The generator suppresses `*UpdatedEvent` (or `*BatchModifiedEvent`/`*BatchModifiedEntry` when combined with `batch: true`) and the corresponding lifecycle interface declaration. The schema MUST NOT list `{entity}.updated` or `{entity}.batch-modified` in `x-event-publications`. |
 | `resource_mapping` | object | No | -- | Enables Puppetmaster watch subscriptions (see Resource Mapping Fields) |
 
 ### Model Field Properties
@@ -300,6 +302,40 @@ The `changedFields` array on updated events lists the property names that change
 
 When `batch: true`, the generator produces additional batch event types (e.g., `AccountBatchCreatedEvent`) containing an array of entities. These are used for bulk operations.
 
+### Immutable Entities
+
+When `immutable: true` is set on an x-lifecycle entity, the entity has no update path — no API endpoint mutates its fields after creation. The generator suppresses the modification event types so that the generated C# code faithfully reflects the entity's actual contract.
+
+**Generator behavior**:
+
+| With… | Generated types | Suppressed types |
+|-------|----------------|------------------|
+| `immutable: true` only | `{Entity}CreatedEvent`, `{Entity}DeletedEvent` | `{Entity}UpdatedEvent` |
+| `immutable: true` + `batch: true` | `{Entity}BatchEntry`, `{Entity}BatchCreatedEvent`, `{Entity}BatchDestroyedEntry`, `{Entity}BatchDestroyedEvent` | `{Entity}BatchModifiedEntry`, `{Entity}BatchModifiedEvent` |
+
+The companion `*LifecycleEvents.Interfaces.cs` file also omits the `ILifecycleUpdatedEvent` declaration for the suppressed type.
+
+**Schema obligations when using `immutable: true`**:
+
+1. The entity MUST NOT list `{entity}.updated` in `x-event-publications` (non-batch case).
+2. The entity MUST NOT list `{entity}.batch-modified` in `x-event-publications` (batch case).
+3. The entity's `x-event-publications` entries still cover `{entity}.created` / `{entity}.deleted` (or the batch equivalents).
+4. The schema description for the entity's section SHOULD call out the immutability — e.g., "Collection instance lifecycle: created, deleted (updated omitted — collections are immutable after creation)".
+
+**When to use**: The entity has no `Update*` / `Modify*` / `Set*` endpoint, no in-place field mutation in service code, and no conceptual "this entity changed" event. Typical candidates:
+- Instance entities created once and later destroyed (collections, license board instances).
+- Records that represent the fact an event happened (receipts, immutable log entries) and are never edited.
+
+**When NOT to use**: Do not set `immutable: true` solely because a specific field subset is immutable — use schema nullability and `ChangeFields` for partial mutability. The flag is for entities whose contract has **no** update endpoint.
+
+**Interaction with other flags**:
+
+| Combination | Effect |
+|-------------|--------|
+| `immutable: true` + `deprecation: true` | Allowed but unusual — Category A/B deprecation both flow through `*.updated` events; if you genuinely need deprecation on an immutable entity, the generator will still emit the `IsDeprecated`/`DeprecatedAt`/`DeprecationReason` fields on `CreatedEvent` and `DeletedEvent` but there is no `UpdatedEvent` to publish deprecation via `changedFields`. This means deprecation cannot be toggled on such entities; they are created deprecated or not at all. Re-evaluate whether deprecation is appropriate. |
+| `immutable: true` + `batch: true` | Standard pattern for high-frequency immutable instance entities (e.g., Collection at NPC scale). Only created / destroyed batch events exist. |
+| `immutable: true` (alone) | Standard pattern for singleton immutable records (e.g., LicenseBoard). Only created / deleted events exist. |
+
 ---
 
 ## Structural Tests
@@ -308,6 +344,8 @@ When `batch: true`, the generator produces additional batch event types (e.g., `
 |-----------|-----------|
 | `LifecycleModels_DoNotContainAutoInjectedDeprecationFields` | No manual `isDeprecated`, `deprecatedAt`, or `deprecationReason` fields exist in `x-lifecycle` model blocks when `deprecation: true` is set |
 | `DeprecatableEntities_MustDeclareInstanceEntity` | Every entity with `deprecation: true` has an `instanceEntity` field naming a valid x-lifecycle entity in the same events file |
+| `BatchLifecycleEntities_HaveBatchEventPublications` | Every entity with `batch: true` declares `batch-created` / `batch-destroyed` publications (and `batch-modified` UNLESS `immutable: true` is also set) |
+| `ImmutableLifecycleEntities_DoNotDeclareUpdatedPublication` | Entities with `immutable: true` must not list `{entity}.updated` or `{entity}.batch-modified` in `x-event-publications` (the generator does not produce those event types) |
 
 ---
 
@@ -367,6 +405,55 @@ x-lifecycle:
 
 **instanceEntity**: `ItemTemplate` declares `instanceEntity: ItemInstance`. The clean-deprecated sweep uses reverse-index instance counts to determine when a deprecated template has zero remaining instances. The structural test `DeprecatableEntities_MustDeclareInstanceEntity` validates that `ItemInstance` is a valid x-lifecycle entity in the same file.
 
+### Example 3: Immutable Instance Entity (LicenseBoard)
+
+**Schema** (`license-service-events.yaml`):
+```yaml
+x-lifecycle:
+  topic_prefix: license
+  LicenseBoardTemplate:
+    deprecation: true
+    instanceEntity: LicenseBoard
+    model:
+      boardTemplateId: { type: string, format: uuid, primary: true, required: true }
+      # ... template-specific fields ...
+  LicenseBoard:
+    immutable: true   # No update endpoint — boards never change after creation
+    model:
+      boardId: { type: string, format: uuid, primary: true, required: true }
+      ownerType: { $ref: 'common-api.yaml#/components/schemas/EntityType', required: true }
+      ownerId: { type: string, format: uuid, required: true }
+      # ... immutable owner/context fields ...
+```
+
+**Generated types**: `LicenseBoardCreatedEvent`, `LicenseBoardDeletedEvent`. No `LicenseBoardUpdatedEvent`.
+
+**x-event-publications** lists only `license.board.created` and `license.board.deleted`.
+
+**Note**: The existence of `immutable: true` means the companion `LicenseLifecycleEvents.Interfaces.cs` emits `ILifecycleCreatedEvent` and `ILifecycleDeletedEvent` declarations for LicenseBoard but no `ILifecycleUpdatedEvent` line — nothing to implement it on.
+
+### Example 4: Immutable + Batch Entity (Collection)
+
+**Schema** (`collection-service-events.yaml`):
+```yaml
+x-lifecycle:
+  topic_prefix: collection
+  CollectionEntryTemplate:
+    deprecation: true
+    instanceEntity: Collection
+    model: { ... }
+  Collection:
+    batch: true
+    immutable: true   # Collections have no update endpoint — only created/destroyed
+    model:
+      collectionId: { type: string, format: uuid, primary: true, required: true }
+      # ... immutable ownership + container fields ...
+```
+
+**Generated types**: `CollectionBatchEntry`, `CollectionBatchCreatedEvent`, `CollectionBatchDestroyedEntry`, `CollectionBatchDestroyedEvent`. No `BatchModifiedEntry` / `BatchModifiedEvent`.
+
+**x-event-publications** lists only `collection.batch-created` and `collection.batch-destroyed`.
+
 ---
 
 ## Edge Cases & Restrictions
@@ -380,6 +467,8 @@ x-lifecycle:
 | Using `topic_prefix: save.load` for hyphenated service `save-load` | Use the full hyphenated name: `topic_prefix: save-load`. The prefix is the service identity. |
 | Omitting `instanceEntity` when `deprecation: true` | Required for Category B deprecation lifecycle; structural test enforces this |
 | `instanceEntity` referencing a non-lifecycle entity | The named entity must be an x-lifecycle entity in the same events file with full CRUD (including deletion capability) |
+| Declaring `{entity}.updated` / `{entity}.batch-modified` in `x-event-publications` when the entity has `immutable: true` | The generator does not produce those event types — declaring the publication would reference a non-existent class. Remove the publication entry. |
+| Setting `immutable: true` on an entity that has an Update/Modify/Set endpoint in its API schema | The flag documents the contract; if an update endpoint exists, the flag is wrong. Either remove the flag or remove the endpoint. |
 | Pattern B topic naming (service name embedded via hyphens in entity) | Forbidden by topic naming convention. Use `topic_prefix` to achieve Pattern C dot-separated namespacing. |
 
 ### Scoping Rules

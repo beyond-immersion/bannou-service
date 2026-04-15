@@ -101,6 +101,7 @@ internal static class SchemaParser
             var modelFields = new List<string>();
             var hasDeprecation = false;
             var isBatch = false;
+            var isImmutable = false;
             string? instanceEntity = null;
 
             // Check deprecation flag
@@ -115,6 +116,13 @@ internal static class SchemaParser
             {
                 isBatch = batchNode is YamlScalarNode batchScalar &&
                         string.Equals(batchScalar.Value, "true", StringComparison.OrdinalIgnoreCase);
+            }
+
+            // Check immutable flag (suppresses UpdatedEvent / BatchModifiedEvent generation)
+            if (entityMapping.Children.TryGetValue(new YamlScalarNode("immutable"), out var immutableNode))
+            {
+                isImmutable = immutableNode is YamlScalarNode immutableScalar &&
+                        string.Equals(immutableScalar.Value, "true", StringComparison.OrdinalIgnoreCase);
             }
 
             // Check instanceEntity (Category B: names the lifecycle entity representing instances)
@@ -135,7 +143,7 @@ internal static class SchemaParser
                 }
             }
 
-            yield return new LifecycleEntity(entityName, modelFields, hasDeprecation, instanceEntity, isBatch);
+            yield return new LifecycleEntity(entityName, modelFields, hasDeprecation, instanceEntity, isBatch, isImmutable);
         }
     }
 
@@ -147,12 +155,14 @@ internal static class SchemaParser
     /// <param name="HasDeprecation">Whether deprecation: true is set</param>
     /// <param name="InstanceEntity">Name of the lifecycle entity representing instances of this template (Category B only)</param>
     /// <param name="IsBatch">Whether batch: true is set (generates batch events instead of individual lifecycle events)</param>
+    /// <param name="IsImmutable">Whether immutable: true is set — the entity has no update path; the generator suppresses UpdatedEvent (or BatchModifiedEvent/Entry when combined with batch: true)</param>
     internal sealed record LifecycleEntity(
         string EntityName,
         List<string> ModelFields,
         bool HasDeprecation,
         string? InstanceEntity,
-        bool IsBatch = false);
+        bool IsBatch = false,
+        bool IsImmutable = false);
 
     /// <summary>
     /// Gets all non-generated API schema YAML files.

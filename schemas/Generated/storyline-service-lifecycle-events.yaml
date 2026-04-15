@@ -81,6 +81,62 @@ components:
           nullable: true
           maxLength: 500
           description: Reason for deprecation (null if not deprecated)
+    ScenarioDefinitionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to storyline.scenario-definition.deleted when a scenariodefinition is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - scenarioId
+      - code
+      - name
+      - priority
+      - enabled
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: storyline.scenario-definition.deleted
+          description: 'Event type identifier: storyline.scenario-definition.deleted'
+        scenarioId: *id001
+        code: *id002
+        name: *id003
+        description: *id004
+        priority: *id005
+        enabled: *id006
+        realmId: *id007
+        gameServiceId: *id008
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this scenario definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the scenario definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     ScenarioDefinitionUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -139,62 +195,6 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    ScenarioDefinitionDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to storyline.scenario-definition.deleted when a scenariodefinition is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - scenarioId
-      - code
-      - name
-      - priority
-      - enabled
-      - createdAt
-      - updatedAt
-      - isDeprecated
-      properties:
-        eventName:
-          type: string
-          default: storyline.scenario-definition.deleted
-          description: 'Event type identifier: storyline.scenario-definition.deleted'
-        scenarioId: *id001
-        code: *id002
-        name: *id003
-        description: *id004
-        priority: *id005
-        enabled: *id006
-        realmId: *id007
-        gameServiceId: *id008
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the scenario definition was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the scenario definition was last updated (set to createdAt on creation)
-        isDeprecated:
-          type: boolean
-          description: Whether this scenario definition is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the scenario definition was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     ScenarioExecutionCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -276,6 +276,55 @@ components:
           type: string
           format: date-time
           description: Timestamp when the scenario execution was last updated (set to createdAt on creation)
+    ScenarioExecutionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to storyline.scenario-execution.deleted when a scenarioexecution is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - executionId
+      - scenarioId
+      - scenarioCode
+      - primaryCharacterId
+      - status
+      - currentPhase
+      - totalPhases
+      - triggeredAt
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: storyline.scenario-execution.deleted
+          description: 'Event type identifier: storyline.scenario-execution.deleted'
+        executionId: *id009
+        scenarioId: *id010
+        scenarioCode: *id011
+        primaryCharacterId: *id012
+        orchestratorId: *id013
+        realmId: *id014
+        gameServiceId: *id015
+        status: *id016
+        currentPhase: *id017
+        totalPhases: *id018
+        triggeredAt: *id019
+        completedAt: *id020
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario execution was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scenario execution was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     ScenarioExecutionUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -327,52 +376,3 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    ScenarioExecutionDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to storyline.scenario-execution.deleted when a scenarioexecution is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - executionId
-      - scenarioId
-      - scenarioCode
-      - primaryCharacterId
-      - status
-      - currentPhase
-      - totalPhases
-      - triggeredAt
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: storyline.scenario-execution.deleted
-          description: 'Event type identifier: storyline.scenario-execution.deleted'
-        executionId: *id009
-        scenarioId: *id010
-        scenarioCode: *id011
-        primaryCharacterId: *id012
-        orchestratorId: *id013
-        realmId: *id014
-        gameServiceId: *id015
-        status: *id016
-        currentPhase: *id017
-        totalPhases: *id018
-        triggeredAt: *id019
-        completedAt: *id020
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the scenario execution was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the scenario execution was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")

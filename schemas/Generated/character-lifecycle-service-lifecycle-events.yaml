@@ -69,6 +69,59 @@ components:
           nullable: true
           maxLength: 500
           description: Reason for deprecation (null if not deprecated)
+    LifecycleTemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to character-lifecycle.lifecycle-template.deleted when a lifecycletemplate is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - speciesCode
+      - gameServiceId
+      - stages
+      - naturalDeathRange
+      - fertilityWindow
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: character-lifecycle.lifecycle-template.deleted
+          description: 'Event type identifier: character-lifecycle.lifecycle-template.deleted'
+        speciesCode: *id001
+        gameServiceId: *id002
+        stages: *id003
+        naturalDeathRange: *id004
+        fertilityWindow: *id005
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the lifecycle template was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the lifecycle template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this lifecycle template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the lifecycle template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     LifecycleTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -124,59 +177,6 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    LifecycleTemplateDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to character-lifecycle.lifecycle-template.deleted when a lifecycletemplate is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - speciesCode
-      - gameServiceId
-      - stages
-      - naturalDeathRange
-      - fertilityWindow
-      - createdAt
-      - updatedAt
-      - isDeprecated
-      properties:
-        eventName:
-          type: string
-          default: character-lifecycle.lifecycle-template.deleted
-          description: 'Event type identifier: character-lifecycle.lifecycle-template.deleted'
-        speciesCode: *id001
-        gameServiceId: *id002
-        stages: *id003
-        naturalDeathRange: *id004
-        fertilityWindow: *id005
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the lifecycle template was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the lifecycle template was last updated (set to createdAt on creation)
-        isDeprecated:
-          type: boolean
-          description: Whether this lifecycle template is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the lifecycle template was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     HeritableTraitTemplateCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -232,6 +232,56 @@ components:
           nullable: true
           maxLength: 500
           description: Reason for deprecation (null if not deprecated)
+    HeritableTraitTemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to character-lifecycle.heritable-trait-template.deleted when a heritabletraittemplate is 
+        deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - speciesCode
+      - gameServiceId
+      - traits
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: character-lifecycle.heritable-trait-template.deleted
+          description: 'Event type identifier: character-lifecycle.heritable-trait-template.deleted'
+        speciesCode: *id006
+        gameServiceId: *id007
+        traits: *id008
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the heritable trait template was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the heritable trait template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this heritable trait template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the heritable trait template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     HeritableTraitTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -284,56 +334,6 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    HeritableTraitTemplateDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to character-lifecycle.heritable-trait-template.deleted when a heritabletraittemplate is 
-        deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - speciesCode
-      - gameServiceId
-      - traits
-      - createdAt
-      - updatedAt
-      - isDeprecated
-      properties:
-        eventName:
-          type: string
-          default: character-lifecycle.heritable-trait-template.deleted
-          description: 'Event type identifier: character-lifecycle.heritable-trait-template.deleted'
-        speciesCode: *id006
-        gameServiceId: *id007
-        traits: *id008
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the heritable trait template was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the heritable trait template was last updated (set to createdAt on creation)
-        isDeprecated:
-          type: boolean
-          description: Whether this heritable trait template is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the heritable trait template was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     HybridTraitTemplateCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -397,6 +397,59 @@ components:
           nullable: true
           maxLength: 500
           description: Reason for deprecation (null if not deprecated)
+    HybridTraitTemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to character-lifecycle.hybrid-trait-template.deleted when a hybridtraittemplate is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - speciesA
+      - speciesB
+      - gameServiceId
+      - traitOverrides
+      - hybridFertilityModifier
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: character-lifecycle.hybrid-trait-template.deleted
+          description: 'Event type identifier: character-lifecycle.hybrid-trait-template.deleted'
+        speciesA: *id009
+        speciesB: *id010
+        gameServiceId: *id011
+        traitOverrides: *id012
+        hybridFertilityModifier: *id013
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the hybrid trait template was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the hybrid trait template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this hybrid trait template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the hybrid trait template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     HybridTraitTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -452,59 +505,6 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    HybridTraitTemplateDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to character-lifecycle.hybrid-trait-template.deleted when a hybridtraittemplate is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - speciesA
-      - speciesB
-      - gameServiceId
-      - traitOverrides
-      - hybridFertilityModifier
-      - createdAt
-      - updatedAt
-      - isDeprecated
-      properties:
-        eventName:
-          type: string
-          default: character-lifecycle.hybrid-trait-template.deleted
-          description: 'Event type identifier: character-lifecycle.hybrid-trait-template.deleted'
-        speciesA: *id009
-        speciesB: *id010
-        gameServiceId: *id011
-        traitOverrides: *id012
-        hybridFertilityModifier: *id013
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the hybrid trait template was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the hybrid trait template was last updated (set to createdAt on creation)
-        isDeprecated:
-          type: boolean
-          description: Whether this hybrid trait template is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the hybrid trait template was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     LifecycleProfileCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -592,6 +592,66 @@ components:
         resource_id_field: characterId
         source_type: character-lifecycle
         is_deletion: false
+    LifecycleProfileDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to character-lifecycle.lifecycle-profile.deleted when a lifecycleprofile is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - characterId
+      - gameServiceId
+      - realmId
+      - speciesCode
+      - birthGameYear
+      - currentAge
+      - currentStage
+      - causeOfCreation
+      - status
+      - childCount
+      - totalChildCount
+      - fertilityModifier
+      - healthModifier
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: character-lifecycle.lifecycle-profile.deleted
+          description: 'Event type identifier: character-lifecycle.lifecycle-profile.deleted'
+        characterId: *id014
+        gameServiceId: *id015
+        realmId: *id016
+        speciesCode: *id017
+        birthGameYear: *id018
+        currentAge: *id019
+        currentStage: *id020
+        causeOfCreation: *id021
+        status: *id022
+        childCount: *id023
+        totalChildCount: *id024
+        fertilityModifier: *id025
+        healthModifier: *id026
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the lifecycle profile was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the lifecycle profile was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-lifecycle
+        is_deletion: true
     LifecycleProfileUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -654,66 +714,6 @@ components:
         resource_id_field: characterId
         source_type: character-lifecycle
         is_deletion: false
-    LifecycleProfileDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to character-lifecycle.lifecycle-profile.deleted when a lifecycleprofile is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - characterId
-      - gameServiceId
-      - realmId
-      - speciesCode
-      - birthGameYear
-      - currentAge
-      - currentStage
-      - causeOfCreation
-      - status
-      - childCount
-      - totalChildCount
-      - fertilityModifier
-      - healthModifier
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: character-lifecycle.lifecycle-profile.deleted
-          description: 'Event type identifier: character-lifecycle.lifecycle-profile.deleted'
-        characterId: *id014
-        gameServiceId: *id015
-        realmId: *id016
-        speciesCode: *id017
-        birthGameYear: *id018
-        currentAge: *id019
-        currentStage: *id020
-        causeOfCreation: *id021
-        status: *id022
-        childCount: *id023
-        totalChildCount: *id024
-        fertilityModifier: *id025
-        healthModifier: *id026
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the lifecycle profile was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the lifecycle profile was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
-      x-resource-mapping:
-        resource_type: character
-        resource_id_field: characterId
-        source_type: character-lifecycle
-        is_deletion: true
     GeneticProfileCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -752,48 +752,6 @@ components:
           type: string
           format: date-time
           description: Timestamp when the genetic profile was last updated (set to createdAt on creation)
-      x-resource-mapping:
-        resource_type: character
-        resource_id_field: characterId
-        source_type: character-lifecycle
-        is_deletion: false
-    GeneticProfileUpdatedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to character-lifecycle.genetic-profile.updated when a geneticprofile is updated
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - characterId
-      - speciesCode
-      - generationDepth
-      - createdAt
-      - updatedAt
-      - changedFields
-      properties:
-        eventName:
-          type: string
-          default: character-lifecycle.genetic-profile.updated
-          description: 'Event type identifier: character-lifecycle.genetic-profile.updated'
-        characterId: *id027
-        speciesCode: *id028
-        generationDepth: *id029
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the genetic profile was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the genetic profile was last updated (set to createdAt on creation)
-        changedFields:
-          type: array
-          items:
-            type: string
-          description: List of field names that were modified
       x-resource-mapping:
         resource_type: character
         resource_id_field: characterId
@@ -839,6 +797,48 @@ components:
         resource_id_field: characterId
         source_type: character-lifecycle
         is_deletion: true
+    GeneticProfileUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to character-lifecycle.genetic-profile.updated when a geneticprofile is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - characterId
+      - speciesCode
+      - generationDepth
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: character-lifecycle.genetic-profile.updated
+          description: 'Event type identifier: character-lifecycle.genetic-profile.updated'
+        characterId: *id027
+        speciesCode: *id028
+        generationDepth: *id029
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the genetic profile was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the genetic profile was last updated (set to createdAt on creation)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-lifecycle
+        is_deletion: false
     BloodlineCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -901,6 +901,51 @@ components:
           type: string
           format: date-time
           description: Timestamp when the bloodline was last updated (set to createdAt on creation)
+    BloodlineDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to character-lifecycle.bloodline.deleted when a bloodline is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - bloodlineId
+      - bloodlineCode
+      - gameServiceId
+      - originCharacterId
+      - originGameYear
+      - traitSignature
+      - memberCount
+      - generationSpan
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: character-lifecycle.bloodline.deleted
+          description: 'Event type identifier: character-lifecycle.bloodline.deleted'
+        bloodlineId: *id030
+        bloodlineCode: *id031
+        gameServiceId: *id032
+        originCharacterId: *id033
+        originGameYear: *id034
+        traitSignature: *id035
+        memberCount: *id036
+        generationSpan: *id037
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the bloodline was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the bloodline was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     BloodlineUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -948,48 +993,3 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    BloodlineDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to character-lifecycle.bloodline.deleted when a bloodline is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - bloodlineId
-      - bloodlineCode
-      - gameServiceId
-      - originCharacterId
-      - originGameYear
-      - traitSignature
-      - memberCount
-      - generationSpan
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: character-lifecycle.bloodline.deleted
-          description: 'Event type identifier: character-lifecycle.bloodline.deleted'
-        bloodlineId: *id030
-        bloodlineCode: *id031
-        gameServiceId: *id032
-        originCharacterId: *id033
-        originGameYear: *id034
-        traitSignature: *id035
-        memberCount: *id036
-        generationSpan: *id037
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the bloodline was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the bloodline was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")

@@ -154,6 +154,10 @@ if [ $? -eq 0 ] && [ -f "$OUTPUT_FILE" ]; then
     echo -e "${YELLOW}🔄 Post-processing: Adding change-tracking to update requests...${NC}"
     python3 "$SCRIPT_DIR/postprocess-change-tracking.py" "$OUTPUT_FILE"
 
+    # Post-process: Add [PolymorphicType] for x-polymorphic-type-properties schema annotations
+    echo -e "${YELLOW}🔄 Post-processing: Adding [PolymorphicType] attributes...${NC}"
+    python3 "$SCRIPT_DIR/postprocess-polymorphic-type.py" "$SCHEMA_FILE" "$OUTPUT_FILE"
+
     FILE_SIZE=$(wc -l < "$OUTPUT_FILE" 2>/dev/null || echo "0")
     echo -e "${GREEN}✅ Generated models ($FILE_SIZE lines)${NC}"
 else

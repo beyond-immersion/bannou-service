@@ -414,7 +414,9 @@ try:
         // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync(\"topic.name\", eventModel, cancellationToken: cancellationToken);
+        // Use generated typed extension methods or *PublishedTopics constants — never inline string literals.
+        // await _messageBus.PublishYourEntityCreatedAsync(eventModel, cancellationToken);
+        // await _messageBus.TryPublishAsync(${SERVICE_PASCAL}PublishedTopics.YourEntityCreated, eventModel, cancellationToken);
     }}
 ''')
                 else:

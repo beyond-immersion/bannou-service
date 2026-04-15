@@ -876,6 +876,13 @@ public class SchemaValidationTests
     /// Validates that batch lifecycle entities have batch event publications
     /// (batch-created, batch-modified, batch-destroyed) and do NOT have individual
     /// lifecycle publications (created, updated, deleted) in x-event-publications.
+    /// <para>
+    /// Entities that also declare <c>immutable: true</c> are exempt from the
+    /// <c>batch-modified</c> requirement — immutable entities have no update path, so
+    /// the generator suppresses the <c>*BatchModifiedEvent</c> type, and the schema
+    /// does not declare the corresponding publication. The <c>batch-created</c> and
+    /// <c>batch-destroyed</c> requirements still apply.
+    /// </para>
     /// </summary>
     [Fact]
     public void BatchLifecycleEntities_HaveBatchEventPublications()
@@ -915,10 +922,18 @@ public class SchemaValidationTests
 
                 if (!hasBatchCreated)
                     violations.Add($"{fileName}.yaml: {entity.EntityName} has batch: true but no batch-created publication");
-                if (!hasBatchModified)
-                    violations.Add($"{fileName}.yaml: {entity.EntityName} has batch: true but no batch-modified publication");
+                // Immutable entities have no update path — generator suppresses BatchModifiedEvent,
+                // so the schema legitimately omits the batch-modified publication.
+                if (!hasBatchModified && !entity.IsImmutable)
+                    violations.Add($"{fileName}.yaml: {entity.EntityName} has batch: true but no batch-modified publication (declare immutable: true if the entity has no update path)");
                 if (!hasBatchDestroyed)
                     violations.Add($"{fileName}.yaml: {entity.EntityName} has batch: true but no batch-destroyed publication");
+
+                // Conversely, an immutable batch entity must NOT declare batch-modified —
+                // the generator doesn't produce the event type, so publishing to it would
+                // reference a non-existent class.
+                if (hasBatchModified && entity.IsImmutable)
+                    violations.Add($"{fileName}.yaml: {entity.EntityName} has immutable: true but still declares batch-modified publication (the generator does not produce BatchModifiedEvent for immutable entities)");
 
                 // Check that individual lifecycle publications do NOT exist
                 // Look for topic patterns like "entity.created" without "batch-" prefix
@@ -948,7 +963,75 @@ public class SchemaValidationTests
             violations.Count == 0,
             $"Found {violations.Count} batch lifecycle violation(s). Entities with batch: true " +
             $"must have batch event publications (batch-created, batch-modified, batch-destroyed) " +
-            $"and must NOT have individual lifecycle publications:\n" +
+            $"and must NOT have individual lifecycle publications. Entities with both batch: true " +
+            $"and immutable: true are exempt from the batch-modified requirement:\n" +
+            string.Join("\n", violations.Select(v => $"  - {v}")));
+    }
+
+    /// <summary>
+    /// Validates that every x-lifecycle entity with <c>immutable: true</c> has no
+    /// corresponding <c>{entity}.updated</c> (individual) or <c>{entity}.batch-modified</c>
+    /// (batch) publication in <c>x-event-publications</c>. The generator suppresses the
+    /// UpdatedEvent/BatchModifiedEvent type for immutable entities, so declaring the
+    /// publication would reference a non-existent class.
+    /// </summary>
+    [Fact]
+    public void ImmutableLifecycleEntities_DoNotDeclareUpdatedPublication()
+    {
+        var violations = new List<string>();
+
+        foreach (var file in SchemaParser.GetEventSchemaFiles())
+        {
+            var fileName = Path.GetFileNameWithoutExtension(file);
+            var entities = SchemaParser.GetLifecycleEntities(file).ToList();
+            var immutableEntities = entities.Where(e => e.IsImmutable).ToList();
+
+            if (immutableEntities.Count == 0)
+                continue;
+
+            var lines = File.ReadAllLines(file);
+
+            foreach (var entity in immutableEntities)
+            {
+                // Convert PascalCase to kebab-case for topic matching
+                var entityKebab = System.Text.RegularExpressions.Regex.Replace(
+                    entity.EntityName, "([a-z0-9])([A-Z])", "$1-$2").ToLowerInvariant();
+                entityKebab = System.Text.RegularExpressions.Regex.Replace(
+                    entityKebab, "([A-Z])([A-Z][a-z])", "$1-$2").ToLowerInvariant();
+
+                if (entity.IsBatch)
+                {
+                    var hasBatchModified = lines.Any(l =>
+                        l.Contains($"{entityKebab}.batch-modified", StringComparison.OrdinalIgnoreCase));
+                    if (hasBatchModified)
+                    {
+                        violations.Add(
+                            $"{fileName}.yaml: {entity.EntityName} has immutable: true + batch: true " +
+                            $"but still declares a batch-modified publication");
+                    }
+                }
+                else
+                {
+                    // Non-batch immutable: ensure no `{entity}.updated` topic is declared
+                    var hasIndividualUpdated = lines.Any(l =>
+                        l.Contains($"topic: ", StringComparison.Ordinal) &&
+                        l.Contains($"{entityKebab}.updated", StringComparison.OrdinalIgnoreCase) &&
+                        !l.Contains("batch-", StringComparison.OrdinalIgnoreCase));
+                    if (hasIndividualUpdated)
+                    {
+                        violations.Add(
+                            $"{fileName}.yaml: {entity.EntityName} has immutable: true " +
+                            $"but still declares an individual .updated publication");
+                    }
+                }
+            }
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            $"Found {violations.Count} immutable lifecycle violation(s). Entities with immutable: true " +
+            $"must not declare updated/batch-modified publications — the generator does not produce " +
+            $"those event types:\n" +
             string.Join("\n", violations.Select(v => $"  - {v}")));
     }
 

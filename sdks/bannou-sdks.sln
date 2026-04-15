@@ -173,6 +173,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "voxel-builder-stride.tests"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeyondImmersion.Bannou.VoxelBuilder.Stride.Tests", "voxel-builder-stride.tests\BeyondImmersion.Bannou.VoxelBuilder.Stride.Tests.csproj", "{BCD87973-134D-46E4-9BAA-2EE90F8E9F9D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sprite-theory", "sprite-theory", "{47736B04-8833-A8C4-703E-ECED4EADC030}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeyondImmersion.Bannou.SpriteTheory", "sprite-theory\BeyondImmersion.Bannou.SpriteTheory.csproj", "{136BCA0C-07F0-4495-AC55-BFB95C0DAB0C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sprite-theory.tests", "sprite-theory.tests", "{DBE1A140-C6B3-699C-7D33-57D93E2D6BF0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeyondImmersion.Bannou.SpriteTheory.Tests", "sprite-theory.tests\BeyondImmersion.Bannou.SpriteTheory.Tests.csproj", "{DCE65469-6E02-449B-B655-328A8F197D80}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -747,6 +755,30 @@ Global
 		{BCD87973-134D-46E4-9BAA-2EE90F8E9F9D}.Release|x64.Build.0 = Release|Any CPU
 		{BCD87973-134D-46E4-9BAA-2EE90F8E9F9D}.Release|x86.ActiveCfg = Release|Any CPU
 		{BCD87973-134D-46E4-9BAA-2EE90F8E9F9D}.Release|x86.Build.0 = Release|Any CPU
+		{136BCA0C-07F0-4495-AC55-BFB95C0DAB0C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{136BCA0C-07F0-4495-AC55-BFB95C0DAB0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{136BCA0C-07F0-4495-AC55-BFB95C0DAB0C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{136BCA0C-07F0-4495-AC55-BFB95C0DAB0C}.Debug|x64.Build.0 = Debug|Any CPU
+		{136BCA0C-07F0-4495-AC55-BFB95C0DAB0C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{136BCA0C-07F0-4495-AC55-BFB95C0DAB0C}.Debug|x86.Build.0 = Debug|Any CPU
+		{136BCA0C-07F0-4495-AC55-BFB95C0DAB0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{136BCA0C-07F0-4495-AC55-BFB95C0DAB0C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{136BCA0C-07F0-4495-AC55-BFB95C0DAB0C}.Release|x64.ActiveCfg = Release|Any CPU
+		{136BCA0C-07F0-4495-AC55-BFB95C0DAB0C}.Release|x64.Build.0 = Release|Any CPU
+		{136BCA0C-07F0-4495-AC55-BFB95C0DAB0C}.Release|x86.ActiveCfg = Release|Any CPU
+		{136BCA0C-07F0-4495-AC55-BFB95C0DAB0C}.Release|x86.Build.0 = Release|Any CPU
+		{DCE65469-6E02-449B-B655-328A8F197D80}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCE65469-6E02-449B-B655-328A8F197D80}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCE65469-6E02-449B-B655-328A8F197D80}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DCE65469-6E02-449B-B655-328A8F197D80}.Debug|x64.Build.0 = Debug|Any CPU
+		{DCE65469-6E02-449B-B655-328A8F197D80}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DCE65469-6E02-449B-B655-328A8F197D80}.Debug|x86.Build.0 = Debug|Any CPU
+		{DCE65469-6E02-449B-B655-328A8F197D80}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCE65469-6E02-449B-B655-328A8F197D80}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCE65469-6E02-449B-B655-328A8F197D80}.Release|x64.ActiveCfg = Release|Any CPU
+		{DCE65469-6E02-449B-B655-328A8F197D80}.Release|x64.Build.0 = Release|Any CPU
+		{DCE65469-6E02-449B-B655-328A8F197D80}.Release|x86.ActiveCfg = Release|Any CPU
+		{DCE65469-6E02-449B-B655-328A8F197D80}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -823,5 +855,7 @@ Global
 		{A2723269-012B-4A17-B8DC-B48C3D1ED133} = {DE73145E-392C-87BE-4332-7BD210447191}
 		{6832781A-9E9D-4CF6-93D5-187A96C9A365} = {0245FBBC-4DF5-11CE-E885-BBE983711570}
 		{BCD87973-134D-46E4-9BAA-2EE90F8E9F9D} = {8AF71CE6-898C-3A08-3D85-6CB158775DDD}
+		{136BCA0C-07F0-4495-AC55-BFB95C0DAB0C} = {47736B04-8833-A8C4-703E-ECED4EADC030}
+		{DCE65469-6E02-449B-B655-328A8F197D80} = {DBE1A140-C6B3-699C-7D33-57D93E2D6BF0}
 	EndGlobalSection
 EndGlobal

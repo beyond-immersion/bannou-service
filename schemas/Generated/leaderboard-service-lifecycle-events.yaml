@@ -75,6 +75,63 @@ components:
           nullable: true
           maxLength: 500
           description: Reason for deprecation (null if not deprecated)
+    LeaderboardDefinitionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to leaderboard.definition.deleted when a leaderboarddefinition is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - gameServiceId
+      - leaderboardId
+      - displayName
+      - sortOrder
+      - updateMode
+      - isSeasonal
+      - isPublic
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: leaderboard.definition.deleted
+          description: 'Event type identifier: leaderboard.definition.deleted'
+        gameServiceId: *id001
+        leaderboardId: *id002
+        displayName: *id003
+        sortOrder: *id004
+        updateMode: *id005
+        isSeasonal: *id006
+        isPublic: *id007
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard definition was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard definition was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this leaderboard definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the leaderboard definition was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     LeaderboardDefinitionUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -134,63 +191,6 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    LeaderboardDefinitionDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to leaderboard.definition.deleted when a leaderboarddefinition is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - gameServiceId
-      - leaderboardId
-      - displayName
-      - sortOrder
-      - updateMode
-      - isSeasonal
-      - isPublic
-      - createdAt
-      - updatedAt
-      - isDeprecated
-      properties:
-        eventName:
-          type: string
-          default: leaderboard.definition.deleted
-          description: 'Event type identifier: leaderboard.definition.deleted'
-        gameServiceId: *id001
-        leaderboardId: *id002
-        displayName: *id003
-        sortOrder: *id004
-        updateMode: *id005
-        isSeasonal: *id006
-        isPublic: *id007
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the leaderboard definition was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the leaderboard definition was last updated (set to createdAt on creation)
-        isDeprecated:
-          type: boolean
-          description: Whether this leaderboard definition is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the leaderboard definition was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     LeaderboardEntryCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -248,6 +248,48 @@ components:
           type: string
           format: date-time
           description: Timestamp when the leaderboard entry was last updated (set to createdAt on creation)
+    LeaderboardEntryDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to leaderboard.entry.deleted when a leaderboardentry is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entryId
+      - gameServiceId
+      - leaderboardId
+      - entityId
+      - entityType
+      - score
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: leaderboard.entry.deleted
+          description: 'Event type identifier: leaderboard.entry.deleted'
+        entryId: *id008
+        gameServiceId: *id009
+        leaderboardId: *id010
+        entityId: *id011
+        entityType: *id012
+        score: *id013
+        seasonNumber: *id014
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard entry was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the leaderboard entry was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     LeaderboardEntryUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -292,45 +334,3 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    LeaderboardEntryDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to leaderboard.entry.deleted when a leaderboardentry is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - entryId
-      - gameServiceId
-      - leaderboardId
-      - entityId
-      - entityType
-      - score
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: leaderboard.entry.deleted
-          description: 'Event type identifier: leaderboard.entry.deleted'
-        entryId: *id008
-        gameServiceId: *id009
-        leaderboardId: *id010
-        entityId: *id011
-        entityType: *id012
-        score: *id013
-        seasonNumber: *id014
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the leaderboard entry was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the leaderboard entry was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")

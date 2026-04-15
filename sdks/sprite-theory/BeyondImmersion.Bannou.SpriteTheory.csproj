@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- SDK Naming: PackageId, RootNamespace, AssemblyName must match -->
+    <PackageId>BeyondImmersion.Bannou.SpriteTheory</PackageId>
+    <RootNamespace>BeyondImmersion.Bannou.SpriteTheory</RootNamespace>
+    <AssemblyName>BeyondImmersion.Bannou.SpriteTheory</AssemblyName>
+
+    <!-- SDK Version: CI overrides with -p:Version=x.y.z or -p:VersionSuffix=preview.123 -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+
+    <!-- NuGet Package Metadata -->
+    <Authors>BeyondImmersion</Authors>
+    <Description>Pure computation sprite theory library for 3D-to-2D sprite sheet generation. Provides camera projection, atlas packing (MaxRects-BSSF), animation frame sampling, mirror optimization, depth-to-normal map conversion (Sobel), and sprite sheet JSON metadata - all without engine dependencies.</Description>
+    <PackageTags>bannou;sprite;atlas;packing;normal-map;gamedev</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/beyond-immersion/bannou-service</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/beyond-immersion/bannou-service</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <!-- Documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BeyondImmersion.Bannou.SpriteTheory.Tests" />
+    <InternalsVisibleTo Include="BeyondImmersion.Bannou.SpriteComposer" />
+    <InternalsVisibleTo Include="BeyondImmersion.Bannou.SpriteComposer.Tests" />
+  </ItemGroup>
+
+  <!-- No external NuGet dependencies — pure .NET BCL only -->
+
+</Project>

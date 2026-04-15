@@ -83,7 +83,7 @@ public partial class GenesisEntityPhaseChangedEvent : BaseServiceEvent
     /// Actor ID if spawned during this transition (EventBrain)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
-    public System.Guid? ActorId { get; set; } = default!;
+    public string? ActorId { get; set; } = default!;
 
     /// <summary>
     /// Character ID if created during this transition (CharacterBrain)

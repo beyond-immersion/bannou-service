@@ -336,19 +336,8 @@ public class GenesisSeedEvolutionListener : ISeedEvolutionListener
             return;
         }
 
-        // The actor API treats actorId as a string; Genesis stores it as a Guid (matches entity ID)
-        if (!Guid.TryParse(spawnResponse.ActorId, out var actorGuid))
-        {
-            _logger.LogError(
-                "Actor spawn returned non-Guid actorId {ActorId} for entity {EntityId}",
-                spawnResponse.ActorId, entity.EntityId);
-            await PublishTransitionFailedAsync(entity, newPhase, CognitiveStage.EventBrain,
-                $"Actor returned non-Guid actorId: {spawnResponse.ActorId}", ct);
-            return;
-        }
-
         // Update entity and persist
-        entity.ActorId = actorGuid;
+        entity.ActorId = spawnResponse.ActorId;
         entity.CognitiveStage = CognitiveStage.EventBrain;
         entity.CurrentPhase = newPhase;
         entity.UpdatedAt = DateTimeOffset.UtcNow;
@@ -370,7 +359,7 @@ public class GenesisSeedEvolutionListener : ISeedEvolutionListener
 
         _logger.LogInformation(
             "Entity {EntityId} transitioned to EventBrain (phase {Phase}, actor {ActorId})",
-            entity.EntityId, newPhase, actorGuid);
+            entity.EntityId, newPhase, entity.ActorId);
     }
 
     /// <summary>
@@ -478,7 +467,7 @@ public class GenesisSeedEvolutionListener : ISeedEvolutionListener
             await _actorClient.BindActorCharacterAsync(
                 new BindActorCharacterRequest
                 {
-                    ActorId = entity.ActorId.Value.ToString(),
+                    ActorId = entity.ActorId,
                     CharacterId = character.CharacterId,
                 }, ct);
         }

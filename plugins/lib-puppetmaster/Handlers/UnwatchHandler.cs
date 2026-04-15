@@ -91,7 +91,7 @@ public sealed class UnwatchHandler : IActionHandler
                     "unwatch: This action can only be executed within an actor context");
             }
 
-            var actorId = context.ActorId.Value;
+            var actorId = context.ActorId.Value.ToString();
 
             // 3. Remove watch from registry
             var removed = _registry.RemoveWatch(actorId, unwatchAction.ResourceType, resourceId);

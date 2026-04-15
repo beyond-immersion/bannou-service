@@ -78,6 +78,7 @@ x-lifecycle:
     sensitive: []
 
   LicenseBoard:
+    immutable: true   # No update endpoint — only created and deleted events are generated
     model:
       boardId: { type: string, format: uuid, primary: true, required: true, description: "Unique board instance identifier" }
       ownerType: { $ref: 'common-api.yaml#/components/schemas/EntityType', required: true, description: "Type of entity that owns this board" }

@@ -22,5 +22,4 @@ public partial class CollectionAreaContentConfigUpdatedEvent : ILifecycleUpdated
 public partial class CollectionAreaContentConfigDeletedEvent : ILifecycleDeletedEvent { }
 
 public partial class CollectionBatchEntry : ILifecycleCreatedEvent { }
-public partial class CollectionBatchModifiedEntry : ILifecycleUpdatedEvent { }
 public partial class CollectionBatchDestroyedEntry : ILifecycleDeletedEvent { }

@@ -189,6 +189,8 @@ for EVENTS_SCHEMA in ../schemas/*-service-events.yaml; do
         postprocess_enum_suppressions "$OUTPUT_FILE"
         # Post-process: Add XML docs to AdditionalProperties
         postprocess_additional_properties_docs "$OUTPUT_FILE"
+        # Post-process: Add [PolymorphicType] for x-polymorphic-type-properties schema annotations
+        python3 "$SCRIPT_DIR/postprocess-polymorphic-type.py" "$EVENTS_SCHEMA" "$OUTPUT_FILE"
         echo -e "${GREEN}  Generated: $OUTPUT_FILE${NC}"
         GENERATED_COUNT=$((GENERATED_COUNT + 1))
     else

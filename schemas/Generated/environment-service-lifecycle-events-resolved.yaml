@@ -106,6 +106,72 @@ components:
           nullable: true
           maxLength: 500
           description: Reason for deprecation (null if not deprecated)
+    ClimateTemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to environment.climate-template.deleted when a climatetemplate is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateId
+      - gameServiceId
+      - biomeCode
+      - displayName
+      - temperatureCurves
+      - weatherDistributions
+      - atmosphericBaselines
+      - resourceAvailability
+      - altitudeTemperatureRate
+      - depthTemperatureRate
+      - heatThreshold
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: environment.climate-template.deleted
+          description: 'Event type identifier: environment.climate-template.deleted'
+        templateId: *id001
+        gameServiceId: *id002
+        biomeCode: *id003
+        displayName: *id004
+        description: *id005
+        temperatureCurves: *id006
+        weatherDistributions: *id007
+        atmosphericBaselines: *id008
+        resourceAvailability: *id009
+        altitudeTemperatureRate: *id010
+        depthTemperatureRate: *id011
+        heatThreshold: *id012
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the climate template was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the climate template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this climate template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the climate template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     ClimateTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -174,72 +240,6 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    ClimateTemplateDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to environment.climate-template.deleted when a climatetemplate is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - templateId
-      - gameServiceId
-      - biomeCode
-      - displayName
-      - temperatureCurves
-      - weatherDistributions
-      - atmosphericBaselines
-      - resourceAvailability
-      - altitudeTemperatureRate
-      - depthTemperatureRate
-      - heatThreshold
-      - createdAt
-      - updatedAt
-      - isDeprecated
-      properties:
-        eventName:
-          type: string
-          default: environment.climate-template.deleted
-          description: 'Event type identifier: environment.climate-template.deleted'
-        templateId: *id001
-        gameServiceId: *id002
-        biomeCode: *id003
-        displayName: *id004
-        description: *id005
-        temperatureCurves: *id006
-        weatherDistributions: *id007
-        atmosphericBaselines: *id008
-        resourceAvailability: *id009
-        altitudeTemperatureRate: *id010
-        depthTemperatureRate: *id011
-        heatThreshold: *id012
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the climate template was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the climate template was last updated (set to createdAt on creation)
-        isDeprecated:
-          type: boolean
-          description: Whether this climate template is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the climate template was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     PrecipitationType:
       type: string
       description: Form of precipitation. Temperature crossover rules apply (Rain below 0C becomes Snow, Snow above 5C 

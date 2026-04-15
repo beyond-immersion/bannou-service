@@ -81,6 +81,64 @@ components:
           nullable: true
           maxLength: 500
           description: Reason for deprecation (null if not deprecated)
+    CollectionEntryTemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to collection.entry-template.deleted when a collectionentrytemplate is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - entryTemplateId
+      - code
+      - collectionType
+      - gameServiceId
+      - displayName
+      - hideWhenLocked
+      - itemTemplateId
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: collection.entry-template.deleted
+          description: 'Event type identifier: collection.entry-template.deleted'
+        entryTemplateId: *id001
+        code: *id002
+        collectionType: *id003
+        gameServiceId: *id004
+        displayName: *id005
+        category: *id006
+        hideWhenLocked: *id007
+        itemTemplateId: *id008
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the collection entry template was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the collection entry template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this collection entry template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the collection entry template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     CollectionEntryTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -141,64 +199,6 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    CollectionEntryTemplateDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to collection.entry-template.deleted when a collectionentrytemplate is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - entryTemplateId
-      - code
-      - collectionType
-      - gameServiceId
-      - displayName
-      - hideWhenLocked
-      - itemTemplateId
-      - createdAt
-      - updatedAt
-      - isDeprecated
-      properties:
-        eventName:
-          type: string
-          default: collection.entry-template.deleted
-          description: 'Event type identifier: collection.entry-template.deleted'
-        entryTemplateId: *id001
-        code: *id002
-        collectionType: *id003
-        gameServiceId: *id004
-        displayName: *id005
-        category: *id006
-        hideWhenLocked: *id007
-        itemTemplateId: *id008
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the collection entry template was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the collection entry template was last updated (set to createdAt on creation)
-        isDeprecated:
-          type: boolean
-          description: Whether this collection entry template is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the collection entry template was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     CollectionAreaContentConfigCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -246,6 +246,45 @@ components:
           type: string
           format: date-time
           description: Timestamp when the collection area content config was last updated (set to createdAt on creation)
+    CollectionAreaContentConfigDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to collection.area-content-config.deleted when a collectionareacontentconfig is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - areaConfigId
+      - areaCode
+      - collectionType
+      - gameServiceId
+      - defaultEntryCode
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: collection.area-content-config.deleted
+          description: 'Event type identifier: collection.area-content-config.deleted'
+        areaConfigId: *id009
+        areaCode: *id010
+        collectionType: *id011
+        gameServiceId: *id012
+        defaultEntryCode: *id013
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the collection area content config was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the collection area content config was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     CollectionAreaContentConfigUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -287,50 +326,11 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    CollectionAreaContentConfigDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to collection.area-content-config.deleted when a collectionareacontentconfig is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - areaConfigId
-      - areaCode
-      - collectionType
-      - gameServiceId
-      - defaultEntryCode
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: collection.area-content-config.deleted
-          description: 'Event type identifier: collection.area-content-config.deleted'
-        areaConfigId: *id009
-        areaCode: *id010
-        collectionType: *id011
-        gameServiceId: *id012
-        defaultEntryCode: *id013
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the collection area content config was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the collection area content config was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     CollectionBatchEntry:
       type: object
       description: Single collection creation record within a batch event
       additionalProperties: false
-      required: &id022
+      required: &id014
       - collectionId
       - ownerId
       - ownerType
@@ -340,78 +340,50 @@ components:
       - createdAt
       - updatedAt
       properties:
-        collectionId: &id014
+        collectionId: &id015
           type: string
           format: uuid
           description: "Unique collection instance identifier"
-        ownerId: &id015
+        ownerId: &id016
           type: string
           format: uuid
           description: "Entity that owns this collection"
-        ownerType: &id016
+        ownerType: &id017
           $ref: ../common-api.yaml#/components/schemas/EntityType
           description: "Entity type discriminator"
-        collectionType: &id017
+        collectionType: &id018
           $ref: ../collection-api.yaml#/components/schemas/CollectionType
           description: "Type of collection"
-        gameServiceId: &id018
+        gameServiceId: &id019
           type: string
           format: uuid
           description: "Game service this collection is scoped to"
-        containerId: &id019
+        containerId: &id020
           type: string
           format: uuid
           description: "Inventory container holding unlocked entry items"
-        createdAt: &id020
+        createdAt: &id021
           type: string
           format: date-time
           description: Timestamp when the collection was created
-        updatedAt: &id021
+        updatedAt: &id022
           type: string
           format: date-time
           description: Timestamp when the collection was last updated
-    CollectionBatchModifiedEntry:
-      type: object
-      description: Single collection modification record within a batch event
-      additionalProperties: false
-      required:
-      - collectionId
-      - ownerId
-      - ownerType
-      - collectionType
-      - gameServiceId
-      - containerId
-      - createdAt
-      - updatedAt
-      - changedFields
-      properties:
-        collectionId: *id014
-        ownerId: *id015
-        ownerType: *id016
-        collectionType: *id017
-        gameServiceId: *id018
-        containerId: *id019
-        createdAt: *id020
-        updatedAt: *id021
-        changedFields:
-          type: array
-          items:
-            type: string
-          description: List of field names that were modified
     CollectionBatchDestroyedEntry:
       type: object
       description: Single collection destruction record within a batch event
       additionalProperties: false
-      required: *id022
+      required: *id014
       properties:
-        collectionId: *id014
-        ownerId: *id015
-        ownerType: *id016
-        collectionType: *id017
-        gameServiceId: *id018
-        containerId: *id019
-        createdAt: *id020
-        updatedAt: *id021
+        collectionId: *id015
+        ownerId: *id016
+        ownerType: *id017
+        collectionType: *id018
+        gameServiceId: *id019
+        containerId: *id020
+        createdAt: *id021
+        updatedAt: *id022
         deletedReason:
           type: string
           nullable: true
@@ -439,36 +411,6 @@ components:
           items:
             $ref: '#/components/schemas/CollectionBatchEntry'
           description: Individual created records in this batch
-        count:
-          type: integer
-          description: Number of entries in this batch
-        windowStartedAt:
-          type: string
-          format: date-time
-          description: When the accumulation window started
-    CollectionBatchModifiedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Batch event containing accumulated collection modified records
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - entries
-      - count
-      - windowStartedAt
-      properties:
-        eventName:
-          type: string
-          default: collection.batch-modified
-          description: 'Event type identifier: collection.batch-modified'
-        entries:
-          type: array
-          items:
-            $ref: '#/components/schemas/CollectionBatchModifiedEntry'
-          description: Individual modified records in this batch
         count:
           type: integer
           description: Number of entries in this batch

@@ -1634,36 +1634,36 @@ paths:
         \         \"description\": \"Current growth phase name\"\n                },\n                \"cognitiveStage\":
         {\n                    \"$ref\": \"#/$defs/CognitiveStage\",\n                    \"description\": \"Current cognitive
         progression stage\"\n                },\n                \"actorId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Actor ID (populated at EventBrain stage, null when Dormant)\"\n                },\n                \"characterId\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Actor ID (populated at EventBrain
+        stage, null when Dormant)\"\n                },\n                \"characterId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Character ID (populated at CharacterBrain stage, null when Dormant or EventBrain)\"\n  \
+        \              },\n                \"physicalFormType\": {\n                    \"$ref\": \"#/$defs/PhysicalFormType\"\
+        ,\n                    \"description\": \"Type of physical form bound to this entity\"\n                },\n     \
+        \           \"physicalFormId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"ID of the bound physical form (null
+        when PhysicalFormType is None or not yet bound)\"\n                },\n                \"bondTargetEntityType\": {\n\
+        \                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Type of the bonded target entity (null when no bond)\"\n                },\n                \"bondTargetEntityId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Character ID (populated at CharacterBrain stage, null when
-        Dormant or EventBrain)\"\n                },\n                \"physicalFormType\": {\n                    \"$ref\"\
-        : \"#/$defs/PhysicalFormType\",\n                    \"description\": \"Type of physical form bound to this entity\"\
-        \n                },\n                \"physicalFormId\": {\n                    \"type\": \"string\",\n         \
-        \           \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        ID of the bound physical form (null when PhysicalFormType is None or not yet bound)\"\n                },\n      \
-        \          \"bondTargetEntityType\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Type of the bonded target entity (null when no bond)\"\n         \
-        \       },\n                \"bondTargetEntityId\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"ID of
-        the bonded target entity (null when no bond)\"\n                },\n                \"bondId\": {\n              \
-        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Relationship ID for the materialized bond (null until CharacterBrain awakening)\"\
-        \n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/GenesisEntityStatus\"\
-        ,\n                    \"description\": \"Operational status\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When the entity was created\"\n                },\n                \"updatedAt\": {\n     \
-        \               \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the entity was last updated\"\n                }\n            }\n        },\n        \"CognitiveStage\":
-        {\n            \"type\": \"string\",\n            \"description\": \"Cognitive progression stage of a genesis entity\"\
-        ,\n            \"enum\": [\n                \"Dormant\",\n                \"EventBrain\",\n                \"CharacterBrain\"\
-        \n            ]\n        },\n        \"PhysicalFormType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of physical form a genesis entity can be bound to\",\n            \"enum\": [\n                \"Item\",\n\
-        \                \"Location\",\n                \"None\"\n            ]\n        },\n        \"GenesisEntityStatus\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Operational status of a genesis entity\",\n\
-        \            \"enum\": [\n                \"Active\",\n                \"Dormant\",\n                \"Archived\"\n\
-        \            ]\n        }\n    }\n}"
+        nullable\": true,\n                    \"description\": \"ID of the bonded target entity (null when no bond)\"\n \
+        \               },\n                \"bondId\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Relationship
+        ID for the materialized bond (null until CharacterBrain awakening)\"\n                },\n                \"status\"\
+        : {\n                    \"$ref\": \"#/$defs/GenesisEntityStatus\",\n                    \"description\": \"Operational
+        status\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"date-time\",\n                    \"description\": \"When the entity was created\"\n\
+        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"When the entity was last updated\"\n    \
+        \            }\n            }\n        },\n        \"CognitiveStage\": {\n            \"type\": \"string\",\n    \
+        \        \"description\": \"Cognitive progression stage of a genesis entity\",\n            \"enum\": [\n        \
+        \        \"Dormant\",\n                \"EventBrain\",\n                \"CharacterBrain\"\n            ]\n      \
+        \  },\n        \"PhysicalFormType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of
+        physical form a genesis entity can be bound to\",\n            \"enum\": [\n                \"Item\",\n          \
+        \      \"Location\",\n                \"None\"\n            ]\n        },\n        \"GenesisEntityStatus\": {\n  \
+        \          \"type\": \"string\",\n            \"description\": \"Operational status of a genesis entity\",\n     \
+        \       \"enum\": [\n                \"Active\",\n                \"Dormant\",\n                \"Archived\"\n   \
+        \         ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a genesis entity from a template\",\n    \"description\": \"Provisions
         a complete genesis entity from a template definition: creates seed,\\ncurrency wallets, inventories, and resource
         registrations. The entity starts\\nat the Dormant cognitive stage and progresses automatically as currency accumulates.\\\
@@ -1733,36 +1733,36 @@ paths:
         \         \"description\": \"Current growth phase name\"\n                },\n                \"cognitiveStage\":
         {\n                    \"$ref\": \"#/$defs/CognitiveStage\",\n                    \"description\": \"Current cognitive
         progression stage\"\n                },\n                \"actorId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Actor ID (populated at EventBrain stage, null when Dormant)\"\n                },\n                \"characterId\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Actor ID (populated at EventBrain
+        stage, null when Dormant)\"\n                },\n                \"characterId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Character ID (populated at CharacterBrain stage, null when Dormant or EventBrain)\"\n  \
+        \              },\n                \"physicalFormType\": {\n                    \"$ref\": \"#/$defs/PhysicalFormType\"\
+        ,\n                    \"description\": \"Type of physical form bound to this entity\"\n                },\n     \
+        \           \"physicalFormId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"ID of the bound physical form (null
+        when PhysicalFormType is None or not yet bound)\"\n                },\n                \"bondTargetEntityType\": {\n\
+        \                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Type of the bonded target entity (null when no bond)\"\n                },\n                \"bondTargetEntityId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Character ID (populated at CharacterBrain stage, null when
-        Dormant or EventBrain)\"\n                },\n                \"physicalFormType\": {\n                    \"$ref\"\
-        : \"#/$defs/PhysicalFormType\",\n                    \"description\": \"Type of physical form bound to this entity\"\
-        \n                },\n                \"physicalFormId\": {\n                    \"type\": \"string\",\n         \
-        \           \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        ID of the bound physical form (null when PhysicalFormType is None or not yet bound)\"\n                },\n      \
-        \          \"bondTargetEntityType\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Type of the bonded target entity (null when no bond)\"\n         \
-        \       },\n                \"bondTargetEntityId\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"ID of
-        the bonded target entity (null when no bond)\"\n                },\n                \"bondId\": {\n              \
-        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Relationship ID for the materialized bond (null until CharacterBrain awakening)\"\
-        \n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/GenesisEntityStatus\"\
-        ,\n                    \"description\": \"Operational status\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When the entity was created\"\n                },\n                \"updatedAt\": {\n     \
-        \               \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the entity was last updated\"\n                }\n            }\n        },\n        \"CognitiveStage\":
-        {\n            \"type\": \"string\",\n            \"description\": \"Cognitive progression stage of a genesis entity\"\
-        ,\n            \"enum\": [\n                \"Dormant\",\n                \"EventBrain\",\n                \"CharacterBrain\"\
-        \n            ]\n        },\n        \"PhysicalFormType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of physical form a genesis entity can be bound to\",\n            \"enum\": [\n                \"Item\",\n\
-        \                \"Location\",\n                \"None\"\n            ]\n        },\n        \"GenesisEntityStatus\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Operational status of a genesis entity\",\n\
-        \            \"enum\": [\n                \"Active\",\n                \"Dormant\",\n                \"Archived\"\n\
-        \            ]\n        }\n    }\n}"
+        nullable\": true,\n                    \"description\": \"ID of the bonded target entity (null when no bond)\"\n \
+        \               },\n                \"bondId\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Relationship
+        ID for the materialized bond (null until CharacterBrain awakening)\"\n                },\n                \"status\"\
+        : {\n                    \"$ref\": \"#/$defs/GenesisEntityStatus\",\n                    \"description\": \"Operational
+        status\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"date-time\",\n                    \"description\": \"When the entity was created\"\n\
+        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"When the entity was last updated\"\n    \
+        \            }\n            }\n        },\n        \"CognitiveStage\": {\n            \"type\": \"string\",\n    \
+        \        \"description\": \"Cognitive progression stage of a genesis entity\",\n            \"enum\": [\n        \
+        \        \"Dormant\",\n                \"EventBrain\",\n                \"CharacterBrain\"\n            ]\n      \
+        \  },\n        \"PhysicalFormType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of
+        physical form a genesis entity can be bound to\",\n            \"enum\": [\n                \"Item\",\n          \
+        \      \"Location\",\n                \"None\"\n            ]\n        },\n        \"GenesisEntityStatus\": {\n  \
+        \          \"type\": \"string\",\n            \"description\": \"Operational status of a genesis entity\",\n     \
+        \       \"enum\": [\n                \"Active\",\n                \"Dormant\",\n                \"Archived\"\n   \
+        \         ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a genesis entity by ID\",\n    \"description\": \"Retrieves entity
         state with optional wallet balance inclusion via read-through cache.\",\n    \"tags\": [\n        \"Genesis Entities\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getEntity\"\n}"
@@ -1853,36 +1853,36 @@ paths:
         \               \"type\": \"string\",\n                    \"description\": \"Current growth phase name\"\n      \
         \          },\n                \"cognitiveStage\": {\n                    \"$ref\": \"#/$defs/CognitiveStage\",\n\
         \                    \"description\": \"Current cognitive progression stage\"\n                },\n              \
-        \  \"actorId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n        \
-        \            \"nullable\": true,\n                    \"description\": \"Actor ID (populated at EventBrain stage,
-        null when Dormant)\"\n                },\n                \"characterId\": {\n                    \"type\": \"string\"\
+        \  \"actorId\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n          \
+        \          \"description\": \"Actor ID (populated at EventBrain stage, null when Dormant)\"\n                },\n\
+        \                \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Character ID (populated at
+        CharacterBrain stage, null when Dormant or EventBrain)\"\n                },\n                \"physicalFormType\"\
+        : {\n                    \"$ref\": \"#/$defs/PhysicalFormType\",\n                    \"description\": \"Type of physical
+        form bound to this entity\"\n                },\n                \"physicalFormId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"ID of the bound physical form (null when PhysicalFormType is None or not yet bound)\"\n\
+        \                },\n                \"bondTargetEntityType\": {\n                    \"type\": \"object\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Type of the bonded target entity (null
+        when no bond)\"\n                },\n                \"bondTargetEntityId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Character ID (populated at CharacterBrain stage, null when Dormant or EventBrain)\"\n                },\n    \
-        \            \"physicalFormType\": {\n                    \"$ref\": \"#/$defs/PhysicalFormType\",\n              \
-        \      \"description\": \"Type of physical form bound to this entity\"\n                },\n                \"physicalFormId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"ID of the bound physical form (null when PhysicalFormType
-        is None or not yet bound)\"\n                },\n                \"bondTargetEntityType\": {\n                   \
-        \ \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\": \"Type of the
-        bonded target entity (null when no bond)\"\n                },\n                \"bondTargetEntityId\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"ID of the bonded target entity (null when no bond)\"\n           \
-        \     },\n                \"bondId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Relationship ID for the
-        materialized bond (null until CharacterBrain awakening)\"\n                },\n                \"status\": {\n   \
-        \                 \"$ref\": \"#/$defs/GenesisEntityStatus\",\n                    \"description\": \"Operational status\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the entity was created\"\n        \
-        \        },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"description\": \"When the entity was last updated\"\n                }\n \
-        \           }\n        },\n        \"CognitiveStage\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Cognitive progression stage of a genesis entity\",\n            \"enum\": [\n                \"Dormant\",\n  \
-        \              \"EventBrain\",\n                \"CharacterBrain\"\n            ]\n        },\n        \"PhysicalFormType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type of physical form a genesis entity can
-        be bound to\",\n            \"enum\": [\n                \"Item\",\n                \"Location\",\n              \
-        \  \"None\"\n            ]\n        },\n        \"GenesisEntityStatus\": {\n            \"type\": \"string\",\n  \
-        \          \"description\": \"Operational status of a genesis entity\",\n            \"enum\": [\n               \
-        \ \"Active\",\n                \"Dormant\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
+        : \"ID of the bonded target entity (null when no bond)\"\n                },\n                \"bondId\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Relationship ID for the materialized bond (null until CharacterBrain
+        awakening)\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/GenesisEntityStatus\"\
+        ,\n                    \"description\": \"Operational status\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"When the entity was created\"\n                },\n                \"updatedAt\": {\n     \
+        \               \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the entity was last updated\"\n                }\n            }\n        },\n        \"CognitiveStage\":
+        {\n            \"type\": \"string\",\n            \"description\": \"Cognitive progression stage of a genesis entity\"\
+        ,\n            \"enum\": [\n                \"Dormant\",\n                \"EventBrain\",\n                \"CharacterBrain\"\
+        \n            ]\n        },\n        \"PhysicalFormType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type of physical form a genesis entity can be bound to\",\n            \"enum\": [\n                \"Item\",\n\
+        \                \"Location\",\n                \"None\"\n            ]\n        },\n        \"GenesisEntityStatus\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Operational status of a genesis entity\",\n\
+        \            \"enum\": [\n                \"Active\",\n                \"Dormant\",\n                \"Archived\"\n\
+        \            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List genesis entities by template and realm\",\n    \"description\": \"\
         \",\n    \"tags\": [\n        \"Genesis Entities\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listEntities\"\
         \n}"
@@ -2043,36 +2043,36 @@ paths:
         \         \"description\": \"Current growth phase name\"\n                },\n                \"cognitiveStage\":
         {\n                    \"$ref\": \"#/$defs/CognitiveStage\",\n                    \"description\": \"Current cognitive
         progression stage\"\n                },\n                \"actorId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Actor ID (populated at EventBrain stage, null when Dormant)\"\n                },\n                \"characterId\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Actor ID (populated at EventBrain
+        stage, null when Dormant)\"\n                },\n                \"characterId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Character ID (populated at CharacterBrain stage, null when Dormant or EventBrain)\"\n  \
+        \              },\n                \"physicalFormType\": {\n                    \"$ref\": \"#/$defs/PhysicalFormType\"\
+        ,\n                    \"description\": \"Type of physical form bound to this entity\"\n                },\n     \
+        \           \"physicalFormId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"ID of the bound physical form (null
+        when PhysicalFormType is None or not yet bound)\"\n                },\n                \"bondTargetEntityType\": {\n\
+        \                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Type of the bonded target entity (null when no bond)\"\n                },\n                \"bondTargetEntityId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Character ID (populated at CharacterBrain stage, null when
-        Dormant or EventBrain)\"\n                },\n                \"physicalFormType\": {\n                    \"$ref\"\
-        : \"#/$defs/PhysicalFormType\",\n                    \"description\": \"Type of physical form bound to this entity\"\
-        \n                },\n                \"physicalFormId\": {\n                    \"type\": \"string\",\n         \
-        \           \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        ID of the bound physical form (null when PhysicalFormType is None or not yet bound)\"\n                },\n      \
-        \          \"bondTargetEntityType\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Type of the bonded target entity (null when no bond)\"\n         \
-        \       },\n                \"bondTargetEntityId\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"ID of
-        the bonded target entity (null when no bond)\"\n                },\n                \"bondId\": {\n              \
-        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Relationship ID for the materialized bond (null until CharacterBrain awakening)\"\
-        \n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/GenesisEntityStatus\"\
-        ,\n                    \"description\": \"Operational status\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When the entity was created\"\n                },\n                \"updatedAt\": {\n     \
-        \               \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the entity was last updated\"\n                }\n            }\n        },\n        \"CognitiveStage\":
-        {\n            \"type\": \"string\",\n            \"description\": \"Cognitive progression stage of a genesis entity\"\
-        ,\n            \"enum\": [\n                \"Dormant\",\n                \"EventBrain\",\n                \"CharacterBrain\"\
-        \n            ]\n        },\n        \"PhysicalFormType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of physical form a genesis entity can be bound to\",\n            \"enum\": [\n                \"Item\",\n\
-        \                \"Location\",\n                \"None\"\n            ]\n        },\n        \"GenesisEntityStatus\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Operational status of a genesis entity\",\n\
-        \            \"enum\": [\n                \"Active\",\n                \"Dormant\",\n                \"Archived\"\n\
-        \            ]\n        }\n    }\n}"
+        nullable\": true,\n                    \"description\": \"ID of the bonded target entity (null when no bond)\"\n \
+        \               },\n                \"bondId\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Relationship
+        ID for the materialized bond (null until CharacterBrain awakening)\"\n                },\n                \"status\"\
+        : {\n                    \"$ref\": \"#/$defs/GenesisEntityStatus\",\n                    \"description\": \"Operational
+        status\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"date-time\",\n                    \"description\": \"When the entity was created\"\n\
+        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"When the entity was last updated\"\n    \
+        \            }\n            }\n        },\n        \"CognitiveStage\": {\n            \"type\": \"string\",\n    \
+        \        \"description\": \"Cognitive progression stage of a genesis entity\",\n            \"enum\": [\n        \
+        \        \"Dormant\",\n                \"EventBrain\",\n                \"CharacterBrain\"\n            ]\n      \
+        \  },\n        \"PhysicalFormType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of
+        physical form a genesis entity can be bound to\",\n            \"enum\": [\n                \"Item\",\n          \
+        \      \"Location\",\n                \"None\"\n            ]\n        },\n        \"GenesisEntityStatus\": {\n  \
+        \          \"type\": \"string\",\n            \"description\": \"Operational status of a genesis entity\",\n     \
+        \       \"enum\": [\n                \"Active\",\n                \"Dormant\",\n                \"Archived\"\n   \
+        \         ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Bind a physical form to a genesis entity\",\n    \"description\": \"Associates
         the entity with a physical form (item instance, location, or none).\\nValidates that the form type matches the template
         configuration and that\\nthe referenced item or location exists.\\n\",\n    \"tags\": [\n        \"Genesis Entities\"\
@@ -2151,36 +2151,36 @@ paths:
         \         \"description\": \"Current growth phase name\"\n                },\n                \"cognitiveStage\":
         {\n                    \"$ref\": \"#/$defs/CognitiveStage\",\n                    \"description\": \"Current cognitive
         progression stage\"\n                },\n                \"actorId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Actor ID (populated at EventBrain stage, null when Dormant)\"\n                },\n                \"characterId\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Actor ID (populated at EventBrain
+        stage, null when Dormant)\"\n                },\n                \"characterId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Character ID (populated at CharacterBrain stage, null when Dormant or EventBrain)\"\n  \
+        \              },\n                \"physicalFormType\": {\n                    \"$ref\": \"#/$defs/PhysicalFormType\"\
+        ,\n                    \"description\": \"Type of physical form bound to this entity\"\n                },\n     \
+        \           \"physicalFormId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"ID of the bound physical form (null
+        when PhysicalFormType is None or not yet bound)\"\n                },\n                \"bondTargetEntityType\": {\n\
+        \                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Type of the bonded target entity (null when no bond)\"\n                },\n                \"bondTargetEntityId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Character ID (populated at CharacterBrain stage, null when
-        Dormant or EventBrain)\"\n                },\n                \"physicalFormType\": {\n                    \"$ref\"\
-        : \"#/$defs/PhysicalFormType\",\n                    \"description\": \"Type of physical form bound to this entity\"\
-        \n                },\n                \"physicalFormId\": {\n                    \"type\": \"string\",\n         \
-        \           \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        ID of the bound physical form (null when PhysicalFormType is None or not yet bound)\"\n                },\n      \
-        \          \"bondTargetEntityType\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Type of the bonded target entity (null when no bond)\"\n         \
-        \       },\n                \"bondTargetEntityId\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"ID of
-        the bonded target entity (null when no bond)\"\n                },\n                \"bondId\": {\n              \
-        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Relationship ID for the materialized bond (null until CharacterBrain awakening)\"\
-        \n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/GenesisEntityStatus\"\
-        ,\n                    \"description\": \"Operational status\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When the entity was created\"\n                },\n                \"updatedAt\": {\n     \
-        \               \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the entity was last updated\"\n                }\n            }\n        },\n        \"CognitiveStage\":
-        {\n            \"type\": \"string\",\n            \"description\": \"Cognitive progression stage of a genesis entity\"\
-        ,\n            \"enum\": [\n                \"Dormant\",\n                \"EventBrain\",\n                \"CharacterBrain\"\
-        \n            ]\n        },\n        \"PhysicalFormType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of physical form a genesis entity can be bound to\",\n            \"enum\": [\n                \"Item\",\n\
-        \                \"Location\",\n                \"None\"\n            ]\n        },\n        \"GenesisEntityStatus\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Operational status of a genesis entity\",\n\
-        \            \"enum\": [\n                \"Active\",\n                \"Dormant\",\n                \"Archived\"\n\
-        \            ]\n        }\n    }\n}"
+        nullable\": true,\n                    \"description\": \"ID of the bonded target entity (null when no bond)\"\n \
+        \               },\n                \"bondId\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Relationship
+        ID for the materialized bond (null until CharacterBrain awakening)\"\n                },\n                \"status\"\
+        : {\n                    \"$ref\": \"#/$defs/GenesisEntityStatus\",\n                    \"description\": \"Operational
+        status\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"date-time\",\n                    \"description\": \"When the entity was created\"\n\
+        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"When the entity was last updated\"\n    \
+        \            }\n            }\n        },\n        \"CognitiveStage\": {\n            \"type\": \"string\",\n    \
+        \        \"description\": \"Cognitive progression stage of a genesis entity\",\n            \"enum\": [\n        \
+        \        \"Dormant\",\n                \"EventBrain\",\n                \"CharacterBrain\"\n            ]\n      \
+        \  },\n        \"PhysicalFormType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of
+        physical form a genesis entity can be bound to\",\n            \"enum\": [\n                \"Item\",\n          \
+        \      \"Location\",\n                \"None\"\n            ]\n        },\n        \"GenesisEntityStatus\": {\n  \
+        \          \"type\": \"string\",\n            \"description\": \"Operational status of a genesis entity\",\n     \
+        \       \"enum\": [\n                \"Active\",\n                \"Dormant\",\n                \"Archived\"\n   \
+        \         ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a bond between a genesis entity and a target entity\",\n    \"description\"\
         : \"Stores bond intent on the entity. If the entity is already awakened\\n(CharacterBrain), creates the Relationship
         immediately. If pre-awakened,\\nthe Relationship is created automatically at awakening. Cardinality\\nenforced per
@@ -3343,7 +3343,6 @@ components:
           description: Current cognitive progression stage
         actorId:
           type: string
-          format: uuid
           nullable: true
           description: Actor ID (populated at EventBrain stage, null when Dormant)
         characterId:

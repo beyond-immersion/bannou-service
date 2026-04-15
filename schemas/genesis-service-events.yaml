@@ -86,7 +86,7 @@ x-lifecycle:
         description: "Map of inventory codes to container IDs"
       currentPhase: { type: string, required: true, description: "Current growth phase name" }
       cognitiveStage: { $ref: 'genesis-api.yaml#/components/schemas/CognitiveStage', required: true, description: "Current cognitive progression stage" }
-      actorId: { type: string, format: uuid, nullable: true, description: "Actor ID (populated at EventBrain)" }
+      actorId: { type: string, nullable: true, description: "Actor ID (populated at EventBrain)" }
       characterId: { type: string, format: uuid, nullable: true, description: "Character ID (populated at CharacterBrain)" }
       physicalFormType: { $ref: 'genesis-api.yaml#/components/schemas/PhysicalFormType', required: true, description: "Type of physical form" }
       physicalFormId: { type: string, format: uuid, nullable: true, description: "ID of the bound physical form" }
@@ -144,7 +144,6 @@ components:
           description: New cognitive stage after transition
         actorId:
           type: string
-          format: uuid
           nullable: true
           description: Actor ID if spawned during this transition (EventBrain)
         characterId:

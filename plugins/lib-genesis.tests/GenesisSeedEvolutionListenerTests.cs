@@ -257,7 +257,7 @@ public class GenesisSeedEvolutionListenerTests : ServiceTestBase<GenesisServiceC
             Times.Once);
         Assert.NotNull(savedEntity);
         Assert.Equal(CognitiveStage.EventBrain, savedEntity.CognitiveStage);
-        Assert.Equal(entityId, savedEntity.ActorId);
+        Assert.Equal(entityId.ToString(), savedEntity.ActorId);
         Assert.Equal("Stirring", savedEntity.CurrentPhase);
         Assert.Equal(GenesisPublishedTopics.GenesisEntityPhaseChanged, capturedTopic);
         Assert.IsType<GenesisEntityPhaseChangedEvent>(capturedEvent);
@@ -378,7 +378,7 @@ public class GenesisSeedEvolutionListenerTests : ServiceTestBase<GenesisServiceC
         var speciesId = Guid.NewGuid();
 
         var entity = CreateEntity(entityId: entityId, seedId: seedId, stage: CognitiveStage.EventBrain, currentPhase: "Stirring");
-        entity.ActorId = entityId;
+        entity.ActorId = entityId.ToString();
         var template = CreateTemplate();
 
         _mockEntityQueryStore

@@ -56,6 +56,47 @@ components:
           type: string
           format: date-time
           description: Timestamp when the matchmaking queue was last updated (set to createdAt on creation)
+    MatchmakingQueueDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to matchmaking.queue.deleted when a matchmakingqueue is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - queueId
+      - gameId
+      - displayName
+      - enabled
+      - minCount
+      - maxCount
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: matchmaking.queue.deleted
+          description: 'Event type identifier: matchmaking.queue.deleted'
+        queueId: *id001
+        gameId: *id002
+        displayName: *id003
+        enabled: *id004
+        minCount: *id005
+        maxCount: *id006
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the matchmaking queue was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the matchmaking queue was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     MatchmakingQueueUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -99,44 +140,3 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    MatchmakingQueueDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to matchmaking.queue.deleted when a matchmakingqueue is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - queueId
-      - gameId
-      - displayName
-      - enabled
-      - minCount
-      - maxCount
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: matchmaking.queue.deleted
-          description: 'Event type identifier: matchmaking.queue.deleted'
-        queueId: *id001
-        gameId: *id002
-        displayName: *id003
-        enabled: *id004
-        minCount: *id005
-        maxCount: *id006
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the matchmaking queue was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the matchmaking queue was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")

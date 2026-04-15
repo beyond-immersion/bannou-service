@@ -104,6 +104,7 @@ x-lifecycle:
 
   Collection:
     batch: true
+    immutable: true   # No update endpoint — only created and destroyed events are generated
     model:
       collectionId: { type: string, format: uuid, primary: true, required: true, description: "Unique collection instance identifier" }
       ownerId: { type: string, format: uuid, required: true, description: "Entity that owns this collection" }

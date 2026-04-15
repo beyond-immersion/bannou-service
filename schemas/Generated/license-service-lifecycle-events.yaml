@@ -81,6 +81,65 @@ components:
           nullable: true
           maxLength: 500
           description: Reason for deprecation (null if not deprecated)
+    LicenseBoardTemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to license.board-template.deleted when a licenseboardtemplate is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - boardTemplateId
+      - gameServiceId
+      - name
+      - gridWidth
+      - gridHeight
+      - boardContractTemplateId
+      - adjacencyMode
+      - isActive
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: license.board-template.deleted
+          description: 'Event type identifier: license.board-template.deleted'
+        boardTemplateId: *id001
+        gameServiceId: *id002
+        name: *id003
+        gridWidth: *id004
+        gridHeight: *id005
+        boardContractTemplateId: *id006
+        adjacencyMode: *id007
+        isActive: *id008
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the license board template was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the license board template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this license board template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the license board template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     LicenseBoardTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -142,65 +201,6 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    LicenseBoardTemplateDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to license.board-template.deleted when a licenseboardtemplate is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - boardTemplateId
-      - gameServiceId
-      - name
-      - gridWidth
-      - gridHeight
-      - boardContractTemplateId
-      - adjacencyMode
-      - isActive
-      - createdAt
-      - updatedAt
-      - isDeprecated
-      properties:
-        eventName:
-          type: string
-          default: license.board-template.deleted
-          description: 'Event type identifier: license.board-template.deleted'
-        boardTemplateId: *id001
-        gameServiceId: *id002
-        name: *id003
-        gridWidth: *id004
-        gridHeight: *id005
-        boardContractTemplateId: *id006
-        adjacencyMode: *id007
-        isActive: *id008
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the license board template was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the license board template was last updated (set to createdAt on creation)
-        isDeprecated:
-          type: boolean
-          description: Whether this license board template is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the license board template was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     LicenseBoardCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -260,50 +260,6 @@ components:
           type: string
           format: date-time
           description: Timestamp when the license board was last updated (set to createdAt on creation)
-    LicenseBoardUpdatedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to license.board.updated when a licenseboard is updated
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - boardId
-      - ownerType
-      - ownerId
-      - boardTemplateId
-      - gameServiceId
-      - containerId
-      - createdAt
-      - updatedAt
-      - changedFields
-      properties:
-        eventName:
-          type: string
-          default: license.board.updated
-          description: 'Event type identifier: license.board.updated'
-        boardId: *id009
-        ownerType: *id010
-        ownerId: *id011
-        realmId: *id012
-        boardTemplateId: *id013
-        gameServiceId: *id014
-        containerId: *id015
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the license board was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the license board was last updated (set to createdAt on creation)
-        changedFields:
-          type: array
-          items:
-            type: string
-          description: List of field names that were modified
     LicenseBoardDeletedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent

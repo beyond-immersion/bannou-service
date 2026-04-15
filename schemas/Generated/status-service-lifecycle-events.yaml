@@ -82,6 +82,65 @@ components:
           nullable: true
           maxLength: 500
           description: Reason for deprecation (null if not deprecated)
+    StatusTemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to status.template.deleted when a statustemplate is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - statusTemplateId
+      - gameServiceId
+      - code
+      - displayName
+      - category
+      - stackable
+      - maxStacks
+      - stackBehavior
+      - createdAt
+      - updatedAt
+      - isDeprecated
+      properties:
+        eventName:
+          type: string
+          default: status.template.deleted
+          description: 'Event type identifier: status.template.deleted'
+        statusTemplateId: *id001
+        gameServiceId: *id002
+        code: *id003
+        displayName: *id004
+        category: *id005
+        stackable: *id006
+        maxStacks: *id007
+        stackBehavior: *id008
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the status template was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the status template was last updated (set to createdAt on creation)
+        isDeprecated:
+          type: boolean
+          description: Whether this status template is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the status template was deprecated (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation (null if not deprecated)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     StatusTemplateUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -143,62 +202,3 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    StatusTemplateDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to status.template.deleted when a statustemplate is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - statusTemplateId
-      - gameServiceId
-      - code
-      - displayName
-      - category
-      - stackable
-      - maxStacks
-      - stackBehavior
-      - createdAt
-      - updatedAt
-      - isDeprecated
-      properties:
-        eventName:
-          type: string
-          default: status.template.deleted
-          description: 'Event type identifier: status.template.deleted'
-        statusTemplateId: *id001
-        gameServiceId: *id002
-        code: *id003
-        displayName: *id004
-        category: *id005
-        stackable: *id006
-        maxStacks: *id007
-        stackBehavior: *id008
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the status template was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the status template was last updated (set to createdAt on creation)
-        isDeprecated:
-          type: boolean
-          description: Whether this status template is deprecated
-        deprecatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the status template was deprecated (null if not deprecated)
-        deprecationReason:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: Reason for deprecation (null if not deprecated)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")

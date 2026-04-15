@@ -66,6 +66,48 @@ components:
           type: string
           format: date-time
           description: Timestamp when the scene was last updated (set to createdAt on creation)
+    SceneDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to scene.deleted when a scene is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - sceneId
+      - sceneType
+      - name
+      - version
+      - nodeCount
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: scene.deleted
+          description: 'Event type identifier: scene.deleted'
+        sceneId: *id001
+        gameId: *id002
+        sceneType: *id003
+        name: *id004
+        description: *id005
+        version: *id006
+        tags: *id007
+        nodeCount: *id008
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scene was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the scene was last updated (set to createdAt on creation)
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     SceneUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -110,45 +152,3 @@ components:
           items:
             type: string
           description: List of field names that were modified
-    SceneDeletedEvent:
-      allOf:
-      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
-      type: object
-      additionalProperties: false
-      description: Published to scene.deleted when a scene is deleted
-      required:
-      - eventName
-      - eventId
-      - timestamp
-      - sceneId
-      - sceneType
-      - name
-      - version
-      - nodeCount
-      - createdAt
-      - updatedAt
-      properties:
-        eventName:
-          type: string
-          default: scene.deleted
-          description: 'Event type identifier: scene.deleted'
-        sceneId: *id001
-        gameId: *id002
-        sceneType: *id003
-        name: *id004
-        description: *id005
-        version: *id006
-        tags: *id007
-        nodeCount: *id008
-        createdAt:
-          type: string
-          format: date-time
-          description: Timestamp when the scene was created
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the scene was last updated (set to createdAt on creation)
-        deletedReason:
-          type: string
-          nullable: true
-          description: Optional reason for deletion (e.g., "Merged into {targetId}")

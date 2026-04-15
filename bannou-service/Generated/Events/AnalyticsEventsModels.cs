@@ -62,6 +62,7 @@ public partial class AnalyticsScoreUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    [BeyondImmersion.BannouService.Attributes.PolymorphicType]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -147,6 +148,7 @@ public partial class AnalyticsRatingUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    [BeyondImmersion.BannouService.Attributes.PolymorphicType]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -238,6 +240,7 @@ public partial class AnalyticsMilestoneReachedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    [BeyondImmersion.BannouService.Attributes.PolymorphicType]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -312,6 +315,7 @@ public partial class AnalyticsControllerRecordedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    [BeyondImmersion.BannouService.Attributes.PolymorphicType]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>

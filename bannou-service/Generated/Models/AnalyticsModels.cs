@@ -87,6 +87,7 @@ public partial class IngestEventRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    [BeyondImmersion.BannouService.Attributes.PolymorphicType]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -229,6 +230,7 @@ public partial class GetEntitySummaryRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    [BeyondImmersion.BannouService.Attributes.PolymorphicType]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -338,6 +340,7 @@ public partial class QueryEntitySummariesRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    [BeyondImmersion.BannouService.Attributes.PolymorphicType]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -436,6 +439,7 @@ public partial class ResetEntitySummariesRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    [BeyondImmersion.BannouService.Attributes.PolymorphicType]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -498,6 +502,7 @@ public partial class GetSkillRatingRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    [BeyondImmersion.BannouService.Attributes.PolymorphicType]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -802,6 +807,7 @@ public partial class RecordControllerEventRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    [BeyondImmersion.BannouService.Attributes.PolymorphicType]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -877,6 +883,7 @@ public partial class QueryControllerHistoryRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
+    [BeyondImmersion.BannouService.Attributes.PolymorphicType]
     public string ServiceId { get; set; } = default!;
 
     /// <summary>
@@ -1040,6 +1047,7 @@ public partial class CleanupControllerHistoryRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.StringLength(256)]
+    [BeyondImmersion.BannouService.Attributes.PolymorphicType]
     public string? ServiceId { get; set; } = default!;
 
 }
