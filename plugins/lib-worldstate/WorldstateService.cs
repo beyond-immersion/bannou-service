@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameService;
+using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Realm;
@@ -1093,9 +1094,9 @@ public partial class WorldstateService : IWorldstateService
             changedFields.Add("seasons");
         }
 
-        if (body.EraLabels != null)
+        if (body.ChangeFields.IsFieldSet("eraLabels"))
         {
-            model.EraLabels = body.EraLabels.Select(e => new EraLabel
+            model.EraLabels = body.EraLabels?.Select(e => new EraLabel
             {
                 Code = e.Code,
                 StartYear = e.StartYear,

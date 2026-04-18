@@ -476,6 +476,15 @@ public partial class StorylineService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "API exception during mutation application");
+            await _messageBus.TryPublishErrorAsync(
+                "storyline",
+                "ApplyMutation",
+                "MutationApiFailed",
+                ex.Message,
+                dependency: mutation.MutationType.ToString().ToLowerInvariant(),
+                endpoint: $"mutation:{mutation.MutationType}",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return (false, $"API error: {ex.StatusCode}");
         }
         catch (Exception ex)

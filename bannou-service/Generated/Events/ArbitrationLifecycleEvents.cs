@@ -192,6 +192,172 @@ public partial class ArbitrationCaseCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to arbitration.case.deleted when a arbitrationcase is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ArbitrationCaseDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: arbitration.case.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "arbitration.case.deleted";
+
+    /// <summary>
+    /// Unique identifier for the case
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("caseId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CaseId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable sequential case code
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("caseCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CaseCode { get; set; } = default!;
+
+    /// <summary>
+    /// Game service scope
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Game-configurable dispute type code
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("caseType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CaseType { get; set; } = default!;
+
+    /// <summary>
+    /// Current case lifecycle status
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ArbitrationCaseStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Location where the case was filed (nullable: DETACH cleanup)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locationId")]
+    public System.Guid? LocationId { get; set; } = default!;
+
+    /// <summary>
+    /// Jurisdictional sovereign faction (nullable: DETACH cleanup)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sovereignFactionId")]
+    public System.Guid? SovereignFactionId { get; set; } = default!;
+
+    /// <summary>
+    /// Petitioner entity ID (nullable: DETACH cleanup)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("petitionerEntityId")]
+    public System.Guid? PetitionerEntityId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of the petitioner entity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("petitionerEntityType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType? PetitionerEntityType { get; set; } = default!;
+
+    /// <summary>
+    /// Respondent entity ID (nullable: DETACH cleanup)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("respondentEntityId")]
+    public System.Guid? RespondentEntityId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of the respondent entity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("respondentEntityType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType? RespondentEntityType { get; set; } = default!;
+
+    /// <summary>
+    /// Assigned arbiter entity ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("arbiterEntityId")]
+    public System.Guid? ArbiterEntityId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of the assigned arbiter entity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("arbiterEntityType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType? ArbiterEntityType { get; set; } = default!;
+
+    /// <summary>
+    /// Underlying contract instance ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ContractId { get; set; } = default!;
+
+    /// <summary>
+    /// Procedural template code from governance data
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TemplateCode { get; set; } = default!;
+
+    /// <summary>
+    /// Ruling ID if issued
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("rulingId")]
+    public System.Guid? RulingId { get; set; } = default!;
+
+    /// <summary>
+    /// Whether jurisdiction has been challenged
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("jurisdictionChallenged")]
+    public bool JurisdictionChallenged { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for case closure
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("closedReason")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CaseClosedReason? ClosedReason { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the arbitration case was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the arbitration case was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to arbitration.case.updated when a arbitrationcase is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -356,172 +522,6 @@ public partial class ArbitrationCaseUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to arbitration.case.deleted when a arbitrationcase is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ArbitrationCaseDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: arbitration.case.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "arbitration.case.deleted";
-
-    /// <summary>
-    /// Unique identifier for the case
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("caseId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CaseId { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable sequential case code
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("caseCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string CaseCode { get; set; } = default!;
-
-    /// <summary>
-    /// Game service scope
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Game-configurable dispute type code
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("caseType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string CaseType { get; set; } = default!;
-
-    /// <summary>
-    /// Current case lifecycle status
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("status")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ArbitrationCaseStatus Status { get; set; } = default!;
-
-    /// <summary>
-    /// Location where the case was filed (nullable: DETACH cleanup)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("locationId")]
-    public System.Guid? LocationId { get; set; } = default!;
-
-    /// <summary>
-    /// Jurisdictional sovereign faction (nullable: DETACH cleanup)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sovereignFactionId")]
-    public System.Guid? SovereignFactionId { get; set; } = default!;
-
-    /// <summary>
-    /// Petitioner entity ID (nullable: DETACH cleanup)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("petitionerEntityId")]
-    public System.Guid? PetitionerEntityId { get; set; } = default!;
-
-    /// <summary>
-    /// Type of the petitioner entity
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("petitionerEntityType")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EntityType? PetitionerEntityType { get; set; } = default!;
-
-    /// <summary>
-    /// Respondent entity ID (nullable: DETACH cleanup)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("respondentEntityId")]
-    public System.Guid? RespondentEntityId { get; set; } = default!;
-
-    /// <summary>
-    /// Type of the respondent entity
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("respondentEntityType")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EntityType? RespondentEntityType { get; set; } = default!;
-
-    /// <summary>
-    /// Assigned arbiter entity ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("arbiterEntityId")]
-    public System.Guid? ArbiterEntityId { get; set; } = default!;
-
-    /// <summary>
-    /// Type of the assigned arbiter entity
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("arbiterEntityType")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EntityType? ArbiterEntityType { get; set; } = default!;
-
-    /// <summary>
-    /// Underlying contract instance ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContractId { get; set; } = default!;
-
-    /// <summary>
-    /// Procedural template code from governance data
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string TemplateCode { get; set; } = default!;
-
-    /// <summary>
-    /// Ruling ID if issued
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("rulingId")]
-    public System.Guid? RulingId { get; set; } = default!;
-
-    /// <summary>
-    /// Whether jurisdiction has been challenged
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("jurisdictionChallenged")]
-    public bool JurisdictionChallenged { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for case closure
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("closedReason")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CaseClosedReason? ClosedReason { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the arbitration case was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the arbitration case was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

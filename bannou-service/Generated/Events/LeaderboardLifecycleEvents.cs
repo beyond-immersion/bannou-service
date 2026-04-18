@@ -138,6 +138,118 @@ public partial class LeaderboardDefinitionCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to leaderboard.definition.deleted when a leaderboarddefinition is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class LeaderboardDefinitionDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: leaderboard.definition.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "leaderboard.definition.deleted";
+
+    /// <summary>
+    /// ID of the owning game service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier for this leaderboard
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("leaderboardId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string LeaderboardId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// Score sort order
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sortOrder")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SortOrder SortOrder { get; set; } = default!;
+
+    /// <summary>
+    /// Score update mode
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updateMode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public UpdateMode UpdateMode { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the leaderboard is seasonal
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isSeasonal")]
+    public bool IsSeasonal { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the leaderboard is publicly visible
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isPublic")]
+    public bool IsPublic { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the leaderboard definition was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the leaderboard definition was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this leaderboard definition is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the leaderboard definition was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to leaderboard.definition.updated when a leaderboarddefinition is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -252,118 +364,6 @@ public partial class LeaderboardDefinitionUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to leaderboard.definition.deleted when a leaderboarddefinition is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class LeaderboardDefinitionDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: leaderboard.definition.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "leaderboard.definition.deleted";
-
-    /// <summary>
-    /// ID of the owning game service
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Unique identifier for this leaderboard
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("leaderboardId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string LeaderboardId { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string DisplayName { get; set; } = default!;
-
-    /// <summary>
-    /// Score sort order
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sortOrder")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SortOrder SortOrder { get; set; } = default!;
-
-    /// <summary>
-    /// Score update mode
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updateMode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public UpdateMode UpdateMode { get; set; } = default!;
-
-    /// <summary>
-    /// Whether the leaderboard is seasonal
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isSeasonal")]
-    public bool IsSeasonal { get; set; } = default!;
-
-    /// <summary>
-    /// Whether the leaderboard is publicly visible
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isPublic")]
-    public bool IsPublic { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the leaderboard definition was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the leaderboard definition was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this leaderboard definition is deprecated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
-    public bool IsDeprecated { get; set; } = default!;
-
-    /// <summary>
-    /// When the leaderboard definition was deprecated (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for deprecation (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? DeprecationReason { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Published to leaderboard.entry.created when a leaderboardentry is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -446,6 +446,98 @@ public partial class LeaderboardEntryCreatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published to leaderboard.entry.deleted when a leaderboardentry is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class LeaderboardEntryDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: leaderboard.entry.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "leaderboard.entry.deleted";
+
+    /// <summary>
+    /// Unique identifier for this leaderboard entry
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entryId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EntryId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the owning game service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Leaderboard this entry belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("leaderboardId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string LeaderboardId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the ranked entity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EntityId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of the ranked entity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
+
+    /// <summary>
+    /// Current score value
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("score")]
+    public double Score { get; set; } = default!;
+
+    /// <summary>
+    /// Season number if this entry is in a seasonal leaderboard
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("seasonNumber")]
+    public int? SeasonNumber { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the leaderboard entry was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the leaderboard entry was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
 
 }
 
@@ -540,98 +632,6 @@ public partial class LeaderboardEntryUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to leaderboard.entry.deleted when a leaderboardentry is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class LeaderboardEntryDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: leaderboard.entry.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "leaderboard.entry.deleted";
-
-    /// <summary>
-    /// Unique identifier for this leaderboard entry
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entryId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EntryId { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the owning game service
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Leaderboard this entry belongs to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("leaderboardId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string LeaderboardId { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the ranked entity
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EntityId { get; set; } = default!;
-
-    /// <summary>
-    /// Type of the ranked entity
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entityType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EntityType EntityType { get; set; } = default!;
-
-    /// <summary>
-    /// Current score value
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("score")]
-    public double Score { get; set; } = default!;
-
-    /// <summary>
-    /// Season number if this entry is in a seasonal leaderboard
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("seasonNumber")]
-    public int? SeasonNumber { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the leaderboard entry was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the leaderboard entry was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

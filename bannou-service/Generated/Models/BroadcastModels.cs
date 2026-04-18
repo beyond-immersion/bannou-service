@@ -1155,73 +1155,41 @@ public partial class StopOutputRequest
 public partial class UpdateOutputRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private System.Guid _broadcastId = default!;
     /// <summary>
     /// Broadcast output to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("broadcastId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid BroadcastId { get => _broadcastId; set { _broadcastId = value; _TrackChange("broadcastId"); } }
+    public System.Guid BroadcastId { get; set; } = default!;
 
-    private string? _rtmpUrl = default!;
     /// <summary>
     /// New RTMP destination URL (validated via FFprobe before committing)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("rtmpUrl")]
     [System.ComponentModel.DataAnnotations.StringLength(2048)]
-    public string? RtmpUrl { get => _rtmpUrl; set { _rtmpUrl = value; _TrackChange("rtmpUrl"); } }
+    public string? RtmpUrl { get; set; } = default!;
 
-    private string? _backgroundVideoUrl = default!;
     /// <summary>
     /// New primary video background URL
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("backgroundVideoUrl")]
     [System.ComponentModel.DataAnnotations.StringLength(2048)]
-    public string? BackgroundVideoUrl { get => _backgroundVideoUrl; set { _backgroundVideoUrl = value; _TrackChange("backgroundVideoUrl"); } }
+    public string? BackgroundVideoUrl { get; set; } = default!;
 
-    private string? _fallbackStreamUrl = default!;
     /// <summary>
     /// New fallback stream URL
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("fallbackStreamUrl")]
     [System.ComponentModel.DataAnnotations.StringLength(2048)]
-    public string? FallbackStreamUrl { get => _fallbackStreamUrl; set { _fallbackStreamUrl = value; _TrackChange("fallbackStreamUrl"); } }
+    public string? FallbackStreamUrl { get; set; } = default!;
 
-    private string? _fallbackImageUrl = default!;
     /// <summary>
     /// New fallback image URL
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("fallbackImageUrl")]
     [System.ComponentModel.DataAnnotations.StringLength(2048)]
-    public string? FallbackImageUrl { get => _fallbackImageUrl; set { _fallbackImageUrl = value; _TrackChange("fallbackImageUrl"); } }
+    public string? FallbackImageUrl { get; set; } = default!;
 
 }
 

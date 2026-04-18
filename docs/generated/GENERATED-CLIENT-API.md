@@ -22,7 +22,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Character Service API](#character) | `client.Character` | 13 | Character management service for game worlds. |
 | [Bannou Character Encounter Service API](#character-encounter) | `client.CharacterEncounter` | 21 | Character encounter tracking service for memorable interacti... |
 | [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 12 | Historical event participation and backstory management for ... |
-| [Bannou Character Lifecycle Service API](#character-lifecycle) | `client.CharacterLifecycle` | 29 | Generational cycle orchestration and genetic heritage servic... |
+| [Bannou Character Lifecycle Service API](#character-lifecycle) | `client.CharacterLifecycle` | 32 | Generational cycle orchestration and genetic heritage servic... |
 | [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 12 | Machine-readable personality traits for NPC behavior decisio... |
 | [Chat Service API](#chat) | `client.Chat` | 32 | Typed message channel service (L1 AppFoundation) providing u... |
 | [Collection Service API](#collection) | `client.Collection` | 22 | Universal content unlock and archive system for collectible ... |
@@ -757,6 +757,9 @@ Generational cycle orchestration and genetic heritage service (L4 GameFeatures).
 | `GetLifecycletemplateAsync` | `GetLifecycleTemplateRequest` | `GetLifecycleTemplateResponse` | Get lifecycle template for a species |
 | `GetHeritabletraittemplateAsync` | `GetHeritableTraitTemplateRequest` | `GetHeritableTraitTemplateResponse` | Get heritable trait template for a species |
 | `ListTemplatesAsync` | `ListTemplatesRequest` | `ListTemplatesResponse` | List all lifecycle and heritage templates for a game service |
+| `DeprecatelifecycletemplateAsync` | `DeprecateLifecycleTemplateRequest` | `GetLifecycleTemplateResponse` | Deprecate a lifecycle template |
+| `DeprecateheritabletraittemplateAsync` | `DeprecateHeritableTraitTemplateRequest` | `GetHeritableTraitTemplateResponse` | Deprecate a heritable trait template |
+| `DeprecatehybridtraittemplateAsync` | `DeprecateHybridTraitTemplateRequest` | `GetHybridTraitTemplateResponse` | Deprecate a hybrid trait template |
 | `GetBloodlineAsync` | `GetBloodlineRequest` | `GetBloodlineResponse` | Get bloodline definition |
 | `ListBloodlinesAsync` | `ListBloodlinesRequest` | `ListBloodlinesResponse` | List bloodlines within a game service |
 | `EstablishbloodlineAsync` | `EstablishBloodlineRequest` | `EstablishBloodlineResponse` | Manually establish a bloodline |
@@ -3102,7 +3105,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 ## Summary
 
 - **Total services**: 63
-- **Total methods**: 1117
+- **Total methods**: 1120
 
 ---
 

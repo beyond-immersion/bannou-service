@@ -645,6 +645,10 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
             catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Seed creation failed during faction seeding for {Code}", def.Code);
+                await _messageBus.TryPublishErrorAsync(
+                    "faction", "SeedFactions", "ApiException",
+                    ex.Message, dependency: "seed", endpoint: "create-seed",
+                    stack: ex.StackTrace, cancellationToken: cancellationToken);
                 errors.Add($"Seed creation failed for faction '{def.Code}': {ex.StatusCode}");
                 failed++;
                 continue;
@@ -894,6 +898,10 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Failed to register resource reference for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "faction", "AddMember", "ApiException",
+                ex.Message, dependency: "resource", endpoint: "register-reference",
+                stack: ex.StackTrace, cancellationToken: cancellationToken);
         }
 
         var evt = new FactionMemberAddedEvent
@@ -1159,6 +1167,10 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Failed to register resource reference for location {LocationId}", body.LocationId);
+            await _messageBus.TryPublishErrorAsync(
+                "faction", "ClaimTerritory", "ApiException",
+                ex.Message, dependency: "resource", endpoint: "register-reference",
+                stack: ex.StackTrace, cancellationToken: cancellationToken);
         }
 
         var evt = new FactionTerritoryClaimedEvent
@@ -1974,6 +1986,10 @@ public partial class FactionService : IFactionService, IDeprecateAndMergeEntity
                 {
                     _logger.LogWarning(ex, "Failed to register resource reference during archive restore for character {CharacterId} in faction {FactionId}",
                         body.CharacterId, membership.FactionId);
+                    await _messageBus.TryPublishErrorAsync(
+                        "faction", "RestoreFromArchive", "ApiException",
+                        ex.Message, dependency: "resource", endpoint: "register-reference",
+                        stack: ex.StackTrace, cancellationToken: cancellationToken);
                 }
 
                 membershipsRestoredCount++;

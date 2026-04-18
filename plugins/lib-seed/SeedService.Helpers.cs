@@ -94,6 +94,10 @@ public partial class SeedService
             catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Could not resolve realm for character {CharacterId}, realmId will be null", ownerId);
+                await _messageBus.TryPublishErrorAsync(
+                    "seed", "ResolveRealmForOwner", "CharacterLookupFailed",
+                    ex.Message, dependency: "character", endpoint: "get-character",
+                    stack: ex.StackTrace, cancellationToken: ct);
                 return null;
             }
         }

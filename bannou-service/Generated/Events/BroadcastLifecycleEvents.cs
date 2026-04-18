@@ -110,6 +110,90 @@ public partial class PlatformLinkCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to broadcast.platform-link.deleted when a platformlink is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PlatformLinkDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: broadcast.platform-link.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "broadcast.platform-link.deleted";
+
+    /// <summary>
+    /// Platform link identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("linkId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid LinkId { get; set; } = default!;
+
+    /// <summary>
+    /// Account that owns this platform link
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Streaming platform type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("platform")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public PlatformType Platform { get; set; } = default!;
+
+    /// <summary>
+    /// When the OAuth access token expires
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tokenExpiresAt")]
+    public System.DateTimeOffset? TokenExpiresAt { get; set; } = default!;
+
+    /// <summary>
+    /// Platform display name from OAuth profile or user-provided
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    public string? DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// When the platform was linked
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("linkedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset LinkedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the platform link was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the platform link was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to broadcast.platform-link.updated when a platformlink is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -192,90 +276,6 @@ public partial class PlatformLinkUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to broadcast.platform-link.deleted when a platformlink is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PlatformLinkDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: broadcast.platform-link.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "broadcast.platform-link.deleted";
-
-    /// <summary>
-    /// Platform link identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("linkId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid LinkId { get; set; } = default!;
-
-    /// <summary>
-    /// Account that owns this platform link
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
-
-    /// <summary>
-    /// Streaming platform type
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("platform")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PlatformType Platform { get; set; } = default!;
-
-    /// <summary>
-    /// When the OAuth access token expires
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("tokenExpiresAt")]
-    public System.DateTimeOffset? TokenExpiresAt { get; set; } = default!;
-
-    /// <summary>
-    /// Platform display name from OAuth profile or user-provided
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    public string? DisplayName { get; set; } = default!;
-
-    /// <summary>
-    /// When the platform was linked
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("linkedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset LinkedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the platform link was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the platform link was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 
@@ -395,6 +395,131 @@ public partial class PlatformSessionCreatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published to broadcast.platform-session.deleted when a platformsession is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PlatformSessionDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: broadcast.platform-session.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "broadcast.platform-session.deleted";
+
+    /// <summary>
+    /// Platform session identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("platformSessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid PlatformSessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Associated platform link
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("linkId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid LinkId { get; set; } = default!;
+
+    /// <summary>
+    /// Account that owns this session
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Streaming platform type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("platform")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public PlatformType Platform { get; set; } = default!;
+
+    /// <summary>
+    /// Platform-specific stream identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("platformStreamId")]
+    public string? PlatformStreamId { get; set; } = default!;
+
+    /// <summary>
+    /// Current approximate viewer count
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("viewerCount")]
+    public int ViewerCount { get; set; } = default!;
+
+    /// <summary>
+    /// Peak viewer count during session
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("peakViewerCount")]
+    public int PeakViewerCount { get; set; } = default!;
+
+    /// <summary>
+    /// When the session started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("startTime")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset StartTime { get; set; } = default!;
+
+    /// <summary>
+    /// Associated in-game stream session ID (opaque)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("streamSessionId")]
+    public System.Guid? StreamSessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Current session state
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("state")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public PlatformSessionState State { get; set; } = default!;
+
+    /// <summary>
+    /// When the session ended
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("endedAt")]
+    public System.DateTimeOffset? EndedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Session duration in seconds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("duration")]
+    public int? Duration { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the platform session was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the platform session was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
 
 }
 
@@ -526,131 +651,6 @@ public partial class PlatformSessionUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to broadcast.platform-session.deleted when a platformsession is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PlatformSessionDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: broadcast.platform-session.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "broadcast.platform-session.deleted";
-
-    /// <summary>
-    /// Platform session identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("platformSessionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid PlatformSessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Associated platform link
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("linkId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid LinkId { get; set; } = default!;
-
-    /// <summary>
-    /// Account that owns this session
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AccountId { get; set; } = default!;
-
-    /// <summary>
-    /// Streaming platform type
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("platform")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PlatformType Platform { get; set; } = default!;
-
-    /// <summary>
-    /// Platform-specific stream identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("platformStreamId")]
-    public string? PlatformStreamId { get; set; } = default!;
-
-    /// <summary>
-    /// Current approximate viewer count
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("viewerCount")]
-    public int ViewerCount { get; set; } = default!;
-
-    /// <summary>
-    /// Peak viewer count during session
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("peakViewerCount")]
-    public int PeakViewerCount { get; set; } = default!;
-
-    /// <summary>
-    /// When the session started
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("startTime")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset StartTime { get; set; } = default!;
-
-    /// <summary>
-    /// Associated in-game stream session ID (opaque)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("streamSessionId")]
-    public System.Guid? StreamSessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Current session state
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("state")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PlatformSessionState State { get; set; } = default!;
-
-    /// <summary>
-    /// When the session ended
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("endedAt")]
-    public System.DateTimeOffset? EndedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Session duration in seconds
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("duration")]
-    public int? Duration { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the platform session was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the platform session was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Published to broadcast.output.created when a output is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -751,6 +751,116 @@ public partial class OutputCreatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published to broadcast.output.deleted when a output is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class OutputDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: broadcast.output.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "broadcast.output.deleted";
+
+    /// <summary>
+    /// Broadcast output identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("broadcastId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid BroadcastId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of broadcast input source
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BroadcastSourceType SourceType { get; set; } = default!;
+
+    /// <summary>
+    /// Source identifier (camera ID or voice room ID)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceId")]
+    public string? SourceId { get; set; } = default!;
+
+    /// <summary>
+    /// RTMP destination URL with stream key masked
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maskedRtmpUrl")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string MaskedRtmpUrl { get; set; } = default!;
+
+    /// <summary>
+    /// Current broadcast state
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("state")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BroadcastState State { get; set; } = default!;
+
+    /// <summary>
+    /// Current active video source in fallback cascade
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currentVideoSource")]
+    public string? CurrentVideoSource { get; set; } = default!;
+
+    /// <summary>
+    /// Mesh instance ID of the node running this broadcast
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("owningInstanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string OwningInstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// When the broadcast started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("startedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset StartedAt { get; set; } = default!;
+
+    /// <summary>
+    /// FFmpeg process health status
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("health")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BroadcastHealth Health { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the output was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the output was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
 
 }
 
@@ -863,116 +973,6 @@ public partial class OutputUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to broadcast.output.deleted when a output is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class OutputDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: broadcast.output.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "broadcast.output.deleted";
-
-    /// <summary>
-    /// Broadcast output identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("broadcastId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid BroadcastId { get; set; } = default!;
-
-    /// <summary>
-    /// Type of broadcast input source
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sourceType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public BroadcastSourceType SourceType { get; set; } = default!;
-
-    /// <summary>
-    /// Source identifier (camera ID or voice room ID)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sourceId")]
-    public string? SourceId { get; set; } = default!;
-
-    /// <summary>
-    /// RTMP destination URL with stream key masked
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("maskedRtmpUrl")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string MaskedRtmpUrl { get; set; } = default!;
-
-    /// <summary>
-    /// Current broadcast state
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("state")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public BroadcastState State { get; set; } = default!;
-
-    /// <summary>
-    /// Current active video source in fallback cascade
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("currentVideoSource")]
-    public string? CurrentVideoSource { get; set; } = default!;
-
-    /// <summary>
-    /// Mesh instance ID of the node running this broadcast
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("owningInstanceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string OwningInstanceId { get; set; } = default!;
-
-    /// <summary>
-    /// When the broadcast started
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("startedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset StartedAt { get; set; } = default!;
-
-    /// <summary>
-    /// FFmpeg process health status
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("health")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public BroadcastHealth Health { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the output was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the output was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

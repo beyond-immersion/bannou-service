@@ -1538,6 +1538,10 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
         {
             _logger.LogWarning(ex, "Could not retrieve game time for realm {RealmId}, using defaults for ETA",
                 originLocation.RealmId);
+            await _messageBus.TryPublishErrorAsync(
+                "transit", "CreateJourney", ex.GetType().Name, ex.Message,
+                dependency: "worldstate", endpoint: "get-realm-time",
+                stack: ex.StackTrace, cancellationToken: cancellationToken);
         }
 
         // Calculate route via route calculator
@@ -1740,6 +1744,10 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Could not retrieve game time for journey departure {JourneyId}, using planned time", body.JourneyId);
+            await _messageBus.TryPublishErrorAsync(
+                "transit", "DepartJourney", ex.GetType().Name, ex.Message,
+                dependency: "worldstate", endpoint: "get-realm-time",
+                stack: ex.StackTrace, cancellationToken: cancellationToken);
         }
 
         // Transition to in_transit
@@ -1765,9 +1773,13 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
                 cancellationToken);
             destinationRealmId = destLocation.RealmId;
         }
-        catch (ApiException)
+        catch (ApiException ex)
         {
-            // Non-fatal for event publishing; null will be coalesced in event publisher
+            _logger.LogWarning(ex, "Could not resolve destination realm for journey {JourneyId} event publishing", body.JourneyId);
+            await _messageBus.TryPublishErrorAsync(
+                "transit", "DepartJourney", ex.GetType().Name, ex.Message,
+                dependency: "location", endpoint: "get-location",
+                stack: ex.StackTrace, cancellationToken: cancellationToken);
         }
 
         // Publish transit.journey.departed event
@@ -2549,10 +2561,12 @@ public partial class TransitService : ITransitService, IDeprecateAndMergeEntity
         }
         catch (ApiException ex)
         {
-            // Non-fatal: if Worldstate is unavailable, we can still calculate routes
-            // but totalRealMinutes will be 0 and seasonal warnings will omit season data
             _logger.LogWarning(ex, "Could not retrieve time ratio for realm {RealmId}, real-minutes estimation will be unavailable",
                 fromLocation.RealmId);
+            await _messageBus.TryPublishErrorAsync(
+                "transit", "CalculateRoute", ex.GetType().Name, ex.Message,
+                dependency: "worldstate", endpoint: "get-realm-time",
+                stack: ex.StackTrace, cancellationToken: cancellationToken);
         }
 
         // Build the route calculation request for the calculator

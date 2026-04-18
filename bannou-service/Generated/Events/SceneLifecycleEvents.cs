@@ -122,6 +122,102 @@ public partial class SceneCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to scene.deleted when a scene is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SceneDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: scene.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "scene.deleted";
+
+    /// <summary>
+    /// Unique scene identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sceneId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SceneId { get; set; } = default!;
+
+    /// <summary>
+    /// Game service identifier for partitioning (null for unpartitioned)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameId")]
+    public string? GameId { get; set; } = default!;
+
+    /// <summary>
+    /// Scene classification code
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sceneType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string SceneType { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable scene name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Optional scene description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// Semantic version (MAJOR.MINOR.PATCH)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Version { get; set; } = default!;
+
+    /// <summary>
+    /// Searchable tags
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tags")]
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
+
+    /// <summary>
+    /// Total number of nodes in scene
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("nodeCount")]
+    public int NodeCount { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the scene was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the scene was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to scene.updated when a scene is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -216,102 +312,6 @@ public partial class SceneUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to scene.deleted when a scene is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SceneDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: scene.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "scene.deleted";
-
-    /// <summary>
-    /// Unique scene identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sceneId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SceneId { get; set; } = default!;
-
-    /// <summary>
-    /// Game service identifier for partitioning (null for unpartitioned)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameId")]
-    public string? GameId { get; set; } = default!;
-
-    /// <summary>
-    /// Scene classification code
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sceneType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
-    public string SceneType { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable scene name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Name { get; set; } = default!;
-
-    /// <summary>
-    /// Optional scene description
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string? Description { get; set; } = default!;
-
-    /// <summary>
-    /// Semantic version (MAJOR.MINOR.PATCH)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Version { get; set; } = default!;
-
-    /// <summary>
-    /// Searchable tags
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
-
-    /// <summary>
-    /// Total number of nodes in scene
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("nodeCount")]
-    public int NodeCount { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the scene was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the scene was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

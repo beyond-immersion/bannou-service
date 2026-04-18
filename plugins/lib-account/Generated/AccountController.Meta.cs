@@ -794,6 +794,7 @@ public partial class AccountController
                     "type": "string",
                     "nullable": true,
                     "maxLength": 100,
+                    "x-detect-if-set": true,
                     "description": "New display name for the account"
                 },
                 "roles": {
@@ -804,12 +805,14 @@ public partial class AccountController
                     },
                     "maxItems": 20,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Updated list of roles for the account (null to keep unchanged)"
                 },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
@@ -1946,12 +1949,14 @@ public partial class AccountController
                     "type": "string",
                     "nullable": true,
                     "maxLength": 100,
+                    "x-detect-if-set": true,
                     "description": "New display name for the account"
                 },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
@@ -2269,6 +2274,7 @@ public partial class AccountController
                 "mfaSecret": {
                     "type": "string",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Encrypted TOTP secret (set when enabling, null when disabling)"
                 },
                 "mfaRecoveryCodes": {
@@ -2277,6 +2283,7 @@ public partial class AccountController
                         "type": "string"
                     },
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "BCrypt-hashed recovery codes (set when enabling, null when disabling)"
                 }
             }
@@ -2766,6 +2773,7 @@ public partial class AccountController
                         "type": "string"
                     },
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Roles to add to all specified accounts (null to skip)"
                 },
                 "removeRoles": {
@@ -2774,6 +2782,7 @@ public partial class AccountController
                         "type": "string"
                     },
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Roles to remove from all specified accounts (null to skip)"
                 }
             }

@@ -271,6 +271,14 @@ public partial class GameSessionService
         {
             _logger.LogWarning(ex, "Connect service error getting sessions for account {AccountId}: {StatusCode}",
                 accountId, ex.StatusCode);
+            await _messageBus.TryPublishErrorAsync(
+                "game-session",
+                "HandleSubscriptionUpdatedInternal",
+                "ConnectSessionQueryFailed",
+                ex.Message,
+                dependency: "connect",
+                endpoint: "get-account-sessions",
+                stack: ex.StackTrace);
             // Fall back to local subscriber-sessions store
             connectedSessionsForAccount = await GetSubscriberSessionsAsync(accountId);
         }
@@ -360,6 +368,14 @@ public partial class GameSessionService
             // Subscription service returned an error - don't cache, allow retry
             _logger.LogWarning(ex, "Subscription service error fetching subscriptions for account {AccountId}: {StatusCode}",
                 accountId, ex.StatusCode);
+            await _messageBus.TryPublishErrorAsync(
+                "game-session",
+                "FetchAndCacheSubscriptions",
+                "SubscriptionQueryFailed",
+                ex.Message,
+                dependency: "subscription",
+                endpoint: "query-current-subscriptions",
+                stack: ex.StackTrace);
         }
         catch (Exception ex)
         {
@@ -791,6 +807,14 @@ public partial class GameSessionService
             _logger.LogWarning(ex,
                 "Failed to check autoLobbyEnabled for {StubName} (status {StatusCode}), defaulting to enabled",
                 stubName, ex.StatusCode);
+            await _messageBus.TryPublishErrorAsync(
+                "game-session",
+                "IsAutoLobbyEnabled",
+                "GameServiceQueryFailed",
+                ex.Message,
+                dependency: "game-service",
+                endpoint: "get-service",
+                stack: ex.StackTrace);
             return true;
         }
         catch (Exception ex)

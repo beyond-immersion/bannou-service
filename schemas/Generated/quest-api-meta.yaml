@@ -671,23 +671,23 @@ paths:
         ,\n                    \"description\": \"Definition to update\"\n                },\n                \"name\": {\n\
         \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"New name\"\n                },\n                \"description\": {\n                    \"type\": \"string\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"New description\"\n             \
-        \   },\n                \"category\": {\n                    \"description\": \"New quest category\",\n          \
-        \          \"nullable\": true,\n                    \"allOf\": [\n                        {\n                    \
-        \        \"$ref\": \"#/$defs/QuestCategory\"\n                        }\n                    ]\n                },\n\
-        \                \"difficulty\": {\n                    \"description\": \"New difficulty rating\",\n            \
-        \        \"nullable\": true,\n                    \"allOf\": [\n                        {\n                      \
-        \      \"$ref\": \"#/$defs/QuestDifficulty\"\n                        }\n                    ]\n                },\n\
-        \                \"tags\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
-        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
-        \            \"description\": \"New tags\"\n                }\n            }\n        },\n        \"QuestCategory\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Main\",\n                \"Side\"\
-        ,\n                \"Bounty\",\n                \"Daily\",\n                \"Weekly\",\n                \"Event\"\
-        ,\n                \"Tutorial\"\n            ],\n            \"description\": \"Category of quest for organization\"\
-        \n        },\n        \"QuestDifficulty\": {\n            \"type\": \"string\",\n            \"enum\": [\n       \
-        \         \"Trivial\",\n                \"Easy\",\n                \"Normal\",\n                \"Hard\",\n      \
-        \          \"Heroic\",\n                \"Legendary\"\n            ],\n            \"description\": \"Difficulty rating
-        of the quest\"\n        }\n    }\n}"
+        \                    \"nullable\": true,\n                    \"x-detect-if-set\": true,\n                    \"description\"\
+        : \"New description\"\n                },\n                \"category\": {\n                    \"description\": \"\
+        New quest category\",\n                    \"nullable\": true,\n                    \"allOf\": [\n               \
+        \         {\n                            \"$ref\": \"#/$defs/QuestCategory\"\n                        }\n        \
+        \            ]\n                },\n                \"difficulty\": {\n                    \"description\": \"New
+        difficulty rating\",\n                    \"nullable\": true,\n                    \"allOf\": [\n                \
+        \        {\n                            \"$ref\": \"#/$defs/QuestDifficulty\"\n                        }\n       \
+        \             ]\n                },\n                \"tags\": {\n                    \"type\": \"array\",\n     \
+        \               \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"New tags\"\n                }\n            }\n  \
+        \      },\n        \"QuestCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n            \
+        \    \"Main\",\n                \"Side\",\n                \"Bounty\",\n                \"Daily\",\n             \
+        \   \"Weekly\",\n                \"Event\",\n                \"Tutorial\"\n            ],\n            \"description\"\
+        : \"Category of quest for organization\"\n        },\n        \"QuestDifficulty\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"Trivial\",\n                \"Easy\",\n                \"Normal\",\n\
+        \                \"Hard\",\n                \"Heroic\",\n                \"Legendary\"\n            ],\n         \
+        \   \"description\": \"Difficulty rating of the quest\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QuestDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"QuestDefinitionResponse\": {\n            \"allOf\": [\n                {\n       \
         \             \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n       \
@@ -2640,6 +2640,7 @@ components:
         description:
           type: string
           nullable: true
+          x-detect-if-set: true
           description: New description
         category:
           description: New quest category

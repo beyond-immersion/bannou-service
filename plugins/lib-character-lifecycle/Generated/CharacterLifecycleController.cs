@@ -346,6 +346,123 @@ public interface ICharacterLifecycleController : BeyondImmersion.BannouService.C
 
 
     /// <summary>
+    /// Deprecate a lifecycle template
+    /// </summary>
+
+    /// <remarks>
+    /// Marks a lifecycle template as deprecated. Deprecated templates cannot be used
+    /// <br/>to create new lifecycle profiles for characters. Existing characters with
+    /// <br/>profiles referencing this template continue to function unchanged.
+    /// <br/>Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+    /// <br/>no delete. Idempotent — returns OK if already deprecated.
+    /// </remarks>
+
+
+
+    /// <returns>Lifecycle template deprecated (or already deprecated)</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetLifecycleTemplateResponse>> DeprecateLifecycleTemplate(DeprecateLifecycleTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Deprecate a heritable trait template
+    /// </summary>
+
+    /// <remarks>
+    /// Marks a heritable trait template as deprecated. Deprecated templates cannot be used
+    /// <br/>to create new genetic profiles for characters of this species. Existing characters
+    /// <br/>with genetic profiles referencing this template continue to function unchanged.
+    /// <br/>Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+    /// <br/>no delete. Idempotent — returns OK if already deprecated.
+    /// </remarks>
+
+
+
+    /// <returns>Heritable trait template deprecated (or already deprecated)</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetHeritableTraitTemplateResponse>> DeprecateHeritableTraitTemplate(DeprecateHeritableTraitTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Deprecate a hybrid trait template
+    /// </summary>
+
+    /// <remarks>
+    /// Marks a hybrid trait template as deprecated. Deprecated hybrid templates cannot
+    /// <br/>be used to create new genetic profiles for hybrid offspring of this species pair.
+    /// <br/>Existing hybrid characters with genetic profiles referencing this template continue
+    /// <br/>to function unchanged.
+    /// <br/>Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+    /// <br/>no delete. Idempotent — returns OK if already deprecated.
+    /// </remarks>
+
+
+
+    /// <returns>Hybrid trait template deprecated (or already deprecated)</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetHybridTraitTemplateResponse>> DeprecateHybridTraitTemplate(DeprecateHybridTraitTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Clean deprecated lifecycle templates with zero remaining profiles
+    /// </summary>
+
+    /// <remarks>
+    /// Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+    /// <br/>lifecycle templates and permanently removes those with zero remaining
+    /// <br/>LifecycleProfile instances referencing them, subject to an optional grace period.
+    /// <br/>Publishes lifecycle-template.deleted events for each removed template. Idempotent
+    /// <br/>and safe to call at any frequency. Supports dry-run mode for admin panel preview.
+    /// </remarks>
+
+
+
+    /// <returns>Cleanup sweep completed</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanDeprecatedStringKeyResponse>> CleanDeprecatedLifecycleTemplates(CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Clean deprecated heritable trait templates with zero remaining profiles
+    /// </summary>
+
+    /// <remarks>
+    /// Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+    /// <br/>heritable trait templates and permanently removes those with zero remaining
+    /// <br/>GeneticProfile instances referencing them, subject to an optional grace period.
+    /// <br/>Publishes heritable-trait-template.deleted events for each removed template.
+    /// <br/>Idempotent and safe to call at any frequency. Supports dry-run mode for admin
+    /// <br/>panel preview.
+    /// </remarks>
+
+
+
+    /// <returns>Cleanup sweep completed</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanDeprecatedStringKeyResponse>> CleanDeprecatedHeritableTraitTemplates(CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
+    /// Clean deprecated hybrid trait templates with zero remaining hybrid profiles
+    /// </summary>
+
+    /// <remarks>
+    /// Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+    /// <br/>hybrid trait templates and permanently removes those with zero remaining hybrid
+    /// <br/>GeneticProfile instances referencing them, subject to an optional grace period.
+    /// <br/>Publishes hybrid-trait-template.deleted events for each removed template.
+    /// <br/>Idempotent and safe to call at any frequency. Supports dry-run mode for admin
+    /// <br/>panel preview.
+    /// </remarks>
+
+
+
+    /// <returns>Cleanup sweep completed</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanDeprecatedStringKeyResponse>> CleanDeprecatedHybridTraitTemplates(CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+
+    /// <summary>
     /// Get bloodline definition
     /// </summary>
 
@@ -1504,6 +1621,321 @@ public partial class CharacterLifecycleController : Microsoft.AspNetCore.Mvc.Con
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:character-lifecycle/template/list",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Deprecate a lifecycle template
+    /// </summary>
+    /// <remarks>
+    /// Marks a lifecycle template as deprecated. Deprecated templates cannot be used
+    /// <br/>to create new lifecycle profiles for characters. Existing characters with
+    /// <br/>profiles referencing this template continue to function unchanged.
+    /// <br/>Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+    /// <br/>no delete. Idempotent — returns OK if already deprecated.
+    /// </remarks>
+    /// <returns>Lifecycle template deprecated (or already deprecated)</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("character-lifecycle/template/deprecate-lifecycle")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetLifecycleTemplateResponse>> DeprecateLifecycleTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateLifecycleTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-lifecycle",
+            "CharacterLifecycleController.DeprecateLifecycleTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-lifecycle/template/deprecate-lifecycle");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.DeprecateLifecycleTemplateAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterLifecycleController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-lifecycle/template/deprecate-lifecycle");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterLifecycleController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:character-lifecycle/template/deprecate-lifecycle");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "character-lifecycle",
+                "DeprecateLifecycleTemplate",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:character-lifecycle/template/deprecate-lifecycle",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Deprecate a heritable trait template
+    /// </summary>
+    /// <remarks>
+    /// Marks a heritable trait template as deprecated. Deprecated templates cannot be used
+    /// <br/>to create new genetic profiles for characters of this species. Existing characters
+    /// <br/>with genetic profiles referencing this template continue to function unchanged.
+    /// <br/>Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+    /// <br/>no delete. Idempotent — returns OK if already deprecated.
+    /// </remarks>
+    /// <returns>Heritable trait template deprecated (or already deprecated)</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("character-lifecycle/template/deprecate-heritable")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetHeritableTraitTemplateResponse>> DeprecateHeritableTraitTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateHeritableTraitTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-lifecycle",
+            "CharacterLifecycleController.DeprecateHeritableTraitTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-lifecycle/template/deprecate-heritable");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.DeprecateHeritableTraitTemplateAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterLifecycleController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-lifecycle/template/deprecate-heritable");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterLifecycleController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:character-lifecycle/template/deprecate-heritable");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "character-lifecycle",
+                "DeprecateHeritableTraitTemplate",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:character-lifecycle/template/deprecate-heritable",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Deprecate a hybrid trait template
+    /// </summary>
+    /// <remarks>
+    /// Marks a hybrid trait template as deprecated. Deprecated hybrid templates cannot
+    /// <br/>be used to create new genetic profiles for hybrid offspring of this species pair.
+    /// <br/>Existing hybrid characters with genetic profiles referencing this template continue
+    /// <br/>to function unchanged.
+    /// <br/>Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+    /// <br/>no delete. Idempotent — returns OK if already deprecated.
+    /// </remarks>
+    /// <returns>Hybrid trait template deprecated (or already deprecated)</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("character-lifecycle/template/deprecate-hybrid")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetHybridTraitTemplateResponse>> DeprecateHybridTraitTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateHybridTraitTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-lifecycle",
+            "CharacterLifecycleController.DeprecateHybridTraitTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-lifecycle/template/deprecate-hybrid");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.DeprecateHybridTraitTemplateAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterLifecycleController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-lifecycle/template/deprecate-hybrid");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterLifecycleController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:character-lifecycle/template/deprecate-hybrid");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "character-lifecycle",
+                "DeprecateHybridTraitTemplate",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:character-lifecycle/template/deprecate-hybrid",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Clean deprecated lifecycle templates with zero remaining profiles
+    /// </summary>
+    /// <remarks>
+    /// Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+    /// <br/>lifecycle templates and permanently removes those with zero remaining
+    /// <br/>LifecycleProfile instances referencing them, subject to an optional grace period.
+    /// <br/>Publishes lifecycle-template.deleted events for each removed template. Idempotent
+    /// <br/>and safe to call at any frequency. Supports dry-run mode for admin panel preview.
+    /// </remarks>
+    /// <returns>Cleanup sweep completed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("character-lifecycle/template/clean-deprecated-lifecycle")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanDeprecatedStringKeyResponse>> CleanDeprecatedLifecycleTemplates([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-lifecycle",
+            "CharacterLifecycleController.CleanDeprecatedLifecycleTemplates",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-lifecycle/template/clean-deprecated-lifecycle");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.CleanDeprecatedLifecycleTemplatesAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterLifecycleController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-lifecycle/template/clean-deprecated-lifecycle");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterLifecycleController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:character-lifecycle/template/clean-deprecated-lifecycle");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "character-lifecycle",
+                "CleanDeprecatedLifecycleTemplates",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:character-lifecycle/template/clean-deprecated-lifecycle",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Clean deprecated heritable trait templates with zero remaining profiles
+    /// </summary>
+    /// <remarks>
+    /// Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+    /// <br/>heritable trait templates and permanently removes those with zero remaining
+    /// <br/>GeneticProfile instances referencing them, subject to an optional grace period.
+    /// <br/>Publishes heritable-trait-template.deleted events for each removed template.
+    /// <br/>Idempotent and safe to call at any frequency. Supports dry-run mode for admin
+    /// <br/>panel preview.
+    /// </remarks>
+    /// <returns>Cleanup sweep completed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("character-lifecycle/template/clean-deprecated-heritable")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanDeprecatedStringKeyResponse>> CleanDeprecatedHeritableTraitTemplates([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-lifecycle",
+            "CharacterLifecycleController.CleanDeprecatedHeritableTraitTemplates",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-lifecycle/template/clean-deprecated-heritable");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.CleanDeprecatedHeritableTraitTemplatesAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterLifecycleController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-lifecycle/template/clean-deprecated-heritable");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterLifecycleController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:character-lifecycle/template/clean-deprecated-heritable");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "character-lifecycle",
+                "CleanDeprecatedHeritableTraitTemplates",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:character-lifecycle/template/clean-deprecated-heritable",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Clean deprecated hybrid trait templates with zero remaining hybrid profiles
+    /// </summary>
+    /// <remarks>
+    /// Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+    /// <br/>hybrid trait templates and permanently removes those with zero remaining hybrid
+    /// <br/>GeneticProfile instances referencing them, subject to an optional grace period.
+    /// <br/>Publishes hybrid-trait-template.deleted events for each removed template.
+    /// <br/>Idempotent and safe to call at any frequency. Supports dry-run mode for admin
+    /// <br/>panel preview.
+    /// </remarks>
+    /// <returns>Cleanup sweep completed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("character-lifecycle/template/clean-deprecated-hybrid")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanDeprecatedStringKeyResponse>> CleanDeprecatedHybridTraitTemplates([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-lifecycle",
+            "CharacterLifecycleController.CleanDeprecatedHybridTraitTemplates",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-lifecycle/template/clean-deprecated-hybrid");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.CleanDeprecatedHybridTraitTemplatesAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterLifecycleController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-lifecycle/template/clean-deprecated-hybrid");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterLifecycleController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:character-lifecycle/template/clean-deprecated-hybrid");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "character-lifecycle",
+                "CleanDeprecatedHybridTraitTemplates",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:character-lifecycle/template/clean-deprecated-hybrid",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

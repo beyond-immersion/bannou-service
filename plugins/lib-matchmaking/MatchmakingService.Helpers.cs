@@ -357,6 +357,10 @@ public partial class MatchmakingService
         {
             _logger.LogWarning(apiEx, "Game session service error finalizing match {MatchId}: {Status}",
                 match.MatchId, apiEx.StatusCode);
+            await _messageBus.TryPublishErrorAsync(
+                "matchmaking", "FinalizeMatch", "GameSessionServiceError", apiEx.Message,
+                dependency: "game-session", endpoint: "create-game-session",
+                stack: apiEx.StackTrace, cancellationToken: cancellationToken);
             await CancelMatchAsync(match, null, cancellationToken);
         }
         catch (Exception ex)

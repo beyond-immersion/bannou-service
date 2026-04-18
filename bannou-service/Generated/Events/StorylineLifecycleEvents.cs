@@ -138,6 +138,118 @@ public partial class ScenarioDefinitionCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to storyline.scenario-definition.deleted when a scenariodefinition is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ScenarioDefinitionDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: storyline.scenario-definition.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "storyline.scenario-definition.deleted";
+
+    /// <summary>
+    /// Unique scenario definition identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scenarioId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ScenarioId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable scenario code
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Code { get; set; } = default!;
+
+    /// <summary>
+    /// Display name for the scenario
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Detailed scenario description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// Higher priority scenarios are checked first
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("priority")]
+    public int Priority { get; set; } = default!;
+
+    /// <summary>
+    /// Whether scenario can be triggered
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("enabled")]
+    public bool Enabled { get; set; } = default!;
+
+    /// <summary>
+    /// Realm scope (null means all realms)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    public System.Guid? RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Game service scope (null means all games)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    public System.Guid? GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the scenario definition was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the scenario definition was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this scenario definition is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the scenario definition was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to storyline.scenario-definition.updated when a scenariodefinition is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -248,118 +360,6 @@ public partial class ScenarioDefinitionUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to storyline.scenario-definition.deleted when a scenariodefinition is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ScenarioDefinitionDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: storyline.scenario-definition.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "storyline.scenario-definition.deleted";
-
-    /// <summary>
-    /// Unique scenario definition identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("scenarioId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ScenarioId { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable scenario code
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Code { get; set; } = default!;
-
-    /// <summary>
-    /// Display name for the scenario
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Name { get; set; } = default!;
-
-    /// <summary>
-    /// Detailed scenario description
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string? Description { get; set; } = default!;
-
-    /// <summary>
-    /// Higher priority scenarios are checked first
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("priority")]
-    public int Priority { get; set; } = default!;
-
-    /// <summary>
-    /// Whether scenario can be triggered
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("enabled")]
-    public bool Enabled { get; set; } = default!;
-
-    /// <summary>
-    /// Realm scope (null means all realms)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    public System.Guid? RealmId { get; set; } = default!;
-
-    /// <summary>
-    /// Game service scope (null means all games)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    public System.Guid? GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the scenario definition was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the scenario definition was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this scenario definition is deprecated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
-    public bool IsDeprecated { get; set; } = default!;
-
-    /// <summary>
-    /// When the scenario definition was deprecated (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for deprecation (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? DeprecationReason { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 
@@ -478,6 +478,130 @@ public partial class ScenarioExecutionCreatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published to storyline.scenario-execution.deleted when a scenarioexecution is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ScenarioExecutionDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: storyline.scenario-execution.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "storyline.scenario-execution.deleted";
+
+    /// <summary>
+    /// Unique scenario execution instance identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("executionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ExecutionId { get; set; } = default!;
+
+    /// <summary>
+    /// Scenario definition this execution was created from
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scenarioId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ScenarioId { get; set; } = default!;
+
+    /// <summary>
+    /// Code of the scenario definition
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scenarioCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ScenarioCode { get; set; } = default!;
+
+    /// <summary>
+    /// Character that triggered the scenario
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("primaryCharacterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid PrimaryCharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// God-actor or system that orchestrated the trigger
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("orchestratorId")]
+    public System.Guid? OrchestratorId { get; set; } = default!;
+
+    /// <summary>
+    /// Realm context for this execution
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    public System.Guid? RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Game service context for this execution
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    public System.Guid? GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Current execution status
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ScenarioStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Current phase number (1-based)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currentPhase")]
+    public int CurrentPhase { get; set; } = default!;
+
+    /// <summary>
+    /// Total number of phases in this execution
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalPhases")]
+    public int TotalPhases { get; set; } = default!;
+
+    /// <summary>
+    /// When the scenario was triggered
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("triggeredAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset TriggeredAt { get; set; } = default!;
+
+    /// <summary>
+    /// When the scenario completed or failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("completedAt")]
+    public System.DateTimeOffset? CompletedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the scenario execution was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the scenario execution was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
 
 }
 
@@ -604,130 +728,6 @@ public partial class ScenarioExecutionUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to storyline.scenario-execution.deleted when a scenarioexecution is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ScenarioExecutionDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: storyline.scenario-execution.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "storyline.scenario-execution.deleted";
-
-    /// <summary>
-    /// Unique scenario execution instance identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("executionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ExecutionId { get; set; } = default!;
-
-    /// <summary>
-    /// Scenario definition this execution was created from
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("scenarioId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ScenarioId { get; set; } = default!;
-
-    /// <summary>
-    /// Code of the scenario definition
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("scenarioCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string ScenarioCode { get; set; } = default!;
-
-    /// <summary>
-    /// Character that triggered the scenario
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("primaryCharacterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid PrimaryCharacterId { get; set; } = default!;
-
-    /// <summary>
-    /// God-actor or system that orchestrated the trigger
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("orchestratorId")]
-    public System.Guid? OrchestratorId { get; set; } = default!;
-
-    /// <summary>
-    /// Realm context for this execution
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    public System.Guid? RealmId { get; set; } = default!;
-
-    /// <summary>
-    /// Game service context for this execution
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    public System.Guid? GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Current execution status
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("status")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ScenarioStatus Status { get; set; } = default!;
-
-    /// <summary>
-    /// Current phase number (1-based)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("currentPhase")]
-    public int CurrentPhase { get; set; } = default!;
-
-    /// <summary>
-    /// Total number of phases in this execution
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("totalPhases")]
-    public int TotalPhases { get; set; } = default!;
-
-    /// <summary>
-    /// When the scenario was triggered
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("triggeredAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset TriggeredAt { get; set; } = default!;
-
-    /// <summary>
-    /// When the scenario completed or failed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("completedAt")]
-    public System.DateTimeOffset? CompletedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the scenario execution was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the scenario execution was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

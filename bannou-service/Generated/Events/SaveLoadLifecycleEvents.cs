@@ -156,6 +156,136 @@ public partial class SaveSlotCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to save-load.save-slot.deleted when a saveslot is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SaveSlotDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: save-load.save-slot.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "save-load.save-slot.deleted";
+
+    /// <summary>
+    /// Unique slot identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("slotId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SlotId { get; set; } = default!;
+
+    /// <summary>
+    /// Game identifier for namespace isolation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(32)]
+    public string GameId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the owning entity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid OwnerId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity that owns this save slot
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// Slot name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("slotName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64)]
+    public string SlotName { get; set; } = default!;
+
+    /// <summary>
+    /// Save category determining retention and cleanup behavior
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("category")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SaveCategory Category { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum versions to retain
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxVersions")]
+    public int MaxVersions { get; set; } = default!;
+
+    /// <summary>
+    /// Days to retain versions (null = indefinite)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("retentionDays")]
+    public int? RetentionDays { get; set; } = default!;
+
+    /// <summary>
+    /// Compression algorithm used for save data
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("compressionType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CompressionType CompressionType { get; set; } = default!;
+
+    /// <summary>
+    /// Current number of versions in slot
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("versionCount")]
+    public int VersionCount { get; set; } = default!;
+
+    /// <summary>
+    /// Latest version number (null if empty)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("latestVersion")]
+    public int? LatestVersion { get; set; } = default!;
+
+    /// <summary>
+    /// Total storage used by all versions
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalSizeBytes")]
+    public long TotalSizeBytes { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the save slot was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the save slot was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to save-load.save-slot.updated when a saveslot is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -284,136 +414,6 @@ public partial class SaveSlotUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to save-load.save-slot.deleted when a saveslot is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SaveSlotDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: save-load.save-slot.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "save-load.save-slot.deleted";
-
-    /// <summary>
-    /// Unique slot identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("slotId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SlotId { get; set; } = default!;
-
-    /// <summary>
-    /// Game identifier for namespace isolation
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(32)]
-    public string GameId { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the owning entity
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid OwnerId { get; set; } = default!;
-
-    /// <summary>
-    /// Type of entity that owns this save slot
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EntityType OwnerType { get; set; } = default!;
-
-    /// <summary>
-    /// Slot name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(64)]
-    public string SlotName { get; set; } = default!;
-
-    /// <summary>
-    /// Save category determining retention and cleanup behavior
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("category")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SaveCategory Category { get; set; } = default!;
-
-    /// <summary>
-    /// Maximum versions to retain
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("maxVersions")]
-    public int MaxVersions { get; set; } = default!;
-
-    /// <summary>
-    /// Days to retain versions (null = indefinite)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("retentionDays")]
-    public int? RetentionDays { get; set; } = default!;
-
-    /// <summary>
-    /// Compression algorithm used for save data
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("compressionType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CompressionType CompressionType { get; set; } = default!;
-
-    /// <summary>
-    /// Current number of versions in slot
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("versionCount")]
-    public int VersionCount { get; set; } = default!;
-
-    /// <summary>
-    /// Latest version number (null if empty)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("latestVersion")]
-    public int? LatestVersion { get; set; } = default!;
-
-    /// <summary>
-    /// Total storage used by all versions
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("totalSizeBytes")]
-    public long TotalSizeBytes { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the save slot was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the save slot was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

@@ -225,6 +225,14 @@ public partial class ObligationService
             _logger.LogWarning(ex,
                 "Failed to query contract {ContractId} for party information, status {Status}",
                 contractId, ex.StatusCode);
+            await _messageBus.TryPublishErrorAsync(
+                "obligation",
+                "GetCharacterPartiesFromContract",
+                "ContractQueryFailed",
+                ex.Message,
+                dependency: "contract",
+                endpoint: "get-contract-instance",
+                stack: ex.StackTrace);
             return new List<Guid>();
         }
     }

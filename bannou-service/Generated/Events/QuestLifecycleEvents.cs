@@ -178,6 +178,158 @@ public partial class QuestDefinitionCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to quest.definition.deleted when a questdefinition is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class QuestDefinitionDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: quest.definition.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "quest.definition.deleted";
+
+    /// <summary>
+    /// Unique identifier for the quest definition
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("definitionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid DefinitionId { get; set; } = default!;
+
+    /// <summary>
+    /// Underlying contract template ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractTemplateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ContractTemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique quest code within game
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Code { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable quest name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Quest description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// Quest category for organization
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("category")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public QuestCategory Category { get; set; } = default!;
+
+    /// <summary>
+    /// Difficulty rating of the quest
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("difficulty")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public QuestDifficulty Difficulty { get; set; } = default!;
+
+    /// <summary>
+    /// Minimum level required
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("levelRequirement")]
+    public int? LevelRequirement { get; set; } = default!;
+
+    /// <summary>
+    /// Whether repeatable
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("repeatable")]
+    public bool Repeatable { get; set; } = default!;
+
+    /// <summary>
+    /// Cooldown for repeatable quests
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("cooldownSeconds")]
+    public int? CooldownSeconds { get; set; } = default!;
+
+    /// <summary>
+    /// Time limit
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deadlineSeconds")]
+    public int? DeadlineSeconds { get; set; } = default!;
+
+    /// <summary>
+    /// Max party size
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxQuestors")]
+    public int MaxQuestors { get; set; } = default!;
+
+    /// <summary>
+    /// Game service this definition belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the quest definition was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the quest definition was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this quest definition is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the quest definition was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to quest.definition.updated when a questdefinition is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -332,158 +484,6 @@ public partial class QuestDefinitionUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to quest.definition.deleted when a questdefinition is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class QuestDefinitionDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: quest.definition.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "quest.definition.deleted";
-
-    /// <summary>
-    /// Unique identifier for the quest definition
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("definitionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid DefinitionId { get; set; } = default!;
-
-    /// <summary>
-    /// Underlying contract template ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contractTemplateId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContractTemplateId { get; set; } = default!;
-
-    /// <summary>
-    /// Unique quest code within game
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Code { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable quest name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Name { get; set; } = default!;
-
-    /// <summary>
-    /// Quest description
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string? Description { get; set; } = default!;
-
-    /// <summary>
-    /// Quest category for organization
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("category")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public QuestCategory Category { get; set; } = default!;
-
-    /// <summary>
-    /// Difficulty rating of the quest
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("difficulty")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public QuestDifficulty Difficulty { get; set; } = default!;
-
-    /// <summary>
-    /// Minimum level required
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("levelRequirement")]
-    public int? LevelRequirement { get; set; } = default!;
-
-    /// <summary>
-    /// Whether repeatable
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("repeatable")]
-    public bool Repeatable { get; set; } = default!;
-
-    /// <summary>
-    /// Cooldown for repeatable quests
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("cooldownSeconds")]
-    public int? CooldownSeconds { get; set; } = default!;
-
-    /// <summary>
-    /// Time limit
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deadlineSeconds")]
-    public int? DeadlineSeconds { get; set; } = default!;
-
-    /// <summary>
-    /// Max party size
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("maxQuestors")]
-    public int MaxQuestors { get; set; } = default!;
-
-    /// <summary>
-    /// Game service this definition belongs to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the quest definition was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the quest definition was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this quest definition is deprecated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
-    public bool IsDeprecated { get; set; } = default!;
-
-    /// <summary>
-    /// When the quest definition was deprecated (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for deprecation (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? DeprecationReason { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Published to quest.instance.created when a questinstance is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -596,6 +596,128 @@ public partial class QuestInstanceCreatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published to quest.instance.deleted when a questinstance is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class QuestInstanceDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: quest.instance.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "quest.instance.deleted";
+
+    /// <summary>
+    /// Unique quest instance identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("questInstanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid QuestInstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Quest definition this instance was created from
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("definitionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid DefinitionId { get; set; } = default!;
+
+    /// <summary>
+    /// Underlying contract instance ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractInstanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ContractInstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Quest code (denormalized from definition)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Code { get; set; } = default!;
+
+    /// <summary>
+    /// Quest name (denormalized from definition)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Current quest status
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public QuestStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Quest giver NPC character ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("questGiverCharacterId")]
+    public System.Guid? QuestGiverCharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Game service this instance belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// When the quest was accepted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("acceptedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset AcceptedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When the quest was completed/failed/abandoned
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("completedAt")]
+    public System.DateTimeOffset? CompletedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Quest deadline (null if no time limit)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deadline")]
+    public System.DateTimeOffset? Deadline { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the quest instance was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the quest instance was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
 
 }
 
@@ -720,128 +842,6 @@ public partial class QuestInstanceUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to quest.instance.deleted when a questinstance is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class QuestInstanceDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: quest.instance.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "quest.instance.deleted";
-
-    /// <summary>
-    /// Unique quest instance identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("questInstanceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid QuestInstanceId { get; set; } = default!;
-
-    /// <summary>
-    /// Quest definition this instance was created from
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("definitionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid DefinitionId { get; set; } = default!;
-
-    /// <summary>
-    /// Underlying contract instance ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contractInstanceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContractInstanceId { get; set; } = default!;
-
-    /// <summary>
-    /// Quest code (denormalized from definition)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Code { get; set; } = default!;
-
-    /// <summary>
-    /// Quest name (denormalized from definition)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Name { get; set; } = default!;
-
-    /// <summary>
-    /// Current quest status
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("status")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public QuestStatus Status { get; set; } = default!;
-
-    /// <summary>
-    /// Quest giver NPC character ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("questGiverCharacterId")]
-    public System.Guid? QuestGiverCharacterId { get; set; } = default!;
-
-    /// <summary>
-    /// Game service this instance belongs to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// When the quest was accepted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("acceptedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset AcceptedAt { get; set; } = default!;
-
-    /// <summary>
-    /// When the quest was completed/failed/abandoned
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("completedAt")]
-    public System.DateTimeOffset? CompletedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Quest deadline (null if no time limit)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deadline")]
-    public System.DateTimeOffset? Deadline { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the quest instance was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the quest instance was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

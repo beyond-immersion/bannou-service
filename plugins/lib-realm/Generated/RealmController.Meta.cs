@@ -812,6 +812,7 @@ public partial class RealmController
                     "type": "string",
                     "maxLength": 2000,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Description of the realm"
                 },
                 "category": {
@@ -819,6 +820,7 @@ public partial class RealmController
                     "minLength": 1,
                     "maxLength": 50,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Category for grouping"
                 },
                 "isActive": {
@@ -835,6 +837,7 @@ public partial class RealmController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }

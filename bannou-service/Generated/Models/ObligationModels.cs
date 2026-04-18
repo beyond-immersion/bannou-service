@@ -86,34 +86,6 @@ public partial class ActionMappingResponse
 public partial class SetActionMappingRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private string _tag = default!;
     /// <summary>
     /// The GOAP action tag to map (e.g., "steal_food")
     /// </summary>
@@ -121,9 +93,8 @@ public partial class SetActionMappingRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
-    public string Tag { get => _tag; set { _tag = value; _TrackChange("tag"); } }
+    public string Tag { get; set; } = default!;
 
-    private System.Collections.Generic.ICollection<string> _violationTypes = new System.Collections.ObjectModel.Collection<string>();
     /// <summary>
     /// Violation type codes this tag should map to
     /// </summary>
@@ -132,15 +103,14 @@ public partial class SetActionMappingRequest
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.MinLength(1)]
     [System.ComponentModel.DataAnnotations.MaxLength(20)]
-    public System.Collections.Generic.ICollection<string> ViolationTypes { get => _violationTypes; set { _violationTypes = value; _TrackChange("violationTypes"); } }
+    public System.Collections.Generic.ICollection<string> ViolationTypes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
-    private string? _description = default!;
     /// <summary>
     /// Human-readable description of this mapping
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.StringLength(512)]
-    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
+    public string? Description { get; set; } = default!;
 
 }
 

@@ -127,6 +127,15 @@ public partial class ObligationService
             _logger.LogWarning(ex,
                 "Failed to query active contracts for character {CharacterId}, status {Status}",
                 characterId, ex.StatusCode);
+            await _messageBus.TryPublishErrorAsync(
+                "obligation",
+                "RebuildObligationCache",
+                "ContractQueryFailed",
+                ex.Message,
+                dependency: "contract",
+                endpoint: "query-contract-instances",
+                stack: ex.StackTrace,
+                cancellationToken: ct);
             return new ObligationManifestModel
             {
                 CharacterId = characterId,

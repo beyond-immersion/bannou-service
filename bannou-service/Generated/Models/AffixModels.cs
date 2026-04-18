@@ -987,7 +987,7 @@ public partial class UpdateDefinitionRequest
     /// <summary>
     /// Fields explicitly set on this request. Populated automatically by property
     /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
+    /// provided" from "field explicitly set to null" for opt-in properties.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
     public System.Collections.Generic.ICollection<string>? ChangeFields
@@ -1008,80 +1008,70 @@ public partial class UpdateDefinitionRequest
         => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
 
 
-    private System.Guid _definitionId = default!;
     /// <summary>
     /// Definition to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("definitionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid DefinitionId { get => _definitionId; set { _definitionId = value; _TrackChange("definitionId"); } }
+    public System.Guid DefinitionId { get; set; } = default!;
 
-    private int? _tier = default!;
     /// <summary>
     /// Updated tier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tier")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
-    public int? Tier { get => _tier; set { _tier = value; _TrackChange("tier"); } }
+    public int? Tier { get; set; } = default!;
 
-    private string? _category = default!;
     /// <summary>
     /// Updated category
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string? Category { get => _category; set { _category = value; _TrackChange("category"); } }
+    public string? Category { get; set; } = default!;
 
-    private System.Collections.Generic.ICollection<string>? _tags = default!;
     /// <summary>
     /// Updated tags
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string>? Tags { get => _tags; set { _tags = value; _TrackChange("tags"); } }
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
-    private System.Collections.Generic.ICollection<StatGrant>? _statGrants = default!;
     /// <summary>
     /// Updated stat grants
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("statGrants")]
-    public System.Collections.Generic.ICollection<StatGrant>? StatGrants { get => _statGrants; set { _statGrants = value; _TrackChange("statGrants"); } }
+    public System.Collections.Generic.ICollection<StatGrant>? StatGrants { get; set; } = default!;
 
-    private int? _spawnWeight = default!;
     /// <summary>
     /// Updated spawn weight
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("spawnWeight")]
     [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
-    public int? SpawnWeight { get => _spawnWeight; set { _spawnWeight = value; _TrackChange("spawnWeight"); } }
+    public int? SpawnWeight { get; set; } = default!;
 
-    private System.Collections.Generic.ICollection<SpawnTagModifier>? _spawnTagModifiers = default!;
     /// <summary>
     /// Updated tag modifiers
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("spawnTagModifiers")]
-    public System.Collections.Generic.ICollection<SpawnTagModifier>? SpawnTagModifiers { get => _spawnTagModifiers; set { _spawnTagModifiers = value; _TrackChange("spawnTagModifiers"); } }
+    public System.Collections.Generic.ICollection<SpawnTagModifier>? SpawnTagModifiers { get; set; } = default!;
 
-    private int? _requiredItemLevel = default!;
     /// <summary>
     /// Updated required item level
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("requiredItemLevel")]
     [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
-    public int? RequiredItemLevel { get => _requiredItemLevel; set { _requiredItemLevel = value; _TrackChange("requiredItemLevel"); } }
+    public int? RequiredItemLevel { get; set; } = default!;
 
-    private System.Collections.Generic.ICollection<string>? _requiredInfluences = default!;
     /// <summary>
     /// Updated required influences
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("requiredInfluences")]
-    public System.Collections.Generic.ICollection<string>? RequiredInfluences { get => _requiredInfluences; set { _requiredInfluences = value; _TrackChange("requiredInfluences"); } }
+    public System.Collections.Generic.ICollection<string>? RequiredInfluences { get; set; } = default!;
 
-    private System.Collections.Generic.ICollection<string>? _validItemClasses = default!;
     /// <summary>
     /// Updated valid item classes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("validItemClasses")]
-    public System.Collections.Generic.ICollection<string>? ValidItemClasses { get => _validItemClasses; set { _validItemClasses = value; _TrackChange("validItemClasses"); } }
+    public System.Collections.Generic.ICollection<string>? ValidItemClasses { get; set; } = default!;
 
     private string? _displayName = default!;
     /// <summary>
@@ -1090,12 +1080,11 @@ public partial class UpdateDefinitionRequest
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     public string? DisplayName { get => _displayName; set { _displayName = value; _TrackChange("displayName"); } }
 
-    private int? _displayOrder = default!;
     /// <summary>
     /// Updated display order
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayOrder")]
-    public int? DisplayOrder { get => _displayOrder; set { _displayOrder = value; _TrackChange("displayOrder"); } }
+    public int? DisplayOrder { get; set; } = default!;
 
 }
 
@@ -1423,83 +1412,49 @@ public partial class RerollValuesRequest
 public partial class SetItemStateRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private System.Guid _itemInstanceId = default!;
     /// <summary>
     /// Target item instance
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("itemInstanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ItemInstanceId { get => _itemInstanceId; set { _itemInstanceId = value; _TrackChange("itemInstanceId"); } }
+    public System.Guid ItemInstanceId { get; set; } = default!;
 
-    private bool? _isCorrupted = default!;
     /// <summary>
     /// Set corrupted flag (irreversible once true)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isCorrupted")]
-    public bool? IsCorrupted { get => _isCorrupted; set { _isCorrupted = value; _TrackChange("isCorrupted"); } }
+    public bool? IsCorrupted { get; set; } = default!;
 
-    private bool? _isMirrored = default!;
     /// <summary>
     /// Set mirrored flag (irreversible once true)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isMirrored")]
-    public bool? IsMirrored { get => _isMirrored; set { _isMirrored = value; _TrackChange("isMirrored"); } }
+    public bool? IsMirrored { get; set; } = default!;
 
-    private bool? _isSplit = default!;
     /// <summary>
     /// Set split flag (irreversible once true)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isSplit")]
-    public bool? IsSplit { get => _isSplit; set { _isSplit = value; _TrackChange("isSplit"); } }
+    public bool? IsSplit { get; set; } = default!;
 
-    private bool? _isIdentified = default!;
     /// <summary>
     /// Set identified flag
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isIdentified")]
-    public bool? IsIdentified { get => _isIdentified; set { _isIdentified = value; _TrackChange("isIdentified"); } }
+    public bool? IsIdentified { get; set; } = default!;
 
-    private bool? _isSynthesized = default!;
     /// <summary>
     /// Set synthesized flag
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isSynthesized")]
-    public bool? IsSynthesized { get => _isSynthesized; set { _isSynthesized = value; _TrackChange("isSynthesized"); } }
+    public bool? IsSynthesized { get; set; } = default!;
 
-    private System.Guid? _fractureDefinitionId = default!;
     /// <summary>
     /// Fracture a specific affix slot by definition ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("fractureDefinitionId")]
-    public System.Guid? FractureDefinitionId { get => _fractureDefinitionId; set { _fractureDefinitionId = value; _TrackChange("fractureDefinitionId"); } }
+    public System.Guid? FractureDefinitionId { get; set; } = default!;
 
 }
 
@@ -1510,50 +1465,21 @@ public partial class SetItemStateRequest
 public partial class SetInfluenceRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private System.Guid _itemInstanceId = default!;
     /// <summary>
     /// Target item instance
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("itemInstanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ItemInstanceId { get => _itemInstanceId; set { _itemInstanceId = value; _TrackChange("itemInstanceId"); } }
+    public System.Guid ItemInstanceId { get; set; } = default!;
 
-    private System.Collections.Generic.ICollection<string> _influences = new System.Collections.ObjectModel.Collection<string>();
     /// <summary>
     /// New influence types to set on the item
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("influences")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> Influences { get => _influences; set { _influences = value; _TrackChange("influences"); } }
+    public System.Collections.Generic.ICollection<string> Influences { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
 }
 

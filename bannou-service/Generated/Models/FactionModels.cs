@@ -519,65 +519,34 @@ public partial class ListFactionsResponse
 public partial class UpdateFactionRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private System.Guid _factionId = default!;
     /// <summary>
     /// ID of the faction to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("factionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid FactionId { get => _factionId; set { _factionId = value; _TrackChange("factionId"); } }
+    public System.Guid FactionId { get; set; } = default!;
 
-    private string? _name = default!;
     /// <summary>
     /// New display name (null to keep current)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
-    public string? Name { get => _name; set { _name = value; _TrackChange("name"); } }
+    public string? Name { get; set; } = default!;
 
-    private string? _code = default!;
     /// <summary>
     /// New code (null to keep current, must be unique within game service)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
     [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
-    public string? Code { get => _code; set { _code = value; _TrackChange("code"); } }
+    public string? Code { get; set; } = default!;
 
-    private string? _description = default!;
     /// <summary>
     /// New description (null to keep current)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.StringLength(2048)]
-    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
+    public string? Description { get; set; } = default!;
 
 }
 
@@ -1072,52 +1041,22 @@ public partial class CharacterMembershipEntry
 public partial class UpdateMemberRoleRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private System.Guid _factionId = default!;
     /// <summary>
     /// Faction containing the membership
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("factionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid FactionId { get => _factionId; set { _factionId = value; _TrackChange("factionId"); } }
+    public System.Guid FactionId { get; set; } = default!;
 
-    private System.Guid _characterId = default!;
     /// <summary>
     /// Character whose role to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get => _characterId; set { _characterId = value; _TrackChange("characterId"); } }
+    public System.Guid CharacterId { get; set; } = default!;
 
-    private FactionMemberRole _role = default!;
     /// <summary>
     /// New role to assign
     /// </summary>
@@ -1125,7 +1064,7 @@ public partial class UpdateMemberRoleRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public FactionMemberRole Role { get => _role; set { _role = value; _TrackChange("role"); } }
+    public FactionMemberRole Role { get; set; } = default!;
 
 }
 
@@ -1545,73 +1484,41 @@ public partial class DefineNormRequest
 public partial class UpdateNormRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private System.Guid _normId = default!;
     /// <summary>
     /// ID of the norm to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("normId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid NormId { get => _normId; set { _normId = value; _TrackChange("normId"); } }
+    public System.Guid NormId { get; set; } = default!;
 
-    private float? _basePenalty = default!;
     /// <summary>
     /// New base penalty (null to keep current)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("basePenalty")]
     [System.ComponentModel.DataAnnotations.Range(0.0F, float.MaxValue)]
-    public float? BasePenalty { get => _basePenalty; set { _basePenalty = value; _TrackChange("basePenalty"); } }
+    public float? BasePenalty { get; set; } = default!;
 
-    private NormSeverity? _severity = default!;
     /// <summary>
     /// New severity level (null to keep current)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("severity")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public NormSeverity? Severity { get => _severity; set { _severity = value; _TrackChange("severity"); } }
+    public NormSeverity? Severity { get; set; } = default!;
 
-    private NormScope? _scope = default!;
     /// <summary>
     /// New scope (null to keep current)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scope")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public NormScope? Scope { get => _scope; set { _scope = value; _TrackChange("scope"); } }
+    public NormScope? Scope { get; set; } = default!;
 
-    private string? _description = default!;
     /// <summary>
     /// New description (null to keep current)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.StringLength(1024)]
-    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
+    public string? Description { get; set; } = default!;
 
 }
 
@@ -2215,43 +2122,14 @@ public partial class GovernanceEntryResponse
 public partial class SetGovernanceEntryRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private System.Guid _factionId = default!;
     /// <summary>
     /// Faction to set governance on (must be Sovereign or Delegated)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("factionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid FactionId { get => _factionId; set { _factionId = value; _TrackChange("factionId"); } }
+    public System.Guid FactionId { get; set; } = default!;
 
-    private string _domain = default!;
     /// <summary>
     /// Case type domain prefix (e.g., "dissolution", "trade_dispute")
     /// </summary>
@@ -2259,9 +2137,8 @@ public partial class SetGovernanceEntryRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
-    public string Domain { get => _domain; set { _domain = value; _TrackChange("domain"); } }
+    public string Domain { get; set; } = default!;
 
-    private string _templateCode = default!;
     /// <summary>
     /// Contract template code in lib-contract for this case type
     /// </summary>
@@ -2269,14 +2146,13 @@ public partial class SetGovernanceEntryRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
-    public string TemplateCode { get => _templateCode; set { _templateCode = value; _TrackChange("templateCode"); } }
+    public string TemplateCode { get; set; } = default!;
 
-    private object? _governanceParameters = default!;
     /// <summary>
     /// Opaque governance parameters for the contract template. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("governanceParameters")]
-    public object? GovernanceParameters { get => _governanceParameters; set { _governanceParameters = value; _TrackChange("governanceParameters"); } }
+    public object? GovernanceParameters { get; set; } = default!;
 
 }
 

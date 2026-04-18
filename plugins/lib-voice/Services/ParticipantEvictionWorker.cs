@@ -289,6 +289,15 @@ public class ParticipantEvictionWorker : BackgroundService
             catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Failed to clear voice permission state for evicted session {SessionId}", stale.SessionId);
+                await messageBus.TryPublishErrorAsync(
+                    "voice",
+                    "EvictStaleParticipants",
+                    "ClearSessionStateFailed",
+                    ex.Message,
+                    dependency: "permission",
+                    endpoint: "clear-session-state",
+                    stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
             }
 
             // Check if eviction breaks broadcast consent
@@ -402,6 +411,15 @@ public class ParticipantEvictionWorker : BackgroundService
             catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Failed to restore voice:in_room state for session {SessionId}", sessionId);
+                await messageBus.TryPublishErrorAsync(
+                    "voice",
+                    "AutoDeclineConsent",
+                    "UpdateSessionStateFailed",
+                    ex.Message,
+                    dependency: "permission",
+                    endpoint: "update-session-state",
+                    stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
             }
         }
 
@@ -486,6 +504,15 @@ public class ParticipantEvictionWorker : BackgroundService
                 catch (ApiException ex)
                 {
                     _logger.LogWarning(ex, "Failed to restore voice:in_room state for session {SessionId}", sessionId);
+                    await messageBus.TryPublishErrorAsync(
+                        "voice",
+                        "StopBroadcastFromWorker",
+                        "UpdateSessionStateFailed",
+                        ex.Message,
+                        dependency: "permission",
+                        endpoint: "update-session-state",
+                        stack: ex.StackTrace,
+                        cancellationToken: cancellationToken);
                 }
             }
         }

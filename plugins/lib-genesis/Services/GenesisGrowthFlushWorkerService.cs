@@ -143,6 +143,7 @@ public class GenesisGrowthFlushWorkerService : BackgroundService
         var entityStore = stateStoreFactory.GetStore<GenesisEntityModel>(StateStoreDefinitions.GenesisEntities);
         var templateStore = stateStoreFactory.GetStore<GenesisTemplateModel>(StateStoreDefinitions.GenesisTemplates);
         var seedClient = scope.ServiceProvider.GetRequiredService<ISeedClient>();
+        var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
 
         var successCount = 0;
         var failureCount = 0;
@@ -152,7 +153,7 @@ public class GenesisGrowthFlushWorkerService : BackgroundService
         {
             try
             {
-                var flushed = await FlushEntityAsync(entityId, entries, entityStore, templateStore, seedClient, cancellationToken);
+                var flushed = await FlushEntityAsync(entityId, entries, entityStore, templateStore, seedClient, messageBus, cancellationToken);
                 if (flushed) successCount++;
                 else skippedCount++;
             }
@@ -180,6 +181,7 @@ public class GenesisGrowthFlushWorkerService : BackgroundService
         IStateStore<GenesisEntityModel> entityStore,
         IStateStore<GenesisTemplateModel> templateStore,
         ISeedClient seedClient,
+        IMessageBus messageBus,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity(
@@ -250,6 +252,9 @@ public class GenesisGrowthFlushWorkerService : BackgroundService
             _logger.LogWarning(ex,
                 "Seed RecordGrowthBatch failed for entity {EntityId} seed {SeedId}",
                 entityId, entity.SeedId);
+            await messageBus.TryPublishErrorAsync(
+                "genesis", "GrowthFlush.RecordGrowthBatch",
+                ex.GetType().Name, ex.Message, stack: ex.StackTrace);
             return false;
         }
 

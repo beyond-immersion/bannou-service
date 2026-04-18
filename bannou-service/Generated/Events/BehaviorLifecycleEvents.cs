@@ -114,6 +114,95 @@ public partial class BehaviorCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to behavior.deleted when a behavior is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BehaviorDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: behavior.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "behavior.deleted";
+
+    /// <summary>
+    /// Unique identifier for the behavior
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("behaviorId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BehaviorId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable name of the behavior
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Category classification for the behavior
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("category")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Category { get; set; } = default!;
+
+    /// <summary>
+    /// Identifier of the bundle this behavior belongs to. Null if not bundled.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    public string? BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Identifier of the asset associated with this behavior
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AssetId { get; set; } = default!;
+
+    /// <summary>
+    /// Size of the compiled bytecode in bytes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bytecodeSize")]
+    public int? BytecodeSize { get; set; } = default!;
+
+    /// <summary>
+    /// Version of the schema used for this behavior
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("schemaVersion")]
+    public string? SchemaVersion { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the behavior was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the behavior was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to behavior.updated when a behavior is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -205,95 +294,6 @@ public partial class BehaviorUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to behavior.deleted when a behavior is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class BehaviorDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: behavior.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "behavior.deleted";
-
-    /// <summary>
-    /// Unique identifier for the behavior
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("behaviorId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string BehaviorId { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable name of the behavior
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Name { get; set; } = default!;
-
-    /// <summary>
-    /// Category classification for the behavior
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("category")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Category { get; set; } = default!;
-
-    /// <summary>
-    /// Identifier of the bundle this behavior belongs to. Null if not bundled.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
-    public string? BundleId { get; set; } = default!;
-
-    /// <summary>
-    /// Identifier of the asset associated with this behavior
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string AssetId { get; set; } = default!;
-
-    /// <summary>
-    /// Size of the compiled bytecode in bytes
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("bytecodeSize")]
-    public int? BytecodeSize { get; set; } = default!;
-
-    /// <summary>
-    /// Version of the schema used for this behavior
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("schemaVersion")]
-    public string? SchemaVersion { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the behavior was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the behavior was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Published to behavior.bundle.created when a behaviorbundle is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -351,6 +351,73 @@ public partial class BehaviorBundleCreatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published to behavior.bundle.deleted when a behaviorbundle is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BehaviorBundleDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: behavior.bundle.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "behavior.bundle.deleted";
+
+    /// <summary>
+    /// Unique identifier for the behavior bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable name of the bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Number of behaviors in the bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("behaviorCount")]
+    public int BehaviorCount { get; set; } = default!;
+
+    /// <summary>
+    /// Total size of all compiled bytecode in bytes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalBytecodeSize")]
+    public long? TotalBytecodeSize { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the behavior bundle was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the behavior bundle was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
 
 }
 
@@ -420,73 +487,6 @@ public partial class BehaviorBundleUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to behavior.bundle.deleted when a behaviorbundle is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class BehaviorBundleDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: behavior.bundle.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "behavior.bundle.deleted";
-
-    /// <summary>
-    /// Unique identifier for the behavior bundle
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable name of the bundle
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Name { get; set; } = default!;
-
-    /// <summary>
-    /// Number of behaviors in the bundle
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("behaviorCount")]
-    public int BehaviorCount { get; set; } = default!;
-
-    /// <summary>
-    /// Total size of all compiled bytecode in bytes
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("totalBytecodeSize")]
-    public long? TotalBytecodeSize { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the behavior bundle was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the behavior bundle was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

@@ -1396,49 +1396,20 @@ public partial class QueryByBloodlineResponse
 public partial class SetNaturalDeathYearRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private System.Guid _characterId = default!;
     /// <summary>
     /// Character to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get => _characterId; set { _characterId = value; _TrackChange("characterId"); } }
+    public System.Guid CharacterId { get; set; } = default!;
 
-    private int _naturalDeathYear = default!;
     /// <summary>
     /// New projected natural death year
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("naturalDeathYear")]
     [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
-    public int NaturalDeathYear { get => _naturalDeathYear; set { _naturalDeathYear = value; _TrackChange("naturalDeathYear"); } }
+    public int NaturalDeathYear { get; set; } = default!;
 
 }
 
@@ -2063,6 +2034,114 @@ public partial class SeedHybridTemplateRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SeedHybridTemplateResponse
 {
+
+}
+
+/// <summary>
+/// Request to deprecate a lifecycle template (Category B — one-way, no delete). Idempotent — returns OK if already deprecated.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeprecateLifecycleTemplateRequest
+{
+
+    /// <summary>
+    /// Species code of the template to deprecate
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("speciesCode")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string SpeciesCode { get; set; } = default!;
+
+    /// <summary>
+    /// Game service scope
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (recommended for audit trail)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? Reason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to deprecate a heritable trait template (Category B — one-way, no delete). Idempotent — returns OK if already deprecated.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeprecateHeritableTraitTemplateRequest
+{
+
+    /// <summary>
+    /// Species code of the template to deprecate
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("speciesCode")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string SpeciesCode { get; set; } = default!;
+
+    /// <summary>
+    /// Game service scope
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (recommended for audit trail)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? Reason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to deprecate a hybrid trait template (Category B — one-way, no delete). Idempotent — returns OK if already deprecated.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeprecateHybridTraitTemplateRequest
+{
+
+    /// <summary>
+    /// First species in the pair
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("speciesA")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string SpeciesA { get; set; } = default!;
+
+    /// <summary>
+    /// Second species in the pair
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("speciesB")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string SpeciesB { get; set; } = default!;
+
+    /// <summary>
+    /// Game service scope
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (recommended for audit trail)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? Reason { get; set; } = default!;
 
 }
 

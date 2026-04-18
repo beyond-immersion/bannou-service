@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Messaging;
@@ -307,8 +308,9 @@ public partial class TransitService
             changedFields.Add("cargoCapacityKg");
         }
 
-        if (request.CargoSpeedPenaltyRate.HasValue && request.CargoSpeedPenaltyRate != model.CargoSpeedPenaltyRate)
+        if (request.ChangeFields.IsFieldSet("cargoSpeedPenaltyRate") && request.CargoSpeedPenaltyRate != model.CargoSpeedPenaltyRate)
         {
+            // Null clears the per-mode override, reverting to the plugin-level DefaultCargoSpeedPenaltyRate.
             model.CargoSpeedPenaltyRate = request.CargoSpeedPenaltyRate;
             changedFields.Add("cargoSpeedPenaltyRate");
         }
@@ -808,8 +810,11 @@ public partial class TransitService
         }
         catch (ApiException ex)
         {
-            // Best-effort: position reporting failure should not fail the journey operation
             _logger.LogWarning(ex, "Failed to report entity {EntityId} position at location {LocationId}", entityId, locationId);
+            await _messageBus.TryPublishErrorAsync(
+                "transit", "TryReportEntityPosition", ex.GetType().Name, ex.Message,
+                dependency: "location", endpoint: "report-entity-position",
+                stack: ex.StackTrace, cancellationToken: cancellationToken);
         }
     }
 
@@ -863,9 +868,13 @@ public partial class TransitService
                 cancellationToken);
             return location.RealmId;
         }
-        catch (ApiException)
+        catch (ApiException ex)
         {
             _logger.LogDebug("Could not resolve realm for location {LocationId}", locationId);
+            await _messageBus.TryPublishErrorAsync(
+                "transit", "ResolveLocationRealmId", ex.GetType().Name, ex.Message,
+                dependency: "location", endpoint: "get-location",
+                stack: ex.StackTrace, cancellationToken: cancellationToken);
             return null;
         }
     }

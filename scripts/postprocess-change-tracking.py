@@ -1,27 +1,39 @@
 #!/usr/bin/env python3
 """
-Post-process NSwag-generated model files to add change-tracking to Update request models.
+Post-process NSwag-generated model files to add change-tracking to OPT-IN Update request properties.
 
-Transforms auto-properties on Update/Modify/Set request classes into tracked properties
-with backing fields, enabling the server to distinguish "field absent" from "field
-explicitly set to null" on nullable optional fields.
+Transforms auto-properties into tracked properties with backing fields ONLY when the
+corresponding source schema property declares `x-detect-if-set: true`. This enables
+the server to distinguish "field absent" from "field explicitly set to null" for
+specific properties that require 3-state update semantics.
 
 See GitHub Issue #722 for the systemic design.
 
+The `x-detect-if-set: true` attribute is an OPT-IN marker on request-model properties
+in `schemas/*-api.yaml`. Under this opt-in design:
+  - Only explicitly marked properties get the tracked-setter wrapper.
+  - Only classes with at least one opted-in property get the ChangeFields infrastructure.
+  - Non-opt-in properties on request classes remain as plain auto-properties.
+
+This replaces the previous "wrap every property on every Update/Modify/Set class" behavior,
+which produced false positives for fields that don't need 3-state semantics (system-driven
+lifecycle fields, security-sensitive tokens, renamed wire fields, etc.).
+
 Usage: python3 scripts/postprocess-change-tracking.py <model-file>
-       Returns exit code 0 on success (even if no target classes found).
+       Returns exit code 0 on success (even if no opted-in classes found).
 
 What this script does:
-  1. Identifies classes matching Update*Request, Modify*Request, Set*Request, BulkUpdate*Request
-  2. For each target class, transforms every auto-property into a tracked property:
-       Before:  public string? Name { get; set; } = default!;
-       After:   private string? _name = default!;
-                public string? Name { get => _name; set { _name = value; _TrackChange("name"); } }
-  3. Injects the _changeFields HashSet field, ChangeFields property, and _TrackChange helper
-  4. Extracts the camelCase field name from existing [JsonPropertyName("...")] attributes
+  1. Loads all `schemas/*-api.yaml` (plus `common-api.yaml`) to build the opt-in map:
+     set of (class_name, camelCaseJsonPropertyName) tuples where `x-detect-if-set: true`.
+  2. Identifies classes matching Update*Request, Modify*Request, Set*Request, BulkUpdate*Request.
+  3. For each target class that has AT LEAST ONE opted-in property:
+       - Transforms each opted-in auto-property into a tracked property
+       - Injects the ChangeFields field, property, and _TrackChange helper
+  4. Classes with NO opted-in properties are left entirely untouched.
 
 What it does NOT touch:
   - Non-target classes (responses, events, enums, other request types)
+  - Properties without `x-detect-if-set: true` in the source schema
   - Properties with [JsonExtensionData] (AdditionalProperties)
   - Properties with [JsonIgnore]
   - XML doc comments, using directives, namespace declarations
@@ -31,8 +43,15 @@ import re
 import sys
 from pathlib import Path
 
-# Classes whose names match these patterns get change-tracking
-# Pattern: starts with Update/Modify/Set/BulkUpdate AND ends with Request
+try:
+    import yaml
+except ImportError:
+    print("ERROR: PyYAML is required — install with `pip install pyyaml`", file=sys.stderr)
+    sys.exit(1)
+
+
+# Classes whose names match these patterns are candidates for change-tracking
+# Pattern: starts with Update/Modify/BulkUpdate AND ends with Request, or Set* (but not Setup*)
 TARGET_CLASS_RE = re.compile(
     r'^(?:Update|Modify|BulkUpdate)\w*Request$'  # Update*, Modify*, BulkUpdate*
     r'|^Set[A-Z]\w*Request$'                      # Set* (but not Setup*)
@@ -56,6 +75,61 @@ JSON_PROP_NAME_RE = re.compile(
 # Attributes that signal "skip this property"
 SKIP_ATTRIBUTES = ['[System.Text.Json.Serialization.JsonExtensionData]',
                     '[System.Text.Json.Serialization.JsonIgnore]']
+
+
+# Repo root is the parent of the scripts/ directory this file lives in
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parent
+SCHEMAS_DIR = REPO_ROOT / "schemas"
+
+
+def load_opt_in_map(schemas_dir: Path) -> set[tuple[str, str]]:
+    """Scan all *-api.yaml and common-api.yaml files for properties with x-detect-if-set: true.
+
+    Returns: set of (class_name, json_property_name) tuples.
+    The json_property_name is the schema-native camelCase key (matches [JsonPropertyName] on the C# side).
+    """
+    opt_ins: set[tuple[str, str]] = set()
+
+    if not schemas_dir.exists():
+        print(f"  ⚠️  Schemas directory not found: {schemas_dir}", file=sys.stderr)
+        return opt_ins
+
+    # Scan all -api.yaml files (top-level only, NOT schemas/Generated/)
+    for yaml_file in sorted(schemas_dir.glob('*-api.yaml')):
+        try:
+            with yaml_file.open('r') as f:
+                doc = yaml.safe_load(f)
+        except yaml.YAMLError as e:
+            print(f"  ⚠️  Failed to parse {yaml_file.name}: {e}", file=sys.stderr)
+            continue
+
+        if not isinstance(doc, dict):
+            continue
+
+        schemas = doc.get('components', {}).get('schemas', {})
+        if not isinstance(schemas, dict):
+            continue
+
+        for class_name, class_def in schemas.items():
+            if not isinstance(class_def, dict):
+                continue
+
+            # Properties can live at the top level OR inside an allOf branch.
+            # For our purposes (Update*/Modify*/Set*/BulkUpdate* request models),
+            # properties are always top-level — they don't inherit from a base schema.
+            # So we just check the top-level properties block.
+            props = class_def.get('properties', {})
+            if not isinstance(props, dict):
+                continue
+
+            for prop_name, prop_def in props.items():
+                if not isinstance(prop_def, dict):
+                    continue
+                if prop_def.get('x-detect-if-set') is True:
+                    opt_ins.add((class_name, prop_name))
+
+    return opt_ins
 
 
 def to_backing_field_name(prop_name: str) -> str:
@@ -134,7 +208,7 @@ def generate_tracking_infrastructure(indent: str) -> list[str]:
         f"{indent}/// <summary>\n",
         f"{indent}/// Fields explicitly set on this request. Populated automatically by property\n",
         f"{indent}/// setters. When serialized, enables the server to distinguish \"field not\n",
-        f"{indent}/// provided\" from \"field explicitly set to null\" for nullable properties.\n",
+        f"{indent}/// provided\" from \"field explicitly set to null\" for opt-in properties.\n",
         f"{indent}/// </summary>\n",
         f"{indent}[System.Text.Json.Serialization.JsonPropertyName(\"changeFields\")]\n",
         f"{indent}public System.Collections.Generic.ICollection<string>? ChangeFields\n",
@@ -157,8 +231,12 @@ def generate_tracking_infrastructure(indent: str) -> list[str]:
     ]
 
 
-def process_file(filepath: str) -> bool:
-    """Process a generated model file. Returns True if any changes were made."""
+def process_file(filepath: str, opt_in_map: set[tuple[str, str]]) -> bool:
+    """Process a generated model file. Returns True if any changes were made.
+
+    Only wraps properties whose (class_name, json_name) pair is in opt_in_map.
+    Only injects tracking infrastructure into classes that have at least one opted-in property.
+    """
     path = Path(filepath)
     if not path.exists():
         print(f"  ⚠️  File not found: {filepath}", file=sys.stderr)
@@ -166,7 +244,6 @@ def process_file(filepath: str) -> bool:
 
     lines = path.read_text().splitlines(keepends=True)
     modified = False
-    target_classes_found = 0
 
     # Phase 1: Find all target class ranges (start line, opening brace line, closing brace line)
     class_ranges = []
@@ -200,11 +277,9 @@ def process_file(filepath: str) -> bool:
 
     # Phase 2: Process each target class (work backwards to preserve line numbers)
     for class_name, class_start, brace_start, brace_end in reversed(class_ranges):
-        target_classes_found += 1
-        props_transformed = 0
         indent = "    "  # NSwag uses 4-space indent for members
 
-        # Collect property transformations within this class
+        # Collect opted-in property transformations within this class
         prop_lines_to_transform = []
 
         for line_idx in range(brace_start + 1, brace_end):
@@ -226,6 +301,10 @@ def process_file(filepath: str) -> bool:
             if json_name is None:
                 json_name = to_camel_case(prop_name)
 
+            # OPT-IN GATE: Only wrap if the (class, json_name) pair is in the opt-in map
+            if (class_name, json_name) not in opt_in_map:
+                continue
+
             backing_field = to_backing_field_name(prop_name)
 
             prop_lines_to_transform.append({
@@ -240,6 +319,11 @@ def process_file(filepath: str) -> bool:
                 'json_name': json_name,
                 'initializer_value': initializer_value,
             })
+
+        # If no properties are opted in for this class, skip it entirely —
+        # do NOT inject tracking infrastructure into classes that don't need it.
+        if not prop_lines_to_transform:
+            continue
 
         # Apply transformations in reverse order (preserve line indices)
         for prop in reversed(prop_lines_to_transform):
@@ -274,17 +358,15 @@ def process_file(filepath: str) -> bool:
             replace_start = preamble_start
             replace_end = prop_idx + 1  # exclusive
             lines[replace_start:replace_end] = new_lines
-            props_transformed += 1
 
         # Inject tracking infrastructure after the opening brace
         # (adjusted for any line shifts from property transformations above)
-        # Find the current opening brace position (may have shifted)
         # Since we worked backwards on properties, brace_start is still valid
         infra_lines = generate_tracking_infrastructure(indent)
         lines[brace_start + 1:brace_start + 1] = ["\n"] + infra_lines
 
         modified = True
-        print(f"  ✅ {class_name}: {props_transformed} properties tracked")
+        print(f"  ✅ {class_name}: {len(prop_lines_to_transform)} opt-in property/properties tracked")
 
     if modified:
         path.write_text(''.join(lines))
@@ -298,11 +380,15 @@ def main():
         sys.exit(1)
 
     filepath = sys.argv[1]
-    changed = process_file(filepath)
+
+    # Build the opt-in map once per invocation by scanning all -api.yaml files
+    opt_in_map = load_opt_in_map(SCHEMAS_DIR)
+
+    changed = process_file(filepath, opt_in_map)
 
     if changed:
         print(f"  📝 Change tracking applied to {filepath}")
-    # Exit 0 even if no changes — not every service has Update request models
+    # Exit 0 even if no changes — not every service has opted-in properties
 
 
 if __name__ == "__main__":

@@ -233,6 +233,15 @@ public partial class GardenerService
                 _logger.LogError(ex,
                     "Failed to record growth for seed {SeedId}, scenario {ScenarioId}",
                     primaryParticipant.SeedId, scenario.ScenarioInstanceId);
+                await _messageBus.TryPublishErrorAsync(
+                    "gardener",
+                    "CalculateAndAwardGrowth",
+                    "SeedGrowthRecordingFailure",
+                    ex.Message,
+                    dependency: "seed",
+                    endpoint: "record-growth-batch",
+                    stack: ex.StackTrace,
+                    cancellationToken: ct);
             }
 
             // Award growth for additional participants
@@ -252,6 +261,15 @@ public partial class GardenerService
                     _logger.LogError(ex,
                         "Failed to record growth for participant seed {SeedId}",
                         participant.SeedId);
+                    await _messageBus.TryPublishErrorAsync(
+                        "gardener",
+                        "CalculateAndAwardGrowth",
+                        "ParticipantGrowthRecordingFailure",
+                        ex.Message,
+                        dependency: "seed",
+                        endpoint: "record-growth-batch",
+                        stack: ex.StackTrace,
+                        cancellationToken: ct);
                 }
             }
         }
@@ -330,6 +348,15 @@ public partial class GardenerService
                 _logger.LogWarning(ex,
                     "Failed to remove participant {AccountId} from game session {SessionId}",
                     participant.AccountId, scenario.GameSessionId);
+                await _messageBus.TryPublishErrorAsync(
+                    "gardener",
+                    "TryCleanupGameSession",
+                    "GameSessionLeaveFailure",
+                    ex.Message,
+                    dependency: "game-session",
+                    endpoint: "leave-game-session-by-id",
+                    stack: ex.StackTrace,
+                    cancellationToken: ct);
             }
         }
     }

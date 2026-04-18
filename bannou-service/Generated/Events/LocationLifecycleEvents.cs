@@ -179,6 +179,159 @@ public partial class LocationCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to location.deleted when a location is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class LocationDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: location.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "location.deleted";
+
+    /// <summary>
+    /// Unique identifier for the location
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locationId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid LocationId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the realm this location belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique code identifier for the location within its realm
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Code { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable name of the location
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Detailed description of the location
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// Type classification of the location
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locationType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public LocationType LocationType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the parent location for hierarchical structures
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentLocationId")]
+    public System.Guid? ParentLocationId { get; set; } = default!;
+
+    /// <summary>
+    /// Depth level in the location hierarchy (0 for root locations)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("depth")]
+    public int Depth { get; set; } = default!;
+
+    /// <summary>
+    /// Optional spatial extent in world coordinates
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bounds")]
+    public BoundingBox3D? Bounds { get; set; } = default!;
+
+    /// <summary>
+    /// Precision level of spatial bounds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundsPrecision")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BoundsPrecision BoundsPrecision { get; set; } = default!;
+
+    /// <summary>
+    /// How this location's coordinate system relates to its parent
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("coordinateMode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CoordinateMode CoordinateMode { get; set; } = default!;
+
+    /// <summary>
+    /// Origin point for local or inherited coordinate systems
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("localOrigin")]
+    public Position3D? LocalOrigin { get; set; } = default!;
+
+    /// <summary>
+    /// Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the location was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the location was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this location is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the location was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to location.updated when a location is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -330,159 +483,6 @@ public partial class LocationUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to location.deleted when a location is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class LocationDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: location.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "location.deleted";
-
-    /// <summary>
-    /// Unique identifier for the location
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("locationId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid LocationId { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the realm this location belongs to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
-
-    /// <summary>
-    /// Unique code identifier for the location within its realm
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Code { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable name of the location
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Name { get; set; } = default!;
-
-    /// <summary>
-    /// Detailed description of the location
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string? Description { get; set; } = default!;
-
-    /// <summary>
-    /// Type classification of the location
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("locationType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public LocationType LocationType { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the parent location for hierarchical structures
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("parentLocationId")]
-    public System.Guid? ParentLocationId { get; set; } = default!;
-
-    /// <summary>
-    /// Depth level in the location hierarchy (0 for root locations)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("depth")]
-    public int Depth { get; set; } = default!;
-
-    /// <summary>
-    /// Optional spatial extent in world coordinates
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("bounds")]
-    public BoundingBox3D? Bounds { get; set; } = default!;
-
-    /// <summary>
-    /// Precision level of spatial bounds
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("boundsPrecision")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public BoundsPrecision BoundsPrecision { get; set; } = default!;
-
-    /// <summary>
-    /// How this location's coordinate system relates to its parent
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("coordinateMode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CoordinateMode CoordinateMode { get; set; } = default!;
-
-    /// <summary>
-    /// Origin point for local or inherited coordinate systems
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("localOrigin")]
-    public Position3D? LocalOrigin { get; set; } = default!;
-
-    /// <summary>
-    /// Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the location was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the location was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this location is deprecated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
-    public bool IsDeprecated { get; set; } = default!;
-
-    /// <summary>
-    /// When the location was deprecated (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for deprecation (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? DeprecationReason { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

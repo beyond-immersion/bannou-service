@@ -425,27 +425,28 @@ paths:
         : \"uuid\",\n                    \"description\": \"Entry template to update\"\n                },\n             \
         \   \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n     \
         \               \"description\": \"Updated display name\"\n                },\n                \"category\": {\n \
-        \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Updated category\"\n                },\n                \"tags\": {\n                    \"type\": \"array\",\n\
-        \                    \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"description\": \"Updated tags\"\n                },\n            \
-        \    \"assetId\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Updated primary asset identifier\"\n                },\n                \"thumbnailAssetId\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Updated thumbnail asset identifier\"\n                },\n                \"unlockHint\": {\n                \
+        \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"x-detect-if-set\"\
+        : true,\n                    \"description\": \"Updated category\"\n                },\n                \"tags\":
+        {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Updated tags\"\n                },\n                \"assetId\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Updated primary asset identifier\"\n\
+        \                },\n                \"thumbnailAssetId\": {\n                    \"type\": \"string\",\n        \
+        \            \"nullable\": true,\n                    \"description\": \"Updated thumbnail asset identifier\"\n  \
+        \              },\n                \"unlockHint\": {\n                    \"type\": \"string\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Updated unlock hint text\"\n                },\n\
+        \                \"hideWhenLocked\": {\n                    \"type\": \"boolean\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Updated spoiler protection flag\"\n                },\n          \
+        \      \"discoveryLevels\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/DiscoveryLevel\"\n                \
+        \    },\n                    \"description\": \"Updated discovery levels\"\n                },\n                \"\
+        themes\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                 \
+        \   \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"Updated theme tags for music entries\"\n                },\n                \"duration\": {\n                \
         \    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Updated
-        unlock hint text\"\n                },\n                \"hideWhenLocked\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Updated spoiler protection flag\"\
-        \n                },\n                \"discoveryLevels\": {\n                    \"type\": \"array\",\n         \
-        \           \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DiscoveryLevel\"\
-        \n                    },\n                    \"description\": \"Updated discovery levels\"\n                },\n\
-        \                \"themes\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
-        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
-        \            \"description\": \"Updated theme tags for music entries\"\n                },\n                \"duration\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Updated duration\"\n                },\n                \"loopPoint\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Updated loop point\"\n        \
-        \        },\n                \"composer\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        duration\"\n                },\n                \"loopPoint\": {\n                    \"type\": \"string\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Updated loop point\"\n              \
+        \  },\n                \"composer\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Updated composer name\"\n                }\n            }\n      \
         \  },\n        \"DiscoveryLevel\": {\n            \"type\": \"object\",\n            \"description\": \"A discovery
         level defining what information is revealed at this level\",\n            \"additionalProperties\": false,\n     \
@@ -2069,6 +2070,7 @@ components:
         category:
           type: string
           nullable: true
+          x-detect-if-set: true
           description: Updated category
         tags:
           type: array

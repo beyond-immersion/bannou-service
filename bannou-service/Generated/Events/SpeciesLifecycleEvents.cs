@@ -155,6 +155,136 @@ public partial class SpeciesCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to species.deleted when a species is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SpeciesDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: species.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "species.deleted";
+
+    /// <summary>
+    /// Unique identifier for the species
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SpeciesId { get; set; } = default!;
+
+    /// <summary>
+    /// Machine-readable code for the species
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Code { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable display name for the species
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Detailed description of the species characteristics and lore
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// Category grouping for the species
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("category")]
+    public string? Category { get; set; } = default!;
+
+    /// <summary>
+    /// Whether players can create characters of this species
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isPlayable")]
+    public bool IsPlayable { get; set; } = default!;
+
+    /// <summary>
+    /// Average lifespan in years for this species
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("baseLifespan")]
+    public int? BaseLifespan { get; set; } = default!;
+
+    /// <summary>
+    /// Age at which members of this species reach maturity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maturityAge")]
+    public int? MaturityAge { get; set; } = default!;
+
+    /// <summary>
+    /// Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("traitModifiers")]
+    public object? TraitModifiers { get; set; } = default!;
+
+    /// <summary>
+    /// IDs of realms where this species can exist
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmIds")]
+    public System.Collections.Generic.ICollection<System.Guid>? RealmIds { get; set; } = default!;
+
+    /// <summary>
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the species was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the species was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this species is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the species was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to species.updated when a species is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -283,136 +413,6 @@ public partial class SpeciesUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to species.deleted when a species is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SpeciesDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: species.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "species.deleted";
-
-    /// <summary>
-    /// Unique identifier for the species
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SpeciesId { get; set; } = default!;
-
-    /// <summary>
-    /// Machine-readable code for the species
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Code { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable display name for the species
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Name { get; set; } = default!;
-
-    /// <summary>
-    /// Detailed description of the species characteristics and lore
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string? Description { get; set; } = default!;
-
-    /// <summary>
-    /// Category grouping for the species
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string? Category { get; set; } = default!;
-
-    /// <summary>
-    /// Whether players can create characters of this species
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isPlayable")]
-    public bool IsPlayable { get; set; } = default!;
-
-    /// <summary>
-    /// Average lifespan in years for this species
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("baseLifespan")]
-    public int? BaseLifespan { get; set; } = default!;
-
-    /// <summary>
-    /// Age at which members of this species reach maturity
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("maturityAge")]
-    public int? MaturityAge { get; set; } = default!;
-
-    /// <summary>
-    /// Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("traitModifiers")]
-    public object? TraitModifiers { get; set; } = default!;
-
-    /// <summary>
-    /// IDs of realms where this species can exist
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmIds")]
-    public System.Collections.Generic.ICollection<System.Guid>? RealmIds { get; set; } = default!;
-
-    /// <summary>
-    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the species was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the species was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this species is deprecated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
-    public bool IsDeprecated { get; set; } = default!;
-
-    /// <summary>
-    /// When the species was deprecated (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for deprecation (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? DeprecationReason { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

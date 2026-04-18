@@ -418,12 +418,14 @@ public partial class CharacterController
                     "minLength": 1,
                     "maxLength": 100,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New name for the character"
                 },
                 "speciesId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Update character's species (used for species merge migrations)"
                 },
                 "status": {
@@ -433,17 +435,20 @@ public partial class CharacterController
                         }
                     ],
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New lifecycle status for the character"
                 },
                 "deathDate": {
                     "type": "string",
                     "format": "date-time",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "In-game death timestamp (sets status to dead)"
                 },
                 "patronDeityCode": {
                     "type": "string",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Opaque deity code identifying this character's patron deity. Set to null to clear patron. When changed, Divine auto-bonds/rebonds character domain seeds to the patron deity's seeds.\n"
                 }
             }

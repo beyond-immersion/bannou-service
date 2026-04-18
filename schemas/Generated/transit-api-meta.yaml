@@ -509,18 +509,18 @@ paths:
         \                  \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\":
         \"Updated cargo capacity\"\n                },\n                \"cargoSpeedPenaltyRate\": {\n                   \
         \ \"type\": \"number\",\n                    \"format\": \"decimal\",\n                    \"nullable\": true,\n \
-        \                   \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"description\": \"\
-        Updated per-mode cargo speed penalty rate\"\n                },\n                \"compatibleTerrainTypes\": {\n \
-        \                   \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Updated terrain compatibility list\",\n                    \"items\": {\n                        \"type\": \"\
-        string\"\n                    }\n                },\n                \"validEntityTypes\": {\n                   \
-        \ \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\": \"Updated entity
-        type restrictions\",\n                    \"items\": {\n                        \"type\": \"string\"\n           \
-        \         }\n                },\n                \"requirements\": {\n                    \"allOf\": [\n         \
-        \               {\n                            \"$ref\": \"#/$defs/TransitModeRequirements\"\n                   \
-        \     }\n                    ],\n                    \"nullable\": true,\n                    \"description\": \"\
-        Updated mode requirements\"\n                },\n                \"fatigueRatePerGameHour\": {\n                 \
-        \   \"type\": \"number\",\n                    \"format\": \"decimal\",\n                    \"nullable\": true,\n\
+        \                   \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"x-detect-if-set\"\
+        : true,\n                    \"description\": \"Updated per-mode cargo speed penalty rate\"\n                },\n\
+        \                \"compatibleTerrainTypes\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Updated terrain compatibility list\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    }\n                },\n                \"validEntityTypes\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Updated entity type restrictions\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    }\n                },\n                \"requirements\": {\n                    \"allOf\": [\n\
+        \                        {\n                            \"$ref\": \"#/$defs/TransitModeRequirements\"\n          \
+        \              }\n                    ],\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Updated mode requirements\"\n                },\n                \"fatigueRatePerGameHour\": {\n             \
+        \       \"type\": \"number\",\n                    \"format\": \"decimal\",\n                    \"nullable\": true,\n\
         \                    \"minimum\": 0,\n                    \"description\": \"Updated fatigue rate\"\n            \
         \    },\n                \"noiseLevelNormalized\": {\n                    \"type\": \"number\",\n                \
         \    \"format\": \"decimal\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n    \
@@ -5124,6 +5124,7 @@ components:
           nullable: true
           minimum: 0
           maximum: 1
+          x-detect-if-set: true
           description: Updated per-mode cargo speed penalty rate
         compatibleTerrainTypes:
           type: array

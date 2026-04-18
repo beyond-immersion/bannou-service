@@ -81,6 +81,10 @@ public partial class FactionService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Failed to check seed capability {Capability} for seed {SeedId}", capabilityCode, seedId);
+            await _messageBus.TryPublishErrorAsync(
+                "faction", "HasCapability", "ApiException",
+                ex.Message, dependency: "seed", endpoint: "get-capability-manifest",
+                stack: ex.StackTrace, cancellationToken: ct);
             return false;
         }
     }
@@ -367,6 +371,10 @@ public partial class FactionService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Failed to unregister resource reference for character {CharacterId}", characterId);
+            await _messageBus.TryPublishErrorAsync(
+                "faction", "RemoveMemberInternal", "ApiException",
+                ex.Message, dependency: "resource", endpoint: "unregister-reference",
+                stack: ex.StackTrace, cancellationToken: ct);
         }
 
         // Update character's membership list
@@ -423,6 +431,10 @@ public partial class FactionService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Failed to unregister resource reference for location {LocationId}", claim.LocationId);
+            await _messageBus.TryPublishErrorAsync(
+                "faction", "ReleaseTerritoryInternal", "ApiException",
+                ex.Message, dependency: "resource", endpoint: "unregister-reference",
+                stack: ex.StackTrace, cancellationToken: ct);
         }
 
         // Update faction's claim list

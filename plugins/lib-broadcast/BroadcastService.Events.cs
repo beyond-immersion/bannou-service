@@ -138,9 +138,18 @@ public partial class BroadcastService
         {
             await voiceClient.GetVoiceRoomAsync(new GetVoiceRoomRequest { RoomId = evt.RoomId }, CancellationToken.None);
         }
-        catch (ApiException)
+        catch (ApiException ex)
         {
             _logger.LogError("Voice broadcast failed: room {RoomId} not found", evt.RoomId);
+            await _messageBus.TryPublishErrorAsync(
+                "broadcast",
+                "HandleVoiceBroadcastApproved",
+                "VoiceRoomNotFound",
+                ex.Message,
+                dependency: "voice",
+                endpoint: "get-voice-room",
+                stack: ex.StackTrace,
+                cancellationToken: CancellationToken.None);
             return;
         }
 

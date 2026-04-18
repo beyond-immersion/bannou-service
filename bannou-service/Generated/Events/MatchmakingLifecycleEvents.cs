@@ -106,6 +106,87 @@ public partial class MatchmakingQueueCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to matchmaking.queue.deleted when a matchmakingqueue is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MatchmakingQueueDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: matchmaking.queue.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "matchmaking.queue.deleted";
+
+    /// <summary>
+    /// Unique identifier for the matchmaking queue
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("queueId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string QueueId { get; set; } = default!;
+
+    /// <summary>
+    /// Game this queue is for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string GameId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable queue name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the queue is accepting tickets
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("enabled")]
+    public bool Enabled { get; set; } = default!;
+
+    /// <summary>
+    /// Minimum players for a match
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("minCount")]
+    public int MinCount { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum players for a match
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxCount")]
+    public int MaxCount { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the matchmaking queue was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the matchmaking queue was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to matchmaking.queue.updated when a matchmakingqueue is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -185,87 +266,6 @@ public partial class MatchmakingQueueUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to matchmaking.queue.deleted when a matchmakingqueue is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MatchmakingQueueDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: matchmaking.queue.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "matchmaking.queue.deleted";
-
-    /// <summary>
-    /// Unique identifier for the matchmaking queue
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("queueId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string QueueId { get; set; } = default!;
-
-    /// <summary>
-    /// Game this queue is for
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string GameId { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable queue name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string DisplayName { get; set; } = default!;
-
-    /// <summary>
-    /// Whether the queue is accepting tickets
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("enabled")]
-    public bool Enabled { get; set; } = default!;
-
-    /// <summary>
-    /// Minimum players for a match
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("minCount")]
-    public int MinCount { get; set; } = default!;
-
-    /// <summary>
-    /// Maximum players for a match
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("maxCount")]
-    public int MaxCount { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the matchmaking queue was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the matchmaking queue was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

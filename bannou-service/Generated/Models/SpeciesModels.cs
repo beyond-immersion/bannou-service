@@ -289,7 +289,7 @@ public partial class UpdateSpeciesRequest
     /// <summary>
     /// Fields explicitly set on this request. Populated automatically by property
     /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
+    /// provided" from "field explicitly set to null" for opt-in properties.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
     public System.Collections.Generic.ICollection<string>? ChangeFields
@@ -310,22 +310,20 @@ public partial class UpdateSpeciesRequest
         => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
 
 
-    private System.Guid _speciesId = default!;
     /// <summary>
     /// ID of the species to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SpeciesId { get => _speciesId; set { _speciesId = value; _TrackChange("speciesId"); } }
+    public System.Guid SpeciesId { get; set; } = default!;
 
-    private string? _name = default!;
     /// <summary>
     /// Display name for the species
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
-    public string? Name { get => _name; set { _name = value; _TrackChange("name"); } }
+    public string? Name { get; set; } = default!;
 
     private string? _description = default!;
     /// <summary>
@@ -343,12 +341,11 @@ public partial class UpdateSpeciesRequest
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string? Category { get => _category; set { _category = value; _TrackChange("category"); } }
 
-    private bool? _isPlayable = default!;
     /// <summary>
     /// Whether players can create characters of this species
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isPlayable")]
-    public bool? IsPlayable { get => _isPlayable; set { _isPlayable = value; _TrackChange("isPlayable"); } }
+    public bool? IsPlayable { get; set; } = default!;
 
     private int? _baseLifespan = default!;
     /// <summary>
@@ -366,12 +363,11 @@ public partial class UpdateSpeciesRequest
     [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int? MaturityAge { get => _maturityAge; set { _maturityAge = value; _TrackChange("maturityAge"); } }
 
-    private object? _traitModifiers = default!;
     /// <summary>
     /// Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("traitModifiers")]
-    public object? TraitModifiers { get => _traitModifiers; set { _traitModifiers = value; _TrackChange("traitModifiers"); } }
+    public object? TraitModifiers { get; set; } = default!;
 
     private object? _metadata = default!;
     /// <summary>

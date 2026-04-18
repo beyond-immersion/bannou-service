@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Relationship.Caching;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
@@ -569,7 +570,7 @@ public partial class RelationshipService : IRelationshipService, IDeprecateAndMe
         }
 
         // Handle metadata updates
-        if (body.Metadata != null)
+        if (body.ChangeFields.IsFieldSet("metadata"))
         {
             changedFields.Add("metadata");
             model.Metadata = body.Metadata;
@@ -1244,13 +1245,13 @@ public partial class RelationshipService : IRelationshipService, IDeprecateAndMe
             changedFields.Add("name");
         }
 
-        if (body.Description != null && body.Description != existing.Description)
+        if (body.ChangeFields.IsFieldSet("description") && body.Description != existing.Description)
         {
             existing.Description = body.Description;
             changedFields.Add("description");
         }
 
-        if (body.Category != null && body.Category != existing.Category)
+        if (body.ChangeFields.IsFieldSet("category") && body.Category != existing.Category)
         {
             existing.Category = body.Category;
             changedFields.Add("category");
@@ -1262,7 +1263,7 @@ public partial class RelationshipService : IRelationshipService, IDeprecateAndMe
             changedFields.Add("isBidirectional");
         }
 
-        if (body.Metadata != null)
+        if (body.ChangeFields.IsFieldSet("metadata"))
         {
             existing.Metadata = body.Metadata;
             changedFields.Add("metadata");

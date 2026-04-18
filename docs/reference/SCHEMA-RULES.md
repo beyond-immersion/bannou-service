@@ -169,7 +169,20 @@ x-lifecycle:
 
 **Generated output**: `EntityNameCreatedEvent`, `EntityNameUpdatedEvent`, `EntityNameDeletedEvent` — all carry full entity data. Auto-injected fields: `createdAt`, `updatedAt`. With `deprecation: true`: `isDeprecated`, `deprecatedAt`, `deprecationReason`.
 
-**Nullable lifecycle fields and update requests**: Any x-lifecycle model field that is NOT `required: true` is implicitly nullable. These fields create a 3-state problem on Update requests (absent / explicit null / value) that service code MUST handle via the ChangeFields pattern. The `Update*Request`, `Modify*Request`, and `Set*Request` models for your service are post-processed to track property setters into a `ChangeFields` collection; your service code checks `body.ChangeFields.IsFieldSet("fieldName")` to distinguish "field was provided" from "field was absent" — including the explicit-null clear case. The structural test `ChangeFieldsCoverageTests.LifecycleNullableFields_HaveIsFieldSetCoverageInPlugin` mechanically verifies that every nullable lifecycle field has at least one `IsFieldSet("fieldName")` call somewhere in the owning plugin's source. Auto-injected fields (`createdAt`, `updatedAt`, `isDeprecated`, `deprecatedAt`, `deprecationReason`) are exempt because they are managed by infrastructure, not by Update request methods. See [HELPERS-AND-COMMON-PATTERNS.md § 17 ChangeFields Pattern](HELPERS-AND-COMMON-PATTERNS.md#17-changefields-pattern-for-update-requests) for the full pattern, migration guidance, and reference implementation.
+**Nullable fields and 3-state update semantics (`x-detect-if-set`)**: Nullable fields on Update/Modify/Set request models create a 3-state problem (absent / explicit null / value). To support explicit-null clearing, individual request-model properties can be marked with `x-detect-if-set: true`. The post-processor (`scripts/postprocess-change-tracking.py`) wraps ONLY these opted-in properties with setter-based change tracking into a `ChangeFields` collection; your service code checks `body.ChangeFields.IsFieldSet("fieldName")` to distinguish "field was provided" from "field was absent". The structural test `ChangeFieldsCoverageTests.DetectIfSetProperties_HaveIsFieldSetCoverageInPlugin` verifies that every opted-in property has at least one `IsFieldSet("fieldName")` call somewhere in the owning plugin's source. Properties without the attribute are left as standard auto-properties with no tracking overhead.
+
+```yaml
+# Opt-in example on a request model property:
+UpdateCharacterRequest:
+  properties:
+    patronDeityCode:
+      type: string
+      nullable: true
+      x-detect-if-set: true    # enables 3-state clear-to-null tracking
+      description: Opaque deity code (null to clear patron)
+```
+
+**When to use `x-detect-if-set`**: Add it to nullable properties on Update/Modify/Set request models where users need the ability to explicitly clear the value to null. Do NOT add it to: system-driven fields set only by event handlers or lifecycle transitions, security-sensitive fields not exposed to user updates, fields with dedicated endpoints using required (non-nullable) semantics, or fields that are nullable in storage but never clearable via API. See [HELPERS-AND-COMMON-PATTERNS.md § 17 ChangeFields Pattern](HELPERS-AND-COMMON-PATTERNS.md#17-changefields-pattern-for-update-requests) for the full pattern, migration guidance, and reference implementation.
 
 ### x-resource-mapping (Resource Event Mapping)
 

@@ -477,42 +477,46 @@ paths:
         \     \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\": \"ID of the
         achievement to update\"\n                },\n                \"displayName\": {\n                    \"type\": \"\
         string\",\n                    \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"\
-        description\": \"New display name\"\n                },\n                \"description\": {\n                    \"\
-        type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\": true,\n          \
-        \          \"description\": \"New description\"\n                },\n                \"category\": {\n           \
-        \         \"type\": \"string\",\n                    \"maxLength\": 100,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"New category for UI grouping\"\n                },\n                \"isActive\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New active status\"\n                },\n                \"platformMappings\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PlatformMapping\"\n  \
-        \                  },\n                    \"nullable\": true,\n                    \"description\": \"Updated platform
-        ID mappings\"\n                },\n                \"scoreType\": {\n                    \"type\": \"string\",\n \
-        \                   \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Score type code for matching analytics.score.updated events (progressive achievements)\"\n                },\n\
-        \                \"milestoneType\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
-        : 100,\n                    \"nullable\": true,\n                    \"description\": \"Milestone type code for matching
+        x-detect-if-set\": true,\n                    \"description\": \"New display name\"\n                },\n        \
+        \        \"description\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 500,\n\
+        \                    \"nullable\": true,\n                    \"x-detect-if-set\": true,\n                    \"description\"\
+        : \"New description\"\n                },\n                \"category\": {\n                    \"type\": \"string\"\
+        ,\n                    \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"x-detect-if-set\"\
+        : true,\n                    \"description\": \"New category for UI grouping\"\n                },\n             \
+        \   \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n       \
+        \             \"x-detect-if-set\": true,\n                    \"description\": \"New active status\"\n           \
+        \     },\n                \"platformMappings\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"$ref\": \"#/$defs/PlatformMapping\"\n                    },\n              \
+        \      \"nullable\": true,\n                    \"x-detect-if-set\": true,\n                    \"description\": \"\
+        Updated platform ID mappings\"\n                },\n                \"scoreType\": {\n                    \"type\"\
+        : \"string\",\n                    \"maxLength\": 100,\n                    \"nullable\": true,\n                \
+        \    \"x-detect-if-set\": true,\n                    \"description\": \"Score type code for matching analytics.score.updated
+        events (progressive achievements)\"\n                },\n                \"milestoneType\": {\n                  \
+        \  \"type\": \"string\",\n                    \"maxLength\": 100,\n                    \"nullable\": true,\n     \
+        \               \"x-detect-if-set\": true,\n                    \"description\": \"Milestone type code for matching
         analytics.milestone.reached events\"\n                },\n                \"milestoneValue\": {\n                \
         \    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Expected milestone value for matching analytics.milestone.reached events\"\
-        \n                },\n                \"milestoneName\": {\n                    \"type\": \"string\",\n          \
-        \          \"maxLength\": 200,\n                    \"nullable\": true,\n                    \"description\": \"Expected
-        milestone name for matching analytics.milestone.reached events\"\n                },\n                \"leaderboardId\"\
-        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 100,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Leaderboard ID for matching leaderboard.rank.changed events\"\n  \
-        \              },\n                \"rankThreshold\": {\n                    \"type\": \"integer\",\n            \
-        \        \"format\": \"int64\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n  \
-        \                  \"description\": \"Rank threshold for leaderboard achievements (unlock when rank <= threshold)\"\
-        \n                }\n            }\n        },\n        \"PlatformMapping\": {\n            \"type\": \"object\",\n\
-        \            \"description\": \"Maps an achievement to a platform-specific ID\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"platform\",\n                \"platformAchievementId\"\n\
-        \            ],\n            \"properties\": {\n                \"platform\": {\n                    \"$ref\": \"\
-        #/$defs/Platform\",\n                    \"description\": \"External platform\"\n                },\n            \
-        \    \"platformAchievementId\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
-        \                    \"maxLength\": 200,\n                    \"description\": \"Platform-specific achievement identifier\"\
-        \n                }\n            }\n        },\n        \"Platform\": {\n            \"type\": \"string\",\n     \
-        \       \"description\": \"External platform for achievement sync\",\n            \"enum\": [\n                \"\
-        Steam\",\n                \"Xbox\",\n                \"PlayStation\",\n                \"Internal\"\n            ]\n\
-        \        }\n    }\n}"
+        \                    \"x-detect-if-set\": true,\n                    \"description\": \"Expected milestone value for
+        matching analytics.milestone.reached events\"\n                },\n                \"milestoneName\": {\n        \
+        \            \"type\": \"string\",\n                    \"maxLength\": 200,\n                    \"nullable\": true,\n\
+        \                    \"x-detect-if-set\": true,\n                    \"description\": \"Expected milestone name for
+        matching analytics.milestone.reached events\"\n                },\n                \"leaderboardId\": {\n        \
+        \            \"type\": \"string\",\n                    \"maxLength\": 100,\n                    \"nullable\": true,\n\
+        \                    \"x-detect-if-set\": true,\n                    \"description\": \"Leaderboard ID for matching
+        leaderboard.rank.changed events\"\n                },\n                \"rankThreshold\": {\n                    \"\
+        type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"nullable\": true,\n      \
+        \              \"minimum\": 1,\n                    \"x-detect-if-set\": true,\n                    \"description\"\
+        : \"Rank threshold for leaderboard achievements (unlock when rank <= threshold)\"\n                }\n           \
+        \ }\n        },\n        \"PlatformMapping\": {\n            \"type\": \"object\",\n            \"description\": \"\
+        Maps an achievement to a platform-specific ID\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"platform\",\n                \"platformAchievementId\"\n            ],\n            \"properties\"\
+        : {\n                \"platform\": {\n                    \"$ref\": \"#/$defs/Platform\",\n                    \"\
+        description\": \"External platform\"\n                },\n                \"platformAchievementId\": {\n         \
+        \           \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 200,\n\
+        \                    \"description\": \"Platform-specific achievement identifier\"\n                }\n          \
+        \  }\n        },\n        \"Platform\": {\n            \"type\": \"string\",\n            \"description\": \"External
+        platform for achievement sync\",\n            \"enum\": [\n                \"Steam\",\n                \"Xbox\",\n\
+        \                \"PlayStation\",\n                \"Internal\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AchievementDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"AchievementDefinitionResponse\": {\n            \"allOf\": [\n                {\n \
         \                   \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n \
@@ -1414,57 +1418,68 @@ components:
           type: string
           maxLength: 100
           nullable: true
+          x-detect-if-set: true
           description: New display name
         description:
           type: string
           maxLength: 500
           nullable: true
+          x-detect-if-set: true
           description: New description
         category:
           type: string
           maxLength: 100
           nullable: true
+          x-detect-if-set: true
           description: New category for UI grouping
         isActive:
           type: boolean
           nullable: true
+          x-detect-if-set: true
           description: New active status
         platformMappings:
           type: array
           items:
             $ref: '#/components/schemas/PlatformMapping'
           nullable: true
+          x-detect-if-set: true
           description: Updated platform ID mappings
         scoreType:
           type: string
           maxLength: 100
           nullable: true
+          x-detect-if-set: true
           description: Score type code for matching analytics.score.updated events (progressive achievements)
         milestoneType:
           type: string
           maxLength: 100
           nullable: true
+          x-detect-if-set: true
           description: Milestone type code for matching analytics.milestone.reached events
         milestoneValue:
           type: number
           format: double
           nullable: true
+          x-detect-if-set: true
           description: Expected milestone value for matching analytics.milestone.reached events
         milestoneName:
           type: string
           maxLength: 200
           nullable: true
+          x-detect-if-set: true
           description: Expected milestone name for matching analytics.milestone.reached events
         leaderboardId:
           type: string
           maxLength: 100
           nullable: true
+          x-detect-if-set: true
           description: Leaderboard ID for matching leaderboard.rank.changed events
         rankThreshold:
           type: integer
           format: int64
           nullable: true
           minimum: 1
+          x-detect-if-set: true
           description: Rank threshold for leaderboard achievements (unlock when rank <= threshold)
     DeprecateAchievementDefinitionRequest:
       type: object

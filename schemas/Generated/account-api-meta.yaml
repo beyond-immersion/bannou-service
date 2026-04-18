@@ -331,14 +331,15 @@ paths:
         {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"ID of the account to update\"\n                },\n                \"displayName\": {\n                    \"\
         type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n          \
-        \          \"description\": \"New display name for the account\"\n                },\n                \"roles\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
-        string\",\n                        \"maxLength\": 50\n                    },\n                    \"maxItems\": 20,\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Updated list of roles for the account
-        (null to keep unchanged)\"\n                },\n                \"metadata\": {\n                    \"type\": \"\
-        object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\
-        \n                }\n            }\n        }\n    }\n}"
+        \          \"x-detect-if-set\": true,\n                    \"description\": \"New display name for the account\"\n\
+        \                },\n                \"roles\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"type\": \"string\",\n                        \"maxLength\": 50\n           \
+        \         },\n                    \"maxItems\": 20,\n                    \"nullable\": true,\n                   \
+        \ \"x-detect-if-set\": true,\n                    \"description\": \"Updated list of roles for the account (null to
+        keep unchanged)\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n\
+        \                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                  \
+        \  \"x-detect-if-set\": true,\n                    \"description\": \"Client-only metadata. No Bannou plugin reads
+        specific keys from this field by convention.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AccountResponse\"\
         ,\n    \"$defs\": {\n        \"AccountResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Account information response\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
@@ -756,10 +757,11 @@ paths:
         {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"ID of the account to update\"\n                },\n                \"displayName\": {\n                    \"\
         type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n          \
-        \          \"description\": \"New display name for the account\"\n                },\n                \"metadata\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Client-only metadata. No Bannou plugin reads
-        specific keys from this field by convention.\"\n                }\n            }\n        }\n    }\n}"
+        \          \"x-detect-if-set\": true,\n                    \"description\": \"New display name for the account\"\n\
+        \                },\n                \"metadata\": {\n                    \"type\": \"object\",\n                \
+        \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"x-detect-if-set\"\
+        : true,\n                    \"description\": \"Client-only metadata. No Bannou plugin reads specific keys from this
+        field by convention.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AccountResponse\"\
         ,\n    \"$defs\": {\n        \"AccountResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Account information response\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
@@ -875,11 +877,12 @@ paths:
         \"uuid\",\n                    \"description\": \"ID of the account to update\"\n                },\n            \
         \    \"mfaEnabled\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
         to enable or disable MFA\"\n                },\n                \"mfaSecret\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Encrypted TOTP secret (set
-        when enabling, null when disabling)\"\n                },\n                \"mfaRecoveryCodes\": {\n             \
-        \       \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n   \
-        \                 },\n                    \"nullable\": true,\n                    \"description\": \"BCrypt-hashed
-        recovery codes (set when enabling, null when disabling)\"\n                }\n            }\n        }\n    }\n}"
+        string\",\n                    \"nullable\": true,\n                    \"x-detect-if-set\": true,\n             \
+        \       \"description\": \"Encrypted TOTP secret (set when enabling, null when disabling)\"\n                },\n\
+        \                \"mfaRecoveryCodes\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"x-detect-if-set\": true,\n                    \"description\": \"BCrypt-hashed recovery codes
+        (set when enabling, null when disabling)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Update MFA settings for an account\",\n    \"description\": \"Sets or clears
         MFA-related fields (mfaEnabled, mfaSecret, mfaRecoveryCodes) atomically.\\nUsed by Auth service during MFA enable/disable
@@ -1055,11 +1058,12 @@ paths:
         : 1,\n                    \"maxItems\": 100,\n                    \"description\": \"List of account IDs to update
         (max 100)\"\n                },\n                \"addRoles\": {\n                    \"type\": \"array\",\n     \
         \               \"items\": {\n                        \"type\": \"string\"\n                    },\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Roles to add to all specified accounts (null to
-        skip)\"\n                },\n                \"removeRoles\": {\n                    \"type\": \"array\",\n      \
-        \              \"items\": {\n                        \"type\": \"string\"\n                    },\n              \
-        \      \"nullable\": true,\n                    \"description\": \"Roles to remove from all specified accounts (null
-        to skip)\"\n                }\n            }\n        }\n    }\n}"
+        \       \"nullable\": true,\n                    \"x-detect-if-set\": true,\n                    \"description\":
+        \"Roles to add to all specified accounts (null to skip)\"\n                },\n                \"removeRoles\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
+        string\"\n                    },\n                    \"nullable\": true,\n                    \"x-detect-if-set\"\
+        : true,\n                    \"description\": \"Roles to remove from all specified accounts (null to skip)\"\n   \
+        \             }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BulkUpdateRolesResponse\"\
         ,\n    \"$defs\": {\n        \"BulkUpdateRolesResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response containing bulk update results (partial success)\",\n            \"additionalProperties\": false,\n \
@@ -1361,6 +1365,7 @@ components:
           type: string
           nullable: true
           maxLength: 100
+          x-detect-if-set: true
           description: New display name for the account
         roles:
           type: array
@@ -1369,11 +1374,13 @@ components:
             maxLength: 50
           maxItems: 20
           nullable: true
+          x-detect-if-set: true
           description: Updated list of roles for the account (null to keep unchanged)
         metadata:
           type: object
           additionalProperties: true
           nullable: true
+          x-detect-if-set: true
           description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     UpdateProfileRequest:
       type: object
@@ -1390,11 +1397,13 @@ components:
           type: string
           nullable: true
           maxLength: 100
+          x-detect-if-set: true
           description: New display name for the account
         metadata:
           type: object
           additionalProperties: true
           nullable: true
+          x-detect-if-set: true
           description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     UpdatePasswordRequest:
       type: object
@@ -1430,12 +1439,14 @@ components:
         mfaSecret:
           type: string
           nullable: true
+          x-detect-if-set: true
           description: Encrypted TOTP secret (set when enabling, null when disabling)
         mfaRecoveryCodes:
           type: array
           items:
             type: string
           nullable: true
+          x-detect-if-set: true
           description: BCrypt-hashed recovery codes (set when enabling, null when disabling)
     UpdateVerificationRequest:
       type: object
@@ -1723,12 +1734,14 @@ components:
           items:
             type: string
           nullable: true
+          x-detect-if-set: true
           description: Roles to add to all specified accounts (null to skip)
         removeRoles:
           type: array
           items:
             type: string
           nullable: true
+          x-detect-if-set: true
           description: Roles to remove from all specified accounts (null to skip)
     BatchGetAccountsResponse:
       type: object

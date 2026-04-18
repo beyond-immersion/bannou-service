@@ -126,6 +126,106 @@ public partial class ChatRoomCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to chat.room.deleted when a chatroom is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ChatRoomDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: chat.room.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "chat.room.deleted";
+
+    /// <summary>
+    /// Unique identifier for the chat room
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RoomId { get; set; } = default!;
+
+    /// <summary>
+    /// Room type code that determines message format and validation rules
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roomTypeCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string RoomTypeCode { get; set; } = default!;
+
+    /// <summary>
+    /// Connect session ID if this is a companion room
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    public System.Guid? SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Governing contract instance ID if contract-bound
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
+    public System.Guid? ContractId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable room display name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    public string? DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// Current room lifecycle status
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ChatRoomStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Current number of participants in the room
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("participantCount")]
+    public int ParticipantCount { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum allowed participants in the room
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxParticipants")]
+    public int MaxParticipants { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the room has been archived via Resource
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isArchived")]
+    public bool IsArchived { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the chat room was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the chat room was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to chat.room.updated when a chatroom is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -224,106 +324,6 @@ public partial class ChatRoomUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to chat.room.deleted when a chatroom is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ChatRoomDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: chat.room.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "chat.room.deleted";
-
-    /// <summary>
-    /// Unique identifier for the chat room
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RoomId { get; set; } = default!;
-
-    /// <summary>
-    /// Room type code that determines message format and validation rules
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("roomTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string RoomTypeCode { get; set; } = default!;
-
-    /// <summary>
-    /// Connect session ID if this is a companion room
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
-    public System.Guid? SessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Governing contract instance ID if contract-bound
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
-    public System.Guid? ContractId { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable room display name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    public string? DisplayName { get; set; } = default!;
-
-    /// <summary>
-    /// Current room lifecycle status
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("status")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ChatRoomStatus Status { get; set; } = default!;
-
-    /// <summary>
-    /// Current number of participants in the room
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("participantCount")]
-    public int ParticipantCount { get; set; } = default!;
-
-    /// <summary>
-    /// Maximum allowed participants in the room
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("maxParticipants")]
-    public int MaxParticipants { get; set; } = default!;
-
-    /// <summary>
-    /// Whether the room has been archived via Resource
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isArchived")]
-    public bool IsArchived { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the chat room was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the chat room was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 
@@ -431,6 +431,119 @@ public partial class ChatRoomTypeCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string? DeprecationReason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published to chat.room-type.deleted when a chatroomtype is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ChatRoomTypeDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: chat.room-type.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "chat.room-type.deleted";
+
+    /// <summary>
+    /// Unique room type code within game service scope
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Code { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable room type name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// Game service scope (null for global built-in types)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    public System.Guid? GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Message format this room type accepts
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("messageFormat")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MessageFormat MessageFormat { get; set; } = default!;
+
+    /// <summary>
+    /// Whether messages are ephemeral (Redis) or persistent (MySQL)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("persistenceMode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public PersistenceMode PersistenceMode { get; set; } = default!;
+
+    /// <summary>
+    /// Whether messages can be sent without sender identity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allowAnonymousSenders")]
+    public bool AllowAnonymousSenders { get; set; } = default!;
+
+    /// <summary>
+    /// Current lifecycle status of the room type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public RoomTypeStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the chat room type was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the chat room type was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this chat room type is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the chat room type was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
 
 }
 
@@ -546,119 +659,6 @@ public partial class ChatRoomTypeUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to chat.room-type.deleted when a chatroomtype is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ChatRoomTypeDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: chat.room-type.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "chat.room-type.deleted";
-
-    /// <summary>
-    /// Unique room type code within game service scope
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Code { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable room type name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string DisplayName { get; set; } = default!;
-
-    /// <summary>
-    /// Game service scope (null for global built-in types)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    public System.Guid? GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Message format this room type accepts
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("messageFormat")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public MessageFormat MessageFormat { get; set; } = default!;
-
-    /// <summary>
-    /// Whether messages are ephemeral (Redis) or persistent (MySQL)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("persistenceMode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PersistenceMode PersistenceMode { get; set; } = default!;
-
-    /// <summary>
-    /// Whether messages can be sent without sender identity
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("allowAnonymousSenders")]
-    public bool AllowAnonymousSenders { get; set; } = default!;
-
-    /// <summary>
-    /// Current lifecycle status of the room type
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("status")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public RoomTypeStatus Status { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the chat room type was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the chat room type was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this chat room type is deprecated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
-    public bool IsDeprecated { get; set; } = default!;
-
-    /// <summary>
-    /// When the chat room type was deprecated (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for deprecation (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? DeprecationReason { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

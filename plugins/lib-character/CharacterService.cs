@@ -940,10 +940,12 @@ public partial class CharacterService : ICharacterService
         catch (ApiException ex)
         {
             // Graceful degradation: lib-resource unavailable means L4 references may be missing,
-            // but we still return L2 reference info (relationships, contracts). No error event
-            // emitted because this is a read-only advisory check, not a fail-closed mutation --
-            // contrast with the delete flow which MUST fail if lib-resource is unavailable.
+            // but we still return L2 reference info (relationships, contracts).
             _logger.LogWarning(ex, "lib-resource unavailable when checking references for character {CharacterId}, L4 references may be missing", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character", "CheckCharacterReferences", "ResourceServiceUnavailable",
+                ex.Message, dependency: "resource", endpoint: "post:resource/check-references",
+                stack: ex.StackTrace, cancellationToken: cancellationToken);
         }
 
         // Check contracts where character is a party (L1 - allowed)

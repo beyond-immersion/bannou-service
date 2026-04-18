@@ -586,6 +586,10 @@ public class GenesisSeedEvolutionListener : ISeedEvolutionListener
             _logger.LogWarning(ex,
                 "Deferred bond materialization failed for entity {EntityId} at awakening",
                 entity.EntityId);
+            await _messageBus.TryPublishErrorAsync(
+                "genesis", "TryMaterializeDeferredBond", "BondMaterializationFailed", ex.Message,
+                dependency: "relationship", endpoint: "create-relationship",
+                stack: ex.StackTrace, cancellationToken: ct);
             return null;
         }
     }

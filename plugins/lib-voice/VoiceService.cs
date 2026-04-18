@@ -417,6 +417,15 @@ public partial class VoiceService : IVoiceService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Failed to set voice:in_room state for session {SessionId}", body.SessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "voice",
+                "JoinVoiceRoom",
+                "SetSessionStateFailed",
+                ex.Message,
+                dependency: "permission",
+                endpoint: "update-session-state",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
         }
 
         // Publish peer joined service event
@@ -477,6 +486,15 @@ public partial class VoiceService : IVoiceService
             catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Failed to set voice:ringing state for joining session {SessionId}", body.SessionId);
+                await _messageBus.TryPublishErrorAsync(
+                    "voice",
+                    "JoinVoiceRoom",
+                    "SetRingingStateFailed",
+                    ex.Message,
+                    dependency: "permission",
+                    endpoint: "update-session-state",
+                    stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
             }
         }
 
@@ -542,6 +560,15 @@ public partial class VoiceService : IVoiceService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Failed to clear voice permission state for session {SessionId}", body.SessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "voice",
+                "LeaveVoiceRoom",
+                "ClearSessionStateFailed",
+                ex.Message,
+                dependency: "permission",
+                endpoint: "clear-session-state",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
         }
 
         // Get remaining count
@@ -696,6 +723,15 @@ public partial class VoiceService : IVoiceService
             catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Failed to clear voice permission state for session {SessionId}", participant.SessionId);
+                await _messageBus.TryPublishErrorAsync(
+                    "voice",
+                    "DeleteVoiceRoom",
+                    "ClearSessionStateFailed",
+                    ex.Message,
+                    dependency: "permission",
+                    endpoint: "clear-session-state",
+                    stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
             }
         }
 
@@ -833,6 +869,15 @@ public partial class VoiceService : IVoiceService
             catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Failed to set voice:consent_pending for session {SessionId}", sessionId);
+                await _messageBus.TryPublishErrorAsync(
+                    "voice",
+                    "RequestBroadcastConsent",
+                    "SetConsentPendingStateFailed",
+                    ex.Message,
+                    dependency: "permission",
+                    endpoint: "update-session-state",
+                    stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
             }
         }
 

@@ -403,6 +403,15 @@ public partial class ObligationService : IObligationService
                 _logger.LogWarning(ex,
                     "Failed to report breach to contract service for contract {ContractId}, status {Status}",
                     body.ContractId, ex.StatusCode);
+                await _messageBus.TryPublishErrorAsync(
+                    "obligation",
+                    "ReportViolation",
+                    "BreachReportFailed",
+                    ex.Message,
+                    dependency: "contract",
+                    endpoint: "report-breach",
+                    stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
             }
         }
 

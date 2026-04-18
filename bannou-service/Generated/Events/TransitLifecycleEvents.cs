@@ -212,6 +212,192 @@ public partial class TransitConnectionCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to transit.connection.deleted when a transitconnection is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class TransitConnectionDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: transit.connection.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "transit.connection.deleted";
+
+    /// <summary>
+    /// Unique identifier for the connection
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("id")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid Id { get; set; } = default!;
+
+    /// <summary>
+    /// Origin location of the connection
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("fromLocationId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid FromLocationId { get; set; } = default!;
+
+    /// <summary>
+    /// Destination location of the connection
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("toLocationId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ToLocationId { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the connection can be traversed in both directions
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bidirectional")]
+    public bool Bidirectional { get; set; } = default!;
+
+    /// <summary>
+    /// Distance of the connection in kilometers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("distanceKm")]
+    public decimal DistanceKm { get; set; } = default!;
+
+    /// <summary>
+    /// Terrain classification code for the connection path
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("terrainType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TerrainType { get; set; } = default!;
+
+    /// <summary>
+    /// Transit mode codes that can traverse this connection
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("compatibleModes")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> CompatibleModes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+    /// <summary>
+    /// Seasonal availability overrides, null if available year-round
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("seasonalAvailability")]
+    public System.Collections.Generic.ICollection<SeasonalAvailabilityEntry>? SeasonalAvailability { get; set; } = default!;
+
+    /// <summary>
+    /// Base risk level for traversing this connection
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("baseRiskLevel")]
+    public decimal BaseRiskLevel { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable description of the risk, if any
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("riskDescription")]
+    public string? RiskDescription { get; set; } = default!;
+
+    /// <summary>
+    /// Current operational status of the connection
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ConnectionStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for the current status, if any
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("statusReason")]
+    public string? StatusReason { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the status was last changed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("statusChangedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset StatusChangedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the connection must be discovered before use
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("discoverable")]
+    public bool Discoverable { get; set; } = default!;
+
+    /// <summary>
+    /// Optional display name for the connection
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    public string? Name { get; set; } = default!;
+
+    /// <summary>
+    /// Optional machine-readable code for the connection
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    public string? Code { get; set; } = default!;
+
+    /// <summary>
+    /// Optional tags for categorization and filtering
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tags")]
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
+
+    /// <summary>
+    /// Realm of the origin location
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("fromRealmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid FromRealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Realm of the destination location
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("toRealmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ToRealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this connection spans realm boundaries
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("crossRealm")]
+    public bool CrossRealm { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the connection was last modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset ModifiedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the transit connection was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the transit connection was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to transit.connection.updated when a transitconnection is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -400,192 +586,6 @@ public partial class TransitConnectionUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to transit.connection.deleted when a transitconnection is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class TransitConnectionDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: transit.connection.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "transit.connection.deleted";
-
-    /// <summary>
-    /// Unique identifier for the connection
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("id")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid Id { get; set; } = default!;
-
-    /// <summary>
-    /// Origin location of the connection
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("fromLocationId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid FromLocationId { get; set; } = default!;
-
-    /// <summary>
-    /// Destination location of the connection
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("toLocationId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ToLocationId { get; set; } = default!;
-
-    /// <summary>
-    /// Whether the connection can be traversed in both directions
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("bidirectional")]
-    public bool Bidirectional { get; set; } = default!;
-
-    /// <summary>
-    /// Distance of the connection in kilometers
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("distanceKm")]
-    public decimal DistanceKm { get; set; } = default!;
-
-    /// <summary>
-    /// Terrain classification code for the connection path
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("terrainType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string TerrainType { get; set; } = default!;
-
-    /// <summary>
-    /// Transit mode codes that can traverse this connection
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("compatibleModes")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> CompatibleModes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-    /// <summary>
-    /// Seasonal availability overrides, null if available year-round
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("seasonalAvailability")]
-    public System.Collections.Generic.ICollection<SeasonalAvailabilityEntry>? SeasonalAvailability { get; set; } = default!;
-
-    /// <summary>
-    /// Base risk level for traversing this connection
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("baseRiskLevel")]
-    public decimal BaseRiskLevel { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable description of the risk, if any
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("riskDescription")]
-    public string? RiskDescription { get; set; } = default!;
-
-    /// <summary>
-    /// Current operational status of the connection
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("status")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ConnectionStatus Status { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for the current status, if any
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("statusReason")]
-    public string? StatusReason { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the status was last changed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("statusChangedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset StatusChangedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether the connection must be discovered before use
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("discoverable")]
-    public bool Discoverable { get; set; } = default!;
-
-    /// <summary>
-    /// Optional display name for the connection
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("name")]
-    public string? Name { get; set; } = default!;
-
-    /// <summary>
-    /// Optional machine-readable code for the connection
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("code")]
-    public string? Code { get; set; } = default!;
-
-    /// <summary>
-    /// Optional tags for categorization and filtering
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
-
-    /// <summary>
-    /// Realm of the origin location
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("fromRealmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid FromRealmId { get; set; } = default!;
-
-    /// <summary>
-    /// Realm of the destination location
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("toRealmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ToRealmId { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this connection spans realm boundaries
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("crossRealm")]
-    public bool CrossRealm { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the connection was last modified
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset ModifiedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the transit connection was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the transit connection was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Published to transit.mode.created when a transitmode is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -742,6 +742,172 @@ public partial class TransitModeCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string? DeprecationReason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published to transit.mode.deleted when a transitmode is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class TransitModeDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: transit.mode.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "transit.mode.deleted";
+
+    /// <summary>
+    /// Unique identifier code for the transit mode
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Code { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Detailed description of the transit mode
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Description { get; set; } = default!;
+
+    /// <summary>
+    /// Base speed in game-kilometers per game-hour
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("baseSpeedKmPerGameHour")]
+    public decimal BaseSpeedKmPerGameHour { get; set; } = default!;
+
+    /// <summary>
+    /// Per-terrain speed multipliers (null means base speed applies uniformly)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("terrainSpeedModifiers")]
+    public System.Collections.Generic.ICollection<TerrainSpeedModifier>? TerrainSpeedModifiers { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum number of entities that can ride
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("passengerCapacity")]
+    public int PassengerCapacity { get; set; } = default!;
+
+    /// <summary>
+    /// Weight capacity in game-kg
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("cargoCapacityKg")]
+    public decimal CargoCapacityKg { get; set; } = default!;
+
+    /// <summary>
+    /// Per-mode cargo speed penalty rate (null means use plugin config default)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("cargoSpeedPenaltyRate")]
+    public decimal? CargoSpeedPenaltyRate { get; set; } = default!;
+
+    /// <summary>
+    /// Terrain types this mode can traverse (empty means all terrain)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("compatibleTerrainTypes")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> CompatibleTerrainTypes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+    /// <summary>
+    /// Entity types allowed to use this mode (null means no restriction)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("validEntityTypes")]
+    public System.Collections.Generic.ICollection<string>? ValidEntityTypes { get; set; } = default!;
+
+    /// <summary>
+    /// Requirements that must be met to use this mode
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("requirements")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public TransitModeRequirements Requirements { get; set; } = new TransitModeRequirements();
+
+    /// <summary>
+    /// Stamina cost per game-hour of travel
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("fatigueRatePerGameHour")]
+    public decimal FatigueRatePerGameHour { get; set; } = default!;
+
+    /// <summary>
+    /// Noise level from 0.0 (silent) to 1.0 (loud)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("noiseLevelNormalized")]
+    public decimal NoiseLevelNormalized { get; set; } = default!;
+
+    /// <summary>
+    /// Realm IDs where this mode is available (null means all realms)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmRestrictions")]
+    public System.Collections.Generic.ICollection<System.Guid>? RealmRestrictions { get; set; } = default!;
+
+    /// <summary>
+    /// Freeform classification tags
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tags")]
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
+
+    /// <summary>
+    /// When the mode was last modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset ModifiedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the transit mode was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the transit mode was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this transit mode is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the transit mode was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
 
 }
 
@@ -910,172 +1076,6 @@ public partial class TransitModeUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to transit.mode.deleted when a transitmode is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class TransitModeDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: transit.mode.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "transit.mode.deleted";
-
-    /// <summary>
-    /// Unique identifier code for the transit mode
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Code { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Name { get; set; } = default!;
-
-    /// <summary>
-    /// Detailed description of the transit mode
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("description")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Description { get; set; } = default!;
-
-    /// <summary>
-    /// Base speed in game-kilometers per game-hour
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("baseSpeedKmPerGameHour")]
-    public decimal BaseSpeedKmPerGameHour { get; set; } = default!;
-
-    /// <summary>
-    /// Per-terrain speed multipliers (null means base speed applies uniformly)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("terrainSpeedModifiers")]
-    public System.Collections.Generic.ICollection<TerrainSpeedModifier>? TerrainSpeedModifiers { get; set; } = default!;
-
-    /// <summary>
-    /// Maximum number of entities that can ride
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("passengerCapacity")]
-    public int PassengerCapacity { get; set; } = default!;
-
-    /// <summary>
-    /// Weight capacity in game-kg
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("cargoCapacityKg")]
-    public decimal CargoCapacityKg { get; set; } = default!;
-
-    /// <summary>
-    /// Per-mode cargo speed penalty rate (null means use plugin config default)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("cargoSpeedPenaltyRate")]
-    public decimal? CargoSpeedPenaltyRate { get; set; } = default!;
-
-    /// <summary>
-    /// Terrain types this mode can traverse (empty means all terrain)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("compatibleTerrainTypes")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> CompatibleTerrainTypes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-    /// <summary>
-    /// Entity types allowed to use this mode (null means no restriction)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("validEntityTypes")]
-    public System.Collections.Generic.ICollection<string>? ValidEntityTypes { get; set; } = default!;
-
-    /// <summary>
-    /// Requirements that must be met to use this mode
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("requirements")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public TransitModeRequirements Requirements { get; set; } = new TransitModeRequirements();
-
-    /// <summary>
-    /// Stamina cost per game-hour of travel
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("fatigueRatePerGameHour")]
-    public decimal FatigueRatePerGameHour { get; set; } = default!;
-
-    /// <summary>
-    /// Noise level from 0.0 (silent) to 1.0 (loud)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("noiseLevelNormalized")]
-    public decimal NoiseLevelNormalized { get; set; } = default!;
-
-    /// <summary>
-    /// Realm IDs where this mode is available (null means all realms)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmRestrictions")]
-    public System.Collections.Generic.ICollection<System.Guid>? RealmRestrictions { get; set; } = default!;
-
-    /// <summary>
-    /// Freeform classification tags
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
-
-    /// <summary>
-    /// When the mode was last modified
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset ModifiedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the transit mode was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the transit mode was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this transit mode is deprecated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
-    public bool IsDeprecated { get; set; } = default!;
-
-    /// <summary>
-    /// When the transit mode was deprecated (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for deprecation (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? DeprecationReason { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

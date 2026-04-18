@@ -182,23 +182,51 @@ public partial class GenesisService
         if (entity.ActorId != null)
         {
             try { await _actorClient.StopActorAsync(new StopActorRequest { ActorId = entity.ActorId }, cancellationToken); }
-            catch (ApiException ex) { _logger.LogWarning(ex, "Failed to stop actor for entity {EntityId}", entity.EntityId); }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Failed to stop actor for entity {EntityId}", entity.EntityId);
+                await _messageBus.TryPublishErrorAsync(
+                    "genesis", "DestroyEntityCore", "StopActorFailed", ex.Message,
+                    dependency: "actor", endpoint: "stop-actor",
+                    stack: ex.StackTrace, cancellationToken: cancellationToken);
+            }
         }
 
         if (entity.CharacterId != null && template?.ArchiveOnDestruction == true)
         {
             try { await _resourceClient.ExecuteCompressAsync(new ExecuteCompressRequest { ResourceType = "character", ResourceId = entity.CharacterId.Value }, cancellationToken); }
-            catch (ApiException ex) { _logger.LogWarning(ex, "Failed to archive character for entity {EntityId}", entity.EntityId); }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Failed to archive character for entity {EntityId}", entity.EntityId);
+                await _messageBus.TryPublishErrorAsync(
+                    "genesis", "DestroyEntityCore", "ArchiveCharacterFailed", ex.Message,
+                    dependency: "resource", endpoint: "execute-compress",
+                    stack: ex.StackTrace, cancellationToken: cancellationToken);
+            }
         }
 
         if (entity.BondId != null)
         {
             try { await _relationshipClient.EndRelationshipAsync(new EndRelationshipRequest { RelationshipId = entity.BondId.Value }, cancellationToken); }
-            catch (ApiException ex) { _logger.LogWarning(ex, "Failed to end bond for entity {EntityId}", entity.EntityId); }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Failed to end bond for entity {EntityId}", entity.EntityId);
+                await _messageBus.TryPublishErrorAsync(
+                    "genesis", "DestroyEntityCore", "EndBondFailed", ex.Message,
+                    dependency: "relationship", endpoint: "end-relationship",
+                    stack: ex.StackTrace, cancellationToken: cancellationToken);
+            }
         }
 
         try { await _resourceClient.ExecuteCleanupAsync(new ExecuteCleanupRequest { ResourceType = "genesis-entity", ResourceId = entity.EntityId }, cancellationToken); }
-        catch (ApiException ex) { _logger.LogWarning(ex, "Failed resource cleanup for entity {EntityId}", entity.EntityId); }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Failed resource cleanup for entity {EntityId}", entity.EntityId);
+            await _messageBus.TryPublishErrorAsync(
+                "genesis", "DestroyEntityCore", "ResourceCleanupFailed", ex.Message,
+                dependency: "resource", endpoint: "execute-cleanup",
+                stack: ex.StackTrace, cancellationToken: cancellationToken);
+        }
 
         await DeleteEntityRecordsAsync(entity, cancellationToken);
         await _messageBus.PublishGenesisEntityDeletedAsync(BuildGenesisEntityDeletedEvent(entity), cancellationToken);
@@ -274,6 +302,10 @@ public partial class GenesisService
             catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Failed to get balance for wallet {WalletCode} ({WalletId})", walletCode, walletId);
+                await _messageBus.TryPublishErrorAsync(
+                    "genesis", "FetchWalletBalances", "GetBalanceFailed", ex.Message,
+                    dependency: "currency", endpoint: "get-balance",
+                    stack: ex.StackTrace, cancellationToken: cancellationToken);
             }
         }
         return walletBalances;
@@ -298,13 +330,27 @@ public partial class GenesisService
         foreach (var (code, containerId) in inventoryIds)
         {
             try { await _inventoryClient.DeleteContainerAsync(new Inventory.DeleteContainerRequest { ContainerId = containerId }, cancellationToken); }
-            catch (ApiException ex) { _logger.LogWarning(ex, "Failed to compensate inventory {Code} ({ContainerId})", code, containerId); }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Failed to compensate inventory {Code} ({ContainerId})", code, containerId);
+                await _messageBus.TryPublishErrorAsync(
+                    "genesis", "CompensateProvisioning", "DeleteContainerFailed", ex.Message,
+                    dependency: "inventory", endpoint: "delete-container",
+                    stack: ex.StackTrace, cancellationToken: cancellationToken);
+            }
         }
 
         foreach (var (code, walletId) in walletIds)
         {
             try { await _currencyClient.CloseWalletAsync(new CloseWalletRequest { WalletId = walletId }, cancellationToken); }
-            catch (ApiException ex) { _logger.LogWarning(ex, "Failed to compensate wallet {Code} ({WalletId})", code, walletId); }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Failed to compensate wallet {Code} ({WalletId})", code, walletId);
+                await _messageBus.TryPublishErrorAsync(
+                    "genesis", "CompensateProvisioning", "CloseWalletFailed", ex.Message,
+                    dependency: "currency", endpoint: "close-wallet",
+                    stack: ex.StackTrace, cancellationToken: cancellationToken);
+            }
         }
     }
 
@@ -491,6 +537,10 @@ public partial class GenesisService
                     _logger.LogWarning(lookupEx,
                         "Actor template for category {Category} reported conflict but could not be resolved",
                         category);
+                    await _messageBus.TryPublishErrorAsync(
+                        "genesis", "EnsureActorTemplatesForRegistration", "GetActorTemplateFailed", lookupEx.Message,
+                        dependency: "actor", endpoint: "get-actor-template",
+                        stack: lookupEx.StackTrace, cancellationToken: cancellationToken);
                     continue;
                 }
             }
@@ -499,6 +549,10 @@ public partial class GenesisService
                 _logger.LogWarning(ex,
                     "Actor template creation failed for {Category}, skipping — phase transitions will publish transition-failed",
                     category);
+                await _messageBus.TryPublishErrorAsync(
+                    "genesis", "EnsureActorTemplatesForRegistration", "CreateActorTemplateFailed", ex.Message,
+                    dependency: "actor", endpoint: "create-actor-template",
+                    stack: ex.StackTrace, cancellationToken: cancellationToken);
                 continue;
             }
 

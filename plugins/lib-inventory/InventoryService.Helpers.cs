@@ -73,25 +73,6 @@ public partial class InventoryService
     #region Helper Methods
 
     /// <summary>
-    /// Maps HTTP status code to internal StatusCodes enum.
-    /// </summary>
-    private static StatusCodes MapHttpStatusCode(int httpStatusCode)
-    {
-        return httpStatusCode switch
-        {
-            >= 200 and < 300 => StatusCodes.OK,
-            400 => StatusCodes.BadRequest,
-            401 => StatusCodes.Unauthorized,
-            403 => StatusCodes.Forbidden,
-            404 => StatusCodes.NotFound,
-            409 => StatusCodes.Conflict,
-            501 => StatusCodes.NotImplemented,
-            503 => StatusCodes.ServiceUnavailable,
-            _ => StatusCodes.InternalServerError
-        };
-    }
-
-    /// <summary>
     /// Builds the owner index key for state store lookups.
     /// </summary>
     internal static string BuildOwnerIndexKey(ContainerOwnerType ownerType, Guid ownerId)

@@ -163,6 +163,10 @@ public class SeedCollectionUnlockListener : ICollectionUnlockListener
                 _logger.LogWarning(ex,
                     "Seed growth recording failed for seed {SeedId} from collection unlock (status {Status})",
                     seed.SeedId, ex.StatusCode);
+                await _messageBus.TryPublishErrorAsync(
+                    "seed", "OnEntryUnlocked", "GrowthRecordingFailed",
+                    ex.Message, dependency: "seed", endpoint: "record-growth-batch",
+                    stack: ex.StackTrace, cancellationToken: ct);
             }
             catch (Exception ex)
             {

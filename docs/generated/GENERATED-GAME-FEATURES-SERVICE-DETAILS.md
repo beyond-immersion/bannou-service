@@ -57,7 +57,7 @@ Historical event participation and backstory management (L4 GameFeatures) for ch
 
 ## Character Lifecycle {#character-lifecycle}
 
-**Version**: 1.0.0 | **Schema**: `schemas/character-lifecycle-api.yaml` | **Endpoints**: 29 | **Deep Dive**: [docs/plugins/CHARACTER-LIFECYCLE.md](../plugins/CHARACTER-LIFECYCLE.md) | **Map**: [docs/maps/CHARACTER-LIFECYCLE.md](../maps/CHARACTER-LIFECYCLE.md)
+**Version**: 1.0.0 | **Schema**: `schemas/character-lifecycle-api.yaml` | **Endpoints**: 35 | **Deep Dive**: [docs/plugins/CHARACTER-LIFECYCLE.md](../plugins/CHARACTER-LIFECYCLE.md) | **Map**: [docs/maps/CHARACTER-LIFECYCLE.md](../maps/CHARACTER-LIFECYCLE.md)
 
 Generational cycle orchestration and genetic heritage service (L4 GameFeatures) for character aging, marriage, procreation, death processing, and cross-generational trait inheritance. The temporal engine that drives the content flywheel by ensuring characters are born, live, age, reproduce, and die -- and that each death produces archives feeding future content. Game-agnostic: lifecycle stages, genetic trait definitions, marriage customs, and death processing are configured through lifecycle configuration and seed data at deployment time. Internal-only, never internet-facing.
 
@@ -266,7 +266,7 @@ Time-based automated production service (L4 GameFeatures) for continuous backgro
 ## Summary
 
 - **Services in layer**: 42
-- **Endpoints in layer**: 511
+- **Endpoints in layer**: 517
 
 ---
 

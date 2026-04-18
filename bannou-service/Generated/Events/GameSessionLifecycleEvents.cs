@@ -141,6 +141,121 @@ public partial class GameSessionCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to game-session.deleted when a gamesession is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GameSessionDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: game-session.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "game-session.deleted";
+
+    /// <summary>
+    /// Unique identifier for the game session
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Game service stub name for this session
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string GameType { get; set; } = default!;
+
+    /// <summary>
+    /// Type of session - lobby or matchmade
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SessionType SessionType { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable name for the session
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionName")]
+    public string? SessionName { get; set; } = default!;
+
+    /// <summary>
+    /// Current status of the game session
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SessionStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum number of players allowed in the session
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxPlayers")]
+    public int? MaxPlayers { get; set; } = default!;
+
+    /// <summary>
+    /// Current number of players in the session
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currentPlayers")]
+    public int? CurrentPlayers { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the session is private (invite-only)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isPrivate")]
+    public bool? IsPrivate { get; set; } = default!;
+
+    /// <summary>
+    /// Account ID of the session owner
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    public System.Guid? Owner { get; set; } = default!;
+
+    /// <summary>
+    /// Game-specific configuration settings
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameSettings")]
+    public object? GameSettings { get; set; } = default!;
+
+    /// <summary>
+    /// For matchmade sessions - when reservations expire
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reservationExpiresAt")]
+    public System.DateTimeOffset? ReservationExpiresAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the game session was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the game session was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to game-session.updated when a gamesession is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -254,121 +369,6 @@ public partial class GameSessionUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to game-session.deleted when a gamesession is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GameSessionDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: game-session.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "game-session.deleted";
-
-    /// <summary>
-    /// Unique identifier for the game session
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Game service stub name for this session
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string GameType { get; set; } = default!;
-
-    /// <summary>
-    /// Type of session - lobby or matchmade
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sessionType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SessionType SessionType { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable name for the session
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sessionName")]
-    public string? SessionName { get; set; } = default!;
-
-    /// <summary>
-    /// Current status of the game session
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("status")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SessionStatus Status { get; set; } = default!;
-
-    /// <summary>
-    /// Maximum number of players allowed in the session
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("maxPlayers")]
-    public int? MaxPlayers { get; set; } = default!;
-
-    /// <summary>
-    /// Current number of players in the session
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("currentPlayers")]
-    public int? CurrentPlayers { get; set; } = default!;
-
-    /// <summary>
-    /// Whether the session is private (invite-only)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isPrivate")]
-    public bool? IsPrivate { get; set; } = default!;
-
-    /// <summary>
-    /// Account ID of the session owner
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("owner")]
-    public System.Guid? Owner { get; set; } = default!;
-
-    /// <summary>
-    /// Game-specific configuration settings
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameSettings")]
-    public object? GameSettings { get; set; } = default!;
-
-    /// <summary>
-    /// For matchmade sessions - when reservations expire
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("reservationExpiresAt")]
-    public System.DateTimeOffset? ReservationExpiresAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the game session was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the game session was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

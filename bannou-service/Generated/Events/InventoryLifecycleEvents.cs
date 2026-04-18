@@ -278,6 +278,258 @@ public partial class InventoryContainerCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to inventory.container.deleted when a inventorycontainer is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class InventoryContainerDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: inventory.container.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "inventory.container.deleted";
+
+    /// <summary>
+    /// Container unique identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("containerId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ContainerId { get; set; } = default!;
+
+    /// <summary>
+    /// Owner entity ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid OwnerId { get; set; } = default!;
+
+    /// <summary>
+    /// Owner type (character, account, location, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ContainerOwnerType OwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// Game-defined container type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("containerType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ContainerType { get; set; } = default!;
+
+    /// <summary>
+    /// Container capacity constraint model
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("constraintModel")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ContainerConstraintModel ConstraintModel { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this is an equipment slot
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isEquipmentSlot")]
+    public bool IsEquipmentSlot { get; set; } = default!;
+
+    /// <summary>
+    /// Equipment slot name if isEquipmentSlot is true
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("equipmentSlotName")]
+    public string? EquipmentSlotName { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum slot count for slot-based constraints
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxSlots")]
+    public int? MaxSlots { get; set; } = default!;
+
+    /// <summary>
+    /// Current number of used slots
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("usedSlots")]
+    public int? UsedSlots { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum weight capacity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxWeight")]
+    public double? MaxWeight { get; set; } = default!;
+
+    /// <summary>
+    /// Grid width for grid-based containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gridWidth")]
+    public int? GridWidth { get; set; } = default!;
+
+    /// <summary>
+    /// Grid height for grid-based containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gridHeight")]
+    public int? GridHeight { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum volume for volumetric containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxVolume")]
+    public double? MaxVolume { get; set; } = default!;
+
+    /// <summary>
+    /// Current volume used
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currentVolume")]
+    public double? CurrentVolume { get; set; } = default!;
+
+    /// <summary>
+    /// Parent container ID for nested containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentContainerId")]
+    public System.Guid? ParentContainerId { get; set; } = default!;
+
+    /// <summary>
+    /// Depth level in container hierarchy
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("nestingDepth")]
+    public int NestingDepth { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this container can hold other containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("canContainContainers")]
+    public bool CanContainContainers { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum allowed nesting depth for child containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxNestingDepth")]
+    public int? MaxNestingDepth { get; set; } = default!;
+
+    /// <summary>
+    /// Weight of the empty container itself
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("selfWeight")]
+    public double SelfWeight { get; set; } = default!;
+
+    /// <summary>
+    /// How container weight propagates to parent
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("weightContribution")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public WeightContribution WeightContribution { get; set; } = default!;
+
+    /// <summary>
+    /// Number of slots this container uses in its parent
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("slotCost")]
+    public int SlotCost { get; set; } = default!;
+
+    /// <summary>
+    /// Width this container occupies in parent grid
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentGridWidth")]
+    public int? ParentGridWidth { get; set; } = default!;
+
+    /// <summary>
+    /// Height this container occupies in parent grid
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentGridHeight")]
+    public int? ParentGridHeight { get; set; } = default!;
+
+    /// <summary>
+    /// Volume this container occupies in parent
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentVolume")]
+    public double? ParentVolume { get; set; } = default!;
+
+    /// <summary>
+    /// Total weight of direct contents
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contentsWeight")]
+    public double ContentsWeight { get; set; } = default!;
+
+    /// <summary>
+    /// Total weight including self and contents
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalWeight")]
+    public double TotalWeight { get; set; } = default!;
+
+    /// <summary>
+    /// Item categories allowed in this container
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allowedCategories")]
+    public System.Collections.Generic.ICollection<string>? AllowedCategories { get; set; } = default!;
+
+    /// <summary>
+    /// Item categories forbidden from this container
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("forbiddenCategories")]
+    public System.Collections.Generic.ICollection<string>? ForbiddenCategories { get; set; } = default!;
+
+    /// <summary>
+    /// Required tags for items in this container
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allowedTags")]
+    public System.Collections.Generic.ICollection<string>? AllowedTags { get; set; } = default!;
+
+    /// <summary>
+    /// Container tags for categorization
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tags")]
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
+
+    /// <summary>
+    /// Game-specific container metadata
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
+
+    /// <summary>
+    /// Realm ID this container belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    public System.Guid? RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// When the container was last modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
+    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the inventory container was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the inventory container was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to inventory.container.updated when a inventorycontainer is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -528,258 +780,6 @@ public partial class InventoryContainerUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to inventory.container.deleted when a inventorycontainer is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class InventoryContainerDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: inventory.container.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "inventory.container.deleted";
-
-    /// <summary>
-    /// Container unique identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("containerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContainerId { get; set; } = default!;
-
-    /// <summary>
-    /// Owner entity ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid OwnerId { get; set; } = default!;
-
-    /// <summary>
-    /// Owner type (character, account, location, etc.)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ContainerOwnerType OwnerType { get; set; } = default!;
-
-    /// <summary>
-    /// Game-defined container type
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("containerType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string ContainerType { get; set; } = default!;
-
-    /// <summary>
-    /// Container capacity constraint model
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("constraintModel")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ContainerConstraintModel ConstraintModel { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this is an equipment slot
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isEquipmentSlot")]
-    public bool IsEquipmentSlot { get; set; } = default!;
-
-    /// <summary>
-    /// Equipment slot name if isEquipmentSlot is true
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("equipmentSlotName")]
-    public string? EquipmentSlotName { get; set; } = default!;
-
-    /// <summary>
-    /// Maximum slot count for slot-based constraints
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("maxSlots")]
-    public int? MaxSlots { get; set; } = default!;
-
-    /// <summary>
-    /// Current number of used slots
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("usedSlots")]
-    public int? UsedSlots { get; set; } = default!;
-
-    /// <summary>
-    /// Maximum weight capacity
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("maxWeight")]
-    public double? MaxWeight { get; set; } = default!;
-
-    /// <summary>
-    /// Grid width for grid-based containers
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gridWidth")]
-    public int? GridWidth { get; set; } = default!;
-
-    /// <summary>
-    /// Grid height for grid-based containers
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gridHeight")]
-    public int? GridHeight { get; set; } = default!;
-
-    /// <summary>
-    /// Maximum volume for volumetric containers
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("maxVolume")]
-    public double? MaxVolume { get; set; } = default!;
-
-    /// <summary>
-    /// Current volume used
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("currentVolume")]
-    public double? CurrentVolume { get; set; } = default!;
-
-    /// <summary>
-    /// Parent container ID for nested containers
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("parentContainerId")]
-    public System.Guid? ParentContainerId { get; set; } = default!;
-
-    /// <summary>
-    /// Depth level in container hierarchy
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("nestingDepth")]
-    public int NestingDepth { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this container can hold other containers
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("canContainContainers")]
-    public bool CanContainContainers { get; set; } = default!;
-
-    /// <summary>
-    /// Maximum allowed nesting depth for child containers
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("maxNestingDepth")]
-    public int? MaxNestingDepth { get; set; } = default!;
-
-    /// <summary>
-    /// Weight of the empty container itself
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("selfWeight")]
-    public double SelfWeight { get; set; } = default!;
-
-    /// <summary>
-    /// How container weight propagates to parent
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("weightContribution")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public WeightContribution WeightContribution { get; set; } = default!;
-
-    /// <summary>
-    /// Number of slots this container uses in its parent
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("slotCost")]
-    public int SlotCost { get; set; } = default!;
-
-    /// <summary>
-    /// Width this container occupies in parent grid
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("parentGridWidth")]
-    public int? ParentGridWidth { get; set; } = default!;
-
-    /// <summary>
-    /// Height this container occupies in parent grid
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("parentGridHeight")]
-    public int? ParentGridHeight { get; set; } = default!;
-
-    /// <summary>
-    /// Volume this container occupies in parent
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("parentVolume")]
-    public double? ParentVolume { get; set; } = default!;
-
-    /// <summary>
-    /// Total weight of direct contents
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contentsWeight")]
-    public double ContentsWeight { get; set; } = default!;
-
-    /// <summary>
-    /// Total weight including self and contents
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("totalWeight")]
-    public double TotalWeight { get; set; } = default!;
-
-    /// <summary>
-    /// Item categories allowed in this container
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("allowedCategories")]
-    public System.Collections.Generic.ICollection<string>? AllowedCategories { get; set; } = default!;
-
-    /// <summary>
-    /// Item categories forbidden from this container
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("forbiddenCategories")]
-    public System.Collections.Generic.ICollection<string>? ForbiddenCategories { get; set; } = default!;
-
-    /// <summary>
-    /// Required tags for items in this container
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("allowedTags")]
-    public System.Collections.Generic.ICollection<string>? AllowedTags { get; set; } = default!;
-
-    /// <summary>
-    /// Container tags for categorization
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
-
-    /// <summary>
-    /// Game-specific container metadata
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
-
-    /// <summary>
-    /// Realm ID this container belongs to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    public System.Guid? RealmId { get; set; } = default!;
-
-    /// <summary>
-    /// When the container was last modified
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
-    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the inventory container was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the inventory container was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

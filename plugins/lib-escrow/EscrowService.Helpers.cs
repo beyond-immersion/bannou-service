@@ -176,6 +176,15 @@ public partial class EscrowService
             {
                 _logger.LogWarning(ex, "Asset transfer failed for {AssetType} in escrow {EscrowId}: HTTP {StatusCode}",
                     asset.AssetType, escrowId, ex.StatusCode);
+                await _messageBus.TryPublishErrorAsync(
+                    "escrow",
+                    "ExecuteDepositTransfers",
+                    "AssetTransferFailed",
+                    ex.Message,
+                    dependency: asset.AssetType.ToString().ToLowerInvariant(),
+                    endpoint: $"escrow-deposit:{asset.AssetType}",
+                    stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
                 return $"Asset transfer failed for {asset.AssetType}: {ex.Message}";
             }
             catch (MeshInvocationException ex)

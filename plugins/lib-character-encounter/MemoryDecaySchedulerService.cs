@@ -282,6 +282,15 @@ public class MemoryDecaySchedulerService : BackgroundService
                 {
                     _logger.LogWarning(ex, "Worldstate unavailable for realm {RealmId} during scheduled memory decay, skipping perspective {PerspectiveId}",
                         encounter.RealmId, perspectiveId);
+                    await messageBus.TryPublishErrorAsync(
+                        "character-encounter",
+                        "ProcessCharacterDecay",
+                        "ApiException",
+                        ex.Message,
+                        dependency: "worldstate",
+                        endpoint: "worldstate/get-elapsed-game-time",
+                        stack: ex.StackTrace,
+                        cancellationToken: cancellationToken);
                     continue;
                 }
             }

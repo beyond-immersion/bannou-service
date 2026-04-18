@@ -531,43 +531,14 @@ public partial class GetRealmLoreRequest
 public partial class SetRealmLoreRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private System.Guid _realmId = default!;
     /// <summary>
     /// ID of the realm to set lore for
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get => _realmId; set { _realmId = value; _TrackChange("realmId"); } }
+    public System.Guid RealmId { get; set; } = default!;
 
-    private System.Collections.Generic.ICollection<RealmLoreElement> _elements = new System.Collections.ObjectModel.Collection<RealmLoreElement>();
     /// <summary>
     /// Lore elements to set
     /// </summary>
@@ -575,16 +546,15 @@ public partial class SetRealmLoreRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.MinLength(1)]
-    public System.Collections.Generic.ICollection<RealmLoreElement> Elements { get => _elements; set { _elements = value; _TrackChange("elements"); } }
+    public System.Collections.Generic.ICollection<RealmLoreElement> Elements { get; set; } = new System.Collections.ObjectModel.Collection<RealmLoreElement>();
 
-    private bool _replaceExisting = false;
     /// <summary>
     /// If true, replace all existing elements.
     /// <br/>If false, merge with existing (update matching type+key pairs).
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("replaceExisting")]
-    public bool ReplaceExisting { get => _replaceExisting; set { _replaceExisting = value; _TrackChange("replaceExisting"); } }
+    public bool ReplaceExisting { get; set; } = false;
 
 }
 

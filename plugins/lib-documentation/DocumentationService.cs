@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Documentation.Services;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Services;
 using Markdig;
 using Microsoft.Extensions.DependencyInjection;
@@ -807,9 +808,9 @@ public partial class DocumentationService : IDocumentationService
             changedFields.Add("voiceSummary");
         }
 
-        if (body.Tags != null)
+        if (body.ChangeFields.IsFieldSet("tags"))
         {
-            storedDoc.Tags = body.Tags.ToList();
+            storedDoc.Tags = body.Tags?.ToList() ?? new List<string>();
             changedFields.Add("tags");
         }
 

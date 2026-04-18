@@ -743,8 +743,12 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             }).ToList();
             version = capResponse.Version;
         }
-        catch (ApiException)
+        catch (ApiException ex)
         {
+            _logger.LogWarning(ex, "Capability fetch failed for entity {EntityId}, defaulting to empty", body.EntityId);
+            await _messageBus.TryPublishErrorAsync(
+                "genesis", "GetEntityCapabilities",
+                ex.GetType().Name, ex.Message, stack: ex.StackTrace);
             capabilities = new List<GenesisCapability>();
             version = 0;
         }
@@ -886,6 +890,15 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
             catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Failed to create bond relationship for entity {EntityId}", body.EntityId);
+                await _messageBus.TryPublishErrorAsync(
+                    "genesis",
+                    "CreateBond",
+                    "BondRelationshipCreationFailed",
+                    ex.Message,
+                    dependency: "relationship",
+                    endpoint: "create-relationship",
+                    stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
             }
         }
 
@@ -937,7 +950,19 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
         if (entity.BondId != null)
         {
             try { await _relationshipClient.EndRelationshipAsync(new EndRelationshipRequest { RelationshipId = entity.BondId.Value }, cancellationToken); }
-            catch (ApiException ex) { _logger.LogWarning(ex, "Failed to end bond relationship {BondId}", entity.BondId); }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Failed to end bond relationship {BondId}", entity.BondId);
+                await _messageBus.TryPublishErrorAsync(
+                    "genesis",
+                    "DissolveBond",
+                    "BondRelationshipEndFailed",
+                    ex.Message,
+                    dependency: "relationship",
+                    endpoint: "end-relationship",
+                    stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
+            }
         }
 
         entity.BondTargetEntityType = null;
@@ -972,19 +997,55 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
                 if (entity.ActorId != null)
                 {
                     try { await _actorClient.StopActorAsync(new StopActorRequest { ActorId = entity.ActorId }, cancellationToken); }
-                    catch (ApiException ex) { _logger.LogWarning(ex, "Failed to stop actor for entity {EntityId}", entity.EntityId); }
+                    catch (ApiException ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to stop actor for entity {EntityId}", entity.EntityId);
+                        await _messageBus.TryPublishErrorAsync(
+                            "genesis",
+                            "CleanupByCharacter",
+                            "ActorStopFailed",
+                            ex.Message,
+                            dependency: "actor",
+                            endpoint: "stop-actor",
+                            stack: ex.StackTrace,
+                            cancellationToken: cancellationToken);
+                    }
                 }
                 if (entity.BondId != null)
                 {
                     try { await _relationshipClient.EndRelationshipAsync(new EndRelationshipRequest { RelationshipId = entity.BondId.Value }, cancellationToken); }
-                    catch (ApiException ex) { _logger.LogWarning(ex, "Failed to end bond for entity {EntityId}", entity.EntityId); }
+                    catch (ApiException ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to end bond for entity {EntityId}", entity.EntityId);
+                        await _messageBus.TryPublishErrorAsync(
+                            "genesis",
+                            "CleanupByCharacter",
+                            "BondEndFailed",
+                            ex.Message,
+                            dependency: "relationship",
+                            endpoint: "end-relationship",
+                            stack: ex.StackTrace,
+                            cancellationToken: cancellationToken);
+                    }
                 }
                 try
                 {
                     await _resourceClient.ExecuteCleanupAsync(
                         new ExecuteCleanupRequest { ResourceType = "genesis-entity", ResourceId = entity.EntityId }, cancellationToken);
                 }
-                catch (ApiException ex) { _logger.LogWarning(ex, "Failed resource cleanup for entity {EntityId}", entity.EntityId); }
+                catch (ApiException ex)
+                {
+                    _logger.LogWarning(ex, "Failed resource cleanup for entity {EntityId}", entity.EntityId);
+                    await _messageBus.TryPublishErrorAsync(
+                        "genesis",
+                        "CleanupByCharacter",
+                        "ResourceCleanupFailed",
+                        ex.Message,
+                        dependency: "resource",
+                        endpoint: "execute-cleanup",
+                        stack: ex.StackTrace,
+                        cancellationToken: cancellationToken);
+                }
 
                 await DeleteEntityRecordsAsync(entity, cancellationToken);
                 await _messageBus.PublishGenesisEntityDeletedAsync(BuildGenesisEntityDeletedEvent(entity), cancellationToken);
@@ -1031,24 +1092,72 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
                     if (entity.ActorId != null)
                     {
                         try { await _actorClient.StopActorAsync(new StopActorRequest { ActorId = entity.ActorId }, cancellationToken); }
-                        catch (ApiException ex) { _logger.LogWarning(ex, "Failed to stop actor for entity {EntityId}", entity.EntityId); }
+                        catch (ApiException ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to stop actor for entity {EntityId}", entity.EntityId);
+                            await _messageBus.TryPublishErrorAsync(
+                                "genesis",
+                                "CleanupByRealm",
+                                "ActorStopFailed",
+                                ex.Message,
+                                dependency: "actor",
+                                endpoint: "stop-actor",
+                                stack: ex.StackTrace,
+                                cancellationToken: cancellationToken);
+                        }
                     }
                     if (entity.CharacterId != null && template?.ArchiveOnDestruction == true)
                     {
                         try { await _resourceClient.ExecuteCompressAsync(new ExecuteCompressRequest { ResourceType = "character", ResourceId = entity.CharacterId.Value }, cancellationToken); }
-                        catch (ApiException ex) { _logger.LogWarning(ex, "Failed to archive character for entity {EntityId}", entity.EntityId); }
+                        catch (ApiException ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to archive character for entity {EntityId}", entity.EntityId);
+                            await _messageBus.TryPublishErrorAsync(
+                                "genesis",
+                                "CleanupByRealm",
+                                "CharacterArchiveFailed",
+                                ex.Message,
+                                dependency: "resource",
+                                endpoint: "execute-compress",
+                                stack: ex.StackTrace,
+                                cancellationToken: cancellationToken);
+                        }
                     }
                     if (entity.BondId != null)
                     {
                         try { await _relationshipClient.EndRelationshipAsync(new EndRelationshipRequest { RelationshipId = entity.BondId.Value }, cancellationToken); }
-                        catch (ApiException ex) { _logger.LogWarning(ex, "Failed to end bond for entity {EntityId}", entity.EntityId); }
+                        catch (ApiException ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to end bond for entity {EntityId}", entity.EntityId);
+                            await _messageBus.TryPublishErrorAsync(
+                                "genesis",
+                                "CleanupByRealm",
+                                "BondEndFailed",
+                                ex.Message,
+                                dependency: "relationship",
+                                endpoint: "end-relationship",
+                                stack: ex.StackTrace,
+                                cancellationToken: cancellationToken);
+                        }
                     }
                     try
                     {
                         await _resourceClient.ExecuteCleanupAsync(
                             new ExecuteCleanupRequest { ResourceType = "genesis-entity", ResourceId = entity.EntityId }, cancellationToken);
                     }
-                    catch (ApiException ex) { _logger.LogWarning(ex, "Failed resource cleanup for entity {EntityId}", entity.EntityId); }
+                    catch (ApiException ex)
+                    {
+                        _logger.LogWarning(ex, "Failed resource cleanup for entity {EntityId}", entity.EntityId);
+                        await _messageBus.TryPublishErrorAsync(
+                            "genesis",
+                            "CleanupByRealm",
+                            "ResourceCleanupFailed",
+                            ex.Message,
+                            dependency: "resource",
+                            endpoint: "execute-cleanup",
+                            stack: ex.StackTrace,
+                            cancellationToken: cancellationToken);
+                    }
 
                     await DeleteEntityRecordsAsync(entity, cancellationToken);
                     await _messageBus.PublishGenesisEntityDeletedAsync(BuildGenesisEntityDeletedEvent(entity), cancellationToken);
@@ -1142,6 +1251,15 @@ public partial class GenesisService : IGenesisService, ICleanDeprecatedEntity
                         catch (ApiException ex)
                         {
                             _logger.LogWarning(ex, "Failed to restore balance for wallet {WalletCode}", wallet.WalletCode);
+                            await _messageBus.TryPublishErrorAsync(
+                                "genesis",
+                                "RestoreFromArchive",
+                                "BalanceRestoreFailed",
+                                ex.Message,
+                                dependency: "currency",
+                                endpoint: "credit-currency",
+                                stack: ex.StackTrace,
+                                cancellationToken: cancellationToken);
                         }
                     }
                 }

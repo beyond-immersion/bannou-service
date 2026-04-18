@@ -602,6 +602,7 @@ components:
           type: string
           nullable: true
           maxLength: 100
+          x-detect-if-set: true
           description: New display name for the account
         roles:
           type: array
@@ -610,11 +611,13 @@ components:
             maxLength: 50
           maxItems: 20
           nullable: true
+          x-detect-if-set: true
           description: Updated list of roles for the account (null to keep unchanged)
         metadata:
           type: object
           additionalProperties: true
           nullable: true
+          x-detect-if-set: true
           description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
 
     UpdateProfileRequest:
@@ -632,11 +635,13 @@ components:
           type: string
           nullable: true
           maxLength: 100
+          x-detect-if-set: true
           description: New display name for the account
         metadata:
           type: object
           additionalProperties: true
           nullable: true
+          x-detect-if-set: true
           description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
 
     UpdatePasswordRequest:
@@ -674,12 +679,14 @@ components:
         mfaSecret:
           type: string
           nullable: true
+          x-detect-if-set: true
           description: Encrypted TOTP secret (set when enabling, null when disabling)
         mfaRecoveryCodes:
           type: array
           items:
             type: string
           nullable: true
+          x-detect-if-set: true
           description: BCrypt-hashed recovery codes (set when enabling, null when disabling)
 
     UpdateVerificationRequest:
@@ -979,12 +986,14 @@ components:
           items:
             type: string
           nullable: true
+          x-detect-if-set: true
           description: Roles to add to all specified accounts (null to skip)
         removeRoles:
           type: array
           items:
             type: string
           nullable: true
+          x-detect-if-set: true
           description: Roles to remove from all specified accounts (null to skip)
 
     # Bulk Operation Response Models

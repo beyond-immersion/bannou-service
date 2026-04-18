@@ -2365,34 +2365,6 @@ public partial class BundleInfo
 public partial class UpdateBundleRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private string _bundleId = default!;
     /// <summary>
     /// Human-readable bundle identifier to update
     /// </summary>
@@ -2400,49 +2372,43 @@ public partial class UpdateBundleRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
-    public string BundleId { get => _bundleId; set { _bundleId = value; _TrackChange("bundleId"); } }
+    public string BundleId { get; set; } = default!;
 
-    private string? _name = default!;
     /// <summary>
     /// New bundle name (null to leave unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
-    public string? Name { get => _name; set { _name = value; _TrackChange("name"); } }
+    public string? Name { get; set; } = default!;
 
-    private string? _description = default!;
     /// <summary>
     /// New bundle description (null to leave unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
+    public string? Description { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, string>? _tags = default!;
     /// <summary>
     /// Replace all tags with these (null to leave unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.IDictionary<string, string>? Tags { get => _tags; set { _tags = value; _TrackChange("tags"); } }
+    public System.Collections.Generic.IDictionary<string, string>? Tags { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, string>? _addTags = default!;
     /// <summary>
     /// Tags to add (merged with existing)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("addTags")]
-    public System.Collections.Generic.IDictionary<string, string>? AddTags { get => _addTags; set { _addTags = value; _TrackChange("addTags"); } }
+    public System.Collections.Generic.IDictionary<string, string>? AddTags { get; set; } = default!;
 
-    private System.Collections.Generic.ICollection<string>? _removeTags = default!;
     /// <summary>
     /// Tag keys to remove
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("removeTags")]
-    public System.Collections.Generic.ICollection<string>? RemoveTags { get => _removeTags; set { _removeTags = value; _TrackChange("removeTags"); } }
+    public System.Collections.Generic.ICollection<string>? RemoveTags { get; set; } = default!;
 
-    private string? _reason = default!;
     /// <summary>
     /// Optional reason for the update (recorded in version history)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
-    public string? Reason { get => _reason; set { _reason = value; _TrackChange("reason"); } }
+    public string? Reason { get; set; } = default!;
 
 }
 

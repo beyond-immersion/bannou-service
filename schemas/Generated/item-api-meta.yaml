@@ -671,72 +671,82 @@ paths:
         \      \"templateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n \
         \                   \"description\": \"Template ID to update\"\n                },\n                \"name\": {\n\
         \                    \"type\": \"string\",\n                    \"maxLength\": 128,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"New display name\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 1000,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"New description\"\n                },\n                \"subcategory\"\
-        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 64,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"New subcategory\"\n                },\n                \"tags\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
-        string\"\n                    },\n                    \"nullable\": true,\n                    \"description\": \"\
-        New tags (replaces existing)\"\n                },\n                \"rarity\": {\n                    \"$ref\": \"\
-        #/$defs/ItemRarity\",\n                    \"nullable\": true,\n                    \"description\": \"New rarity
-        tier\"\n                },\n                \"weight\": {\n                    \"type\": \"number\",\n           \
-        \         \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        New weight value\"\n                },\n                \"volume\": {\n                    \"type\": \"number\",\n\
-        \                    \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New volume value\"\n                },\n                \"gridWidth\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"New grid width\"\n            \
-        \    },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"x-detect-if-set\": true,\n                    \"description\": \"New display name\"\
+        \n                },\n                \"description\": {\n                    \"type\": \"string\",\n            \
+        \        \"maxLength\": 1000,\n                    \"nullable\": true,\n                    \"x-detect-if-set\": true,\n\
+        \                    \"description\": \"New description\"\n                },\n                \"subcategory\": {\n\
+        \                    \"type\": \"string\",\n                    \"maxLength\": 64,\n                    \"nullable\"\
+        : true,\n                    \"x-detect-if-set\": true,\n                    \"description\": \"New subcategory\"\n\
+        \                },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"x-detect-if-set\": true,\n                    \"description\": \"New tags (replaces
+        existing)\"\n                },\n                \"rarity\": {\n                    \"$ref\": \"#/$defs/ItemRarity\"\
+        ,\n                    \"nullable\": true,\n                    \"x-detect-if-set\": true,\n                    \"\
+        description\": \"New rarity tier\"\n                },\n                \"weight\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n            \
+        \        \"x-detect-if-set\": true,\n                    \"description\": \"New weight value\"\n                },\n\
+        \                \"volume\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"nullable\": true,\n                    \"x-detect-if-set\": true,\n                    \"\
+        description\": \"New volume value\"\n                },\n                \"gridWidth\": {\n                    \"\
+        type\": \"integer\",\n                    \"nullable\": true,\n                    \"x-detect-if-set\": true,\n  \
+        \                  \"description\": \"New grid width\"\n                },\n                \"gridHeight\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"x-detect-if-set\"\
         : true,\n                    \"description\": \"New grid height\"\n                },\n                \"canRotate\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New rotation setting\"\n                },\n                \"baseValue\": {\n                    \"type\": \"\
-        number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n                \
-        \    \"description\": \"New base value\"\n                },\n                \"tradeable\": {\n                 \
-        \   \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"New tradeable
-        setting\"\n                },\n                \"destroyable\": {\n                    \"type\": \"boolean\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"New destroyable setting\"\n       \
-        \         },\n                \"maxDurability\": {\n                    \"type\": \"integer\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"New max durability\"\n                },\n       \
-        \         \"availableRealms\": {\n                    \"type\": \"array\",\n                    \"items\": {\n   \
-        \                     \"type\": \"string\",\n                        \"format\": \"uuid\"\n                    },\n\
-        \                    \"nullable\": true,\n                    \"description\": \"New available realms\"\n        \
-        \        },\n                \"stats\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"New stats. Opaque to Bannou; no plugin reads keys by convention.\"\
-        \n                },\n                \"effects\": {\n                    \"type\": \"object\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"New effects. Opaque to Bannou; no plugin reads keys
-        by convention.\"\n                },\n                \"requirements\": {\n                    \"type\": \"object\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"New requirements. Opaque to Bannou;
-        no plugin reads keys by convention.\"\n                },\n                \"display\": {\n                    \"\
-        type\": \"object\",\n                    \"nullable\": true,\n                    \"description\": \"New display properties.
-        Opaque to Bannou; no plugin reads keys by convention.\"\n                },\n                \"metadata\": {\n   \
-        \                 \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New metadata. Opaque to Bannou; no plugin reads keys by convention.\"\n                },\n                \"\
-        isActive\": {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n             \
-        \       \"description\": \"Active status\"\n                },\n                \"useBehaviorContractTemplateId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Contract template ID for executable item behavior (null
-        to clear)\"\n                },\n                \"canUseBehaviorContractTemplateId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Contract template for pre-use validation (null to clear)\"\n                },\n       \
-        \         \"onUseFailedBehaviorContractTemplateId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Contract
-        template for use failure handling (null to clear)\"\n                },\n                \"itemUseBehavior\": {\n\
-        \                    \"$ref\": \"#/$defs/ItemUseBehavior\",\n                    \"nullable\": true,\n           \
-        \         \"description\": \"How the item should behave when used\"\n                },\n                \"canUseBehavior\"\
-        : {\n                    \"$ref\": \"#/$defs/CanUseBehavior\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"How CanUse validation failures should be handled\"\n                }\n          \
-        \  }\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\": \"Item
-        rarity tier\",\n            \"enum\": [\n                \"Common\",\n                \"Uncommon\",\n            \
-        \    \"Rare\",\n                \"Epic\",\n                \"Legendary\",\n                \"Custom\"\n          \
-        \  ]\n        },\n        \"ItemUseBehavior\": {\n            \"type\": \"string\",\n            \"description\":
-        \"Controls item consumption on use.\\n- disabled: Item cannot be used (/item/use returns 400)\\n- destroy_on_success:
-        Item consumed only if use behavior succeeds (default)\\n- destroy_always: Item consumed regardless of success/failure\\\
-        n\",\n            \"enum\": [\n                \"Disabled\",\n                \"DestroyOnSuccess\",\n            \
-        \    \"DestroyAlways\"\n            ]\n        },\n        \"CanUseBehavior\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Controls CanUse validation behavior.\\n- disabled: Skip CanUse validation even if
-        template is configured\\n- block: CanUse failure prevents use (default)\\n- warn_and_proceed: CanUse failure logs
-        warning but proceeds with use\\n\",\n            \"enum\": [\n                \"Disabled\",\n                \"Block\"\
-        ,\n                \"WarnAndProceed\"\n            ]\n        }\n    }\n}"
+        : {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"x-detect-if-set\"\
+        : true,\n                    \"description\": \"New rotation setting\"\n                },\n                \"baseValue\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        nullable\": true,\n                    \"x-detect-if-set\": true,\n                    \"description\": \"New base
+        value\"\n                },\n                \"tradeable\": {\n                    \"type\": \"boolean\",\n      \
+        \              \"nullable\": true,\n                    \"x-detect-if-set\": true,\n                    \"description\"\
+        : \"New tradeable setting\"\n                },\n                \"destroyable\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"nullable\": true,\n                    \"x-detect-if-set\": true,\n        \
+        \            \"description\": \"New destroyable setting\"\n                },\n                \"maxDurability\":
+        {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"x-detect-if-set\"\
+        : true,\n                    \"description\": \"New max durability\"\n                },\n                \"availableRealms\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"x-detect-if-set\": true,\n                    \"description\": \"New available realms\"\
+        \n                },\n                \"stats\": {\n                    \"type\": \"object\",\n                  \
+        \  \"nullable\": true,\n                    \"x-detect-if-set\": true,\n                    \"description\": \"New
+        stats. Opaque to Bannou; no plugin reads keys by convention.\"\n                },\n                \"effects\": {\n\
+        \                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"x-detect-if-set\"\
+        : true,\n                    \"description\": \"New effects. Opaque to Bannou; no plugin reads keys by convention.\"\
+        \n                },\n                \"requirements\": {\n                    \"type\": \"object\",\n           \
+        \         \"nullable\": true,\n                    \"x-detect-if-set\": true,\n                    \"description\"\
+        : \"New requirements. Opaque to Bannou; no plugin reads keys by convention.\"\n                },\n              \
+        \  \"display\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n          \
+        \          \"x-detect-if-set\": true,\n                    \"description\": \"New display properties. Opaque to Bannou;
+        no plugin reads keys by convention.\"\n                },\n                \"metadata\": {\n                    \"\
+        type\": \"object\",\n                    \"nullable\": true,\n                    \"x-detect-if-set\": true,\n   \
+        \                 \"description\": \"New metadata. Opaque to Bannou; no plugin reads keys by convention.\"\n     \
+        \           },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
+        nullable\": true,\n                    \"x-detect-if-set\": true,\n                    \"description\": \"Active status\"\
+        \n                },\n                \"useBehaviorContractTemplateId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"x-detect-if-set\"\
+        : true,\n                    \"description\": \"Contract template ID for executable item behavior (null to clear)\"\
+        \n                },\n                \"canUseBehaviorContractTemplateId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"x-detect-if-set\"\
+        : true,\n                    \"description\": \"Contract template for pre-use validation (null to clear)\"\n     \
+        \           },\n                \"onUseFailedBehaviorContractTemplateId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"x-detect-if-set\"\
+        : true,\n                    \"description\": \"Contract template for use failure handling (null to clear)\"\n   \
+        \             },\n                \"itemUseBehavior\": {\n                    \"$ref\": \"#/$defs/ItemUseBehavior\"\
+        ,\n                    \"nullable\": true,\n                    \"x-detect-if-set\": true,\n                    \"\
+        description\": \"How the item should behave when used\"\n                },\n                \"canUseBehavior\": {\n\
+        \                    \"$ref\": \"#/$defs/CanUseBehavior\",\n                    \"nullable\": true,\n            \
+        \        \"x-detect-if-set\": true,\n                    \"description\": \"How CanUse validation failures should
+        be handled\"\n                }\n            }\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"Common\",\n    \
+        \            \"Uncommon\",\n                \"Rare\",\n                \"Epic\",\n                \"Legendary\",\n\
+        \                \"Custom\"\n            ]\n        },\n        \"ItemUseBehavior\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Controls item consumption on use.\\n- disabled: Item cannot be used (/item/use returns
+        400)\\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\\n- destroy_always: Item consumed
+        regardless of success/failure\\n\",\n            \"enum\": [\n                \"Disabled\",\n                \"DestroyOnSuccess\"\
+        ,\n                \"DestroyAlways\"\n            ]\n        },\n        \"CanUseBehavior\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Controls CanUse validation behavior.\\n- disabled: Skip CanUse validation
+        even if template is configured\\n- block: CanUse failure prevents use (default)\\n- warn_and_proceed: CanUse failure
+        logs warning but proceeds with use\\n\",\n            \"enum\": [\n                \"Disabled\",\n               \
+        \ \"Block\",\n                \"WarnAndProceed\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ItemTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ItemTemplateResponse\": {\n            \"allOf\": [\n                {\n          \
         \          \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n          \
@@ -1319,29 +1329,32 @@ paths:
         : [\n                \"instanceId\"\n            ],\n            \"properties\": {\n                \"instanceId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Instance ID to modify\"\n                },\n                \"durabilityDelta\": {\n           \
-        \         \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Change to durability (positive to repair, negative for damage)\"\n                },\n                \"customStats\"\
-        : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New custom stats (merges with existing). Opaque to Bannou; no plugin reads keys by convention.\"\n           \
-        \     },\n                \"customName\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
-        : 128,\n                    \"nullable\": true,\n                    \"description\": \"New custom name\"\n      \
-        \          },\n                \"quantityDelta\": {\n                    \"type\": \"number\",\n                 \
-        \   \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Change
-        to quantity (positive to add, negative to subtract). Only valid for stackable items.\"\n                },\n     \
-        \           \"instanceMetadata\": {\n                    \"type\": \"object\",\n                    \"nullable\":
-        true,\n                    \"description\": \"New instance metadata (merges with existing). Opaque to Bannou; no plugin
-        reads keys by convention.\"\n                },\n                \"newContainerId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"New container for the item. Set to a container ID to move it, or set explicitly to null
-        (via changeFields) to remove the item from all containers (unplaced). Used by inventory service for item movement.
-        Uses ChangeFields 3-state semantics: absent means no change, explicit null means clear (Issue #722).\"\n         \
-        \       },\n                \"newSlotIndex\": {\n                    \"type\": \"integer\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"New slot index within the container\"\n                },\n\
-        \                \"newSlotX\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"New X position for grid-based containers\"\n                },\n         \
-        \       \"newSlotY\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n   \
-        \                 \"description\": \"New Y position for grid-based containers\"\n                }\n            }\n\
-        \        }\n    }\n}"
+        \         \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"x-detect-if-set\"\
+        : true,\n                    \"description\": \"Change to durability (positive to repair, negative for damage)\"\n\
+        \                },\n                \"customStats\": {\n                    \"type\": \"object\",\n             \
+        \       \"nullable\": true,\n                    \"x-detect-if-set\": true,\n                    \"description\":
+        \"New custom stats (merges with existing). Opaque to Bannou; no plugin reads keys by convention.\"\n             \
+        \   },\n                \"customName\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
+        : 128,\n                    \"nullable\": true,\n                    \"x-detect-if-set\": true,\n                \
+        \    \"description\": \"New custom name\"\n                },\n                \"quantityDelta\": {\n            \
+        \        \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n\
+        \                    \"x-detect-if-set\": true,\n                    \"description\": \"Change to quantity (positive
+        to add, negative to subtract). Only valid for stackable items.\"\n                },\n                \"instanceMetadata\"\
+        : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"x-detect-if-set\"\
+        : true,\n                    \"description\": \"New instance metadata (merges with existing). Opaque to Bannou; no
+        plugin reads keys by convention.\"\n                },\n                \"newContainerId\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n   \
+        \                 \"x-detect-if-set\": true,\n                    \"description\": \"New container for the item. Set
+        to a container ID to move it, or set explicitly to null (via changeFields) to remove the item from all containers
+        (unplaced). Used by inventory service for item movement. Uses ChangeFields 3-state semantics: absent means no change,
+        explicit null means clear (Issue #722).\"\n                },\n                \"newSlotIndex\": {\n             \
+        \       \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"x-detect-if-set\":
+        true,\n                    \"description\": \"New slot index within the container\"\n                },\n        \
+        \        \"newSlotX\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n  \
+        \                  \"x-detect-if-set\": true,\n                    \"description\": \"New X position for grid-based
+        containers\"\n                },\n                \"newSlotY\": {\n                    \"type\": \"integer\",\n  \
+        \                  \"nullable\": true,\n                    \"x-detect-if-set\": true,\n                    \"description\"\
+        : \"New Y position for grid-based containers\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ItemInstanceResponse\"\
         ,\n    \"$defs\": {\n        \"ItemInstanceResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Item instance details\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
@@ -2511,65 +2524,79 @@ components:
           type: string
           maxLength: 128
           nullable: true
+          x-detect-if-set: true
           description: New display name
         description:
           type: string
           maxLength: 1000
           nullable: true
+          x-detect-if-set: true
           description: New description
         subcategory:
           type: string
           maxLength: 64
           nullable: true
+          x-detect-if-set: true
           description: New subcategory
         tags:
           type: array
           items:
             type: string
           nullable: true
+          x-detect-if-set: true
           description: New tags (replaces existing)
         rarity:
           $ref: '#/components/schemas/ItemRarity'
           nullable: true
+          x-detect-if-set: true
           description: New rarity tier
         weight:
           type: number
           format: double
           nullable: true
+          x-detect-if-set: true
           description: New weight value
         volume:
           type: number
           format: double
           nullable: true
+          x-detect-if-set: true
           description: New volume value
         gridWidth:
           type: integer
           nullable: true
+          x-detect-if-set: true
           description: New grid width
         gridHeight:
           type: integer
           nullable: true
+          x-detect-if-set: true
           description: New grid height
         canRotate:
           type: boolean
           nullable: true
+          x-detect-if-set: true
           description: New rotation setting
         baseValue:
           type: number
           format: double
           nullable: true
+          x-detect-if-set: true
           description: New base value
         tradeable:
           type: boolean
           nullable: true
+          x-detect-if-set: true
           description: New tradeable setting
         destroyable:
           type: boolean
           nullable: true
+          x-detect-if-set: true
           description: New destroyable setting
         maxDurability:
           type: integer
           nullable: true
+          x-detect-if-set: true
           description: New max durability
         availableRealms:
           type: array
@@ -2577,53 +2604,65 @@ components:
             type: string
             format: uuid
           nullable: true
+          x-detect-if-set: true
           description: New available realms
         stats:
           type: object
           nullable: true
+          x-detect-if-set: true
           description: New stats. Opaque to Bannou; no plugin reads keys by convention.
         effects:
           type: object
           nullable: true
+          x-detect-if-set: true
           description: New effects. Opaque to Bannou; no plugin reads keys by convention.
         requirements:
           type: object
           nullable: true
+          x-detect-if-set: true
           description: New requirements. Opaque to Bannou; no plugin reads keys by convention.
         display:
           type: object
           nullable: true
+          x-detect-if-set: true
           description: New display properties. Opaque to Bannou; no plugin reads keys by convention.
         metadata:
           type: object
           nullable: true
+          x-detect-if-set: true
           description: New metadata. Opaque to Bannou; no plugin reads keys by convention.
         isActive:
           type: boolean
           nullable: true
+          x-detect-if-set: true
           description: Active status
         useBehaviorContractTemplateId:
           type: string
           format: uuid
           nullable: true
+          x-detect-if-set: true
           description: Contract template ID for executable item behavior (null to clear)
         canUseBehaviorContractTemplateId:
           type: string
           format: uuid
           nullable: true
+          x-detect-if-set: true
           description: Contract template for pre-use validation (null to clear)
         onUseFailedBehaviorContractTemplateId:
           type: string
           format: uuid
           nullable: true
+          x-detect-if-set: true
           description: Contract template for use failure handling (null to clear)
         itemUseBehavior:
           $ref: '#/components/schemas/ItemUseBehavior'
           nullable: true
+          x-detect-if-set: true
           description: How the item should behave when used
         canUseBehavior:
           $ref: '#/components/schemas/CanUseBehavior'
           nullable: true
+          x-detect-if-set: true
           description: How CanUse validation failures should be handled
     DeprecateItemTemplateRequest:
       type: object
@@ -2955,30 +2994,36 @@ components:
         durabilityDelta:
           type: integer
           nullable: true
+          x-detect-if-set: true
           description: Change to durability (positive to repair, negative for damage)
         customStats:
           type: object
           nullable: true
+          x-detect-if-set: true
           description: New custom stats (merges with existing). Opaque to Bannou; no plugin reads keys by convention.
         customName:
           type: string
           maxLength: 128
           nullable: true
+          x-detect-if-set: true
           description: New custom name
         quantityDelta:
           type: number
           format: double
           nullable: true
+          x-detect-if-set: true
           description: Change to quantity (positive to add, negative to subtract). Only valid for stackable items.
         instanceMetadata:
           type: object
           nullable: true
+          x-detect-if-set: true
           description: New instance metadata (merges with existing). Opaque to Bannou; no plugin reads keys by 
             convention.
         newContainerId:
           type: string
           format: uuid
           nullable: true
+          x-detect-if-set: true
           description: >-
             New container for the item. Set to a container ID to move it, or set explicitly
             to null (via changeFields) to remove the item from all containers (unplaced).
@@ -2987,14 +3032,17 @@ components:
         newSlotIndex:
           type: integer
           nullable: true
+          x-detect-if-set: true
           description: New slot index within the container
         newSlotX:
           type: integer
           nullable: true
+          x-detect-if-set: true
           description: New X position for grid-based containers
         newSlotY:
           type: integer
           nullable: true
+          x-detect-if-set: true
           description: New Y position for grid-based containers
     BindItemInstanceRequest:
       type: object

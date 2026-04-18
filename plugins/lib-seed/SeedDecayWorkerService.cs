@@ -329,6 +329,10 @@ public class SeedDecayWorkerService : BackgroundService
             {
                 _logger.LogWarning(ex, "Worldstate unavailable for realm {RealmId} during seed decay, skipping seed {SeedId}",
                     seed.RealmId.Value, seed.SeedId);
+                await messageBus.TryPublishErrorAsync(
+                    "seed", "ProcessSeedDecay", "WorldstateUnavailable",
+                    ex.Message, dependency: "worldstate", endpoint: "get-elapsed-game-time",
+                    stack: ex.StackTrace, cancellationToken: cancellationToken);
                 return (0, false);
             }
         }

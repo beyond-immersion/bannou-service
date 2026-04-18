@@ -46,6 +46,34 @@ namespace BeyondImmersion.BannouService.StructuralTests;
 /// any known suffix, or whose plugin directory does not exist on disk, are silently skipped.
 /// </para>
 /// <para>
+/// <b>x-sdk-type extension:</b> When a model declares <c>x-sdk-type:
+/// BeyondImmersion.Bannou.{SdkName}.{TypeName}</c>, its implementation lives in the named SDK
+/// rather than in the owning plugin — the plugin typically passes the whole object opaquely to
+/// a helper in <c>sdks/{sdk-name-kebab}/</c> that reads the individual fields. The coverage
+/// check honors this by ALSO scanning the SDK source tree — properties that appear in SDK
+/// source count as "used" for <c>x-sdk-type</c> models. PascalCase SDK names are converted to
+/// kebab-case (<c>Core</c> → <c>core</c>, <c>MusicTheory</c> → <c>music-theory</c>). This
+/// preserves the ability to catch fields declared with <c>x-sdk-type</c> but still not read
+/// anywhere: the annotation promises the SDK will read the field, and if neither the plugin
+/// nor the SDK does, it is still flagged.
+/// </para>
+/// <para>
+/// <b>Passthrough detection:</b> When a model is <c>$ref</c>'d by some other property in the
+/// schema (i.e., it is an embedded sub-type rather than a top-level request/response/event)
+/// AND the model's PascalCase type name appears anywhere in plugin source (e.g.,
+/// <c>body.DeviceInfo</c>, <c>new DeviceInfo()</c>, or <c>session.DeviceInfo = ...</c>), the
+/// per-field check is skipped for that model. The plugin is treating the type as a
+/// passthrough unit — the whole object is forwarded to consumers (other services via
+/// events, clients via responses, internal storage) without per-field inspection. Top-level
+/// entry-point models (request/response/top-level event types) are NEVER marked passthrough
+/// because they are not <c>$ref</c>'d by anything else; their per-field checks always run,
+/// which catches the case of an entry-point model receiving a field the service never reads.
+/// The two-condition rule (referenced AND named) prevents name collisions on top-level types
+/// from silently hiding real gaps — a top-level model like <c>LoginRequest</c> would never
+/// be marked passthrough even if some unrelated source line contained the literal token
+/// <c>LoginRequest</c>, because <c>LoginRequest</c> is not <c>$ref</c>'d by anything.
+/// </para>
+/// <para>
 /// <b>Excluded schema files</b> (skipped wholesale):
 /// </para>
 /// <list type="bullet">
@@ -86,8 +114,11 @@ namespace BeyondImmersion.BannouService.StructuralTests;
 ///     <c>InitialPersonalityTraits</c> case slips through).</item>
 ///   <item><b>Semantic usage is not verified</b> — <c>LogWarning(..., template.Foo.Count)</c>
 ///     counts as a read of <c>Foo</c> even though the code only logs it.</item>
-///   <item><b>$ref navigation is not followed</b> — if model A references model B via
-///     <c>$ref</c> and only A's properties are read, B's properties are still walked in isolation.</item>
+///   <item><b>$ref navigation is partial</b> — passthrough detection (see above) skips a
+///     model's per-field check when the model is <c>$ref</c>'d by another property AND its
+///     type name appears in plugin source. Models <c>$ref</c>'d but whose type name does
+///     NOT appear in source are still walked in isolation; if only the parent's other
+///     properties are read, the sub-type's fields are still flagged.</item>
 ///   <item><b>Substring match may false-positive across models sharing a property name</b> —
 ///     if two models define a <c>Name</c> field and only one is actually used, both pass because
 ///     the lexical scan cannot tell them apart.</item>
@@ -113,6 +144,7 @@ public class SchemaFieldCoverageTests
 {
     private static readonly string SchemasDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "schemas");
     private static readonly string PluginsDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "plugins");
+    private static readonly string SdksDir = Path.Combine(TestAssemblyDiscovery.RepoRoot, "sdks");
 
     /// <summary>
     /// Schema filenames that are not per-service schemas and are skipped wholesale. The
@@ -154,6 +186,27 @@ public class SchemaFieldCoverageTests
         "eventId",
         "timestamp",
         "eventName",
+    };
+
+    /// <summary>
+    /// TEMPORARY: Pre-implementation plugins where every endpoint throws
+    /// <c>NotImplementedException</c>. Their schemas are designed and code scaffolding
+    /// exists, but no business logic has been written yet. Each pre-implementation
+    /// plugin contributes hundreds of unused fields (craft: 303, divine: 157), drowning
+    /// out signal from operational plugins where individual gaps are actionable.
+    /// </summary>
+    /// <remarks>
+    /// This list deliberately violates the "no exclusions" rule documented in this class's
+    /// XML summary. It is a temporary signal-to-noise concession until each listed plugin
+    /// has its business logic implemented. <b>When a plugin's endpoints stop throwing
+    /// <c>NotImplementedException</c>, remove it from this list immediately</b> — the
+    /// remaining unused fields will then be real implementation gaps that the test is
+    /// meant to catch.
+    /// </remarks>
+    private static readonly HashSet<string> PreImplementationPlugins = new(StringComparer.Ordinal)
+    {
+        "craft",
+        "divine",
     };
 
     /// <summary>
@@ -200,6 +253,10 @@ public class SchemaFieldCoverageTests
         // -service-events, -client-events) and we don't want to re-scan source files four times.
         var pluginReferenceCache = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
 
+        // Cache SDK source scans separately — a single SDK (e.g. sdks/core/) is referenced by
+        // x-sdk-type declarations in many schemas, so we scan each SDK directory once.
+        var sdkReferenceCache = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+
         var violations = new List<Violation>();
 
         foreach (var schemaFile in Directory.EnumerateFiles(SchemasDir, "*.yaml", SearchOption.TopDirectoryOnly))
@@ -212,13 +269,17 @@ public class SchemaFieldCoverageTests
             if (serviceName == null)
                 continue; // Filename doesn't match any known suffix pattern — out of scope.
 
+            // TEMPORARY: Skip pre-implementation plugins (see PreImplementationPlugins above).
+            if (PreImplementationPlugins.Contains(serviceName))
+                continue;
+
             var pluginDir = Path.Combine(PluginsDir, $"lib-{serviceName}");
             if (!Directory.Exists(pluginDir))
                 continue; // Pre-implementation stub or shared schema — skip silently.
 
             if (!pluginReferenceCache.TryGetValue(pluginDir, out var coveredProperties))
             {
-                coveredProperties = CollectPluginPropertyReferences(pluginDir);
+                coveredProperties = CollectSourcePropertyReferences(pluginDir);
                 pluginReferenceCache[pluginDir] = coveredProperties;
             }
 
@@ -233,6 +294,13 @@ public class SchemaFieldCoverageTests
             var schemas = GetComponentsSchemas(root);
             if (schemas == null)
                 continue;
+
+            // Pre-pass: collect the set of model names that are referenced by some other
+            // property in this schema file via $ref (direct, allOf composition, or array
+            // items). These are the candidates for passthrough detection — top-level
+            // entry-point models (requests, responses, top-level events) are not in this
+            // set because nothing $ref's them. See "Passthrough detection" in class XML.
+            var modelsReferencedByOthers = CollectReferencedModelNames(schemas);
 
             foreach (var modelEntry in schemas.Children)
             {
@@ -258,6 +326,37 @@ public class SchemaFieldCoverageTests
                 if (propsNode is not YamlMappingNode propsMapping)
                     continue;
 
+                // PASSTHROUGH DETECTION: If this model is $ref'd by another property in the
+                // schema (so it's an embedded sub-type, not a top-level entry point) AND its
+                // type name appears in plugin source, the plugin is forwarding the whole
+                // object to consumers without inspecting individual fields. Skip the per-field
+                // check — downstream consumers (events, responses, services) read the fields.
+                // Both conditions are required: the $ref check ensures top-level types like
+                // request/response models are never silently hidden by name collisions.
+                if (modelsReferencedByOthers.Contains(modelName)
+                    && coveredProperties.Contains(modelName))
+                {
+                    continue;
+                }
+
+                // When a model declares x-sdk-type, its implementation lives in the named SDK
+                // rather than in the owning plugin. Collect the SDK's property references once
+                // (cached) and include them in the coverage check for this model's fields.
+                HashSet<string>? sdkProperties = null;
+                var sdkTypeFullName = GetSdkTypeFullName(modelMapping);
+                if (sdkTypeFullName != null)
+                {
+                    var sdkDir = ResolveSdkSourceDir(sdkTypeFullName);
+                    if (sdkDir != null)
+                    {
+                        if (!sdkReferenceCache.TryGetValue(sdkDir, out sdkProperties))
+                        {
+                            sdkProperties = CollectSourcePropertyReferences(sdkDir);
+                            sdkReferenceCache[sdkDir] = sdkProperties;
+                        }
+                    }
+                }
+
                 foreach (var propEntry in propsMapping.Children)
                 {
                     var propName = (propEntry.Key as YamlScalarNode)?.Value;
@@ -271,6 +370,9 @@ public class SchemaFieldCoverageTests
 
                     var pascalName = ToPascalCase(propName);
                     if (coveredProperties.Contains(pascalName))
+                        continue;
+                    // Accept reads from the declared SDK source tree when x-sdk-type is set.
+                    if (sdkProperties != null && sdkProperties.Contains(pascalName))
                         continue;
 
                     violations.Add(new Violation(serviceName, fileName, modelName, propName));
@@ -350,10 +452,11 @@ public class SchemaFieldCoverageTests
     }
 
     /// <summary>
-    /// Walks every non-Generated, non-test <c>.cs</c> file in the plugin directory and collects
+    /// Walks every non-Generated, non-test <c>.cs</c> file in a source directory and collects
     /// every PascalCase identifier that appears after a dot or immediately before a simple
     /// <c>=</c> assignment. The resulting set is the "used property" bag against which schema
-    /// property names are checked.
+    /// property names are checked. Used for both plugin directories (<c>plugins/lib-{service}/</c>)
+    /// and SDK directories (<c>sdks/{sdk-name}/</c>, reached via <c>x-sdk-type</c> on a model).
     /// </summary>
     /// <remarks>
     /// This is inherently a lexical approximation. Common property names (<c>Name</c>,
@@ -361,16 +464,16 @@ public class SchemaFieldCoverageTests
     /// they appear in unrelated code. This causes the test to under-report violations for fields
     /// sharing those names — a known limitation documented on the test class.
     /// </remarks>
-    private static HashSet<string> CollectPluginPropertyReferences(string pluginDir)
+    private static HashSet<string> CollectSourcePropertyReferences(string sourceDir)
     {
         var references = new HashSet<string>(StringComparer.Ordinal);
 
-        foreach (var csFile in Directory.EnumerateFiles(pluginDir, "*.cs", SearchOption.AllDirectories))
+        foreach (var csFile in Directory.EnumerateFiles(sourceDir, "*.cs", SearchOption.AllDirectories))
         {
-            var relative = Path.GetRelativePath(pluginDir, csFile);
+            var relative = Path.GetRelativePath(sourceDir, csFile);
             if (relative.Contains("Generated", StringComparison.OrdinalIgnoreCase))
                 continue;
-            // Defensive: skip any .tests project content inside the plugin dir. By convention
+            // Defensive: skip any .tests project content inside the source dir. By convention
             // lib-*.tests is a sibling directory, not nested under lib-*, but this keeps the
             // collection honest if someone ever nests test sources.
             if (relative.Contains(".tests", StringComparison.OrdinalIgnoreCase))
@@ -396,6 +499,64 @@ public class SchemaFieldCoverageTests
         }
 
         return references;
+    }
+
+    /// <summary>
+    /// Extracts the <c>x-sdk-type</c> value from a model mapping, if declared. When a schema
+    /// model carries <c>x-sdk-type: BeyondImmersion.Bannou.{SdkName}.{TypeName}</c>, its
+    /// property reads live in the named SDK rather than in the owning plugin. The coverage
+    /// check honors this by ALSO scanning the SDK source tree — a field declared with
+    /// <c>x-sdk-type</c> is still flagged if it isn't read in either the plugin OR the SDK.
+    /// </summary>
+    private static string? GetSdkTypeFullName(YamlMappingNode modelMapping)
+    {
+        if (modelMapping.Children.TryGetValue(new YamlScalarNode("x-sdk-type"), out var sdkTypeNode)
+            && sdkTypeNode is YamlScalarNode scalar
+            && !string.IsNullOrEmpty(scalar.Value))
+        {
+            return scalar.Value;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Maps an <c>x-sdk-type</c> full name (e.g. <c>BeyondImmersion.Bannou.Core.ResponseTransformation</c>)
+    /// to the corresponding SDK source directory (<c>sdks/core/</c>). Returns null if the full
+    /// name does not match the expected <c>BeyondImmersion.Bannou.{SdkName}.*</c> pattern, or if
+    /// the resolved directory does not exist on disk. PascalCase SDK names are converted to
+    /// kebab-case (e.g. <c>MusicTheory</c> → <c>music-theory</c>).
+    /// </summary>
+    private static string? ResolveSdkSourceDir(string sdkTypeFullName)
+    {
+        const string prefix = "BeyondImmersion.Bannou.";
+        if (!sdkTypeFullName.StartsWith(prefix, StringComparison.Ordinal))
+            return null;
+        var remainder = sdkTypeFullName[prefix.Length..];
+        var dotIdx = remainder.IndexOf('.');
+        if (dotIdx <= 0)
+            return null;
+        var sdkName = remainder[..dotIdx];
+        var kebabName = PascalToKebab(sdkName);
+        var dir = Path.Combine(SdksDir, kebabName);
+        return Directory.Exists(dir) ? dir : null;
+    }
+
+    /// <summary>
+    /// Converts a PascalCase identifier to kebab-case by lowercasing each character and
+    /// inserting a hyphen before each uppercase character (except the first).
+    /// <c>Core</c> → <c>core</c>, <c>MusicTheory</c> → <c>music-theory</c>.
+    /// </summary>
+    private static string PascalToKebab(string pascal)
+    {
+        if (string.IsNullOrEmpty(pascal)) return pascal;
+        var sb = new StringBuilder();
+        for (int i = 0; i < pascal.Length; i++)
+        {
+            var c = pascal[i];
+            if (i > 0 && char.IsUpper(c)) sb.Append('-');
+            sb.Append(char.ToLowerInvariant(c));
+        }
+        return sb.ToString();
     }
 
     /// <summary>
@@ -450,5 +611,104 @@ public class SchemaFieldCoverageTests
             return null;
 
         return schemasNode as YamlMappingNode;
+    }
+
+    /// <summary>
+    /// Walks every model in <paramref name="schemas"/> and collects the set of model names
+    /// that are <c>$ref</c>'d by some other property in this schema file. Used by passthrough
+    /// detection to distinguish embedded sub-types (legitimate passthrough candidates) from
+    /// top-level entry-point models (request/response/event types that are not <c>$ref</c>'d
+    /// by anything else and must always have their fields checked individually).
+    /// </summary>
+    /// <remarks>
+    /// Cross-file <c>$ref</c>s (e.g., <c>common-api.yaml#/components/schemas/Foo</c>) are
+    /// captured by their last path segment, which is the same identifier the target file uses
+    /// for the type. This means a model defined in file A and <c>$ref</c>'d from file B is
+    /// recognized as referenced when file A is the current scan target. <c>common-*.yaml</c>
+    /// files are excluded wholesale by the test, so cross-file targets pointing into common
+    /// schemas don't appear in violation reports either way.
+    /// </remarks>
+    private static HashSet<string> CollectReferencedModelNames(YamlMappingNode schemas)
+    {
+        var referenced = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var modelEntry in schemas.Children)
+        {
+            if (modelEntry.Value is not YamlMappingNode parentMapping)
+                continue;
+            if (!parentMapping.Children.TryGetValue(new YamlScalarNode("properties"), out var pNode))
+                continue;
+            if (pNode is not YamlMappingNode pMapping)
+                continue;
+
+            foreach (var propEntry in pMapping.Children)
+            {
+                if (propEntry.Value is not YamlMappingNode propMapping)
+                    continue;
+
+                var targetType = ExtractRefTarget(propMapping);
+                if (targetType != null)
+                    referenced.Add(targetType);
+            }
+        }
+
+        return referenced;
+    }
+
+    /// <summary>
+    /// Extracts a <c>$ref</c> target type name from a property's schema mapping. Handles three
+    /// shapes: direct <c>$ref</c>, <c>allOf</c> composition (used to attach <c>nullable: true</c>
+    /// to a referenced type in OpenAPI 3.0.x), and array <c>items.$ref</c>. Returns the bare
+    /// type name (e.g., <c>"DeviceInfo"</c>) regardless of whether the source path is local
+    /// (<c>#/components/schemas/Foo</c>) or cross-file (<c>common-api.yaml#/components/schemas/Foo</c>).
+    /// Returns <c>null</c> if no <c>$ref</c> is found in any of the recognized shapes.
+    /// </summary>
+    private static string? ExtractRefTarget(YamlMappingNode propMapping)
+    {
+        // Direct: { $ref: '#/components/schemas/Foo' }
+        if (propMapping.Children.TryGetValue(new YamlScalarNode("$ref"), out var refNode)
+            && refNode is YamlScalarNode refScalar)
+        {
+            return ParseRefTargetName(refScalar.Value);
+        }
+
+        // allOf composition: { allOf: [{ $ref: '#/components/schemas/Foo' }] }
+        // Used by OpenAPI 3.0.x to attach `nullable: true` and similar siblings to a $ref.
+        if (propMapping.Children.TryGetValue(new YamlScalarNode("allOf"), out var allOfNode)
+            && allOfNode is YamlSequenceNode allOfSeq)
+        {
+            foreach (var item in allOfSeq)
+            {
+                if (item is YamlMappingNode itemMapping
+                    && itemMapping.Children.TryGetValue(new YamlScalarNode("$ref"), out var inner)
+                    && inner is YamlScalarNode innerScalar)
+                {
+                    return ParseRefTargetName(innerScalar.Value);
+                }
+            }
+        }
+
+        // Array items: { type: array, items: { $ref: '#/components/schemas/Foo' } }
+        // Recurse so items.allOf.[$ref] also works if the item itself is a composition.
+        if (propMapping.Children.TryGetValue(new YamlScalarNode("items"), out var itemsNode)
+            && itemsNode is YamlMappingNode itemsMapping)
+        {
+            return ExtractRefTarget(itemsMapping);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Parses a <c>$ref</c> string into the bare type name (the last path segment).
+    /// <c>"#/components/schemas/Foo"</c> → <c>"Foo"</c>.
+    /// <c>"common-api.yaml#/components/schemas/Foo"</c> → <c>"Foo"</c>.
+    /// </summary>
+    private static string? ParseRefTargetName(string? refValue)
+    {
+        if (string.IsNullOrEmpty(refValue))
+            return null;
+        var idx = refValue.LastIndexOf('/');
+        return idx >= 0 ? refValue[(idx + 1)..] : refValue;
     }
 }

@@ -244,11 +244,12 @@ paths:
         type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n          \
         \          \"description\": \"New display name\"\n                },\n                \"description\": {\n       \
         \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 500,\n\
-        \                    \"description\": \"New description\"\n                },\n                \"isActive\": {\n \
-        \                   \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New active status\"\n                },\n                \"autoLobbyEnabled\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"New auto-lobby enabled
-        status\"\n                }\n            }\n        }\n    }\n}"
+        \                    \"x-detect-if-set\": true,\n                    \"description\": \"New description\"\n      \
+        \          },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"New active status\"\n                },\n              \
+        \  \"autoLobbyEnabled\": {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"New auto-lobby enabled status\"\n                }\n            }\n      \
+        \  }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ServiceInfo\"\
         ,\n    \"$defs\": {\n        \"ServiceInfo\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Information about a game service\",\n            \"required\": [\n      \
@@ -395,6 +396,7 @@ components:
           type: string
           nullable: true
           maxLength: 500
+          x-detect-if-set: true
           description: New description
         isActive:
           type: boolean

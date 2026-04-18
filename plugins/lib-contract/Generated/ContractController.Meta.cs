@@ -2798,6 +2798,7 @@ public partial class ContractController
                     "type": "string",
                     "maxLength": 2000,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New description"
                 },
                 "isActive": {

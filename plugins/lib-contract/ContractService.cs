@@ -441,7 +441,7 @@ public partial class ContractService : IContractService, ICleanDeprecatedEntity
             changedFields.Add("name");
         }
 
-        if (body.Description != null && body.Description != model.Description)
+        if (body.ChangeFields.IsFieldSet("description") && body.Description != model.Description)
         {
             model.Description = body.Description;
             changedFields.Add("description");

@@ -172,6 +172,152 @@ public partial class ClimateTemplateCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to environment.climate-template.deleted when a climatetemplate is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ClimateTemplateDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: environment.climate-template.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "environment.climate-template.deleted";
+
+    /// <summary>
+    /// Unique climate template identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Game service this template belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Biome type code (e.g. temperate_forest alpine desert)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("biomeCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BiomeCode { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable name for the climate template
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// Optional detailed description of this climate template
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string Description { get; set; } = default!;
+
+    /// <summary>
+    /// Temperature curves per season
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("temperatureCurves")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<TemperatureCurve> TemperatureCurves { get; set; } = new System.Collections.ObjectModel.Collection<TemperatureCurve>();
+
+    /// <summary>
+    /// Weather pattern distributions per season
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("weatherDistributions")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<WeatherDistributionSeason> WeatherDistributions { get; set; } = new System.Collections.ObjectModel.Collection<WeatherDistributionSeason>();
+
+    /// <summary>
+    /// Atmospheric baselines per season
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("atmosphericBaselines")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<AtmosphericBaselineSeason> AtmosphericBaselines { get; set; } = new System.Collections.ObjectModel.Collection<AtmosphericBaselineSeason>();
+
+    /// <summary>
+    /// Resource availability values per season
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceAvailability")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ResourceAvailabilitySeason> ResourceAvailability { get; set; } = new System.Collections.ObjectModel.Collection<ResourceAvailabilitySeason>();
+
+    /// <summary>
+    /// Temperature change per altitude unit (negative for lapse rate)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("altitudeTemperatureRate")]
+    public double AltitudeTemperatureRate { get; set; } = default!;
+
+    /// <summary>
+    /// Temperature change per depth unit (positive for geothermal)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("depthTemperatureRate")]
+    public double DepthTemperatureRate { get; set; } = default!;
+
+    /// <summary>
+    /// Temperature above which is_hot is true for this biome
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("heatThreshold")]
+    public double HeatThreshold { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the climate template was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the climate template was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this climate template is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the climate template was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to environment.climate-template.updated when a climatetemplate is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -316,152 +462,6 @@ public partial class ClimateTemplateUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to environment.climate-template.deleted when a climatetemplate is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ClimateTemplateDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: environment.climate-template.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "environment.climate-template.deleted";
-
-    /// <summary>
-    /// Unique climate template identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TemplateId { get; set; } = default!;
-
-    /// <summary>
-    /// Game service this template belongs to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Biome type code (e.g. temperate_forest alpine desert)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("biomeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string BiomeCode { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable name for the climate template
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string DisplayName { get; set; } = default!;
-
-    /// <summary>
-    /// Optional detailed description of this climate template
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string Description { get; set; } = default!;
-
-    /// <summary>
-    /// Temperature curves per season
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("temperatureCurves")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<TemperatureCurve> TemperatureCurves { get; set; } = new System.Collections.ObjectModel.Collection<TemperatureCurve>();
-
-    /// <summary>
-    /// Weather pattern distributions per season
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("weatherDistributions")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<WeatherDistributionSeason> WeatherDistributions { get; set; } = new System.Collections.ObjectModel.Collection<WeatherDistributionSeason>();
-
-    /// <summary>
-    /// Atmospheric baselines per season
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("atmosphericBaselines")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<AtmosphericBaselineSeason> AtmosphericBaselines { get; set; } = new System.Collections.ObjectModel.Collection<AtmosphericBaselineSeason>();
-
-    /// <summary>
-    /// Resource availability values per season
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("resourceAvailability")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<ResourceAvailabilitySeason> ResourceAvailability { get; set; } = new System.Collections.ObjectModel.Collection<ResourceAvailabilitySeason>();
-
-    /// <summary>
-    /// Temperature change per altitude unit (negative for lapse rate)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("altitudeTemperatureRate")]
-    public double AltitudeTemperatureRate { get; set; } = default!;
-
-    /// <summary>
-    /// Temperature change per depth unit (positive for geothermal)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("depthTemperatureRate")]
-    public double DepthTemperatureRate { get; set; } = default!;
-
-    /// <summary>
-    /// Temperature above which is_hot is true for this biome
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("heatThreshold")]
-    public double HeatThreshold { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the climate template was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the climate template was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this climate template is deprecated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
-    public bool IsDeprecated { get; set; } = default!;
-
-    /// <summary>
-    /// When the climate template was deprecated (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for deprecation (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? DeprecationReason { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

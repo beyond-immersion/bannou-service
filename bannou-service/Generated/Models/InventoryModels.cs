@@ -530,7 +530,7 @@ public partial class UpdateContainerRequest
     /// <summary>
     /// Fields explicitly set on this request. Populated automatically by property
     /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
+    /// provided" from "field explicitly set to null" for opt-in properties.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
     public System.Collections.Generic.ICollection<string>? ChangeFields
@@ -551,14 +551,13 @@ public partial class UpdateContainerRequest
         => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
 
 
-    private System.Guid _containerId = default!;
     /// <summary>
     /// Container ID to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("containerId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContainerId { get => _containerId; set { _containerId = value; _TrackChange("containerId"); } }
+    public System.Guid ContainerId { get; set; } = default!;
 
     private int? _maxSlots = default!;
     /// <summary>

@@ -4481,6 +4481,929 @@ public partial class CharacterLifecycleController
 
     #endregion
 
+    #region Meta Endpoints for DeprecateLifecycleTemplate
+
+    private static readonly string _DeprecateLifecycleTemplate_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeprecateLifecycleTemplateRequest",
+    "$defs": {
+        "DeprecateLifecycleTemplateRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to deprecate a lifecycle template (Category B \u2014 one-way, no delete). Idempotent \u2014 returns OK if already deprecated.",
+            "required": [
+                "speciesCode",
+                "gameServiceId"
+            ],
+            "properties": {
+                "speciesCode": {
+                    "type": "string",
+                    "description": "Species code of the template to deprecate",
+                    "minLength": 1,
+                    "maxLength": 100
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Game service scope"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (recommended for audit trail)",
+                    "maxLength": 500
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeprecateLifecycleTemplate_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetLifecycleTemplateResponse",
+    "$defs": {
+        "GetLifecycleTemplateResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Lifecycle template for a species",
+            "required": [
+                "speciesCode",
+                "gameServiceId",
+                "stages",
+                "naturalDeathRange",
+                "fertilityWindow"
+            ],
+            "properties": {
+                "speciesCode": {
+                    "type": "string",
+                    "description": "Species code",
+                    "maxLength": 100
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Game service scope"
+                },
+                "stages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/LifecycleStageDefinition"
+                    },
+                    "description": "Lifecycle stage definitions"
+                },
+                "naturalDeathRange": {
+                    "$ref": "#/$defs/NaturalDeathRange",
+                    "description": "Natural death year calculation parameters"
+                },
+                "fertilityWindow": {
+                    "$ref": "#/$defs/FertilityWindow",
+                    "description": "Fertility peak and decline parameters"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this template is deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the template was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Why the template was deprecated (null if not deprecated)",
+                    "maxLength": 500
+                }
+            }
+        },
+        "LifecycleStageDefinition": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Definition of a single lifecycle stage within a species template",
+            "required": [
+                "code",
+                "minAge",
+                "healthModifier",
+                "fertilityBase",
+                "canMarry",
+                "canProcreate",
+                "canOwnOrg",
+                "canBePossessed"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "description": "Stage code (species-configurable, e.g., infant, child, adult)",
+                    "minLength": 1,
+                    "maxLength": 50
+                },
+                "minAge": {
+                    "type": "integer",
+                    "description": "Minimum age in game years for this stage",
+                    "minimum": 0
+                },
+                "maxAge": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Maximum age for this stage (null for open-ended stages like dying)"
+                },
+                "healthModifier": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Multiplier applied to character health at this stage",
+                    "minimum": 0.0,
+                    "maximum": 2.0
+                },
+                "fertilityBase": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Base fertility at this stage (0.0-1.0)",
+                    "minimum": 0.0,
+                    "maximum": 1.0
+                },
+                "canMarry": {
+                    "type": "boolean",
+                    "description": "Whether marriage is permitted at this stage"
+                },
+                "canProcreate": {
+                    "type": "boolean",
+                    "description": "Whether procreation is permitted at this stage"
+                },
+                "canOwnOrg": {
+                    "type": "boolean",
+                    "description": "Whether character can own organizations at this stage"
+                },
+                "canBePossessed": {
+                    "type": "boolean",
+                    "description": "Whether guardian spirit can possess character at this stage"
+                }
+            }
+        },
+        "NaturalDeathRange": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Configuration for natural death year calculation",
+            "required": [
+                "minAge",
+                "maxAge",
+                "distribution"
+            ],
+            "properties": {
+                "minAge": {
+                    "type": "integer",
+                    "description": "Earliest possible natural death age",
+                    "minimum": 1
+                },
+                "maxAge": {
+                    "type": "integer",
+                    "description": "Latest possible natural death age",
+                    "minimum": 1
+                },
+                "distribution": {
+                    "$ref": "#/$defs/DeathDistribution",
+                    "description": "Statistical distribution for death year selection"
+                }
+            }
+        },
+        "DeathDistribution": {
+            "type": "string",
+            "description": "Statistical distribution model for natural death year calculation",
+            "enum": [
+                "Uniform",
+                "Normal",
+                "WeightedLate"
+            ]
+        },
+        "FertilityWindow": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Species fertility peak and decline configuration",
+            "required": [
+                "peakStartAge",
+                "peakEndAge",
+                "declineRate"
+            ],
+            "properties": {
+                "peakStartAge": {
+                    "type": "integer",
+                    "description": "Age when fertility peaks",
+                    "minimum": 0
+                },
+                "peakEndAge": {
+                    "type": "integer",
+                    "description": "Age when peak ends",
+                    "minimum": 0
+                },
+                "declineRate": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "How fast fertility drops after peak (0.0-1.0)",
+                    "minimum": 0.0,
+                    "maximum": 1.0
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeprecateLifecycleTemplate_Info = """
+{
+    "summary": "Deprecate a lifecycle template",
+    "description": "Marks a lifecycle template as deprecated. Deprecated templates cannot be used\nto create new lifecycle profiles for characters. Existing characters with\nprofiles referencing this template continue to function unchanged.\nCategory B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,\nno delete. Idempotent \u2014 returns OK if already deprecated.\n",
+    "tags": [
+        "CharacterLifecycle"
+    ],
+    "deprecated": false,
+    "operationId": "deprecateLifecycleTemplate"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeprecateLifecycleTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/deprecate-lifecycle/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateLifecycleTemplate_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/deprecate-lifecycle",
+            _DeprecateLifecycleTemplate_Info));
+
+    /// <summary>Returns request schema for DeprecateLifecycleTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/deprecate-lifecycle/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateLifecycleTemplate_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/deprecate-lifecycle",
+            "request-schema",
+            _DeprecateLifecycleTemplate_RequestSchema));
+
+    /// <summary>Returns response schema for DeprecateLifecycleTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/deprecate-lifecycle/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateLifecycleTemplate_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/deprecate-lifecycle",
+            "response-schema",
+            _DeprecateLifecycleTemplate_ResponseSchema));
+
+    /// <summary>Returns full schema for DeprecateLifecycleTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/deprecate-lifecycle/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateLifecycleTemplate_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/deprecate-lifecycle",
+            _DeprecateLifecycleTemplate_Info,
+            _DeprecateLifecycleTemplate_RequestSchema,
+            _DeprecateLifecycleTemplate_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeprecateHeritableTraitTemplate
+
+    private static readonly string _DeprecateHeritableTraitTemplate_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeprecateHeritableTraitTemplateRequest",
+    "$defs": {
+        "DeprecateHeritableTraitTemplateRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to deprecate a heritable trait template (Category B \u2014 one-way, no delete). Idempotent \u2014 returns OK if already deprecated.",
+            "required": [
+                "speciesCode",
+                "gameServiceId"
+            ],
+            "properties": {
+                "speciesCode": {
+                    "type": "string",
+                    "description": "Species code of the template to deprecate",
+                    "minLength": 1,
+                    "maxLength": 100
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Game service scope"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (recommended for audit trail)",
+                    "maxLength": 500
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeprecateHeritableTraitTemplate_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetHeritableTraitTemplateResponse",
+    "$defs": {
+        "GetHeritableTraitTemplateResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Heritable trait template for a species",
+            "required": [
+                "speciesCode",
+                "gameServiceId",
+                "traits"
+            ],
+            "properties": {
+                "speciesCode": {
+                    "type": "string",
+                    "description": "Species code",
+                    "maxLength": 100
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Game service scope"
+                },
+                "traits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/HeritableTraitDefinition"
+                    },
+                    "description": "Heritable trait definitions"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this template is deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the template was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Why the template was deprecated (null if not deprecated)",
+                    "maxLength": 500
+                }
+            }
+        },
+        "HeritableTraitDefinition": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Definition of a heritable genetic trait for a species",
+            "required": [
+                "traitCode",
+                "displayName",
+                "category",
+                "dominanceModel",
+                "mutationChance",
+                "mutationRange"
+            ],
+            "properties": {
+                "traitCode": {
+                    "type": "string",
+                    "description": "Unique trait identifier within species",
+                    "minLength": 1,
+                    "maxLength": 100
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "Human-readable trait name",
+                    "minLength": 1,
+                    "maxLength": 200
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Trait category (physical, mental, magical, social)",
+                    "minLength": 1,
+                    "maxLength": 50
+                },
+                "dominanceModel": {
+                    "$ref": "#/$defs/DominanceModel",
+                    "description": "How alleles combine for this trait"
+                },
+                "mutationChance": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Probability of mutation per trait during procreation (0.0-1.0)",
+                    "minimum": 0.0,
+                    "maximum": 1.0
+                },
+                "mutationRange": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Maximum allele shift on mutation",
+                    "minimum": 0.0,
+                    "maximum": 1.0
+                },
+                "expressionDelay": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Stage at which trait fully expresses (null for immediate expression at birth)",
+                    "maxLength": 50
+                },
+                "personalityMapping": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Which personality trait this feeds (e.g., aggression)",
+                    "maxLength": 100
+                },
+                "aptitudeMapping": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Which aptitude domain this feeds (e.g., smithing)",
+                    "maxLength": 100
+                }
+            }
+        },
+        "DominanceModel": {
+            "type": "string",
+            "description": "Genetic dominance model determining how alleles combine to produce phenotype",
+            "enum": [
+                "DominantHigh",
+                "DominantLow",
+                "Blending",
+                "Codominant",
+                "Maternal",
+                "Random"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _DeprecateHeritableTraitTemplate_Info = """
+{
+    "summary": "Deprecate a heritable trait template",
+    "description": "Marks a heritable trait template as deprecated. Deprecated templates cannot be used\nto create new genetic profiles for characters of this species. Existing characters\nwith genetic profiles referencing this template continue to function unchanged.\ nCategory B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,\nno delete. Idempotent \u2014 returns OK if already deprecated.\n",
+    "tags": [
+        "CharacterLifecycle"
+    ],
+    "deprecated": false,
+    "operationId": "deprecateHeritableTraitTemplate"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeprecateHeritableTraitTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/deprecate-heritable/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateHeritableTraitTemplate_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/deprecate-heritable",
+            _DeprecateHeritableTraitTemplate_Info));
+
+    /// <summary>Returns request schema for DeprecateHeritableTraitTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/deprecate-heritable/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateHeritableTraitTemplate_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/deprecate-heritable",
+            "request-schema",
+            _DeprecateHeritableTraitTemplate_RequestSchema));
+
+    /// <summary>Returns response schema for DeprecateHeritableTraitTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/deprecate-heritable/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateHeritableTraitTemplate_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/deprecate-heritable",
+            "response-schema",
+            _DeprecateHeritableTraitTemplate_ResponseSchema));
+
+    /// <summary>Returns full schema for DeprecateHeritableTraitTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/deprecate-heritable/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateHeritableTraitTemplate_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/deprecate-heritable",
+            _DeprecateHeritableTraitTemplate_Info,
+            _DeprecateHeritableTraitTemplate_RequestSchema,
+            _DeprecateHeritableTraitTemplate_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DeprecateHybridTraitTemplate
+
+    private static readonly string _DeprecateHybridTraitTemplate_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeprecateHybridTraitTemplateRequest",
+    "$defs": {
+        "DeprecateHybridTraitTemplateRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to deprecate a hybrid trait template (Category B \u2014 one-way, no delete). Idempotent \u2014 returns OK if already deprecated.",
+            "required": [
+                "speciesA",
+                "speciesB",
+                "gameServiceId"
+            ],
+            "properties": {
+                "speciesA": {
+                    "type": "string",
+                    "description": "First species in the pair",
+                    "minLength": 1,
+                    "maxLength": 100
+                },
+                "speciesB": {
+                    "type": "string",
+                    "description": "Second species in the pair",
+                    "minLength": 1,
+                    "maxLength": 100
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Game service scope"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Reason for deprecation (recommended for audit trail)",
+                    "maxLength": 500
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeprecateHybridTraitTemplate_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetHybridTraitTemplateResponse",
+    "$defs": {
+        "GetHybridTraitTemplateResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Hybrid trait template for a species pair",
+            "required": [
+                "speciesA",
+                "speciesB",
+                "gameServiceId",
+                "traitOverrides",
+                "hybridFertilityModifier"
+            ],
+            "properties": {
+                "speciesA": {
+                    "type": "string",
+                    "description": "First species in the pair",
+                    "maxLength": 100
+                },
+                "speciesB": {
+                    "type": "string",
+                    "description": "Second species in the pair",
+                    "maxLength": 100
+                },
+                "gameServiceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Game service scope"
+                },
+                "traitOverrides": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/HybridTraitOverride"
+                    },
+                    "description": "Dominance overrides for specific traits in hybrid offspring"
+                },
+                "hybridFertilityModifier": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Fertility modifier for hybrid offspring (0.0 = sterile, 1.0 = normal)",
+                    "minimum": 0.0,
+                    "maximum": 2.0
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this template is deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the template was deprecated (null if not deprecated)"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Why the template was deprecated (null if not deprecated)",
+                    "maxLength": 500
+                }
+            }
+        },
+        "HybridTraitOverride": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Dominance override for a specific trait in cross-species hybridization",
+            "required": [
+                "traitCode",
+                "dominanceOverride"
+            ],
+            "properties": {
+                "traitCode": {
+                    "type": "string",
+                    "description": "Trait being overridden",
+                    "minLength": 1,
+                    "maxLength": 100
+                },
+                "dominanceOverride": {
+                    "$ref": "#/$defs/DominanceModel",
+                    "description": "Dominance model override for this trait in hybrid offspring"
+                }
+            }
+        },
+        "DominanceModel": {
+            "type": "string",
+            "description": "Genetic dominance model determining how alleles combine to produce phenotype",
+            "enum": [
+                "DominantHigh",
+                "DominantLow",
+                "Blending",
+                "Codominant",
+                "Maternal",
+                "Random"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _DeprecateHybridTraitTemplate_Info = """
+{
+    "summary": "Deprecate a hybrid trait template",
+    "description": "Marks a hybrid trait template as deprecated. Deprecated hybrid templates cannot\nbe used to create new genetic profiles for hybrid offspring of this species pair.\nExisting hybrid characters with genetic profiles referencing this template continue\ nto function unchanged.\nCategory B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,\nno delete. Idempotent \u2014 returns OK if already deprecated.\n",
+    "tags": [
+        "CharacterLifecycle"
+    ],
+    "deprecated": false,
+    "operationId": "deprecateHybridTraitTemplate"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeprecateHybridTraitTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/deprecate-hybrid/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateHybridTraitTemplate_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/deprecate-hybrid",
+            _DeprecateHybridTraitTemplate_Info));
+
+    /// <summary>Returns request schema for DeprecateHybridTraitTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/deprecate-hybrid/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateHybridTraitTemplate_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/deprecate-hybrid",
+            "request-schema",
+            _DeprecateHybridTraitTemplate_RequestSchema));
+
+    /// <summary>Returns response schema for DeprecateHybridTraitTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/deprecate-hybrid/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateHybridTraitTemplate_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/deprecate-hybrid",
+            "response-schema",
+            _DeprecateHybridTraitTemplate_ResponseSchema));
+
+    /// <summary>Returns full schema for DeprecateHybridTraitTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/deprecate-hybrid/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeprecateHybridTraitTemplate_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/deprecate-hybrid",
+            _DeprecateHybridTraitTemplate_Info,
+            _DeprecateHybridTraitTemplate_RequestSchema,
+            _DeprecateHybridTraitTemplate_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CleanDeprecatedLifecycleTemplates
+
+    private static readonly string _CleanDeprecatedLifecycleTemplates_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object"
+}
+""";
+
+    private static readonly string _CleanDeprecatedLifecycleTemplates_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object"
+}
+""";
+
+    private static readonly string _CleanDeprecatedLifecycleTemplates_Info = """
+{
+    "summary": "Clean deprecated lifecycle templates with zero remaining profiles",
+    "description": "Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated\nlifecycle templates and permanently removes those with zero remaining\nLifecycleProfile instances referencing them, subject to an optional grace period.\nPublishes lifecycle-template.deleted events for each removed template. Idempotent\ nand safe to call at any frequency. Supports dry-run mode for admin panel preview.\n",
+    "tags": [
+        "CharacterLifecycle"
+    ],
+    "deprecated": false,
+    "operationId": "cleanDeprecatedLifecycleTemplates"
+}
+""";
+
+    /// <summary>Returns endpoint information for CleanDeprecatedLifecycleTemplates</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/clean-deprecated-lifecycle/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanDeprecatedLifecycleTemplates_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/clean-deprecated-lifecycle",
+            _CleanDeprecatedLifecycleTemplates_Info));
+
+    /// <summary>Returns request schema for CleanDeprecatedLifecycleTemplates</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/clean-deprecated-lifecycle/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanDeprecatedLifecycleTemplates_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/clean-deprecated-lifecycle",
+            "request-schema",
+            _CleanDeprecatedLifecycleTemplates_RequestSchema));
+
+    /// <summary>Returns response schema for CleanDeprecatedLifecycleTemplates</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/clean-deprecated-lifecycle/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanDeprecatedLifecycleTemplates_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/clean-deprecated-lifecycle",
+            "response-schema",
+            _CleanDeprecatedLifecycleTemplates_ResponseSchema));
+
+    /// <summary>Returns full schema for CleanDeprecatedLifecycleTemplates</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/clean-deprecated-lifecycle/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanDeprecatedLifecycleTemplates_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/clean-deprecated-lifecycle",
+            _CleanDeprecatedLifecycleTemplates_Info,
+            _CleanDeprecatedLifecycleTemplates_RequestSchema,
+            _CleanDeprecatedLifecycleTemplates_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CleanDeprecatedHeritableTraitTemplates
+
+    private static readonly string _CleanDeprecatedHeritableTraitTemplates_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object"
+}
+""";
+
+    private static readonly string _CleanDeprecatedHeritableTraitTemplates_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object"
+}
+""";
+
+    private static readonly string _CleanDeprecatedHeritableTraitTemplates_Info = """
+{
+    "summary": "Clean deprecated heritable trait templates with zero remaining profiles",
+    "description": "Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated\nheritable trait templates and permanently removes those with zero remaining\nGeneticProfile instances referencing them, subject to an optional grace period.\nPublishes heritable-trait-template.deleted events for each removed template.\nIdempotent and safe to call at any frequency. Supports dry-run mode for admin\npanel preview.\n",
+    "tags": [
+        "CharacterLifecycle"
+    ],
+    "deprecated": false,
+    "operationId": "cleanDeprecatedHeritableTraitTemplates"
+}
+""";
+
+    /// <summary>Returns endpoint information for CleanDeprecatedHeritableTraitTemplates</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/clean-deprecated-heritable/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanDeprecatedHeritableTraitTemplates_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/clean-deprecated-heritable",
+            _CleanDeprecatedHeritableTraitTemplates_Info));
+
+    /// <summary>Returns request schema for CleanDeprecatedHeritableTraitTemplates</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/clean-deprecated-heritable/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanDeprecatedHeritableTraitTemplates_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/clean-deprecated-heritable",
+            "request-schema",
+            _CleanDeprecatedHeritableTraitTemplates_RequestSchema));
+
+    /// <summary>Returns response schema for CleanDeprecatedHeritableTraitTemplates</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/clean-deprecated-heritable/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanDeprecatedHeritableTraitTemplates_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/clean-deprecated-heritable",
+            "response-schema",
+            _CleanDeprecatedHeritableTraitTemplates_ResponseSchema));
+
+    /// <summary>Returns full schema for CleanDeprecatedHeritableTraitTemplates</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/clean-deprecated-heritable/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanDeprecatedHeritableTraitTemplates_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/clean-deprecated-heritable",
+            _CleanDeprecatedHeritableTraitTemplates_Info,
+            _CleanDeprecatedHeritableTraitTemplates_RequestSchema,
+            _CleanDeprecatedHeritableTraitTemplates_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CleanDeprecatedHybridTraitTemplates
+
+    private static readonly string _CleanDeprecatedHybridTraitTemplates_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object"
+}
+""";
+
+    private static readonly string _CleanDeprecatedHybridTraitTemplates_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object"
+}
+""";
+
+    private static readonly string _CleanDeprecatedHybridTraitTemplates_Info = """
+{
+    "summary": "Clean deprecated hybrid trait templates with zero remaining hybrid profiles",
+    "description": "Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated\nhybrid trait templates and permanently removes those with zero remaining hybrid\nGeneticProfile instances referencing them, subject to an optional grace period.\nPublishes hybrid-trait-template.deleted events for each removed template.\nIdempotent and safe to call at any frequency. Supports dry-run mode for admin\npanel preview.\n",
+    "tags": [
+        "CharacterLifecycle"
+    ],
+    "deprecated": false,
+    "operationId": "cleanDeprecatedHybridTraitTemplates"
+}
+""";
+
+    /// <summary>Returns endpoint information for CleanDeprecatedHybridTraitTemplates</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/clean-deprecated-hybrid/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanDeprecatedHybridTraitTemplates_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/clean-deprecated-hybrid",
+            _CleanDeprecatedHybridTraitTemplates_Info));
+
+    /// <summary>Returns request schema for CleanDeprecatedHybridTraitTemplates</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/clean-deprecated-hybrid/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanDeprecatedHybridTraitTemplates_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/clean-deprecated-hybrid",
+            "request-schema",
+            _CleanDeprecatedHybridTraitTemplates_RequestSchema));
+
+    /// <summary>Returns response schema for CleanDeprecatedHybridTraitTemplates</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/clean-deprecated-hybrid/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanDeprecatedHybridTraitTemplates_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/clean-deprecated-hybrid",
+            "response-schema",
+            _CleanDeprecatedHybridTraitTemplates_ResponseSchema));
+
+    /// <summary>Returns full schema for CleanDeprecatedHybridTraitTemplates</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-lifecycle/template/clean-deprecated-hybrid/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanDeprecatedHybridTraitTemplates_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "CharacterLifecycle",
+            "POST",
+            "/character-lifecycle/template/clean-deprecated-hybrid",
+            _CleanDeprecatedHybridTraitTemplates_Info,
+            _CleanDeprecatedHybridTraitTemplates_RequestSchema,
+            _CleanDeprecatedHybridTraitTemplates_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for GetBloodline
 
     private static readonly string _GetBloodline_RequestSchema = """

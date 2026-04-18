@@ -1048,52 +1048,52 @@ paths:
         \              \"minItems\": 1,\n                    \"description\": \"New season definitions\"\n               \
         \ },\n                \"eraLabels\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
         : true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EraLabel\"\n              \
-        \      },\n                    \"description\": \"New era label definitions (null = no change, empty array = clear
-        all)\"\n                }\n            }\n        },\n        \"DayPeriodDefinition\": {\n            \"type\": \"\
-        object\",\n            \"additionalProperties\": false,\n            \"description\": \"A named time-of-day period
-        within a calendar template\",\n            \"required\": [\n                \"code\",\n                \"startHour\"\
-        ,\n                \"endHour\",\n                \"isDaylight\"\n            ],\n            \"properties\": {\n \
-        \               \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n  \
-        \                  \"maxLength\": 64,\n                    \"description\": \"Period identifier code (e.g., \\\"dawn\\\
-        \", \\\"morning\\\", \\\"night\\\")\"\n                },\n                \"startHour\": {\n                    \"\
-        type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Game hour this period
-        begins (0 to gameHoursPerDay-1)\"\n                },\n                \"endHour\": {\n                    \"type\"\
-        : \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"Game hour this period
-        ends (exclusive, max = gameHoursPerDay)\"\n                },\n                \"isDaylight\": {\n               \
-        \     \"type\": \"boolean\",\n                    \"description\": \"True if this period has sunlight, used by ${world.time.is_day}
-        and ${world.time.is_night}\"\n                }\n            }\n        },\n        \"MonthDefinition\": {\n     \
-        \       \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A month
-        within a calendar template year\",\n            \"required\": [\n                \"code\",\n                \"name\"\
-        ,\n                \"daysInMonth\",\n                \"seasonCode\"\n            ],\n            \"properties\": {\n\
-        \                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n \
-        \                   \"maxLength\": 64,\n                    \"description\": \"Month identifier code (e.g., \\\"frostmere\\\
-        \", \\\"greenleaf\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
-        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\"\
-        : \"Display name for the month\"\n                },\n                \"daysInMonth\": {\n                    \"type\"\
-        : \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"Number of game days in
-        this month\"\n                },\n                \"seasonCode\": {\n                    \"type\": \"string\",\n \
-        \                   \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\"\
-        : \"Season code this month belongs to (must reference a defined season)\"\n                }\n            }\n    \
-        \    },\n        \"SeasonDefinition\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"A season within a calendar template year\",\n            \"required\": [\n\
-        \                \"code\",\n                \"name\",\n                \"ordinal\"\n            ],\n            \"\
-        properties\": {\n                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
-        : 1,\n                    \"maxLength\": 64,\n                    \"description\": \"Season identifier code (e.g.,
-        \\\"winter\\\", \\\"spring\\\", \\\"summer\\\", \\\"autumn\\\")\"\n                },\n                \"name\": {\n\
-        \                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 128,\n                    \"description\": \"Display name for the season\"\n                },\n               \
-        \ \"ordinal\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n              \
-        \      \"description\": \"Position in annual cycle (0-based)\"\n                }\n            }\n        },\n   \
-        \     \"EraLabel\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n         \
-        \   \"description\": \"A named time span in the calendar for display purposes\",\n            \"required\": [\n  \
-        \              \"code\",\n                \"startYear\"\n            ],\n            \"properties\": {\n         \
-        \       \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n          \
-        \          \"maxLength\": 64,\n                    \"description\": \"Era identifier code (e.g., \\\"first_age\\\"\
-        , \\\"era_of_strife\\\")\"\n                },\n                \"startYear\": {\n                    \"type\": \"\
-        integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Game year when this era begins
-        (0-based)\"\n                },\n                \"endYear\": {\n                    \"type\": \"integer\",\n    \
-        \                \"nullable\": true,\n                    \"description\": \"Game year when this era ends (null =
-        ongoing)\"\n                }\n            }\n        }\n    }\n}"
+        \      },\n                    \"x-detect-if-set\": true,\n                    \"description\": \"New era label definitions
+        (null = no change, empty array = clear all)\"\n                }\n            }\n        },\n        \"DayPeriodDefinition\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"A named time-of-day period within a calendar template\",\n            \"required\": [\n                \"code\"\
+        ,\n                \"startHour\",\n                \"endHour\",\n                \"isDaylight\"\n            ],\n\
+        \            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\",\n         \
+        \           \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\": \"Period
+        identifier code (e.g., \\\"dawn\\\", \\\"morning\\\", \\\"night\\\")\"\n                },\n                \"startHour\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Game hour this period begins (0 to gameHoursPerDay-1)\"\n                },\n                \"endHour\": {\n\
+        \                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\"\
+        : \"Game hour this period ends (exclusive, max = gameHoursPerDay)\"\n                },\n                \"isDaylight\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"True if this period has sunlight,
+        used by ${world.time.is_day} and ${world.time.is_night}\"\n                }\n            }\n        },\n        \"\
+        MonthDefinition\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n          \
+        \  \"description\": \"A month within a calendar template year\",\n            \"required\": [\n                \"\
+        code\",\n                \"name\",\n                \"daysInMonth\",\n                \"seasonCode\"\n           \
+        \ ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\",\n    \
+        \                \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\": \"\
+        Month identifier code (e.g., \\\"frostmere\\\", \\\"greenleaf\\\")\"\n                },\n                \"name\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 128,\n                    \"description\": \"Display name for the month\"\n                },\n                \"\
+        daysInMonth\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n              \
+        \      \"description\": \"Number of game days in this month\"\n                },\n                \"seasonCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 64,\n                    \"description\": \"Season code this month belongs to (must reference a defined season)\"\
+        \n                }\n            }\n        },\n        \"SeasonDefinition\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"A season within a calendar template
+        year\",\n            \"required\": [\n                \"code\",\n                \"name\",\n                \"ordinal\"\
+        \n            ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\"\
+        : \"Season identifier code (e.g., \\\"winter\\\", \\\"spring\\\", \\\"summer\\\", \\\"autumn\\\")\"\n            \
+        \    },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Display name for the season\"\
+        \n                },\n                \"ordinal\": {\n                    \"type\": \"integer\",\n               \
+        \     \"minimum\": 0,\n                    \"description\": \"Position in annual cycle (0-based)\"\n             \
+        \   }\n            }\n        },\n        \"EraLabel\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"A named time span in the calendar for display purposes\",\n            \"\
+        required\": [\n                \"code\",\n                \"startYear\"\n            ],\n            \"properties\"\
+        : {\n                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"maxLength\": 64,\n                    \"description\": \"Era identifier code (e.g., \\\"first_age\\\
+        \", \\\"era_of_strife\\\")\"\n                },\n                \"startYear\": {\n                    \"type\":
+        \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Game year when this era
+        begins (0-based)\"\n                },\n                \"endYear\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Game year when this era ends (null
+        = ongoing)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CalendarTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"CalendarTemplateResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"A calendar template definition with computed summary fields\",\n        \
@@ -2187,6 +2187,7 @@ components:
           nullable: true
           items:
             $ref: '#/components/schemas/EraLabel'
+          x-detect-if-set: true
           description: New era label definitions (null = no change, empty array = clear all)
     DeleteCalendarRequest:
       type: object

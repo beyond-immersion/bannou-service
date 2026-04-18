@@ -1111,49 +1111,20 @@ public partial class SceneSummary
 public partial class UpdateSceneRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private Scene _scene = new Scene();
     /// <summary>
     /// The updated scene document (sceneId must match existing)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scene")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public Scene Scene { get => _scene; set { _scene = value; _TrackChange("scene"); } }
+    public Scene Scene { get; set; } = new Scene();
 
-    private string? _checkoutToken = default!;
     /// <summary>
     /// Checkout token if updating via checkout workflow
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("checkoutToken")]
     [System.ComponentModel.DataAnnotations.StringLength(200)]
-    public string? CheckoutToken { get => _checkoutToken; set { _checkoutToken = value; _TrackChange("checkoutToken"); } }
+    public string? CheckoutToken { get; set; } = default!;
 
 }
 

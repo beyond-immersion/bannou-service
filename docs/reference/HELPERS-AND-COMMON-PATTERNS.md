@@ -1072,6 +1072,31 @@ Category B entities are content templates where instances persist independently 
 
 **Reference implementations**: `lib-item` (Item Template) for lifecycle infrastructure and storage, `lib-collection` (Collection Entry Template) for correct idempotent endpoint pattern.
 
+### Choosing the Key Shape (Guid, String, or Composite)
+
+Category B templates across the codebase fall into three primary-key shapes. Pick the shape before copying the endpoint patterns below — it drives the deprecate request model, the clean-deprecated response type, and the reverse-index key format.
+
+| Shape | Example templates | Deprecate request | Clean-deprecated response |
+|-------|-------------------|-------------------|---------------------------|
+| **Guid** (single field) | ItemTemplate, ContractTemplate, QuestDefinition, CollectionEntryTemplate | `{ templateId: uuid, reason? }` | `CleanDeprecatedResponse` (Guid `cleanedIds`) |
+| **String** (single field, no scope) | GenesisTemplate, TransitMode | `{ templateCode: string, reason? }` | `CleanDeprecatedStringKeyResponse` |
+| **Composite** (2 or 3 parts, `gameServiceId`-scoped) | SeedType, ChatRoomType, LifecycleTemplate, HeritableTraitTemplate, HybridTraitTemplate | `{ primary-code-field(s), gameServiceId, reason? }` | `CleanDeprecatedStringKeyResponse` |
+
+**Composite-keyed templates follow this pattern** (reference: `lib-seed` SeedType 2-part; `lib-character-lifecycle` HybridTraitTemplate 3-part):
+
+- **Deprecate request** takes every component of the storage key plus an optional `reason`. Declare `gameServiceId` as **required** when the storage model has it required (most cases); declare it nullable ONLY when cross-game types are a real use case (Seed allows null for shared types across games).
+- **Response type** is `CleanDeprecatedStringKeyResponse` — Chat's SHA-256-derived-Guid workaround is obsolete now that the shared string-keyed response exists.
+- **`DeprecationCleanupHelper.ExecuteCleanupSweepAsync`** has a string-key overload: pass `getEntityId: t => "{part1}:{part2}:..."` (colon-joined composite) and return the result via `StringKeyCleanupSweepResult` → `CleanDeprecatedStringKeyResponse.CleanedIds`.
+- **Reverse index keys** use the same colon-joined composite under a service-specific prefix, one prefix per deprecatable template type:
+  ```
+  lifecycle-by-template:{speciesCode}:{gameServiceId}
+  genetic-by-trait-template:{speciesCode}:{gameServiceId}
+  genetic-by-hybrid-template:{speciesA}:{speciesB}:{gameServiceId}
+  ```
+- **Per-template-type endpoints** (NOT polymorphic): each deprecatable template type gets its own `deprecate-{type}` and `clean-deprecated-{type}` endpoint pair. This matches how Seed/Genesis/Gardener expose a single pair when they have one template type, and generalizes cleanly when a service has multiple template types (as `lib-character-lifecycle` does: lifecycle, heritable, hybrid). Avoid collapsing multiple template types behind a polymorphic discriminator — generators, clean-deprecated dry-run reporting, and audit logs all read cleaner when endpoints are shape-specific.
+
+**Instance-creation guards** MUST reject references to deprecated composite-keyed templates at every creation point. For batch-seed methods with per-item error isolation, skip the entry and record it as an error (continuing the batch); for single-entity methods, hard-reject with `BadRequest`. Reference: `lib-character-lifecycle` SeedLifecycleProfileAsync (batch, skip+record) and SeedGeneticProfileAsync (single, hard reject).
+
 ### API Schema Pattern (`{service}-api.yaml`)
 
 #### Deprecate Endpoint
@@ -1599,21 +1624,23 @@ The field name passed to `IsFieldSet` is always the **camelCase** property name 
 ### Generation Pipeline Integration
 
 1. **NSwag** generates the initial model with standard auto-properties
-2. **`scripts/postprocess-change-tracking.py`** (called from `generate-models.sh`) transforms auto-properties on `Update*Request` / `Modify*Request` / `Set*Request` classes into tracked properties with backing fields and injects `ChangeFields` infrastructure
-3. **Runtime** — every setter call adds to `ChangeFields`, both during C# code construction and STJ deserialization
+2. **`scripts/postprocess-change-tracking.py`** (called from `generate-models.sh`) scans all `schemas/*-api.yaml` files for properties with `x-detect-if-set: true`, then transforms ONLY those opted-in properties into tracked properties with backing fields and injects `ChangeFields` infrastructure. Classes with zero opted-in properties are left entirely untouched.
+3. **Runtime** — every opted-in setter call adds to `ChangeFields`, both during C# code construction and STJ deserialization
 
-The post-processing script matches class names via regex: `^(Update|Modify|BulkUpdate)\w*Request$` or `^Set[A-Z]\w*Request$`. Classes not matching these patterns are not transformed. Properties with `[JsonExtensionData]` or `[JsonIgnore]` attributes are skipped.
+The post-processing script identifies candidate classes via regex (`^(Update|Modify|BulkUpdate)\w*Request$` or `^Set[A-Z]\w*Request$`), then filters to only wrap properties whose `(className, camelCasePropertyName)` pair appears in the opt-in map built from schemas. Properties with `[JsonExtensionData]` or `[JsonIgnore]` attributes are always skipped regardless of opt-in status.
 
 ### Structural Test Enforcement
 
-**Test**: `ChangeFieldsCoverageTests.LifecycleNullableFields_HaveIsFieldSetCoverageInPlugin`
+**Test**: `ChangeFieldsCoverageTests.DetectIfSetProperties_HaveIsFieldSetCoverageInPlugin`
 **File**: `structural-tests/ChangeFieldsCoverageTests.cs`
 
-For every nullable field on an x-lifecycle entity, the test verifies that the owning plugin's source code (excluding `Generated/`) contains at least one `IsFieldSet("fieldName")` call for that field. Auto-injected fields (`createdAt`, `updatedAt`, `isDeprecated`, `deprecatedAt`, `deprecationReason`) are excluded.
+For every property marked with `x-detect-if-set: true` in a service's API schema (`schemas/*-api.yaml`), the test verifies that the owning plugin's source code (excluding `Generated/`) contains at least one `IsFieldSet("fieldName")` call for that property's camelCase JSON name.
 
-This is a **mechanical check** with no exceptions list and no informational-test gating — every violation is a real gap that must be closed by implementing the missing IsFieldSet handling. The test reports a grouped-by-service list of uncovered fields on failure, making it trivial to iterate through.
+This is an **opt-in mechanical check** — only properties explicitly marked with the attribute are tested. There is no exceptions list. The test reports a grouped-by-service list of uncovered fields on failure.
 
-**When this test fails**: Either (a) the plugin has an Update method that needs migration from `!= null` to `ChangeFields.IsFieldSet`, or (b) the lifecycle field should not be nullable in the first place. Both are fixes that resolve the violation; there is no third option.
+**When this test fails**: The schema declares `x-detect-if-set: true` on a property but the plugin code doesn't call `IsFieldSet` for it. Either (a) implement the missing IsFieldSet handling in the plugin's Update method, or (b) remove the `x-detect-if-set: true` attribute if the property doesn't actually need 3-state semantics.
+
+**Adding new opt-in fields**: When migrating a new Update method to the ChangeFields pattern, add `x-detect-if-set: true` to each property in the API schema that needs 3-state tracking, regenerate models (`generate(script: "models", service: "name")`), and implement the `IsFieldSet` handling. The test will verify coverage automatically.
 
 ### Test Reference
 

@@ -1093,12 +1093,13 @@ paths:
         \                    \"type\": \"string\",\n                    \"maxLength\": 200,\n                    \"nullable\"\
         : true,\n                    \"description\": \"New template name\"\n                },\n                \"description\"\
         : {\n                    \"type\": \"string\",\n                    \"maxLength\": 2000,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"New description\"\n                },\n                \"isActive\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Active status\"\n                },\n                \"gameMetadata\": {\n                    \"type\": \"object\"\
-        ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
-        \    \"description\": \"Client-only game metadata. No Bannou plugin reads specific keys from this field by convention.\"\
-        \n                }\n            }\n        }\n    }\n}"
+        : true,\n                    \"x-detect-if-set\": true,\n                    \"description\": \"New description\"\n\
+        \                },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Active status\"\n                },\n          \
+        \      \"gameMetadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only game metadata.
+        No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContractTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ContractTemplateResponse\": {\n            \"allOf\": [\n                {\n      \
         \              \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n      \
@@ -4648,6 +4649,7 @@ components:
           type: string
           maxLength: 2000
           nullable: true
+          x-detect-if-set: true
           description: New description
         isActive:
           type: boolean

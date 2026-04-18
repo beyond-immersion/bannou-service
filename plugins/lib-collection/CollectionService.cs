@@ -515,7 +515,7 @@ public partial class CollectionService : ICollectionService, ICleanDeprecatedEnt
             template.DisplayName = body.DisplayName;
             changedFields.Add("displayName");
         }
-        if (body.Category != null)
+        if (body.ChangeFields.IsFieldSet("category") && body.Category != template.Category)
         {
             template.Category = body.Category;
             changedFields.Add("category");

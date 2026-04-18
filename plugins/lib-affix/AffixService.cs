@@ -310,7 +310,7 @@ public partial class AffixService : IAffixService, ICleanDeprecatedEntity
         if (body.RequiredItemLevel.HasValue && body.RequiredItemLevel.Value != existing.RequiredItemLevel) { existing.RequiredItemLevel = body.RequiredItemLevel.Value; changedFields.Add("requiredItemLevel"); generationFieldsChanged = true; }
         if (body.RequiredInfluences != null) { existing.RequiredInfluences = body.RequiredInfluences.ToArray(); changedFields.Add("requiredInfluences"); generationFieldsChanged = true; }
         if (body.ValidItemClasses != null) { existing.ValidItemClasses = body.ValidItemClasses.ToArray(); changedFields.Add("validItemClasses"); generationFieldsChanged = true; }
-        if (body.DisplayName != null && body.DisplayName != existing.DisplayName) { existing.DisplayName = body.DisplayName; changedFields.Add("displayName"); }
+        if (body.ChangeFields.IsFieldSet("displayName") && body.DisplayName != existing.DisplayName) { existing.DisplayName = body.DisplayName; changedFields.Add("displayName"); }
         if (body.DisplayOrder.HasValue && body.DisplayOrder.Value != existing.DisplayOrder) { existing.DisplayOrder = body.DisplayOrder.Value; changedFields.Add("displayOrder"); }
 
         existing.UpdatedAt = DateTimeOffset.UtcNow;
@@ -720,6 +720,10 @@ public partial class AffixService : IAffixService, ICleanDeprecatedEntity
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Failed to create item-traits seed for item {ItemInstanceId}", body.ItemInstanceId);
+            await _messageBus.TryPublishErrorAsync(
+                "affix", "InitializeItemAffixes", "SeedCreationFailed",
+                ex.Message, dependency: "seed", endpoint: "create-seed",
+                stack: ex.StackTrace, cancellationToken: cancellationToken);
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -902,6 +906,10 @@ public partial class AffixService : IAffixService, ICleanDeprecatedEntity
             catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Failed to record seed growth for item {ItemInstanceId}", body.ItemInstanceId);
+                await _messageBus.TryPublishErrorAsync(
+                    "affix", "ApplyAffix", "SeedGrowthRecordingFailed",
+                    ex.Message, dependency: "seed", endpoint: "record-growth",
+                    stack: ex.StackTrace, cancellationToken: cancellationToken);
             }
         }
 
@@ -1509,6 +1517,10 @@ public partial class AffixService : IAffixService, ICleanDeprecatedEntity
                 catch (ApiException ex)
                 {
                     _logger.LogWarning(ex, "Failed to get contents of equipment container {ContainerId}", container.ContainerId);
+                    await _messageBus.TryPublishErrorAsync(
+                        "affix", "ComputeEquipmentStats", "ContainerFetchFailed",
+                        ex.Message, dependency: "inventory", endpoint: "get-container",
+                        stack: ex.StackTrace, cancellationToken: cancellationToken);
                 }
             }
         }

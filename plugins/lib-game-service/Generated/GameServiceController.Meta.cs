@@ -528,6 +528,7 @@ public partial class GameServiceController
                     "type": "string",
                     "nullable": true,
                     "maxLength": 500,
+                    "x-detect-if-set": true,
                     "description": "New description"
                 },
                 "isActive": {

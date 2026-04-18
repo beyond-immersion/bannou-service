@@ -17,10 +17,10 @@ This document specifies a multi-game publisher app architecture for Beyond Immer
 3. Gates 18+ at the **account tier**, not the **app content tier** — preserves legal simplicity (COPPA avoidance, clean creator contracting, adult-only ToS binding) without forcing an 18+ content rating on the app
 4. Delivers **per-game companion modules** (chat, compendiums, message boards, game notifications, mini-games that impact in-game state) via CDN-delivered content packs
 5. Unifies **Beyond Immersion as both publisher brand and in-universe Omega hardware manufacturer** — deliberate fourth-wall trick where the real app and the diegetic Omega device are the same product
-6. Introduces a dedicated **lib-push plugin (L3)** with publisher/receiver modes, tapping entity-scoped client events via a new `IEntityEventObserver` DI interface so push delivery fires regardless of session state (the critical case: app is closed, no session, but the user still needs the notification)
+6. Introduces a dedicated **lib-push plugin (L3)** with publisher/receiver modes using a **two-scope push model**: account-scope (persistent, resolved from a session-registration-seeded interest index — events never carry accountIds per T32) and possession-scope (ephemeral, resolved from Gardener's active character bindings). Two new DI observer interfaces (`IEntityEventObserver` for event dispatch, `IEntityRegistrationObserver` for interest-index population) tap into IEntitySessionRegistry without coupling publishers to push.
 7. Uses **platform-native anonymous identity** (Game Center, Play Games, Steam) so individual games work without any Beyond Immersion account; account registration unlocks cross-platform features
 
-The document establishes 14 decisions, their rationale, the architecture that emerges, the plugin-level impact, and the open questions that remain.
+The document establishes 18 decisions, their rationale, the architecture that emerges, the plugin-level impact, and the open questions that remain.
 
 ---
 
@@ -317,6 +317,73 @@ The companion Defenders knowledge base (`~/repos/defenders-kb`) describes a mobi
 - `lib-push` dispatch path inspects APNs/FCM response and deletes token on invalidation signals
 - `TokenReconciliationWorker` runs on configurable interval (default 24h)
 - Also handles the account.deleted cleanup obligation — tokens associated with a deleted account are purged (per Account Deletion Cleanup Obligation)
+
+---
+
+### D15: Two-scope push model — account-persistent and possession-ephemeral
+
+**Decision**: Push notifications operate on two distinct scopes with different lifecycle semantics:
+
+1. **Account scope (persistent)**: Driven by device registrations (which carry accountId). Events on account-adjacent entities (chat rooms, friend lists, seeds, subscriptions, platform announcements) resolve audience from Push's own persistent interest index. Account-scope pushes work regardless of session state — including when all apps are closed. Account-scope pushes work even if Gardener is disabled.
+
+2. **Possession scope (ephemeral, Gardener-managed)**: Driven by Gardener's active character↔account possession bindings. Events on character-adjacent entities (character, inventory, quest, contract, status) push only while an active possession binding exists. When the player isn't playing Arcadia (no possession), character-scoped events do not push — the player discovers what happened when they return.
+
+**Rationale**:
+- Maps directly to the existing architectural boundary: seeds are account-owned (persistent link), characters are possessed via Gardener (ephemeral link)
+- Aligns with the "world is alive whether or not you're watching" design principle — offline character events are NOT pushed; you find out when you come back
+- Account-scope entities (chat, friends, subscription) are meaningful regardless of gameplay session state — pushes for these should always work
+- Gardener already manages the possession lifecycle; Push reads its state rather than duplicating it
+
+**The scope boundary principle**: if the entity is account-owned (outlives character lifecycles) → account-scope. If the entity is character-specific (meaningless without active possession) → possession-scope.
+
+**Implications**:
+- x-push-config per event declares `scope: account | possession`
+- Account-scope audience: resolved from Push's persistent interest index (see D16)
+- Possession-scope audience: resolved from Gardener's active possession bindings
+- Gardener calls Push's API directly (L4 → L3, hierarchy-permitted) to bind/unbind possession — not events (possession bindings are state-critical; events have no ordering/confirmation guarantee)
+
+---
+
+### D16: Push audience resolved from session-registration-seeded interest index — events never carry accountIds
+
+**Decision**: Push resolves audience entirely from its own persistent state. Events do NOT carry accountIds — ever (per T32: Account Identity Boundary). Push builds its audience knowledge by observing IEntitySessionRegistry registrations and resolving session → account via Connect's session manager.
+
+**Mechanism**: A second observer interface `IEntityRegistrationObserver` in `bannou-service/Providers/` notifies Push when sessions register/unregister for entities. Push resolves `sessionId → accountId` at registration time (via Connect's `BannouSessionManager`) and maintains a persistent interest store: `(entityType, entityId) → Set<accountId>`.
+
+- **On session entity registration**: Push resolves session → account, adds account to entity's interest set
+- **On session entity unregistration or disconnect**: Push checks the event's x-push-config scope. Account-scope → interest KEPT (account remains interested beyond session). Possession-scope → interest REMOVED (possession ended)
+- **At dispatch time**: observer fires with (entityType, entityId, event) → lookup interest index → accountIds → device tokens → push. No external service calls on the critical dispatch path.
+
+**Staleness handling**: The interest index may become stale (e.g., user leaves a chat room while offline — Push doesn't know until the next session). Eventual consistency is acceptable: a few erroneous pushes to someone who recently left a room are harmless. The index naturally refreshes on the next session (new registrations replace old ones). Entity `*.deleted` lifecycle events clean dead entries. A periodic staleness sweep can verify against owning services if tighter consistency is needed.
+
+**Rationale**:
+- Events are published to sessions, not accounts — Push cannot read audience from events (T32)
+- External service calls at dispatch time would add latency and failure modes to the critical push path
+- Session registrations already carry the entity-interest information — Push just needs to shadow it with account resolution
+- DI observer pattern (IEntityRegistrationObserver) matches the established Bannou pattern for cross-plugin notification
+
+**Implications**:
+- New interface: `bannou-service/Providers/IEntityRegistrationObserver.cs`
+- Refactor: `EntitySessionRegistry.RegisterAsync` and `UnregisterAsync` notify registration observers (parallel to D12's event observers)
+- New state store: `push-interest` (Redis) — `(entityType:entityId) → Set<accountId>` — persistent, cleaned on entity deletion and account deletion
+- Push resolves session → account via Connect's session manager (Push is in the identity boundary — same justification as Subscription, Game-Session, Analytics, Gardener)
+
+---
+
+### D17: Device tokens are not deprecatable — immediate hard delete
+
+**Decision**: Device token registrations use immediate hard delete per the T31 decision tree. They are instance data (concrete occurrences, not definitions), never referenced by other persistent entities, and have no need for a transition period.
+
+---
+
+### D18: No offline character push; no reconnect summary events
+
+**Decision**: Character-scoped events do NOT push when the player has no active possession. There are no "character lifecycle summary" events on reconnect. The player discovers what happened to their characters through in-game surfaces when they return.
+
+**Rationale**:
+- Aligns with "the world is alive whether or not you're watching" — discovery when you return IS the experience
+- Characters are not directly linked to accounts (only indirectly via seeds during active possession) — resolving "character X's owner" when no possession exists is architecturally impossible by design
+- Reconnect summary events would require maintaining a per-account "what happened while you were away" queue — this is a significant new subsystem with no clear boundary on what qualifies as "important enough to summarize"
 
 ---
 
@@ -644,7 +711,10 @@ IEntitySessionRegistry.PublishToEntitySessionsAsync(entityType, entityId, event)
  │              │
  │              └──► lib-push PushEventObserver:
  │                   ├── Apply push rule engine (event eligible? rate-limited? muted?)
- │                   ├── Resolve push audience (accounts → device tokens)
+ │                   ├── Determine scope from x-push-config (account | possession)
+ │                   ├── If account-scope: lookup push-interest[entityType:entityId] → accountIds
+ │                   ├── If possession-scope: lookup Gardener's possession binding → accountId (or none)
+ │                   ├── For each account: lookup device tokens, apply preferences, exclude session device
  │                   └── Enqueue per-device into Redis pending-push queue
  │
  └──► Session dispatch (only fires if sessions exist)
@@ -683,13 +753,16 @@ In production, cloud Bannou runs `sender` mode and the BI app's embedded Bannou 
 
 ### Sender side: dispatch flow in detail
 
-1. **Observer fires** (`PushEventObserver.OnEntityEventAsync`): receives entityType, entityId, event, returns immediately after enqueuing.
-2. **Push rule lookup**: per-event config (declared in each plugin's `-service-events.yaml` via a new `x-push-config` extension) determines eligibility, category, priority, batching rule.
-3. **Audience resolution**: "for this entity, which accounts should receive a push?" — plugin-specific. Chat resolves to room members. Character service resolves to the character's guardian account. Marketplace resolves to the buyer. For some events, audience may be empty (no-op).
+1. **Observer fires** (`PushEventObserver.OnEntityEventAsync`): receives entityType, entityId, event.
+2. **Push rule lookup**: per-event config (declared in each plugin's `-service-events.yaml` via a new `x-push-config` extension) determines eligibility, scope, category, priority, batching rule.
+3. **Scope-driven audience resolution** (Push resolves entirely from its own state — no external service calls, no accountIds in events per T32):
+   - **Account scope**: lookup `push-interest[entityType:entityId]` → Set of accountIds. This index was populated by `IEntityRegistrationObserver` during prior session activity (see D16). If no accounts are interested, no push.
+   - **Possession scope**: lookup Gardener's active possession binding for the entity → accountId. If no binding exists (player not actively possessing), no push (see D18).
 4. **Preference check**: per-account preferences (quiet hours, muted categories, muted games) filter out ineligible devices.
-5. **Enqueue**: remaining (account, device, event) tuples enqueued into Redis pending-push queue (distributed). Observer returns.
-6. **Dispatch worker**: on any node, `PushDispatchWorker` claims entries, applies batching via `EventBatcher` or `DeduplicatingEventBatcher` (from `bannou-service/Services/`), formats summary payload, dispatches to APNs/FCM.
-7. **Delivery feedback**: APNs/FCM response parsed. Success → update `lastConfirmedValidAt`. Invalidation signals → delete token (auto-cleanup per D14).
+5. **Session-device exclusion**: for each account, if any of their devices holds the WebSocket session that received this event, exclude that device (WebSocket already delivered it).
+6. **Enqueue**: remaining (account, device, event) tuples enqueued into Redis pending-push queue (distributed). Observer returns.
+7. **Dispatch worker**: on any node, `PushDispatchWorker` claims entries, applies batching via `EventBatcher` or `DeduplicatingEventBatcher` (from `bannou-service/Services/`), formats summary payload, dispatches to APNs/FCM.
+8. **Delivery feedback**: APNs/FCM response parsed. Success → update `lastConfirmedValidAt`. Invalidation signals → delete token (auto-cleanup per D14).
 
 ### Receiver side: notification-to-navigation flow
 
@@ -797,8 +870,9 @@ Stored in `push-account-preferences` and `push-device-preferences` state stores.
 | `ApnsGateway` | APNs HTTP/2 adapter (mTLS, p8 auth key) |
 | `FcmGateway` | FCM HTTP adapter (OAuth service account auth) |
 | `PushBatcher` | Uses `EventBatcher` / `DeduplicatingEventBatcher` from bannou-service |
-| `PushRuleEngine` | Evaluates x-push-config per event |
-| `PushAudienceResolver` | Plugin-specific: "event → account list" — may use provider pattern |
+| `PushRuleEngine` | Evaluates x-push-config per event (scope, category, batching, priority) |
+| `PushInterestManager` | Maintains push-interest index (entity→accounts), seeded from IEntityRegistrationObserver |
+| `PushRegistrationObserver` | IEntityRegistrationObserver implementation — resolves session→account, updates interest index |
 | `TokenReconciliationWorker` | BackgroundService — periodic dead-token cleanup |
 | `OsNotificationReceiver` (receiver mode) | OS push payload → /website/navigation/handle |
 
@@ -812,7 +886,7 @@ Stored in `push-account-preferences` and `push-device-preferences` state stores.
 | `push-pending-queue` | Redis | Distributed queue of pending push events |
 | `push-batcher-state` | Redis | Per-device batch accumulators (if using Redis-backed batchers instead of per-node) |
 | `push-rate-limits` | Redis | Per-device rate-limit counters (TTL'd) |
-| `push-audience-cache` | Redis | Short-TTL cache of entity-to-audience lookups |
+| `push-interest` | Redis | Persistent entity→accounts interest index (seeded from session registrations via IEntityRegistrationObserver, cleaned on entity/account deletion) |
 
 ### Distribution and scale considerations
 
@@ -875,13 +949,14 @@ Comprehensive list of changes this architecture requires across Bannou plugins:
 | Component | Location | Purpose |
 |---|---|---|
 | `IEntityEventObserver` interface | `bannou-service/Providers/` | DI interface for plugins to observe entity-scoped client event publishes. Fires regardless of session count. See D12. |
+| `IEntityRegistrationObserver` interface | `bannou-service/Providers/` | DI interface for plugins to observe entity-session registrations/unregistrations. Push uses this to build its persistent interest index (see D16). |
 
 ### Redesigned plugins
 
 | Plugin | Layer | Change |
 |---|---|---|
 | **Website** | L3 | Complete redesign from stub to module-composable CMS — new schema, new endpoints, module registration and manifest composition. Adds `POST /website/navigation/handle` endpoint for receiver-side navigation routing (D13). |
-| **Connect** | L1 | Refactor `EntitySessionRegistry.PublishToEntitySessionsAsync` to split observer dispatch (always fires) from session dispatch (fires only if sessions exist). Inject `IEnumerable<IEntityEventObserver>`. No other changes — push delivery is NOT added to Connect per D11. |
+| **Connect** | L1 | Refactor `EntitySessionRegistry`: (1) `PublishToEntitySessionsAsync` splits observer dispatch from session dispatch, injects `IEnumerable<IEntityEventObserver>` (D12); (2) `RegisterAsync`/`UnregisterAsync`/`UnregisterSessionAsync` notify `IEnumerable<IEntityRegistrationObserver>` (D16). No push delivery logic added — push lives entirely in lib-push per D11. |
 | **Auth** | L1 | Platform-native OAuth providers (Game Center, Play Games Services) added alongside existing Steam/email/OAuth |
 
 ### Extended plugins
@@ -1144,7 +1219,11 @@ The following are **explicitly not** part of this architecture:
 6. **Not a chat platform product.** Chat is a feature; the app isn't trying to compete with Discord.
 7. **Not a streaming platform.** Showtime integration exists but the app doesn't host streaming infrastructure (relies on external services).
 8. **Not a replacement for store-native saves and achievements on initial launch.** Game Center/Play Games/Steam handle these at the platform level; account-linked sync is additive.
-9. **Not all of this at once.** Sequencing applies (see Part 10).
+9. **No accountIds in events.** Push audience is resolved entirely from Push's own interest index (D16), never from event payloads. Events are published to sessions, not accounts (T32).
+10. **No offline character push.** Character-scoped events do not push when no possession binding exists (D18). The player discovers what happened in-game when they return.
+11. **No reconnect summary events.** There is no "here's what happened while you were away" push or event on reconnect (D18). Discovery IS the experience.
+12. **Device tokens are not deprecatable.** Immediate hard delete per T31 decision tree (D17). No deprecation lifecycle for device registrations.
+13. **Not all of this at once.** Sequencing applies (see Part 10).
 
 ---
 
@@ -1175,10 +1254,13 @@ Rough priority ordering for when this becomes real work:
 
 ### Phase 4 (Push notifications)
 
-- `IEntityEventObserver` interface in `bannou-service/Providers/`
-- `EntitySessionRegistry.PublishToEntitySessionsAsync` refactor (split observer dispatch from session dispatch)
+- `IEntityEventObserver` interface in `bannou-service/Providers/` (D12)
+- `IEntityRegistrationObserver` interface in `bannou-service/Providers/` (D16)
+- `EntitySessionRegistry` refactor: PublishToEntitySessionsAsync (split observer from session dispatch), RegisterAsync/UnregisterAsync (notify registration observers)
 - `lib-push` plugin scaffolding (L3, sender + receiver modes)
 - Device token registration APIs + state stores
+- Push interest index (`push-interest` Redis store) + PushInterestManager + PushRegistrationObserver (D16)
+- Gardener possession-binding integration: Gardener calls Push API at possession start/end (D15)
 - Redis pending-push queue
 - `PushDispatchWorker` with EventBatcher / DeduplicatingEventBatcher integration
 - APNs gateway (HTTP/2, mTLS, p8 auth key)
@@ -1216,7 +1298,7 @@ This sequencing is indicative, not prescriptive. The actual phase boundaries wil
 | [DEPLOYMENT-MODES.md](DEPLOYMENT-MODES.md) | Beyond Immersion app is an embedded deployment; Arcadia is cloud; Defenders can be either |
 | [VISION.md](../reference/VISION.md) | Architecture aligns with the 5 North Stars (Content Flywheel, Ship Games Fast, etc.) |
 | [PLAYER-VISION.md](../reference/PLAYER-VISION.md) | Omega's "diegetic UX progression" is realized via the Beyond Immersion app's diegetic brand |
-| [AGENCY.md](../plugins/AGENCY.md) | Agency's Potential Extension #10 (per-session event transformation) informs the push notification rule engine design |
+| [AGENCY.md](../plugins/AGENCY.md) | Agency's Potential Extension #10 (per-session event transformation) operates in parallel — Agency handles per-session UX fidelity filtering; Push handles per-device notification batching. No shared mechanism (OQ4 resolved). |
 | [defenders-kb](https://github.com/) (external) | Defenders of Ba'hava is the first consumer of this architecture |
 
 ---
@@ -1228,7 +1310,8 @@ All decisions above were made across planning sessions. Future changes to decisi
 | Date | Change | Rationale |
 |---|---|---|
 | (initial) | Document created with D1–D10 | Baseline strategic + architectural framing for the Beyond Immersion app, module-composable CMS, push notifications as new delivery channel, and platform-native identity |
-| (follow-up) | Added D11–D14; rewrote Part 4; updated Part 6 plugin impact matrix; resolved OQ1 and OQ4; added OQ13 | After designing the push notification architecture in detail, four new decisions emerged: (D11) lib-push as new L3 plugin rather than Connect extension, chosen because device registrations are persistent cross-session entities that don't belong in Connect; (D12) `IEntityEventObserver` DI tap at IEntitySessionRegistry level, chosen because the existing IClientEventPublisher/RabbitMQ taps both miss the no-session case that push cares about most; (D13) Website's `/website/navigation/handle` as first-class universal navigation endpoint, chosen because push is one signal source among many and Website should own navigation authority on the receiving side; (D14) auto-cleanup on APNs/FCM invalidation signals combined with a reconciliation worker, chosen because APNs/FCM provide explicit signals that can be consumed at no extra cost but won't catch all cases. Summary updated to 14 decisions. Phase 4 sequencing updated with concrete component list. |
+| (follow-up 1) | Added D11–D14; rewrote Part 4; updated Part 6 plugin impact matrix; resolved OQ1 and OQ4; added OQ13 | Push plugin architecture: (D11) lib-push as new L3 plugin; (D12) IEntityEventObserver DI tap; (D13) Website navigation endpoint; (D14) auto-cleanup on APNs/FCM signals. |
+| (follow-up 2) | Added D15–D18; corrected Part 4 audience resolution; updated Part 6, non-goals, Phase 4 sequencing; fixed stale references | Major correction: audience resolution was redesigned after T32 violation identified. Events NEVER carry accountIds. Push resolves audience from its own persistent interest index seeded via new IEntityRegistrationObserver (D16). Two-scope model formalized: account-persistent + possession-ephemeral-via-Gardener (D15). Device tokens confirmed not deprecatable (D17). Offline character push and reconnect summary events explicitly excluded (D18). PushAudienceResolver concept removed entirely — replaced by PushInterestManager + PushRegistrationObserver. Agency reference in Appendix A corrected to reflect resolved OQ4 (parallel systems). Non-goals expanded from 9 to 13 items. Decision count updated to 18. |
 
 ---
 

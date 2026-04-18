@@ -1171,6 +1171,7 @@ public partial class AffixController
                 "displayName": {
                     "type": "string",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Updated display name"
                 },
                 "displayOrder": {

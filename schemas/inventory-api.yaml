@@ -796,57 +796,67 @@ components:
           type: integer
           nullable: true
           minimum: 1
+          x-detect-if-set: true
           description: New max slots
         maxWeight:
           type: number
           format: double
           nullable: true
           minimum: 0
+          x-detect-if-set: true
           description: New max weight
         gridWidth:
           type: integer
           nullable: true
           minimum: 1
+          x-detect-if-set: true
           description: New grid width
         gridHeight:
           type: integer
           nullable: true
           minimum: 1
+          x-detect-if-set: true
           description: New grid height
         maxVolume:
           type: number
           format: double
           nullable: true
           minimum: 0
+          x-detect-if-set: true
           description: New max volume
         allowedCategories:
           type: array
           items:
             type: string
           nullable: true
+          x-detect-if-set: true
           description: New allowed categories
         forbiddenCategories:
           type: array
           items:
             type: string
           nullable: true
+          x-detect-if-set: true
           description: New forbidden categories
         allowedTags:
           type: array
           items:
             type: string
           nullable: true
+          x-detect-if-set: true
           description: New allowed tags
         tags:
           type: array
           items:
             type: string
           nullable: true
+          x-detect-if-set: true
           description: New container tags
         metadata:
           type: object
           additionalProperties: true
           nullable: true
+          x-detect-if-set: true
           description: New game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
 
     DeleteContainerRequest:

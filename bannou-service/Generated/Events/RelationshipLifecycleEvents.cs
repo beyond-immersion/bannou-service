@@ -134,6 +134,115 @@ public partial class RelationshipCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to relationship.deleted when a relationship is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RelationshipDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: relationship.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "relationship.deleted";
+
+    /// <summary>
+    /// Unique identifier for the relationship
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("relationshipId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RelationshipId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier of the first entity in the relationship
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entity1Id")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid Entity1Id { get; set; } = default!;
+
+    /// <summary>
+    /// Type classification of the first entity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entity1Type")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType Entity1Type { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier of the second entity in the relationship
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entity2Id")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid Entity2Id { get; set; } = default!;
+
+    /// <summary>
+    /// Type classification of the second entity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entity2Type")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType Entity2Type { get; set; } = default!;
+
+    /// <summary>
+    /// Reference to the relationship type definition
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RelationshipTypeId { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the relationship began
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("startedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset StartedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the relationship ended, if applicable
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("endedAt")]
+    public System.DateTimeOffset? EndedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Client-provided relationship data. No Bannou plugin reads specific keys from this field by convention.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the relationship was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the relationship was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to relationship.updated when a relationship is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -241,115 +350,6 @@ public partial class RelationshipUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to relationship.deleted when a relationship is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class RelationshipDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: relationship.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "relationship.deleted";
-
-    /// <summary>
-    /// Unique identifier for the relationship
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("relationshipId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RelationshipId { get; set; } = default!;
-
-    /// <summary>
-    /// Unique identifier of the first entity in the relationship
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entity1Id")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid Entity1Id { get; set; } = default!;
-
-    /// <summary>
-    /// Type classification of the first entity
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entity1Type")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EntityType Entity1Type { get; set; } = default!;
-
-    /// <summary>
-    /// Unique identifier of the second entity in the relationship
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entity2Id")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid Entity2Id { get; set; } = default!;
-
-    /// <summary>
-    /// Type classification of the second entity
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entity2Type")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EntityType Entity2Type { get; set; } = default!;
-
-    /// <summary>
-    /// Reference to the relationship type definition
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RelationshipTypeId { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the relationship began
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("startedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset StartedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the relationship ended, if applicable
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("endedAt")]
-    public System.DateTimeOffset? EndedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Client-provided relationship data. No Bannou plugin reads specific keys from this field by convention.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the relationship was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the relationship was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 
@@ -480,6 +480,142 @@ public partial class RelationshipTypeCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string? DeprecationReason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published to relationship.type.deleted when a relationshiptype is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RelationshipTypeDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: relationship.type.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "relationship.type.deleted";
+
+    /// <summary>
+    /// Unique identifier for the relationship type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RelationshipTypeId { get; set; } = default!;
+
+    /// <summary>
+    /// Machine-readable code for the relationship type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Code { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable display name for the relationship type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Detailed description of the relationship type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// Category grouping for the relationship type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("category")]
+    public string? Category { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the parent relationship type for hierarchical relationships
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentTypeId")]
+    public System.Guid? ParentTypeId { get; set; } = default!;
+
+    /// <summary>
+    /// Code of the parent relationship type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentTypeCode")]
+    public string? ParentTypeCode { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the inverse relationship type for asymmetric relationships
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("inverseTypeId")]
+    public System.Guid? InverseTypeId { get; set; } = default!;
+
+    /// <summary>
+    /// Code of the inverse relationship type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("inverseTypeCode")]
+    public string? InverseTypeCode { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the relationship applies equally in both directions
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isBidirectional")]
+    public bool IsBidirectional { get; set; } = default!;
+
+    /// <summary>
+    /// Hierarchy depth level from the root relationship type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("depth")]
+    public int Depth { get; set; } = default!;
+
+    /// <summary>
+    /// Client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the relationship type was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the relationship type was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this relationship type is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the relationship type was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
 
 }
 
@@ -618,142 +754,6 @@ public partial class RelationshipTypeUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to relationship.type.deleted when a relationshiptype is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class RelationshipTypeDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: relationship.type.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "relationship.type.deleted";
-
-    /// <summary>
-    /// Unique identifier for the relationship type
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RelationshipTypeId { get; set; } = default!;
-
-    /// <summary>
-    /// Machine-readable code for the relationship type
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Code { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable display name for the relationship type
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Name { get; set; } = default!;
-
-    /// <summary>
-    /// Detailed description of the relationship type
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string? Description { get; set; } = default!;
-
-    /// <summary>
-    /// Category grouping for the relationship type
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string? Category { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the parent relationship type for hierarchical relationships
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("parentTypeId")]
-    public System.Guid? ParentTypeId { get; set; } = default!;
-
-    /// <summary>
-    /// Code of the parent relationship type
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("parentTypeCode")]
-    public string? ParentTypeCode { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the inverse relationship type for asymmetric relationships
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("inverseTypeId")]
-    public System.Guid? InverseTypeId { get; set; } = default!;
-
-    /// <summary>
-    /// Code of the inverse relationship type
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("inverseTypeCode")]
-    public string? InverseTypeCode { get; set; } = default!;
-
-    /// <summary>
-    /// Whether the relationship applies equally in both directions
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isBidirectional")]
-    public bool IsBidirectional { get; set; } = default!;
-
-    /// <summary>
-    /// Hierarchy depth level from the root relationship type
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("depth")]
-    public int Depth { get; set; } = default!;
-
-    /// <summary>
-    /// Client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the relationship type was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the relationship type was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this relationship type is deprecated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
-    public bool IsDeprecated { get; set; } = default!;
-
-    /// <summary>
-    /// When the relationship type was deprecated (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for deprecation (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? DeprecationReason { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

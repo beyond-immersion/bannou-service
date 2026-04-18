@@ -1745,6 +1745,7 @@ public partial class DocumentationController
                         "type": "string"
                     },
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New set of tags for the document (null to keep unchanged)"
                 },
                 "relatedDocuments": {

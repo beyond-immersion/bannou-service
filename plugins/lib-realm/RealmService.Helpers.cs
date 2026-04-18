@@ -204,6 +204,15 @@ public partial class RealmService
             _logger.LogWarning(ex,
                 "Failed to auto-initialize worldstate clock for realm {RealmId} (status {StatusCode}). Clock can be initialized manually via the worldstate API",
                 realmId, ex.StatusCode);
+            await _messageBus.TryPublishErrorAsync(
+                "realm",
+                "TryInitializeWorldstateClock",
+                "WorldstateClockInitFailure",
+                ex.Message,
+                dependency: "worldstate",
+                endpoint: "initialize-realm-clock",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
         }
     }
 

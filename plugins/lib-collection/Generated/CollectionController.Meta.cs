@@ -934,6 +934,7 @@ public partial class CollectionController
                 "category": {
                     "type": "string",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Updated category"
                 },
                 "tags": {

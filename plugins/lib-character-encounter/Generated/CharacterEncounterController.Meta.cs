@@ -612,6 +612,7 @@ public partial class CharacterEncounterController
                     "type": "string",
                     "maxLength": 500,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New description"
                 },
                 "defaultEmotionalImpact": {

@@ -1117,36 +1117,36 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
         : 200,\n                    \"nullable\": true,\n                    \"description\": \"Display name for the location\"\
         \n                },\n                \"description\": {\n                    \"type\": \"string\",\n            \
-        \        \"maxLength\": 2000,\n                    \"nullable\": true,\n                    \"description\": \"Description
-        of the location\"\n                },\n                \"locationType\": {\n                    \"allOf\": [\n   \
-        \                     {\n                            \"$ref\": \"#/$defs/LocationType\"\n                        }\n\
-        \                    ],\n                    \"nullable\": true,\n                    \"description\": \"Type of location\"\
-        \n                },\n                \"bounds\": {\n                    \"allOf\": [\n                        {\n\
-        \                            \"type\": \"object\"\n                        }\n                    ],\n           \
-        \         \"nullable\": true,\n                    \"description\": \"Optional spatial extent in world coordinates\"\
-        \n                },\n                \"boundsPrecision\": {\n                    \"allOf\": [\n                 \
-        \       {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\n                        }\n        \
-        \            ],\n                    \"nullable\": true,\n                    \"description\": \"Precision level of
-        spatial bounds\"\n                },\n                \"coordinateMode\": {\n                    \"allOf\": [\n  \
-        \                      {\n                            \"$ref\": \"#/$defs/CoordinateMode\"\n                     \
-        \   }\n                    ],\n                    \"nullable\": true,\n                    \"description\": \"How
-        this location's coordinate system relates to its parent\"\n                },\n                \"localOrigin\": {\n\
-        \                    \"allOf\": [\n                        {\n                            \"type\": \"object\"\n \
-        \                       }\n                    ],\n                    \"nullable\": true,\n                    \"\
-        description\": \"Origin point for local or inherited coordinate systems\"\n                },\n                \"\
-        metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Updated client-provided location metadata.
-        No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        },\n\
-        \        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\": \"Type classification
-        for locations\",\n            \"enum\": [\n                \"Continent\",\n                \"Region\",\n         \
-        \       \"City\",\n                \"District\",\n                \"Building\",\n                \"Room\",\n     \
-        \           \"Landmark\",\n                \"Wilderness\",\n                \"Dungeon\",\n                \"Other\"\
-        \n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Precision level of spatial bounds for a location\",\n            \"enum\": [\n                \"Exact\",\n   \
-        \             \"Approximate\",\n                \"None\"\n            ]\n        },\n        \"CoordinateMode\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"How this location's coordinate system relates to
-        its parent\",\n            \"enum\": [\n                \"Inherit\",\n                \"Local\",\n               \
-        \ \"Portal\"\n            ]\n        }\n    }\n}"
+        \        \"maxLength\": 2000,\n                    \"nullable\": true,\n                    \"x-detect-if-set\": true,\n\
+        \                    \"description\": \"Description of the location\"\n                },\n                \"locationType\"\
+        : {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/LocationType\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Type of location\"\n                },\n                \"bounds\": {\n                    \"\
+        allOf\": [\n                        {\n                            \"type\": \"object\"\n                        }\n\
+        \                    ],\n                    \"nullable\": true,\n                    \"description\": \"Optional
+        spatial extent in world coordinates\"\n                },\n                \"boundsPrecision\": {\n              \
+        \      \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\n\
+        \                        }\n                    ],\n                    \"nullable\": true,\n                    \"\
+        description\": \"Precision level of spatial bounds\"\n                },\n                \"coordinateMode\": {\n\
+        \                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/CoordinateMode\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"How this location's coordinate system relates to its parent\"\n                },\n         \
+        \       \"localOrigin\": {\n                    \"allOf\": [\n                        {\n                        \
+        \    \"type\": \"object\"\n                        }\n                    ],\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Origin point for local or inherited coordinate systems\"\n               \
+        \ },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"x-detect-if-set\": true,\n               \
+        \     \"description\": \"Updated client-provided location metadata. No Bannou plugin reads specific keys from this
+        field by convention.\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n\
+        \                \"Continent\",\n                \"Region\",\n                \"City\",\n                \"District\"\
+        ,\n                \"Building\",\n                \"Room\",\n                \"Landmark\",\n                \"Wilderness\"\
+        ,\n                \"Dungeon\",\n                \"Other\"\n            ]\n        },\n        \"BoundsPrecision\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Precision level of spatial bounds for a location\"\
+        ,\n            \"enum\": [\n                \"Exact\",\n                \"Approximate\",\n                \"None\"\
+        \n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How this location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"Inherit\"\
+        ,\n                \"Local\",\n                \"Portal\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LocationResponse\"\
         ,\n    \"$defs\": {\n        \"LocationResponse\": {\n            \"allOf\": [\n                {\n              \
         \      \"type\": \"object\"\n                }\n            ],\n            \"description\": \"Complete location data
@@ -2697,6 +2697,7 @@ components:
           type: string
           maxLength: 2000
           nullable: true
+          x-detect-if-set: true
           description: Description of the location
         locationType:
           allOf:
@@ -2727,6 +2728,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
+          x-detect-if-set: true
           description: >-
             Updated client-provided location metadata.
             No Bannou plugin reads specific keys from this field by convention.

@@ -259,9 +259,13 @@ public partial class CharacterService
                     cancellationToken);
                 return (typeId, code: typeResponse?.Code);
             }
-            catch (ApiException)
+            catch (ApiException ex)
             {
-                _logger.LogWarning("Could not look up relationship type {TypeId}", typeId);
+                _logger.LogWarning(ex, "Could not look up relationship type {TypeId}", typeId);
+                await _messageBus.TryPublishErrorAsync(
+                    "character", "BuildTypeCodeLookup", "RelationshipTypeLookupFailed",
+                    ex.Message, dependency: "relationship", endpoint: "post:relationship/type/get",
+                    stack: ex.StackTrace, cancellationToken: cancellationToken);
                 return (typeId, code: (string?)null);
             }
         }).ToList();

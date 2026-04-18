@@ -3914,6 +3914,126 @@
         }
       }
     },
+    "/character-lifecycle/template/deprecate-lifecycle": {
+      "post": {
+        "summary": "Deprecate a lifecycle template",
+        "description": "Marks a lifecycle template as deprecated. Deprecated templates cannot be used\nto create new lifecycle profiles for characters. Existing characters with\nprofiles referencing this template continue to function unchanged.\nCategory B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,\nno delete. Idempotent \u2014 returns OK if already deprecated.\n",
+        "operationId": "characterLifecycle_deprecateLifecycleTemplate",
+        "tags": [
+          "CharacterLifecycle"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeprecateLifecycleTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Lifecycle template deprecated (or already deprecated)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetLifecycleTemplateResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Lifecycle template not found"
+          }
+        }
+      }
+    },
+    "/character-lifecycle/template/deprecate-heritable": {
+      "post": {
+        "summary": "Deprecate a heritable trait template",
+        "description": "Marks a heritable trait template as deprecated. Deprecated templates cannot be used\nto create new genetic profiles for characters of this species. Existing characters\nwith genetic profiles referencing this template continue to function unchanged.\nCategory B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,\nno delete. Idempotent \u2014 returns OK if already deprecated.\n",
+        "operationId": "characterLifecycle_deprecateHeritableTraitTemplate",
+        "tags": [
+          "CharacterLifecycle"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeprecateHeritableTraitTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Heritable trait template deprecated (or already deprecated)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetHeritableTraitTemplateResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Heritable trait template not found"
+          }
+        }
+      }
+    },
+    "/character-lifecycle/template/deprecate-hybrid": {
+      "post": {
+        "summary": "Deprecate a hybrid trait template",
+        "description": "Marks a hybrid trait template as deprecated. Deprecated hybrid templates cannot\nbe used to create new genetic profiles for hybrid offspring of this species pair.\nExisting hybrid characters with genetic profiles referencing this template continue\nto function unchanged.\nCategory B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,\nno delete. Idempotent \u2014 returns OK if already deprecated.\n",
+        "operationId": "characterLifecycle_deprecateHybridTraitTemplate",
+        "tags": [
+          "CharacterLifecycle"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeprecateHybridTraitTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Hybrid trait template deprecated (or already deprecated)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetHybridTraitTemplateResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hybrid trait template not found"
+          }
+        }
+      }
+    },
     "/character-lifecycle/bloodline/get": {
       "post": {
         "summary": "Get bloodline definition",
@@ -37626,6 +37746,69 @@
           }
         }
       },
+      "DeprecateHeritableTraitTemplateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to deprecate a heritable trait template (Category B \u2014 one-way, no delete). Idempotent \u2014 returns OK if already deprecated.",
+        "required": [
+          "speciesCode",
+          "gameServiceId"
+        ],
+        "properties": {
+          "speciesCode": {
+            "type": "string",
+            "description": "Species code of the template to deprecate",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reason for deprecation (recommended for audit trail)",
+            "maxLength": 500
+          }
+        }
+      },
+      "DeprecateHybridTraitTemplateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to deprecate a hybrid trait template (Category B \u2014 one-way, no delete). Idempotent \u2014 returns OK if already deprecated.",
+        "required": [
+          "speciesA",
+          "speciesB",
+          "gameServiceId"
+        ],
+        "properties": {
+          "speciesA": {
+            "type": "string",
+            "description": "First species in the pair",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "speciesB": {
+            "type": "string",
+            "description": "Second species in the pair",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reason for deprecation (recommended for audit trail)",
+            "maxLength": 500
+          }
+        }
+      },
       "DeprecateLeaderboardDefinitionRequest": {
         "type": "object",
         "description": "Request to deprecate a leaderboard definition (Category B \u2014 one-way)",
@@ -37649,6 +37832,34 @@
             "nullable": true,
             "maxLength": 500,
             "description": "Reason for deprecation (audit context for Category B entities)"
+          }
+        }
+      },
+      "DeprecateLifecycleTemplateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to deprecate a lifecycle template (Category B \u2014 one-way, no delete). Idempotent \u2014 returns OK if already deprecated.",
+        "required": [
+          "speciesCode",
+          "gameServiceId"
+        ],
+        "properties": {
+          "speciesCode": {
+            "type": "string",
+            "description": "Species code of the template to deprecate",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "gameServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Game service scope"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reason for deprecation (recommended for audit trail)",
+            "maxLength": 500
           }
         }
       },
@@ -52512,49 +52723,58 @@
           "durabilityDelta": {
             "type": "integer",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "Change to durability (positive to repair, negative for damage)"
           },
           "customStats": {
             "type": "object",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New custom stats (merges with existing). Opaque to Bannou; no plugin reads keys by convention."
           },
           "customName": {
             "type": "string",
             "maxLength": 128,
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New custom name"
           },
           "quantityDelta": {
             "type": "number",
             "format": "double",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "Change to quantity (positive to add, negative to subtract). Only valid for stackable items."
           },
           "instanceMetadata": {
             "type": "object",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New instance metadata (merges with existing). Opaque to Bannou; no plugin reads keys by convention."
           },
           "newContainerId": {
             "type": "string",
             "format": "uuid",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New container for the item. Set to a container ID to move it, or set explicitly to null (via changeFields) to remove the item from all containers (unplaced). Used by inventory service for item movement. Uses ChangeFields 3-state semantics: absent means no change, explicit null means clear (Issue #722)."
           },
           "newSlotIndex": {
             "type": "integer",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New slot index within the container"
           },
           "newSlotX": {
             "type": "integer",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New X position for grid-based containers"
           },
           "newSlotY": {
             "type": "integer",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New Y position for grid-based containers"
           }
         }
@@ -67581,23 +67801,27 @@
             "type": "string",
             "maxLength": 100,
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New display name"
           },
           "description": {
             "type": "string",
             "maxLength": 500,
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New description"
           },
           "category": {
             "type": "string",
             "maxLength": 100,
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New category for UI grouping"
           },
           "isActive": {
             "type": "boolean",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New active status"
           },
           "platformMappings": {
@@ -67606,36 +67830,42 @@
               "$ref": "#/components/schemas/PlatformMapping"
             },
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "Updated platform ID mappings"
           },
           "scoreType": {
             "type": "string",
             "maxLength": 100,
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "Score type code for matching analytics.score.updated events (progressive achievements)"
           },
           "milestoneType": {
             "type": "string",
             "maxLength": 100,
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "Milestone type code for matching analytics.milestone.reached events"
           },
           "milestoneValue": {
             "type": "number",
             "format": "double",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "Expected milestone value for matching analytics.milestone.reached events"
           },
           "milestoneName": {
             "type": "string",
             "maxLength": 200,
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "Expected milestone name for matching analytics.milestone.reached events"
           },
           "leaderboardId": {
             "type": "string",
             "maxLength": 100,
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "Leaderboard ID for matching leaderboard.rank.changed events"
           },
           "rankThreshold": {
@@ -67643,6 +67873,7 @@
             "format": "int64",
             "nullable": true,
             "minimum": 1,
+            "x-detect-if-set": true,
             "description": "Rank threshold for leaderboard achievements (unlock when rank <= threshold)"
           }
         }
@@ -67884,6 +68115,7 @@
             "items": {
               "$ref": "#/components/schemas/EraLabel"
             },
+            "x-detect-if-set": true,
             "description": "New era label definitions (null = no change, empty array = clear all)"
           }
         }
@@ -68143,6 +68375,7 @@
             "type": "integer",
             "nullable": true,
             "minimum": 1,
+            "x-detect-if-set": true,
             "description": "New max slots"
           },
           "maxWeight": {
@@ -68150,18 +68383,21 @@
             "format": "double",
             "nullable": true,
             "minimum": 0,
+            "x-detect-if-set": true,
             "description": "New max weight"
           },
           "gridWidth": {
             "type": "integer",
             "nullable": true,
             "minimum": 1,
+            "x-detect-if-set": true,
             "description": "New grid width"
           },
           "gridHeight": {
             "type": "integer",
             "nullable": true,
             "minimum": 1,
+            "x-detect-if-set": true,
             "description": "New grid height"
           },
           "maxVolume": {
@@ -68169,6 +68405,7 @@
             "format": "double",
             "nullable": true,
             "minimum": 0,
+            "x-detect-if-set": true,
             "description": "New max volume"
           },
           "allowedCategories": {
@@ -68177,6 +68414,7 @@
               "type": "string"
             },
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New allowed categories"
           },
           "forbiddenCategories": {
@@ -68185,6 +68423,7 @@
               "type": "string"
             },
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New forbidden categories"
           },
           "allowedTags": {
@@ -68193,6 +68432,7 @@
               "type": "string"
             },
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New allowed tags"
           },
           "tags": {
@@ -68201,12 +68441,14 @@
               "type": "string"
             },
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New container tags"
           },
           "metadata": {
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
@@ -68443,6 +68685,7 @@
           "displayName": {
             "type": "string",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "Updated display name"
           },
           "displayOrder": {
@@ -68508,6 +68751,7 @@
               "type": "string"
             },
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New set of tags for the document (null to keep unchanged)"
           },
           "relatedDocuments": {
@@ -68571,6 +68815,7 @@
             "type": "string",
             "maxLength": 500,
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New description"
           },
           "defaultEmotionalImpact": {
@@ -68654,6 +68899,7 @@
           "category": {
             "type": "string",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "Updated category"
           },
           "tags": {
@@ -68812,18 +69058,21 @@
             "type": "string",
             "maxLength": 128,
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New display name"
           },
           "description": {
             "type": "string",
             "maxLength": 1000,
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New description"
           },
           "subcategory": {
             "type": "string",
             "maxLength": 64,
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New subcategory"
           },
           "tags": {
@@ -68832,59 +69081,70 @@
               "type": "string"
             },
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New tags (replaces existing)"
           },
           "rarity": {
             "$ref": "#/components/schemas/ItemRarity",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New rarity tier"
           },
           "weight": {
             "type": "number",
             "format": "double",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New weight value"
           },
           "volume": {
             "type": "number",
             "format": "double",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New volume value"
           },
           "gridWidth": {
             "type": "integer",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New grid width"
           },
           "gridHeight": {
             "type": "integer",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New grid height"
           },
           "canRotate": {
             "type": "boolean",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New rotation setting"
           },
           "baseValue": {
             "type": "number",
             "format": "double",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New base value"
           },
           "tradeable": {
             "type": "boolean",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New tradeable setting"
           },
           "destroyable": {
             "type": "boolean",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New destroyable setting"
           },
           "maxDurability": {
             "type": "integer",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New max durability"
           },
           "availableRealms": {
@@ -68894,64 +69154,76 @@
               "format": "uuid"
             },
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New available realms"
           },
           "stats": {
             "type": "object",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New stats. Opaque to Bannou; no plugin reads keys by convention."
           },
           "effects": {
             "type": "object",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New effects. Opaque to Bannou; no plugin reads keys by convention."
           },
           "requirements": {
             "type": "object",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New requirements. Opaque to Bannou; no plugin reads keys by convention."
           },
           "display": {
             "type": "object",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New display properties. Opaque to Bannou; no plugin reads keys by convention."
           },
           "metadata": {
             "type": "object",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New metadata. Opaque to Bannou; no plugin reads keys by convention."
           },
           "isActive": {
             "type": "boolean",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "Active status"
           },
           "useBehaviorContractTemplateId": {
             "type": "string",
             "format": "uuid",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "Contract template ID for executable item behavior (null to clear)"
           },
           "canUseBehaviorContractTemplateId": {
             "type": "string",
             "format": "uuid",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "Contract template for pre-use validation (null to clear)"
           },
           "onUseFailedBehaviorContractTemplateId": {
             "type": "string",
             "format": "uuid",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "Contract template for use failure handling (null to clear)"
           },
           "itemUseBehavior": {
             "$ref": "#/components/schemas/ItemUseBehavior",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "How the item should behave when used"
           },
           "canUseBehavior": {
             "$ref": "#/components/schemas/CanUseBehavior",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "How CanUse validation failures should be handled"
           }
         }
@@ -69074,6 +69346,7 @@
             "type": "string",
             "maxLength": 2000,
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "Description of the location"
           },
           "locationType": {
@@ -69125,6 +69398,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "Updated client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
@@ -69221,6 +69495,7 @@
             "nullable": true,
             "minimum": 0,
             "maximum": 1,
+            "x-detect-if-set": true,
             "description": "Updated per-mode cargo speed penalty rate"
           },
           "compatibleTerrainTypes": {
@@ -69426,12 +69701,14 @@
             "type": "string",
             "nullable": true,
             "maxLength": 100,
+            "x-detect-if-set": true,
             "description": "New display name for the account"
           },
           "metadata": {
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
@@ -69457,6 +69734,7 @@
           "description": {
             "type": "string",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New description"
           },
           "category": {
@@ -69681,12 +69959,14 @@
             "type": "string",
             "maxLength": 500,
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "Description of the relationship type"
           },
           "category": {
             "type": "string",
             "maxLength": 50,
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "Category for grouping"
           },
           "parentTypeId": {
@@ -69710,6 +69990,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "Updated client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
@@ -69808,6 +70089,7 @@
             "type": "string",
             "nullable": true,
             "maxLength": 200,
+            "x-detect-if-set": true,
             "description": "Updated room name"
           },
           "maxParticipants": {
@@ -69919,6 +70201,7 @@
           "description": {
             "type": "string",
             "nullable": true,
+            "x-detect-if-set": true,
             "description": "New description"
           },
           "triggerConditions": {

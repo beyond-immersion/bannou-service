@@ -1657,18 +1657,21 @@ public partial class ItemController
                     "type": "string",
                     "maxLength": 128,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New display name"
                 },
                 "description": {
                     "type": "string",
                     "maxLength": 1000,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New description"
                 },
                 "subcategory": {
                     "type": "string",
                     "maxLength": 64,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New subcategory"
                 },
                 "tags": {
@@ -1677,59 +1680,70 @@ public partial class ItemController
                         "type": "string"
                     },
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New tags (replaces existing)"
                 },
                 "rarity": {
                     "$ref": "#/$defs/ItemRarity",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New rarity tier"
                 },
                 "weight": {
                     "type": "number",
                     "format": "double",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New weight value"
                 },
                 "volume": {
                     "type": "number",
                     "format": "double",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New volume value"
                 },
                 "gridWidth": {
                     "type": "integer",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New grid width"
                 },
                 "gridHeight": {
                     "type": "integer",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New grid height"
                 },
                 "canRotate": {
                     "type": "boolean",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New rotation setting"
                 },
                 "baseValue": {
                     "type": "number",
                     "format": "double",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New base value"
                 },
                 "tradeable": {
                     "type": "boolean",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New tradeable setting"
                 },
                 "destroyable": {
                     "type": "boolean",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New destroyable setting"
                 },
                 "maxDurability": {
                     "type": "integer",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New max durability"
                 },
                 "availableRealms": {
@@ -1739,64 +1753,76 @@ public partial class ItemController
                         "format": "uuid"
                     },
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New available realms"
                 },
                 "stats": {
                     "type": "object",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New stats. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "effects": {
                     "type": "object",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New effects. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "requirements": {
                     "type": "object",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New requirements. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "display": {
                     "type": "object",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New display properties. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "metadata": {
                     "type": "object",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New metadata. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "isActive": {
                     "type": "boolean",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Active status"
                 },
                 "useBehaviorContractTemplateId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Contract template ID for executable item behavior (null to clear)"
                 },
                 "canUseBehaviorContractTemplateId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Contract template for pre-use validation (null to clear)"
                 },
                 "onUseFailedBehaviorContractTemplateId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Contract template for use failure handling (null to clear)"
                 },
                 "itemUseBehavior": {
                     "$ref": "#/$defs/ItemUseBehavior",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "How the item should behave when used"
                 },
                 "canUseBehavior": {
                     "$ref": "#/$defs/CanUseBehavior",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "How CanUse validation failures should be handled"
                 }
             }
@@ -3299,49 +3325,58 @@ public partial class ItemController
                 "durabilityDelta": {
                     "type": "integer",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Change to durability (positive to repair, negative for damage)"
                 },
                 "customStats": {
                     "type": "object",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New custom stats (merges with existing). Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "customName": {
                     "type": "string",
                     "maxLength": 128,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New custom name"
                 },
                 "quantityDelta": {
                     "type": "number",
                     "format": "double",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Change to quantity (positive to add, negative to subtract). Only valid for stackable items."
                 },
                 "instanceMetadata": {
                     "type": "object",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New instance metadata (merges with existing). Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "newContainerId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New container for the item. Set to a container ID to move it, or set explicitly to null (via changeFields) to remove the item from all containers (unplaced). Used by inventory service for item movement. Uses ChangeFields 3-state semantics: absent means no change, explicit null means clear (Issue #722)."
                 },
                 "newSlotIndex": {
                     "type": "integer",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New slot index within the container"
                 },
                 "newSlotX": {
                     "type": "integer",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New X position for grid-based containers"
                 },
                 "newSlotY": {
                     "type": "integer",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New Y position for grid-based containers"
                 }
             }

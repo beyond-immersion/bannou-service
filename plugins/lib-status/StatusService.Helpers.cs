@@ -308,6 +308,15 @@ public partial class StatusService
                     _logger.LogError(deleteEx,
                         "Failed to delete item {ItemInstanceId} during contract failure compensation",
                         itemInstanceId);
+                    await _messageBus.TryPublishErrorAsync(
+                        "status",
+                        "CreateNewStatusInstance",
+                        "SagaCompensationError",
+                        deleteEx.Message,
+                        dependency: "item",
+                        endpoint: "destroy-item-instance",
+                        stack: deleteEx.StackTrace,
+                        cancellationToken: cancellationToken);
                 }
                 await PublishGrantFailedEventAsync(
                     body, GrantFailureReason.ContractFailed, null, cancellationToken);
@@ -469,6 +478,15 @@ public partial class StatusService
             _logger.LogWarning(ex,
                 "Failed to delete item instance {ItemInstanceId} for status removal",
                 instance.ItemInstanceId);
+            await _messageBus.TryPublishErrorAsync(
+                "status",
+                "RemoveInstanceInternal",
+                "ItemDestroyError",
+                ex.Message,
+                dependency: "item",
+                endpoint: "destroy-item-instance",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
         }
 
         // Cancel contract if exists
@@ -491,6 +509,15 @@ public partial class StatusService
                 _logger.LogWarning(ex,
                     "Failed to terminate contract {ContractInstanceId} for status removal",
                     instance.ContractInstanceId.Value);
+                await _messageBus.TryPublishErrorAsync(
+                    "status",
+                    "RemoveInstanceInternal",
+                    "ContractTerminateError",
+                    ex.Message,
+                    dependency: "contract",
+                    endpoint: "terminate-contract-instance",
+                    stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
             }
         }
 
@@ -648,6 +675,15 @@ public partial class StatusService
                         _logger.LogWarning(ex,
                             "Failed to destroy item instance {ItemInstanceId} during lazy expiration of status {StatusInstanceId}",
                             instance.ItemInstanceId, instance.StatusInstanceId);
+                        await _messageBus.TryPublishErrorAsync(
+                            "status",
+                            "GetOrBuildActiveCache",
+                            "LazyExpirationItemDestroyError",
+                            ex.Message,
+                            dependency: "item",
+                            endpoint: "destroy-item-instance",
+                            stack: ex.StackTrace,
+                            cancellationToken: cancellationToken);
                     }
 
                     // Cancel contract if contract-managed
@@ -670,6 +706,15 @@ public partial class StatusService
                             _logger.LogWarning(ex,
                                 "Failed to terminate contract {ContractInstanceId} during lazy expiration of status {StatusInstanceId}",
                                 instance.ContractInstanceId.Value, instance.StatusInstanceId);
+                            await _messageBus.TryPublishErrorAsync(
+                                "status",
+                                "GetOrBuildActiveCache",
+                                "LazyExpirationContractTerminateError",
+                                ex.Message,
+                                dependency: "contract",
+                                endpoint: "terminate-contract-instance",
+                                stack: ex.StackTrace,
+                                cancellationToken: cancellationToken);
                         }
                     }
 
@@ -764,6 +809,15 @@ public partial class StatusService
             _logger.LogWarning(ex,
                 "Failed to fetch seed capabilities for {EntityType} {EntityId}",
                 entityType, entityId);
+            await _messageBus.TryPublishErrorAsync(
+                "status",
+                "GetOrBuildSeedEffectsCache",
+                "SeedCapabilityFetchError",
+                ex.Message,
+                dependency: "seed",
+                endpoint: "get-seeds-by-owner",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
         }
 
         var cache = new SeedEffectsCacheModel

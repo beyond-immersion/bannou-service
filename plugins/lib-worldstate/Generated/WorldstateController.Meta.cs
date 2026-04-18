@@ -2609,6 +2609,7 @@ public partial class WorldstateController
                     "items": {
                         "$ref": "#/$defs/EraLabel"
                     },
+                    "x-detect-if-set": true,
                     "description": "New era label definitions (null = no change, empty array = clear all)"
                 }
             }

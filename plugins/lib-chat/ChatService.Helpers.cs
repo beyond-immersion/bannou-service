@@ -236,6 +236,10 @@ public partial class ChatService
         catch (ApiException apiEx)
         {
             _logger.LogWarning(apiEx, "Permission service error when setting state for session {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "chat", "SetParticipantPermissionState", "PermissionStateError",
+                apiEx.Message, dependency: "permission", endpoint: "post:permission/session-state/update",
+                stack: apiEx.StackTrace, cancellationToken: ct);
         }
         catch (Exception ex)
         {
@@ -259,6 +263,10 @@ public partial class ChatService
         catch (ApiException apiEx)
         {
             _logger.LogWarning(apiEx, "Permission service error when clearing state for session {SessionId}", sessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "chat", "ClearParticipantPermissionState", "PermissionStateError",
+                apiEx.Message, dependency: "permission", endpoint: "post:permission/session-state/clear",
+                stack: apiEx.StackTrace, cancellationToken: ct);
         }
         catch (Exception ex)
         {

@@ -222,21 +222,24 @@ paths:
         \             \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
         ,\n                    \"description\": \"ID of the character to update\"\n                },\n                \"\
         name\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"\
-        maxLength\": 100,\n                    \"nullable\": true,\n                    \"description\": \"New name for the
-        character\"\n                },\n                \"speciesId\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Update character's species (used for species merge migrations)\"\n                },\n                \"status\"\
-        : {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/CharacterStatus\"\
-        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
-        \ \"description\": \"New lifecycle status for the character\"\n                },\n                \"deathDate\":
-        {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"In-game death timestamp (sets status to dead)\"\n  \
-        \              },\n                \"patronDeityCode\": {\n                    \"type\": \"string\",\n           \
-        \         \"nullable\": true,\n                    \"description\": \"Opaque deity code identifying this character's
-        patron deity. Set to null to clear patron. When changed, Divine auto-bonds/rebonds character domain seeds to the patron
-        deity's seeds.\\n\"\n                }\n            }\n        },\n        \"CharacterStatus\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Character lifecycle status\",\n            \"enum\": [\n     \
-        \           \"Alive\",\n                \"Dead\",\n                \"Dormant\"\n            ]\n        }\n    }\n}"
+        maxLength\": 100,\n                    \"nullable\": true,\n                    \"x-detect-if-set\": true,\n     \
+        \               \"description\": \"New name for the character\"\n                },\n                \"speciesId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"x-detect-if-set\": true,\n                    \"description\": \"Update character's
+        species (used for species merge migrations)\"\n                },\n                \"status\": {\n               \
+        \     \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/CharacterStatus\"\n\
+        \                        }\n                    ],\n                    \"nullable\": true,\n                    \"\
+        x-detect-if-set\": true,\n                    \"description\": \"New lifecycle status for the character\"\n      \
+        \          },\n                \"deathDate\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"nullable\": true,\n                    \"x-detect-if-set\": true,\n\
+        \                    \"description\": \"In-game death timestamp (sets status to dead)\"\n                },\n    \
+        \            \"patronDeityCode\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"x-detect-if-set\": true,\n                    \"description\": \"Opaque deity code identifying
+        this character's patron deity. Set to null to clear patron. When changed, Divine auto-bonds/rebonds character domain
+        seeds to the patron deity's seeds.\\n\"\n                }\n            }\n        },\n        \"CharacterStatus\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Character lifecycle status\",\n           \
+        \ \"enum\": [\n                \"Alive\",\n                \"Dead\",\n                \"Dormant\"\n            ]\n\
+        \        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CharacterResponse\"\
         ,\n    \"$defs\": {\n        \"CharacterResponse\": {\n            \"description\": \"Complete character data returned
         from character operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
@@ -1053,25 +1056,30 @@ components:
           minLength: 1
           maxLength: 100
           nullable: true
+          x-detect-if-set: true
           description: New name for the character
         speciesId:
           type: string
           format: uuid
           nullable: true
+          x-detect-if-set: true
           description: Update character's species (used for species merge migrations)
         status:
           allOf:
           - $ref: '#/components/schemas/CharacterStatus'
           nullable: true
+          x-detect-if-set: true
           description: New lifecycle status for the character
         deathDate:
           type: string
           format: date-time
           nullable: true
+          x-detect-if-set: true
           description: In-game death timestamp (sets status to dead)
         patronDeityCode:
           type: string
           nullable: true
+          x-detect-if-set: true
           description: >
             Opaque deity code identifying this character's patron deity.
             Set to null to clear patron. When changed, Divine auto-bonds/rebonds

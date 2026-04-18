@@ -1157,23 +1157,27 @@ public partial class AchievementController
                     "type": "string",
                     "maxLength": 100,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New display name"
                 },
                 "description": {
                     "type": "string",
                     "maxLength": 500,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New description"
                 },
                 "category": {
                     "type": "string",
                     "maxLength": 100,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New category for UI grouping"
                 },
                 "isActive": {
                     "type": "boolean",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New active status"
                 },
                 "platformMappings": {
@@ -1182,36 +1186,42 @@ public partial class AchievementController
                         "$ref": "#/$defs/PlatformMapping"
                     },
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Updated platform ID mappings"
                 },
                 "scoreType": {
                     "type": "string",
                     "maxLength": 100,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Score type code for matching analytics.score.updated events (progressive achievements)"
                 },
                 "milestoneType": {
                     "type": "string",
                     "maxLength": 100,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Milestone type code for matching analytics.milestone.reached events"
                 },
                 "milestoneValue": {
                     "type": "number",
                     "format": "double",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Expected milestone value for matching analytics.milestone.reached events"
                 },
                 "milestoneName": {
                     "type": "string",
                     "maxLength": 200,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Expected milestone name for matching analytics.milestone.reached events"
                 },
                 "leaderboardId": {
                     "type": "string",
                     "maxLength": 100,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Leaderboard ID for matching leaderboard.rank.changed events"
                 },
                 "rankThreshold": {
@@ -1219,6 +1229,7 @@ public partial class AchievementController
                     "format": "int64",
                     "nullable": true,
                     "minimum": 1,
+                    "x-detect-if-set": true,
                     "description": "Rank threshold for leaderboard achievements (unlock when rank <= threshold)"
                 }
             }

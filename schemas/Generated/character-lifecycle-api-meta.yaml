@@ -1767,6 +1767,415 @@ paths:
         description\": \"Returns all lifecycle templates, heritable trait templates, and hybrid templates. Supports includeDeprecated
         for Category B deprecation.\",\n    \"tags\": [\n        \"CharacterLifecycle\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"listTemplates\"\n}"
+  /character-lifecycle/template/deprecate-lifecycle:
+    post:
+      summary: Deprecate a lifecycle template
+      description: |
+        Marks a lifecycle template as deprecated. Deprecated templates cannot be used
+        to create new lifecycle profiles for characters. Existing characters with
+        profiles referencing this template continue to function unchanged.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
+      operationId: deprecateLifecycleTemplate
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateLifecycleTemplateRequest'
+      responses:
+        '200':
+          description: Lifecycle template deprecated (or already deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetLifecycleTemplateResponse'
+        '404':
+          description: Lifecycle template not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeprecateLifecycleTemplateRequest\"\
+        ,\n    \"$defs\": {\n        \"DeprecateLifecycleTemplateRequest\": {\n            \"type\": \"object\",\n       \
+        \     \"additionalProperties\": false,\n            \"description\": \"Request to deprecate a lifecycle template (Category
+        B \\u2014 one-way, no delete). Idempotent \\u2014 returns OK if already deprecated.\",\n            \"required\":
+        [\n                \"speciesCode\",\n                \"gameServiceId\"\n            ],\n            \"properties\"\
+        : {\n                \"speciesCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Species code of the template to deprecate\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 100\n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"description\": \"Game service scope\"\n             \
+        \   },\n                \"reason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Reason for deprecation (recommended for audit trail)\",\n        \
+        \            \"maxLength\": 500\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetLifecycleTemplateResponse\"\
+        ,\n    \"$defs\": {\n        \"GetLifecycleTemplateResponse\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Lifecycle template for a species\",\n            \"\
+        required\": [\n                \"speciesCode\",\n                \"gameServiceId\",\n                \"stages\",\n\
+        \                \"naturalDeathRange\",\n                \"fertilityWindow\"\n            ],\n            \"properties\"\
+        : {\n                \"speciesCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Species code\",\n                    \"maxLength\": 100\n                },\n                \"gameServiceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Game service scope\"\n                },\n                \"stages\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/LifecycleStageDefinition\"\
+        \n                    },\n                    \"description\": \"Lifecycle stage definitions\"\n                },\n\
+        \                \"naturalDeathRange\": {\n                    \"$ref\": \"#/$defs/NaturalDeathRange\",\n        \
+        \            \"description\": \"Natural death year calculation parameters\"\n                },\n                \"\
+        fertilityWindow\": {\n                    \"$ref\": \"#/$defs/FertilityWindow\",\n                    \"description\"\
+        : \"Fertility peak and decline parameters\"\n                },\n                \"isDeprecated\": {\n           \
+        \         \"type\": \"boolean\",\n                    \"description\": \"Whether this template is deprecated\"\n \
+        \               },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\":
+        \"When the template was deprecated (null if not deprecated)\"\n                },\n                \"deprecationReason\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Why the template was deprecated (null if not deprecated)\",\n                    \"maxLength\": 500\n        \
+        \        }\n            }\n        },\n        \"LifecycleStageDefinition\": {\n            \"type\": \"object\",\n\
+        \            \"additionalProperties\": false,\n            \"description\": \"Definition of a single lifecycle stage
+        within a species template\",\n            \"required\": [\n                \"code\",\n                \"minAge\",\n\
+        \                \"healthModifier\",\n                \"fertilityBase\",\n                \"canMarry\",\n        \
+        \        \"canProcreate\",\n                \"canOwnOrg\",\n                \"canBePossessed\"\n            ],\n \
+        \           \"properties\": {\n                \"code\": {\n                    \"type\": \"string\",\n          \
+        \          \"description\": \"Stage code (species-configurable, e.g., infant, child, adult)\",\n                 \
+        \   \"minLength\": 1,\n                    \"maxLength\": 50\n                },\n                \"minAge\": {\n\
+        \                    \"type\": \"integer\",\n                    \"description\": \"Minimum age in game years for
+        this stage\",\n                    \"minimum\": 0\n                },\n                \"maxAge\": {\n           \
+        \         \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Maximum age for this stage (null for open-ended stages like dying)\"\n                },\n                \"healthModifier\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        description\": \"Multiplier applied to character health at this stage\",\n                    \"minimum\": 0.0,\n\
+        \                    \"maximum\": 2.0\n                },\n                \"fertilityBase\": {\n                \
+        \    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Base
+        fertility at this stage (0.0-1.0)\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0\n\
+        \                },\n                \"canMarry\": {\n                    \"type\": \"boolean\",\n               \
+        \     \"description\": \"Whether marriage is permitted at this stage\"\n                },\n                \"canProcreate\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether procreation is permitted
+        at this stage\"\n                },\n                \"canOwnOrg\": {\n                    \"type\": \"boolean\",\n\
+        \                    \"description\": \"Whether character can own organizations at this stage\"\n                },\n\
+        \                \"canBePossessed\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether guardian spirit can possess character at this stage\"\n                }\n            }\n        },\n\
+        \        \"NaturalDeathRange\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"Configuration for natural death year calculation\",\n            \"required\": [\n\
+        \                \"minAge\",\n                \"maxAge\",\n                \"distribution\"\n            ],\n    \
+        \        \"properties\": {\n                \"minAge\": {\n                    \"type\": \"integer\",\n          \
+        \          \"description\": \"Earliest possible natural death age\",\n                    \"minimum\": 1\n       \
+        \         },\n                \"maxAge\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Latest possible natural death age\",\n                    \"minimum\": 1\n                },\n               \
+        \ \"distribution\": {\n                    \"$ref\": \"#/$defs/DeathDistribution\",\n                    \"description\"\
+        : \"Statistical distribution for death year selection\"\n                }\n            }\n        },\n        \"\
+        DeathDistribution\": {\n            \"type\": \"string\",\n            \"description\": \"Statistical distribution
+        model for natural death year calculation\",\n            \"enum\": [\n                \"Uniform\",\n             \
+        \   \"Normal\",\n                \"WeightedLate\"\n            ]\n        },\n        \"FertilityWindow\": {\n   \
+        \         \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Species
+        fertility peak and decline configuration\",\n            \"required\": [\n                \"peakStartAge\",\n    \
+        \            \"peakEndAge\",\n                \"declineRate\"\n            ],\n            \"properties\": {\n   \
+        \             \"peakStartAge\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Age when fertility peaks\",\n                    \"minimum\": 0\n                },\n                \"peakEndAge\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Age when peak ends\",\n  \
+        \                  \"minimum\": 0\n                },\n                \"declineRate\": {\n                    \"\
+        type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"How fast fertility
+        drops after peak (0.0-1.0)\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0\n     \
+        \           }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Deprecate a lifecycle template\",\n    \"description\": \"Marks a lifecycle
+        template as deprecated. Deprecated templates cannot be used\\nto create new lifecycle profiles for characters. Existing
+        characters with\\nprofiles referencing this template continue to function unchanged.\\nCategory B deprecation (per
+        IMPLEMENTATION TENETS): one-way, no undeprecate,\\nno delete. Idempotent \\u2014 returns OK if already deprecated.\\\
+        n\",\n    \"tags\": [\n        \"CharacterLifecycle\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
+        deprecateLifecycleTemplate\"\n}"
+  /character-lifecycle/template/deprecate-heritable:
+    post:
+      summary: Deprecate a heritable trait template
+      description: |
+        Marks a heritable trait template as deprecated. Deprecated templates cannot be used
+        to create new genetic profiles for characters of this species. Existing characters
+        with genetic profiles referencing this template continue to function unchanged.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
+      operationId: deprecateHeritableTraitTemplate
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateHeritableTraitTemplateRequest'
+      responses:
+        '200':
+          description: Heritable trait template deprecated (or already deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetHeritableTraitTemplateResponse'
+        '404':
+          description: Heritable trait template not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeprecateHeritableTraitTemplateRequest\"\
+        ,\n    \"$defs\": {\n        \"DeprecateHeritableTraitTemplateRequest\": {\n            \"type\": \"object\",\n  \
+        \          \"additionalProperties\": false,\n            \"description\": \"Request to deprecate a heritable trait
+        template (Category B \\u2014 one-way, no delete). Idempotent \\u2014 returns OK if already deprecated.\",\n      \
+        \      \"required\": [\n                \"speciesCode\",\n                \"gameServiceId\"\n            ],\n    \
+        \        \"properties\": {\n                \"speciesCode\": {\n                    \"type\": \"string\",\n      \
+        \              \"description\": \"Species code of the template to deprecate\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 100\n                },\n                \"gameServiceId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Game service scope\"\n                },\n                \"reason\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Reason for deprecation (recommended
+        for audit trail)\",\n                    \"maxLength\": 500\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetHeritableTraitTemplateResponse\"\
+        ,\n    \"$defs\": {\n        \"GetHeritableTraitTemplateResponse\": {\n            \"type\": \"object\",\n       \
+        \     \"additionalProperties\": false,\n            \"description\": \"Heritable trait template for a species\",\n\
+        \            \"required\": [\n                \"speciesCode\",\n                \"gameServiceId\",\n             \
+        \   \"traits\"\n            ],\n            \"properties\": {\n                \"speciesCode\": {\n              \
+        \      \"type\": \"string\",\n                    \"description\": \"Species code\",\n                    \"maxLength\"\
+        : 100\n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"description\": \"Game service scope\"\n             \
+        \   },\n                \"traits\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"$ref\": \"#/$defs/HeritableTraitDefinition\"\n                    },\n                \
+        \    \"description\": \"Heritable trait definitions\"\n                },\n                \"isDeprecated\": {\n \
+        \                   \"type\": \"boolean\",\n                    \"description\": \"Whether this template is deprecated\"\
+        \n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the template was deprecated (null if not deprecated)\"\n                },\n                \"deprecationReason\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Why the template was deprecated (null if not deprecated)\",\n                    \"maxLength\": 500\n        \
+        \        }\n            }\n        },\n        \"HeritableTraitDefinition\": {\n            \"type\": \"object\",\n\
+        \            \"additionalProperties\": false,\n            \"description\": \"Definition of a heritable genetic trait
+        for a species\",\n            \"required\": [\n                \"traitCode\",\n                \"displayName\",\n\
+        \                \"category\",\n                \"dominanceModel\",\n                \"mutationChance\",\n       \
+        \         \"mutationRange\"\n            ],\n            \"properties\": {\n                \"traitCode\": {\n   \
+        \                 \"type\": \"string\",\n                    \"description\": \"Unique trait identifier within species\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 100\n                },\n           \
+        \     \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
+        trait name\",\n                    \"minLength\": 1,\n                    \"maxLength\": 200\n                },\n\
+        \                \"category\": {\n                    \"type\": \"string\",\n                    \"description\":
+        \"Trait category (physical, mental, magical, social)\",\n                    \"minLength\": 1,\n                 \
+        \   \"maxLength\": 50\n                },\n                \"dominanceModel\": {\n                    \"$ref\": \"\
+        #/$defs/DominanceModel\",\n                    \"description\": \"How alleles combine for this trait\"\n         \
+        \       },\n                \"mutationChance\": {\n                    \"type\": \"number\",\n                   \
+        \ \"format\": \"float\",\n                    \"description\": \"Probability of mutation per trait during procreation
+        (0.0-1.0)\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0\n                },\n  \
+        \              \"mutationRange\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
+        float\",\n                    \"description\": \"Maximum allele shift on mutation\",\n                    \"minimum\"\
+        : 0.0,\n                    \"maximum\": 1.0\n                },\n                \"expressionDelay\": {\n       \
+        \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Stage at which trait fully expresses (null for immediate expression at birth)\",\n                    \"maxLength\"\
+        : 50\n                },\n                \"personalityMapping\": {\n                    \"type\": \"string\",\n \
+        \                   \"nullable\": true,\n                    \"description\": \"Which personality trait this feeds
+        (e.g., aggression)\",\n                    \"maxLength\": 100\n                },\n                \"aptitudeMapping\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Which aptitude domain this feeds (e.g., smithing)\",\n                    \"maxLength\": 100\n               \
+        \ }\n            }\n        },\n        \"DominanceModel\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Genetic dominance model determining how alleles combine to produce phenotype\",\n            \"enum\": [\n   \
+        \             \"DominantHigh\",\n                \"DominantLow\",\n                \"Blending\",\n               \
+        \ \"Codominant\",\n                \"Maternal\",\n                \"Random\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Deprecate a heritable trait template\",\n    \"description\": \"Marks a
+        heritable trait template as deprecated. Deprecated templates cannot be used\\nto create new genetic profiles for characters
+        of this species. Existing characters\\nwith genetic profiles referencing this template continue to function unchanged.\\
+        nCategory B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,\\nno delete. Idempotent \\u2014 returns
+        OK if already deprecated.\\n\",\n    \"tags\": [\n        \"CharacterLifecycle\"\n    ],\n    \"deprecated\": false,\n\
+        \    \"operationId\": \"deprecateHeritableTraitTemplate\"\n}"
+  /character-lifecycle/template/deprecate-hybrid:
+    post:
+      summary: Deprecate a hybrid trait template
+      description: |
+        Marks a hybrid trait template as deprecated. Deprecated hybrid templates cannot
+        be used to create new genetic profiles for hybrid offspring of this species pair.
+        Existing hybrid characters with genetic profiles referencing this template continue
+        to function unchanged.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
+      operationId: deprecateHybridTraitTemplate
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateHybridTraitTemplateRequest'
+      responses:
+        '200':
+          description: Hybrid trait template deprecated (or already deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetHybridTraitTemplateResponse'
+        '404':
+          description: Hybrid trait template not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeprecateHybridTraitTemplateRequest\"\
+        ,\n    \"$defs\": {\n        \"DeprecateHybridTraitTemplateRequest\": {\n            \"type\": \"object\",\n     \
+        \       \"additionalProperties\": false,\n            \"description\": \"Request to deprecate a hybrid trait template
+        (Category B \\u2014 one-way, no delete). Idempotent \\u2014 returns OK if already deprecated.\",\n            \"required\"\
+        : [\n                \"speciesA\",\n                \"speciesB\",\n                \"gameServiceId\"\n           \
+        \ ],\n            \"properties\": {\n                \"speciesA\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"First species in the pair\",\n                    \"minLength\": 1,\n    \
+        \                \"maxLength\": 100\n                },\n                \"speciesB\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Second species in the pair\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 100\n                },\n                \"gameServiceId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Game service scope\"\n                },\n                \"reason\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Reason for deprecation (recommended
+        for audit trail)\",\n                    \"maxLength\": 500\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetHybridTraitTemplateResponse\"\
+        ,\n    \"$defs\": {\n        \"GetHybridTraitTemplateResponse\": {\n            \"type\": \"object\",\n          \
+        \  \"additionalProperties\": false,\n            \"description\": \"Hybrid trait template for a species pair\",\n\
+        \            \"required\": [\n                \"speciesA\",\n                \"speciesB\",\n                \"gameServiceId\"\
+        ,\n                \"traitOverrides\",\n                \"hybridFertilityModifier\"\n            ],\n            \"\
+        properties\": {\n                \"speciesA\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"First species in the pair\",\n                    \"maxLength\": 100\n                },\n      \
+        \          \"speciesB\": {\n                    \"type\": \"string\",\n                    \"description\": \"Second
+        species in the pair\",\n                    \"maxLength\": 100\n                },\n                \"gameServiceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Game service scope\"\n                },\n                \"traitOverrides\": {\n               \
+        \     \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/HybridTraitOverride\"\
+        \n                    },\n                    \"description\": \"Dominance overrides for specific traits in hybrid
+        offspring\"\n                },\n                \"hybridFertilityModifier\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"float\",\n                    \"description\": \"Fertility modifier for
+        hybrid offspring (0.0 = sterile, 1.0 = normal)\",\n                    \"minimum\": 0.0,\n                    \"maximum\"\
+        : 2.0\n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n     \
+        \               \"description\": \"Whether this template is deprecated\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When the template was deprecated (null if not deprecated)\"\
+        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Why the template was deprecated (null if
+        not deprecated)\",\n                    \"maxLength\": 500\n                }\n            }\n        },\n       \
+        \ \"HybridTraitOverride\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
+        \          \"description\": \"Dominance override for a specific trait in cross-species hybridization\",\n        \
+        \    \"required\": [\n                \"traitCode\",\n                \"dominanceOverride\"\n            ],\n    \
+        \        \"properties\": {\n                \"traitCode\": {\n                    \"type\": \"string\",\n        \
+        \            \"description\": \"Trait being overridden\",\n                    \"minLength\": 1,\n               \
+        \     \"maxLength\": 100\n                },\n                \"dominanceOverride\": {\n                    \"$ref\"\
+        : \"#/$defs/DominanceModel\",\n                    \"description\": \"Dominance model override for this trait in hybrid
+        offspring\"\n                }\n            }\n        },\n        \"DominanceModel\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Genetic dominance model determining how alleles combine to produce phenotype\"\
+        ,\n            \"enum\": [\n                \"DominantHigh\",\n                \"DominantLow\",\n                \"\
+        Blending\",\n                \"Codominant\",\n                \"Maternal\",\n                \"Random\"\n        \
+        \    ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Deprecate a hybrid trait template\",\n    \"description\": \"Marks a hybrid
+        trait template as deprecated. Deprecated hybrid templates cannot\\nbe used to create new genetic profiles for hybrid
+        offspring of this species pair.\\nExisting hybrid characters with genetic profiles referencing this template continue\\
+        nto function unchanged.\\nCategory B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,\\nno delete.
+        Idempotent \\u2014 returns OK if already deprecated.\\n\",\n    \"tags\": [\n        \"CharacterLifecycle\"\n    ],\n\
+        \    \"deprecated\": false,\n    \"operationId\": \"deprecateHybridTraitTemplate\"\n}"
+  /character-lifecycle/template/clean-deprecated-lifecycle:
+    post:
+      summary: Clean deprecated lifecycle templates with zero remaining profiles
+      description: |
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        lifecycle templates and permanently removes those with zero remaining
+        LifecycleProfile instances referencing them, subject to an optional grace period.
+        Publishes lifecycle-template.deleted events for each removed template. Idempotent
+        and safe to call at any frequency. Supports dry-run mode for admin panel preview.
+      operationId: cleanDeprecatedLifecycleTemplates
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedRequest'
+      responses:
+        '200':
+          description: Cleanup sweep completed
+          content:
+            application/json:
+              schema:
+                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedStringKeyResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\
+        }"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\
+        }"
+      x-endpoint-info-json: "{\n    \"summary\": \"Clean deprecated lifecycle templates with zero remaining profiles\",\n\
+        \    \"description\": \"Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated\\nlifecycle
+        templates and permanently removes those with zero remaining\\nLifecycleProfile instances referencing them, subject
+        to an optional grace period.\\nPublishes lifecycle-template.deleted events for each removed template. Idempotent\\
+        nand safe to call at any frequency. Supports dry-run mode for admin panel preview.\\n\",\n    \"tags\": [\n      \
+        \  \"CharacterLifecycle\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"cleanDeprecatedLifecycleTemplates\"\
+        \n}"
+  /character-lifecycle/template/clean-deprecated-heritable:
+    post:
+      summary: Clean deprecated heritable trait templates with zero remaining profiles
+      description: |
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        heritable trait templates and permanently removes those with zero remaining
+        GeneticProfile instances referencing them, subject to an optional grace period.
+        Publishes heritable-trait-template.deleted events for each removed template.
+        Idempotent and safe to call at any frequency. Supports dry-run mode for admin
+        panel preview.
+      operationId: cleanDeprecatedHeritableTraitTemplates
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedRequest'
+      responses:
+        '200':
+          description: Cleanup sweep completed
+          content:
+            application/json:
+              schema:
+                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedStringKeyResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\
+        }"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\
+        }"
+      x-endpoint-info-json: "{\n    \"summary\": \"Clean deprecated heritable trait templates with zero remaining profiles\"\
+        ,\n    \"description\": \"Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated\\nheritable
+        trait templates and permanently removes those with zero remaining\\nGeneticProfile instances referencing them, subject
+        to an optional grace period.\\nPublishes heritable-trait-template.deleted events for each removed template.\\nIdempotent
+        and safe to call at any frequency. Supports dry-run mode for admin\\npanel preview.\\n\",\n    \"tags\": [\n     \
+        \   \"CharacterLifecycle\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"cleanDeprecatedHeritableTraitTemplates\"\
+        \n}"
+  /character-lifecycle/template/clean-deprecated-hybrid:
+    post:
+      summary: Clean deprecated hybrid trait templates with zero remaining hybrid profiles
+      description: |
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        hybrid trait templates and permanently removes those with zero remaining hybrid
+        GeneticProfile instances referencing them, subject to an optional grace period.
+        Publishes hybrid-trait-template.deleted events for each removed template.
+        Idempotent and safe to call at any frequency. Supports dry-run mode for admin
+        panel preview.
+      operationId: cleanDeprecatedHybridTraitTemplates
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedRequest'
+      responses:
+        '200':
+          description: Cleanup sweep completed
+          content:
+            application/json:
+              schema:
+                $ref: 'common-api.yaml#/components/schemas/CleanDeprecatedStringKeyResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\
+        }"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"type\": \"object\"\n\
+        }"
+      x-endpoint-info-json: "{\n    \"summary\": \"Clean deprecated hybrid trait templates with zero remaining hybrid profiles\"\
+        ,\n    \"description\": \"Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated\\nhybrid trait
+        templates and permanently removes those with zero remaining hybrid\\nGeneticProfile instances referencing them, subject
+        to an optional grace period.\\nPublishes hybrid-trait-template.deleted events for each removed template.\\nIdempotent
+        and safe to call at any frequency. Supports dry-run mode for admin\\npanel preview.\\n\",\n    \"tags\": [\n     \
+        \   \"CharacterLifecycle\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"cleanDeprecatedHybridTraitTemplates\"\
+        \n}"
   /character-lifecycle/bloodline/get:
     post:
       summary: Get bloodline definition
@@ -3843,6 +4252,81 @@ components:
       description: Empty response. HTTP 200 confirms the template was created.
       additionalProperties: false
       properties: {}
+    DeprecateLifecycleTemplateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to deprecate a lifecycle template (Category B — one-way, no delete). Idempotent — returns OK 
+        if already deprecated.
+      required:
+      - speciesCode
+      - gameServiceId
+      properties:
+        speciesCode:
+          type: string
+          description: Species code of the template to deprecate
+          minLength: 1
+          maxLength: 100
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        reason:
+          type: string
+          nullable: true
+          description: Reason for deprecation (recommended for audit trail)
+          maxLength: 500
+    DeprecateHeritableTraitTemplateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to deprecate a heritable trait template (Category B — one-way, no delete). Idempotent — 
+        returns OK if already deprecated.
+      required:
+      - speciesCode
+      - gameServiceId
+      properties:
+        speciesCode:
+          type: string
+          description: Species code of the template to deprecate
+          minLength: 1
+          maxLength: 100
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        reason:
+          type: string
+          nullable: true
+          description: Reason for deprecation (recommended for audit trail)
+          maxLength: 500
+    DeprecateHybridTraitTemplateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to deprecate a hybrid trait template (Category B — one-way, no delete). Idempotent — returns 
+        OK if already deprecated.
+      required:
+      - speciesA
+      - speciesB
+      - gameServiceId
+      properties:
+        speciesA:
+          type: string
+          description: First species in the pair
+          minLength: 1
+          maxLength: 100
+        speciesB:
+          type: string
+          description: Second species in the pair
+          minLength: 1
+          maxLength: 100
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        reason:
+          type: string
+          nullable: true
+          description: Reason for deprecation (recommended for audit trail)
+          maxLength: 500
     GetLifecycleTemplateRequest:
       type: object
       additionalProperties: false

@@ -304,7 +304,7 @@ public partial class UpdateRelationshipRequest
     /// <summary>
     /// Fields explicitly set on this request. Populated automatically by property
     /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
+    /// provided" from "field explicitly set to null" for opt-in properties.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
     public System.Collections.Generic.ICollection<string>? ChangeFields
@@ -325,21 +325,19 @@ public partial class UpdateRelationshipRequest
         => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
 
 
-    private System.Guid _relationshipId = default!;
     /// <summary>
     /// ID of the relationship to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RelationshipId { get => _relationshipId; set { _relationshipId = value; _TrackChange("relationshipId"); } }
+    public System.Guid RelationshipId { get; set; } = default!;
 
-    private System.Guid? _relationshipTypeId = default!;
     /// <summary>
     /// Update relationship type (used for type merge migrations)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
-    public System.Guid? RelationshipTypeId { get => _relationshipTypeId; set { _relationshipTypeId = value; _TrackChange("relationshipTypeId"); } }
+    public System.Guid? RelationshipTypeId { get; set; } = default!;
 
     private object? _metadata = default!;
     /// <summary>
@@ -775,7 +773,7 @@ public partial class UpdateRelationshipTypeRequest
     /// <summary>
     /// Fields explicitly set on this request. Populated automatically by property
     /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
+    /// provided" from "field explicitly set to null" for opt-in properties.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
     public System.Collections.Generic.ICollection<string>? ChangeFields
@@ -796,22 +794,20 @@ public partial class UpdateRelationshipTypeRequest
         => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
 
 
-    private System.Guid _relationshipTypeId = default!;
     /// <summary>
     /// ID of the relationship type to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipTypeId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RelationshipTypeId { get => _relationshipTypeId; set { _relationshipTypeId = value; _TrackChange("relationshipTypeId"); } }
+    public System.Guid RelationshipTypeId { get; set; } = default!;
 
-    private string? _name = default!;
     /// <summary>
     /// Display name for the relationship type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
-    public string? Name { get => _name; set { _name = value; _TrackChange("name"); } }
+    public string? Name { get; set; } = default!;
 
     private string? _description = default!;
     /// <summary>
@@ -829,27 +825,24 @@ public partial class UpdateRelationshipTypeRequest
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string? Category { get => _category; set { _category = value; _TrackChange("category"); } }
 
-    private System.Guid? _parentTypeId = default!;
     /// <summary>
     /// Parent type ID for hierarchy
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentTypeId")]
-    public System.Guid? ParentTypeId { get => _parentTypeId; set { _parentTypeId = value; _TrackChange("parentTypeId"); } }
+    public System.Guid? ParentTypeId { get; set; } = default!;
 
-    private string? _inverseTypeCode = default!;
     /// <summary>
     /// Code of the inverse relationship
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("inverseTypeCode")]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
-    public string? InverseTypeCode { get => _inverseTypeCode; set { _inverseTypeCode = value; _TrackChange("inverseTypeCode"); } }
+    public string? InverseTypeCode { get; set; } = default!;
 
-    private bool? _isBidirectional = default!;
     /// <summary>
     /// Whether the relationship is bidirectional
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isBidirectional")]
-    public bool? IsBidirectional { get => _isBidirectional; set { _isBidirectional = value; _TrackChange("isBidirectional"); } }
+    public bool? IsBidirectional { get; set; } = default!;
 
     private object? _metadata = default!;
     /// <summary>

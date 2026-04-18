@@ -235,6 +235,215 @@ public partial class AchievementDefinitionCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to achievement.definition.deleted when a achievementdefinition is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AchievementDefinitionDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: achievement.definition.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "achievement.definition.deleted";
+
+    /// <summary>
+    /// ID of the owning game service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique achievement identifier within game service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("achievementId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AchievementId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// How to earn this achievement
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Description { get; set; } = default!;
+
+    /// <summary>
+    /// Description shown before achievement is earned (for hidden types)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("hiddenDescription")]
+    public string? HiddenDescription { get; set; } = default!;
+
+    /// <summary>
+    /// Game-defined category for UI grouping and filtering
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("category")]
+    public string? Category { get; set; } = default!;
+
+    /// <summary>
+    /// Classification of the achievement
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("achievementType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public AchievementType AchievementType { get; set; } = default!;
+
+    /// <summary>
+    /// Which entity types can earn this achievement
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityTypes")]
+    // TODO(system.text.json): Add string enum item converter
+    public System.Collections.Generic.ICollection<EntityType>? EntityTypes { get; set; } = default!;
+
+    /// <summary>
+    /// Target value for progressive achievements
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("progressTarget")]
+    public int? ProgressTarget { get; set; } = default!;
+
+    /// <summary>
+    /// Point value of this achievement
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("points")]
+    public int Points { get; set; } = default!;
+
+    /// <summary>
+    /// Achievement icon URL
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("iconUrl")]
+    public string? IconUrl { get; set; } = default!;
+
+    /// <summary>
+    /// Available platforms
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("platforms")]
+    // TODO(system.text.json): Add string enum item converter
+    public System.Collections.Generic.ICollection<Platform>? Platforms { get; set; } = default!;
+
+    /// <summary>
+    /// Platform-specific achievement ID mappings
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("platformMappings")]
+    public System.Collections.Generic.ICollection<PlatformMapping>? PlatformMappings { get; set; } = default!;
+
+    /// <summary>
+    /// Achievement IDs that must be unlocked first
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("prerequisites")]
+    public System.Collections.Generic.ICollection<string>? Prerequisites { get; set; } = default!;
+
+    /// <summary>
+    /// Score type code for analytics event matching
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scoreType")]
+    public string? ScoreType { get; set; } = default!;
+
+    /// <summary>
+    /// Milestone type code for analytics event matching
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneType")]
+    public string? MilestoneType { get; set; } = default!;
+
+    /// <summary>
+    /// Expected milestone value for analytics event matching
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneValue")]
+    public double? MilestoneValue { get; set; } = default!;
+
+    /// <summary>
+    /// Expected milestone name for analytics event matching
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestoneName")]
+    public string? MilestoneName { get; set; } = default!;
+
+    /// <summary>
+    /// Leaderboard ID for rank change event matching
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("leaderboardId")]
+    public string? LeaderboardId { get; set; } = default!;
+
+    /// <summary>
+    /// Rank threshold for leaderboard achievements
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("rankThreshold")]
+    public long? RankThreshold { get; set; } = default!;
+
+    /// <summary>
+    /// Whether achievement is earnable
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isActive")]
+    public bool IsActive { get; set; } = default!;
+
+    /// <summary>
+    /// How many entities have earned this
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("earnedCount")]
+    public long EarnedCount { get; set; } = default!;
+
+    /// <summary>
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the achievement definition was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the achievement definition was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this achievement definition is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the achievement definition was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to achievement.definition.updated when a achievementdefinition is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -446,215 +655,6 @@ public partial class AchievementDefinitionUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to achievement.definition.deleted when a achievementdefinition is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AchievementDefinitionDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: achievement.definition.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "achievement.definition.deleted";
-
-    /// <summary>
-    /// ID of the owning game service
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Unique achievement identifier within game service
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("achievementId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string AchievementId { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string DisplayName { get; set; } = default!;
-
-    /// <summary>
-    /// How to earn this achievement
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("description")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Description { get; set; } = default!;
-
-    /// <summary>
-    /// Description shown before achievement is earned (for hidden types)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("hiddenDescription")]
-    public string? HiddenDescription { get; set; } = default!;
-
-    /// <summary>
-    /// Game-defined category for UI grouping and filtering
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string? Category { get; set; } = default!;
-
-    /// <summary>
-    /// Classification of the achievement
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("achievementType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AchievementType AchievementType { get; set; } = default!;
-
-    /// <summary>
-    /// Which entity types can earn this achievement
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entityTypes")]
-    // TODO(system.text.json): Add string enum item converter
-    public System.Collections.Generic.ICollection<EntityType>? EntityTypes { get; set; } = default!;
-
-    /// <summary>
-    /// Target value for progressive achievements
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("progressTarget")]
-    public int? ProgressTarget { get; set; } = default!;
-
-    /// <summary>
-    /// Point value of this achievement
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("points")]
-    public int Points { get; set; } = default!;
-
-    /// <summary>
-    /// Achievement icon URL
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("iconUrl")]
-    public string? IconUrl { get; set; } = default!;
-
-    /// <summary>
-    /// Available platforms
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("platforms")]
-    // TODO(system.text.json): Add string enum item converter
-    public System.Collections.Generic.ICollection<Platform>? Platforms { get; set; } = default!;
-
-    /// <summary>
-    /// Platform-specific achievement ID mappings
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("platformMappings")]
-    public System.Collections.Generic.ICollection<PlatformMapping>? PlatformMappings { get; set; } = default!;
-
-    /// <summary>
-    /// Achievement IDs that must be unlocked first
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("prerequisites")]
-    public System.Collections.Generic.ICollection<string>? Prerequisites { get; set; } = default!;
-
-    /// <summary>
-    /// Score type code for analytics event matching
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("scoreType")]
-    public string? ScoreType { get; set; } = default!;
-
-    /// <summary>
-    /// Milestone type code for analytics event matching
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("milestoneType")]
-    public string? MilestoneType { get; set; } = default!;
-
-    /// <summary>
-    /// Expected milestone value for analytics event matching
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("milestoneValue")]
-    public double? MilestoneValue { get; set; } = default!;
-
-    /// <summary>
-    /// Expected milestone name for analytics event matching
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("milestoneName")]
-    public string? MilestoneName { get; set; } = default!;
-
-    /// <summary>
-    /// Leaderboard ID for rank change event matching
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("leaderboardId")]
-    public string? LeaderboardId { get; set; } = default!;
-
-    /// <summary>
-    /// Rank threshold for leaderboard achievements
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("rankThreshold")]
-    public long? RankThreshold { get; set; } = default!;
-
-    /// <summary>
-    /// Whether achievement is earnable
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isActive")]
-    public bool IsActive { get; set; } = default!;
-
-    /// <summary>
-    /// How many entities have earned this
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("earnedCount")]
-    public long EarnedCount { get; set; } = default!;
-
-    /// <summary>
-    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the achievement definition was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the achievement definition was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this achievement definition is deprecated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
-    public bool IsDeprecated { get; set; } = default!;
-
-    /// <summary>
-    /// When the achievement definition was deprecated (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for deprecation (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? DeprecationReason { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Published to achievement.progress-record.created when a achievementprogressrecord is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -747,6 +747,108 @@ public partial class AchievementProgressRecordCreatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published to achievement.progress-record.deleted when a achievementprogressrecord is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AchievementProgressRecordDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: achievement.progress-record.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "achievement.progress-record.deleted";
+
+    /// <summary>
+    /// ID of the owning game service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Achievement definition identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("achievementId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AchievementId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity tracking progress
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EntityId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity tracking progress
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
+
+    /// <summary>
+    /// Current progress toward the achievement target
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currentProgress")]
+    public int CurrentProgress { get; set; } = default!;
+
+    /// <summary>
+    /// Target progress value for progressive achievements
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetProgress")]
+    public int? TargetProgress { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the achievement has been unlocked
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isUnlocked")]
+    public bool IsUnlocked { get; set; } = default!;
+
+    /// <summary>
+    /// When the achievement was unlocked, null if not unlocked
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("unlockedAt")]
+    public System.DateTimeOffset? UnlockedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Point value earned from this achievement
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("points")]
+    public int Points { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the achievement progress record was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the achievement progress record was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
 
 }
 
@@ -851,108 +953,6 @@ public partial class AchievementProgressRecordUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to achievement.progress-record.deleted when a achievementprogressrecord is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AchievementProgressRecordDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: achievement.progress-record.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "achievement.progress-record.deleted";
-
-    /// <summary>
-    /// ID of the owning game service
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Achievement definition identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("achievementId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string AchievementId { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the entity tracking progress
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EntityId { get; set; } = default!;
-
-    /// <summary>
-    /// Type of entity tracking progress
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entityType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EntityType EntityType { get; set; } = default!;
-
-    /// <summary>
-    /// Current progress toward the achievement target
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("currentProgress")]
-    public int CurrentProgress { get; set; } = default!;
-
-    /// <summary>
-    /// Target progress value for progressive achievements
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("targetProgress")]
-    public int? TargetProgress { get; set; } = default!;
-
-    /// <summary>
-    /// Whether the achievement has been unlocked
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isUnlocked")]
-    public bool IsUnlocked { get; set; } = default!;
-
-    /// <summary>
-    /// When the achievement was unlocked, null if not unlocked
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("unlockedAt")]
-    public System.DateTimeOffset? UnlockedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Point value earned from this achievement
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("points")]
-    public int Points { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the achievement progress record was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the achievement progress record was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

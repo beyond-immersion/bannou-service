@@ -1750,6 +1750,7 @@ public partial class InventoryController
                     "type": "integer",
                     "nullable": true,
                     "minimum": 1,
+                    "x-detect-if-set": true,
                     "description": "New max slots"
                 },
                 "maxWeight": {
@@ -1757,18 +1758,21 @@ public partial class InventoryController
                     "format": "double",
                     "nullable": true,
                     "minimum": 0,
+                    "x-detect-if-set": true,
                     "description": "New max weight"
                 },
                 "gridWidth": {
                     "type": "integer",
                     "nullable": true,
                     "minimum": 1,
+                    "x-detect-if-set": true,
                     "description": "New grid width"
                 },
                 "gridHeight": {
                     "type": "integer",
                     "nullable": true,
                     "minimum": 1,
+                    "x-detect-if-set": true,
                     "description": "New grid height"
                 },
                 "maxVolume": {
@@ -1776,6 +1780,7 @@ public partial class InventoryController
                     "format": "double",
                     "nullable": true,
                     "minimum": 0,
+                    "x-detect-if-set": true,
                     "description": "New max volume"
                 },
                 "allowedCategories": {
@@ -1784,6 +1789,7 @@ public partial class InventoryController
                         "type": "string"
                     },
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New allowed categories"
                 },
                 "forbiddenCategories": {
@@ -1792,6 +1798,7 @@ public partial class InventoryController
                         "type": "string"
                     },
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New forbidden categories"
                 },
                 "allowedTags": {
@@ -1800,6 +1807,7 @@ public partial class InventoryController
                         "type": "string"
                     },
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New allowed tags"
                 },
                 "tags": {
@@ -1808,12 +1816,14 @@ public partial class InventoryController
                         "type": "string"
                     },
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New container tags"
                 },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }

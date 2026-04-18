@@ -419,7 +419,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Behavior | L4 | ABML compiler (YAML to bytecode), A*-based GOAP planner, and 5-stage cognition pipeline | 6 |
 | Character Encounter | L4 | NPC encounter memory with per-participant perspectives, time-decay, and sentiment aggregation | 22 |
 | Character History | L4 | Historical event participation and machine-readable backstory for behavior system consumption | 12 |
-| Character Lifecycle | L4 | Generational cycle orchestration (aging, marriage, procreation, death, genetic inheritance) | 29 |
+| Character Lifecycle | L4 | Generational cycle orchestration (aging, marriage, procreation, death, genetic inheritance) | 35 |
 | Character Personality | L4 | Personality traits (bipolar axes) and combat preferences with probabilistic evolution | 12 |
 | Craft | L4 | Recipe-based crafting orchestration composing Item, Inventory, Contract, Currency, and Affix | 31 |
 | Director | L4 | Human-in-the-loop event coordination (Observe/Steer/Drive tiers) for live content management | — |
@@ -454,7 +454,7 @@ For full details including code examples, deployment modes, and the Variable Pro
 | Utility | L4 | Infrastructure network topology, flow calculation, and coverage cascading (aqueducts, power grids) | — |
 | Workshop | L4 | Time-based automated production with lazy evaluation and background materialization | — |
 
-**78 services, 1141 endpoints**
+**78 services, 1147 endpoints**
 
 For full per-service details: `docs/generated/GENERATED-*-SERVICE-DETAILS.md`
 

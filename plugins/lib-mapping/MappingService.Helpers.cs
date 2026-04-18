@@ -614,6 +614,10 @@ public partial class MappingService
         {
             _logger.LogError(apiEx, "Asset service error uploading large payload for region {RegionId}: {Status}",
                 regionId, apiEx.StatusCode);
+            await _messageBus.TryPublishErrorAsync(
+                "mapping", "UploadLargePayloadToAsset", "AssetServiceError", apiEx.Message,
+                dependency: "asset", endpoint: "request-upload",
+                stack: apiEx.StackTrace, cancellationToken: cancellationToken);
             return null;
         }
         catch (Exception ex)

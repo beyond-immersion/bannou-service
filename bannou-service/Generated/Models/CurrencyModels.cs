@@ -572,188 +572,140 @@ public partial class ListCurrencyDefinitionsRequest
 public partial class UpdateCurrencyDefinitionRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private System.Guid _definitionId = default!;
     /// <summary>
     /// Definition ID to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("definitionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid DefinitionId { get => _definitionId; set { _definitionId = value; _TrackChange("definitionId"); } }
+    public System.Guid DefinitionId { get; set; } = default!;
 
-    private string? _name = default!;
     /// <summary>
     /// New currency name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
-    public string? Name { get => _name; set { _name = value; _TrackChange("name"); } }
+    public string? Name { get; set; } = default!;
 
-    private string? _description = default!;
     /// <summary>
     /// New description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
+    public string? Description { get; set; } = default!;
 
-    private bool? _transferable = default!;
     /// <summary>
     /// New transferable flag
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("transferable")]
-    public bool? Transferable { get => _transferable; set { _transferable = value; _TrackChange("transferable"); } }
+    public bool? Transferable { get; set; } = default!;
 
-    private bool? _tradeable = default!;
     /// <summary>
     /// New tradeable flag
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tradeable")]
-    public bool? Tradeable { get => _tradeable; set { _tradeable = value; _TrackChange("tradeable"); } }
+    public bool? Tradeable { get; set; } = default!;
 
-    private bool? _allowNegative = default!;
     /// <summary>
     /// New allowNegative flag
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("allowNegative")]
-    public bool? AllowNegative { get => _allowNegative; set { _allowNegative = value; _TrackChange("allowNegative"); } }
+    public bool? AllowNegative { get; set; } = default!;
 
-    private double? _perWalletCap = default!;
     /// <summary>
     /// New wallet cap
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("perWalletCap")]
-    public double? PerWalletCap { get => _perWalletCap; set { _perWalletCap = value; _TrackChange("perWalletCap"); } }
+    public double? PerWalletCap { get; set; } = default!;
 
-    private CapOverflowBehavior? _capOverflowBehavior = default!;
     /// <summary>
     /// New overflow behavior
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("capOverflowBehavior")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CapOverflowBehavior? CapOverflowBehavior { get => _capOverflowBehavior; set { _capOverflowBehavior = value; _TrackChange("capOverflowBehavior"); } }
+    public CapOverflowBehavior? CapOverflowBehavior { get; set; } = default!;
 
-    private double? _dailyEarnCap = default!;
     /// <summary>
     /// New daily earn cap
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("dailyEarnCap")]
-    public double? DailyEarnCap { get => _dailyEarnCap; set { _dailyEarnCap = value; _TrackChange("dailyEarnCap"); } }
+    public double? DailyEarnCap { get; set; } = default!;
 
-    private double? _weeklyEarnCap = default!;
     /// <summary>
     /// New weekly earn cap
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("weeklyEarnCap")]
-    public double? WeeklyEarnCap { get => _weeklyEarnCap; set { _weeklyEarnCap = value; _TrackChange("weeklyEarnCap"); } }
+    public double? WeeklyEarnCap { get; set; } = default!;
 
-    private string? _earnCapResetTime = default!;
     /// <summary>
     /// New earn cap reset time (e.g. "14:00:00" for 2pm UTC)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("earnCapResetTime")]
     [System.ComponentModel.DataAnnotations.StringLength(20)]
-    public string? EarnCapResetTime { get => _earnCapResetTime; set { _earnCapResetTime = value; _TrackChange("earnCapResetTime"); } }
+    public string? EarnCapResetTime { get; set; } = default!;
 
-    private bool? _autogainEnabled = default!;
     /// <summary>
     /// Enable/disable autogain
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autogainEnabled")]
-    public bool? AutogainEnabled { get => _autogainEnabled; set { _autogainEnabled = value; _TrackChange("autogainEnabled"); } }
+    public bool? AutogainEnabled { get; set; } = default!;
 
-    private AutogainMode? _autogainMode = default!;
     /// <summary>
     /// New autogain mode
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autogainMode")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AutogainMode? AutogainMode { get => _autogainMode; set { _autogainMode = value; _TrackChange("autogainMode"); } }
+    public AutogainMode? AutogainMode { get; set; } = default!;
 
-    private double? _autogainAmount = default!;
     /// <summary>
     /// New autogain amount
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autogainAmount")]
-    public double? AutogainAmount { get => _autogainAmount; set { _autogainAmount = value; _TrackChange("autogainAmount"); } }
+    public double? AutogainAmount { get; set; } = default!;
 
-    private string? _autogainInterval = default!;
     /// <summary>
     /// New autogain interval
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autogainInterval")]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
-    public string? AutogainInterval { get => _autogainInterval; set { _autogainInterval = value; _TrackChange("autogainInterval"); } }
+    public string? AutogainInterval { get; set; } = default!;
 
-    private double? _autogainCap = default!;
     /// <summary>
     /// New autogain cap
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autogainCap")]
-    public double? AutogainCap { get => _autogainCap; set { _autogainCap = value; _TrackChange("autogainCap"); } }
+    public double? AutogainCap { get; set; } = default!;
 
-    private bool? _autogainUseGameTime = default!;
     /// <summary>
     /// Per-definition override for autogain time source. True = game-time, false = real-time, null = use global config.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autogainUseGameTime")]
-    public bool? AutogainUseGameTime { get => _autogainUseGameTime; set { _autogainUseGameTime = value; _TrackChange("autogainUseGameTime"); } }
+    public bool? AutogainUseGameTime { get; set; } = default!;
 
-    private double? _exchangeRateToBase = default!;
     /// <summary>
     /// New exchange rate to base
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("exchangeRateToBase")]
-    public double? ExchangeRateToBase { get => _exchangeRateToBase; set { _exchangeRateToBase = value; _TrackChange("exchangeRateToBase"); } }
+    public double? ExchangeRateToBase { get; set; } = default!;
 
-    private System.Guid? _iconAssetId = default!;
     /// <summary>
     /// New icon asset ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("iconAssetId")]
-    public System.Guid? IconAssetId { get => _iconAssetId; set { _iconAssetId = value; _TrackChange("iconAssetId"); } }
+    public System.Guid? IconAssetId { get; set; } = default!;
 
-    private string? _displayFormat = default!;
     /// <summary>
     /// New display format
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayFormat")]
     [System.ComponentModel.DataAnnotations.StringLength(200)]
-    public string? DisplayFormat { get => _displayFormat; set { _displayFormat = value; _TrackChange("displayFormat"); } }
+    public string? DisplayFormat { get; set; } = default!;
 
-    private bool? _isActive = default!;
     /// <summary>
     /// Active status
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
-    public bool? IsActive { get => _isActive; set { _isActive = value; _TrackChange("isActive"); } }
+    public bool? IsActive { get; set; } = default!;
 
 }
 
@@ -2734,49 +2686,20 @@ public partial class GetExchangeRateResponse
 public partial class UpdateExchangeRateRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private System.Guid _currencyDefinitionId = default!;
     /// <summary>
     /// Currency to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currencyDefinitionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CurrencyDefinitionId { get => _currencyDefinitionId; set { _currencyDefinitionId = value; _TrackChange("currencyDefinitionId"); } }
+    public System.Guid CurrencyDefinitionId { get; set; } = default!;
 
-    private double _exchangeRateToBase = default!;
     /// <summary>
     /// New exchange rate to base currency (must be positive)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("exchangeRateToBase")]
     [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
-    public double ExchangeRateToBase { get => _exchangeRateToBase; set { _exchangeRateToBase = value; _TrackChange("exchangeRateToBase"); } }
+    public double ExchangeRateToBase { get; set; } = default!;
 
 }
 

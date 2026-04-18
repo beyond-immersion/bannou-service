@@ -490,135 +490,95 @@ public partial class CreateQueueRequest
 public partial class UpdateQueueRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private string _queueId = default!;
     /// <summary>
     /// ID of the queue to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("queueId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string QueueId { get => _queueId; set { _queueId = value; _TrackChange("queueId"); } }
+    public string QueueId { get; set; } = default!;
 
-    private string? _displayName = default!;
     /// <summary>
     /// New display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
-    public string? DisplayName { get => _displayName; set { _displayName = value; _TrackChange("displayName"); } }
+    public string? DisplayName { get; set; } = default!;
 
-    private string? _description = default!;
     /// <summary>
     /// New description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
+    public string? Description { get; set; } = default!;
 
-    private bool? _enabled = default!;
     /// <summary>
     /// Enable or disable the queue
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("enabled")]
-    public bool? Enabled { get => _enabled; set { _enabled = value; _TrackChange("enabled"); } }
+    public bool? Enabled { get; set; } = default!;
 
-    private int? _minCount = default!;
     /// <summary>
     /// New minimum count
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("minCount")]
     [System.ComponentModel.DataAnnotations.Range(2, int.MaxValue)]
-    public int? MinCount { get => _minCount; set { _minCount = value; _TrackChange("minCount"); } }
+    public int? MinCount { get; set; } = default!;
 
-    private int? _maxCount = default!;
     /// <summary>
     /// New maximum count
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxCount")]
     [System.ComponentModel.DataAnnotations.Range(int.MinValue, 200)]
-    public int? MaxCount { get => _maxCount; set { _maxCount = value; _TrackChange("maxCount"); } }
+    public int? MaxCount { get; set; } = default!;
 
-    private int? _countMultiple = default!;
     /// <summary>
     /// New count multiple
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("countMultiple")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
-    public int? CountMultiple { get => _countMultiple; set { _countMultiple = value; _TrackChange("countMultiple"); } }
+    public int? CountMultiple { get; set; } = default!;
 
-    private int? _intervalSeconds = default!;
     /// <summary>
     /// New interval seconds
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("intervalSeconds")]
     [System.ComponentModel.DataAnnotations.Range(1, 300)]
-    public int? IntervalSeconds { get => _intervalSeconds; set { _intervalSeconds = value; _TrackChange("intervalSeconds"); } }
+    public int? IntervalSeconds { get; set; } = default!;
 
-    private int? _maxIntervals = default!;
     /// <summary>
     /// New max intervals
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxIntervals")]
     [System.ComponentModel.DataAnnotations.Range(1, 100)]
-    public int? MaxIntervals { get => _maxIntervals; set { _maxIntervals = value; _TrackChange("maxIntervals"); } }
+    public int? MaxIntervals { get; set; } = default!;
 
-    private System.Collections.Generic.ICollection<SkillExpansionStep>? _skillExpansion = default!;
     /// <summary>
     /// New skill expansion steps
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("skillExpansion")]
-    public System.Collections.Generic.ICollection<SkillExpansionStep>? SkillExpansion { get => _skillExpansion; set { _skillExpansion = value; _TrackChange("skillExpansion"); } }
+    public System.Collections.Generic.ICollection<SkillExpansionStep>? SkillExpansion { get; set; } = default!;
 
-    private PartySkillAggregation? _partySkillAggregation = default!;
     /// <summary>
     /// New party skill aggregation method
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("partySkillAggregation")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PartySkillAggregation? PartySkillAggregation { get => _partySkillAggregation; set { _partySkillAggregation = value; _TrackChange("partySkillAggregation"); } }
+    public PartySkillAggregation? PartySkillAggregation { get; set; } = default!;
 
-    private int? _partyMaxSize = default!;
     /// <summary>
     /// New party max size
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("partyMaxSize")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
-    public int? PartyMaxSize { get => _partyMaxSize; set { _partyMaxSize = value; _TrackChange("partyMaxSize"); } }
+    public int? PartyMaxSize { get; set; } = default!;
 
-    private int? _matchAcceptTimeoutSeconds = default!;
     /// <summary>
     /// New match accept timeout
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("matchAcceptTimeoutSeconds")]
     [System.ComponentModel.DataAnnotations.Range(10, 120)]
-    public int? MatchAcceptTimeoutSeconds { get => _matchAcceptTimeoutSeconds; set { _matchAcceptTimeoutSeconds = value; _TrackChange("matchAcceptTimeoutSeconds"); } }
+    public int? MatchAcceptTimeoutSeconds { get; set; } = default!;
 
 }
 

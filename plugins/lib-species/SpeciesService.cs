@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
@@ -366,7 +367,8 @@ public partial class SpeciesService : ISpeciesService, IDeprecateAndMergeEntity
             model,
             body.Name, body.Description, body.Category,
             body.IsPlayable, body.BaseLifespan, body.MaturityAge,
-            body.TraitModifiers, body.Metadata);
+            body.TraitModifiers, body.Metadata,
+            body.ChangeFields);
 
         if (changedFields.Count > 0)
         {
@@ -1083,6 +1085,15 @@ public partial class SpeciesService : ISpeciesService, IDeprecateAndMergeEntity
                     {
                         _logger.LogWarning(charEx, "Character service error migrating character {CharacterId}: {StatusCode}",
                             character.CharacterId, charEx.StatusCode);
+                        await _messageBus.TryPublishErrorAsync(
+                            "species",
+                            "MergeSpecies",
+                            "CharacterMigrationFailed",
+                            charEx.Message,
+                            dependency: "character",
+                            endpoint: "post:/character/update",
+                            stack: charEx.StackTrace,
+                            cancellationToken: cancellationToken);
                         failedEntityIds.Add(character.CharacterId);
                     }
                     catch (Exception charEx)
@@ -1175,6 +1186,12 @@ public partial class SpeciesService : ISpeciesService, IDeprecateAndMergeEntity
     /// Used by both UpdateSpeciesAsync and SeedSpeciesAsync (updateExisting path) to avoid
     /// duplicating change-tracking logic.
     /// </summary>
+    /// <param name="changeFields">
+    /// Optional tracked-change collection from the request (ChangeFields pattern). When supplied,
+    /// opted-in fields (description, category, baseLifespan, maturityAge, metadata) gate on
+    /// IsFieldSet so explicit-null JSON clears are respected. When null (Seed path), the legacy
+    /// "present if non-null" behavior is preserved.
+    /// </param>
     private static List<string> ApplySpeciesFieldUpdates(
         SpeciesModel model,
         string? name,
@@ -1184,7 +1201,8 @@ public partial class SpeciesService : ISpeciesService, IDeprecateAndMergeEntity
         int? baseLifespan,
         int? maturityAge,
         object? traitModifiers,
-        object? metadata)
+        object? metadata,
+        ICollection<string>? changeFields = null)
     {
         var changedFields = new List<string>();
 
@@ -1193,37 +1211,64 @@ public partial class SpeciesService : ISpeciesService, IDeprecateAndMergeEntity
             model.Name = name;
             changedFields.Add("name");
         }
-        if (description != null && description != model.Description)
+
+        // Description (nullable storage — allow clearing via ChangeFields)
+        bool descriptionSet = changeFields != null
+            ? changeFields.IsFieldSet("description")
+            : description != null;
+        if (descriptionSet && description != model.Description)
         {
             model.Description = description;
             changedFields.Add("description");
         }
-        if (category != null && category != model.Category)
+
+        // Category (nullable storage — allow clearing via ChangeFields)
+        bool categorySet = changeFields != null
+            ? changeFields.IsFieldSet("category")
+            : category != null;
+        if (categorySet && category != model.Category)
         {
             model.Category = category;
             changedFields.Add("category");
         }
+
         if (isPlayable.HasValue && isPlayable.Value != model.IsPlayable)
         {
             model.IsPlayable = isPlayable.Value;
             changedFields.Add("isPlayable");
         }
-        if (baseLifespan.HasValue && baseLifespan != model.BaseLifespan)
+
+        // BaseLifespan (nullable storage — allow clearing via ChangeFields)
+        bool baseLifespanSet = changeFields != null
+            ? changeFields.IsFieldSet("baseLifespan")
+            : baseLifespan.HasValue;
+        if (baseLifespanSet && baseLifespan != model.BaseLifespan)
         {
             model.BaseLifespan = baseLifespan;
             changedFields.Add("baseLifespan");
         }
-        if (maturityAge.HasValue && maturityAge != model.MaturityAge)
+
+        // MaturityAge (nullable storage — allow clearing via ChangeFields)
+        bool maturityAgeSet = changeFields != null
+            ? changeFields.IsFieldSet("maturityAge")
+            : maturityAge.HasValue;
+        if (maturityAgeSet && maturityAge != model.MaturityAge)
         {
             model.MaturityAge = maturityAge;
             changedFields.Add("maturityAge");
         }
+
         if (traitModifiers != null)
         {
             model.TraitModifiers = traitModifiers;
             changedFields.Add("traitModifiers");
         }
-        if (metadata != null)
+
+        // Metadata (opaque object? per T25 Case 4 / T29 — no equality check, simple assignment)
+        bool metadataSet = changeFields != null
+            ? changeFields.IsFieldSet("metadata")
+            : metadata != null;
+        if (metadataSet)
         {
             model.Metadata = metadata;
             changedFields.Add("metadata");

@@ -897,12 +897,13 @@ paths:
         \   \"roomId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n        \
         \            \"description\": \"Room ID to update\"\n                },\n                \"displayName\": {\n    \
         \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
-        : 200,\n                    \"description\": \"Updated room name\"\n                },\n                \"maxParticipants\"\
-        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\"\
-        : 1,\n                    \"description\": \"Updated participant limit\"\n                },\n                \"metadata\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.\"\
-        \n                }\n            }\n        }\n    }\n}"
+        : 200,\n                    \"x-detect-if-set\": true,\n                    \"description\": \"Updated room name\"\
+        \n                },\n                \"maxParticipants\": {\n                    \"type\": \"integer\",\n       \
+        \             \"nullable\": true,\n                    \"minimum\": 1,\n                    \"description\": \"Updated
+        participant limit\"\n                },\n                \"metadata\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Client-only metadata stored as
+        JSON string. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n          \
+        \  }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ChatRoomResponse\"\
         ,\n    \"$defs\": {\n        \"ChatRoomResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Chat room details including status and participant count\",\n           \
@@ -2926,6 +2927,7 @@ components:
           type: string
           nullable: true
           maxLength: 200
+          x-detect-if-set: true
           description: Updated room name
         maxParticipants:
           type: integer

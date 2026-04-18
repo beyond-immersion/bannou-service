@@ -485,27 +485,28 @@ paths:
         type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                  \
         \      \"type\": \"string\"\n                    },\n                    \"description\": \"Updated valid item classes\"\
         \n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Updated display name\"\n                },\n\
-        \                \"displayOrder\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Updated display order\"\n                }\n            }\n      \
-        \  },\n        \"StatGrant\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"description\": \"A single stat contribution from an affix definition\",\n            \"required\":
-        [\n                \"statCode\",\n                \"minValue\",\n                \"maxValue\"\n            ],\n  \
-        \          \"properties\": {\n                \"statCode\": {\n                    \"type\": \"string\",\n       \
-        \             \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\": \"\
-        Stat identifier (e.g., \\\"maximum_life\\\", \\\"fire_resistance\\\")\"\n                },\n                \"minValue\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        description\": \"Minimum rolled value for this stat\"\n                },\n                \"maxValue\": {\n     \
-        \               \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
-        : \"Maximum rolled value for this stat\"\n                }\n            }\n        },\n        \"SpawnTagModifier\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Per-tag weight multiplier for affix generation pool filtering\",\n            \"required\": [\n              \
-        \  \"tag\",\n                \"weightMultiplier\"\n            ],\n            \"properties\": {\n               \
-        \ \"tag\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                 \
-        \   \"maxLength\": 100,\n                    \"description\": \"Item class tag (e.g., \\\"amulet\\\", \\\"ring\\\"\
-        , \\\"body_armour\\\")\"\n                },\n                \"weightMultiplier\": {\n                    \"type\"\
-        : \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Weight multiplier (0 =
-        cannot appear, 1000 = normal, 1500 = more likely)\"\n                }\n            }\n        }\n    }\n}"
+        \        \"nullable\": true,\n                    \"x-detect-if-set\": true,\n                    \"description\"\
+        : \"Updated display name\"\n                },\n                \"displayOrder\": {\n                    \"type\"\
+        : \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Updated display order\"\
+        \n                }\n            }\n        },\n        \"StatGrant\": {\n            \"type\": \"object\",\n    \
+        \        \"additionalProperties\": false,\n            \"description\": \"A single stat contribution from an affix
+        definition\",\n            \"required\": [\n                \"statCode\",\n                \"minValue\",\n       \
+        \         \"maxValue\"\n            ],\n            \"properties\": {\n                \"statCode\": {\n         \
+        \           \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n\
+        \                    \"description\": \"Stat identifier (e.g., \\\"maximum_life\\\", \\\"fire_resistance\\\")\"\n\
+        \                },\n                \"minValue\": {\n                    \"type\": \"number\",\n                \
+        \    \"format\": \"double\",\n                    \"description\": \"Minimum rolled value for this stat\"\n      \
+        \          },\n                \"maxValue\": {\n                    \"type\": \"number\",\n                    \"\
+        format\": \"double\",\n                    \"description\": \"Maximum rolled value for this stat\"\n             \
+        \   }\n            }\n        },\n        \"SpawnTagModifier\": {\n            \"type\": \"object\",\n           \
+        \ \"additionalProperties\": false,\n            \"description\": \"Per-tag weight multiplier for affix generation
+        pool filtering\",\n            \"required\": [\n                \"tag\",\n                \"weightMultiplier\"\n \
+        \           ],\n            \"properties\": {\n                \"tag\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\"\
+        : \"Item class tag (e.g., \\\"amulet\\\", \\\"ring\\\", \\\"body_armour\\\")\"\n                },\n             \
+        \   \"weightMultiplier\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n   \
+        \                 \"description\": \"Weight multiplier (0 = cannot appear, 1000 = normal, 1500 = more likely)\"\n\
+        \                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AffixDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"AffixDefinitionResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Full affix definition response\",\n            \"required\": [\n        \
@@ -3240,6 +3241,7 @@ components:
         displayName:
           type: string
           nullable: true
+          x-detect-if-set: true
           description: Updated display name
         displayOrder:
           type: integer

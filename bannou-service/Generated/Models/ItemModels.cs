@@ -714,7 +714,7 @@ public partial class UpdateItemTemplateRequest
     /// <summary>
     /// Fields explicitly set on this request. Populated automatically by property
     /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
+    /// provided" from "field explicitly set to null" for opt-in properties.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
     public System.Collections.Generic.ICollection<string>? ChangeFields
@@ -735,14 +735,13 @@ public partial class UpdateItemTemplateRequest
         => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
 
 
-    private System.Guid _templateId = default!;
     /// <summary>
     /// Template ID to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TemplateId { get => _templateId; set { _templateId = value; _TrackChange("templateId"); } }
+    public System.Guid TemplateId { get; set; } = default!;
 
     private string? _name = default!;
     /// <summary>
@@ -1423,7 +1422,7 @@ public partial class ModifyItemInstanceRequest
     /// <summary>
     /// Fields explicitly set on this request. Populated automatically by property
     /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
+    /// provided" from "field explicitly set to null" for opt-in properties.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
     public System.Collections.Generic.ICollection<string>? ChangeFields
@@ -1444,14 +1443,13 @@ public partial class ModifyItemInstanceRequest
         => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
 
 
-    private System.Guid _instanceId = default!;
     /// <summary>
     /// Instance ID to modify
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid InstanceId { get => _instanceId; set { _instanceId = value; _TrackChange("instanceId"); } }
+    public System.Guid InstanceId { get; set; } = default!;
 
     private int? _durabilityDelta = default!;
     /// <summary>

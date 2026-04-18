@@ -241,6 +241,15 @@ public partial class ItemService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Failed to get remaining milestones for contract {ContractId}", contractInstanceId);
+            await _messageBus.TryPublishErrorAsync(
+                "item",
+                "GetRemainingMilestones",
+                "ContractQueryFailed",
+                ex.Message,
+                dependency: "contract",
+                endpoint: "contract/get-contract-instance",
+                stack: ex.StackTrace,
+                cancellationToken: ct);
             return new List<string>();
         }
     }
@@ -402,6 +411,15 @@ public partial class ItemService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "CanUse validation failed for {InstanceId}", instanceId);
+            await _messageBus.TryPublishErrorAsync(
+                "item",
+                "ExecuteCanUseValidation",
+                "CanUseValidationFailed",
+                ex.Message,
+                dependency: "contract",
+                endpoint: "contract/complete-milestone",
+                stack: ex.StackTrace,
+                cancellationToken: ct);
             return (false, ex.Message);
         }
     }
@@ -550,6 +568,15 @@ public partial class ItemService
             _logger.LogWarning(ex,
                 "API error creating contract instance for template {TemplateId}",
                 templateId);
+            await _messageBus.TryPublishErrorAsync(
+                "item",
+                "CreateItemUseContractInstance",
+                "ContractCreationFailed",
+                ex.Message,
+                dependency: "contract",
+                endpoint: "contract/create-contract-instance",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return null;
         }
     }
@@ -581,6 +608,15 @@ public partial class ItemService
             _logger.LogWarning(ex,
                 "API error completing milestone for contract {ContractId}",
                 contractInstanceId);
+            await _messageBus.TryPublishErrorAsync(
+                "item",
+                "CompleteUseMilestone",
+                "MilestoneCompletionFailed",
+                ex.Message,
+                dependency: "contract",
+                endpoint: "contract/complete-milestone",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return false;
         }
     }

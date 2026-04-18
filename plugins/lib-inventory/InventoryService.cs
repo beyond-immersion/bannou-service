@@ -282,6 +282,15 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
             {
                 _logger.LogWarning(ex, "Failed to get items for container {ContainerId}: {StatusCode}",
                     body.ContainerId, ex.StatusCode);
+                await _messageBus.TryPublishErrorAsync(
+                    "inventory",
+                    "GetContainer",
+                    "ContainerItemsFetchFailure",
+                    ex.Message,
+                    dependency: "item",
+                    endpoint: "list-items-by-container",
+                    stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
                 // Container exists but items couldn't be fetched - return empty list
             }
         }
@@ -540,6 +549,15 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
                         catch (ApiException ex)
                         {
                             _logger.LogWarning(ex, "Failed to destroy item {InstanceId} during container deletion", item.InstanceId);
+                            await _messageBus.TryPublishErrorAsync(
+                                "inventory",
+                                "DeleteContainer",
+                                "ItemDestructionFailure",
+                                ex.Message,
+                                dependency: "item",
+                                endpoint: "destroy-item-instance",
+                                stack: ex.StackTrace,
+                                cancellationToken: cancellationToken);
                             failedDestructions.Add(item.InstanceId);
                         }
                     }
@@ -669,7 +687,7 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
         catch (ApiException ex)
         {
             _logger.LogDebug(ex, "Item not found: {InstanceId}", body.InstanceId);
-            return (MapHttpStatusCode(ex.StatusCode), null);
+            return ((StatusCodes)ex.StatusCode, null);
         }
 
         // Get template for constraint checking
@@ -808,7 +826,7 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
         catch (ApiException ex)
         {
             _logger.LogDebug(ex, "Item not found: {InstanceId}", body.InstanceId);
-            return (MapHttpStatusCode(ex.StatusCode), null);
+            return ((StatusCodes)ex.StatusCode, null);
         }
 
         if (!item.ContainerId.HasValue)
@@ -866,6 +884,15 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Failed to get template for weight/volume update: {StatusCode}", ex.StatusCode);
+            await _messageBus.TryPublishErrorAsync(
+                "inventory",
+                "RemoveItemFromContainer",
+                "TemplateLookupFailure",
+                ex.Message,
+                dependency: "item",
+                endpoint: "get-item-template",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             // Continue without weight/volume update
         }
 
@@ -889,6 +916,15 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Failed to clear item container reference for {InstanceId}", body.InstanceId);
+            await _messageBus.TryPublishErrorAsync(
+                "inventory",
+                "RemoveItemFromContainer",
+                "ContainerReferenceClearFailure",
+                ex.Message,
+                dependency: "item",
+                endpoint: "modify-item-instance",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
         }
 
         await _messageBus.PublishInventoryItemRemovedAsync(new InventoryItemRemovedEvent
@@ -933,7 +969,7 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
         catch (ApiException ex)
         {
             _logger.LogDebug(ex, "Item not found: {InstanceId}", body.InstanceId);
-            return (MapHttpStatusCode(ex.StatusCode), null);
+            return ((StatusCodes)ex.StatusCode, null);
         }
 
         if (!item.ContainerId.HasValue)
@@ -977,7 +1013,7 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
             catch (ApiException ex)
             {
                 _logger.LogError(ex, "Failed to update slot position for item {InstanceId}", body.InstanceId);
-                return (MapHttpStatusCode(ex.StatusCode), null);
+                return ((StatusCodes)ex.StatusCode, null);
             }
 
             var sameContainerNow = DateTimeOffset.UtcNow;
@@ -1175,7 +1211,7 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
         catch (ApiException ex)
         {
             _logger.LogDebug(ex, "Item not found: {InstanceId}", body.InstanceId);
-            return (MapHttpStatusCode(ex.StatusCode), null);
+            return ((StatusCodes)ex.StatusCode, null);
         }
 
         // Check if item is tradeable
@@ -1336,7 +1372,7 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
         catch (ApiException ex)
         {
             _logger.LogDebug(ex, "Item not found: {InstanceId}", body.InstanceId);
-            return (MapHttpStatusCode(ex.StatusCode), null);
+            return ((StatusCodes)ex.StatusCode, null);
         }
 
         if (!item.ContainerId.HasValue)
@@ -1441,6 +1477,15 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
             catch (ApiException restoreEx)
             {
                 _logger.LogError(restoreEx, "Failed to restore original quantity after split failure");
+                await _messageBus.TryPublishErrorAsync(
+                    "inventory",
+                    "SplitStack",
+                    "QuantityRestoreFailure",
+                    restoreEx.Message,
+                    dependency: "item",
+                    endpoint: "modify-item-instance",
+                    stack: restoreEx.StackTrace,
+                    cancellationToken: cancellationToken);
             }
             return (StatusCodes.InternalServerError, null);
         }
@@ -1507,7 +1552,7 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
         catch (ApiException ex)
         {
             _logger.LogDebug(ex, "Source item not found: {InstanceId}", body.SourceInstanceId);
-            return (MapHttpStatusCode(ex.StatusCode), null);
+            return ((StatusCodes)ex.StatusCode, null);
         }
 
         try
@@ -1519,7 +1564,7 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
         catch (ApiException ex)
         {
             _logger.LogDebug(ex, "Target item not found: {InstanceId}", body.TargetInstanceId);
-            return (MapHttpStatusCode(ex.StatusCode), null);
+            return ((StatusCodes)ex.StatusCode, null);
         }
 
         if (source.TemplateId != target.TemplateId)
@@ -1675,6 +1720,15 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
                     {
                         _logger.LogError(compensationEx, "Failed to compensate target quantity after source reduction failure — items may be duplicated. Source {SourceId}, Target {TargetId}, Quantity {Quantity}",
                             body.SourceInstanceId, body.TargetInstanceId, quantityToAdd);
+                        await _messageBus.TryPublishErrorAsync(
+                            "inventory",
+                            "MergeStacks",
+                            "CompensationFailure",
+                            compensationEx.Message,
+                            dependency: "item",
+                            endpoint: "modify-item-instance",
+                            stack: compensationEx.StackTrace,
+                            cancellationToken: cancellationToken);
                     }
                     return (StatusCodes.InternalServerError, null);
                 }
@@ -1709,6 +1763,15 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
                     {
                         _logger.LogError(compensationEx, "Failed to compensate target quantity after source destruction failure — items may be duplicated. Source {SourceId}, Target {TargetId}, Quantity {Quantity}",
                             body.SourceInstanceId, body.TargetInstanceId, quantityToAdd);
+                        await _messageBus.TryPublishErrorAsync(
+                            "inventory",
+                            "MergeStacks",
+                            "CompensationFailure",
+                            compensationEx.Message,
+                            dependency: "item",
+                            endpoint: "modify-item-instance",
+                            stack: compensationEx.StackTrace,
+                            cancellationToken: cancellationToken);
                     }
                     return (StatusCodes.InternalServerError, null);
                 }
@@ -1803,8 +1866,9 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
                     cancellationToken);
                 items = itemsResponse.Items.ToList();
             }
-            catch (ApiException)
+            catch (ApiException ex) when (ex.StatusCode is >= 400 and < 500)
             {
+                _logger.LogDebug(ex, "Items fetch failed for container {ContainerId}, skipping", container.ContainerId);
                 continue;
             }
 
@@ -1833,8 +1897,9 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
                             if (!body.Tags.All(t => template.Tags.Contains(t))) continue;
                         }
                     }
-                    catch (ApiException)
+                    catch (ApiException ex) when (ex.StatusCode is >= 400 and < 500)
                     {
+                        _logger.LogDebug(ex, "Template fetch failed for item {InstanceId}, skipping", item.InstanceId);
                         continue;
                     }
                 }
@@ -1964,7 +2029,7 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
         catch (ApiException ex)
         {
             _logger.LogDebug(ex, "Template not found: {TemplateId}", body.TemplateId);
-            return (MapHttpStatusCode(ex.StatusCode), null);
+            return ((StatusCodes)ex.StatusCode, null);
         }
 
         // Get all containers for owner
@@ -2031,9 +2096,9 @@ public partial class InventoryService : IInventoryService, IAccountDeletionClean
                             template.MaxStackSize - existingStack.Quantity);
                     }
                 }
-                catch (ApiException)
+                catch (ApiException ex) when (ex.StatusCode is >= 400 and < 500)
                 {
-                    // Container exists but items couldn't be fetched - skip stack check
+                    _logger.LogDebug(ex, "Stack check failed for container {ContainerId}, skipping", container.ContainerId);
                 }
             }
 

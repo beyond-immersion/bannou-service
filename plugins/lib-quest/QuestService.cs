@@ -353,7 +353,7 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
                 // Update mutable fields only
                 if (!string.IsNullOrWhiteSpace(body.Name))
                     d.Name = body.Name;
-                if (body.Description != null)
+                if (body.ChangeFields.IsFieldSet("description"))
                     d.Description = body.Description;
                 if (body.Category.HasValue)
                     d.Category = body.Category.Value;
@@ -693,11 +693,18 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
             }
             catch (ApiException ex)
             {
-                // Template values are needed for rewards - this is a critical failure
                 _logger.LogWarning(ex,
                     "Failed to set template values for quest {Code}, rewards may fail",
                     definition.Code);
-                // Continue anyway - quest is already accepted, rewards will fail gracefully
+                await _messageBus.TryPublishErrorAsync(
+                    "quest",
+                    "AcceptQuest",
+                    "SetTemplateValuesFailed",
+                    ex.Message,
+                    dependency: "contract",
+                    endpoint: "set-contract-template-values",
+                    stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
             }
         }
 
@@ -1263,7 +1270,15 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
                 {
                     _logger.LogWarning(ex, "Failed to complete milestone {MilestoneCode} on contract {ContractId}",
                         body.ObjectiveCode, instance.ContractInstanceId);
-                    // Continue - milestone completion is eventually consistent via events
+                    await _messageBus.TryPublishErrorAsync(
+                        "quest",
+                        "ReportObjectiveProgress",
+                        "CompleteMilestoneFailed",
+                        ex.Message,
+                        dependency: "contract",
+                        endpoint: "complete-milestone",
+                        stack: ex.StackTrace,
+                        cancellationToken: cancellationToken);
                 }
             }
 
@@ -1350,7 +1365,15 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
             {
                 _logger.LogWarning(ex, "Failed to complete milestone {MilestoneCode} on contract {ContractId}",
                     body.ObjectiveCode, instance.ContractInstanceId);
-                // Continue - milestone completion is eventually consistent via events
+                await _messageBus.TryPublishErrorAsync(
+                    "quest",
+                    "ForceCompleteObjective",
+                    "CompleteMilestoneFailed",
+                    ex.Message,
+                    dependency: "contract",
+                    endpoint: "complete-milestone",
+                    stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
             }
 
             _logger.LogInformation("Objective force completed: {QuestInstanceId}/{ObjectiveCode}",
@@ -1628,6 +1651,15 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
                                 _logger.LogWarning(ex,
                                     "Failed to terminate contract {ContractId} for quest {QuestInstanceId} during character cleanup, skipping quest abandonment",
                                     current.ContractInstanceId, instance.QuestInstanceId);
+                                await _messageBus.TryPublishErrorAsync(
+                                    "quest",
+                                    "DeleteByCharacter",
+                                    "TerminateContractFailed",
+                                    ex.Message,
+                                    dependency: "contract",
+                                    endpoint: "terminate-contract-instance",
+                                    stack: ex.StackTrace,
+                                    cancellationToken: cancellationToken);
                                 continue;
                             }
 
@@ -1710,6 +1742,15 @@ public partial class QuestService : IQuestService, ICleanDeprecatedEntity
                     _logger.LogWarning(ex,
                         "Failed to unregister character reference for quest {QuestInstanceId}",
                         instance.QuestInstanceId);
+                    await _messageBus.TryPublishErrorAsync(
+                        "quest",
+                        "DeleteByCharacter",
+                        "UnregisterReferenceFailed",
+                        ex.Message,
+                        dependency: "resource",
+                        endpoint: "unregister-reference",
+                        stack: ex.StackTrace,
+                        cancellationToken: cancellationToken);
                 }
 
                 if (isSoleQuestor)

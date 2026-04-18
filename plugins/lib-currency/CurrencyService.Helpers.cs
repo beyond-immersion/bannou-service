@@ -344,6 +344,10 @@ public partial class CurrencyService
             {
                 _logger.LogWarning(ex, "Worldstate unavailable for realm {RealmId} during lazy autogain, skipping",
                     wallet.RealmId.Value);
+                await _messageBus.TryPublishErrorAsync(
+                    "currency", "ApplyAutogainIfNeeded", "WorldstateUnavailable",
+                    ex.Message, dependency: "worldstate", endpoint: "post:worldstate/get-elapsed-game-time",
+                    stack: ex.StackTrace, cancellationToken: ct);
                 return balance;
             }
         }

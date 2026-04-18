@@ -192,6 +192,172 @@ public partial class AffixDefinitionCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to affix.definition.deleted when a affixdefinition is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AffixDefinitionDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: affix.definition.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "affix.definition.deleted";
+
+    /// <summary>
+    /// Unique definition identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("definitionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid DefinitionId { get; set; } = default!;
+
+    /// <summary>
+    /// Game service scope
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique code within game service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Code { get; set; } = default!;
+
+    /// <summary>
+    /// Slot type (prefix, suffix, implicit, enchant, or custom)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("slotType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SlotType { get; set; } = default!;
+
+    /// <summary>
+    /// Exclusivity group
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("modGroup")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ModGroup { get; set; } = default!;
+
+    /// <summary>
+    /// Power tier within mod group (1 = best)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tier")]
+    public int Tier { get; set; } = default!;
+
+    /// <summary>
+    /// Broad classification
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("category")]
+    public string? Category { get; set; } = default!;
+
+    /// <summary>
+    /// Generation tags
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tags")]
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
+
+    /// <summary>
+    /// Stat contributions
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("statGrants")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<StatGrant> StatGrants { get; set; } = new System.Collections.ObjectModel.Collection<StatGrant>();
+
+    /// <summary>
+    /// Base weight for generation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("spawnWeight")]
+    public int SpawnWeight { get; set; } = default!;
+
+    /// <summary>
+    /// Per-tag weight multipliers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("spawnTagModifiers")]
+    public System.Collections.Generic.ICollection<SpawnTagModifier>? SpawnTagModifiers { get; set; } = default!;
+
+    /// <summary>
+    /// Minimum item level to spawn
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("requiredItemLevel")]
+    public int RequiredItemLevel { get; set; } = default!;
+
+    /// <summary>
+    /// Required influence types
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("requiredInfluences")]
+    public System.Collections.Generic.ICollection<string>? RequiredInfluences { get; set; } = default!;
+
+    /// <summary>
+    /// Item classes this appears on
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("validItemClasses")]
+    public System.Collections.Generic.ICollection<string>? ValidItemClasses { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable display name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    public string? DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// Sorting priority
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayOrder")]
+    public int DisplayOrder { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the affix definition was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the affix definition was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this affix definition is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the affix definition was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to affix.definition.updated when a affixdefinition is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -360,172 +526,6 @@ public partial class AffixDefinitionUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to affix.definition.deleted when a affixdefinition is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AffixDefinitionDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: affix.definition.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "affix.definition.deleted";
-
-    /// <summary>
-    /// Unique definition identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("definitionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid DefinitionId { get; set; } = default!;
-
-    /// <summary>
-    /// Game service scope
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Unique code within game service
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Code { get; set; } = default!;
-
-    /// <summary>
-    /// Slot type (prefix, suffix, implicit, enchant, or custom)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("slotType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string SlotType { get; set; } = default!;
-
-    /// <summary>
-    /// Exclusivity group
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("modGroup")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string ModGroup { get; set; } = default!;
-
-    /// <summary>
-    /// Power tier within mod group (1 = best)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("tier")]
-    public int Tier { get; set; } = default!;
-
-    /// <summary>
-    /// Broad classification
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("category")]
-    public string? Category { get; set; } = default!;
-
-    /// <summary>
-    /// Generation tags
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
-
-    /// <summary>
-    /// Stat contributions
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("statGrants")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<StatGrant> StatGrants { get; set; } = new System.Collections.ObjectModel.Collection<StatGrant>();
-
-    /// <summary>
-    /// Base weight for generation
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("spawnWeight")]
-    public int SpawnWeight { get; set; } = default!;
-
-    /// <summary>
-    /// Per-tag weight multipliers
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("spawnTagModifiers")]
-    public System.Collections.Generic.ICollection<SpawnTagModifier>? SpawnTagModifiers { get; set; } = default!;
-
-    /// <summary>
-    /// Minimum item level to spawn
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("requiredItemLevel")]
-    public int RequiredItemLevel { get; set; } = default!;
-
-    /// <summary>
-    /// Required influence types
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("requiredInfluences")]
-    public System.Collections.Generic.ICollection<string>? RequiredInfluences { get; set; } = default!;
-
-    /// <summary>
-    /// Item classes this appears on
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("validItemClasses")]
-    public System.Collections.Generic.ICollection<string>? ValidItemClasses { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable display name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    public string? DisplayName { get; set; } = default!;
-
-    /// <summary>
-    /// Sorting priority
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("displayOrder")]
-    public int DisplayOrder { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the affix definition was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the affix definition was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this affix definition is deprecated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
-    public bool IsDeprecated { get; set; } = default!;
-
-    /// <summary>
-    /// When the affix definition was deprecated (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for deprecation (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? DeprecationReason { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Single affix instance creation record within a batch event
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -583,75 +583,6 @@ public partial class AffixInstanceBatchEntry
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Single affix instance modification record within a batch event
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AffixInstanceBatchModifiedEntry
-{
-
-    /// <summary>
-    /// Item instance ID (foreign key to lib-item)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("itemInstanceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ItemInstanceId { get; set; } = default!;
-
-    /// <summary>
-    /// Game service scope
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Current effective rarity
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("effectiveRarity")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string EffectiveRarity { get; set; } = default!;
-
-    /// <summary>
-    /// Item level (set at creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("itemLevel")]
-    public int ItemLevel { get; set; } = default!;
-
-    /// <summary>
-    /// Item quality (0-30)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("quality")]
-    public int Quality { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the affix instance was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the affix instance was last updated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// List of field names that were modified
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changedFields")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
 }
 
@@ -762,45 +693,6 @@ public partial class AffixInstanceBatchCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Batch event containing accumulated affix instance modified records
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AffixInstanceBatchModifiedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: affix.instance.batch-modified
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "affix.instance.batch-modified";
-
-    /// <summary>
-    /// Individual modified records in this batch
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entries")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<AffixInstanceBatchModifiedEntry> Entries { get; set; } = new System.Collections.ObjectModel.Collection<AffixInstanceBatchModifiedEntry>();
-
-    /// <summary>
-    /// Number of entries in this batch
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("count")]
-    public int Count { get; set; } = default!;
-
-    /// <summary>
-    /// When the accumulation window started
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("windowStartedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset WindowStartedAt { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Batch event containing accumulated affix instance destroyed records
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -822,6 +714,114 @@ public partial class AffixInstanceBatchDestroyedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<AffixInstanceBatchDestroyedEntry> Entries { get; set; } = new System.Collections.ObjectModel.Collection<AffixInstanceBatchDestroyedEntry>();
+
+    /// <summary>
+    /// Number of entries in this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("count")]
+    public int Count { get; set; } = default!;
+
+    /// <summary>
+    /// When the accumulation window started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("windowStartedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset WindowStartedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Single affix instance modification record within a batch event
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AffixInstanceBatchModifiedEntry
+{
+
+    /// <summary>
+    /// Item instance ID (foreign key to lib-item)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("itemInstanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ItemInstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Game service scope
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Current effective rarity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("effectiveRarity")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string EffectiveRarity { get; set; } = default!;
+
+    /// <summary>
+    /// Item level (set at creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("itemLevel")]
+    public int ItemLevel { get; set; } = default!;
+
+    /// <summary>
+    /// Item quality (0-30)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("quality")]
+    public int Quality { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the affix instance was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the affix instance was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// List of field names that were modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changedFields")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
+/// <summary>
+/// Batch event containing accumulated affix instance modified records
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AffixInstanceBatchModifiedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: affix.instance.batch-modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "affix.instance.batch-modified";
+
+    /// <summary>
+    /// Individual modified records in this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entries")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<AffixInstanceBatchModifiedEntry> Entries { get; set; } = new System.Collections.ObjectModel.Collection<AffixInstanceBatchModifiedEntry>();
 
     /// <summary>
     /// Number of entries in this batch

@@ -153,6 +153,133 @@ public partial class ContractTemplateCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to contract.template.deleted when a contracttemplate is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ContractTemplateDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: contract.template.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "contract.template.deleted";
+
+    /// <summary>
+    /// Unique identifier for the contract template
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique template code (lowercase, underscores)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Code { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable template name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Detailed description of this contract type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// Realm ID if template is realm-specific
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    public System.Guid? RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Minimum number of parties required
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("minParties")]
+    public int MinParties { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum number of parties allowed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxParties")]
+    public int MaxParties { get; set; } = default!;
+
+    /// <summary>
+    /// Default enforcement mode for instances
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("defaultEnforcementMode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EnforcementMode DefaultEnforcementMode { get; set; } = default!;
+
+    /// <summary>
+    /// Whether contracts can be transferred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transferable")]
+    public bool Transferable { get; set; } = default!;
+
+    /// <summary>
+    /// Whether template is active
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isActive")]
+    public bool IsActive { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the contract template was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the contract template was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this contract template is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the contract template was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to contract.template.updated when a contracttemplate is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -282,133 +409,6 @@ public partial class ContractTemplateUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to contract.template.deleted when a contracttemplate is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ContractTemplateDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: contract.template.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "contract.template.deleted";
-
-    /// <summary>
-    /// Unique identifier for the contract template
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TemplateId { get; set; } = default!;
-
-    /// <summary>
-    /// Unique template code (lowercase, underscores)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Code { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable template name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Name { get; set; } = default!;
-
-    /// <summary>
-    /// Detailed description of this contract type
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string? Description { get; set; } = default!;
-
-    /// <summary>
-    /// Realm ID if template is realm-specific
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    public System.Guid? RealmId { get; set; } = default!;
-
-    /// <summary>
-    /// Minimum number of parties required
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("minParties")]
-    public int MinParties { get; set; } = default!;
-
-    /// <summary>
-    /// Maximum number of parties allowed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("maxParties")]
-    public int MaxParties { get; set; } = default!;
-
-    /// <summary>
-    /// Default enforcement mode for instances
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("defaultEnforcementMode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EnforcementMode DefaultEnforcementMode { get; set; } = default!;
-
-    /// <summary>
-    /// Whether contracts can be transferred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("transferable")]
-    public bool Transferable { get; set; } = default!;
-
-    /// <summary>
-    /// Whether template is active
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isActive")]
-    public bool IsActive { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the contract template was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the contract template was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this contract template is deprecated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
-    public bool IsDeprecated { get; set; } = default!;
-
-    /// <summary>
-    /// When the contract template was deprecated (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for deprecation (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? DeprecationReason { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Published to contract.instance.created when a contractinstance is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -501,6 +501,108 @@ public partial class ContractInstanceCreatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published to contract.instance.deleted when a contractinstance is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ContractInstanceDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: contract.instance.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "contract.instance.deleted";
+
+    /// <summary>
+    /// Unique identifier for the contract instance
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ContractId { get; set; } = default!;
+
+    /// <summary>
+    /// Reference to the source template
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Template code for reference
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TemplateCode { get; set; } = default!;
+
+    /// <summary>
+    /// Current contract status
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ContractStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// When contract was proposed to parties
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("proposedAt")]
+    public System.DateTimeOffset? ProposedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When all parties consented
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("acceptedAt")]
+    public System.DateTimeOffset? AcceptedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When contract became active
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("effectiveFrom")]
+    public System.DateTimeOffset? EffectiveFrom { get; set; } = default!;
+
+    /// <summary>
+    /// When contract expires
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("effectiveUntil")]
+    public System.DateTimeOffset? EffectiveUntil { get; set; } = default!;
+
+    /// <summary>
+    /// When contract was terminated early
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("terminatedAt")]
+    public System.DateTimeOffset? TerminatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the contract instance was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the contract instance was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
 
 }
 
@@ -605,108 +707,6 @@ public partial class ContractInstanceUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to contract.instance.deleted when a contractinstance is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ContractInstanceDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: contract.instance.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "contract.instance.deleted";
-
-    /// <summary>
-    /// Unique identifier for the contract instance
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContractId { get; set; } = default!;
-
-    /// <summary>
-    /// Reference to the source template
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TemplateId { get; set; } = default!;
-
-    /// <summary>
-    /// Template code for reference
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string TemplateCode { get; set; } = default!;
-
-    /// <summary>
-    /// Current contract status
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("status")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ContractStatus Status { get; set; } = default!;
-
-    /// <summary>
-    /// When contract was proposed to parties
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("proposedAt")]
-    public System.DateTimeOffset? ProposedAt { get; set; } = default!;
-
-    /// <summary>
-    /// When all parties consented
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("acceptedAt")]
-    public System.DateTimeOffset? AcceptedAt { get; set; } = default!;
-
-    /// <summary>
-    /// When contract became active
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("effectiveFrom")]
-    public System.DateTimeOffset? EffectiveFrom { get; set; } = default!;
-
-    /// <summary>
-    /// When contract expires
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("effectiveUntil")]
-    public System.DateTimeOffset? EffectiveUntil { get; set; } = default!;
-
-    /// <summary>
-    /// When contract was terminated early
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("terminatedAt")]
-    public System.DateTimeOffset? TerminatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the contract instance was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the contract instance was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

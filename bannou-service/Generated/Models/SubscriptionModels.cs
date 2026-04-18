@@ -154,55 +154,25 @@ public partial class CreateSubscriptionRequest
 public partial class UpdateSubscriptionRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private System.Guid _subscriptionId = default!;
     /// <summary>
     /// ID of the subscription to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("subscriptionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SubscriptionId { get => _subscriptionId; set { _subscriptionId = value; _TrackChange("subscriptionId"); } }
+    public System.Guid SubscriptionId { get; set; } = default!;
 
-    private System.DateTimeOffset? _expirationDate = default!;
     /// <summary>
     /// New expiration date
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("expirationDate")]
-    public System.DateTimeOffset? ExpirationDate { get => _expirationDate; set { _expirationDate = value; _TrackChange("expirationDate"); } }
+    public System.DateTimeOffset? ExpirationDate { get; set; } = default!;
 
-    private bool? _isActive = default!;
     /// <summary>
     /// New active status
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
-    public bool? IsActive { get => _isActive; set { _isActive = value; _TrackChange("isActive"); } }
+    public bool? IsActive { get; set; } = default!;
 
 }
 

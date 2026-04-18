@@ -411,7 +411,10 @@ struct FDeprecateDefinitionRequest;
 struct FDeprecateEncounterTypeRequest;
 struct FDeprecateEntryTemplateRequest;
 struct FDeprecateFactionRequest;
+struct FDeprecateHeritableTraitTemplateRequest;
+struct FDeprecateHybridTraitTemplateRequest;
 struct FDeprecateLeaderboardDefinitionRequest;
+struct FDeprecateLifecycleTemplateRequest;
 struct FDeprecateLocationRequest;
 struct FDeprecateModeRequest;
 struct FDeprecateQuestDefinitionRequest;
@@ -12349,6 +12352,54 @@ struct FDeprecateFactionRequest
 };
 
 /**
+ * Request to deprecate a heritable trait template (Category B — one-way, no delete). Idempotent — returns OK if already deprecated.
+ */
+USTRUCT(BlueprintType)
+struct FDeprecateHeritableTraitTemplateRequest
+{
+    GENERATED_BODY()
+
+    /** Species code of the template to deprecate */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SpeciesCode;
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Reason for deprecation (recommended for audit trail) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Reason;
+
+};
+
+/**
+ * Request to deprecate a hybrid trait template (Category B — one-way, no delete). Idempotent — returns OK if already deprecated.
+ */
+USTRUCT(BlueprintType)
+struct FDeprecateHybridTraitTemplateRequest
+{
+    GENERATED_BODY()
+
+    /** First species in the pair */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SpeciesA;
+
+    /** Second species in the pair */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SpeciesB;
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Reason for deprecation (recommended for audit trail) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Reason;
+
+};
+
+/**
  * Request to deprecate a leaderboard definition (Category B — one-way)
  */
 USTRUCT(BlueprintType)
@@ -12365,6 +12416,28 @@ struct FDeprecateLeaderboardDefinitionRequest
     FString LeaderboardId;
 
     /** Reason for deprecation (audit context for Category B entities) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString Reason;
+
+};
+
+/**
+ * Request to deprecate a lifecycle template (Category B — one-way, no delete). Idempotent — returns OK if already deprecated.
+ */
+USTRUCT(BlueprintType)
+struct FDeprecateLifecycleTemplateRequest
+{
+    GENERATED_BODY()
+
+    /** Species code of the template to deprecate */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FString SpeciesCode;
+
+    /** Game service scope */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
+    FGuid GameServiceId;
+
+    /** Reason for deprecation (recommended for audit trail) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bannou")
     FString Reason;
 

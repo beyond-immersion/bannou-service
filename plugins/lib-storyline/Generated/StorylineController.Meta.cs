@@ -3090,6 +3090,7 @@ public partial class StorylineController
                 "description": {
                     "type": "string",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New description"
                 },
                 "triggerConditions": {
@@ -3269,7 +3270,7 @@ public partial class StorylineController
                 "WorldState",
                 "Custom"
             ],
-            "description": "Types of trigger conditions for scenario activation.\nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\ nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
+            "description": "Types of trigger conditions for scenario activation.\nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
         },
         "ScenarioPhase": {
             "type": "object",

@@ -2,6 +2,7 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -281,7 +282,7 @@ public partial class GameServiceService : IGameServiceService
             changedFields.Add("displayName");
         }
 
-        if (body.Description != null && body.Description != serviceModel.Description)
+        if (body.ChangeFields.IsFieldSet("description") && body.Description != serviceModel.Description)
         {
             serviceModel.Description = body.Description;
             changedFields.Add("description");
@@ -381,6 +382,15 @@ public partial class GameServiceService : IGameServiceService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Resource service call failed during game service {ServiceId} deletion", body.ServiceId);
+            await _messageBus.TryPublishErrorAsync(
+                "game-service",
+                "DeleteService",
+                "ResourceCleanupFailed",
+                ex.Message,
+                dependency: "resource",
+                endpoint: "check-references",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return StatusCodes.Conflict;
         }
 

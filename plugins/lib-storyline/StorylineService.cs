@@ -648,7 +648,8 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
         // Apply updates
         if (body.Name is not null)
             existing.Name = body.Name;
-        if (body.Description is not null)
+        var descriptionChanged = body.ChangeFields.IsFieldSet("description") && body.Description != existing.Description;
+        if (descriptionChanged)
             existing.Description = body.Description;
         if (body.TriggerConditions is not null)
             existing.TriggerConditionsJson = BannouJson.Serialize(body.TriggerConditions);
@@ -687,7 +688,7 @@ public partial class StorylineService : IStorylineService, ICleanDeprecatedEntit
         // Build changedFields list from non-null request fields
         var changedFields = new List<string>();
         if (body.Name is not null) changedFields.Add("name");
-        if (body.Description is not null) changedFields.Add("description");
+        if (descriptionChanged) changedFields.Add("description");
         if (body.TriggerConditions is not null) changedFields.Add("triggerConditions");
         if (body.Phases is not null) changedFields.Add("phases");
         if (body.Mutations is not null) changedFields.Add("mutations");

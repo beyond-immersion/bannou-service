@@ -307,7 +307,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService, ICl
         // Track changed fields for lifecycle event
         var changedFields = new List<string>();
         if (body.Name != null) { data.Name = body.Name; changedFields.Add("name"); }
-        if (body.Description != null) { data.Description = body.Description; changedFields.Add("description"); }
+        if (body.ChangeFields.IsFieldSet("description") && body.Description != data.Description) { data.Description = body.Description; changedFields.Add("description"); }
         if (body.DefaultEmotionalImpact != null) { data.DefaultEmotionalImpact = body.DefaultEmotionalImpact.Value; changedFields.Add("defaultEmotionalImpact"); }
         if (body.SortOrder != null) { data.SortOrder = body.SortOrder.Value; changedFields.Add("sortOrder"); }
 
@@ -1428,6 +1428,15 @@ public partial class CharacterEncounterService : ICharacterEncounterService, ICl
                     {
                         _logger.LogWarning(ex, "Worldstate unavailable for realm {RealmId} during decay, skipping perspective {PerspectiveId}",
                             encounter.RealmId, perspectiveId);
+                        await _messageBus.TryPublishErrorAsync(
+                            "character-encounter",
+                            "DecayMemories",
+                            "ApiException",
+                            ex.Message,
+                            dependency: "worldstate",
+                            endpoint: "worldstate/get-elapsed-game-time",
+                            stack: ex.StackTrace,
+                            cancellationToken: cancellationToken);
                         continue;
                     }
                 }

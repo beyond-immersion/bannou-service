@@ -209,6 +209,189 @@ public partial class ItemTemplateCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to item.template.deleted when a itemtemplate is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ItemTemplateDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: item.template.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "item.template.deleted";
+
+    /// <summary>
+    /// Unique identifier for the item template
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique item code within game
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Code { get; set; } = default!;
+
+    /// <summary>
+    /// Game service this template belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string GameId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable display name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Detailed item description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// Item classification category
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("category")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ItemCategory Category { get; set; } = default!;
+
+    /// <summary>
+    /// Item rarity tier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("rarity")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ItemRarity Rarity { get; set; } = default!;
+
+    /// <summary>
+    /// How quantities are tracked
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("quantityModel")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public QuantityModel QuantityModel { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum stack size for this item
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxStackSize")]
+    public int MaxStackSize { get; set; } = default!;
+
+    /// <summary>
+    /// Realm availability scope
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("scope")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ItemScope Scope { get; set; } = default!;
+
+    /// <summary>
+    /// When item becomes bound to a character
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("soulboundType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SoulboundType SoulboundType { get; set; } = default!;
+
+    /// <summary>
+    /// Whether item can be traded between characters
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tradeable")]
+    public bool Tradeable { get; set; } = default!;
+
+    /// <summary>
+    /// Whether item can be destroyed by the owner
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("destroyable")]
+    public bool Destroyable { get; set; } = default!;
+
+    /// <summary>
+    /// Whether item has durability system
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("hasDurability")]
+    public bool HasDurability { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum durability value (if hasDurability is true)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxDurability")]
+    public int? MaxDurability { get; set; } = default!;
+
+    /// <summary>
+    /// Whether template is currently active
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isActive")]
+    public bool IsActive { get; set; } = default!;
+
+    /// <summary>
+    /// Template ID to migrate existing instances to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("migrationTargetId")]
+    public System.Guid? MigrationTargetId { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the item template was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the item template was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this item template is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the item template was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to item.template.updated when a itemtemplate is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -394,189 +577,6 @@ public partial class ItemTemplateUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to item.template.deleted when a itemtemplate is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ItemTemplateDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: item.template.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "item.template.deleted";
-
-    /// <summary>
-    /// Unique identifier for the item template
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TemplateId { get; set; } = default!;
-
-    /// <summary>
-    /// Unique item code within game
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Code { get; set; } = default!;
-
-    /// <summary>
-    /// Game service this template belongs to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string GameId { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable display name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Name { get; set; } = default!;
-
-    /// <summary>
-    /// Detailed item description
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string? Description { get; set; } = default!;
-
-    /// <summary>
-    /// Item classification category
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("category")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ItemCategory Category { get; set; } = default!;
-
-    /// <summary>
-    /// Item rarity tier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("rarity")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ItemRarity Rarity { get; set; } = default!;
-
-    /// <summary>
-    /// How quantities are tracked
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("quantityModel")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public QuantityModel QuantityModel { get; set; } = default!;
-
-    /// <summary>
-    /// Maximum stack size for this item
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("maxStackSize")]
-    public int MaxStackSize { get; set; } = default!;
-
-    /// <summary>
-    /// Realm availability scope
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("scope")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ItemScope Scope { get; set; } = default!;
-
-    /// <summary>
-    /// When item becomes bound to a character
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("soulboundType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SoulboundType SoulboundType { get; set; } = default!;
-
-    /// <summary>
-    /// Whether item can be traded between characters
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("tradeable")]
-    public bool Tradeable { get; set; } = default!;
-
-    /// <summary>
-    /// Whether item can be destroyed by the owner
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("destroyable")]
-    public bool Destroyable { get; set; } = default!;
-
-    /// <summary>
-    /// Whether item has durability system
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("hasDurability")]
-    public bool HasDurability { get; set; } = default!;
-
-    /// <summary>
-    /// Maximum durability value (if hasDurability is true)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("maxDurability")]
-    public int? MaxDurability { get; set; } = default!;
-
-    /// <summary>
-    /// Whether template is currently active
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isActive")]
-    public bool IsActive { get; set; } = default!;
-
-    /// <summary>
-    /// Template ID to migrate existing instances to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("migrationTargetId")]
-    public System.Guid? MigrationTargetId { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the item template was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the item template was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this item template is deprecated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
-    public bool IsDeprecated { get; set; } = default!;
-
-    /// <summary>
-    /// When the item template was deprecated (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for deprecation (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? DeprecationReason { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Single item instance creation record within a batch event
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -703,144 +703,6 @@ public partial class ItemInstanceBatchEntry
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Single item instance modification record within a batch event
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ItemInstanceBatchModifiedEntry
-{
-
-    /// <summary>
-    /// Unique identifier for this item instance
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid InstanceId { get; set; } = default!;
-
-    /// <summary>
-    /// Reference to the item template
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TemplateId { get; set; } = default!;
-
-    /// <summary>
-    /// Container holding this item (ownership derived from container). Null when removed from all containers.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("containerId")]
-    public System.Guid? ContainerId { get; set; } = default!;
-
-    /// <summary>
-    /// Realm this instance exists in
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
-
-    /// <summary>
-    /// Item quantity (1 for unique, integer for discrete, decimal for continuous)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("quantity")]
-    public double Quantity { get; set; } = default!;
-
-    /// <summary>
-    /// Slot position in slot-based containers
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("slotIndex")]
-    public int? SlotIndex { get; set; } = default!;
-
-    /// <summary>
-    /// X position in grid-based containers
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("slotX")]
-    public int? SlotX { get; set; } = default!;
-
-    /// <summary>
-    /// Y position in grid-based containers
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("slotY")]
-    public int? SlotY { get; set; } = default!;
-
-    /// <summary>
-    /// Whether item is rotated in grid-based containers
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("rotated")]
-    public bool? Rotated { get; set; } = default!;
-
-    /// <summary>
-    /// Current durability value
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("currentDurability")]
-    public int? CurrentDurability { get; set; } = default!;
-
-    /// <summary>
-    /// Character ID this item is bound to (if soulbound)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("boundToId")]
-    public System.Guid? BoundToId { get; set; } = default!;
-
-    /// <summary>
-    /// When the item was bound to a character
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("boundAt")]
-    public System.DateTimeOffset? BoundAt { get; set; } = default!;
-
-    /// <summary>
-    /// Player-assigned custom name for this instance
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("customName")]
-    public string? CustomName { get; set; } = default!;
-
-    /// <summary>
-    /// How this item instance was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("originType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ItemOriginType OriginType { get; set; } = default!;
-
-    /// <summary>
-    /// Source entity ID for the origin (e.g., crafting recipe, vendor)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("originId")]
-    public System.Guid? OriginId { get; set; } = default!;
-
-    /// <summary>
-    /// When the instance was last modified
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
-    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the item instance was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the item instance was last updated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// List of field names that were modified
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changedFields")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
 }
 
@@ -1020,45 +882,6 @@ public partial class ItemInstanceBatchCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Batch event containing accumulated item instance modified records
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ItemInstanceBatchModifiedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: item.instance.batch-modified
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "item.instance.batch-modified";
-
-    /// <summary>
-    /// Individual modified records in this batch
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entries")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<ItemInstanceBatchModifiedEntry> Entries { get; set; } = new System.Collections.ObjectModel.Collection<ItemInstanceBatchModifiedEntry>();
-
-    /// <summary>
-    /// Number of entries in this batch
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("count")]
-    public int Count { get; set; } = default!;
-
-    /// <summary>
-    /// When the accumulation window started
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("windowStartedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset WindowStartedAt { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Batch event containing accumulated item instance destroyed records
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -1080,6 +903,183 @@ public partial class ItemInstanceBatchDestroyedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<ItemInstanceBatchDestroyedEntry> Entries { get; set; } = new System.Collections.ObjectModel.Collection<ItemInstanceBatchDestroyedEntry>();
+
+    /// <summary>
+    /// Number of entries in this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("count")]
+    public int Count { get; set; } = default!;
+
+    /// <summary>
+    /// When the accumulation window started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("windowStartedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset WindowStartedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Single item instance modification record within a batch event
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ItemInstanceBatchModifiedEntry
+{
+
+    /// <summary>
+    /// Unique identifier for this item instance
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid InstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// Reference to the item template
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TemplateId { get; set; } = default!;
+
+    /// <summary>
+    /// Container holding this item (ownership derived from container). Null when removed from all containers.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("containerId")]
+    public System.Guid? ContainerId { get; set; } = default!;
+
+    /// <summary>
+    /// Realm this instance exists in
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Item quantity (1 for unique, integer for discrete, decimal for continuous)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("quantity")]
+    public double Quantity { get; set; } = default!;
+
+    /// <summary>
+    /// Slot position in slot-based containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("slotIndex")]
+    public int? SlotIndex { get; set; } = default!;
+
+    /// <summary>
+    /// X position in grid-based containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("slotX")]
+    public int? SlotX { get; set; } = default!;
+
+    /// <summary>
+    /// Y position in grid-based containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("slotY")]
+    public int? SlotY { get; set; } = default!;
+
+    /// <summary>
+    /// Whether item is rotated in grid-based containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("rotated")]
+    public bool? Rotated { get; set; } = default!;
+
+    /// <summary>
+    /// Current durability value
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currentDurability")]
+    public int? CurrentDurability { get; set; } = default!;
+
+    /// <summary>
+    /// Character ID this item is bound to (if soulbound)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundToId")]
+    public System.Guid? BoundToId { get; set; } = default!;
+
+    /// <summary>
+    /// When the item was bound to a character
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundAt")]
+    public System.DateTimeOffset? BoundAt { get; set; } = default!;
+
+    /// <summary>
+    /// Player-assigned custom name for this instance
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("customName")]
+    public string? CustomName { get; set; } = default!;
+
+    /// <summary>
+    /// How this item instance was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("originType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ItemOriginType OriginType { get; set; } = default!;
+
+    /// <summary>
+    /// Source entity ID for the origin (e.g., crafting recipe, vendor)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("originId")]
+    public System.Guid? OriginId { get; set; } = default!;
+
+    /// <summary>
+    /// When the instance was last modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("modifiedAt")]
+    public System.DateTimeOffset? ModifiedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the item instance was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the item instance was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// List of field names that were modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changedFields")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
+/// <summary>
+/// Batch event containing accumulated item instance modified records
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ItemInstanceBatchModifiedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: item.instance.batch-modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "item.instance.batch-modified";
+
+    /// <summary>
+    /// Individual modified records in this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entries")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ItemInstanceBatchModifiedEntry> Entries { get; set; } = new System.Collections.ObjectModel.Collection<ItemInstanceBatchModifiedEntry>();
 
     /// <summary>
     /// Number of entries in this batch

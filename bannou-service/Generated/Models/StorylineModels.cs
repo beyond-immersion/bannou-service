@@ -1841,7 +1841,7 @@ public partial class UpdateScenarioDefinitionRequest
     /// <summary>
     /// Fields explicitly set on this request. Populated automatically by property
     /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
+    /// provided" from "field explicitly set to null" for opt-in properties.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
     public System.Collections.Generic.ICollection<string>? ChangeFields
@@ -1862,30 +1862,27 @@ public partial class UpdateScenarioDefinitionRequest
         => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
 
 
-    private System.Guid _scenarioId = default!;
     /// <summary>
     /// Scenario to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scenarioId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ScenarioId { get => _scenarioId; set { _scenarioId = value; _TrackChange("scenarioId"); } }
+    public System.Guid ScenarioId { get; set; } = default!;
 
-    private string _etag = default!;
     /// <summary>
     /// ETag for optimistic concurrency
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("etag")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Etag { get => _etag; set { _etag = value; _TrackChange("etag"); } }
+    public string Etag { get; set; } = default!;
 
-    private string? _name = default!;
     /// <summary>
     /// New name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
-    public string? Name { get => _name; set { _name = value; _TrackChange("name"); } }
+    public string? Name { get; set; } = default!;
 
     private string? _description = default!;
     /// <summary>
@@ -1894,69 +1891,60 @@ public partial class UpdateScenarioDefinitionRequest
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
-    private System.Collections.Generic.ICollection<TriggerCondition>? _triggerConditions = default!;
     /// <summary>
     /// New trigger conditions
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("triggerConditions")]
-    public System.Collections.Generic.ICollection<TriggerCondition>? TriggerConditions { get => _triggerConditions; set { _triggerConditions = value; _TrackChange("triggerConditions"); } }
+    public System.Collections.Generic.ICollection<TriggerCondition>? TriggerConditions { get; set; } = default!;
 
-    private System.Collections.Generic.ICollection<ScenarioPhase>? _phases = default!;
     /// <summary>
     /// New phases
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("phases")]
-    public System.Collections.Generic.ICollection<ScenarioPhase>? Phases { get => _phases; set { _phases = value; _TrackChange("phases"); } }
+    public System.Collections.Generic.ICollection<ScenarioPhase>? Phases { get; set; } = default!;
 
-    private System.Collections.Generic.ICollection<ScenarioMutation>? _mutations = default!;
     /// <summary>
     /// New mutations
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("mutations")]
-    public System.Collections.Generic.ICollection<ScenarioMutation>? Mutations { get => _mutations; set { _mutations = value; _TrackChange("mutations"); } }
+    public System.Collections.Generic.ICollection<ScenarioMutation>? Mutations { get; set; } = default!;
 
-    private System.Collections.Generic.ICollection<ScenarioQuestHook>? _questHooks = default!;
     /// <summary>
     /// New quest hooks
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("questHooks")]
-    public System.Collections.Generic.ICollection<ScenarioQuestHook>? QuestHooks { get => _questHooks; set { _questHooks = value; _TrackChange("questHooks"); } }
+    public System.Collections.Generic.ICollection<ScenarioQuestHook>? QuestHooks { get; set; } = default!;
 
-    private int? _cooldownSeconds = default!;
     /// <summary>
     /// New cooldown
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cooldownSeconds")]
     [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
-    public int? CooldownSeconds { get => _cooldownSeconds; set { _cooldownSeconds = value; _TrackChange("cooldownSeconds"); } }
+    public int? CooldownSeconds { get; set; } = default!;
 
-    private System.Collections.Generic.ICollection<string>? _exclusivityTags = default!;
     /// <summary>
     /// New exclusivity tags
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("exclusivityTags")]
-    public System.Collections.Generic.ICollection<string>? ExclusivityTags { get => _exclusivityTags; set { _exclusivityTags = value; _TrackChange("exclusivityTags"); } }
+    public System.Collections.Generic.ICollection<string>? ExclusivityTags { get; set; } = default!;
 
-    private int? _priority = default!;
     /// <summary>
     /// New priority
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("priority")]
-    public int? Priority { get => _priority; set { _priority = value; _TrackChange("priority"); } }
+    public int? Priority { get; set; } = default!;
 
-    private bool? _enabled = default!;
     /// <summary>
     /// New enabled state
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("enabled")]
-    public bool? Enabled { get => _enabled; set { _enabled = value; _TrackChange("enabled"); } }
+    public bool? Enabled { get; set; } = default!;
 
-    private System.Collections.Generic.ICollection<string>? _tags = default!;
     /// <summary>
     /// New classification tags
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string>? Tags { get => _tags; set { _tags = value; _TrackChange("tags"); } }
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
 }
 

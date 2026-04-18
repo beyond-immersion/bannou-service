@@ -1216,92 +1216,93 @@ paths:
         for optimistic concurrency\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"New name\"\n                },\n\
         \                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\":
-        true,\n                    \"description\": \"New description\"\n                },\n                \"triggerConditions\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/TriggerCondition\"\n                    },\n                    \"nullable\": true,\n                \
-        \    \"description\": \"New trigger conditions\"\n                },\n                \"phases\": {\n            \
-        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ScenarioPhase\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"New phases\"\
-        \n                },\n                \"mutations\": {\n                    \"type\": \"array\",\n               \
-        \     \"items\": {\n                        \"$ref\": \"#/$defs/ScenarioMutation\"\n                    },\n     \
-        \               \"nullable\": true,\n                    \"description\": \"New mutations\"\n                },\n\
-        \                \"questHooks\": {\n                    \"type\": \"array\",\n                    \"items\": {\n \
-        \                       \"$ref\": \"#/$defs/ScenarioQuestHook\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"New quest hooks\"\n                },\n                \"cooldownSeconds\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"New cooldown\"\n                },\n                \"exclusivityTags\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
-        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New exclusivity tags\"\n                },\n                \"priority\": {\n                    \"type\": \"\
-        integer\",\n                    \"nullable\": true,\n                    \"description\": \"New priority\"\n     \
-        \           },\n                \"enabled\": {\n                    \"type\": \"boolean\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"New enabled state\"\n                },\n              \
-        \  \"tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                     \
-        \   \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                    \"\
-        description\": \"New classification tags\"\n                }\n            }\n        },\n        \"TriggerCondition\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"A condition that must be met for scenario triggering\",\n            \"required\": [\n                \"conditionType\"\
-        \n            ],\n            \"properties\": {\n                \"conditionType\": {\n                    \"$ref\"\
-        : \"#/$defs/TriggerConditionType\",\n                    \"description\": \"Type of condition to evaluate\"\n    \
-        \            },\n                \"traitAxis\": {\n                    \"type\": \"string\",\n                   \
-        \ \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"description\": \"Personality
-        trait axis for TraitRange (e.g., AGGRESSION)\"\n                },\n                \"traitMin\": {\n            \
-        \        \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Minimum trait value for TraitRange (-1.0 to 1.0)\"\n                },\n \
-        \               \"traitMax\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Maximum trait value for TraitRange
-        (-1.0 to 1.0)\"\n                },\n                \"backstoryType\": {\n                    \"type\": \"string\"\
-        ,\n                    \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Backstory element type for BackstoryElement (e.g., TRAUMA)\"\n                },\n                \"backstoryKey\"\
+        true,\n                    \"x-detect-if-set\": true,\n                    \"description\": \"New description\"\n\
+        \                },\n                \"triggerConditions\": {\n                    \"type\": \"array\",\n        \
+        \            \"items\": {\n                        \"$ref\": \"#/$defs/TriggerCondition\"\n                    },\n\
+        \                    \"nullable\": true,\n                    \"description\": \"New trigger conditions\"\n      \
+        \          },\n                \"phases\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/ScenarioPhase\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"New phases\"\n                },\n                \"mutations\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/ScenarioMutation\"\n                    },\n                    \"nullable\": true,\n                    \"\
+        description\": \"New mutations\"\n                },\n                \"questHooks\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ScenarioQuestHook\"\n\
+        \                    },\n                    \"nullable\": true,\n                    \"description\": \"New quest
+        hooks\"\n                },\n                \"cooldownSeconds\": {\n                    \"type\": \"integer\",\n\
+        \                    \"minimum\": 0,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"New cooldown\"\n                },\n                \"exclusivityTags\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
+        \              \"nullable\": true,\n                    \"description\": \"New exclusivity tags\"\n              \
+        \  },\n                \"priority\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"New priority\"\n                },\n                \"enabled\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"New enabled state\"\n                },\n                \"tags\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
+        \              \"nullable\": true,\n                    \"description\": \"New classification tags\"\n           \
+        \     }\n            }\n        },\n        \"TriggerCondition\": {\n            \"type\": \"object\",\n         \
+        \   \"additionalProperties\": false,\n            \"description\": \"A condition that must be met for scenario triggering\"\
+        ,\n            \"required\": [\n                \"conditionType\"\n            ],\n            \"properties\": {\n\
+        \                \"conditionType\": {\n                    \"$ref\": \"#/$defs/TriggerConditionType\",\n         \
+        \           \"description\": \"Type of condition to evaluate\"\n                },\n                \"traitAxis\"\
         : {\n                    \"type\": \"string\",\n                    \"maxLength\": 100,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Backstory element key for BackstoryElement\"\n                },\n\
-        \                \"relationshipTypeCode\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
-        : 100,\n                    \"nullable\": true,\n                    \"description\": \"Relationship type code for
-        RelationshipExists/Missing\"\n                },\n                \"otherEntityType\": {\n                    \"type\"\
-        : \"string\",\n                    \"maxLength\": 100,\n                    \"nullable\": true,\n                \
-        \    \"description\": \"Type of other entity in relationship check\"\n                },\n                \"ageMin\"\
-        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Minimum character age for AgeRange\"\n                },\n                \"ageMax\": {\n                    \"\
-        type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Maximum character
-        age for AgeRange\"\n                },\n                \"locationId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Required location ID for LocationAt\"\n                },\n                \"timeOfDayMin\": {\n             \
-        \       \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 23,\n      \
-        \              \"nullable\": true,\n                    \"description\": \"Minimum hour of day (0-23) for TimeOfDay\"\
-        \n                },\n                \"timeOfDayMax\": {\n                    \"type\": \"integer\",\n          \
-        \          \"minimum\": 0,\n                    \"maximum\": 23,\n                    \"nullable\": true,\n      \
-        \              \"description\": \"Maximum hour of day (0-23) for TimeOfDay\"\n                },\n               \
-        \ \"worldStateKey\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 100,\n     \
-        \               \"nullable\": true,\n                    \"description\": \"Custom state key for WorldState/Custom\"\
-        \n                },\n                \"worldStateValue\": {\n                    \"type\": \"string\",\n        \
-        \            \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"description\": \"\
-        Expected value for WorldState/Custom\"\n                }\n            }\n        },\n        \"TriggerConditionType\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"TraitRange\",\n               \
-        \ \"BackstoryElement\",\n                \"RelationshipExists\",\n                \"RelationshipMissing\",\n     \
-        \           \"AgeRange\",\n                \"LocationAt\",\n                \"TimeOfDay\",\n                \"WorldState\"\
-        ,\n                \"Custom\"\n            ],\n            \"description\": \"Types of trigger conditions for scenario
-        activation.\\nTraitRange: Character trait within value range\\nBackstoryElement: Character has specific backstory
-        element\\nRelationshipExists: Relationship exists between entities\\nRelationshipMissing: Relationship does not exist\\
-        nAgeRange: Character age within range\\nLocationAt: Character at specific location\\nTimeOfDay: In-game time within
-        range\\nWorldState: Custom world state check\\nCustom: Custom condition (not evaluated server-side)\\n\"\n       \
-        \ },\n        \"ScenarioPhase\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"description\": \"A phase in scenario execution\",\n            \"required\": [\n                \"\
-        phaseNumber\",\n                \"name\"\n            ],\n            \"properties\": {\n                \"phaseNumber\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\"\
-        : \"Phase sequence number (1-based)\"\n                },\n                \"name\": {\n                    \"type\"\
-        : \"string\",\n                    \"maxLength\": 200,\n                    \"description\": \"Phase name\"\n    \
-        \            },\n                \"description\": {\n                    \"type\": \"string\",\n                 \
-        \   \"maxLength\": 1000,\n                    \"nullable\": true,\n                    \"description\": \"What happens
-        in this phase\"\n                },\n                \"durationSeconds\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Expected duration in seconds (for
-        pacing, not enforced)\"\n                },\n                \"dialogueHint\": {\n                    \"type\": \"\
-        string\",\n                    \"maxLength\": 1000,\n                    \"nullable\": true,\n                   \
-        \ \"description\": \"Hint for dialogue generation system\"\n                },\n                \"actionHint\": {\n\
-        \                    \"type\": \"string\",\n                    \"maxLength\": 1000,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Hint for behavior/GOAP system\"\n                }\n            }\n\
-        \        },\n        \"ScenarioMutation\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"A state mutation to apply during scenario execution\",\n            \"required\"\
-        : [\n                \"mutationType\"\n            ],\n            \"properties\": {\n                \"mutationType\"\
+        : true,\n                    \"description\": \"Personality trait axis for TraitRange (e.g., AGGRESSION)\"\n     \
+        \           },\n                \"traitMin\": {\n                    \"type\": \"number\",\n                    \"\
+        format\": \"float\",\n                    \"nullable\": true,\n                    \"description\": \"Minimum trait
+        value for TraitRange (-1.0 to 1.0)\"\n                },\n                \"traitMax\": {\n                    \"\
+        type\": \"number\",\n                    \"format\": \"float\",\n                    \"nullable\": true,\n       \
+        \             \"description\": \"Maximum trait value for TraitRange (-1.0 to 1.0)\"\n                },\n        \
+        \        \"backstoryType\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 100,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Backstory element type for BackstoryElement
+        (e.g., TRAUMA)\"\n                },\n                \"backstoryKey\": {\n                    \"type\": \"string\"\
+        ,\n                    \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Backstory element key for BackstoryElement\"\n                },\n                \"relationshipTypeCode\": {\n\
+        \                    \"type\": \"string\",\n                    \"maxLength\": 100,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Relationship type code for RelationshipExists/Missing\"\n        \
+        \        },\n                \"otherEntityType\": {\n                    \"type\": \"string\",\n                 \
+        \   \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"description\": \"Type of other
+        entity in relationship check\"\n                },\n                \"ageMin\": {\n                    \"type\": \"\
+        integer\",\n                    \"nullable\": true,\n                    \"description\": \"Minimum character age
+        for AgeRange\"\n                },\n                \"ageMax\": {\n                    \"type\": \"integer\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Maximum character age for AgeRange\"\
+        \n                },\n                \"locationId\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Required
+        location ID for LocationAt\"\n                },\n                \"timeOfDayMin\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 23,\n                    \"\
+        nullable\": true,\n                    \"description\": \"Minimum hour of day (0-23) for TimeOfDay\"\n           \
+        \     },\n                \"timeOfDayMax\": {\n                    \"type\": \"integer\",\n                    \"\
+        minimum\": 0,\n                    \"maximum\": 23,\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Maximum hour of day (0-23) for TimeOfDay\"\n                },\n                \"worldStateKey\"\
+        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 100,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Custom state key for WorldState/Custom\"\n                },\n   \
+        \             \"worldStateValue\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
+        : 100,\n                    \"nullable\": true,\n                    \"description\": \"Expected value for WorldState/Custom\"\
+        \n                }\n            }\n        },\n        \"TriggerConditionType\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"TraitRange\",\n                \"BackstoryElement\",\n             \
+        \   \"RelationshipExists\",\n                \"RelationshipMissing\",\n                \"AgeRange\",\n           \
+        \     \"LocationAt\",\n                \"TimeOfDay\",\n                \"WorldState\",\n                \"Custom\"\
+        \n            ],\n            \"description\": \"Types of trigger conditions for scenario activation.\\nTraitRange:
+        Character trait within value range\\nBackstoryElement: Character has specific backstory element\\nRelationshipExists:
+        Relationship exists between entities\\nRelationshipMissing: Relationship does not exist\\nAgeRange: Character age
+        within range\\nLocationAt: Character at specific location\\nTimeOfDay: In-game time within range\\nWorldState: Custom
+        world state check\\nCustom: Custom condition (not evaluated server-side)\\n\"\n        },\n        \"ScenarioPhase\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"A phase in scenario execution\",\n            \"required\": [\n                \"phaseNumber\",\n            \
+        \    \"name\"\n            ],\n            \"properties\": {\n                \"phaseNumber\": {\n               \
+        \     \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"Phase sequence
+        number (1-based)\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n \
+        \                   \"maxLength\": 200,\n                    \"description\": \"Phase name\"\n                },\n\
+        \                \"description\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
+        : 1000,\n                    \"nullable\": true,\n                    \"description\": \"What happens in this phase\"\
+        \n                },\n                \"durationSeconds\": {\n                    \"type\": \"integer\",\n       \
+        \             \"nullable\": true,\n                    \"description\": \"Expected duration in seconds (for pacing,
+        not enforced)\"\n                },\n                \"dialogueHint\": {\n                    \"type\": \"string\"\
+        ,\n                    \"maxLength\": 1000,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Hint for dialogue generation system\"\n                },\n                \"actionHint\": {\n               \
+        \     \"type\": \"string\",\n                    \"maxLength\": 1000,\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Hint for behavior/GOAP system\"\n                }\n            }\n       \
+        \ },\n        \"ScenarioMutation\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"A state mutation to apply during scenario execution\",\n            \"required\":
+        [\n                \"mutationType\"\n            ],\n            \"properties\": {\n                \"mutationType\"\
         : {\n                    \"$ref\": \"#/$defs/MutationType\",\n                    \"description\": \"Type of mutation
         to apply\"\n                },\n                \"experienceType\": {\n                    \"$ref\": \"#/$defs/StorylineExperienceType\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Experience type for PersonalityEvolve
@@ -3670,6 +3671,7 @@ components:
         description:
           type: string
           nullable: true
+          x-detect-if-set: true
           description: New description
         triggerConditions:
           type: array

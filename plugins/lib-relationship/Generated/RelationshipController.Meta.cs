@@ -1117,6 +1117,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Updated client-provided relationship data. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
@@ -2813,12 +2814,14 @@ public partial class RelationshipController
                     "type": "string",
                     "maxLength": 500,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Description of the relationship type"
                 },
                 "category": {
                     "type": "string",
                     "maxLength": 50,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Category for grouping"
                 },
                 "parentTypeId": {
@@ -2842,6 +2845,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Updated client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }

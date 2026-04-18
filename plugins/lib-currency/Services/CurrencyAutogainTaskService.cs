@@ -286,6 +286,10 @@ public class CurrencyAutogainTaskService : BackgroundService
                     {
                         _logger.LogWarning(ex, "Worldstate unavailable for realm {RealmId} during autogain task, skipping wallet {WalletId}",
                             walletForEvent.RealmId.Value, walletId);
+                        await messageBus.TryPublishErrorAsync(
+                            "currency", "ProcessSingleBalanceAutogain", "WorldstateUnavailable",
+                            ex.Message, dependency: "worldstate", endpoint: "post:worldstate/get-elapsed-game-time",
+                            stack: ex.StackTrace, cancellationToken: cancellationToken);
                         return false;
                     }
                 }

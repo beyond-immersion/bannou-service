@@ -136,7 +136,7 @@ public partial class UpdateCharacterRequest
     /// <summary>
     /// Fields explicitly set on this request. Populated automatically by property
     /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
+    /// provided" from "field explicitly set to null" for opt-in properties.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
     public System.Collections.Generic.ICollection<string>? ChangeFields
@@ -157,14 +157,13 @@ public partial class UpdateCharacterRequest
         => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
 
 
-    private System.Guid _characterId = default!;
     /// <summary>
     /// ID of the character to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get => _characterId; set { _characterId = value; _TrackChange("characterId"); } }
+    public System.Guid CharacterId { get; set; } = default!;
 
     private string? _name = default!;
     /// <summary>

@@ -124,6 +124,104 @@ public partial class LocalizationCategoryCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to localization.category.deleted when a localizationcategory is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class LocalizationCategoryDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: localization.category.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "localization.category.deleted";
+
+    /// <summary>
+    /// Unique category identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("categoryId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CategoryId { get; set; } = default!;
+
+    /// <summary>
+    /// Machine-readable category code
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Code { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable category description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Description { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this category was seeded from localization-categories.yaml
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isSchemaDefinition")]
+    public bool IsSchemaDefinition { get; set; } = default!;
+
+    /// <summary>
+    /// How ILocalizationKeyValidator behaves for this category
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("validationMode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ValidationMode ValidationMode { get; set; } = default!;
+
+    /// <summary>
+    /// Fallback language (BCP 47 tag)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("defaultLanguage")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string DefaultLanguage { get; set; } = default!;
+
+    /// <summary>
+    /// Number of translation entries in this category
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entryCount")]
+    public int EntryCount { get; set; } = default!;
+
+    /// <summary>
+    /// Language of most recent entry mutation (null if no entries)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("lastEntryUpdateLanguage")]
+    public string? LastEntryUpdateLanguage { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the localization category was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the localization category was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to localization.category.updated when a localizationcategory is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -220,104 +318,6 @@ public partial class LocalizationCategoryUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to localization.category.deleted when a localizationcategory is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class LocalizationCategoryDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: localization.category.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "localization.category.deleted";
-
-    /// <summary>
-    /// Unique category identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("categoryId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CategoryId { get; set; } = default!;
-
-    /// <summary>
-    /// Machine-readable category code
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Code { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable category description
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("description")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Description { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this category was seeded from localization-categories.yaml
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isSchemaDefinition")]
-    public bool IsSchemaDefinition { get; set; } = default!;
-
-    /// <summary>
-    /// How ILocalizationKeyValidator behaves for this category
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("validationMode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ValidationMode ValidationMode { get; set; } = default!;
-
-    /// <summary>
-    /// Fallback language (BCP 47 tag)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("defaultLanguage")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string DefaultLanguage { get; set; } = default!;
-
-    /// <summary>
-    /// Number of translation entries in this category
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entryCount")]
-    public int EntryCount { get; set; } = default!;
-
-    /// <summary>
-    /// Language of most recent entry mutation (null if no entries)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("lastEntryUpdateLanguage")]
-    public string? LastEntryUpdateLanguage { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the localization category was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the localization category was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

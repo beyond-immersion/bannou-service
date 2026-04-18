@@ -147,6 +147,127 @@ public partial class SeedCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to seed.deleted when a seed is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SeedDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: seed.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "seed.deleted";
+
+    /// <summary>
+    /// Unique identifier for the seed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("seedId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SeedId { get; set; } = default!;
+
+    /// <summary>
+    /// Entity that owns this seed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid OwnerId { get; set; } = default!;
+
+    /// <summary>
+    /// Owner entity type discriminator
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
+
+    /// <summary>
+    /// Registered seed type code
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SeedTypeCode { get; set; } = default!;
+
+    /// <summary>
+    /// Game service this seed is scoped to. Null for cross-game seed types.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    public System.Guid? GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Realm associated with this seed for game-time decay. Null if no realm association.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    public System.Guid? RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Current computed growth phase code
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("growthPhase")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string GrowthPhase { get; set; } = default!;
+
+    /// <summary>
+    /// Aggregate growth across all domains
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalGrowth")]
+    public float TotalGrowth { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable seed name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// Current lifecycle status
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SeedStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Bond ID if bonded, null otherwise
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bondId")]
+    public System.Guid? BondId { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the seed was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the seed was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to seed.updated when a seed is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -270,127 +391,6 @@ public partial class SeedUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to seed.deleted when a seed is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SeedDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: seed.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "seed.deleted";
-
-    /// <summary>
-    /// Unique identifier for the seed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("seedId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SeedId { get; set; } = default!;
-
-    /// <summary>
-    /// Entity that owns this seed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid OwnerId { get; set; } = default!;
-
-    /// <summary>
-    /// Owner entity type discriminator
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EntityType OwnerType { get; set; } = default!;
-
-    /// <summary>
-    /// Registered seed type code
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string SeedTypeCode { get; set; } = default!;
-
-    /// <summary>
-    /// Game service this seed is scoped to. Null for cross-game seed types.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    public System.Guid? GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Realm associated with this seed for game-time decay. Null if no realm association.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    public System.Guid? RealmId { get; set; } = default!;
-
-    /// <summary>
-    /// Current computed growth phase code
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("growthPhase")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string GrowthPhase { get; set; } = default!;
-
-    /// <summary>
-    /// Aggregate growth across all domains
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("totalGrowth")]
-    public float TotalGrowth { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable seed name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string DisplayName { get; set; } = default!;
-
-    /// <summary>
-    /// Current lifecycle status
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("status")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SeedStatus Status { get; set; } = default!;
-
-    /// <summary>
-    /// Bond ID if bonded, null otherwise
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("bondId")]
-    public System.Guid? BondId { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the seed was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the seed was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Published to seed.type.created when a seedtype is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -493,6 +493,118 @@ public partial class SeedTypeCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string? DeprecationReason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published to seed.type.deleted when a seedtype is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SeedTypeDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: seed.type.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "seed.type.deleted";
+
+    /// <summary>
+    /// Unique seed type code
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SeedTypeCode { get; set; } = default!;
+
+    /// <summary>
+    /// Game service this type is scoped to. Null for cross-game seed types.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    public System.Guid? GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// Description of what this seed type represents
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Description { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum seeds of this type per owner
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxPerOwner")]
+    public int MaxPerOwner { get; set; } = default!;
+
+    /// <summary>
+    /// Max bond participants (0 = no bonding)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bondCardinality")]
+    public int BondCardinality { get; set; } = default!;
+
+    /// <summary>
+    /// Whether bonds of this type are permanent
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bondPermanent")]
+    public bool BondPermanent { get; set; } = default!;
+
+    /// <summary>
+    /// Cross-pollination multiplier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sameOwnerGrowthMultiplier")]
+    public float SameOwnerGrowthMultiplier { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the seed type was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the seed type was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this seed type is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the seed type was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
 
 }
 
@@ -607,118 +719,6 @@ public partial class SeedTypeUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to seed.type.deleted when a seedtype is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SeedTypeDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: seed.type.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "seed.type.deleted";
-
-    /// <summary>
-    /// Unique seed type code
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string SeedTypeCode { get; set; } = default!;
-
-    /// <summary>
-    /// Game service this type is scoped to. Null for cross-game seed types.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    public System.Guid? GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string DisplayName { get; set; } = default!;
-
-    /// <summary>
-    /// Description of what this seed type represents
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("description")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Description { get; set; } = default!;
-
-    /// <summary>
-    /// Maximum seeds of this type per owner
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("maxPerOwner")]
-    public int MaxPerOwner { get; set; } = default!;
-
-    /// <summary>
-    /// Max bond participants (0 = no bonding)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("bondCardinality")]
-    public int BondCardinality { get; set; } = default!;
-
-    /// <summary>
-    /// Whether bonds of this type are permanent
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("bondPermanent")]
-    public bool BondPermanent { get; set; } = default!;
-
-    /// <summary>
-    /// Cross-pollination multiplier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sameOwnerGrowthMultiplier")]
-    public float SameOwnerGrowthMultiplier { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the seed type was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the seed type was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this seed type is deprecated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
-    public bool IsDeprecated { get; set; } = default!;
-
-    /// <summary>
-    /// When the seed type was deprecated (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for deprecation (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? DeprecationReason { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

@@ -556,7 +556,7 @@ public partial class ChatService : IChatService, ICleanDeprecatedEntity
         }
 
         var changedFields = new List<string>();
-        if (body.DisplayName != null) { model.DisplayName = body.DisplayName; changedFields.Add("displayName"); }
+        if (body.ChangeFields.IsFieldSet("displayName") && body.DisplayName != model.DisplayName) { model.DisplayName = body.DisplayName; changedFields.Add("displayName"); }
         if (body.MaxParticipants.HasValue) { model.MaxParticipants = body.MaxParticipants; changedFields.Add("maxParticipants"); }
         if (body.Metadata != null) { model.Metadata = body.Metadata; changedFields.Add("metadata"); }
 

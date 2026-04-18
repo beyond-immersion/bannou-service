@@ -123,6 +123,103 @@ public partial class MappingChannelCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to mapping.channel.deleted when a mappingchannel is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MappingChannelDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: mapping.channel.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "mapping.channel.deleted";
+
+    /// <summary>
+    /// Unique identifier for the channel (region+kind)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("channelId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ChannelId { get; set; } = default!;
+
+    /// <summary>
+    /// Region this channel serves
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("regionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RegionId { get; set; } = default!;
+
+    /// <summary>
+    /// Map kind
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("kind")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MapKind Kind { get; set; } = default!;
+
+    /// <summary>
+    /// App ID of current authority (null if unassigned)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authorityAppId")]
+    public string? AuthorityAppId { get; set; } = default!;
+
+    /// <summary>
+    /// Current authority token (null if unassigned)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authorityToken")]
+    public string? AuthorityToken { get; set; } = default!;
+
+    /// <summary>
+    /// When current authority expires
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authorityExpiresAt")]
+    public System.DateTimeOffset? AuthorityExpiresAt { get; set; } = default!;
+
+    /// <summary>
+    /// How to handle non-authority publishes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("nonAuthorityHandling")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public NonAuthorityHandlingMode NonAuthorityHandling { get; set; } = default!;
+
+    /// <summary>
+    /// Current version number
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
+    public long Version { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the mapping channel was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the mapping channel was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to mapping.channel.updated when a mappingchannel is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -218,103 +315,6 @@ public partial class MappingChannelUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to mapping.channel.deleted when a mappingchannel is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MappingChannelDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: mapping.channel.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "mapping.channel.deleted";
-
-    /// <summary>
-    /// Unique identifier for the channel (region+kind)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("channelId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ChannelId { get; set; } = default!;
-
-    /// <summary>
-    /// Region this channel serves
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("regionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RegionId { get; set; } = default!;
-
-    /// <summary>
-    /// Map kind
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("kind")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public MapKind Kind { get; set; } = default!;
-
-    /// <summary>
-    /// App ID of current authority (null if unassigned)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("authorityAppId")]
-    public string? AuthorityAppId { get; set; } = default!;
-
-    /// <summary>
-    /// Current authority token (null if unassigned)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("authorityToken")]
-    public string? AuthorityToken { get; set; } = default!;
-
-    /// <summary>
-    /// When current authority expires
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("authorityExpiresAt")]
-    public System.DateTimeOffset? AuthorityExpiresAt { get; set; } = default!;
-
-    /// <summary>
-    /// How to handle non-authority publishes
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("nonAuthorityHandling")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public NonAuthorityHandlingMode NonAuthorityHandling { get; set; } = default!;
-
-    /// <summary>
-    /// Current version number
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public long Version { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the mapping channel was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the mapping channel was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

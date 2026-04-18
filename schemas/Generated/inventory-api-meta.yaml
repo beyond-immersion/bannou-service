@@ -689,30 +689,34 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Container ID to update\"\n                },\n                \"maxSlots\": {\n                 \
         \   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n       \
-        \             \"description\": \"New max slots\"\n                },\n                \"maxWeight\": {\n         \
-        \           \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\":
-        true,\n                    \"minimum\": 0,\n                    \"description\": \"New max weight\"\n            \
-        \    },\n                \"gridWidth\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
-        : true,\n                    \"minimum\": 1,\n                    \"description\": \"New grid width\"\n          \
-        \      },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
-        : true,\n                    \"minimum\": 1,\n                    \"description\": \"New grid height\"\n         \
-        \       },\n                \"maxVolume\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        \             \"x-detect-if-set\": true,\n                    \"description\": \"New max slots\"\n               \
+        \ },\n                \"maxWeight\": {\n                    \"type\": \"number\",\n                    \"format\"\
         : \"double\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n                    \"\
-        description\": \"New max volume\"\n                },\n                \"allowedCategories\": {\n                \
-        \    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n      \
-        \              },\n                    \"nullable\": true,\n                    \"description\": \"New allowed categories\"\
-        \n                },\n                \"forbiddenCategories\": {\n                    \"type\": \"array\",\n     \
-        \               \"items\": {\n                        \"type\": \"string\"\n                    },\n             \
-        \       \"nullable\": true,\n                    \"description\": \"New forbidden categories\"\n                },\n\
-        \                \"allowedTags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n \
-        \                   \"description\": \"New allowed tags\"\n                },\n                \"tags\": {\n     \
-        \               \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"New container
-        tags\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n         \
-        \           \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by
-        convention.\"\n                }\n            }\n        }\n    }\n}"
+        x-detect-if-set\": true,\n                    \"description\": \"New max weight\"\n                },\n          \
+        \      \"gridWidth\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n   \
+        \                 \"minimum\": 1,\n                    \"x-detect-if-set\": true,\n                    \"description\"\
+        : \"New grid width\"\n                },\n                \"gridHeight\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"minimum\": 1,\n                    \"x-detect-if-set\"\
+        : true,\n                    \"description\": \"New grid height\"\n                },\n                \"maxVolume\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        nullable\": true,\n                    \"minimum\": 0,\n                    \"x-detect-if-set\": true,\n         \
+        \           \"description\": \"New max volume\"\n                },\n                \"allowedCategories\": {\n  \
+        \                  \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"x-detect-if-set\": true,\n\
+        \                    \"description\": \"New allowed categories\"\n                },\n                \"forbiddenCategories\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"x-detect-if-set\"\
+        : true,\n                    \"description\": \"New forbidden categories\"\n                },\n                \"\
+        allowedTags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                   \
+        \     \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                    \"\
+        x-detect-if-set\": true,\n                    \"description\": \"New allowed tags\"\n                },\n        \
+        \        \"tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n               \
+        \         \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                \
+        \    \"x-detect-if-set\": true,\n                    \"description\": \"New container tags\"\n                },\n\
+        \                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"x-detect-if-set\": true,\n               \
+        \     \"description\": \"New game-specific container data. Client-only metadata. No Bannou plugin reads specific keys
+        from this field by convention.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContainerResponse\"\
         ,\n    \"$defs\": {\n        \"ContainerResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Container details\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
@@ -1759,57 +1763,67 @@ components:
           type: integer
           nullable: true
           minimum: 1
+          x-detect-if-set: true
           description: New max slots
         maxWeight:
           type: number
           format: double
           nullable: true
           minimum: 0
+          x-detect-if-set: true
           description: New max weight
         gridWidth:
           type: integer
           nullable: true
           minimum: 1
+          x-detect-if-set: true
           description: New grid width
         gridHeight:
           type: integer
           nullable: true
           minimum: 1
+          x-detect-if-set: true
           description: New grid height
         maxVolume:
           type: number
           format: double
           nullable: true
           minimum: 0
+          x-detect-if-set: true
           description: New max volume
         allowedCategories:
           type: array
           items:
             type: string
           nullable: true
+          x-detect-if-set: true
           description: New allowed categories
         forbiddenCategories:
           type: array
           items:
             type: string
           nullable: true
+          x-detect-if-set: true
           description: New forbidden categories
         allowedTags:
           type: array
           items:
             type: string
           nullable: true
+          x-detect-if-set: true
           description: New allowed tags
         tags:
           type: array
           items:
             type: string
           nullable: true
+          x-detect-if-set: true
           description: New container tags
         metadata:
           type: object
           additionalProperties: true
           nullable: true
+          x-detect-if-set: true
           description: New game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from
             this field by convention.
     DeleteContainerRequest:

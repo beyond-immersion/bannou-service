@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
@@ -383,12 +384,12 @@ public partial class RealmService : IRealmService, IDeprecateAndMergeEntity
                     model.Name = body.Name;
                     changedFields.Add("name");
                 }
-                if (body.Description != null && body.Description != model.Description)
+                if (body.ChangeFields.IsFieldSet("description") && body.Description != model.Description)
                 {
                     model.Description = body.Description;
                     changedFields.Add("description");
                 }
-                if (body.Category != null && body.Category != model.Category)
+                if (body.ChangeFields.IsFieldSet("category") && body.Category != model.Category)
                 {
                     model.Category = body.Category;
                     changedFields.Add("category");
@@ -408,7 +409,7 @@ public partial class RealmService : IRealmService, IDeprecateAndMergeEntity
                     model.GameServiceId = body.GameServiceId.Value;
                     changedFields.Add("gameServiceId");
                 }
-                if (body.Metadata != null)
+                if (body.ChangeFields.IsFieldSet("metadata"))
                 {
                     model.Metadata = body.Metadata;
                     changedFields.Add("metadata");

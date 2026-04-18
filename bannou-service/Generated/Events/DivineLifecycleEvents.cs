@@ -183,6 +183,163 @@ public partial class DeityCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to divine.deity.deleted when a deity is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeityDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: divine.deity.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "divine.deity.deleted";
+
+    /// <summary>
+    /// Unique identifier for the deity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid DeityId { get; set; } = default!;
+
+    /// <summary>
+    /// Game service this deity belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Unique code within the game service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Code { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable display name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// Description of the deity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Description { get; set; } = default!;
+
+    /// <summary>
+    /// Domain influences
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("domains")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<DomainInfluence> Domains { get; set; } = new System.Collections.ObjectModel.Collection<DomainInfluence>();
+
+    /// <summary>
+    /// Current lifecycle status
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public DeityStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Number of active followers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("followerCount")]
+    public int FollowerCount { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum characters the deity can actively monitor
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxAttentionSlots")]
+    public int MaxAttentionSlots { get; set; } = default!;
+
+    /// <summary>
+    /// Associated actor ID for the deity watcher brain
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
+    public System.Guid? ActorId { get; set; } = default!;
+
+    /// <summary>
+    /// Domain power seed ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("seedId")]
+    public System.Guid? SeedId { get; set; } = default!;
+
+    /// <summary>
+    /// Genesis entity ID for lifecycle queries
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("genesisEntityId")]
+    public System.Guid? GenesisEntityId { get; set; } = default!;
+
+    /// <summary>
+    /// Divinity currency wallet ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currencyWalletId")]
+    public System.Guid? CurrencyWalletId { get; set; } = default!;
+
+    /// <summary>
+    /// Home realm for this deity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    public System.Guid? RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the deity was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the deity was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this deity is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the deity was deprecated (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation (null if not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to divine.deity.updated when a deity is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -338,163 +495,6 @@ public partial class DeityUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to divine.deity.deleted when a deity is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class DeityDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: divine.deity.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "divine.deity.deleted";
-
-    /// <summary>
-    /// Unique identifier for the deity
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deityId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid DeityId { get; set; } = default!;
-
-    /// <summary>
-    /// Game service this deity belongs to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Unique code within the game service
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Code { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable display name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string DisplayName { get; set; } = default!;
-
-    /// <summary>
-    /// Description of the deity
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("description")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Description { get; set; } = default!;
-
-    /// <summary>
-    /// Domain influences
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("domains")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<DomainInfluence> Domains { get; set; } = new System.Collections.ObjectModel.Collection<DomainInfluence>();
-
-    /// <summary>
-    /// Current lifecycle status
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("status")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DeityStatus Status { get; set; } = default!;
-
-    /// <summary>
-    /// Number of active followers
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("followerCount")]
-    public int FollowerCount { get; set; } = default!;
-
-    /// <summary>
-    /// Maximum characters the deity can actively monitor
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("maxAttentionSlots")]
-    public int MaxAttentionSlots { get; set; } = default!;
-
-    /// <summary>
-    /// Associated actor ID for the deity watcher brain
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
-    public System.Guid? ActorId { get; set; } = default!;
-
-    /// <summary>
-    /// Domain power seed ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("seedId")]
-    public System.Guid? SeedId { get; set; } = default!;
-
-    /// <summary>
-    /// Genesis entity ID for lifecycle queries
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("genesisEntityId")]
-    public System.Guid? GenesisEntityId { get; set; } = default!;
-
-    /// <summary>
-    /// Divinity currency wallet ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("currencyWalletId")]
-    public System.Guid? CurrencyWalletId { get; set; } = default!;
-
-    /// <summary>
-    /// Home realm for this deity
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    public System.Guid? RealmId { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the deity was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the deity was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Whether this deity is deprecated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
-    public bool IsDeprecated { get; set; } = default!;
-
-    /// <summary>
-    /// When the deity was deprecated (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for deprecation (null if not deprecated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? DeprecationReason { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

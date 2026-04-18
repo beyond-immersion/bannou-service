@@ -2344,6 +2344,7 @@ public partial class ChatController
                     "type": "string",
                     "nullable": true,
                     "maxLength": 200,
+                    "x-detect-if-set": true,
                     "description": "Updated room name"
                 },
                 "maxParticipants": {

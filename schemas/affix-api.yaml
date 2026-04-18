@@ -1546,6 +1546,7 @@ components:
         displayName:
           type: string
           nullable: true
+          x-detect-if-set: true
           description: Updated display name
         displayOrder:
           type: integer

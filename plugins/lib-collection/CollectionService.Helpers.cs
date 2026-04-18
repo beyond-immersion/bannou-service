@@ -148,6 +148,15 @@ public partial class CollectionService
             _logger.LogError(ex,
                 "Failed to load container {ContainerId} for cache rebuild of collection {CollectionId}",
                 collection.ContainerId, collection.CollectionId);
+            await _messageBus.TryPublishErrorAsync(
+                "collection",
+                "LoadOrRebuildCollectionCache",
+                "ContainerLoadFailure",
+                ex.Message,
+                dependency: "inventory",
+                endpoint: "get-container",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
 
             // Graceful degradation: return empty cache on inventory failure.
             // The cache will attempt to rebuild on the next access.

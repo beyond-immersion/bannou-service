@@ -197,6 +197,96 @@ public static class CharacterLifecyclePermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/character-lifecycle/template/deprecate-lifecycle",
+            Method = ServiceEndpointMethod.Post,
+            Description = "deprecateLifecycleTemplate",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/character-lifecycle/template/deprecate-heritable",
+            Method = ServiceEndpointMethod.Post,
+            Description = "deprecateHeritableTraitTemplate",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/character-lifecycle/template/deprecate-hybrid",
+            Method = ServiceEndpointMethod.Post,
+            Description = "deprecateHybridTraitTemplate",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/character-lifecycle/template/clean-deprecated-lifecycle",
+            Method = ServiceEndpointMethod.Post,
+            Description = "cleanDeprecatedLifecycleTemplates",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/character-lifecycle/template/clean-deprecated-heritable",
+            Method = ServiceEndpointMethod.Post,
+            Description = "cleanDeprecatedHeritableTraitTemplates",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/character-lifecycle/template/clean-deprecated-hybrid",
+            Method = ServiceEndpointMethod.Post,
+            Description = "cleanDeprecatedHybridTraitTemplates",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/character-lifecycle/bloodline/get",
             Method = ServiceEndpointMethod.Post,
             Description = "getBloodline",

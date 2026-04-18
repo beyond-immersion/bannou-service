@@ -819,7 +819,7 @@ public partial class UpdateQuestDefinitionRequest
     /// <summary>
     /// Fields explicitly set on this request. Populated automatically by property
     /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
+    /// provided" from "field explicitly set to null" for opt-in properties.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
     public System.Collections.Generic.ICollection<string>? ChangeFields
@@ -840,21 +840,19 @@ public partial class UpdateQuestDefinitionRequest
         => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
 
 
-    private System.Guid _definitionId = default!;
     /// <summary>
     /// Definition to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("definitionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid DefinitionId { get => _definitionId; set { _definitionId = value; _TrackChange("definitionId"); } }
+    public System.Guid DefinitionId { get; set; } = default!;
 
-    private string? _name = default!;
     /// <summary>
     /// New name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
-    public string? Name { get => _name; set { _name = value; _TrackChange("name"); } }
+    public string? Name { get; set; } = default!;
 
     private string? _description = default!;
     /// <summary>
@@ -863,28 +861,25 @@ public partial class UpdateQuestDefinitionRequest
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
-    private QuestCategory? _category = default!;
     /// <summary>
     /// New quest category
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public QuestCategory? Category { get => _category; set { _category = value; _TrackChange("category"); } }
+    public QuestCategory? Category { get; set; } = default!;
 
-    private QuestDifficulty? _difficulty = default!;
     /// <summary>
     /// New difficulty rating
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("difficulty")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public QuestDifficulty? Difficulty { get => _difficulty; set { _difficulty = value; _TrackChange("difficulty"); } }
+    public QuestDifficulty? Difficulty { get; set; } = default!;
 
-    private System.Collections.Generic.ICollection<string>? _tags = default!;
     /// <summary>
     /// New tags
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string>? Tags { get => _tags; set { _tags = value; _TrackChange("tags"); } }
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
 }
 

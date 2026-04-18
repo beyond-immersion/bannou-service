@@ -515,8 +515,9 @@ paths:
         \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Update relationship type
         (used for type merge migrations)\"\n                },\n                \"metadata\": {\n                    \"type\"\
         : \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Updated client-provided relationship data. No Bannou plugin reads specific keys
-        from this field by convention.\"\n                }\n            }\n        }\n    }\n}"
+        \                \"x-detect-if-set\": true,\n                    \"description\": \"Updated client-provided relationship
+        data. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n  \
+        \      }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RelationshipResponse\"\
         ,\n    \"$defs\": {\n        \"RelationshipResponse\": {\n            \"description\": \"Complete details of a relationship
         between two entities\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n       \
@@ -1209,19 +1210,21 @@ paths:
         \                 \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"nullable\": true,\n\
         \                    \"description\": \"Display name for the relationship type\"\n                },\n           \
         \     \"description\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 500,\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Description of the relationship type\"\
-        \n                },\n                \"category\": {\n                    \"type\": \"string\",\n               \
-        \     \"maxLength\": 50,\n                    \"nullable\": true,\n                    \"description\": \"Category
-        for grouping\"\n                },\n                \"parentTypeId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Parent type ID for hierarchy\"\n                },\n                \"inverseTypeCode\": {\n                 \
-        \   \"type\": \"string\",\n                    \"maxLength\": 50,\n                    \"nullable\": true,\n     \
-        \               \"description\": \"Code of the inverse relationship\"\n                },\n                \"isBidirectional\"\
+        \                 \"nullable\": true,\n                    \"x-detect-if-set\": true,\n                    \"description\"\
+        : \"Description of the relationship type\"\n                },\n                \"category\": {\n                \
+        \    \"type\": \"string\",\n                    \"maxLength\": 50,\n                    \"nullable\": true,\n    \
+        \                \"x-detect-if-set\": true,\n                    \"description\": \"Category for grouping\"\n    \
+        \            },\n                \"parentTypeId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent
+        type ID for hierarchy\"\n                },\n                \"inverseTypeCode\": {\n                    \"type\"\
+        : \"string\",\n                    \"maxLength\": 50,\n                    \"nullable\": true,\n                 \
+        \   \"description\": \"Code of the inverse relationship\"\n                },\n                \"isBidirectional\"\
         : {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Whether the relationship is bidirectional\"\n                },\n                \"metadata\": {\n           \
         \         \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Updated client-provided relationship type metadata. No Bannou plugin
-        reads specific keys from this field by convention.\"\n                }\n            }\n        }\n    }\n}"
+        : true,\n                    \"x-detect-if-set\": true,\n                    \"description\": \"Updated client-provided
+        relationship type metadata. No Bannou plugin reads specific keys from this field by convention.\"\n              \
+        \  }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RelationshipTypeResponse\"\
         ,\n    \"$defs\": {\n        \"RelationshipTypeResponse\": {\n            \"allOf\": [\n                {\n      \
         \              \"type\": \"object\"\n                }\n            ],\n            \"description\": \"Complete representation
@@ -1802,6 +1805,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
+          x-detect-if-set: true
           description: >-
             Updated client-provided relationship data.
             No Bannou plugin reads specific keys from this field by convention.
@@ -2106,11 +2110,13 @@ components:
           type: string
           maxLength: 500
           nullable: true
+          x-detect-if-set: true
           description: Description of the relationship type
         category:
           type: string
           maxLength: 50
           nullable: true
+          x-detect-if-set: true
           description: Category for grouping
         parentTypeId:
           type: string
@@ -2130,6 +2136,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
+          x-detect-if-set: true
           description: >-
             Updated client-provided relationship type metadata.
             No Bannou plugin reads specific keys from this field by convention.

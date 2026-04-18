@@ -2882,6 +2882,7 @@ public partial class LocationController
                     "type": "string",
                     "maxLength": 2000,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Description of the location"
                 },
                 "locationType": {
@@ -2933,6 +2934,7 @@ public partial class LocationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Updated client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }

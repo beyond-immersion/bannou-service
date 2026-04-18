@@ -135,6 +135,115 @@ public partial class CalendarTemplateCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published to calendar-template.deleted when a calendartemplate is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CalendarTemplateDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: calendar-template.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "calendar-template.deleted";
+
+    /// <summary>
+    /// Unique code identifying this calendar template
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TemplateCode { get; set; } = default!;
+
+    /// <summary>
+    /// Game service this calendar template belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of game hours in one game day
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameHoursPerDay")]
+    public int GameHoursPerDay { get; set; } = default!;
+
+    /// <summary>
+    /// Ordered list of day period definitions (e.g., dawn, morning, noon)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("dayPeriods")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<DayPeriodDefinition> DayPeriods { get; set; } = new System.Collections.ObjectModel.Collection<DayPeriodDefinition>();
+
+    /// <summary>
+    /// Ordered list of month definitions for this calendar
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("months")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<MonthDefinition> Months { get; set; } = new System.Collections.ObjectModel.Collection<MonthDefinition>();
+
+    /// <summary>
+    /// Ordered list of season definitions for this calendar
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("seasons")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<SeasonDefinition> Seasons { get; set; } = new System.Collections.ObjectModel.Collection<SeasonDefinition>();
+
+    /// <summary>
+    /// Total number of game days in one game year
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("daysPerYear")]
+    public int DaysPerYear { get; set; } = default!;
+
+    /// <summary>
+    /// Total number of months in one game year
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("monthsPerYear")]
+    public int MonthsPerYear { get; set; } = default!;
+
+    /// <summary>
+    /// Total number of seasons in one game year
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("seasonsPerYear")]
+    public int SeasonsPerYear { get; set; } = default!;
+
+    /// <summary>
+    /// Optional era label definitions for year-range naming
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eraLabels")]
+    public System.Collections.Generic.ICollection<EraLabel>? EraLabels { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the calendar template was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the calendar template was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published to calendar-template.updated when a calendartemplate is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -246,115 +355,6 @@ public partial class CalendarTemplateUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to calendar-template.deleted when a calendartemplate is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CalendarTemplateDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: calendar-template.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "calendar-template.deleted";
-
-    /// <summary>
-    /// Unique code identifying this calendar template
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string TemplateCode { get; set; } = default!;
-
-    /// <summary>
-    /// Game service this calendar template belongs to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Number of game hours in one game day
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameHoursPerDay")]
-    public int GameHoursPerDay { get; set; } = default!;
-
-    /// <summary>
-    /// Ordered list of day period definitions (e.g., dawn, morning, noon)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("dayPeriods")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<DayPeriodDefinition> DayPeriods { get; set; } = new System.Collections.ObjectModel.Collection<DayPeriodDefinition>();
-
-    /// <summary>
-    /// Ordered list of month definitions for this calendar
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("months")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<MonthDefinition> Months { get; set; } = new System.Collections.ObjectModel.Collection<MonthDefinition>();
-
-    /// <summary>
-    /// Ordered list of season definitions for this calendar
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("seasons")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<SeasonDefinition> Seasons { get; set; } = new System.Collections.ObjectModel.Collection<SeasonDefinition>();
-
-    /// <summary>
-    /// Total number of game days in one game year
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("daysPerYear")]
-    public int DaysPerYear { get; set; } = default!;
-
-    /// <summary>
-    /// Total number of months in one game year
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("monthsPerYear")]
-    public int MonthsPerYear { get; set; } = default!;
-
-    /// <summary>
-    /// Total number of seasons in one game year
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("seasonsPerYear")]
-    public int SeasonsPerYear { get; set; } = default!;
-
-    /// <summary>
-    /// Optional era label definitions for year-range naming
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eraLabels")]
-    public System.Collections.Generic.ICollection<EraLabel>? EraLabels { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the calendar template was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the calendar template was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Published to realm-config.created when a realmconfig is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -437,6 +437,98 @@ public partial class RealmConfigCreatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published to realm-config.deleted when a realmconfig is deleted
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RealmConfigDeletedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: realm-config.deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "realm-config.deleted";
+
+    /// <summary>
+    /// Unique identifier of the realm this config belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Game service this realm config is associated with
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid GameServiceId { get; set; } = default!;
+
+    /// <summary>
+    /// Code of the calendar template assigned to this realm
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("calendarTemplateCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string CalendarTemplateCode { get; set; } = default!;
+
+    /// <summary>
+    /// Current game-seconds per real-second ratio
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currentTimeRatio")]
+    public float CurrentTimeRatio { get; set; } = default!;
+
+    /// <summary>
+    /// Policy for handling game time during server downtime
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("downtimePolicy")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public DowntimePolicy DowntimePolicy { get; set; } = default!;
+
+    /// <summary>
+    /// Real-world timestamp marking the start of this realm's game time
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmEpoch")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset RealmEpoch { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the realm clock is initialized and active
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isActive")]
+    public bool IsActive { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the realm config was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the realm config was last updated (set to createdAt on creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Optional reason for deletion (e.g., "Merged into {targetId}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
+    public string? DeletedReason { get; set; } = default!;
 
 }
 
@@ -531,98 +623,6 @@ public partial class RealmConfigUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
-/// Published to realm-config.deleted when a realmconfig is deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class RealmConfigDeletedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: realm-config.deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "realm-config.deleted";
-
-    /// <summary>
-    /// Unique identifier of the realm this config belongs to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
-
-    /// <summary>
-    /// Game service this realm config is associated with
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Code of the calendar template assigned to this realm
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("calendarTemplateCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string CalendarTemplateCode { get; set; } = default!;
-
-    /// <summary>
-    /// Current game-seconds per real-second ratio
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("currentTimeRatio")]
-    public float CurrentTimeRatio { get; set; } = default!;
-
-    /// <summary>
-    /// Policy for handling game time during server downtime
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("downtimePolicy")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DowntimePolicy DowntimePolicy { get; set; } = default!;
-
-    /// <summary>
-    /// Real-world timestamp marking the start of this realm's game time
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmEpoch")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset RealmEpoch { get; set; } = default!;
-
-    /// <summary>
-    /// Whether the realm clock is initialized and active
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isActive")]
-    public bool IsActive { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the realm config was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the realm config was last updated (set to createdAt on creation)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Optional reason for deletion (e.g., "Merged into {targetId}")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deletedReason")]
-    public string? DeletedReason { get; set; } = default!;
 
 }
 

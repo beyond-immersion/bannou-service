@@ -334,6 +334,15 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
                         _logger.LogWarning(ex,
                             "Failed to award partial growth for participant seed {SeedId}",
                             participant.SeedId);
+                        await messageBus.TryPublishErrorAsync(
+                            "gardener",
+                            "ForceCompleteScenario",
+                            "PartialGrowthAwardFailure",
+                            ex.Message,
+                            dependency: "seed",
+                            endpoint: "record-growth-batch",
+                            stack: ex.StackTrace,
+                            cancellationToken: ct);
                     }
                 }
             }
@@ -394,6 +403,15 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
                 _logger.LogWarning(ex,
                     "Failed to remove participant {AccountId} from game session {SessionId}",
                     participant.AccountId, scenario.GameSessionId);
+                await messageBus.TryPublishErrorAsync(
+                    "gardener",
+                    "ForceCompleteScenario",
+                    "GameSessionLeaveFailure",
+                    ex.Message,
+                    dependency: "game-session",
+                    endpoint: "leave-game-session-by-id",
+                    stack: ex.StackTrace,
+                    cancellationToken: ct);
             }
         }
 

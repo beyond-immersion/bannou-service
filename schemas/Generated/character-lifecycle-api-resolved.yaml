@@ -440,7 +440,7 @@ paths:
           description: Character lifecycle profile not found
 
   # ==========================================================================
-  # Template Management (6 endpoints)
+  # Template Management (12 endpoints)
   # ==========================================================================
 
   /character-lifecycle/template/seed-lifecycle:
@@ -598,6 +598,183 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListTemplatesResponse'
+
+  /character-lifecycle/template/deprecate-lifecycle:
+    post:
+      summary: Deprecate a lifecycle template
+      description: |
+        Marks a lifecycle template as deprecated. Deprecated templates cannot be used
+        to create new lifecycle profiles for characters. Existing characters with
+        profiles referencing this template continue to function unchanged.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
+      operationId: deprecateLifecycleTemplate
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateLifecycleTemplateRequest'
+      responses:
+        '200':
+          description: Lifecycle template deprecated (or already deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetLifecycleTemplateResponse'
+        '404':
+          description: Lifecycle template not found
+
+  /character-lifecycle/template/deprecate-heritable:
+    post:
+      summary: Deprecate a heritable trait template
+      description: |
+        Marks a heritable trait template as deprecated. Deprecated templates cannot be used
+        to create new genetic profiles for characters of this species. Existing characters
+        with genetic profiles referencing this template continue to function unchanged.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
+      operationId: deprecateHeritableTraitTemplate
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateHeritableTraitTemplateRequest'
+      responses:
+        '200':
+          description: Heritable trait template deprecated (or already deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetHeritableTraitTemplateResponse'
+        '404':
+          description: Heritable trait template not found
+
+  /character-lifecycle/template/deprecate-hybrid:
+    post:
+      summary: Deprecate a hybrid trait template
+      description: |
+        Marks a hybrid trait template as deprecated. Deprecated hybrid templates cannot
+        be used to create new genetic profiles for hybrid offspring of this species pair.
+        Existing hybrid characters with genetic profiles referencing this template continue
+        to function unchanged.
+        Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+        no delete. Idempotent — returns OK if already deprecated.
+      operationId: deprecateHybridTraitTemplate
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateHybridTraitTemplateRequest'
+      responses:
+        '200':
+          description: Hybrid trait template deprecated (or already deprecated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetHybridTraitTemplateResponse'
+        '404':
+          description: Hybrid trait template not found
+
+  /character-lifecycle/template/clean-deprecated-lifecycle:
+    post:
+      summary: Clean deprecated lifecycle templates with zero remaining profiles
+      description: |
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        lifecycle templates and permanently removes those with zero remaining
+        LifecycleProfile instances referencing them, subject to an optional grace period.
+        Publishes lifecycle-template.deleted events for each removed template. Idempotent
+        and safe to call at any frequency. Supports dry-run mode for admin panel preview.
+      operationId: cleanDeprecatedLifecycleTemplates
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../common-api.yaml#/components/schemas/CleanDeprecatedRequest'
+      responses:
+        '200':
+          description: Cleanup sweep completed
+          content:
+            application/json:
+              schema:
+                $ref: '../common-api.yaml#/components/schemas/CleanDeprecatedStringKeyResponse'
+
+  /character-lifecycle/template/clean-deprecated-heritable:
+    post:
+      summary: Clean deprecated heritable trait templates with zero remaining profiles
+      description: |
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        heritable trait templates and permanently removes those with zero remaining
+        GeneticProfile instances referencing them, subject to an optional grace period.
+        Publishes heritable-trait-template.deleted events for each removed template.
+        Idempotent and safe to call at any frequency. Supports dry-run mode for admin
+        panel preview.
+      operationId: cleanDeprecatedHeritableTraitTemplates
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../common-api.yaml#/components/schemas/CleanDeprecatedRequest'
+      responses:
+        '200':
+          description: Cleanup sweep completed
+          content:
+            application/json:
+              schema:
+                $ref: '../common-api.yaml#/components/schemas/CleanDeprecatedStringKeyResponse'
+
+  /character-lifecycle/template/clean-deprecated-hybrid:
+    post:
+      summary: Clean deprecated hybrid trait templates with zero remaining hybrid profiles
+      description: |
+        Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+        hybrid trait templates and permanently removes those with zero remaining hybrid
+        GeneticProfile instances referencing them, subject to an optional grace period.
+        Publishes hybrid-trait-template.deleted events for each removed template.
+        Idempotent and safe to call at any frequency. Supports dry-run mode for admin
+        panel preview.
+      operationId: cleanDeprecatedHybridTraitTemplates
+      tags:
+      - CharacterLifecycle
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../common-api.yaml#/components/schemas/CleanDeprecatedRequest'
+      responses:
+        '200':
+          description: Cleanup sweep completed
+          content:
+            application/json:
+              schema:
+                $ref: '../common-api.yaml#/components/schemas/CleanDeprecatedStringKeyResponse'
 
   # ==========================================================================
   # Bloodline Management (5 endpoints)
@@ -2276,6 +2453,84 @@ components:
       description: Empty response. HTTP 200 confirms the template was created.
       additionalProperties: false
       properties: {}
+
+    DeprecateLifecycleTemplateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to deprecate a lifecycle template (Category B — one-way, no delete). Idempotent — returns OK 
+        if already deprecated.
+      required:
+      - speciesCode
+      - gameServiceId
+      properties:
+        speciesCode:
+          type: string
+          description: Species code of the template to deprecate
+          minLength: 1
+          maxLength: 100
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        reason:
+          type: string
+          nullable: true
+          description: Reason for deprecation (recommended for audit trail)
+          maxLength: 500
+
+    DeprecateHeritableTraitTemplateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to deprecate a heritable trait template (Category B — one-way, no delete). Idempotent — 
+        returns OK if already deprecated.
+      required:
+      - speciesCode
+      - gameServiceId
+      properties:
+        speciesCode:
+          type: string
+          description: Species code of the template to deprecate
+          minLength: 1
+          maxLength: 100
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        reason:
+          type: string
+          nullable: true
+          description: Reason for deprecation (recommended for audit trail)
+          maxLength: 500
+
+    DeprecateHybridTraitTemplateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to deprecate a hybrid trait template (Category B — one-way, no delete). Idempotent — returns 
+        OK if already deprecated.
+      required:
+      - speciesA
+      - speciesB
+      - gameServiceId
+      properties:
+        speciesA:
+          type: string
+          description: First species in the pair
+          minLength: 1
+          maxLength: 100
+        speciesB:
+          type: string
+          description: Second species in the pair
+          minLength: 1
+          maxLength: 100
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        reason:
+          type: string
+          nullable: true
+          description: Reason for deprecation (recommended for audit trail)
+          maxLength: 500
 
     GetLifecycleTemplateRequest:
       type: object

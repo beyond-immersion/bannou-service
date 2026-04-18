@@ -1801,6 +1801,7 @@ public partial class QuestController
                 "description": {
                     "type": "string",
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "New description"
                 },
                 "category": {

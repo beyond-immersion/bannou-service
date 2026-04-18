@@ -290,6 +290,15 @@ public class BehaviorBundleManager : IBehaviorBundleManager
                 ex,
                 "Failed to create asset bundle for behavior bundle {BundleId}",
                 bundleId);
+            await _messageBus.TryPublishErrorAsync(
+                "behavior",
+                "CreateAssetBundle",
+                "AssetBundleCreationFailed",
+                ex.Message,
+                dependency: "asset",
+                endpoint: "post:/asset/bundle/create",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return null;
         }
     }

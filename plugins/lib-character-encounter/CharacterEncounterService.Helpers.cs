@@ -1206,6 +1206,15 @@ public partial class CharacterEncounterService
             {
                 _logger.LogWarning(ex, "Worldstate unavailable for realm {RealmId} during lazy decay, skipping perspective {PerspectiveId}",
                     encounter.RealmId, perspective.PerspectiveId);
+                await _messageBus.TryPublishErrorAsync(
+                    "character-encounter",
+                    "ApplyLazyDecay",
+                    "ApiException",
+                    ex.Message,
+                    dependency: "worldstate",
+                    endpoint: "worldstate/get-elapsed-game-time",
+                    stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
                 return perspective;
             }
         }

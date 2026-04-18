@@ -1157,6 +1157,7 @@ public partial class TransitController
                     "nullable": true,
                     "minimum": 0,
                     "maximum": 1,
+                    "x-detect-if-set": true,
                     "description": "Updated per-mode cargo speed penalty rate"
                 },
                 "compatibleTerrainTypes": {

@@ -1967,6 +1967,79 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/character-lifecycle/template/deprecate-lifecycle': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Deprecate a lifecycle template
+     * @description Marks a lifecycle template as deprecated. Deprecated templates cannot be used
+     *     to create new lifecycle profiles for characters. Existing characters with
+     *     profiles referencing this template continue to function unchanged.
+     *     Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+     *     no delete. Idempotent — returns OK if already deprecated.
+     */
+    post: operations['characterLifecycle_deprecateLifecycleTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-lifecycle/template/deprecate-heritable': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Deprecate a heritable trait template
+     * @description Marks a heritable trait template as deprecated. Deprecated templates cannot be used
+     *     to create new genetic profiles for characters of this species. Existing characters
+     *     with genetic profiles referencing this template continue to function unchanged.
+     *     Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+     *     no delete. Idempotent — returns OK if already deprecated.
+     */
+    post: operations['characterLifecycle_deprecateHeritableTraitTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/character-lifecycle/template/deprecate-hybrid': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Deprecate a hybrid trait template
+     * @description Marks a hybrid trait template as deprecated. Deprecated hybrid templates cannot
+     *     be used to create new genetic profiles for hybrid offspring of this species pair.
+     *     Existing hybrid characters with genetic profiles referencing this template continue
+     *     to function unchanged.
+     *     Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+     *     no delete. Idempotent — returns OK if already deprecated.
+     */
+    post: operations['characterLifecycle_deprecateHybridTraitTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/character-lifecycle/bloodline/get': {
     parameters: {
       query?: never;
@@ -19274,6 +19347,32 @@ export interface components {
       /** @description Reason for deprecation (audit context for Category A entities) */
       deprecationReason: string;
     };
+    /** @description Request to deprecate a heritable trait template (Category B — one-way, no delete). Idempotent — returns OK if already deprecated. */
+    DeprecateHeritableTraitTemplateRequest: {
+      /** @description Species code of the template to deprecate */
+      speciesCode: string;
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /** @description Reason for deprecation (recommended for audit trail) */
+      reason?: string | null;
+    };
+    /** @description Request to deprecate a hybrid trait template (Category B — one-way, no delete). Idempotent — returns OK if already deprecated. */
+    DeprecateHybridTraitTemplateRequest: {
+      /** @description First species in the pair */
+      speciesA: string;
+      /** @description Second species in the pair */
+      speciesB: string;
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /** @description Reason for deprecation (recommended for audit trail) */
+      reason?: string | null;
+    };
     /** @description Request to deprecate a leaderboard definition (Category B — one-way) */
     DeprecateLeaderboardDefinitionRequest: {
       /**
@@ -19284,6 +19383,18 @@ export interface components {
       /** @description ID of the leaderboard to deprecate */
       leaderboardId: string;
       /** @description Reason for deprecation (audit context for Category B entities) */
+      reason?: string | null;
+    };
+    /** @description Request to deprecate a lifecycle template (Category B — one-way, no delete). Idempotent — returns OK if already deprecated. */
+    DeprecateLifecycleTemplateRequest: {
+      /** @description Species code of the template to deprecate */
+      speciesCode: string;
+      /**
+       * Format: uuid
+       * @description Game service scope
+       */
+      gameServiceId: string;
+      /** @description Reason for deprecation (recommended for audit trail) */
       reason?: string | null;
     };
     /** @description Request to soft-delete a location by marking it as deprecated */
@@ -39217,6 +39328,99 @@ export interface operations {
         content: {
           'application/json': components['schemas']['ListTemplatesResponse'];
         };
+      };
+    };
+  };
+  characterLifecycle_deprecateLifecycleTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeprecateLifecycleTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Lifecycle template deprecated (or already deprecated) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetLifecycleTemplateResponse'];
+        };
+      };
+      /** @description Lifecycle template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  characterLifecycle_deprecateHeritableTraitTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeprecateHeritableTraitTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Heritable trait template deprecated (or already deprecated) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetHeritableTraitTemplateResponse'];
+        };
+      };
+      /** @description Heritable trait template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  characterLifecycle_deprecateHybridTraitTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeprecateHybridTraitTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Hybrid trait template deprecated (or already deprecated) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetHybridTraitTemplateResponse'];
+        };
+      };
+      /** @description Hybrid trait template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };

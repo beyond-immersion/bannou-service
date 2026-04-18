@@ -293,16 +293,16 @@ paths:
         \ \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"nullable\": true,\n          \
         \          \"description\": \"New display name\"\n                },\n                \"description\": {\n       \
         \             \"type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"New description\"\n                },\n                \"defaultEmotionalImpact\"\
-        : {\n                    \"$ref\": \"#/$defs/EmotionalImpact\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"New suggested emotional response\"\n                },\n                \"sortOrder\"\
-        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New display ordering\"\n                }\n            }\n        },\n        \"EmotionalImpact\": {\n       \
-        \     \"type\": \"string\",\n            \"description\": \"How the encounter emotionally affected the character\"\
-        ,\n            \"enum\": [\n                \"Gratitude\",\n                \"Anger\",\n                \"Fear\",\n\
-        \                \"Respect\",\n                \"Contempt\",\n                \"Affection\",\n                \"Rivalry\"\
-        ,\n                \"Indifference\",\n                \"Guilt\",\n                \"Pride\"\n            ]\n     \
-        \   }\n    }\n}"
+        \                    \"x-detect-if-set\": true,\n                    \"description\": \"New description\"\n      \
+        \          },\n                \"defaultEmotionalImpact\": {\n                    \"$ref\": \"#/$defs/EmotionalImpact\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"New suggested emotional response\"\
+        \n                },\n                \"sortOrder\": {\n                    \"type\": \"integer\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"New display ordering\"\n                }\n  \
+        \          }\n        },\n        \"EmotionalImpact\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How the encounter emotionally affected the character\",\n            \"enum\": [\n                \"Gratitude\"\
+        ,\n                \"Anger\",\n                \"Fear\",\n                \"Respect\",\n                \"Contempt\"\
+        ,\n                \"Affection\",\n                \"Rivalry\",\n                \"Indifference\",\n             \
+        \   \"Guilt\",\n                \"Pride\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EncounterTypeResponse\"\
         ,\n    \"$defs\": {\n        \"EncounterTypeResponse\": {\n            \"allOf\": [\n                {\n         \
         \           \"type\": \"object\"\n                }\n            ],\n            \"type\": \"object\",\n         \
@@ -2071,6 +2071,7 @@ components:
           type: string
           maxLength: 500
           nullable: true
+          x-detect-if-set: true
           description: New description
         defaultEmotionalImpact:
           $ref: '#/components/schemas/EmotionalImpact'

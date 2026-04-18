@@ -207,6 +207,60 @@ export class CharacterLifecycleProxy {
   }
 
   /**
+   * Deprecate a lifecycle template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async characterLifecycleDeprecateLifecycleTemplateAsync(
+    request: Schemas['DeprecateLifecycleTemplateRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['GetLifecycleTemplateResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['DeprecateLifecycleTemplateRequest'],
+      Schemas['GetLifecycleTemplateResponse']
+    >('/character-lifecycle/template/deprecate-lifecycle', request, channel, timeout);
+  }
+
+  /**
+   * Deprecate a heritable trait template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async characterLifecycleDeprecateHeritableTraitTemplateAsync(
+    request: Schemas['DeprecateHeritableTraitTemplateRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['GetHeritableTraitTemplateResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['DeprecateHeritableTraitTemplateRequest'],
+      Schemas['GetHeritableTraitTemplateResponse']
+    >('/character-lifecycle/template/deprecate-heritable', request, channel, timeout);
+  }
+
+  /**
+   * Deprecate a hybrid trait template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async characterLifecycleDeprecateHybridTraitTemplateAsync(
+    request: Schemas['DeprecateHybridTraitTemplateRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['GetHybridTraitTemplateResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['DeprecateHybridTraitTemplateRequest'],
+      Schemas['GetHybridTraitTemplateResponse']
+    >('/character-lifecycle/template/deprecate-hybrid', request, channel, timeout);
+  }
+
+  /**
    * Get bloodline definition
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).

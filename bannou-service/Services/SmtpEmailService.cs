@@ -60,7 +60,11 @@ public class SmtpEmailService : IEmailService
 
         if (!string.IsNullOrEmpty(_username))
         {
-            await client.AuthenticateAsync(_username, _password, cancellationToken);
+            await client.AuthenticateAsync(
+                _username,
+                _password ?? throw new InvalidOperationException(
+                    "SMTP password is required when username is configured (AUTH_SMTP_PASSWORD)"),
+                cancellationToken);
         }
 
         await client.SendAsync(message, cancellationToken);

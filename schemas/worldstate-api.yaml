@@ -1265,6 +1265,7 @@ components:
           nullable: true
           items:
             $ref: '#/components/schemas/EraLabel'
+          x-detect-if-set: true
           description: New era label definitions (null = no change, empty array = clear all)
 
     DeleteCalendarRequest:

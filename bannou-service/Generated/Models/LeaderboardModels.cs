@@ -244,89 +244,55 @@ public partial class ListLeaderboardDefinitionsResponse
 public partial class UpdateLeaderboardDefinitionRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private System.Guid _gameServiceId = default!;
     /// <summary>
     /// ID of the game service
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get => _gameServiceId; set { _gameServiceId = value; _TrackChange("gameServiceId"); } }
+    public System.Guid GameServiceId { get; set; } = default!;
 
-    private string _leaderboardId = default!;
     /// <summary>
     /// ID of the leaderboard to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("leaderboardId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string LeaderboardId { get => _leaderboardId; set { _leaderboardId = value; _TrackChange("leaderboardId"); } }
+    public string LeaderboardId { get; set; } = default!;
 
-    private string? _displayName = default!;
     /// <summary>
     /// New display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
-    public string? DisplayName { get => _displayName; set { _displayName = value; _TrackChange("displayName"); } }
+    public string? DisplayName { get; set; } = default!;
 
-    private string? _description = default!;
     /// <summary>
     /// New description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
+    public string? Description { get; set; } = default!;
 
-    private bool? _isPublic = default!;
     /// <summary>
     /// New visibility setting
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isPublic")]
-    public bool? IsPublic { get => _isPublic; set { _isPublic = value; _TrackChange("isPublic"); } }
+    public bool? IsPublic { get; set; } = default!;
 
-    private string? _scoreType = default!;
     /// <summary>
     /// New analytics score type mapping
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scoreType")]
     [System.ComponentModel.DataAnnotations.StringLength(128)]
-    public string? ScoreType { get => _scoreType; set { _scoreType = value; _TrackChange("scoreType"); } }
+    public string? ScoreType { get; set; } = default!;
 
-    private string? _ratingType = default!;
     /// <summary>
     /// New analytics rating type mapping
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ratingType")]
     [System.ComponentModel.DataAnnotations.StringLength(128)]
-    public string? RatingType { get => _ratingType; set { _ratingType = value; _TrackChange("ratingType"); } }
+    public string? RatingType { get; set; } = default!;
 
 }
 

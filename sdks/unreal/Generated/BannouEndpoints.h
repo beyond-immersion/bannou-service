@@ -306,6 +306,15 @@ namespace Bannou
         /** List all lifecycle and heritage templates for a game service */
         constexpr const TCHAR* CharacterLifecycleListTemplates = TEXT("POST:/character-lifecycle/template/list");
 
+        /** Deprecate a lifecycle template */
+        constexpr const TCHAR* CharacterLifecycleDeprecateLifecycleTemplate = TEXT("POST:/character-lifecycle/template/deprecate-lifecycle");
+
+        /** Deprecate a heritable trait template */
+        constexpr const TCHAR* CharacterLifecycleDeprecateHeritableTraitTemplate = TEXT("POST:/character-lifecycle/template/deprecate-heritable");
+
+        /** Deprecate a hybrid trait template */
+        constexpr const TCHAR* CharacterLifecycleDeprecateHybridTraitTemplate = TEXT("POST:/character-lifecycle/template/deprecate-hybrid");
+
         /** Get bloodline definition */
         constexpr const TCHAR* CharacterLifecycleGetBloodline = TEXT("POST:/character-lifecycle/bloodline/get");
 
@@ -2611,6 +2620,30 @@ namespace Bannou
                 TEXT("FListTemplatesRequest"),
                 TEXT("FListTemplatesResponse"),
                 TEXT("List all lifecycle and heritage templates for a game service")
+            });
+            Registry.Add(TEXT("CharacterLifecycleDeprecateLifecycleTemplate"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-lifecycle/template/deprecate-lifecycle"),
+                TEXT("character-lifecycle"),
+                TEXT("FDeprecateLifecycleTemplateRequest"),
+                TEXT("FGetLifecycleTemplateResponse"),
+                TEXT("Deprecate a lifecycle template")
+            });
+            Registry.Add(TEXT("CharacterLifecycleDeprecateHeritableTraitTemplate"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-lifecycle/template/deprecate-heritable"),
+                TEXT("character-lifecycle"),
+                TEXT("FDeprecateHeritableTraitTemplateRequest"),
+                TEXT("FGetHeritableTraitTemplateResponse"),
+                TEXT("Deprecate a heritable trait template")
+            });
+            Registry.Add(TEXT("CharacterLifecycleDeprecateHybridTraitTemplate"), FEndpointInfo{
+                TEXT("POST"),
+                TEXT("/character-lifecycle/template/deprecate-hybrid"),
+                TEXT("character-lifecycle"),
+                TEXT("FDeprecateHybridTraitTemplateRequest"),
+                TEXT("FGetHybridTraitTemplateResponse"),
+                TEXT("Deprecate a hybrid trait template")
             });
             Registry.Add(TEXT("CharacterLifecycleGetBloodline"), FEndpointInfo{
                 TEXT("POST"),

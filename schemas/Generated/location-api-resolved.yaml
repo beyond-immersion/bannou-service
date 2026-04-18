@@ -1157,6 +1157,7 @@ components:
           type: string
           maxLength: 2000
           nullable: true
+          x-detect-if-set: true
           description: Description of the location
         locationType:
           allOf:
@@ -1187,6 +1188,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
+          x-detect-if-set: true
           description: >-
             Updated client-provided location metadata.
             No Bannou plugin reads specific keys from this field by convention.

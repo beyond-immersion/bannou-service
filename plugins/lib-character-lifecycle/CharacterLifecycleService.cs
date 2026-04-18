@@ -46,6 +46,8 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService, ICl
     private readonly IStateStore<BloodlineMembershipModel> _membershipStore;
     private readonly IStateStore<BloodlineMemberListModel> _memberListStore;
     private readonly IStateStore<string> _bloodlineCodeStore;
+    private readonly IStateStore<string> _profileStringStore;
+    private readonly IStateStore<string> _heritageStringStore;
     private readonly IStateStore<LifecycleManifestModel> _cacheStore;
     private readonly IQueryableStateStore<LifecycleTemplateModel> _queryableLifecycleTemplateStore;
     private readonly IQueryableStateStore<HeritableTraitTemplateModel> _queryableTraitTemplateStore;
@@ -79,6 +81,16 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService, ICl
     private const string BLOODLINE_MEMBERS_KEY_PREFIX = "bloodline:members:";
     private const string MANIFEST_KEY_PREFIX = "manifest:";
     private const string PREGNANCY_KEY_PREFIX = "pregnancy-pending:";
+    private const string LIFECYCLE_BY_TEMPLATE_PREFIX = "lifecycle-by-template:";
+    private const string GENETIC_BY_TRAIT_TEMPLATE_PREFIX = "genetic-by-trait-template:";
+    private const string GENETIC_BY_HYBRID_TEMPLATE_PREFIX = "genetic-by-hybrid-template:";
+
+    /// <summary>
+    /// Optimistic concurrency retry count for reverse-index string-list operations
+    /// (AddToStringListAsync / RemoveFromStringListAsync / HasStringListEntriesAsync).
+    /// Matches Seed's precedent for Category B clean-deprecated reverse-index maintenance.
+    /// </summary>
+    private const int ReverseIndexMaxRetries = 3;
 
     internal static string BuildProfileKey(Guid characterId)
         => $"{PROFILE_KEY_PREFIX}{characterId}";
@@ -109,6 +121,32 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService, ICl
 
     internal static string BuildManifestKey(Guid characterId)
         => $"{MANIFEST_KEY_PREFIX}{characterId}";
+
+    /// <summary>
+    /// Reverse-index key for lifecycle profiles keyed by their template identity.
+    /// Used by the Category B clean-deprecated sweep to check O(1) whether any
+    /// LifecycleProfile instances still reference a deprecated lifecycle template.
+    /// Key pattern: lifecycle-by-template:{speciesCode}:{gameServiceId}
+    /// </summary>
+    internal static string BuildLifecycleByTemplateKey(string speciesCode, Guid gameServiceId)
+        => $"{LIFECYCLE_BY_TEMPLATE_PREFIX}{speciesCode}:{gameServiceId}";
+
+    /// <summary>
+    /// Reverse-index key for genetic profiles keyed by their heritable trait template identity.
+    /// Used by the Category B clean-deprecated sweep to check O(1) whether any
+    /// GeneticProfile instances still reference a deprecated heritable trait template.
+    /// Key pattern: genetic-by-trait-template:{speciesCode}:{gameServiceId}
+    /// </summary>
+    internal static string BuildGeneticByTraitTemplateKey(string speciesCode, Guid gameServiceId)
+        => $"{GENETIC_BY_TRAIT_TEMPLATE_PREFIX}{speciesCode}:{gameServiceId}";
+
+    /// <summary>
+    /// Reverse-index key for hybrid genetic profiles keyed by their hybrid template identity.
+    /// Only populated for GeneticProfile instances whose SecondarySpecies is non-null.
+    /// Key pattern: genetic-by-hybrid-template:{speciesA}:{speciesB}:{gameServiceId}
+    /// </summary>
+    internal static string BuildGeneticByHybridTemplateKey(string speciesA, string speciesB, Guid gameServiceId)
+        => $"{GENETIC_BY_HYBRID_TEMPLATE_PREFIX}{speciesA}:{speciesB}:{gameServiceId}";
 
     #endregion
 
@@ -151,6 +189,8 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService, ICl
         _membershipStore = stateStoreFactory.GetStore<BloodlineMembershipModel>(StateStoreDefinitions.CharacterLifecycleBloodlines);
         _memberListStore = stateStoreFactory.GetStore<BloodlineMemberListModel>(StateStoreDefinitions.CharacterLifecycleBloodlines);
         _bloodlineCodeStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CharacterLifecycleBloodlines);
+        _profileStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CharacterLifecycleProfiles);
+        _heritageStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CharacterLifecycleHeritage);
         _cacheStore = stateStoreFactory.GetStore<LifecycleManifestModel>(StateStoreDefinitions.CharacterLifecycleCache);
         _queryableLifecycleTemplateStore = stateStoreFactory.GetQueryableStore<LifecycleTemplateModel>(StateStoreDefinitions.CharacterLifecycleHeritage);
         _queryableTraitTemplateStore = stateStoreFactory.GetQueryableStore<HeritableTraitTemplateModel>(StateStoreDefinitions.CharacterLifecycleHeritage);
@@ -496,6 +536,9 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService, ICl
             catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Guardian spirit growth recording failed for character {CharacterId}", body.CharacterId);
+                await _messageBus.TryPublishErrorAsync(
+                    "character-lifecycle", "DeathProcessing.GuardianGrowth",
+                    ex.GetType().Name, ex.Message, stack: ex.StackTrace);
             }
         }
 
@@ -509,6 +552,9 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService, ICl
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Archive compression failed for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character-lifecycle", "DeathProcessing.ArchiveCompression",
+                ex.GetType().Name, ex.Message, stack: ex.StackTrace);
         }
 
         // Step 5: Inheritance (each step individually safe to re-execute per map)
@@ -541,12 +587,18 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService, ICl
                 catch (ApiException ex)
                 {
                     _logger.LogWarning(ex, "Contract termination failed for {ContractId}", contract.ContractId);
+                    await _messageBus.TryPublishErrorAsync(
+                        "character-lifecycle", "DeathProcessing.ContractTermination",
+                        ex.GetType().Name, ex.Message, stack: ex.StackTrace);
                 }
             }
         }
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Contract query failed during death processing for {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character-lifecycle", "DeathProcessing.ContractQuery",
+                ex.GetType().Name, ex.Message, stack: ex.StackTrace);
         }
 
         // Step 6: Afterlife pathway (pure computation)
@@ -736,6 +788,45 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService, ICl
                 var templateKey = BuildLifecycleTemplateKey(entry.SpeciesCode, entry.GameServiceId);
                 var template = await _lifecycleTemplateStore.GetAsync(templateKey, cancellationToken);
 
+                // Category B instance creation guard (per IMPLEMENTATION TENETS):
+                // reject entries referencing deprecated lifecycle templates. Per-item
+                // error isolation — record the failure and continue with other entries.
+                if (template != null && template.IsDeprecated)
+                {
+                    _logger.LogWarning(
+                        "Skipping lifecycle profile seed for character {CharacterId}: " +
+                        "lifecycle template for species {SpeciesCode} in game {GameServiceId} is deprecated",
+                        entry.CharacterId, entry.SpeciesCode, entry.GameServiceId);
+                    errors.Add(new SeedItemError
+                    {
+                        CharacterId = entry.CharacterId,
+                        Error = $"Lifecycle template for species '{entry.SpeciesCode}' is deprecated"
+                    });
+                    continue;
+                }
+
+                // If heritage data is provided, also guard against a deprecated trait template
+                // (the heritage template that will be used to back this profile's genetics).
+                HeritableTraitTemplateModel? traitTemplate = null;
+                if (entry.HeritageData != null && entry.HeritageData.Count > 0)
+                {
+                    traitTemplate = await _traitTemplateStore.GetAsync(
+                        BuildTraitTemplateKey(entry.SpeciesCode, entry.GameServiceId), cancellationToken);
+                    if (traitTemplate != null && traitTemplate.IsDeprecated)
+                    {
+                        _logger.LogWarning(
+                            "Skipping lifecycle profile seed for character {CharacterId}: " +
+                            "heritable trait template for species {SpeciesCode} in game {GameServiceId} is deprecated",
+                            entry.CharacterId, entry.SpeciesCode, entry.GameServiceId);
+                        errors.Add(new SeedItemError
+                        {
+                            CharacterId = entry.CharacterId,
+                            Error = $"Heritable trait template for species '{entry.SpeciesCode}' is deprecated"
+                        });
+                        continue;
+                    }
+                }
+
                 // Compute naturalDeathYear from template + random
                 int? naturalDeathYear = null;
                 if (template != null)
@@ -766,6 +857,15 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService, ICl
 
                 await _profileStore.SaveAsync(profileKey, profile, cancellationToken: cancellationToken);
 
+                // Maintain reverse index for Category B clean-deprecated sweep
+                // (lifecycle-template → lifecycle-profile list)
+                await _profileStringStore.AddToStringListAsync(
+                    BuildLifecycleByTemplateKey(entry.SpeciesCode, entry.GameServiceId),
+                    entry.CharacterId.ToString(),
+                    ReverseIndexMaxRetries,
+                    _logger,
+                    cancellationToken);
+
                 // Write minimal genetic profile if heritage data provided (per map)
                 if (entry.HeritageData != null && entry.HeritageData.Count > 0)
                 {
@@ -789,6 +889,17 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService, ICl
                         CreatedAt = now
                     };
                     await _geneticStore.SaveAsync(geneticKey, geneticProfile, cancellationToken: cancellationToken);
+
+                    // Maintain reverse index for Category B clean-deprecated sweep
+                    // (heritable-trait-template → genetic-profile list). Seeded genetic
+                    // profiles are never hybrids, so only the trait-template index is
+                    // written here; the hybrid index is populated by procreation paths.
+                    await _heritageStringStore.AddToStringListAsync(
+                        BuildGeneticByTraitTemplateKey(entry.SpeciesCode, entry.GameServiceId),
+                        entry.CharacterId.ToString(),
+                        ReverseIndexMaxRetries,
+                        _logger,
+                        cancellationToken);
                 }
 
                 createdCount++;
@@ -902,6 +1013,17 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService, ICl
         if (traitTemplate == null)
             return (StatusCodes.NotFound, null);
 
+        // Category B instance creation guard (per IMPLEMENTATION TENETS):
+        // reject genetic profile creation if the heritable trait template is deprecated.
+        if (traitTemplate.IsDeprecated)
+        {
+            _logger.LogWarning(
+                "Cannot create genetic profile for character {CharacterId}: " +
+                "heritable trait template for species {SpeciesCode} in game {GameServiceId} is deprecated",
+                body.CharacterId, body.SpeciesCode, body.GameServiceId);
+            return (StatusCodes.BadRequest, null);
+        }
+
         // Generate phenotype from provided values or species-default + random variation
         var phenotype = body.PhenotypeValues != null && body.PhenotypeValues.Count > 0
             ? body.PhenotypeValues.ToList()
@@ -949,6 +1071,17 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService, ICl
 
         await _geneticStore.SaveAsync(geneticKey, geneticProfile, cancellationToken: cancellationToken);
         await _cacheStore.DeleteAsync(BuildManifestKey(body.CharacterId), cancellationToken);
+
+        // Maintain reverse index for Category B clean-deprecated sweep
+        // (heritable-trait-template → genetic-profile list). First-gen seeded profiles
+        // are never hybrids, so only the trait-template index is written here; the
+        // hybrid index is populated by procreation paths.
+        await _heritageStringStore.AddToStringListAsync(
+            BuildGeneticByTraitTemplateKey(body.SpeciesCode, body.GameServiceId),
+            body.CharacterId.ToString(),
+            ReverseIndexMaxRetries,
+            _logger,
+            cancellationToken);
 
         _logger.LogInformation("Seeded genetic profile for character {CharacterId} species {SpeciesCode}",
             body.CharacterId, body.SpeciesCode);
@@ -1655,8 +1788,47 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService, ICl
     /// </summary>
     public async Task<(StatusCodes, CleanupByCharacterResponse?)> CleanupByCharacterAsync(CleanupByCharacterRequest body, CancellationToken cancellationToken)
     {
-        // Read profile for parent references before deletion
+        // Read profile and genetic for template identity before deletion (needed for reverse-index removal)
         var profile = await _profileStore.GetAsync(BuildProfileKey(body.CharacterId), cancellationToken);
+        var genetic = await _geneticStore.GetAsync(BuildGeneticKey(body.CharacterId), cancellationToken);
+
+        // Remove from reverse indexes BEFORE deleting the source records. This order
+        // is safe under Category B — a stale index entry is handled by the
+        // clean-deprecated sweep (which rechecks existence), so pointing at a
+        // deleted record degrades to "has instances" false positives rather than
+        // data corruption. The reverse order (delete record, then index) would be
+        // identical in effect given HasStringListEntriesAsync's semantics.
+        if (profile != null)
+        {
+            await _profileStringStore.RemoveFromStringListAsync(
+                BuildLifecycleByTemplateKey(profile.SpeciesCode, profile.GameServiceId),
+                body.CharacterId.ToString(),
+                ReverseIndexMaxRetries,
+                _logger,
+                cancellationToken);
+        }
+        if (genetic != null)
+        {
+            // Non-hybrid genetic profiles live in the trait-template reverse index.
+            await _heritageStringStore.RemoveFromStringListAsync(
+                BuildGeneticByTraitTemplateKey(genetic.SpeciesCode, profile?.GameServiceId ?? default),
+                body.CharacterId.ToString(),
+                ReverseIndexMaxRetries,
+                _logger,
+                cancellationToken);
+
+            // Hybrid genetic profiles additionally live in the hybrid-template reverse index.
+            if (genetic.SecondarySpecies != null && profile != null)
+            {
+                await _heritageStringStore.RemoveFromStringListAsync(
+                    BuildGeneticByHybridTemplateKey(
+                        genetic.SpeciesCode, genetic.SecondarySpecies, profile.GameServiceId),
+                    body.CharacterId.ToString(),
+                    ReverseIndexMaxRetries,
+                    _logger,
+                    cancellationToken);
+            }
+        }
 
         // Delete profile and genetic data
         await _profileStore.DeleteAsync(BuildProfileKey(body.CharacterId), cancellationToken);
@@ -1713,6 +1885,37 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService, ICl
         {
             try
             {
+                // Read genetic profile before deletion to reach the hybrid index when applicable.
+                var genetic = await _geneticStore.GetAsync(BuildGeneticKey(profile.CharacterId), cancellationToken);
+
+                // Remove from reverse indexes before deleting source records. See
+                // CleanupByCharacterAsync for the ordering rationale.
+                await _profileStringStore.RemoveFromStringListAsync(
+                    BuildLifecycleByTemplateKey(profile.SpeciesCode, profile.GameServiceId),
+                    profile.CharacterId.ToString(),
+                    ReverseIndexMaxRetries,
+                    _logger,
+                    cancellationToken);
+                if (genetic != null)
+                {
+                    await _heritageStringStore.RemoveFromStringListAsync(
+                        BuildGeneticByTraitTemplateKey(genetic.SpeciesCode, profile.GameServiceId),
+                        profile.CharacterId.ToString(),
+                        ReverseIndexMaxRetries,
+                        _logger,
+                        cancellationToken);
+                    if (genetic.SecondarySpecies != null)
+                    {
+                        await _heritageStringStore.RemoveFromStringListAsync(
+                            BuildGeneticByHybridTemplateKey(
+                                genetic.SpeciesCode, genetic.SecondarySpecies, profile.GameServiceId),
+                            profile.CharacterId.ToString(),
+                            ReverseIndexMaxRetries,
+                            _logger,
+                            cancellationToken);
+                    }
+                }
+
                 await _profileStore.DeleteAsync(BuildProfileKey(profile.CharacterId), cancellationToken);
                 await _geneticStore.DeleteAsync(BuildGeneticKey(profile.CharacterId), cancellationToken);
                 await _membershipStore.DeleteAsync(BuildBloodlineMemberKey(profile.CharacterId), cancellationToken);

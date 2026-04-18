@@ -130,6 +130,36 @@ public partial interface ICharacterLifecycleService : IBannouService
         Task<(StatusCodes, ListTemplatesResponse?)> ListTemplatesAsync(ListTemplatesRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// DeprecateLifecycleTemplate operation
+        /// </summary>
+        Task<(StatusCodes, GetLifecycleTemplateResponse?)> DeprecateLifecycleTemplateAsync(DeprecateLifecycleTemplateRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// DeprecateHeritableTraitTemplate operation
+        /// </summary>
+        Task<(StatusCodes, GetHeritableTraitTemplateResponse?)> DeprecateHeritableTraitTemplateAsync(DeprecateHeritableTraitTemplateRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// DeprecateHybridTraitTemplate operation
+        /// </summary>
+        Task<(StatusCodes, GetHybridTraitTemplateResponse?)> DeprecateHybridTraitTemplateAsync(DeprecateHybridTraitTemplateRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// CleanDeprecatedLifecycleTemplates operation
+        /// </summary>
+        Task<(StatusCodes, CleanDeprecatedStringKeyResponse?)> CleanDeprecatedLifecycleTemplatesAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// CleanDeprecatedHeritableTraitTemplates operation
+        /// </summary>
+        Task<(StatusCodes, CleanDeprecatedStringKeyResponse?)> CleanDeprecatedHeritableTraitTemplatesAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// CleanDeprecatedHybridTraitTemplates operation
+        /// </summary>
+        Task<(StatusCodes, CleanDeprecatedStringKeyResponse?)> CleanDeprecatedHybridTraitTemplatesAsync(CleanDeprecatedRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// GetBloodline operation
         /// </summary>
         Task<(StatusCodes, GetBloodlineResponse?)> GetBloodlineAsync(GetBloodlineRequest body, CancellationToken cancellationToken = default(CancellationToken));

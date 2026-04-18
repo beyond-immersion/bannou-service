@@ -247,8 +247,17 @@ public partial class QuestService
                     },
                     cancellationToken);
             }
-            catch (ApiException)
+            catch (ApiException ex)
             {
+                await _messageBus.TryPublishErrorAsync(
+                    "quest",
+                    "CheckCurrencyPrerequisite",
+                    "GetOrCreateWalletFailed",
+                    ex.Message,
+                    dependency: "currency",
+                    endpoint: "get-or-create-wallet",
+                    stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
                 return new PrerequisiteFailure
                 {
                     Type = PrerequisiteType.CurrencyAmount,
@@ -283,9 +292,17 @@ public partial class QuestService
                     },
                     cancellationToken);
             }
-            catch (ApiException)
+            catch (ApiException ex)
             {
-                // No balance means 0
+                await _messageBus.TryPublishErrorAsync(
+                    "quest",
+                    "CheckCurrencyPrerequisite",
+                    "GetBalanceFailed",
+                    ex.Message,
+                    dependency: "currency",
+                    endpoint: "get-balance",
+                    stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
                 return new PrerequisiteFailure
                 {
                     Type = PrerequisiteType.CurrencyAmount,

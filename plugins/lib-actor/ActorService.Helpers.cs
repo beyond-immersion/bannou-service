@@ -159,6 +159,10 @@ public partial class ActorService
         {
             _logger.LogWarning(ex, "Character service call failed for realm resolution of {CharacterId} with status {Status}",
                 characterId.Value, ex.StatusCode);
+            await _messageBus.TryPublishErrorAsync(
+                "actor", "ResolveRealmId", "CharacterServiceError", ex.Message,
+                dependency: "character", endpoint: "get-character",
+                stack: ex.StackTrace, cancellationToken: ct);
             return null;
         }
     }

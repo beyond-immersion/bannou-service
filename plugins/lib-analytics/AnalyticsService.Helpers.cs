@@ -159,8 +159,16 @@ public partial class AnalyticsService
         }
         catch (ApiException ex)
         {
-            // Per IMPLEMENTATION TENETS: ApiException is expected, log at Warning, do NOT emit error events
             _logger.LogWarning(ex, "Failed to resolve game service for game type {GameType}: {Status}", gameType, ex.StatusCode);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "ResolveGameServiceId",
+                "ApiException",
+                ex.Message,
+                dependency: "game-service",
+                endpoint: "game-service/get",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return null;
         }
         catch (Exception ex)
@@ -242,8 +250,16 @@ public partial class AnalyticsService
         }
         catch (ApiException ex)
         {
-            // Per IMPLEMENTATION TENETS: ApiException is expected, log at Warning, do NOT emit error events
             _logger.LogWarning(ex, "Failed to resolve game session {SessionId} for analytics event: {Status}", sessionId, ex.StatusCode);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "ResolveGameServiceIdForSession",
+                "ApiException",
+                ex.Message,
+                dependency: "game-session",
+                endpoint: "game-session/get",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return null;
         }
         catch (Exception ex)
@@ -334,8 +350,16 @@ public partial class AnalyticsService
         }
         catch (ApiException ex)
         {
-            // Per IMPLEMENTATION TENETS: ApiException is expected, log at Warning, do NOT emit error events
             _logger.LogWarning(ex, "Failed to resolve game service for realm {RealmId}: {Status}", realmId, ex.StatusCode);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "ResolveGameServiceIdForRealm",
+                "ApiException",
+                ex.Message,
+                dependency: "realm",
+                endpoint: "realm/get",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return null;
         }
         catch (Exception ex)
@@ -402,8 +426,16 @@ public partial class AnalyticsService
         }
         catch (ApiException ex)
         {
-            // Per IMPLEMENTATION TENETS: ApiException is expected, log at Warning, do NOT emit error events
             _logger.LogWarning(ex, "Failed to resolve game service for character {CharacterId}: {Status}", characterId, ex.StatusCode);
+            await _messageBus.TryPublishErrorAsync(
+                "analytics",
+                "ResolveGameServiceIdForCharacter",
+                "ApiException",
+                ex.Message,
+                dependency: "character",
+                endpoint: "character/get",
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
             return null;
         }
         catch (Exception ex)

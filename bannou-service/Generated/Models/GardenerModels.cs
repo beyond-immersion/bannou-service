@@ -716,59 +716,29 @@ public partial class GetGardenStateRequest
 public partial class UpdatePositionRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private System.Guid _sessionId = default!;
     /// <summary>
     /// WebSocket session ID of the player
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SessionId { get => _sessionId; set { _sessionId = value; _TrackChange("sessionId"); } }
+    public System.Guid SessionId { get; set; } = default!;
 
-    private Vec3 _position = new Vec3();
     /// <summary>
     /// New position in garden space
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("position")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public Vec3 Position { get => _position; set { _position = value; _TrackChange("position"); } }
+    public Vec3 Position { get; set; } = new Vec3();
 
-    private Vec3 _velocity = new Vec3();
     /// <summary>
     /// Current velocity vector
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("velocity")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public Vec3 Velocity { get => _velocity; set { _velocity = value; _TrackChange("velocity"); } }
+    public Vec3 Velocity { get; set; } = new Vec3();
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -1369,97 +1339,61 @@ public partial class ListTemplatesRequest
 public partial class UpdateTemplateRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private System.Guid _scenarioTemplateId = default!;
     /// <summary>
     /// Template ID to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scenarioTemplateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ScenarioTemplateId { get => _scenarioTemplateId; set { _scenarioTemplateId = value; _TrackChange("scenarioTemplateId"); } }
+    public System.Guid ScenarioTemplateId { get; set; } = default!;
 
-    private string? _displayName = default!;
     /// <summary>
     /// Updated display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    public string? DisplayName { get => _displayName; set { _displayName = value; _TrackChange("displayName"); } }
+    public string? DisplayName { get; set; } = default!;
 
-    private string? _description = default!;
     /// <summary>
     /// Updated description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
-    public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
+    public string? Description { get; set; } = default!;
 
-    private System.Collections.Generic.ICollection<DomainWeight>? _domainWeights = default!;
     /// <summary>
     /// Updated domain weights
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("domainWeights")]
-    public System.Collections.Generic.ICollection<DomainWeight>? DomainWeights { get => _domainWeights; set { _domainWeights = value; _TrackChange("domainWeights"); } }
+    public System.Collections.Generic.ICollection<DomainWeight>? DomainWeights { get; set; } = default!;
 
-    private int? _maxConcurrentInstances = default!;
     /// <summary>
     /// Updated max concurrent instances
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxConcurrentInstances")]
-    public int? MaxConcurrentInstances { get => _maxConcurrentInstances; set { _maxConcurrentInstances = value; _TrackChange("maxConcurrentInstances"); } }
+    public int? MaxConcurrentInstances { get; set; } = default!;
 
-    private ScenarioPrerequisites? _prerequisites = default!;
     /// <summary>
     /// Updated prerequisites
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("prerequisites")]
-    public ScenarioPrerequisites? Prerequisites { get => _prerequisites; set { _prerequisites = value; _TrackChange("prerequisites"); } }
+    public ScenarioPrerequisites? Prerequisites { get; set; } = default!;
 
-    private ScenarioChaining? _chaining = default!;
     /// <summary>
     /// Updated chaining configuration
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("chaining")]
-    public ScenarioChaining? Chaining { get => _chaining; set { _chaining = value; _TrackChange("chaining"); } }
+    public ScenarioChaining? Chaining { get; set; } = default!;
 
-    private ScenarioMultiplayer? _multiplayer = default!;
     /// <summary>
     /// Updated multiplayer configuration
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("multiplayer")]
-    public ScenarioMultiplayer? Multiplayer { get => _multiplayer; set { _multiplayer = value; _TrackChange("multiplayer"); } }
+    public ScenarioMultiplayer? Multiplayer { get; set; } = default!;
 
-    private ScenarioContent? _content = default!;
     /// <summary>
     /// Updated content references
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("content")]
-    public ScenarioContent? Content { get => _content; set { _content = value; _TrackChange("content"); } }
+    public ScenarioContent? Content { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -1539,61 +1473,30 @@ public partial class GetPhaseConfigRequest
 public partial class UpdatePhaseConfigRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private DeploymentPhase? _currentPhase = default!;
     /// <summary>
     /// New deployment phase
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentPhase")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DeploymentPhase? CurrentPhase { get => _currentPhase; set { _currentPhase = value; _TrackChange("currentPhase"); } }
+    public DeploymentPhase? CurrentPhase { get; set; } = default!;
 
-    private int? _maxConcurrentScenariosGlobal = default!;
     /// <summary>
     /// Updated global scenario capacity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxConcurrentScenariosGlobal")]
-    public int? MaxConcurrentScenariosGlobal { get => _maxConcurrentScenariosGlobal; set { _maxConcurrentScenariosGlobal = value; _TrackChange("maxConcurrentScenariosGlobal"); } }
+    public int? MaxConcurrentScenariosGlobal { get; set; } = default!;
 
-    private bool? _persistentEntryEnabled = default!;
     /// <summary>
     /// Whether persistent world entry is enabled
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("persistentEntryEnabled")]
-    public bool? PersistentEntryEnabled { get => _persistentEntryEnabled; set { _persistentEntryEnabled = value; _TrackChange("persistentEntryEnabled"); } }
+    public bool? PersistentEntryEnabled { get; set; } = default!;
 
-    private bool? _gardenMinigamesEnabled = default!;
     /// <summary>
     /// Whether garden minigames are enabled
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gardenMinigamesEnabled")]
-    public bool? GardenMinigamesEnabled { get => _gardenMinigamesEnabled; set { _gardenMinigamesEnabled = value; _TrackChange("gardenMinigamesEnabled"); } }
+    public bool? GardenMinigamesEnabled { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

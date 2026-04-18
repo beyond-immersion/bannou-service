@@ -1074,12 +1074,14 @@ public partial class SpeciesController
                     "type": "string",
                     "maxLength": 1000,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Description of the species"
                 },
                 "category": {
                     "type": "string",
                     "maxLength": 50,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Category for grouping"
                 },
                 "isPlayable": {
@@ -1091,12 +1093,14 @@ public partial class SpeciesController
                     "type": "integer",
                     "minimum": 1,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Base lifespan in game years"
                 },
                 "maturityAge": {
                     "type": "integer",
                     "minimum": 0,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Age at which the species reaches maturity"
                 },
                 "traitModifiers": {
@@ -1109,6 +1113,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
+                    "x-detect-if-set": true,
                     "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }

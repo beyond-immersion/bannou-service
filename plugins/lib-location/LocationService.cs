@@ -3,6 +3,7 @@ using BeyondImmersion.Bannou.Location.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Helpers;
 using BeyondImmersion.BannouService.History;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Realm;
@@ -745,7 +746,7 @@ public partial class LocationService : ILocationService, IDeprecateAndMergeEntit
             changedFields.Add("name");
         }
 
-        if (body.Description != null && body.Description != model.Description)
+        if (body.ChangeFields.IsFieldSet("description") && body.Description != model.Description)
         {
             model.Description = body.Description;
             changedFields.Add("description");
@@ -781,7 +782,7 @@ public partial class LocationService : ILocationService, IDeprecateAndMergeEntit
             changedFields.Add("localOrigin");
         }
 
-        if (body.Metadata != null)
+        if (body.ChangeFields.IsFieldSet("metadata"))
         {
             model.Metadata = body.Metadata;
             changedFields.Add("metadata");

@@ -188,7 +188,7 @@ public partial class UpdateRealmRequest
     /// <summary>
     /// Fields explicitly set on this request. Populated automatically by property
     /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
+    /// provided" from "field explicitly set to null" for opt-in properties.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
     public System.Collections.Generic.ICollection<string>? ChangeFields
@@ -209,29 +209,26 @@ public partial class UpdateRealmRequest
         => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
 
 
-    private System.Guid _realmId = default!;
     /// <summary>
     /// ID of the realm to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get => _realmId; set { _realmId = value; _TrackChange("realmId"); } }
+    public System.Guid RealmId { get; set; } = default!;
 
-    private System.Guid? _gameServiceId = default!;
     /// <summary>
     /// ID of the game service this realm belongs to
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
-    public System.Guid? GameServiceId { get => _gameServiceId; set { _gameServiceId = value; _TrackChange("gameServiceId"); } }
+    public System.Guid? GameServiceId { get; set; } = default!;
 
-    private string? _name = default!;
     /// <summary>
     /// Display name for the realm
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
     [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
-    public string? Name { get => _name; set { _name = value; _TrackChange("name"); } }
+    public string? Name { get; set; } = default!;
 
     private string? _description = default!;
     /// <summary>
@@ -249,19 +246,17 @@ public partial class UpdateRealmRequest
     [System.ComponentModel.DataAnnotations.StringLength(50, MinimumLength = 1)]
     public string? Category { get => _category; set { _category = value; _TrackChange("category"); } }
 
-    private bool? _isActive = default!;
     /// <summary>
     /// Whether the realm is currently active
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
-    public bool? IsActive { get => _isActive; set { _isActive = value; _TrackChange("isActive"); } }
+    public bool? IsActive { get; set; } = default!;
 
-    private bool? _isSystemType = default!;
     /// <summary>
     /// Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isSystemType")]
-    public bool? IsSystemType { get => _isSystemType; set { _isSystemType = value; _TrackChange("isSystemType"); } }
+    public bool? IsSystemType { get; set; } = default!;
 
     private object? _metadata = default!;
     /// <summary>

@@ -113,95 +113,6 @@ public partial class ParticipationBatchEntry
 }
 
 /// <summary>
-/// Single participation modification record within a batch event
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ParticipationBatchModifiedEntry
-{
-
-    /// <summary>
-    /// Unique identifier for this participation record
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("participationId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ParticipationId { get; set; } = default!;
-
-    /// <summary>
-    /// Character who participated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
-    /// Historical event the character participated in
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("historicalEventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid HistoricalEventId { get; set; } = default!;
-
-    /// <summary>
-    /// Role the character played in the event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("role")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ParticipationRole Role { get; set; } = default!;
-
-    /// <summary>
-    /// Name of the historical event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("historicalEventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string HistoricalEventName { get; set; } = default!;
-
-    /// <summary>
-    /// Category of the historical event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventCategory")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EventCategory EventCategory { get; set; } = default!;
-
-    /// <summary>
-    /// How significant this event was for the character (0.0 to 1.0)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("significance")]
-    public float Significance { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the participation was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the participation was last updated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// List of field names that were modified
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changedFields")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
-
-}
-
-/// <summary>
 /// Single participation destruction record within a batch event
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -328,45 +239,6 @@ public partial class ParticipationBatchCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Batch event containing accumulated participation modified records
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ParticipationBatchModifiedEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Event type identifier: character-history.participation.batch-modified
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "character-history.participation.batch-modified";
-
-    /// <summary>
-    /// Individual modified records in this batch
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entries")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<ParticipationBatchModifiedEntry> Entries { get; set; } = new System.Collections.ObjectModel.Collection<ParticipationBatchModifiedEntry>();
-
-    /// <summary>
-    /// Number of entries in this batch
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("count")]
-    public int Count { get; set; } = default!;
-
-    /// <summary>
-    /// When the accumulation window started
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("windowStartedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset WindowStartedAt { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Batch event containing accumulated participation destroyed records
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -388,6 +260,134 @@ public partial class ParticipationBatchDestroyedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<ParticipationBatchDestroyedEntry> Entries { get; set; } = new System.Collections.ObjectModel.Collection<ParticipationBatchDestroyedEntry>();
+
+    /// <summary>
+    /// Number of entries in this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("count")]
+    public int Count { get; set; } = default!;
+
+    /// <summary>
+    /// When the accumulation window started
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("windowStartedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset WindowStartedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Single participation modification record within a batch event
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ParticipationBatchModifiedEntry
+{
+
+    /// <summary>
+    /// Unique identifier for this participation record
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("participationId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ParticipationId { get; set; } = default!;
+
+    /// <summary>
+    /// Character who participated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Historical event the character participated in
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("historicalEventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid HistoricalEventId { get; set; } = default!;
+
+    /// <summary>
+    /// Role the character played in the event
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("role")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ParticipationRole Role { get; set; } = default!;
+
+    /// <summary>
+    /// Name of the historical event
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("historicalEventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string HistoricalEventName { get; set; } = default!;
+
+    /// <summary>
+    /// Category of the historical event
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventCategory")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EventCategory EventCategory { get; set; } = default!;
+
+    /// <summary>
+    /// How significant this event was for the character (0.0 to 1.0)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("significance")]
+    public float Significance { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the participation was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Timestamp when the participation was last updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// List of field names that were modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changedFields")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
+/// <summary>
+/// Batch event containing accumulated participation modified records
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ParticipationBatchModifiedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier: character-history.participation.batch-modified
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "character-history.participation.batch-modified";
+
+    /// <summary>
+    /// Individual modified records in this batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entries")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ParticipationBatchModifiedEntry> Entries { get; set; } = new System.Collections.ObjectModel.Collection<ParticipationBatchModifiedEntry>();
 
     /// <summary>
     /// Number of entries in this batch

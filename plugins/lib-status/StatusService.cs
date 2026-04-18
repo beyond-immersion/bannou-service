@@ -1311,6 +1311,15 @@ public partial class StatusService : IStatusService, IAccountDeletionCleanupRequ
                     _logger.LogWarning(ex,
                         "Failed to delete item instance {ItemInstanceId} during cleanup",
                         instance.ItemInstanceId);
+                    await _messageBus.TryPublishErrorAsync(
+                        "status",
+                        "CleanupByOwner",
+                        "ItemDestroyError",
+                        ex.Message,
+                        dependency: "item",
+                        endpoint: "destroy-item-instance",
+                        stack: ex.StackTrace,
+                        cancellationToken: cancellationToken);
                 }
 
                 // Delete instance record
@@ -1354,6 +1363,15 @@ public partial class StatusService : IStatusService, IAccountDeletionCleanupRequ
                 _logger.LogWarning(ex,
                     "Failed to delete container {ContainerId} during cleanup",
                     container.ContainerId);
+                await _messageBus.TryPublishErrorAsync(
+                    "status",
+                    "CleanupByOwner",
+                    "ContainerDeleteError",
+                    ex.Message,
+                    dependency: "inventory",
+                    endpoint: "delete-container",
+                    stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
             }
 
             // Delete container records (dual keys)

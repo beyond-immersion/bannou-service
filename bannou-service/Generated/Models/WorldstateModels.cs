@@ -687,51 +687,21 @@ public partial class InitializeRealmClockResponse
 public partial class SetTimeRatioRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private System.Guid _realmId = default!;
     /// <summary>
     /// Realm to change the time ratio for
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get => _realmId; set { _realmId = value; _TrackChange("realmId"); } }
+    public System.Guid RealmId { get; set; } = default!;
 
-    private float _newRatio = default!;
     /// <summary>
     /// New game-seconds per real-second (0.0 pauses the clock)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newRatio")]
     [System.ComponentModel.DataAnnotations.Range(0F, 10000F)]
-    public float NewRatio { get => _newRatio; set { _newRatio = value; _TrackChange("newRatio"); } }
+    public float NewRatio { get; set; } = default!;
 
-    private TimeRatioChangeReason _reason = default!;
     /// <summary>
     /// Reason for the ratio change
     /// </summary>
@@ -739,7 +709,7 @@ public partial class SetTimeRatioRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public TimeRatioChangeReason Reason { get => _reason; set { _reason = value; _TrackChange("reason"); } }
+    public TimeRatioChangeReason Reason { get; set; } = default!;
 
 }
 
@@ -1055,7 +1025,7 @@ public partial class UpdateCalendarRequest
     /// <summary>
     /// Fields explicitly set on this request. Populated automatically by property
     /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
+    /// provided" from "field explicitly set to null" for opt-in properties.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
     public System.Collections.Generic.ICollection<string>? ChangeFields
@@ -1076,16 +1046,14 @@ public partial class UpdateCalendarRequest
         => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
 
 
-    private System.Guid _gameServiceId = default!;
     /// <summary>
     /// Game service the calendar belongs to (identity, cannot be changed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid GameServiceId { get => _gameServiceId; set { _gameServiceId = value; _TrackChange("gameServiceId"); } }
+    public System.Guid GameServiceId { get; set; } = default!;
 
-    private string _templateCode = default!;
     /// <summary>
     /// Calendar template code (identity, cannot be changed)
     /// </summary>
@@ -1093,39 +1061,35 @@ public partial class UpdateCalendarRequest
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
-    public string TemplateCode { get => _templateCode; set { _templateCode = value; _TrackChange("templateCode"); } }
+    public string TemplateCode { get; set; } = default!;
 
-    private int? _gameHoursPerDay = default!;
     /// <summary>
     /// New number of game hours in a day (triggers day period re-validation)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameHoursPerDay")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
-    public int? GameHoursPerDay { get => _gameHoursPerDay; set { _gameHoursPerDay = value; _TrackChange("gameHoursPerDay"); } }
+    public int? GameHoursPerDay { get; set; } = default!;
 
-    private System.Collections.Generic.ICollection<DayPeriodDefinition>? _dayPeriods = default!;
     /// <summary>
     /// New day period definitions (must cover [0, gameHoursPerDay) without gaps or overlaps)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("dayPeriods")]
     [System.ComponentModel.DataAnnotations.MinLength(1)]
-    public System.Collections.Generic.ICollection<DayPeriodDefinition>? DayPeriods { get => _dayPeriods; set { _dayPeriods = value; _TrackChange("dayPeriods"); } }
+    public System.Collections.Generic.ICollection<DayPeriodDefinition>? DayPeriods { get; set; } = default!;
 
-    private System.Collections.Generic.ICollection<MonthDefinition>? _months = default!;
     /// <summary>
     /// New month definitions (season codes must reference defined seasons)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("months")]
     [System.ComponentModel.DataAnnotations.MinLength(1)]
-    public System.Collections.Generic.ICollection<MonthDefinition>? Months { get => _months; set { _months = value; _TrackChange("months"); } }
+    public System.Collections.Generic.ICollection<MonthDefinition>? Months { get; set; } = default!;
 
-    private System.Collections.Generic.ICollection<SeasonDefinition>? _seasons = default!;
     /// <summary>
     /// New season definitions
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seasons")]
     [System.ComponentModel.DataAnnotations.MinLength(1)]
-    public System.Collections.Generic.ICollection<SeasonDefinition>? Seasons { get => _seasons; set { _seasons = value; _TrackChange("seasons"); } }
+    public System.Collections.Generic.ICollection<SeasonDefinition>? Seasons { get; set; } = default!;
 
     private System.Collections.Generic.ICollection<EraLabel>? _eraLabels = default!;
     /// <summary>
@@ -1258,57 +1222,27 @@ public partial class RealmConfigResponse
 public partial class UpdateRealmConfigRequest
 {
 
-    // === Change-tracking infrastructure (auto-generated, see Issue #722) ===
-    private System.Collections.Generic.HashSet<string>? _changeFields;
-
-    /// <summary>
-    /// Fields explicitly set on this request. Populated automatically by property
-    /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
-    public System.Collections.Generic.ICollection<string>? ChangeFields
-    {
-        get => _changeFields?.Count > 0 ? _changeFields : null;
-        set
-        {
-            if (value != null)
-            {
-                _changeFields ??= new(System.StringComparer.OrdinalIgnoreCase);
-                foreach (var f in value)
-                    _changeFields.Add(f);
-            }
-        }
-    }
-
-    private void _TrackChange(string fieldName)
-        => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
-
-
-    private System.Guid _realmId = default!;
     /// <summary>
     /// Realm to update configuration for
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get => _realmId; set { _realmId = value; _TrackChange("realmId"); } }
+    public System.Guid RealmId { get; set; } = default!;
 
-    private DowntimePolicy? _downtimePolicy = default!;
     /// <summary>
     /// New downtime handling policy (null = no change)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("downtimePolicy")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DowntimePolicy? DowntimePolicy { get => _downtimePolicy; set { _downtimePolicy = value; _TrackChange("downtimePolicy"); } }
+    public DowntimePolicy? DowntimePolicy { get; set; } = default!;
 
-    private string? _calendarTemplateCode = default!;
     /// <summary>
     /// New calendar template code (validated for existence, null = no change)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("calendarTemplateCode")]
     [System.ComponentModel.DataAnnotations.StringLength(128)]
-    public string? CalendarTemplateCode { get => _calendarTemplateCode; set { _calendarTemplateCode = value; _TrackChange("calendarTemplateCode"); } }
+    public string? CalendarTemplateCode { get; set; } = default!;
 
 }
 

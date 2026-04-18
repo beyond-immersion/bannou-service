@@ -469,23 +469,25 @@ paths:
         \  \"name\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n               \
         \     \"maxLength\": 100,\n                    \"nullable\": true,\n                    \"description\": \"Display
         name for the species\"\n                },\n                \"description\": {\n                    \"type\": \"string\"\
-        ,\n                    \"maxLength\": 1000,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Description of the species\"\n                },\n                \"category\": {\n                    \"type\"\
-        : \"string\",\n                    \"maxLength\": 50,\n                    \"nullable\": true,\n                 \
-        \   \"description\": \"Category for grouping\"\n                },\n                \"isPlayable\": {\n          \
-        \          \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Whether players can create characters of this species\"\n                },\n                \"baseLifespan\": {\n\
-        \                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Base lifespan in game years\"\n                },\n              \
-        \  \"maturityAge\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n         \
-        \           \"nullable\": true,\n                    \"description\": \"Age at which the species reaches maturity\"\
-        \n                },\n                \"traitModifiers\": {\n                    \"type\": \"object\",\n         \
-        \           \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.\"\n         \
-        \       },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only metadata. No
-        Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        }\n\
-        \    }\n}"
+        ,\n                    \"maxLength\": 1000,\n                    \"nullable\": true,\n                    \"x-detect-if-set\"\
+        : true,\n                    \"description\": \"Description of the species\"\n                },\n               \
+        \ \"category\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 50,\n           \
+        \         \"nullable\": true,\n                    \"x-detect-if-set\": true,\n                    \"description\"\
+        : \"Category for grouping\"\n                },\n                \"isPlayable\": {\n                    \"type\":
+        \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"Whether players can
+        create characters of this species\"\n                },\n                \"baseLifespan\": {\n                   \
+        \ \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"nullable\": true,\n         \
+        \           \"x-detect-if-set\": true,\n                    \"description\": \"Base lifespan in game years\"\n   \
+        \             },\n                \"maturityAge\": {\n                    \"type\": \"integer\",\n               \
+        \     \"minimum\": 0,\n                    \"nullable\": true,\n                    \"x-detect-if-set\": true,\n \
+        \                   \"description\": \"Age at which the species reaches maturity\"\n                },\n         \
+        \       \"traitModifiers\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only trait modifiers.
+        No Bannou plugin reads specific keys from this field by convention.\"\n                },\n                \"metadata\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"x-detect-if-set\": true,\n                    \"description\"\
+        : \"Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SpeciesResponse\"\
         ,\n    \"$defs\": {\n        \"SpeciesResponse\": {\n            \"allOf\": [\n                {\n               \
         \     \"type\": \"object\"\n                }\n            ],\n            \"description\": \"Complete species data
@@ -1238,11 +1240,13 @@ components:
           type: string
           maxLength: 1000
           nullable: true
+          x-detect-if-set: true
           description: Description of the species
         category:
           type: string
           maxLength: 50
           nullable: true
+          x-detect-if-set: true
           description: Category for grouping
         isPlayable:
           type: boolean
@@ -1252,11 +1256,13 @@ components:
           type: integer
           minimum: 1
           nullable: true
+          x-detect-if-set: true
           description: Base lifespan in game years
         maturityAge:
           type: integer
           minimum: 0
           nullable: true
+          x-detect-if-set: true
           description: Age at which the species reaches maturity
         traitModifiers:
           type: object
@@ -1267,6 +1273,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
+          x-detect-if-set: true
           description: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
     DeleteSpeciesRequest:
       description: Request to hard-delete a deprecated species with no remaining references

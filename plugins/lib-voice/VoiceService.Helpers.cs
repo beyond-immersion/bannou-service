@@ -132,6 +132,15 @@ public partial class VoiceService
             catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Failed to restore voice:in_room state for session {SessionId}", sessionId);
+                await _messageBus.TryPublishErrorAsync(
+                    "voice",
+                    "ClearConsentPendingStates",
+                    "RestoreSessionStateFailed",
+                    ex.Message,
+                    dependency: "permission",
+                    endpoint: "update-session-state",
+                    stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
             }
         }
     }
@@ -206,6 +215,15 @@ public partial class VoiceService
             catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Failed to set voice:ringing state for session {SessionId}", participant.SessionId);
+                await _messageBus.TryPublishErrorAsync(
+                    "voice",
+                    "NotifyPeerJoined",
+                    "SetRingingStateFailed",
+                    ex.Message,
+                    dependency: "permission",
+                    endpoint: "update-session-state",
+                    stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
             }
         }
 

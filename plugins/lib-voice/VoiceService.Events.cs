@@ -97,6 +97,15 @@ public partial class VoiceService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Failed to clear voice permission state for disconnected session {SessionId}", evt.SessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "voice",
+                "HandleSessionDisconnected",
+                "ClearSessionStateFailed",
+                ex.Message,
+                dependency: "permission",
+                endpoint: "clear-session-state",
+                stack: ex.StackTrace,
+                cancellationToken: CancellationToken.None);
         }
 
         // Delete session -> room mapping
@@ -219,6 +228,15 @@ public partial class VoiceService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Failed to restore voice permission state for reconnected session {SessionId}", evt.SessionId);
+            await _messageBus.TryPublishErrorAsync(
+                "voice",
+                "HandleSessionReconnected",
+                "UpdateSessionStateFailed",
+                ex.Message,
+                dependency: "permission",
+                endpoint: "update-session-state",
+                stack: ex.StackTrace,
+                cancellationToken: CancellationToken.None);
         }
 
         // Get current peers for room state event (skip peers with no endpoint data)

@@ -262,10 +262,10 @@ This document specifies a multi-game publisher app architecture for Beyond Immer
 3. Gates 18+ at the **account tier**, not the **app content tier** — preserves legal simplicity (COPPA avoidance, clean creator contracting, adult-only ToS binding) without forcing an 18+ content rating on the app
 4. Delivers **per-game companion modules** (chat, compendiums, message boards, game notifications, mini-games that impact in-game state) via CDN-delivered content packs
 5. Unifies **Beyond Immersion as both publisher brand and in-universe Omega hardware manufacturer** — deliberate fourth-wall trick where the real app and the diegetic Omega device are the same product
-6. Introduces a dedicated **lib-push plugin (L3)** with publisher/receiver modes, tapping entity-scoped client events via a new `IEntityEventObserver` DI interface so push delivery fires regardless of session state (the critical case: app is closed, no session, but the user still needs the notification)
+6. Introduces a dedicated **lib-push plugin (L3)** with publisher/receiver modes using a **two-scope push model**: account-scope (persistent, resolved from a session-registration-seeded interest index — events never carry accountIds per T32) and possession-scope (ephemeral, resolved from Gardener's active character bindings). Two new DI observer interfaces (`IEntityEventObserver` for event dispatch, `IEntityRegistrationObserver` for interest-index population) tap into IEntitySessionRegistry without coupling publishers to push.
 7. Uses **platform-native anonymous identity** (Game Center, Play Games, Steam) so individual games work without any Beyond Immersion account; account registration unlocks cross-platform features
 
-The document establishes 14 decisions, their rationale, the architecture that emerges, the plugin-level impact, and the open questions that remain.
+The document establishes 18 decisions, their rationale, the architecture that emerges, the plugin-level impact, and the open questions that remain.
 
 ### In-Game Cinematic Series: The Ledger and the Sword {#in-game-cinematic-series}
 

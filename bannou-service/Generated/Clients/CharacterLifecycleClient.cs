@@ -296,6 +296,105 @@ public partial interface ICharacterLifecycleClient
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
+    /// Deprecate a lifecycle template
+    /// </summary>
+    /// <remarks>
+    /// Marks a lifecycle template as deprecated. Deprecated templates cannot be used
+    /// <br/>to create new lifecycle profiles for characters. Existing characters with
+    /// <br/>profiles referencing this template continue to function unchanged.
+    /// <br/>Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+    /// <br/>no delete. Idempotent — returns OK if already deprecated.
+    /// </remarks>
+    /// <returns>Lifecycle template deprecated (or already deprecated)</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<GetLifecycleTemplateResponse> DeprecateLifecycleTemplateAsync(DeprecateLifecycleTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Deprecate a heritable trait template
+    /// </summary>
+    /// <remarks>
+    /// Marks a heritable trait template as deprecated. Deprecated templates cannot be used
+    /// <br/>to create new genetic profiles for characters of this species. Existing characters
+    /// <br/>with genetic profiles referencing this template continue to function unchanged.
+    /// <br/>Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+    /// <br/>no delete. Idempotent — returns OK if already deprecated.
+    /// </remarks>
+    /// <returns>Heritable trait template deprecated (or already deprecated)</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<GetHeritableTraitTemplateResponse> DeprecateHeritableTraitTemplateAsync(DeprecateHeritableTraitTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Deprecate a hybrid trait template
+    /// </summary>
+    /// <remarks>
+    /// Marks a hybrid trait template as deprecated. Deprecated hybrid templates cannot
+    /// <br/>be used to create new genetic profiles for hybrid offspring of this species pair.
+    /// <br/>Existing hybrid characters with genetic profiles referencing this template continue
+    /// <br/>to function unchanged.
+    /// <br/>Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+    /// <br/>no delete. Idempotent — returns OK if already deprecated.
+    /// </remarks>
+    /// <returns>Hybrid trait template deprecated (or already deprecated)</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<GetHybridTraitTemplateResponse> DeprecateHybridTraitTemplateAsync(DeprecateHybridTraitTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Clean deprecated lifecycle templates with zero remaining profiles
+    /// </summary>
+    /// <remarks>
+    /// Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+    /// <br/>lifecycle templates and permanently removes those with zero remaining
+    /// <br/>LifecycleProfile instances referencing them, subject to an optional grace period.
+    /// <br/>Publishes lifecycle-template.deleted events for each removed template. Idempotent
+    /// <br/>and safe to call at any frequency. Supports dry-run mode for admin panel preview.
+    /// </remarks>
+    /// <returns>Cleanup sweep completed</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<CleanDeprecatedStringKeyResponse> CleanDeprecatedLifecycleTemplatesAsync(CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Clean deprecated heritable trait templates with zero remaining profiles
+    /// </summary>
+    /// <remarks>
+    /// Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+    /// <br/>heritable trait templates and permanently removes those with zero remaining
+    /// <br/>GeneticProfile instances referencing them, subject to an optional grace period.
+    /// <br/>Publishes heritable-trait-template.deleted events for each removed template.
+    /// <br/>Idempotent and safe to call at any frequency. Supports dry-run mode for admin
+    /// <br/>panel preview.
+    /// </remarks>
+    /// <returns>Cleanup sweep completed</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<CleanDeprecatedStringKeyResponse> CleanDeprecatedHeritableTraitTemplatesAsync(CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Clean deprecated hybrid trait templates with zero remaining hybrid profiles
+    /// </summary>
+    /// <remarks>
+    /// Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+    /// <br/>hybrid trait templates and permanently removes those with zero remaining hybrid
+    /// <br/>GeneticProfile instances referencing them, subject to an optional grace period.
+    /// <br/>Publishes hybrid-trait-template.deleted events for each removed template.
+    /// <br/>Idempotent and safe to call at any frequency. Supports dry-run mode for admin
+    /// <br/>panel preview.
+    /// </remarks>
+    /// <returns>Cleanup sweep completed</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<CleanDeprecatedStringKeyResponse> CleanDeprecatedHybridTraitTemplatesAsync(CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
     /// Get bloodline definition
     /// </summary>
     /// <remarks>
@@ -2521,6 +2620,597 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
                     if (status_ == 200)
                     {
                         var objectResponse_ = await ReadObjectResponseAsync<ListTemplatesResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Deprecate a lifecycle template
+    /// </summary>
+    /// <remarks>
+    /// Marks a lifecycle template as deprecated. Deprecated templates cannot be used
+    /// <br/>to create new lifecycle profiles for characters. Existing characters with
+    /// <br/>profiles referencing this template continue to function unchanged.
+    /// <br/>Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+    /// <br/>no delete. Idempotent — returns OK if already deprecated.
+    /// </remarks>
+    /// <returns>Lifecycle template deprecated (or already deprecated)</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<GetLifecycleTemplateResponse> DeprecateLifecycleTemplateAsync(DeprecateLifecycleTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetLifecycleTemplateResponse>(
+                _directDispatchProvider, _serviceName, "DeprecateLifecycleTemplateAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "character-lifecycle/template/deprecate-lifecycle"
+        urlBuilder_.Append("character-lifecycle/template/deprecate-lifecycle");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<GetLifecycleTemplateResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Lifecycle template not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Deprecate a heritable trait template
+    /// </summary>
+    /// <remarks>
+    /// Marks a heritable trait template as deprecated. Deprecated templates cannot be used
+    /// <br/>to create new genetic profiles for characters of this species. Existing characters
+    /// <br/>with genetic profiles referencing this template continue to function unchanged.
+    /// <br/>Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+    /// <br/>no delete. Idempotent — returns OK if already deprecated.
+    /// </remarks>
+    /// <returns>Heritable trait template deprecated (or already deprecated)</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<GetHeritableTraitTemplateResponse> DeprecateHeritableTraitTemplateAsync(DeprecateHeritableTraitTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetHeritableTraitTemplateResponse>(
+                _directDispatchProvider, _serviceName, "DeprecateHeritableTraitTemplateAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "character-lifecycle/template/deprecate-heritable"
+        urlBuilder_.Append("character-lifecycle/template/deprecate-heritable");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<GetHeritableTraitTemplateResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Heritable trait template not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Deprecate a hybrid trait template
+    /// </summary>
+    /// <remarks>
+    /// Marks a hybrid trait template as deprecated. Deprecated hybrid templates cannot
+    /// <br/>be used to create new genetic profiles for hybrid offspring of this species pair.
+    /// <br/>Existing hybrid characters with genetic profiles referencing this template continue
+    /// <br/>to function unchanged.
+    /// <br/>Category B deprecation (per IMPLEMENTATION TENETS): one-way, no undeprecate,
+    /// <br/>no delete. Idempotent — returns OK if already deprecated.
+    /// </remarks>
+    /// <returns>Hybrid trait template deprecated (or already deprecated)</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<GetHybridTraitTemplateResponse> DeprecateHybridTraitTemplateAsync(DeprecateHybridTraitTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetHybridTraitTemplateResponse>(
+                _directDispatchProvider, _serviceName, "DeprecateHybridTraitTemplateAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "character-lifecycle/template/deprecate-hybrid"
+        urlBuilder_.Append("character-lifecycle/template/deprecate-hybrid");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<GetHybridTraitTemplateResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Hybrid trait template not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Clean deprecated lifecycle templates with zero remaining profiles
+    /// </summary>
+    /// <remarks>
+    /// Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+    /// <br/>lifecycle templates and permanently removes those with zero remaining
+    /// <br/>LifecycleProfile instances referencing them, subject to an optional grace period.
+    /// <br/>Publishes lifecycle-template.deleted events for each removed template. Idempotent
+    /// <br/>and safe to call at any frequency. Supports dry-run mode for admin panel preview.
+    /// </remarks>
+    /// <returns>Cleanup sweep completed</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<CleanDeprecatedStringKeyResponse> CleanDeprecatedLifecycleTemplatesAsync(CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanDeprecatedStringKeyResponse>(
+                _directDispatchProvider, _serviceName, "CleanDeprecatedLifecycleTemplatesAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "character-lifecycle/template/clean-deprecated-lifecycle"
+        urlBuilder_.Append("character-lifecycle/template/clean-deprecated-lifecycle");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<CleanDeprecatedStringKeyResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Clean deprecated heritable trait templates with zero remaining profiles
+    /// </summary>
+    /// <remarks>
+    /// Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+    /// <br/>heritable trait templates and permanently removes those with zero remaining
+    /// <br/>GeneticProfile instances referencing them, subject to an optional grace period.
+    /// <br/>Publishes heritable-trait-template.deleted events for each removed template.
+    /// <br/>Idempotent and safe to call at any frequency. Supports dry-run mode for admin
+    /// <br/>panel preview.
+    /// </remarks>
+    /// <returns>Cleanup sweep completed</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<CleanDeprecatedStringKeyResponse> CleanDeprecatedHeritableTraitTemplatesAsync(CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanDeprecatedStringKeyResponse>(
+                _directDispatchProvider, _serviceName, "CleanDeprecatedHeritableTraitTemplatesAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "character-lifecycle/template/clean-deprecated-heritable"
+        urlBuilder_.Append("character-lifecycle/template/clean-deprecated-heritable");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<CleanDeprecatedStringKeyResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Clean deprecated hybrid trait templates with zero remaining hybrid profiles
+    /// </summary>
+    /// <remarks>
+    /// Category B cleanup sweep (per IMPLEMENTATION TENETS). Iterates all deprecated
+    /// <br/>hybrid trait templates and permanently removes those with zero remaining hybrid
+    /// <br/>GeneticProfile instances referencing them, subject to an optional grace period.
+    /// <br/>Publishes hybrid-trait-template.deleted events for each removed template.
+    /// <br/>Idempotent and safe to call at any frequency. Supports dry-run mode for admin
+    /// <br/>panel preview.
+    /// </remarks>
+    /// <returns>Cleanup sweep completed</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<CleanDeprecatedStringKeyResponse> CleanDeprecatedHybridTraitTemplatesAsync(CleanDeprecatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
+        if (_directDispatchProvider != null)
+        {
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanDeprecatedStringKeyResponse>(
+                _directDispatchProvider, _serviceName, "CleanDeprecatedHybridTraitTemplatesAsync",
+                body, cancellationToken).ConfigureAwait(false);
+        }
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "character-lifecycle/template/clean-deprecated-hybrid"
+        urlBuilder_.Append("character-lifecycle/template/clean-deprecated-hybrid");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<CleanDeprecatedStringKeyResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
                             throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);

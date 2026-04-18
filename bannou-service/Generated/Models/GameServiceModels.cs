@@ -140,7 +140,7 @@ public partial class UpdateServiceRequest
     /// <summary>
     /// Fields explicitly set on this request. Populated automatically by property
     /// setters. When serialized, enables the server to distinguish "field not
-    /// provided" from "field explicitly set to null" for nullable properties.
+    /// provided" from "field explicitly set to null" for opt-in properties.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("changeFields")]
     public System.Collections.Generic.ICollection<string>? ChangeFields
@@ -161,22 +161,20 @@ public partial class UpdateServiceRequest
         => (_changeFields ??= new(System.StringComparer.OrdinalIgnoreCase)).Add(fieldName);
 
 
-    private System.Guid _serviceId = default!;
     /// <summary>
     /// ID of the service to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ServiceId { get => _serviceId; set { _serviceId = value; _TrackChange("serviceId"); } }
+    public System.Guid ServiceId { get; set; } = default!;
 
-    private string? _displayName = default!;
     /// <summary>
     /// New display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.StringLength(100)]
-    public string? DisplayName { get => _displayName; set { _displayName = value; _TrackChange("displayName"); } }
+    public string? DisplayName { get; set; } = default!;
 
     private string? _description = default!;
     /// <summary>
@@ -186,19 +184,17 @@ public partial class UpdateServiceRequest
     [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string? Description { get => _description; set { _description = value; _TrackChange("description"); } }
 
-    private bool? _isActive = default!;
     /// <summary>
     /// New active status
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
-    public bool? IsActive { get => _isActive; set { _isActive = value; _TrackChange("isActive"); } }
+    public bool? IsActive { get; set; } = default!;
 
-    private bool? _autoLobbyEnabled = default!;
     /// <summary>
     /// New auto-lobby enabled status
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autoLobbyEnabled")]
-    public bool? AutoLobbyEnabled { get => _autoLobbyEnabled; set { _autoLobbyEnabled = value; _TrackChange("autoLobbyEnabled"); } }
+    public bool? AutoLobbyEnabled { get; set; } = default!;
 
 }
 

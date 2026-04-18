@@ -387,6 +387,60 @@ public sealed class CharacterLifecycleProxy
     }
 
     /// <summary>
+    /// Deprecate a lifecycle template
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing GetLifecycleTemplateResponse on success.</returns>
+    public Task<ApiResponse<GetLifecycleTemplateResponse>> DeprecateLifecycleTemplateAsync(
+        DeprecateLifecycleTemplateRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<DeprecateLifecycleTemplateRequest, GetLifecycleTemplateResponse>(
+            "/character-lifecycle/template/deprecate-lifecycle", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Deprecate a heritable trait template
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing GetHeritableTraitTemplateResponse on success.</returns>
+    public Task<ApiResponse<GetHeritableTraitTemplateResponse>> DeprecateHeritableTraitTemplateAsync(
+        DeprecateHeritableTraitTemplateRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<DeprecateHeritableTraitTemplateRequest, GetHeritableTraitTemplateResponse>(
+            "/character-lifecycle/template/deprecate-heritable", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Deprecate a hybrid trait template
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing GetHybridTraitTemplateResponse on success.</returns>
+    public Task<ApiResponse<GetHybridTraitTemplateResponse>> DeprecateHybridTraitTemplateAsync(
+        DeprecateHybridTraitTemplateRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<DeprecateHybridTraitTemplateRequest, GetHybridTraitTemplateResponse>(
+            "/character-lifecycle/template/deprecate-hybrid", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Get bloodline definition
     /// </summary>
     /// <param name="request">The request payload.</param>
