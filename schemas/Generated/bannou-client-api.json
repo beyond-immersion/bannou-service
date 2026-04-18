@@ -47155,7 +47155,8 @@
           "op",
           "path"
         ],
-        "description": "JSON Patch operation per RFC 6902.\nUses JsonPatch.Net library (MIT licensed).\n",
+        "x-library-type": "Json.Patch.JsonPatch",
+        "description": "JSON Patch operation per RFC 6902.\nUses JsonPatch.Net library (MIT licensed).\nField-level access is owned by the external JsonPatch.Net library\n(Json.Patch.JsonPatch). The plugin forwards these objects through\nserialization to the library without inspecting individual fields.\nThe x-library-type annotation directs the schema field coverage\ncheck to verify the library is referenced in plugin source before\naccepting passthrough for this model's fields.\n",
         "properties": {
           "op": {
             "$ref": "#/components/schemas/JsonPatchOperationType",

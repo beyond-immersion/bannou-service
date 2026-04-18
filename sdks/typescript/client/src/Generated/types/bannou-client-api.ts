@@ -24147,6 +24147,12 @@ export interface components {
     /**
      * @description JSON Patch operation per RFC 6902.
      *     Uses JsonPatch.Net library (MIT licensed).
+     *     Field-level access is owned by the external JsonPatch.Net library
+     *     (Json.Patch.JsonPatch). The plugin forwards these objects through
+     *     serialization to the library without inspecting individual fields.
+     *     The x-library-type annotation directs the schema field coverage
+     *     check to verify the library is referenced in plugin source before
+     *     accepting passthrough for this model's fields.
      */
     JsonPatchOperation: {
       /** @description Operation type */

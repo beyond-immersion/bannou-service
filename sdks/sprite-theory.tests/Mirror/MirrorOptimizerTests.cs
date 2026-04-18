@@ -201,4 +201,161 @@ public class MirrorOptimizerTests
 
         Assert.Empty(mirrorFrames);
     }
+
+    // --- Multi-animation / multi-angle identity (regression protection) ---
+    //
+    // SpriteFrame.Index is documented as globally unique across captured + mirror
+    // frames. MirrorOptimizer.GenerateMirrorFrames relies on each source frame
+    // having a unique Index so that MirrorSourceIndex disambiguates which source
+    // produced each mirror. These tests verify mirror generation remains correct
+    // when multiple animations share an angle name — the realistic Defenders shape.
+
+    private static List<SpriteFrame> CreateMultiAnimationCapturedFrames(
+        IReadOnlyList<string> animations,
+        IReadOnlyList<string> sourceAngles,
+        int framesPerAnimation)
+    {
+        var frames = new List<SpriteFrame>();
+        var globalIndex = 0;
+        foreach (var animation in animations)
+        {
+            foreach (var angle in sourceAngles)
+            {
+                for (var frameIdx = 0; frameIdx < framesPerAnimation; frameIdx++)
+                {
+                    frames.Add(new SpriteFrame(
+                        Index: globalIndex,
+                        AtlasIndex: 0,
+                        AngleName: angle,
+                        AnimationName: animation,
+                        FrameInAnimation: frameIdx,
+                        Rect: new Rectangle(globalIndex * 16, 0, 16, 16),
+                        TrimmedRect: null,
+                        Pivot: new Vector2(0.5f, 0.85f),
+                        Duration: 0.125f,
+                        IsMirror: false,
+                        MirrorSourceIndex: null));
+                    globalIndex++;
+                }
+            }
+        }
+        return frames;
+    }
+
+    [Fact]
+    public void GenerateMirrorFrames_MultiAnimation_ProducesOneMirrorPerSourceFrame()
+    {
+        // Three animations ("idle", "run", "attack") × 3 source angles ("NE", "E", "SE")
+        // × 4 frames per animation = 36 captured frames. Three mirrors (NE→NW, E→W, SE→SW).
+        // Each source frame must generate exactly one mirror, and each mirror must
+        // reference the correct source by Index (not by AngleName alone, which would
+        // collide across animations).
+        var captured = CreateMultiAnimationCapturedFrames(
+            animations: new[] { "idle", "run", "attack" },
+            sourceAngles: new[] { "NE", "E", "SE" },
+            framesPerAnimation: 4);
+        var mirrors = new List<MirrorInfo>
+        {
+            new MirrorInfo("NE", "NW", MirrorAxis.Horizontal),
+            new MirrorInfo("E", "W", MirrorAxis.Horizontal),
+            new MirrorInfo("SE", "SW", MirrorAxis.Horizontal)
+        };
+
+        var mirrorFrames = MirrorOptimizer.GenerateMirrorFrames(captured, mirrors);
+
+        // 3 animations × 3 source angles × 4 frames/animation × 1 mirror each = 36 mirrors.
+        Assert.Equal(36, mirrorFrames.Count);
+    }
+
+    [Fact]
+    public void GenerateMirrorFrames_MultiAnimation_EachMirrorReferencesUniqueSource()
+    {
+        // Regression: mirror frames must not collide by source index when multiple
+        // source frames share an AngleName. Each MirrorSourceIndex value must appear
+        // in at most one mirror per mirror-target, and the source it points to must
+        // have the matching animation, angle, and intra-animation frame.
+        var captured = CreateMultiAnimationCapturedFrames(
+            animations: new[] { "idle", "run" },
+            sourceAngles: new[] { "E" },
+            framesPerAnimation: 3);
+
+        // Captured shape (index → (anim, angle, frameInAnim)):
+        //   0: ("idle", "E", 0)
+        //   1: ("idle", "E", 1)
+        //   2: ("idle", "E", 2)
+        //   3: ("run", "E", 0)
+        //   4: ("run", "E", 1)
+        //   5: ("run", "E", 2)
+        var mirrors = new List<MirrorInfo>
+        {
+            new MirrorInfo("E", "W", MirrorAxis.Horizontal)
+        };
+
+        var mirrorFrames = MirrorOptimizer.GenerateMirrorFrames(captured, mirrors);
+
+        Assert.Equal(6, mirrorFrames.Count);
+
+        // Each mirror must reference a distinct source index.
+        var sourceIndices = mirrorFrames
+            .Select(m => m.MirrorSourceIndex ?? throw new Xunit.Sdk.XunitException(
+                "Mirror frame has null MirrorSourceIndex"))
+            .ToHashSet();
+        Assert.Equal(6, sourceIndices.Count);
+
+        // And each mirror must inherit the correct animation + intra-animation frame
+        // from its source, so the game runtime can play "idle left-facing" and "run
+        // left-facing" as separate animations.
+        foreach (var mirror in mirrorFrames)
+        {
+            var sourceIndex = mirror.MirrorSourceIndex;
+            if (sourceIndex is null)
+            {
+                throw new Xunit.Sdk.XunitException(
+                    "Mirror frame has null MirrorSourceIndex — the previous collect-indices " +
+                    "assertion should have caught this.");
+            }
+
+            var source = captured[sourceIndex.Value];
+            Assert.Equal(source.AnimationName, mirror.AnimationName);
+            Assert.Equal(source.FrameInAnimation, mirror.FrameInAnimation);
+            Assert.Equal("W", mirror.AngleName);
+            Assert.True(mirror.IsMirror);
+        }
+
+        // Both animations are represented in the mirror output.
+        Assert.Contains(mirrorFrames, m => m.AnimationName == "idle");
+        Assert.Contains(mirrorFrames, m => m.AnimationName == "run");
+    }
+
+    [Fact]
+    public void GenerateMirrorFrames_MultiAnimation_IndicesStartAfterCaptured()
+    {
+        // The existing GenerateMirrorFrames_MirrorIndicesStartAfterCaptured test covers
+        // the single-animation case. This variant confirms the invariant holds for the
+        // multi-animation shape.
+        var captured = CreateMultiAnimationCapturedFrames(
+            animations: new[] { "idle", "run" },
+            sourceAngles: new[] { "right" },
+            framesPerAnimation: 4);  // 8 captured frames
+
+        var mirrors = new List<MirrorInfo>
+        {
+            new MirrorInfo("right", "left", MirrorAxis.Horizontal)
+        };
+
+        var mirrorFrames = MirrorOptimizer.GenerateMirrorFrames(captured, mirrors);
+
+        Assert.Equal(8, mirrorFrames.Count);
+
+        // Every mirror Index is unique AND strictly above all captured Indices.
+        var maxCapturedIndex = captured.Max(f => f.Index);
+        var mirrorIndices = mirrorFrames.Select(m => m.Index).ToList();
+        Assert.Equal(mirrorIndices.Count, mirrorIndices.Distinct().Count());
+        foreach (var mirrorIdx in mirrorIndices)
+        {
+            Assert.True(
+                mirrorIdx > maxCapturedIndex,
+                $"Mirror Index {mirrorIdx} must be > maxCapturedIndex {maxCapturedIndex}");
+        }
+    }
 }

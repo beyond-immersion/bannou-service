@@ -218,6 +218,12 @@ public enum StatsGroupBy
 /// <summary>
 /// JSON Patch operation per RFC 6902.
 /// <br/>Uses JsonPatch.Net library (MIT licensed).
+/// <br/>Field-level access is owned by the external JsonPatch.Net library
+/// <br/>(Json.Patch.JsonPatch). The plugin forwards these objects through
+/// <br/>serialization to the library without inspecting individual fields.
+/// <br/>The x-library-type annotation directs the schema field coverage
+/// <br/>check to verify the library is referenced in plugin source before
+/// <br/>accepting passthrough for this model's fields.
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

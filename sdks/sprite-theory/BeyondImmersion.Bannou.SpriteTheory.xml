@@ -850,14 +850,24 @@
             are blitted in row-by-row using <see cref="M:System.Buffer.BlockCopy(System.Array,System.Int32,System.Array,System.Int32,System.Int32)"/> for efficiency.
             </para>
             <para>
-            Frame captures are matched to placements by <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.PackedFrame.FrameIndex"/>
-            via dictionary lookup, supporting any ordering of input frames.
+            <b>Indexing contract:</b> <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.PackedFrame.FrameIndex"/> is the position of
+            the frame in the <paramref name="frames"/> list — the same index the caller used
+            when constructing input for <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasPacker.Pack(System.Collections.Generic.IReadOnlyList{System.ValueTuple{System.Int32,System.Int32,System.Int32}},BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasOptions)"/> (typically
+            <c>frames.Select((f, i) =&gt; (f.Width, f.Height, i))</c>). AtlasAssembler uses
+            <c>frames[placement.FrameIndex]</c> to retrieve the source capture. This
+            index is NOT <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.FrameIndex"/>, which is the intra-animation
+            frame number and is not unique across captures from multiple animations.
             </para>
             </remarks>
             <param name="frames">Captured frame pixel data from the engine bridge.</param>
             <param name="layout">Atlas layout computed by <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasPacker.Pack(System.Collections.Generic.IReadOnlyList{System.ValueTuple{System.Int32,System.Int32,System.Int32}},BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasOptions)"/>.</param>
             <param name="backgroundColor">Background color to fill each atlas with before blitting frames.</param>
             <returns>Array of atlas byte arrays, one per atlas image. Each is RGBA (4 bytes/pixel, row-major).</returns>
+            <exception cref="T:System.ArgumentOutOfRangeException">
+            Thrown when a placement's <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Atlas.PackedFrame.FrameIndex"/> is outside the bounds
+            of <paramref name="frames"/>. This indicates the layout was built from inputs that
+            don't match the provided frames list — a caller bug.
+            </exception>
         </member>
         <member name="T:BeyondImmersion.Bannou.SpriteTheory.Export.IDepthSource">
             <summary>

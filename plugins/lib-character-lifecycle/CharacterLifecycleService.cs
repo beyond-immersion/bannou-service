@@ -1718,10 +1718,25 @@ public partial class CharacterLifecycleService : ICharacterLifecycleService, ICl
                     var bloodlineEntry = membership?.Bloodlines
                         .FirstOrDefault(b => b.BloodlineId == body.BloodlineId);
 
+                    // Load genetic profile and extract signature-trait phenotype entries
+                    // per implementation map: "Include generation depth and trait expression per member".
+                    // TraitExpression is nullable — null when the member has no genetic profile or
+                    // no bloodline entry; empty list when the signature traits aren't expressed on
+                    // this member's phenotype.
+                    var genetic = await _geneticStore.GetAsync(
+                        BuildGeneticKey(memberId), cancellationToken);
+                    var signatureTraits = bloodlineEntry?.TraitSignature;
+                    var traitExpression = (genetic != null && signatureTraits != null)
+                        ? genetic.Phenotype
+                            .Where(p => signatureTraits.Contains(p.TraitCode))
+                            .ToList()
+                        : null;
+
                     aliveMembers.Add(new BloodlineMemberSummary
                     {
                         CharacterId = memberId,
-                        GenerationFrom = bloodlineEntry?.GenerationFrom ?? 0
+                        GenerationFrom = bloodlineEntry?.GenerationFrom ?? 0,
+                        TraitExpression = traitExpression
                     });
                 }
             }

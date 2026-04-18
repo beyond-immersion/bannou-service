@@ -1808,18 +1808,22 @@ paths:
         operations to migrate from previousVersion.\\nUses JsonPatch.Net library (MIT licensed).\\n\"\n                }\n\
         \            }\n        },\n        \"JsonPatchOperation\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"op\",\n                \"path\"\n            ],\n       \
-        \     \"description\": \"JSON Patch operation per RFC 6902.\\nUses JsonPatch.Net library (MIT licensed).\\n\",\n \
-        \           \"properties\": {\n                \"op\": {\n                    \"$ref\": \"#/$defs/JsonPatchOperationType\"\
-        ,\n                    \"description\": \"Operation type\"\n                },\n                \"path\": {\n    \
-        \                \"type\": \"string\",\n                    \"description\": \"JSON Pointer to target location\"\n\
-        \                },\n                \"from\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Source path (for move/copy operations)\"\n             \
-        \   },\n                \"value\": {\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Value to use (for add/replace/test operations, null for remove/move/copy)\"\n                }\n            }\n\
-        \        },\n        \"JsonPatchOperationType\": {\n            \"type\": \"string\",\n            \"enum\": [\n \
-        \               \"Add\",\n                \"Remove\",\n                \"Replace\",\n                \"Move\",\n \
-        \               \"Copy\",\n                \"Test\"\n            ],\n            \"description\": \"JSON Patch operation
-        type per RFC 6902\"\n        }\n    }\n}"
+        \     \"x-library-type\": \"Json.Patch.JsonPatch\",\n            \"description\": \"JSON Patch operation per RFC 6902.\\
+        nUses JsonPatch.Net library (MIT licensed).\\nField-level access is owned by the external JsonPatch.Net library\\\
+        n(Json.Patch.JsonPatch). The plugin forwards these objects through\\nserialization to the library without inspecting
+        individual fields.\\nThe x-library-type annotation directs the schema field coverage\\ncheck to verify the library
+        is referenced in plugin source before\\naccepting passthrough for this model's fields.\\n\",\n            \"properties\"\
+        : {\n                \"op\": {\n                    \"$ref\": \"#/$defs/JsonPatchOperationType\",\n              \
+        \      \"description\": \"Operation type\"\n                },\n                \"path\": {\n                    \"\
+        type\": \"string\",\n                    \"description\": \"JSON Pointer to target location\"\n                },\n\
+        \                \"from\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Source path (for move/copy operations)\"\n                },\n           \
+        \     \"value\": {\n                    \"nullable\": true,\n                    \"description\": \"Value to use (for
+        add/replace/test operations, null for remove/move/copy)\"\n                }\n            }\n        },\n        \"\
+        JsonPatchOperationType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Add\",\n\
+        \                \"Remove\",\n                \"Replace\",\n                \"Move\",\n                \"Copy\",\n\
+        \                \"Test\"\n            ],\n            \"description\": \"JSON Patch operation type per RFC 6902\"\
+        \n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SchemaResponse\"\
         ,\n    \"$defs\": {\n        \"SchemaResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Registered schema definition with version lineage information\",\n      \
@@ -2086,9 +2090,16 @@ components:
       required:
       - op
       - path
+      x-library-type: "Json.Patch.JsonPatch"
       description: |
         JSON Patch operation per RFC 6902.
         Uses JsonPatch.Net library (MIT licensed).
+        Field-level access is owned by the external JsonPatch.Net library
+        (Json.Patch.JsonPatch). The plugin forwards these objects through
+        serialization to the library without inspecting individual fields.
+        The x-library-type annotation directs the schema field coverage
+        check to verify the library is referenced in plugin source before
+        accepting passthrough for this model's fields.
       properties:
         op:
           $ref: '#/components/schemas/JsonPatchOperationType'

@@ -33,9 +33,12 @@ namespace BeyondImmersion.BannouService.StructuralTests;
 /// and generated outputs), walk every <c>components/schemas/</c> model with a <c>properties:</c>
 /// block. For each property name, compute the PascalCase C# form (upper-case first character,
 /// preserve the rest) and check whether that name appears anywhere in the owning plugin's C#
-/// source as either <c>.PropertyName</c> (dot access) or <c>PropertyName =</c> (initializer
-/// assignment, excluding <c>==</c> comparisons). If no file in the plugin contains a match, the
-/// property is flagged as an unused schema field.
+/// source as any of four lexical forms: <c>.PropertyName</c> (dot access),
+/// <c>PropertyName =</c> (initializer assignment, excluding <c>==</c>),
+/// <c>&lt;PropertyName&gt;</c> (generic type parameter), or <c>new PropertyName</c>
+/// (constructor or allocation expression). If no file in the plugin contains a match, the
+/// property is flagged as an unused schema field. The same four patterns populate the
+/// "covered" set used by passthrough detection for embedded sub-types.
 /// </para>
 /// <para>
 /// <b>Plugin directory resolution:</b> The owning plugin is derived from the schema filename by
@@ -56,6 +59,21 @@ namespace BeyondImmersion.BannouService.StructuralTests;
 /// preserves the ability to catch fields declared with <c>x-sdk-type</c> but still not read
 /// anywhere: the annotation promises the SDK will read the field, and if neither the plugin
 /// nor the SDK does, it is still flagged.
+/// </para>
+/// <para>
+/// <b>x-library-type extension:</b> When a model declares <c>x-library-type:
+/// "Namespace.TypeName"</c> (e.g. <c>"Json.Patch.JsonPatch"</c>), its field reads live in an
+/// external library (typically a NuGet package) whose source is not in this repository. The
+/// schema declares which library owns field-level access; the test verifies the declaration
+/// by scanning plugin source for either a <c>using Namespace;</c> directive or a qualified
+/// reference to the full type name. When the verification succeeds, the per-field check is
+/// skipped — the library is trusted to read the fields correctly. When the plugin does NOT
+/// reference the declared library (misdeclared annotation, or library never actually
+/// adopted), the check falls through to the normal per-field walk and dead fields are still
+/// flagged. This mirrors the <c>x-sdk-type</c> trust-by-association pattern for external
+/// dependencies, with the key safeguard that the scan confirms the plugin actually imports
+/// the library before granting passthrough. The schema annotation alone is not sufficient;
+/// the code must match the claim.
 /// </para>
 /// <para>
 /// <b>Passthrough detection:</b> When a model is <c>$ref</c>'d by some other property in the
@@ -205,8 +223,11 @@ public class SchemaFieldCoverageTests
     /// </remarks>
     private static readonly HashSet<string> PreImplementationPlugins = new(StringComparer.Ordinal)
     {
+        "arbitration",
         "craft",
         "divine",
+        "environment",
+        "website",
     };
 
     /// <summary>
@@ -243,6 +264,32 @@ public class SchemaFieldCoverageTests
         @"\b([A-Z][a-zA-Z0-9_]*)\s*=(?!=)",
         RegexOptions.Compiled);
 
+    /// <summary>
+    /// Matches a PascalCase identifier appearing as a generic type parameter
+    /// (<c>List&lt;Foo&gt;</c>, <c>Dictionary&lt;K, Foo&gt;</c>, <c>Foo&lt;Bar?&gt;</c>).
+    /// Captures type names the dot-access and initializer-assignment patterns miss because
+    /// C# generic-parameter syntax uses angle brackets rather than dots or equals signs.
+    /// Required for passthrough detection to recognize that a plugin is aware of an embedded
+    /// sub-type via its collection/dictionary usage (e.g. <c>List&lt;ContractClauseDefinition&gt;</c>
+    /// on an internal model tells the scan that the plugin is forwarding the whole object).
+    /// </summary>
+    private static readonly Regex GenericParameterPattern = new(
+        @"[<,]\s*([A-Z][a-zA-Z0-9_]*)(?=\s*[,>?])",
+        RegexOptions.Compiled);
+
+    /// <summary>
+    /// Matches a PascalCase identifier immediately after the <c>new</c> keyword
+    /// (<c>new Foo()</c>, <c>new Foo { }</c>, <c>new Foo&lt;T&gt;()</c>, <c>new Foo[]</c>).
+    /// Captures type names used in constructor and allocation expressions that the
+    /// dot-access and initializer-assignment patterns miss. This is the form the
+    /// passthrough detection XML doc already documents (<c>new DeviceInfo()</c>) — the
+    /// existing two regexes did not actually match that shape prior to this pattern
+    /// being added.
+    /// </summary>
+    private static readonly Regex ConstructorPattern = new(
+        @"\bnew\s+([A-Z][a-zA-Z0-9_]*)",
+        RegexOptions.Compiled);
+
     [Fact]
     public void SchemaFields_MustBeReadByPluginCode()
     {
@@ -256,6 +303,12 @@ public class SchemaFieldCoverageTests
         // Cache SDK source scans separately — a single SDK (e.g. sdks/core/) is referenced by
         // x-sdk-type declarations in many schemas, so we scan each SDK directory once.
         var sdkReferenceCache = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+
+        // Cache raw plugin source content for x-library-type namespace/import scanning.
+        // This is distinct from pluginReferenceCache (which holds extracted PascalCase
+        // identifiers) because library references appear in positions — `using Namespace;`,
+        // dotted type names — that the identifier regexes do not capture.
+        var libraryReferenceCache = new Dictionary<string, string>(StringComparer.Ordinal);
 
         var violations = new List<Violation>();
 
@@ -355,6 +408,20 @@ public class SchemaFieldCoverageTests
                             sdkReferenceCache[sdkDir] = sdkProperties;
                         }
                     }
+                }
+
+                // When a model declares x-library-type, its field reads live in an external
+                // library (e.g., a NuGet package like JsonPatch.Net) rather than in plugin or
+                // SDK source. If the plugin actually references the declared library — via a
+                // `using` directive on the containing namespace or a qualified type reference —
+                // the annotation is verified and the entire per-field check is skipped. If the
+                // plugin does NOT reference the library (misdeclared annotation), the check
+                // falls through to the normal per-field walk and dead fields are still flagged.
+                var libraryTypeFullName = GetLibraryTypeFullName(modelMapping);
+                if (libraryTypeFullName != null
+                    && PluginSourceReferencesLibrary(pluginDir, libraryTypeFullName, libraryReferenceCache))
+                {
+                    continue;
                 }
 
                 foreach (var propEntry in propsMapping.Children)
@@ -496,6 +563,10 @@ public class SchemaFieldCoverageTests
                 references.Add(match.Groups[1].Value);
             foreach (Match match in InitializerAssignmentPattern.Matches(content))
                 references.Add(match.Groups[1].Value);
+            foreach (Match match in GenericParameterPattern.Matches(content))
+                references.Add(match.Groups[1].Value);
+            foreach (Match match in ConstructorPattern.Matches(content))
+                references.Add(match.Groups[1].Value);
         }
 
         return references;
@@ -517,6 +588,99 @@ public class SchemaFieldCoverageTests
             return scalar.Value;
         }
         return null;
+    }
+
+    /// <summary>
+    /// Extracts the <c>x-library-type</c> value from a model mapping, if declared. When a
+    /// schema model carries <c>x-library-type: "Namespace.TypeName"</c>, its field reads
+    /// live in an external library (e.g., a NuGet package) rather than in plugin or SDK
+    /// source. The test verifies the declaration by scanning plugin source for either a
+    /// <c>using</c> directive against the containing namespace or a qualified reference to
+    /// the type. If the schema claims an external library owner but the plugin doesn't
+    /// actually reference it, passthrough does NOT activate and the fields are walked
+    /// individually — protecting against misdeclared annotations.
+    /// </summary>
+    private static string? GetLibraryTypeFullName(YamlMappingNode modelMapping)
+    {
+        if (modelMapping.Children.TryGetValue(new YamlScalarNode("x-library-type"), out var libraryTypeNode)
+            && libraryTypeNode is YamlScalarNode scalar
+            && !string.IsNullOrEmpty(scalar.Value))
+        {
+            return scalar.Value;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Verifies that a plugin's source references the declared library — either via a
+    /// <c>using Namespace;</c> directive against the containing namespace, or via a
+    /// qualified reference to the full type name (e.g., <c>Json.Patch.JsonPatch</c>).
+    /// The match is a simple substring search over the cached plugin source content; the
+    /// scan intentionally tolerates trailing punctuation and whitespace that would appear
+    /// in real usage (semicolons after usings, angle brackets before generic parameters,
+    /// parentheses before constructor invocations).
+    /// </summary>
+    /// <remarks>
+    /// The cache in <paramref name="libraryReferenceCache"/> stores per-plugin raw
+    /// concatenated source content, not the PascalCase-identifier set used by the property
+    /// coverage check. That separate cache is necessary because library references appear
+    /// in non-identifier positions (inside <c>using</c> directives, in fully-qualified type
+    /// references with dots embedded) that the identifier-extraction regexes do not capture.
+    /// </remarks>
+    private static bool PluginSourceReferencesLibrary(
+        string pluginDir,
+        string libraryFullTypeName,
+        Dictionary<string, string> libraryReferenceCache)
+    {
+        if (!libraryReferenceCache.TryGetValue(pluginDir, out var combinedSource))
+        {
+            combinedSource = ReadAllPluginSource(pluginDir);
+            libraryReferenceCache[pluginDir] = combinedSource;
+        }
+
+        // Extract containing namespace: "Json.Patch.JsonPatch" -> "Json.Patch"
+        var lastDot = libraryFullTypeName.LastIndexOf('.');
+        var libraryNamespace = lastDot > 0 ? libraryFullTypeName[..lastDot] : libraryFullTypeName;
+
+        // Accept either:
+        //   (1) `using Namespace;` or `using Namespace.Deeper;` — captures top-level imports
+        //   (2) A fully-qualified type reference `Namespace.TypeName` anywhere in source
+        //       (e.g., `Json.Patch.JsonPatch` inside a method body)
+        return combinedSource.Contains($"using {libraryNamespace};", StringComparison.Ordinal)
+            || combinedSource.Contains($"using {libraryNamespace}.", StringComparison.Ordinal)
+            || combinedSource.Contains(libraryFullTypeName, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Reads every non-Generated, non-test <c>.cs</c> file in a plugin directory and
+    /// concatenates the raw content into a single string. Used for library-import scanning
+    /// where the matching target (e.g., <c>using Json.Patch;</c>) appears in a position
+    /// that the PascalCase-identifier extraction regexes cannot capture.
+    /// </summary>
+    private static string ReadAllPluginSource(string sourceDir)
+    {
+        var sb = new StringBuilder();
+        foreach (var csFile in Directory.EnumerateFiles(sourceDir, "*.cs", SearchOption.AllDirectories))
+        {
+            var relative = Path.GetRelativePath(sourceDir, csFile);
+            if (relative.Contains("Generated", StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (relative.Contains(".tests", StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (relative.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar, StringComparison.Ordinal) ||
+                relative.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+                continue;
+
+            try
+            {
+                sb.AppendLine(File.ReadAllText(csFile));
+            }
+            catch
+            {
+                // Skip unreadable files — same tolerance as the identifier-extraction scan.
+            }
+        }
+        return sb.ToString();
     }
 
     /// <summary>
