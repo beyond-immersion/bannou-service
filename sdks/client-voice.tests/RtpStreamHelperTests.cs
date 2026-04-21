@@ -59,7 +59,7 @@ public class RtpStreamHelperTests
         using var helper = new RtpStreamHelper();
 
         // Act - malformed URI should fail gracefully
-        var result = await helper.StartAsync("not-a-valid-uri");
+        var result = await helper.StartAsync("not-a-valid-uri", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -73,7 +73,7 @@ public class RtpStreamHelperTests
         using var helper = new RtpStreamHelper();
 
         // Act - unreachable host should fail gracefully
-        var result = await helper.StartAsync("udp://unreachable.invalid.host:22222");
+        var result = await helper.StartAsync("udp://unreachable.invalid.host:22222", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - should fail due to DNS resolution failure
         Assert.False(result);
@@ -86,13 +86,13 @@ public class RtpStreamHelperTests
         // Arrange
         using var helper = new RtpStreamHelper();
         // Use localhost to succeed the first time
-        var result = await helper.StartAsync("udp://127.0.0.1:22222");
+        var result = await helper.StartAsync("udp://127.0.0.1:22222", cancellationToken: TestContext.Current.CancellationToken);
 
         if (result)
         {
             // Act & Assert - second start should throw
             await Assert.ThrowsAsync<InvalidOperationException>(
-                () => helper.StartAsync("udp://127.0.0.1:22223"));
+                () => helper.StartAsync("udp://127.0.0.1:22223", cancellationToken: TestContext.Current.CancellationToken));
         }
         // If first start failed, skip this test (infrastructure issue)
     }
@@ -211,7 +211,7 @@ public class RtpStreamHelperTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ObjectDisposedException>(
-            () => helper.StartAsync("udp://localhost:22222"));
+            () => helper.StartAsync("udp://localhost:22222", cancellationToken: TestContext.Current.CancellationToken));
     }
 
     #endregion

@@ -503,9 +503,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EncounterTypeResponse>(
-                _directDispatchProvider, _serviceName, "CreateEncounterTypeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, CreateEncounterTypeRequest, EncounterTypeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateEncounterTypeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -606,9 +608,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EncounterTypeResponse>(
-                _directDispatchProvider, _serviceName, "GetEncounterTypeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, GetEncounterTypeRequest, EncounterTypeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetEncounterTypeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -703,9 +707,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EncounterTypeListResponse>(
-                _directDispatchProvider, _serviceName, "ListEncounterTypesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, ListEncounterTypesRequest, EncounterTypeListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListEncounterTypesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -795,9 +801,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EncounterTypeResponse>(
-                _directDispatchProvider, _serviceName, "UpdateEncounterTypeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, UpdateEncounterTypeRequest, EncounterTypeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateEncounterTypeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -901,9 +909,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EncounterTypeResponse>(
-                _directDispatchProvider, _serviceName, "DeprecateEncounterTypeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, DeprecateEncounterTypeRequest, EncounterTypeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeprecateEncounterTypeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1003,9 +1013,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanDeprecatedResponse>(
-                _directDispatchProvider, _serviceName, "CleanDeprecatedEncounterTypesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, CleanDeprecatedRequest, CleanDeprecatedResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanDeprecatedEncounterTypesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1095,9 +1107,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SeedEncounterTypesResponse>(
-                _directDispatchProvider, _serviceName, "SeedEncounterTypesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, SeedEncounterTypesRequest, SeedEncounterTypesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SeedEncounterTypesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1191,9 +1205,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EncounterResponse>(
-                _directDispatchProvider, _serviceName, "RecordEncounterAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, RecordEncounterRequest, EncounterResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RecordEncounterAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1301,9 +1317,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EncounterListResponse>(
-                _directDispatchProvider, _serviceName, "QueryByCharacterAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, QueryByCharacterRequest, EncounterListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.QueryByCharacterAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1393,9 +1411,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EncounterListResponse>(
-                _directDispatchProvider, _serviceName, "QueryBetweenAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, QueryBetweenRequest, EncounterListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.QueryBetweenAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1485,9 +1505,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EncounterListResponse>(
-                _directDispatchProvider, _serviceName, "QueryByLocationAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, QueryByLocationRequest, EncounterListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.QueryByLocationAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1577,9 +1599,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<HasMetResponse>(
-                _directDispatchProvider, _serviceName, "HasMetAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, HasMetRequest, HasMetResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.HasMetAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1669,9 +1693,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SentimentResponse>(
-                _directDispatchProvider, _serviceName, "GetSentimentAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, GetSentimentRequest, SentimentResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetSentimentAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1761,9 +1787,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BatchSentimentResponse>(
-                _directDispatchProvider, _serviceName, "BatchGetSentimentAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, BatchGetSentimentRequest, BatchSentimentResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.BatchGetSentimentAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1853,9 +1881,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PerspectiveResponse>(
-                _directDispatchProvider, _serviceName, "GetPerspectiveAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, GetPerspectiveRequest, PerspectiveResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetPerspectiveAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1951,9 +1981,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PerspectiveResponse>(
-                _directDispatchProvider, _serviceName, "UpdatePerspectiveAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, UpdatePerspectiveRequest, PerspectiveResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdatePerspectiveAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2049,9 +2081,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PerspectiveResponse>(
-                _directDispatchProvider, _serviceName, "RefreshMemoryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, RefreshMemoryRequest, PerspectiveResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RefreshMemoryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2147,9 +2181,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeleteEncounterResponse>(
-                _directDispatchProvider, _serviceName, "DeleteEncounterAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, DeleteEncounterRequest, DeleteEncounterResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteEncounterAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2245,9 +2281,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeleteByCharacterResponse>(
-                _directDispatchProvider, _serviceName, "DeleteByCharacterAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, DeleteByCharacterRequest, DeleteByCharacterResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteByCharacterAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2338,9 +2376,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DecayMemoriesResponse>(
-                _directDispatchProvider, _serviceName, "DecayMemoriesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, DecayMemoriesRequest, DecayMemoriesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DecayMemoriesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2430,9 +2470,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CharacterEncounterArchive>(
-                _directDispatchProvider, _serviceName, "GetCompressDataAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, GetCompressDataRequest, CharacterEncounterArchive>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetCompressDataAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2528,9 +2570,11 @@ public partial class CharacterEncounterClient : ICharacterEncounterClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RestoreFromArchiveResponse>(
-                _directDispatchProvider, _serviceName, "RestoreFromArchiveAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterEncounterService, RestoreFromArchiveRequest, RestoreFromArchiveResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RestoreFromArchiveAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

@@ -50,7 +50,7 @@ public partial interface IBehaviorClient
     /// </remarks>
     /// <returns>ABML behavior compiled successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<CompileBehaviorResponse> CompileAbmlBehaviorAsync(string body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<CompileBehaviorResponse> CompileAbmlBehaviorAsync(CompileBehaviorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -63,7 +63,7 @@ public partial interface IBehaviorClient
     /// </remarks>
     /// <returns>Validation completed</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<ValidateAbmlResponse> ValidateAbmlAsync(string body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<ValidateAbmlResponse> ValidateAbmlAsync(ValidateAbmlRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -278,7 +278,7 @@ public partial class BehaviorClient : IBehaviorClient, BeyondImmersion.BannouSer
     /// </remarks>
     /// <returns>ABML behavior compiled successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<CompileBehaviorResponse> CompileAbmlBehaviorAsync(string body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<CompileBehaviorResponse> CompileAbmlBehaviorAsync(CompileBehaviorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
@@ -286,9 +286,11 @@ public partial class BehaviorClient : IBehaviorClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CompileBehaviorResponse>(
-                _directDispatchProvider, _serviceName, "CompileAbmlBehaviorAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IBehaviorService, CompileBehaviorRequest, CompileBehaviorResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CompileAbmlBehaviorAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -307,7 +309,7 @@ public partial class BehaviorClient : IBehaviorClient, BeyondImmersion.BannouSer
         {
             var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
-            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/yaml");
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
             request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
@@ -388,7 +390,7 @@ public partial class BehaviorClient : IBehaviorClient, BeyondImmersion.BannouSer
     /// </remarks>
     /// <returns>Validation completed</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<ValidateAbmlResponse> ValidateAbmlAsync(string body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<ValidateAbmlResponse> ValidateAbmlAsync(ValidateAbmlRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
@@ -396,9 +398,11 @@ public partial class BehaviorClient : IBehaviorClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ValidateAbmlResponse>(
-                _directDispatchProvider, _serviceName, "ValidateAbmlAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IBehaviorService, ValidateAbmlRequest, ValidateAbmlResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ValidateAbmlAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -417,7 +421,7 @@ public partial class BehaviorClient : IBehaviorClient, BeyondImmersion.BannouSer
         {
             var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
             var content_ = new System.Net.Http.ByteArrayContent(json_);
-            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/yaml");
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
             request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
@@ -488,9 +492,11 @@ public partial class BehaviorClient : IBehaviorClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CachedBehaviorResponse>(
-                _directDispatchProvider, _serviceName, "GetCachedBehaviorAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IBehaviorService, GetCachedBehaviorRequest, CachedBehaviorResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetCachedBehaviorAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -586,9 +592,11 @@ public partial class BehaviorClient : IBehaviorClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "InvalidateCachedBehaviorAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IBehaviorService, InvalidateCacheRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.InvalidateCachedBehaviorAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -679,9 +687,11 @@ public partial class BehaviorClient : IBehaviorClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GoapPlanResponse>(
-                _directDispatchProvider, _serviceName, "GenerateGoapPlanAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IBehaviorService, GoapPlanRequest, GoapPlanResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GenerateGoapPlanAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -777,9 +787,11 @@ public partial class BehaviorClient : IBehaviorClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ValidateGoapPlanResponse>(
-                _directDispatchProvider, _serviceName, "ValidateGoapPlanAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IBehaviorService, ValidateGoapPlanRequest, ValidateGoapPlanResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ValidateGoapPlanAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

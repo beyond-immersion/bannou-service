@@ -666,9 +666,11 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ContactResponse>(
-                _directDispatchProvider, _serviceName, "SubmitContactAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IWebsiteService, ContactRequest, ContactResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SubmitContactAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -933,9 +935,11 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PageContent>(
-                _directDispatchProvider, _serviceName, "CreatePageAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IWebsiteService, PageContent, PageContent>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreatePageAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1025,9 +1029,6 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PageContent>(
-                _directDispatchProvider, _serviceName, "UpdatePageAsync",
-                body, cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1267,9 +1268,11 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SiteSettings>(
-                _directDispatchProvider, _serviceName, "UpdateSiteSettingsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IWebsiteService, SiteSettings, SiteSettings>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateSiteSettingsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1432,9 +1435,11 @@ public partial class WebsiteClient : IWebsiteClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "UpdateThemeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IWebsiteService, ThemeConfig>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateThemeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 

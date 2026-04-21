@@ -11,10 +11,10 @@ public class MemoryAssetCacheTests : IAsyncLifetime
 {
     private MemoryAssetCache? _cache;
 
-    public Task InitializeAsync()
+    public ValueTask InitializeAsync()
     {
         _cache = new MemoryAssetCache(maxSizeBytes: 1024 * 1024); // 1MB default
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>
@@ -22,10 +22,10 @@ public class MemoryAssetCacheTests : IAsyncLifetime
     /// </summary>
     private MemoryAssetCache Cache => _cache ?? throw new InvalidOperationException("Cache not initialized - InitializeAsync must be called first");
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (_cache != null)
-            await Cache.ClearAsync();
+            await Cache.ClearAsync(TestContext.Current.CancellationToken);
     }
 
     #region Constructor Tests
@@ -73,10 +73,10 @@ public class MemoryAssetCacheTests : IAsyncLifetime
 
         // Act
         using var stream = new MemoryStream(data);
-        await Cache.StoreBundleAsync(bundleId, stream, hash);
+        await Cache.StoreBundleAsync(bundleId, stream, hash, TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.True(await Cache.HasBundleAsync(bundleId));
+        Assert.True(await Cache.HasBundleAsync(bundleId, ct: TestContext.Current.CancellationToken));
     }
 
     /// <summary>
@@ -92,13 +92,13 @@ public class MemoryAssetCacheTests : IAsyncLifetime
 
         // Act
         using var inputStream = new MemoryStream(originalData);
-        await Cache.StoreBundleAsync(bundleId, inputStream, hash);
-        using var stream = await Cache.GetBundleStreamAsync(bundleId);
+        await Cache.StoreBundleAsync(bundleId, inputStream, hash, TestContext.Current.CancellationToken);
+        using var stream = await Cache.GetBundleStreamAsync(bundleId, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(stream);
         using var ms = new MemoryStream();
-        await stream.CopyToAsync(ms);
+        await stream.CopyToAsync(ms, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(originalData, ms.ToArray());
     }
 
@@ -113,7 +113,7 @@ public class MemoryAssetCacheTests : IAsyncLifetime
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            Cache.StoreBundleAsync("", stream, "hash"));
+            Cache.StoreBundleAsync("", stream, "hash", TestContext.Current.CancellationToken));
     }
 
     /// <summary>
@@ -127,7 +127,7 @@ public class MemoryAssetCacheTests : IAsyncLifetime
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            Cache.StoreBundleAsync("bundle", stream, ""));
+            Cache.StoreBundleAsync("bundle", stream, "", TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -141,7 +141,7 @@ public class MemoryAssetCacheTests : IAsyncLifetime
     public async Task HasBundleAsync_NonExistent_ReturnsFalse()
     {
         // Act
-        var result = await Cache.HasBundleAsync("non-existent");
+        var result = await Cache.HasBundleAsync("non-existent", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -155,10 +155,10 @@ public class MemoryAssetCacheTests : IAsyncLifetime
     {
         // Arrange
         using var stream = new MemoryStream(CreateTestData(100));
-        await Cache.StoreBundleAsync("bundle-1", stream, "hash1");
+        await Cache.StoreBundleAsync("bundle-1", stream, "hash1", TestContext.Current.CancellationToken);
 
         // Act
-        var result = await Cache.HasBundleAsync("bundle-1");
+        var result = await Cache.HasBundleAsync("bundle-1", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -172,10 +172,10 @@ public class MemoryAssetCacheTests : IAsyncLifetime
     {
         // Arrange
         using var stream = new MemoryStream(CreateTestData(100));
-        await Cache.StoreBundleAsync("bundle-1", stream, "correct-hash");
+        await Cache.StoreBundleAsync("bundle-1", stream, "correct-hash", TestContext.Current.CancellationToken);
 
         // Act
-        var result = await Cache.HasBundleAsync("bundle-1", "correct-hash");
+        var result = await Cache.HasBundleAsync("bundle-1", "correct-hash", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -189,10 +189,10 @@ public class MemoryAssetCacheTests : IAsyncLifetime
     {
         // Arrange
         using var stream = new MemoryStream(CreateTestData(100));
-        await Cache.StoreBundleAsync("bundle-1", stream, "original-hash");
+        await Cache.StoreBundleAsync("bundle-1", stream, "original-hash", TestContext.Current.CancellationToken);
 
         // Act
-        var result = await Cache.HasBundleAsync("bundle-1", "different-hash");
+        var result = await Cache.HasBundleAsync("bundle-1", "different-hash", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result);
@@ -206,10 +206,10 @@ public class MemoryAssetCacheTests : IAsyncLifetime
     {
         // Arrange
         using var stream = new MemoryStream(CreateTestData(100));
-        await Cache.StoreBundleAsync("bundle-1", stream, "ABC123");
+        await Cache.StoreBundleAsync("bundle-1", stream, "ABC123", TestContext.Current.CancellationToken);
 
         // Act
-        var result = await Cache.HasBundleAsync("bundle-1", "abc123");
+        var result = await Cache.HasBundleAsync("bundle-1", "abc123", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result);
@@ -226,7 +226,7 @@ public class MemoryAssetCacheTests : IAsyncLifetime
     public async Task GetBundleStreamAsync_NonExistent_ReturnsNull()
     {
         // Act
-        var result = await Cache.GetBundleStreamAsync("non-existent");
+        var result = await Cache.GetBundleStreamAsync("non-existent", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -240,20 +240,23 @@ public class MemoryAssetCacheTests : IAsyncLifetime
     {
         // Arrange
         using var inputStream = new MemoryStream(CreateTestData(100));
-        await Cache.StoreBundleAsync("bundle-1", inputStream, "hash1");
+        await Cache.StoreBundleAsync("bundle-1", inputStream, "hash1", TestContext.Current.CancellationToken);
 
         // Act
-        using var stream1 = await Cache.GetBundleStreamAsync("bundle-1");
-        using var stream2 = await Cache.GetBundleStreamAsync("bundle-1");
+        using var stream1 = await Cache.GetBundleStreamAsync("bundle-1", TestContext.Current.CancellationToken);
+        using var stream2 = await Cache.GetBundleStreamAsync("bundle-1", TestContext.Current.CancellationToken);
 
-        // Assert - streams should be independent
+        // Assert - streams should be independent.
+        // Assert.NotNull uses [NotNull] attribute which informs null-state analysis:
+        // after these calls, the compiler treats stream1/stream2 as non-null,
+        // avoiding the null-forgiving operator pattern (per CLAUDE-PRACTICES § Null Safety).
         Assert.NotNull(stream1);
         Assert.NotNull(stream2);
 
         // Reading from one should not affect the other
         var buffer = new byte[50];
-        _ = await stream1!.ReadAsync(buffer);
-        Assert.Equal(0, stream2!.Position);
+        _ = await stream1.ReadAsync(buffer, cancellationToken: TestContext.Current.CancellationToken);
+        Assert.Equal(0, stream2.Position);
     }
 
     /// <summary>
@@ -264,11 +267,11 @@ public class MemoryAssetCacheTests : IAsyncLifetime
     {
         // Arrange
         using var inputStream = new MemoryStream(CreateTestData(100));
-        await Cache.StoreBundleAsync("bundle-1", inputStream, "hash1");
+        await Cache.StoreBundleAsync("bundle-1", inputStream, "hash1", TestContext.Current.CancellationToken);
         var initialStats = Cache.GetStats();
 
         // Act
-        using var stream = await Cache.GetBundleStreamAsync("bundle-1");
+        using var stream = await Cache.GetBundleStreamAsync("bundle-1", TestContext.Current.CancellationToken);
 
         // Assert - hit count should increase
         var afterStats = Cache.GetStats();
@@ -287,13 +290,13 @@ public class MemoryAssetCacheTests : IAsyncLifetime
     {
         // Arrange
         using var stream = new MemoryStream(CreateTestData(100));
-        await Cache.StoreBundleAsync("bundle-1", stream, "hash1");
+        await Cache.StoreBundleAsync("bundle-1", stream, "hash1", TestContext.Current.CancellationToken);
 
         // Act
-        await Cache.RemoveBundleAsync("bundle-1");
+        await Cache.RemoveBundleAsync("bundle-1", TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.False(await Cache.HasBundleAsync("bundle-1"));
+        Assert.False(await Cache.HasBundleAsync("bundle-1", ct: TestContext.Current.CancellationToken));
     }
 
     /// <summary>
@@ -303,7 +306,7 @@ public class MemoryAssetCacheTests : IAsyncLifetime
     public async Task RemoveBundleAsync_NonExistent_DoesNotThrow()
     {
         // Act - should not throw
-        await Cache.RemoveBundleAsync("non-existent");
+        await Cache.RemoveBundleAsync("non-existent", TestContext.Current.CancellationToken);
     }
 
     #endregion
@@ -321,8 +324,8 @@ public class MemoryAssetCacheTests : IAsyncLifetime
         var data2 = CreateTestData(200);
         using var stream1 = new MemoryStream(data1);
         using var stream2 = new MemoryStream(data2);
-        await Cache.StoreBundleAsync("bundle-1", stream1, "hash1");
-        await Cache.StoreBundleAsync("bundle-2", stream2, "hash2");
+        await Cache.StoreBundleAsync("bundle-1", stream1, "hash1", TestContext.Current.CancellationToken);
+        await Cache.StoreBundleAsync("bundle-2", stream2, "hash2", TestContext.Current.CancellationToken);
 
         // Act
         var stats = Cache.GetStats();
@@ -340,12 +343,12 @@ public class MemoryAssetCacheTests : IAsyncLifetime
     {
         // Arrange
         using var inputStream = new MemoryStream(CreateTestData(100));
-        await Cache.StoreBundleAsync("bundle-1", inputStream, "hash1");
+        await Cache.StoreBundleAsync("bundle-1", inputStream, "hash1", TestContext.Current.CancellationToken);
 
         // Act - call GetBundleStreamAsync three times to register hits
-        (await Cache.GetBundleStreamAsync("bundle-1"))?.Dispose();
-        (await Cache.GetBundleStreamAsync("bundle-1"))?.Dispose();
-        (await Cache.GetBundleStreamAsync("bundle-1"))?.Dispose();
+        (await Cache.GetBundleStreamAsync("bundle-1", TestContext.Current.CancellationToken))?.Dispose();
+        (await Cache.GetBundleStreamAsync("bundle-1", TestContext.Current.CancellationToken))?.Dispose();
+        (await Cache.GetBundleStreamAsync("bundle-1", TestContext.Current.CancellationToken))?.Dispose();
 
         // Assert
         var stats = Cache.GetStats();
@@ -359,8 +362,8 @@ public class MemoryAssetCacheTests : IAsyncLifetime
     public async Task GetStats_TracksMissCount()
     {
         // Act
-        await Cache.GetBundleStreamAsync("non-existent-1");
-        await Cache.GetBundleStreamAsync("non-existent-2");
+        await Cache.GetBundleStreamAsync("non-existent-1", TestContext.Current.CancellationToken);
+        await Cache.GetBundleStreamAsync("non-existent-2", TestContext.Current.CancellationToken);
 
         // Assert
         var stats = Cache.GetStats();
@@ -382,26 +385,26 @@ public class MemoryAssetCacheTests : IAsyncLifetime
 
         // Add three bundles with different timestamps
         using var streamOld = new MemoryStream(CreateTestData(100));
-        await Cache.StoreBundleAsync("old", streamOld, "hash1");
-        await Task.Delay(10); // Ensure different timestamps
+        await Cache.StoreBundleAsync("old", streamOld, "hash1", TestContext.Current.CancellationToken);
+        await Task.Delay(10, TestContext.Current.CancellationToken); // Ensure different timestamps
         using var streamMiddle = new MemoryStream(CreateTestData(100));
-        await Cache.StoreBundleAsync("middle", streamMiddle, "hash2");
-        await Task.Delay(10);
+        await Cache.StoreBundleAsync("middle", streamMiddle, "hash2", TestContext.Current.CancellationToken);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
         using var streamNew = new MemoryStream(CreateTestData(100));
-        await Cache.StoreBundleAsync("new", streamNew, "hash3");
+        await Cache.StoreBundleAsync("new", streamNew, "hash3", TestContext.Current.CancellationToken);
 
         // Access "old" to make it recently used (updates LastAccessedAt)
         // Order after access: middle (oldest), new (middle), old (newest)
-        (await Cache.GetBundleStreamAsync("old"))?.Dispose();
+        (await Cache.GetBundleStreamAsync("old", TestContext.Current.CancellationToken))?.Dispose();
 
         // Act - evict to 200 bytes (need to remove 100 bytes from 300 total)
         // Only "middle" should be evicted as it has the oldest LastAccessedAt
-        await Cache.EvictToSizeAsync(200);
+        await Cache.EvictToSizeAsync(200, TestContext.Current.CancellationToken);
 
         // Assert - "middle" should be evicted (least recently accessed)
-        Assert.True(await Cache.HasBundleAsync("old"), "Old bundle should remain (recently accessed)");
-        Assert.False(await Cache.HasBundleAsync("middle"), "Middle bundle should be evicted (least recently accessed)");
-        Assert.True(await Cache.HasBundleAsync("new"), "New bundle should remain (more recently created than middle)");
+        Assert.True(await Cache.HasBundleAsync("old", ct: TestContext.Current.CancellationToken), "Old bundle should remain (recently accessed)");
+        Assert.False(await Cache.HasBundleAsync("middle", ct: TestContext.Current.CancellationToken), "Middle bundle should be evicted (least recently accessed)");
+        Assert.True(await Cache.HasBundleAsync("new", ct: TestContext.Current.CancellationToken), "New bundle should remain (more recently created than middle)");
     }
 
     /// <summary>
@@ -414,17 +417,17 @@ public class MemoryAssetCacheTests : IAsyncLifetime
         _cache = new MemoryAssetCache(maxSizeBytes: 300);
         using var stream1 = new MemoryStream(CreateTestData(100));
         using var stream2 = new MemoryStream(CreateTestData(100));
-        await Cache.StoreBundleAsync("bundle-1", stream1, "hash1");
-        await Cache.StoreBundleAsync("bundle-2", stream2, "hash2");
+        await Cache.StoreBundleAsync("bundle-1", stream1, "hash1", TestContext.Current.CancellationToken);
+        await Cache.StoreBundleAsync("bundle-2", stream2, "hash2", TestContext.Current.CancellationToken);
 
         // Act - add bundle that would exceed max size
         using var stream3 = new MemoryStream(CreateTestData(150));
-        await Cache.StoreBundleAsync("bundle-3", stream3, "hash3");
+        await Cache.StoreBundleAsync("bundle-3", stream3, "hash3", TestContext.Current.CancellationToken);
 
         // Assert - some bundles should be evicted
         var stats = Cache.GetStats();
         Assert.True(stats.TotalBytes <= 300, "Total size should not exceed max");
-        Assert.True(await Cache.HasBundleAsync("bundle-3"), "New bundle should be present");
+        Assert.True(await Cache.HasBundleAsync("bundle-3", ct: TestContext.Current.CancellationToken), "New bundle should be present");
     }
 
     /// <summary>
@@ -435,7 +438,7 @@ public class MemoryAssetCacheTests : IAsyncLifetime
     {
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
-            Cache.EvictToSizeAsync(-1));
+            Cache.EvictToSizeAsync(-1, TestContext.Current.CancellationToken));
     }
 
     /// <summary>
@@ -446,13 +449,13 @@ public class MemoryAssetCacheTests : IAsyncLifetime
     {
         // Arrange
         using var stream = new MemoryStream(CreateTestData(100));
-        await Cache.StoreBundleAsync("bundle-1", stream, "hash1");
+        await Cache.StoreBundleAsync("bundle-1", stream, "hash1", TestContext.Current.CancellationToken);
 
         // Act
-        await Cache.EvictToSizeAsync(1000);
+        await Cache.EvictToSizeAsync(1000, TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.True(await Cache.HasBundleAsync("bundle-1"));
+        Assert.True(await Cache.HasBundleAsync("bundle-1", ct: TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -468,11 +471,11 @@ public class MemoryAssetCacheTests : IAsyncLifetime
         // Arrange
         using var stream1 = new MemoryStream(CreateTestData(100));
         using var stream2 = new MemoryStream(CreateTestData(100));
-        await Cache.StoreBundleAsync("bundle-1", stream1, "hash1");
-        await Cache.StoreBundleAsync("bundle-2", stream2, "hash2");
+        await Cache.StoreBundleAsync("bundle-1", stream1, "hash1", TestContext.Current.CancellationToken);
+        await Cache.StoreBundleAsync("bundle-2", stream2, "hash2", TestContext.Current.CancellationToken);
 
         // Act
-        await Cache.ClearAsync();
+        await Cache.ClearAsync(TestContext.Current.CancellationToken);
 
         // Assert
         var stats = Cache.GetStats();
@@ -488,12 +491,12 @@ public class MemoryAssetCacheTests : IAsyncLifetime
     {
         // Arrange
         using var inputStream = new MemoryStream(CreateTestData(100));
-        await Cache.StoreBundleAsync("bundle-1", inputStream, "hash1");
-        (await Cache.GetBundleStreamAsync("bundle-1"))?.Dispose();
-        await Cache.GetBundleStreamAsync("non-existent");
+        await Cache.StoreBundleAsync("bundle-1", inputStream, "hash1", TestContext.Current.CancellationToken);
+        (await Cache.GetBundleStreamAsync("bundle-1", TestContext.Current.CancellationToken))?.Dispose();
+        await Cache.GetBundleStreamAsync("non-existent", TestContext.Current.CancellationToken);
 
         // Act
-        await Cache.ClearAsync();
+        await Cache.ClearAsync(TestContext.Current.CancellationToken);
 
         // Assert
         var stats = Cache.GetStats();

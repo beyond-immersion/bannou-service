@@ -77,68 +77,6 @@ public partial interface IConnectClient
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<ClientCapabilitiesResponse> GetClientCapabilitiesAsync(GetClientCapabilitiesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// Establish WebSocket connection
-    /// </summary>
-    /// <remarks>
-    /// Initiates a WebSocket connection for real-time communication.
-    /// <br/>Requires JWT authentication via Authorization header.
-    /// <br/>
-    /// <br/>**Connection Flow:**
-    /// <br/>1. Send HTTP GET request with `Connection: Upgrade` and `Upgrade: websocket` headers
-    /// <br/>2. Include `Authorization: Bearer &lt;jwt_token&gt;` header for authentication
-    /// <br/>3. Server validates JWT and extracts user claims (roles, scopes, services)
-    /// <br/>4. Connection upgrades to WebSocket protocol
-    /// <br/>5. Client can send binary messages using the custom protocol
-    /// <br/>
-    /// <br/>**Reconnection:**
-    /// <br/>For existing sessions, use `Authorization: Reconnect &lt;reconnect_token&gt;` instead.
-    /// </remarks>
-    /// <param name="connection">Must be "Upgrade" to initiate WebSocket connection</param>
-    /// <param name="upgrade">Must be "websocket" to specify protocol upgrade</param>
-    /// <param name="authorization">JWT Bearer token for new connections: "Bearer &lt;jwt_token&gt;"
-    /// <br/>Reconnect token for existing sessions: "Reconnect &lt;reconnect_token&gt;"</param>
-    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task ConnectWebSocketAsync(Connection connection, Upgrade upgrade, string authorization, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-    /// <param name="connection">The connection parameter.</param>
-    /// <param name="upgrade">The upgrade parameter.</param>
-    /// <param name="authorization">The authorization parameter.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// Establish WebSocket connection (POST variant)
-    /// </summary>
-    /// <remarks>
-    /// Alternative POST method for establishing WebSocket connections.
-    /// <br/>Functionally identical to the GET method but supports clients that
-    /// <br/>require POST for WebSocket upgrades.
-    /// </remarks>
-    /// <param name="body">Optional connection parameters</param>
-    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task ConnectWebSocketPostAsync(Connection2 connection, Upgrade2 upgrade, string authorization, ConnectRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// Inter-node broadcast WebSocket endpoint
-    /// </summary>
-    /// <remarks>
-    /// Internal WebSocket endpoint for the multi-node broadcast mesh.
-    /// <br/>Other Connect instances connect here to relay broadcast messages.
-    /// <br/>Requires service-token authentication (same as Internal connection mode).
-    /// <br/>
-    /// <br/>**Not client-facing.** This endpoint is used exclusively for
-    /// <br/>inter-node communication between Connect instances in multi-instance
-    /// <br/>deployments. Requires `instanceId` query parameter identifying the
-    /// <br/>connecting peer.
-    /// </remarks>
-    /// <param name="instanceId">Instance ID of the connecting peer Connect node</param>
-    /// <param name="connection">Must be "Upgrade" to initiate WebSocket connection</param>
-    /// <param name="upgrade">Must be "websocket" to specify protocol upgrade</param>
-    /// <param name="x_Service_Token">Service token for authentication (required when InternalAuthMode is ServiceToken)</param>
-    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task BroadcastWebSocketAsync(string instanceId, Connection3 connection, Upgrade3 upgrade, string? x_Service_Token = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -351,9 +289,11 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<InternalProxyResponse>(
-                _directDispatchProvider, _serviceName, "ProxyInternalRequestAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IConnectService, InternalProxyRequest, InternalProxyResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ProxyInternalRequestAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -472,9 +412,11 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ClientCapabilitiesResponse>(
-                _directDispatchProvider, _serviceName, "GetClientCapabilitiesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IConnectService, GetClientCapabilitiesRequest, ClientCapabilitiesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetClientCapabilitiesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -557,366 +499,6 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
         }
     }
 
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// Establish WebSocket connection
-    /// </summary>
-    /// <remarks>
-    /// Initiates a WebSocket connection for real-time communication.
-    /// <br/>Requires JWT authentication via Authorization header.
-    /// <br/>
-    /// <br/>**Connection Flow:**
-    /// <br/>1. Send HTTP GET request with `Connection: Upgrade` and `Upgrade: websocket` headers
-    /// <br/>2. Include `Authorization: Bearer &lt;jwt_token&gt;` header for authentication
-    /// <br/>3. Server validates JWT and extracts user claims (roles, scopes, services)
-    /// <br/>4. Connection upgrades to WebSocket protocol
-    /// <br/>5. Client can send binary messages using the custom protocol
-    /// <br/>
-    /// <br/>**Reconnection:**
-    /// <br/>For existing sessions, use `Authorization: Reconnect &lt;reconnect_token&gt;` instead.
-    /// </remarks>
-    /// <param name="connection">Must be "Upgrade" to initiate WebSocket connection</param>
-    /// <param name="upgrade">Must be "websocket" to specify protocol upgrade</param>
-    /// <param name="authorization">JWT Bearer token for new connections: "Bearer &lt;jwt_token&gt;"
-    /// <br/>Reconnect token for existing sessions: "Reconnect &lt;reconnect_token&gt;"</param>
-    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task ConnectWebSocketAsync(Connection connection, Upgrade upgrade, string authorization, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
-        if (_directDispatchProvider != null)
-        {
-        }
-
-        // Build method path (without base URL - mesh client handles endpoint resolution)
-        var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "connect"
-        urlBuilder_.Append("connect");
-
-        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
-        var appId_ = _resolver.GetAppIdForService(ServiceName);
-
-        // Create HTTP request via mesh client
-        using (var request_ = _meshClient.CreateInvokeMethodRequest(
-            new System.Net.Http.HttpMethod("GET"),
-            appId_,
-            methodPath_))
-        {
-
-            request_.Headers.TryAddWithoutValidation("Connection", ConvertToString(connection, System.Globalization.CultureInfo.InvariantCulture));
-
-            request_.Headers.TryAddWithoutValidation("Upgrade", ConvertToString(upgrade, System.Globalization.CultureInfo.InvariantCulture));
-
-            if (authorization == null)
-                throw new System.ArgumentNullException("authorization");
-            request_.Headers.TryAddWithoutValidation("Authorization", ConvertToString(authorization, System.Globalization.CultureInfo.InvariantCulture));
-
-            // Apply custom headers
-            ApplyHeaders(request_);
-
-            try
-            {
-                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
-                var disposeResponse_ = true;
-                try
-                {
-                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                    foreach (var item_ in response_.Headers)
-                        headers_[item_.Key] = item_.Value;
-                    if (response_.Content != null && response_.Content.Headers != null)
-                    {
-                        foreach (var item_ in response_.Content.Headers)
-                            headers_[item_.Key] = item_.Value;
-                    }
-
-                    var status_ = (int)response_.StatusCode;
-                    if (status_ == 101)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("WebSocket connection established successfully", status_, responseText_, headers_, null);
-                    }
-                    else
-                    if (status_ == 400)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Bad request - missing required headers or invalid request format", status_, responseText_, headers_, null);
-                    }
-                    else
-                    if (status_ == 403)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Forbidden - invalid JWT token or reconnection token", status_, responseText_, headers_, null);
-                    }
-                    else
-                    if (status_ == 500)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Internal server error during connection setup", status_, responseText_, headers_, null);
-                    }
-                    else
-
-                    if (status_ == 200 || status_ == 204)
-                    {
-
-                        return;
-                    }
-                    else
-                    {
-                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                    }
-                }
-                finally
-                {
-                    if (disposeResponse_)
-                        response_.Dispose();
-                }
-            }
-            finally
-            {
-                // Clear headers after request (one-time use)
-                ClearHeaders();
-            }
-        }
-    }
-
-    /// <param name="connection">The connection parameter.</param>
-    /// <param name="upgrade">The upgrade parameter.</param>
-    /// <param name="authorization">The authorization parameter.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// Establish WebSocket connection (POST variant)
-    /// </summary>
-    /// <remarks>
-    /// Alternative POST method for establishing WebSocket connections.
-    /// <br/>Functionally identical to the GET method but supports clients that
-    /// <br/>require POST for WebSocket upgrades.
-    /// </remarks>
-    /// <param name="body">Optional connection parameters</param>
-    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task ConnectWebSocketPostAsync(Connection2 connection, Upgrade2 upgrade, string authorization, ConnectRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
-        if (_directDispatchProvider != null)
-        {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "ConnectWebSocketPostAsync",
-                body, cancellationToken).ConfigureAwait(false);
-            return;
-        }
-
-        // Build method path (without base URL - mesh client handles endpoint resolution)
-        var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "connect"
-        urlBuilder_.Append("connect");
-
-        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
-        var appId_ = _resolver.GetAppIdForService(ServiceName);
-
-        // Create HTTP request via mesh client
-        using (var request_ = _meshClient.CreateInvokeMethodRequest(
-            new System.Net.Http.HttpMethod("POST"),
-            appId_,
-            methodPath_))
-        {
-
-            request_.Headers.TryAddWithoutValidation("Connection", ConvertToString(connection, System.Globalization.CultureInfo.InvariantCulture));
-
-            request_.Headers.TryAddWithoutValidation("Upgrade", ConvertToString(upgrade, System.Globalization.CultureInfo.InvariantCulture));
-
-            if (authorization == null)
-                throw new System.ArgumentNullException("authorization");
-            request_.Headers.TryAddWithoutValidation("Authorization", ConvertToString(authorization, System.Globalization.CultureInfo.InvariantCulture));
-            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
-            var content_ = new System.Net.Http.ByteArrayContent(json_);
-            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-            request_.Content = content_;
-
-            // Apply custom headers
-            ApplyHeaders(request_);
-
-            try
-            {
-                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
-                var disposeResponse_ = true;
-                try
-                {
-                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                    foreach (var item_ in response_.Headers)
-                        headers_[item_.Key] = item_.Value;
-                    if (response_.Content != null && response_.Content.Headers != null)
-                    {
-                        foreach (var item_ in response_.Content.Headers)
-                            headers_[item_.Key] = item_.Value;
-                    }
-
-                    var status_ = (int)response_.StatusCode;
-                    if (status_ == 101)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("WebSocket connection established successfully", status_, responseText_, headers_, null);
-                    }
-                    else
-                    if (status_ == 400)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Bad request", status_, responseText_, headers_, null);
-                    }
-                    else
-                    if (status_ == 403)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Forbidden", status_, responseText_, headers_, null);
-                    }
-                    else
-                    if (status_ == 500)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Internal server error", status_, responseText_, headers_, null);
-                    }
-                    else
-
-                    if (status_ == 200 || status_ == 204)
-                    {
-
-                        return;
-                    }
-                    else
-                    {
-                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                    }
-                }
-                finally
-                {
-                    if (disposeResponse_)
-                        response_.Dispose();
-                }
-            }
-            finally
-            {
-                // Clear headers after request (one-time use)
-                ClearHeaders();
-            }
-        }
-    }
-
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// Inter-node broadcast WebSocket endpoint
-    /// </summary>
-    /// <remarks>
-    /// Internal WebSocket endpoint for the multi-node broadcast mesh.
-    /// <br/>Other Connect instances connect here to relay broadcast messages.
-    /// <br/>Requires service-token authentication (same as Internal connection mode).
-    /// <br/>
-    /// <br/>**Not client-facing.** This endpoint is used exclusively for
-    /// <br/>inter-node communication between Connect instances in multi-instance
-    /// <br/>deployments. Requires `instanceId` query parameter identifying the
-    /// <br/>connecting peer.
-    /// </remarks>
-    /// <param name="instanceId">Instance ID of the connecting peer Connect node</param>
-    /// <param name="connection">Must be "Upgrade" to initiate WebSocket connection</param>
-    /// <param name="upgrade">Must be "websocket" to specify protocol upgrade</param>
-    /// <param name="x_Service_Token">Service token for authentication (required when InternalAuthMode is ServiceToken)</param>
-    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task BroadcastWebSocketAsync(string instanceId, Connection3 connection, Upgrade3 upgrade, string? x_Service_Token = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-        if (instanceId == null)
-            throw new System.ArgumentNullException("instanceId");
-
-        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
-        if (_directDispatchProvider != null)
-        {
-        }
-
-        // Build method path (without base URL - mesh client handles endpoint resolution)
-        var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "connect/broadcast"
-        urlBuilder_.Append("connect/broadcast");
-        urlBuilder_.Append('?');
-        urlBuilder_.Append(System.Uri.EscapeDataString("instanceId")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(instanceId, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-        urlBuilder_.Length--;
-
-        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
-        var appId_ = _resolver.GetAppIdForService(ServiceName);
-
-        // Create HTTP request via mesh client
-        using (var request_ = _meshClient.CreateInvokeMethodRequest(
-            new System.Net.Http.HttpMethod("GET"),
-            appId_,
-            methodPath_))
-        {
-
-            request_.Headers.TryAddWithoutValidation("Connection", ConvertToString(connection, System.Globalization.CultureInfo.InvariantCulture));
-
-            request_.Headers.TryAddWithoutValidation("Upgrade", ConvertToString(upgrade, System.Globalization.CultureInfo.InvariantCulture));
-
-            if (x_Service_Token != null)
-                request_.Headers.TryAddWithoutValidation("X-Service-Token", ConvertToString(x_Service_Token, System.Globalization.CultureInfo.InvariantCulture));
-
-            // Apply custom headers
-            ApplyHeaders(request_);
-
-            try
-            {
-                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
-                var disposeResponse_ = true;
-                try
-                {
-                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                    foreach (var item_ in response_.Headers)
-                        headers_[item_.Key] = item_.Value;
-                    if (response_.Content != null && response_.Content.Headers != null)
-                    {
-                        foreach (var item_ in response_.Content.Headers)
-                            headers_[item_.Key] = item_.Value;
-                    }
-
-                    var status_ = (int)response_.StatusCode;
-                    if (status_ == 101)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("WebSocket connection established for broadcast relay", status_, responseText_, headers_, null);
-                    }
-                    else
-                    if (status_ == 400)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Not a WebSocket request, or missing/invalid instanceId", status_, responseText_, headers_, null);
-                    }
-                    else
-                    if (status_ == 401)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Invalid or missing service token", status_, responseText_, headers_, null);
-                    }
-                    else
-
-                    if (status_ == 200 || status_ == 204)
-                    {
-
-                        return;
-                    }
-                    else
-                    {
-                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                    }
-                }
-                finally
-                {
-                    if (disposeResponse_)
-                        response_.Dispose();
-                }
-            }
-            finally
-            {
-                // Clear headers after request (one-time use)
-                ClearHeaders();
-            }
-        }
-    }
-
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -943,9 +525,11 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetEndpointMetaResponse>(
-                _directDispatchProvider, _serviceName, "GetEndpointMetaAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IConnectService, GetEndpointMetaRequest, GetEndpointMetaResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetEndpointMetaAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1062,9 +646,11 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetAccountSessionsResponse>(
-                _directDispatchProvider, _serviceName, "GetAccountSessionsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IConnectService, GetAccountSessionsRequest, GetAccountSessionsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetAccountSessionsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

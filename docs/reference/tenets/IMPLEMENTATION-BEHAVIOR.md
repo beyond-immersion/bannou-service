@@ -13,6 +13,7 @@ These tenets define what a service method **does** at runtime.
 
 ---
 
+<!-- TENET:T3 -->
 ## Tenet 3: Event Consumer Fan-Out (MANDATORY)
 
 **Rule**: Services subscribing to pub/sub events MUST use `IEventConsumer` for multi-plugin event handling.
@@ -62,9 +63,11 @@ public async Task HandleAccountDeletedAsync(AccountDeletedEvent evt)
 ```
 
 Registration is idempotent. Handlers are isolated (one throwing doesn't prevent others). `IEventConsumer` is singleton. See [Helpers & Common Patterns § Event & Messaging](../HELPERS-AND-COMMON-PATTERNS.md#2-event--messaging-helpers) for the full `IEventConsumer` API and error event publishing helpers.
+<!-- /TENET:T3 -->
 
 ---
 
+<!-- TENET:T7 -->
 ## Tenet 7: Error Handling (STANDARDIZED)
 
 **Rule**: Use specific exception types where available. Let unexpected exceptions propagate to the generated controller's catch-all boundary.
@@ -315,9 +318,11 @@ await _resourceClient.ExecuteCleanupAsync(request, ct);  // May fail — data no
 ```
 
 > **Helpers**: See [Helpers & Common Patterns § Event & Messaging](../HELPERS-AND-COMMON-PATTERNS.md#2-event--messaging-helpers) for `TryPublishErrorAsync` and `WorkerErrorPublisher` usage patterns.
+<!-- /TENET:T7 -->
 
 ---
 
+<!-- TENET:T8 -->
 ## Tenet 8: Return Pattern (MANDATORY)
 
 **Rule**: All service **implementation** methods (i.e., methods implementing `I{Service}Service`) MUST return `(StatusCodes, TResponse?)` tuples using `BeyondImmersion.BannouService.StatusCodes` (NOT `Microsoft.AspNetCore.Http.StatusCodes`).
@@ -407,9 +412,11 @@ return (StatusCodes.OK, new LockContractResponse());
 ```
 
 This is cleaner than inventing filler fields to make the response "look" like it has content.
+<!-- /TENET:T8 -->
 
 ---
 
+<!-- TENET:T9 -->
 ## Tenet 9: Multi-Instance Safety (MANDATORY)
 
 **Rule**: Services MUST be safe to run as multiple instances across multiple nodes.
@@ -498,9 +505,11 @@ _serverSalt = GuidGenerator.GenerateServerSalt();
 ```
 
 **Detection**: If a service has Singleton lifetime + generates cryptographic values in constructor + participates in distributed deployment → MUST use shared/deterministic values. See [Helpers & Common Patterns § Miscellaneous](../HELPERS-AND-COMMON-PATTERNS.md#14-miscellaneous-helpers) for `GuidGenerator` and `VariableProviderCacheBucket` (which uses `ConcurrentDictionary` correctly).
+<!-- /TENET:T9 -->
 
 ---
 
+<!-- TENET:T17 -->
 ## Tenet 17: Client Event Schema Pattern (RECOMMENDED)
 
 **Rule**: Services pushing events to WebSocket clients MUST define them in `{service}-client-events.yaml`.
@@ -524,9 +533,11 @@ await _messageBus.PublishAsync($"CONNECT_SESSION_{sessionId}", clientEvent);
 ```
 
 > **Helpers**: See [Helpers & Common Patterns § Client Event Publishing](../HELPERS-AND-COMMON-PATTERNS.md#7-client-event-publishing) for `IClientEventPublisher`, `IEntitySessionRegistry`, and client event model details.
+<!-- /TENET:T17 -->
 
 ---
 
+<!-- TENET:T30 -->
 ## Tenet 30: Telemetry Span Instrumentation (MANDATORY)
 
 **Rule**: All async methods in service code MUST create a telemetry span via `ITelemetryProvider.StartActivity`. This applies to generated controller wrappers, helper DI services, and async methods in service implementation classes (except the primary methods that generated controllers already wrap).
@@ -611,9 +622,11 @@ _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingServiceEvents
 ### Dependency
 
 Services that need to create spans must have access to `ITelemetryProvider`. This is already available via DI (constructor injection) in all services since it's an L0 infrastructure dependency. Helper DI services should accept `ITelemetryProvider` in their constructors. See [Helpers & Common Patterns § Telemetry](../HELPERS-AND-COMMON-PATTERNS.md#10-telemetry) for `ITelemetryProvider` API and `NullTelemetryProvider`.
+<!-- /TENET:T30 -->
 
 ---
 
+<!-- TENET:T31 -->
 ## Tenet 31: Deprecation Lifecycle (MANDATORY)
 
 **Rule**: Entities that other entities reference by ID MUST support a deprecation lifecycle before deletion. Entities that are never referenced by ID MUST NOT have deprecation — use immediate deletion. The pattern, storage, behavior, and cleanup rules are standardized below.
@@ -893,6 +906,66 @@ catch (ApiException)
     return (StatusCodes.BadRequest, null);  // Realm missing or unavailable
 }
 ```
+<!-- /TENET:T31 -->
+
+---
+
+<!-- TENET:T34 -->
+## Tenet 34: AOT Compatibility (MANDATORY)
+
+**Rule**: Runtime reflection, dynamic code generation, and dynamic assembly loading are FORBIDDEN in `bannou-service/` and `plugins/*/` code paths. Consumer shipping targets include iOS (Mono AOT, JIT prohibited by Apple) and the path forward includes NativeAOT for standalone builds. All code in these paths MUST be AOT-clean by default.
+
+### Forbidden Patterns
+
+| Pattern | Why forbidden | Static alternative |
+|---------|---------------|---------------------|
+| `Assembly.LoadFrom(path)` / `Assembly.LoadFile(path)` | iOS prohibits JIT compilation; runtime-loaded assemblies cannot be AOT-compiled | Static plugin registration manifest (source generator) |
+| `Reflection.Emit`, `DynamicMethod`, `AssemblyBuilder`, `ModuleBuilder`, `TypeBuilder`, `ILGenerator` | Emits IL at runtime; incompatible with any AOT target | Source generators or compile-time factories |
+| `MakeGenericMethod(runtimeType)` / `MakeGenericType(runtimeType)` | Requires closed-generic instantiation not known at compile time | Baked-in generic dispatch via template or source generator |
+| `method.Invoke(target, args)` on a runtime-resolved `MethodInfo` in hot paths | Bypasses the AOT inliner; NativeAOT cannot resolve | Direct method call or statically-typed delegate |
+| `Activator.CreateInstance(runtimeType, args)` with a non-`typeof(T)` `Type` | Needs `[DynamicallyAccessedMembers]` at minimum; often breaks under NativeAOT trimming | `Activator.CreateInstance&lt;T&gt;()` or DI resolution |
+| `Expression.Compile()` on hot paths | Compiles to IL at runtime | Source-generated delegates or precomputed expression trees |
+| `ValueTuple.GetField("Item1")` / `GetField("Item2")` reflection | Erases the whole point of tuple static typing; forces AOT-hostile boxing | `var (status, result) = await ...;` deconstruction |
+| `AppDomain.CurrentDomain.GetAssemblies().GetTypes()` in runtime paths | Runtime assembly scanning; forces all-inclusive trimming preservation | Source-generated type catalogs |
+| Roslyn scripting (`CSharpScript`, `Microsoft.CodeAnalysis.Scripting`) | Compiles C# at runtime | Precompiled configuration or source generators |
+
+### Allowed Patterns
+
+- Typed generics known at compile time: `GetService&lt;TService&gt;()`, `IStateStore&lt;TModel&gt;`
+- `Activator.CreateInstance&lt;T&gt;()` with `T` closed at the call site
+- Source-generated dispatch tables (`[BannouService]` manifest, `[Generated]` factories)
+- DI resolution via `IServiceProvider.GetRequiredService&lt;TService&gt;()` or `GetRequiredService(typeof(TService))`
+- `System.Text.Json` with source-generated `JsonSerializerContext` (already via `BannouJson`)
+- Closed-form generic method calls: `SubscribeDynamicAsync&lt;ConcreteEvent&gt;(...)` where `ConcreteEvent` is known at the call site
+
+### Exception Paths (Allow-Listed Directories)
+
+The AOT discipline applies to code that ships to consumer devices. The following paths are explicitly exempt because they never run on AOT targets:
+
+| Path | Justification |
+|------|---------------|
+| `tools/` | Developer tools (bannou-inspect, edge-tester) — run on dev machines with full CoreCLR |
+| `structural-tests/` | Test infrastructure — runs in CI with CoreCLR reflection |
+| `test-utilities/` | Shared test utilities — same as above |
+| `*.tests/` generally | Test assemblies — do not ship to consumers |
+
+All other paths (`bannou-service/`, `plugins/*/`, `sdks/*/` that are consumed by plugins) are AOT-disciplined by default.
+
+### Reference Issue and Pre-Existing Violations
+
+GitHub issue #724 tracks the PluginLoader AOT-safe refactor, the source-generated plugin registration manifest design, and the audit sweep for existing violations in `bannou-service/` and `plugins/`. Until that issue ships, known pre-existing violations remain tracked tech debt — they are not a license for NEW violations.
+
+**NEW violations introduced after this tenet is landed are rejected outright in code review.** Pre-existing violations are enumerated in issue #724 and are the only approved residual surface.
+
+### The One Test
+
+"If we compiled this into a Mono AOT iOS binary today, would it throw `System.ExecutionEngineException` with 'Attempting to JIT compile method while running in aot-only mode' the first time it ran?" If yes, the code violates this tenet.
+
+### Relationship to Other Tenets
+
+- IMPLEMENTATION TENETS (T20 JSON Serialization): `BannouJson` already routes through a source-generated JsonSerializerContext — following T20 is already AOT-clean; bypassing to `JsonSerializer.*` breaks both tenets
+- QUALITY TENETS (T33 Design Specification Fidelity): the most common gateway for AOT violations is substituting reflection for static dispatch to avoid template/source-gen work; T33 catches the divergence, this tenet catches the shape
+<!-- /TENET:T34 -->
 
 ---
 

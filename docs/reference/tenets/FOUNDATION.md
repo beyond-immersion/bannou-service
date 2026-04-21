@@ -12,6 +12,7 @@ These tenets define the architectural foundation of Bannou. Understanding them i
 
 ---
 
+<!-- TENET:T4 -->
 ## Tenet 4: Infrastructure Libs Pattern (ABSOLUTE)
 
 **Rule**: Services MUST use the three infrastructure libs for all infrastructure concerns. Direct database/cache/queue access is FORBIDDEN in service code.
@@ -169,9 +170,11 @@ Some L3 AppFeatures services also access external backends directly because they
 | lib-orchestrator | Docker, Portainer, Kubernetes APIs | Manages container orchestration |
 | lib-voice | RTPEngine, Kamailio | Manages VoIP infrastructure |
 | lib-asset | MinIO | Manages binary asset storage |
+<!-- /TENET:T4 -->
 
 ---
 
+<!-- TENET:T5 -->
 ## Tenet 5: Event-Driven Architecture (REQUIRED)
 
 **Rule**: All meaningful state changes MUST publish events, even without current consumers.
@@ -319,9 +322,11 @@ For atomically consistent state across instances, include complete state + monot
 Each `{service}-service-events.yaml` MUST contain ONLY canonical definitions for events that service PUBLISHES. No `$ref` references to other service event files - NSwag follows `$ref` and generates ALL types it encounters, causing duplicate type definitions.
 
 > **Helpers**: See [Helpers & Common Patterns § Event & Messaging](../HELPERS-AND-COMMON-PATTERNS.md#2-event--messaging-helpers) for generated publishers, `IEventConsumer`, error event publishing, and topic constants.
+<!-- /TENET:T5 -->
 
 ---
 
+<!-- TENET:T6 -->
 ## Tenet 6: Service Implementation Pattern (STANDARDIZED)
 
 **Rule**: All service implementations MUST follow the standardized structure.
@@ -648,9 +653,11 @@ When `InterfaceType` is provided, PluginLoader auto-registers the helper — no 
 | Internal helpers shared across methods | Partial class: `{Service}Service.Helpers.cs` | `FactionService.Helpers.cs` |
 | Independently injectable logic with own deps | Separate class: `{Other}Service.cs` | `TokenService.cs`, `RarityCalculationService.cs` |
 | Background worker with own lifecycle | Separate class: `{Other}Service.cs` | `ContractExpirationService.cs` |
+<!-- /TENET:T6 -->
 
 ---
 
+<!-- TENET:T13 -->
 ## Tenet 13: X-Permissions Usage (DOCUMENTED)
 
 **Rule**: All endpoints MUST declare x-permissions in schema.
@@ -698,9 +705,11 @@ x-permissions: []
 **Common mistake**: `x-permissions: []` does NOT mean "anonymous" or "public." It means the endpoint is completely invisible to WebSocket clients. If you want an endpoint accessible without authentication, use `role: anonymous`.
 
 > **Choosing the right level**: T13 requires that all endpoints declare `x-permissions` — but which value? For the complete decision framework (7 permission levels, the Entry/Context/Exit pattern for state-gating, shortcut eligibility, anti-patterns, and per-service-type guidance), see [ENDPOINT-PERMISSION-GUIDELINES.md](../ENDPOINT-PERMISSION-GUIDELINES.md).
+<!-- /TENET:T13 -->
 
 ---
 
+<!-- TENET:T15 -->
 ## Tenet 15: Browser-Facing Endpoints (DOCUMENTED)
 
 **Rule**: Some endpoints are accessed directly by browsers through NGINX rather than WebSocket. These are EXCEPTIONAL.
@@ -715,9 +724,11 @@ Bannou uses POST-only APIs because each endpoint maps to a fixed 16-byte GUID fo
 | Auth | `/auth/oauth/{provider}/init`, `/auth/oauth/{provider}/callback` | OAuth redirect flow |
 | Connect | `/connect` (GET) | WebSocket upgrade handshake |
 | Documentation | `/documentation/view/{slug}`, `/documentation/raw/{slug}` (GET) | Browser-rendered markdown-to-HTML for knowledge base |
+<!-- /TENET:T15 -->
 
 ---
 
+<!-- TENET:T18 -->
 ## Tenet 18: Licensing Requirements (MANDATORY)
 
 **Rule**: All dependencies MUST use permissive licenses (MIT, BSD, Apache 2.0). Copyleft (GPL, LGPL, AGPL) is forbidden for linked code but acceptable for infrastructure containers communicating via network protocols.
@@ -727,9 +738,11 @@ Bannou uses POST-only APIs because each endpoint maps to a fixed 16-byte GUID fo
 **Infrastructure exception**: GPL software in separate containers (e.g., RTPEngine GPLv3, Kamailio GPLv2+).
 
 When a package changes license, pin to the last permissive version with XML comment documentation.
+<!-- /TENET:T18 -->
 
 ---
 
+<!-- TENET:T27 -->
 ## Tenet 27: Cross-Service Communication Discipline (MANDATORY)
 
 **Rule**: Bannou has three mechanisms for cross-service communication. Each has exactly one valid use case. Using the wrong mechanism creates invisible coupling, loses error feedback, or wastes infrastructure.
@@ -859,9 +872,11 @@ await _messageBus.PublishAsync("permission.service-registered", registrationEven
 | Something happened, anyone can react | Broadcast event | `seed.phase.changed`, `character.created` |
 | High-frequency instance cleanup (T28 exception) | DI Listener + orphan worker | Item uses `IItemInstanceDestructionListener` |
 | High-frequency session lifecycle | DI Listener (heartbeats DI-only) | Connect uses `ISessionActivityListener` |
+<!-- /TENET:T27 -->
 
 ---
 
+<!-- TENET:T28 -->
 ## Tenet 28: Resource-Managed Cleanup (MANDATORY)
 
 **Rule**: When a foundational resource (L1/L2) is deleted, all dependent data in higher layers MUST be cleaned up through **lib-resource** — never through lifecycle event subscriptions. Plugins must not subscribe to `*.deleted` or `*.lifecycle.*` events from other plugins for the purpose of destroying their own dependent data.
@@ -1171,9 +1186,11 @@ When adding a new service that stores data keyed by another service's entity:
 3. **High-frequency instance exception**: If ALL four criteria of the High-Frequency Instance Lifecycle Exception are met, use DI Listener + orphan reconciliation instead
 4. For all non-account entities: do NOT add `x-event-subscriptions` for the parent entity's `*.deleted` event for cleanup purposes (regardless of which path you use)
 5. For all non-account entities: do NOT add event handler methods for parent entity deletion
+<!-- /TENET:T28 -->
 
 ---
 
+<!-- TENET:T29 -->
 ## Tenet 29: No Metadata Bag Contracts (INVIOLABLE)
 
 **Rule**: `additionalProperties: true` (or any untyped metadata dictionary) MUST NEVER be used as a data contract between services. If Service A stores data that Service B reads by convention, that data MUST be defined in a schema, generated into typed code, and owned by the service responsible for the domain concept.
@@ -1277,9 +1294,11 @@ The service OWNS the template definitions (seed types, collection types, license
 **Archive-level**: If a service registers an `x-compression-callback` for game-mechanical operational state (proficiency levels, rankings, statistics, known recipes) rather than entity identity/narrative data, this is a violation. The mechanical state should be tracked through Seed, Collection, or License primitives whose L2 services handle their own archival.
 
 **The test**: "If I renamed or removed this metadata key, would any Bannou plugin break?" If yes — **violation**. That data must be in a schema.
+<!-- /TENET:T29 -->
 
 ---
 
+<!-- TENET:T32 -->
 ## Tenet 32: Account Identity Boundary (INVIOLABLE)
 
 **Rule**: `accountId` is a privileged identifier restricted to the **identity, session, and access boundary**. Services outside this boundary MUST NOT accept `accountId` from clients and SHOULD NOT propagate it in events. The Connect gateway resolves session-to-account mapping; downstream services identify callers by `webSocketSessionId` or domain-specific identifiers.
@@ -1390,47 +1409,7 @@ ownerId:
 | String field described as "accountId or service name" | **Violation of Rule 5 + T14** |
 | Service outside boundary accepting accountId with `role: admin` or `role: developer` | **Review needed** -- may be legitimate internal API |
 | Service in boundary using server-injected accountId via shortcuts | **Correct pattern** |
-
----
-
-| Violation | Tenet | Fix |
-|-----------|-------|-----|
-| Direct Redis/MySQL connection | T4 | Use IStateStoreFactory via lib-state |
-| Direct RabbitMQ connection | T4 | Use IMessageBus via lib-messaging |
-| Direct HTTP service calls | T4 | Use generated clients via lib-mesh |
-| Graceful degradation for L0/L1/L2 dependency | T4 | Constructor injection; see SERVICE-HIERARCHY.md |
-| Lua script when interface method exists | T4 | Use `ICacheableStateStore` or `IRedisOperations` methods |
-| Inline Lua script string | T4 | Move to `.lua` file with loader class |
-| Loop/iteration in Lua script | T4 | Restructure; use C# for loops |
-| Anonymous event objects | T5 | Define typed event in schema |
-| Manually defining lifecycle events | T5 | Use `x-lifecycle` in events schema |
-| Service class missing `partial` | T6 | Add `partial` keyword |
-| Inline string interpolation for state store keys | T6 | Use `Build*Key()` method with `const` prefix |
-| `private static` key builder method | T6 | Use `internal static` for provider/test accessibility |
-| `Get*Key` naming for key construction | T6 | Use `Build*Key` — `Get` implies store retrieval |
-| Missing x-permissions on endpoint | T13 | Add to schema; use `[]` for service-to-service only, `role: anonymous` for pre-auth public |
-| Designing browser-facing without justification | T15 | Use POST-only WebSocket pattern |
-| GPL library in NuGet package | T18 | Use MIT/BSD alternative |
-| Publishing event to lower-layer's topic instead of calling API | T27 | Use generated client directly (hierarchy permits the call) |
-| Lower-layer subscribing to higher-layer events | T27 | Use DI Provider/Listener interface in `bannou-service/Providers/` |
-| Publishing registration events at startup | T27 | Use DI Provider interface discovered via `IEnumerable<T>` |
-| Defining event schema to receive data from callers | T27 | Remove event; expose API endpoint; callers use generated client |
-| Lower-layer caching higher-layer data with event invalidation | T27 | Provider owns its cache; lower layer calls provider interface |
-| Subscribing to `*.deleted` for dependent data cleanup | T28 | Declare `x-references` in schema; implement cleanup endpoint; register via generated `RegisterResourceCleanupCallbacksAsync()` |
-| Event-based cleanup for persistent dependent data | T28 | Use lib-resource with CASCADE/RESTRICT/DETACH policy |
-| Cleanup handler in `*ServiceEvents.cs` for another service's entity | T28 | Move to lib-resource cleanup callback; remove event subscription |
-| Using `additionalProperties: true` as cross-service data contract | T29 | Owning service defines its own schema, stores its own data |
-| Reading metadata keys from another service's response by convention | T29 | Query the service that owns the domain concept via API |
-| Storing higher-layer domain data in lower-layer metadata bags | T29 | Higher-layer service owns binding table, references lower-layer entity by ID |
-| `JsonElement` navigation on another service's metadata field | T29 | Define data in owning service's schema, use generated types |
-| Documentation specifying "put X in service Y's metadata" | T29 | X belongs in the schema of the service that owns concept X |
-| Client-facing endpoint accepting accountId in request body | T32 | Remove accountId; use webSocketSessionId; resolve account server-side if needed |
-| Non-boundary service emitting accountId in events | T32 | Use sessionId or domain-specific identifiers (ticketId, matchId) |
-| Polymorphic string field "accountId or service name" | T32, T14 | Use ownerType enum + ownerId; use sessionId for user-initiated operations |
-| Service outside identity boundary accepting accountId with role: user | T32 | Use shortcut system for server-injected accountId, or remove entirely |
-| New service added to identity boundary table without approval | T32 | Discuss with team; justify why accountId is required at the domain level |
-
-> **Schema-related violations** (editing Generated/ files, wrong env var format, missing description, etc.) are covered in [SCHEMA-RULES.md](../SCHEMA-RULES.md).
+<!-- /TENET:T32 -->
 
 ---
 

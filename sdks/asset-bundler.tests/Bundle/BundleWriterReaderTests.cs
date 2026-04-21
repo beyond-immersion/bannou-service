@@ -250,9 +250,9 @@ public class BundleWriterReaderTests : IDisposable
         // Act
         await using var readStream = File.OpenRead(bundlePath);
         using var reader = new BannouBundleReader(readStream);
-        await reader.ReadHeaderAsync();
+        await reader.ReadHeaderAsync(TestContext.Current.CancellationToken);
 
-        var result = await reader.ReadAssetAsync("async-asset");
+        var result = await reader.ReadAssetAsync("async-asset", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);

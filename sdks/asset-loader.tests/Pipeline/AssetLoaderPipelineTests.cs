@@ -46,10 +46,10 @@ public class AssetLoaderPipelineTests : IDisposable
             TestBundleFactory.TextAsset("asset2"));
         var bundlePath = await SaveBundleToFile(bundleStream, "preload.bannou");
 
-        await loader.LoadBundleAsync(bundleId, new Uri($"file://{bundlePath}"));
+        await loader.LoadBundleAsync(bundleId, new Uri($"file://{bundlePath}"), ct: TestContext.Current.CancellationToken);
 
         // Act
-        var result = await loader.EnsureAssetsAvailableAsync(new[] { "asset1", "asset2" });
+        var result = await loader.EnsureAssetsAvailableAsync(new[] { "asset1", "asset2" }, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result.DownloadedBundleIds);
@@ -97,7 +97,7 @@ public class AssetLoaderPipelineTests : IDisposable
         await using var loader = new AssetLoader(source.Object, cache: null);
 
         // Act
-        var result = await loader.EnsureAssetsAvailableAsync(new[] { "asset1", "asset2" });
+        var result = await loader.EnsureAssetsAvailableAsync(new[] { "asset1", "asset2" }, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result.DownloadedBundleIds);
@@ -125,7 +125,7 @@ public class AssetLoaderPipelineTests : IDisposable
         await using var loader = new AssetLoader(source.Object, cache: null);
 
         // Act
-        var result = await loader.EnsureAssetsAvailableAsync(new[] { "missing1", "missing2" });
+        var result = await loader.EnsureAssetsAvailableAsync(new[] { "missing1", "missing2" }, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result.DownloadedBundleIds);
@@ -152,7 +152,7 @@ public class AssetLoaderPipelineTests : IDisposable
         await using var loader = new AssetLoader(source.Object, cache: null);
 
         // Act
-        var result = await loader.LoadBundleAsync(bundleId, new Uri($"file://{bundlePath}"));
+        var result = await loader.LoadBundleAsync(bundleId, new Uri($"file://{bundlePath}"), ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(BundleLoadStatus.Success, result.Status);
@@ -175,10 +175,10 @@ public class AssetLoaderPipelineTests : IDisposable
         await using var loader = new AssetLoader(source.Object, cache: null);
 
         // First load
-        await loader.LoadBundleAsync(bundleId, new Uri($"file://{bundlePath}"));
+        await loader.LoadBundleAsync(bundleId, new Uri($"file://{bundlePath}"), ct: TestContext.Current.CancellationToken);
 
         // Act - second load
-        var result = await loader.LoadBundleAsync(bundleId, new Uri($"file://{bundlePath}"));
+        var result = await loader.LoadBundleAsync(bundleId, new Uri($"file://{bundlePath}"), ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(BundleLoadStatus.AlreadyLoaded, result.Status);
@@ -193,7 +193,7 @@ public class AssetLoaderPipelineTests : IDisposable
 
         // Act
         var result = await loader.LoadBundleAsync("missing/bundle",
-            new Uri($"file://{_tempDir}/nonexistent.bannou"));
+            new Uri($"file://{_tempDir}/nonexistent.bannou"), ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(BundleLoadStatus.Failed, result.Status);
@@ -234,7 +234,7 @@ public class AssetLoaderPipelineTests : IDisposable
         await using var loader = new AssetLoader(source.Object, cache.Object, options);
 
         // Act
-        var result = await loader.LoadBundleAsync(bundleId, new Uri("http://example.com/bundle.bannou"));
+        var result = await loader.LoadBundleAsync(bundleId, new Uri("http://example.com/bundle.bannou"), ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(BundleLoadStatus.Success, result.Status);
@@ -260,10 +260,10 @@ public class AssetLoaderPipelineTests : IDisposable
         // Disable validation to avoid hash mismatch (TestBundleFactory doesn't set correct hashes)
         var options = new AssetLoaderOptions { ValidateBundles = false };
         await using var loader = new AssetLoader(source.Object, cache: null, options);
-        await loader.LoadBundleAsync(bundleId, new Uri($"file://{bundlePath}"));
+        await loader.LoadBundleAsync(bundleId, new Uri($"file://{bundlePath}"), ct: TestContext.Current.CancellationToken);
 
         // Act
-        var bytes = await loader.GetAssetBytesAsync("asset1");
+        var bytes = await loader.GetAssetBytesAsync("asset1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(bytes);
@@ -283,10 +283,10 @@ public class AssetLoaderPipelineTests : IDisposable
         var source = CreateMockSource();
         var options = new AssetLoaderOptions { ValidateBundles = false };
         await using var loader = new AssetLoader(source.Object, cache: null, options);
-        await loader.LoadBundleAsync(bundleId, new Uri($"file://{bundlePath}"));
+        await loader.LoadBundleAsync(bundleId, new Uri($"file://{bundlePath}"), ct: TestContext.Current.CancellationToken);
 
         // Act
-        var bytes = await loader.GetAssetBytesAsync("nonexistent");
+        var bytes = await loader.GetAssetBytesAsync("nonexistent", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(bytes);
@@ -308,7 +308,7 @@ public class AssetLoaderPipelineTests : IDisposable
         var source = CreateMockSource();
         var options = new AssetLoaderOptions { ValidateBundles = false };
         await using var loader = new AssetLoader(source.Object, cache: null, options);
-        await loader.LoadBundleAsync(bundleId, new Uri($"file://{bundlePath}"));
+        await loader.LoadBundleAsync(bundleId, new Uri($"file://{bundlePath}"), ct: TestContext.Current.CancellationToken);
 
         // Act
         var entry = loader.GetAssetEntry("asset1");
@@ -349,7 +349,7 @@ public class AssetLoaderPipelineTests : IDisposable
         var source = CreateMockSource();
         var options = new AssetLoaderOptions { ValidateBundles = false };
         await using var loader = new AssetLoader(source.Object, cache: null, options);
-        await loader.LoadBundleAsync(bundleId, new Uri($"file://{bundlePath}"));
+        await loader.LoadBundleAsync(bundleId, new Uri($"file://{bundlePath}"), ct: TestContext.Current.CancellationToken);
 
         Assert.True(loader.Registry.HasBundle(bundleId));
         Assert.True(loader.Registry.HasAsset("asset1"));
@@ -377,7 +377,7 @@ public class AssetLoaderPipelineTests : IDisposable
             var bundleStream = TestBundleFactory.CreateBundleStream(bundleId,
                 TestBundleFactory.TextAsset($"asset{i}"));
             var bundlePath = await SaveBundleToFile(bundleStream, $"bundle{i}.bannou");
-            await loader.LoadBundleAsync(bundleId, new Uri($"file://{bundlePath}"));
+            await loader.LoadBundleAsync(bundleId, new Uri($"file://{bundlePath}"), ct: TestContext.Current.CancellationToken);
         }
 
         Assert.Equal(3, loader.Registry.GetLoadedBundleIds().Count());
@@ -411,9 +411,9 @@ public class AssetLoaderPipelineTests : IDisposable
         // Act - load concurrently
         var tasks = new[]
         {
-            loader.LoadBundleAsync(bundleId, bundleUri),
-            loader.LoadBundleAsync(bundleId, bundleUri),
-            loader.LoadBundleAsync(bundleId, bundleUri)
+            loader.LoadBundleAsync(bundleId, bundleUri, ct: TestContext.Current.CancellationToken),
+            loader.LoadBundleAsync(bundleId, bundleUri, ct: TestContext.Current.CancellationToken),
+            loader.LoadBundleAsync(bundleId, bundleUri, ct: TestContext.Current.CancellationToken)
         };
 
         var results = await Task.WhenAll(tasks);
@@ -464,7 +464,7 @@ public class AssetLoaderPipelineTests : IDisposable
         await using var loader = new AssetLoader(source.Object, cache: null, options);
 
         // Act - full workflow: ensure assets available, then read them
-        var availResult = await loader.EnsureAssetsAvailableAsync(new[] { "asset1", "asset2" });
+        var availResult = await loader.EnsureAssetsAvailableAsync(new[] { "asset1", "asset2" }, ct: TestContext.Current.CancellationToken);
 
         // Assert - resolve and download succeeded
         Assert.Single(availResult.DownloadedBundleIds);
@@ -472,8 +472,8 @@ public class AssetLoaderPipelineTests : IDisposable
         Assert.Empty(availResult.UnresolvedAssetIds);
 
         // Verify assets are accessible
-        var bytes1 = await loader.GetAssetBytesAsync("asset1");
-        var bytes2 = await loader.GetAssetBytesAsync("asset2");
+        var bytes1 = await loader.GetAssetBytesAsync("asset1", TestContext.Current.CancellationToken);
+        var bytes2 = await loader.GetAssetBytesAsync("asset2", TestContext.Current.CancellationToken);
 
         Assert.NotNull(bytes1);
         Assert.NotNull(bytes2);
@@ -498,7 +498,7 @@ public class AssetLoaderPipelineTests : IDisposable
         var path = Path.Combine(_tempDir, filename);
         bundleStream.Position = 0;
         await using var fileStream = File.Create(path);
-        await bundleStream.CopyToAsync(fileStream);
+        await bundleStream.CopyToAsync(fileStream, cancellationToken: TestContext.Current.CancellationToken);
         bundleStream.Position = 0;
         return path;
     }

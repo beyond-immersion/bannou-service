@@ -112,7 +112,11 @@ public class SubscriptionExpirationService : BackgroundService
 
         using var scope = _serviceProvider.CreateScope();
         var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
-        var subscriptionService = scope.ServiceProvider.GetRequiredService<ISubscriptionService>();
+        // ExpireSubscriptionAsync is a plugin-internal helper on the concrete SubscriptionService,
+        // not on the schema-generated ISubscriptionService. SubscriptionService is the only
+        // ISubscriptionService implementation in this plugin and is always co-located with
+        // the expiration worker, so the cast is safe. Same pattern as PermissionSessionActivityListener.
+        var subscriptionService = (SubscriptionService)scope.ServiceProvider.GetRequiredService<ISubscriptionService>();
 
         // Get the subscription index to find all subscription IDs
         var indexStore = stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Subscription);

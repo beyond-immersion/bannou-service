@@ -9,7 +9,7 @@ Pure-computation SDK deep dives covering Bannou's creative and infrastructure li
 
 ### Sprite Theory SDK Deep Dive {#sprite-theory}
 
-**Layer**: Theory | **Status**: Implemented — all types and methods from implementation map complete. 77 unit tests passing. | **Dependencies**: None (pure .NET BCL only) | **Consumers**: sprite-composer, sprite-composer-stride, future SpriteBatcher | [Implementation Map](../sdks/maps/SPRITE-THEORY.md) | [Full Deep Dive](../sdks/SPRITE-THEORY.md)
+**Layer**: Theory | **Status**: Implemented — all types and methods from implementation map complete. 100 unit tests passing. | **Dependencies**: `BeyondImmersion.Bannou.Core` (for the shared `Vector3` primitive). No external NuGet dependencies. | **Consumers**: sprite-composer, sprite-composer-stride, future SpriteBatcher | [Implementation Map](../sdks/maps/SPRITE-THEORY.md) | [Full Deep Dive](../sdks/SPRITE-THEORY.md)
 
 *Camera math, atlas packing, mirror optimization, normal maps, and sprite sheet JSON metadata*
 
@@ -21,7 +21,7 @@ It follows the same pattern as music-theory, storyline-theory, and voxel-core: p
 
 ### Sprite Composer SDK Deep Dive {#sprite-composer}
 
-**Layer**: Composer | **Status**: Aspirational — no code exists. | **Dependencies**: sprite-theory | **Consumers**: sprite-composer-stride (primary bridge), future sprite-composer-godot / sprite-composer-unity bridges, future SpriteBatcher automation tool, defenders-sprite-composer Stride project | [Implementation Map](../sdks/maps/SPRITE-COMPOSER.md) | [Full Deep Dive](../sdks/SPRITE-COMPOSER.md)
+**Layer**: Composer | **Status**: Aspirational — no code exists. | **Dependencies**: `sprite-theory` (transitively brings in `BeyondImmersion.Bannou.Core` for the shared `Vector3` primitive). | **Consumers**: sprite-composer-stride (primary bridge), future sprite-composer-godot / sprite-composer-unity bridges, future SpriteBatcher automation tool, defenders-sprite-composer Stride project | [Implementation Map](../sdks/maps/SPRITE-COMPOSER.md) | [Full Deep Dive](../sdks/SPRITE-COMPOSER.md)
 
 *Engine-agnostic orchestrator for 3D-to-2D sprite capture — projects, capture sessions, equipment/animation configuration, preview, and atlas export*
 

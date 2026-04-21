@@ -51,7 +51,7 @@ public class LiteNetLibTransportTests
             MoveX = 1,
             MoveY = 0
         };
-        var payload = MessagePackSerializer.Serialize(msg, GameProtocolEnvelope.DefaultOptions);
+        var payload = MessagePackSerializer.Serialize(msg, GameProtocolEnvelope.DefaultOptions, cts.Token);
         await client.SendAsync(GameMessageType.PlayerInput, payload, reliable: true, cts.Token);
 
         // Wait for message to arrive (poll instead of fixed delay to avoid flakiness on slow CI)
@@ -100,7 +100,7 @@ public class LiteNetLibTransportTests
             Tick = 999
         };
         snapshot.Entities.Add(new EntityState { EntityId = 1, X = 1, Y = 2, Z = 3, Health = 100, ActionState = 0 });
-        var payload = MessagePackSerializer.Serialize(snapshot, GameProtocolEnvelope.DefaultOptions);
+        var payload = MessagePackSerializer.Serialize(snapshot, GameProtocolEnvelope.DefaultOptions, cts.Token);
         await server.BroadcastAsync(GameMessageType.ArenaStateSnapshot, payload, reliable: true, cts.Token);
 
         // Wait for message to arrive (poll instead of fixed delay to avoid flakiness on slow CI)
@@ -140,7 +140,7 @@ public class LiteNetLibTransportTests
         await Task.Delay(50, cts.Token);
 
         var msg = new PlayerInputMessage { Tick = 1 };
-        var payload = MessagePackSerializer.Serialize(msg, GameProtocolEnvelope.DefaultOptions);
+        var payload = MessagePackSerializer.Serialize(msg, GameProtocolEnvelope.DefaultOptions, cts.Token);
 
         for (int i = 0; i < 5; i++)
         {
@@ -191,7 +191,7 @@ public class LiteNetLibTransportTests
             DeadlineMs = 1500
         };
         opp.Options.Add(new OpportunityOption { Id = "yes", Label = "Yes" });
-        var payload = MessagePackSerializer.Serialize(opp, GameProtocolEnvelope.DefaultOptions);
+        var payload = MessagePackSerializer.Serialize(opp, GameProtocolEnvelope.DefaultOptions, cts.Token);
         await server.BroadcastAsync(GameMessageType.OpportunityData, payload, reliable: true, cts.Token);
 
         // Wait for message to arrive (poll instead of fixed delay to avoid flakiness on slow CI)
@@ -241,7 +241,7 @@ public class LiteNetLibTransportTests
             SelectedOptionId = "yes",
             ClientLatencyMs = 12
         };
-        var payload = MessagePackSerializer.Serialize(resp, GameProtocolEnvelope.DefaultOptions);
+        var payload = MessagePackSerializer.Serialize(resp, GameProtocolEnvelope.DefaultOptions, cts.Token);
         await client.SendAsync(GameMessageType.OpportunityResponse, payload, reliable: true, cts.Token);
 
         // Wait for message to arrive (poll instead of fixed delay to avoid flakiness on slow CI)
@@ -291,7 +291,7 @@ public class LiteNetLibTransportTests
             }
         };
 
-        var payload = MessagePackSerializer.Serialize(ce, GameProtocolEnvelope.DefaultOptions);
+        var payload = MessagePackSerializer.Serialize(ce, GameProtocolEnvelope.DefaultOptions, cts.Token);
         await server.BroadcastAsync(GameMessageType.CombatEvent, payload, reliable: true, cts.Token);
 
         // Wait for message to arrive (poll instead of fixed delay to avoid flakiness on slow CI)
@@ -347,7 +347,7 @@ public class LiteNetLibTransportTests
                 }
             }
         };
-        var payload = MessagePackSerializer.Serialize(deltaMsg, GameProtocolEnvelope.DefaultOptions);
+        var payload = MessagePackSerializer.Serialize(deltaMsg, GameProtocolEnvelope.DefaultOptions, cts.Token);
         await server.BroadcastAsync(GameMessageType.ArenaStateDelta, payload, reliable: false, cts.Token);
 
         // Wait for message to arrive (poll instead of fixed delay to avoid flakiness on slow CI)
@@ -396,7 +396,7 @@ public class LiteNetLibTransportTests
             PayloadUrl = "https://example.com/ext.bin",
             ValidUntilEpochMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + 1000
         };
-        var payload = MessagePackSerializer.Serialize(extMsg, GameProtocolEnvelope.DefaultOptions);
+        var payload = MessagePackSerializer.Serialize(extMsg, GameProtocolEnvelope.DefaultOptions, cts.Token);
         await server.BroadcastAsync(GameMessageType.CinematicExtension, payload, reliable: true, cts.Token);
 
         // Wait for message to arrive (poll instead of fixed delay to avoid flakiness on slow CI)

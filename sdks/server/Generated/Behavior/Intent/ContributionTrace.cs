@@ -161,7 +161,12 @@ public sealed class ContributionTrace
             }
         }
 
-        return string.Join(Environment.NewLine, lines);
+        // Qualify as System.Environment to avoid namespace collision when this file is
+        // copied by scripts/generate-client-sdk.sh into sdks/server/Generated/Behavior/
+        // and sdks/client/Generated/Behavior/. Those SDK projects have a sibling
+        // `BeyondImmersion.Bannou.Environment` namespace (the generated Environment
+        // service client) that would otherwise shadow System.Environment.
+        return string.Join(System.Environment.NewLine, lines);
     }
 }
 #endif

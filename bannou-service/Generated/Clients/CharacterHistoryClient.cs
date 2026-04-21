@@ -368,9 +368,11 @@ public partial class CharacterHistoryClient : ICharacterHistoryClient, BeyondImm
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<HistoricalParticipation>(
-                _directDispatchProvider, _serviceName, "RecordParticipationAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterHistoryService, RecordParticipationRequest, HistoricalParticipation>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RecordParticipationAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -472,9 +474,11 @@ public partial class CharacterHistoryClient : ICharacterHistoryClient, BeyondImm
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ParticipationListResponse>(
-                _directDispatchProvider, _serviceName, "GetParticipationAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterHistoryService, GetParticipationRequest, ParticipationListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetParticipationAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -564,9 +568,11 @@ public partial class CharacterHistoryClient : ICharacterHistoryClient, BeyondImm
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ParticipationListResponse>(
-                _directDispatchProvider, _serviceName, "GetEventParticipantsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterHistoryService, GetEventParticipantsRequest, ParticipationListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetEventParticipantsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -656,9 +662,11 @@ public partial class CharacterHistoryClient : ICharacterHistoryClient, BeyondImm
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "DeleteParticipationAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<ICharacterHistoryService, DeleteParticipationRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteParticipationAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -750,9 +758,11 @@ public partial class CharacterHistoryClient : ICharacterHistoryClient, BeyondImm
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BackstoryResponse>(
-                _directDispatchProvider, _serviceName, "GetBackstoryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterHistoryService, GetBackstoryRequest, BackstoryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetBackstoryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -848,9 +858,11 @@ public partial class CharacterHistoryClient : ICharacterHistoryClient, BeyondImm
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BackstoryResponse>(
-                _directDispatchProvider, _serviceName, "SetBackstoryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterHistoryService, SetBackstoryRequest, BackstoryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SetBackstoryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -946,9 +958,11 @@ public partial class CharacterHistoryClient : ICharacterHistoryClient, BeyondImm
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BackstoryResponse>(
-                _directDispatchProvider, _serviceName, "AddBackstoryElementAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterHistoryService, AddBackstoryElementRequest, BackstoryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.AddBackstoryElementAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1044,9 +1058,11 @@ public partial class CharacterHistoryClient : ICharacterHistoryClient, BeyondImm
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "DeleteBackstoryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<ICharacterHistoryService, DeleteBackstoryRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteBackstoryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1137,9 +1153,11 @@ public partial class CharacterHistoryClient : ICharacterHistoryClient, BeyondImm
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeleteAllHistoryResponse>(
-                _directDispatchProvider, _serviceName, "DeleteAllHistoryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterHistoryService, DeleteAllHistoryRequest, DeleteAllHistoryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteAllHistoryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1230,9 +1248,11 @@ public partial class CharacterHistoryClient : ICharacterHistoryClient, BeyondImm
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<HistorySummaryResponse>(
-                _directDispatchProvider, _serviceName, "SummarizeHistoryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterHistoryService, SummarizeHistoryRequest, HistorySummaryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SummarizeHistoryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1322,9 +1342,11 @@ public partial class CharacterHistoryClient : ICharacterHistoryClient, BeyondImm
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CharacterHistoryArchive>(
-                _directDispatchProvider, _serviceName, "GetCompressDataAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterHistoryService, GetCompressDataRequest, CharacterHistoryArchive>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetCompressDataAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1420,9 +1442,11 @@ public partial class CharacterHistoryClient : ICharacterHistoryClient, BeyondImm
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RestoreFromArchiveResponse>(
-                _directDispatchProvider, _serviceName, "RestoreFromArchiveAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterHistoryService, RestoreFromArchiveRequest, RestoreFromArchiveResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RestoreFromArchiveAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

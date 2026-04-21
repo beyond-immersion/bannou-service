@@ -127,7 +127,7 @@ public class ScaledVoiceConnectionTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ObjectDisposedException>(
-            () => connection.ConnectAsync(credentials, "udp://localhost:22222"));
+            () => connection.ConnectAsync(credentials, "udp://localhost:22222", cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -210,7 +210,7 @@ public class ScaledVoiceConnectionTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => connection.RefreshRegistrationAsync());
+            () => connection.RefreshRegistrationAsync(cancellationToken: TestContext.Current.CancellationToken));
     }
 
     #endregion

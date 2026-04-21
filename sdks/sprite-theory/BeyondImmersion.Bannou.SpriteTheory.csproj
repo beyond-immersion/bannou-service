@@ -38,6 +38,10 @@
     <InternalsVisibleTo Include="BeyondImmersion.Bannou.SpriteComposer.Tests" />
   </ItemGroup>
 
-  <!-- No external NuGet dependencies — pure .NET BCL only -->
+  <ItemGroup>
+    <!-- Core provides the shared Vector3 primitive used by BoundingBox, camera math,
+         and the sprite-composer bridge contract (e.g., TryGetBonePosition → Vector3?). -->
+    <ProjectReference Include="../core/BeyondImmersion.Bannou.Core.csproj" />
+  </ItemGroup>
 
 </Project>

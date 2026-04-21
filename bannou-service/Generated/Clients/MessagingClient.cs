@@ -240,9 +240,11 @@ public partial class MessagingClient : IMessagingClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PublishEventResponse>(
-                _directDispatchProvider, _serviceName, "PublishEventAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMessagingService, PublishEventRequest, PublishEventResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.PublishEventAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -328,9 +330,11 @@ public partial class MessagingClient : IMessagingClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CreateSubscriptionResponse>(
-                _directDispatchProvider, _serviceName, "CreateSubscriptionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMessagingService, CreateSubscriptionRequest, CreateSubscriptionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateSubscriptionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -416,9 +420,11 @@ public partial class MessagingClient : IMessagingClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "RemoveSubscriptionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IMessagingService, RemoveSubscriptionRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RemoveSubscriptionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -502,9 +508,11 @@ public partial class MessagingClient : IMessagingClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListTopicsResponse>(
-                _directDispatchProvider, _serviceName, "ListTopicsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMessagingService, ListTopicsRequest?, ListTopicsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListTopicsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

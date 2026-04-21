@@ -457,6 +457,171 @@
             Null when no specific reason was provided.
             </summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.Core.Math.Vector3">
+            <summary>
+            Engine-agnostic 3D floating-point vector shared across Bannou SDKs.
+            </summary>
+            <remarks>
+            <para>
+            A 12-byte value type (three floats). Single-precision to match graphics-pipeline
+            conventions used by sprite-theory, bridges (Stride, Godot, Unity), and GPU math.
+            The scene-composer SDK defines its own <c>SceneComposer.Math.Vector3</c> with
+            double precision for large-world accuracy — that is a separate type and does
+            not conflict with this one.
+            </para>
+            <para>
+            Equality is exact (bit-pattern) rather than epsilon-based so the type is usable
+            as a dictionary key and satisfies the <c>Equals</c>/<c>GetHashCode</c> contract.
+            Callers that need tolerance-based comparisons should compute per-component
+            differences explicitly.
+            </para>
+            </remarks>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.Math.Vector3.Zero">
+            <summary>Zero vector (0, 0, 0).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.Math.Vector3.One">
+            <summary>Unit vector (1, 1, 1) — all components set to one.</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.Math.Vector3.UnitX">
+            <summary>Unit X axis (1, 0, 0).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.Math.Vector3.UnitY">
+            <summary>Unit Y axis (0, 1, 0).</summary>
+        </member>
+        <member name="F:BeyondImmersion.Bannou.Core.Math.Vector3.UnitZ">
+            <summary>Unit Z axis (0, 0, 1).</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.Math.Vector3.X">
+            <summary>X component.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.Math.Vector3.Y">
+            <summary>Y component.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.Math.Vector3.Z">
+            <summary>Z component.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.Math.Vector3.#ctor(System.Single,System.Single,System.Single)">
+            <summary>
+            Creates a 3D vector from its three floating-point components.
+            </summary>
+            <param name="x">X component.</param>
+            <param name="y">Y component.</param>
+            <param name="z">Z component.</param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.Math.Vector3.LengthSquared">
+            <summary>
+            Squared length of the vector. Prefer this over <see cref="P:BeyondImmersion.Bannou.Core.Math.Vector3.Length"/> for
+            comparison operations — it avoids the square root.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.Math.Vector3.Length">
+            <summary>
+            Euclidean length of the vector.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.Core.Math.Vector3.Normalized">
+            <summary>
+            Returns a unit-length copy of the vector, or <see cref="F:BeyondImmersion.Bannou.Core.Math.Vector3.Zero"/> when the
+            vector is too small to normalize without producing NaN/Inf.
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.Math.Vector3.op_Addition(BeyondImmersion.Bannou.Core.Math.Vector3,BeyondImmersion.Bannou.Core.Math.Vector3)">
+            <summary>Component-wise addition.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.Math.Vector3.op_Subtraction(BeyondImmersion.Bannou.Core.Math.Vector3,BeyondImmersion.Bannou.Core.Math.Vector3)">
+            <summary>Component-wise subtraction.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.Math.Vector3.op_Multiply(BeyondImmersion.Bannou.Core.Math.Vector3,System.Single)">
+            <summary>Scalar multiplication.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.Math.Vector3.op_Multiply(System.Single,BeyondImmersion.Bannou.Core.Math.Vector3)">
+            <summary>Scalar multiplication (scalar first).</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.Math.Vector3.op_Division(BeyondImmersion.Bannou.Core.Math.Vector3,System.Single)">
+            <summary>Scalar division.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.Math.Vector3.op_UnaryNegation(BeyondImmersion.Bannou.Core.Math.Vector3)">
+            <summary>Unary negation.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.Math.Vector3.Dot(BeyondImmersion.Bannou.Core.Math.Vector3,BeyondImmersion.Bannou.Core.Math.Vector3)">
+            <summary>
+            Dot product of two vectors.
+            </summary>
+            <param name="a">First vector.</param>
+            <param name="b">Second vector.</param>
+            <returns>Scalar dot product.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.Math.Vector3.Cross(BeyondImmersion.Bannou.Core.Math.Vector3,BeyondImmersion.Bannou.Core.Math.Vector3)">
+            <summary>
+            Cross product of two vectors.
+            </summary>
+            <param name="a">First vector.</param>
+            <param name="b">Second vector.</param>
+            <returns>Vector perpendicular to both <paramref name="a"/> and <paramref name="b"/>.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.Math.Vector3.Lerp(BeyondImmersion.Bannou.Core.Math.Vector3,BeyondImmersion.Bannou.Core.Math.Vector3,System.Single)">
+            <summary>
+            Linear interpolation between <paramref name="a"/> (at <c>t = 0</c>) and
+            <paramref name="b"/> (at <c>t = 1</c>). The <paramref name="t"/> parameter
+            is not clamped — callers may extrapolate beyond the <c>[0, 1]</c> range.
+            </summary>
+            <param name="a">Start vector.</param>
+            <param name="b">End vector.</param>
+            <param name="t">Interpolation parameter.</param>
+            <returns>Interpolated vector.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.Math.Vector3.Distance(BeyondImmersion.Bannou.Core.Math.Vector3,BeyondImmersion.Bannou.Core.Math.Vector3)">
+            <summary>
+            Euclidean distance between two points.
+            </summary>
+            <param name="a">First point.</param>
+            <param name="b">Second point.</param>
+            <returns>Distance between the two points.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.Math.Vector3.Min(BeyondImmersion.Bannou.Core.Math.Vector3,BeyondImmersion.Bannou.Core.Math.Vector3)">
+            <summary>
+            Component-wise minimum of two vectors.
+            </summary>
+            <param name="a">First vector.</param>
+            <param name="b">Second vector.</param>
+            <returns>Vector whose components are the smaller of the two inputs.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.Math.Vector3.Max(BeyondImmersion.Bannou.Core.Math.Vector3,BeyondImmersion.Bannou.Core.Math.Vector3)">
+            <summary>
+            Component-wise maximum of two vectors.
+            </summary>
+            <param name="a">First vector.</param>
+            <param name="b">Second vector.</param>
+            <returns>Vector whose components are the larger of the two inputs.</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.Math.Vector3.Equals(BeyondImmersion.Bannou.Core.Math.Vector3)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.Math.Vector3.Equals(System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.Math.Vector3.GetHashCode">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.Math.Vector3.op_Equality(BeyondImmersion.Bannou.Core.Math.Vector3,BeyondImmersion.Bannou.Core.Math.Vector3)">
+            <summary>Exact equality operator.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.Math.Vector3.op_Inequality(BeyondImmersion.Bannou.Core.Math.Vector3,BeyondImmersion.Bannou.Core.Math.Vector3)">
+            <summary>Exact inequality operator.</summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.Math.Vector3.ToString">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.Math.Vector3.Deconstruct(System.Single@,System.Single@,System.Single@)">
+            <summary>
+            Deconstructs the vector into its three components for pattern matching and
+            tuple-style destructuring.
+            </summary>
+            <param name="x">Receives the X component.</param>
+            <param name="y">Receives the Y component.</param>
+            <param name="z">Receives the Z component.</param>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Core.PreboundApi">
             <summary>
             Definition of a prebound API call.

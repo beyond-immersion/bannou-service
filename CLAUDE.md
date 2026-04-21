@@ -37,12 +37,17 @@ An agent once read over 140 files in a single parallel command call to write a c
 | `write_script` | Write a script to the sandboxed scripts directory with automatic chmod +x and syntax validation. | Creating utility scripts (.sh, .py, .mjs). Scripts written to `/tmp/bannou-scripts/` ONLY. Auto-validates syntax (bash -n, py_compile, node --check). |
 | `move_lines` | Move a line range from one file to another by line number. Both files written atomically. Runs **structure validation** automatically after each move. | Relocating methods, blocks, or sections between files. No string matching — immune to invisible whitespace issues. |
 | `validate_structure` | Check a C# file for balanced braces, `#region`/`#endregion`, and `#if`/`#endif`. | After manual edits, or to diagnose structural build failures. Also runs automatically inside `move_lines`. |
-| `prepare_context` | Pack documentation files into optimally-sized composites for efficient context loading. Pre-registers originals as read. Gates all other tools until composites are read. | Agent initialization, plugin context loading. Profiles: `dev`, `plugin`, `schema`, `custom`. |
+| `prepare_context` | Pack documentation files into optimally-sized composites for efficient context loading. Pre-registers originals as read. Gates all other tools until composites are read. | Agent initialization, plugin context loading. Profiles: `dev`, `plugin`, `schema`, `tenets-full`, `custom`. |
 | `list_plugins` | List all 78 plugins with layer, endpoint count, and doc availability. | Discovering available services, checking doc coverage. |
 | `get_plugin_docs` | Get deep dive + implementation map for a plugin. Marks source files as read. | Plugin investigation. Replaces manually reading `docs/plugins/` + `docs/maps/`. |
 | `list_documents` | Categorized index of all docs from generated catalogs. | Documentation discovery. Replaces reading catalog files individually. |
 | `get_document` | Get a specific document by path. Marks source as read. | Reading any doc file. |
 | `search_docs` | Full-text keyword search across all docs/ with relevance ranking. | Finding relevant documentation by topic. |
+| `list_tenets` | Compact one-line summary per tenet (all ~33, grouped by category, with severity + violation count). | **Always start here** when looking up rules — the short list replaces reading full tenet files by default. Filter by `category`, `severity`, or `keyword`. |
+| `get_tenet` | Full body of a single tenet (heading, rule, full markdown, every Quick Reference violation citing it). | Focused audit or deep reference for ONE tenet. Use after `list_tenets` identifies the relevant id. |
+| `get_tenets` | Batch `get_tenet` for multiple ids (e.g. `["T4","T5","T27"]`). | Code review against a focused set of 2–4 tenets. Avoids loading the full tenet bundle. |
+| `list_violations` | Query rows from the Quick Reference common-violations catalog. Filter by `tenet` (id or array) or `keyword`. | "Is this pattern a known violation?" — check the catalog before grepping the codebase. |
+| `search_tenets` | Full-text ranked search across tenet bodies + Quick Reference. Name hits weighted 10, rule/summary 4, body 1 per occurrence, violation rows 2. | Finding the tenet that governs a concept when you don't know the id. |
 | `list_schemas` | List all schema files organized by service. | Schema discovery. |
 | `get_schema` | Get a specific schema file or all schemas for a service. Marks source as read. | Schema inspection. Replaces reading `schemas/*.yaml` individually. |
 | `get_service_details` | Generated service details, optionally by layer. | Service investigation. Replaces reading `GENERATED-*-SERVICE-DETAILS.md`. |
@@ -76,9 +81,10 @@ An agent once read over 140 files in a single parallel command call to write a c
 
 | Profile | Files Loaded | Options |
 |---------|-------------|---------|
-| `dev` | CLAUDE.md, CLAUDE-PRACTICES.md, HELPERS-AND-COMMON-PATTERNS.md, all 5 tenet files | — |
+| `dev` | CLAUDE.md, CLAUDE-PRACTICES.md, HELPERS-AND-COMMON-PATTERNS.md (tenet bodies are queried on demand via `list_tenets` / `get_tenet` / `list_violations` / `search_tenets`) | — |
 | `plugin` | Everything in `dev` + `docs/plugins/{SERVICE}.md` + `docs/maps/{SERVICE}.md` | `service: "name"` (required) |
 | `schema` | Everything in `dev` + SCHEMA-RULES.md + specifications catalog | — |
+| `tenets-full` | The 5 tenet category files (FOUNDATION, IMPLEMENTATION-BEHAVIOR, IMPLEMENTATION-DATA, QUALITY, TESTING-PATTERNS). Stackable on top of any other profile for deep cross-tenet audits. | — |
 | `custom` | Arbitrary file list | `files: ["path/to/file", ...]` (required) |
 
 Idempotent: files already read are skipped. Stackable: calling `prepare_context` while a gate is active adds new composites to the existing gate. After calling, read ALL returned composites to clear the gate and unlock other tools.
@@ -170,8 +176,8 @@ This protocol exists because there is a behavioral tendency to serialize reads a
 | Agent Type | Context Profile | Use For |
 |------------|----------------|---------|
 | `bannou` | Manual reads (CLAUDE.md, CLAUDE-PRACTICES.md) | General tasks needing project awareness |
-| `bannou-dev` | `prepare_context(profile: "dev")` — tenets + patterns | Implementation, code review, auditing, tenet compliance |
-| `bannou-schema` | `prepare_context(profile: "schema")` — tenets + schema rules | Schema work, generation, extension attributes |
+| `bannou-dev` | `prepare_context(profile: "dev")` — project instructions + patterns (tenet bodies queried on demand); stack `tenets-full` for deep audits | Implementation, code review, auditing, tenet compliance |
+| `bannou-schema` | `prepare_context(profile: "schema")` — dev context + schema rules + specifications catalog | Schema work, generation, extension attributes |
 
 These agents call `prepare_context` as Step 0, then read the returned composites to load all reference documents efficiently. Use them via `subagent_type: "bannou"` (or `"bannou-dev"`, `"bannou-schema"`).
 
@@ -181,7 +187,7 @@ These agents call `prepare_context` as Step 0, then read the returned composites
 |---------------|----------------|
 | **Plugin work** (auditing, mapping, testing, implementing) | Use `prepare_context(profile: "plugin", service: "{name}")` — loads dev context + deep dive + implementation map. **Always use this instead of reading plugin docs individually.** |
 | **Investigation** (tracing dependencies, exploring architecture) | Layer-specific service details: `docs/generated/GENERATED-*-SERVICE-DETAILS.md`. Also `docs/reference/SERVICE-HIERARCHY.md` for dependency analysis. |
-| **Testing work** | `docs/reference/tenets/TESTING-PATTERNS.md` — already included in `dev` and `plugin` profiles. |
+| **Testing work** | Query `get_tenet(id)` for the specific testing rule you need, or stack `prepare_context(profile: "tenets-full")` — which includes `docs/reference/tenets/TESTING-PATTERNS.md` — when a task involves heavy test authoring. |
 | **High-level vision** | `docs/reference/VISION.md` and `docs/reference/PLAYER-VISION.md` (same as Big Brain Mode). |
 | **Documentation search** | The relevant catalog(s) — see Catalog-First Documentation Search below. |
 | **bannou-service infrastructure** (shared helpers, ABML runtime, plugin loading, DI providers) | `docs/BANNOU-DEEP-DIVE.md` — the complete bannou-service subsystem inventory. HELPERS already included via `dev` profile. |

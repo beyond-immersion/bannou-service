@@ -460,9 +460,11 @@ public partial class StorylineClient : IStorylineClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ComposeResponse>(
-                _directDispatchProvider, _serviceName, "ComposeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IStorylineService, ComposeRequest, ComposeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ComposeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -564,9 +566,11 @@ public partial class StorylineClient : IStorylineClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetPlanResponse>(
-                _directDispatchProvider, _serviceName, "GetPlanAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IStorylineService, GetPlanRequest, GetPlanResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetPlanAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -662,9 +666,11 @@ public partial class StorylineClient : IStorylineClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListPlansResponse>(
-                _directDispatchProvider, _serviceName, "ListPlansAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IStorylineService, ListPlansRequest, ListPlansResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListPlansAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -755,9 +761,11 @@ public partial class StorylineClient : IStorylineClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ScenarioDefinition>(
-                _directDispatchProvider, _serviceName, "CreateScenarioDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IStorylineService, CreateScenarioDefinitionRequest, ScenarioDefinition>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateScenarioDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -859,9 +867,11 @@ public partial class StorylineClient : IStorylineClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetScenarioDefinitionResponse>(
-                _directDispatchProvider, _serviceName, "GetScenarioDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IStorylineService, GetScenarioDefinitionRequest, GetScenarioDefinitionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetScenarioDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -957,9 +967,11 @@ public partial class StorylineClient : IStorylineClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListScenarioDefinitionsResponse>(
-                _directDispatchProvider, _serviceName, "ListScenarioDefinitionsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IStorylineService, ListScenarioDefinitionsRequest, ListScenarioDefinitionsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListScenarioDefinitionsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1049,9 +1061,11 @@ public partial class StorylineClient : IStorylineClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ScenarioDefinition>(
-                _directDispatchProvider, _serviceName, "UpdateScenarioDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IStorylineService, UpdateScenarioDefinitionRequest, ScenarioDefinition>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateScenarioDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1154,9 +1168,11 @@ public partial class StorylineClient : IStorylineClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ScenarioDefinition>(
-                _directDispatchProvider, _serviceName, "DeprecateScenarioDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IStorylineService, DeprecateScenarioDefinitionRequest, ScenarioDefinition>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeprecateScenarioDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1256,9 +1272,11 @@ public partial class StorylineClient : IStorylineClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanDeprecatedResponse>(
-                _directDispatchProvider, _serviceName, "CleanDeprecatedScenarioDefinitionsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IStorylineService, CleanDeprecatedRequest, CleanDeprecatedResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanDeprecatedScenarioDefinitionsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1351,9 +1369,11 @@ public partial class StorylineClient : IStorylineClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<FindAvailableScenariosResponse>(
-                _directDispatchProvider, _serviceName, "FindAvailableScenariosAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IStorylineService, FindAvailableScenariosRequest, FindAvailableScenariosResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.FindAvailableScenariosAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1444,9 +1464,11 @@ public partial class StorylineClient : IStorylineClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<TestScenarioResponse>(
-                _directDispatchProvider, _serviceName, "TestScenarioTriggerAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IStorylineService, TestScenarioRequest, TestScenarioResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.TestScenarioTriggerAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1542,9 +1564,11 @@ public partial class StorylineClient : IStorylineClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EvaluateFitResponse>(
-                _directDispatchProvider, _serviceName, "EvaluateScenarioFitAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IStorylineService, EvaluateFitRequest, EvaluateFitResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.EvaluateScenarioFitAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1638,9 +1662,11 @@ public partial class StorylineClient : IStorylineClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<TriggerScenarioResponse>(
-                _directDispatchProvider, _serviceName, "TriggerScenarioAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IStorylineService, TriggerScenarioRequest, TriggerScenarioResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.TriggerScenarioAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1747,9 +1773,11 @@ public partial class StorylineClient : IStorylineClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetActiveScenariosResponse>(
-                _directDispatchProvider, _serviceName, "GetActiveScenariosAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IStorylineService, GetActiveScenariosRequest, GetActiveScenariosResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetActiveScenariosAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1838,9 +1866,11 @@ public partial class StorylineClient : IStorylineClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetScenarioHistoryResponse>(
-                _directDispatchProvider, _serviceName, "GetScenarioHistoryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IStorylineService, GetScenarioHistoryRequest, GetScenarioHistoryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetScenarioHistoryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1933,9 +1963,11 @@ public partial class StorylineClient : IStorylineClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeleteScenarioExecutionResponse>(
-                _directDispatchProvider, _serviceName, "DeleteScenarioExecutionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IStorylineService, DeleteScenarioExecutionRequest, DeleteScenarioExecutionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteScenarioExecutionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2037,9 +2069,11 @@ public partial class StorylineClient : IStorylineClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<StorylineArchive>(
-                _directDispatchProvider, _serviceName, "GetCompressDataAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IStorylineService, GetCompressDataRequest, StorylineArchive>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetCompressDataAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

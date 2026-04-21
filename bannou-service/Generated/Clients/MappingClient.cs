@@ -470,9 +470,11 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AuthorityGrant>(
-                _directDispatchProvider, _serviceName, "CreateChannelAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMappingService, CreateChannelRequest, AuthorityGrant>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateChannelAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -569,9 +571,11 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "DeleteChannelAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IMappingService, DeleteChannelRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteChannelAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -668,9 +672,11 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "ReleaseAuthorityAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IMappingService, ReleaseAuthorityRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ReleaseAuthorityAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -761,9 +767,11 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AuthorityHeartbeatResponse>(
-                _directDispatchProvider, _serviceName, "AuthorityHeartbeatAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMappingService, AuthorityHeartbeatRequest, AuthorityHeartbeatResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.AuthorityHeartbeatAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -860,9 +868,11 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PublishMapUpdateResponse>(
-                _directDispatchProvider, _serviceName, "PublishMapUpdateAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMappingService, PublishMapUpdateRequest, PublishMapUpdateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.PublishMapUpdateAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -959,9 +969,11 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PublishObjectChangesResponse>(
-                _directDispatchProvider, _serviceName, "PublishObjectChangesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMappingService, PublishObjectChangesRequest, PublishObjectChangesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.PublishObjectChangesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1058,9 +1070,11 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RequestSnapshotResponse>(
-                _directDispatchProvider, _serviceName, "RequestSnapshotAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMappingService, RequestSnapshotRequest, RequestSnapshotResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RequestSnapshotAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1157,9 +1171,11 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QueryPointResponse>(
-                _directDispatchProvider, _serviceName, "QueryPointAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMappingService, QueryPointRequest, QueryPointResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.QueryPointAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1250,9 +1266,11 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QueryBoundsResponse>(
-                _directDispatchProvider, _serviceName, "QueryBoundsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMappingService, QueryBoundsRequest, QueryBoundsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.QueryBoundsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1342,9 +1360,11 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QueryObjectsByTypeResponse>(
-                _directDispatchProvider, _serviceName, "QueryObjectsByTypeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMappingService, QueryObjectsByTypeRequest, QueryObjectsByTypeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.QueryObjectsByTypeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1442,9 +1462,11 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AffordanceQueryResponse>(
-                _directDispatchProvider, _serviceName, "QueryAffordanceAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMappingService, AffordanceQueryRequest, AffordanceQueryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.QueryAffordanceAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1535,9 +1557,11 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AuthoringCheckoutResponse>(
-                _directDispatchProvider, _serviceName, "CheckoutForAuthoringAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMappingService, AuthoringCheckoutRequest, AuthoringCheckoutResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CheckoutForAuthoringAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1633,9 +1657,11 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AuthoringCommitResponse>(
-                _directDispatchProvider, _serviceName, "CommitAuthoringAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMappingService, AuthoringCommitRequest, AuthoringCommitResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CommitAuthoringAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1731,9 +1757,11 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "ReleaseAuthoringAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IMappingService, AuthoringReleaseRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ReleaseAuthoringAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1819,9 +1847,11 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<MapDefinition>(
-                _directDispatchProvider, _serviceName, "CreateDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMappingService, CreateDefinitionRequest, MapDefinition>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1916,9 +1946,11 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<MapDefinition>(
-                _directDispatchProvider, _serviceName, "GetDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMappingService, GetDefinitionRequest, MapDefinition>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2013,9 +2045,11 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListDefinitionsResponse>(
-                _directDispatchProvider, _serviceName, "ListDefinitionsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMappingService, ListDefinitionsRequest, ListDefinitionsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListDefinitionsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2105,9 +2139,11 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<MapDefinition>(
-                _directDispatchProvider, _serviceName, "UpdateDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMappingService, UpdateDefinitionRequest, MapDefinition>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2202,9 +2238,11 @@ public partial class MappingClient : IMappingClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "DeleteDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IMappingService, DeleteDefinitionRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 

@@ -282,9 +282,11 @@ public partial class PuppetmasterClient : IPuppetmasterClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PuppetmasterStatusResponse>(
-                _directDispatchProvider, _serviceName, "GetStatusAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IPuppetmasterService, GetStatusRequest, PuppetmasterStatusResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetStatusAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -374,9 +376,11 @@ public partial class PuppetmasterClient : IPuppetmasterClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<InvalidateBehaviorsResponse>(
-                _directDispatchProvider, _serviceName, "InvalidateBehaviorsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IPuppetmasterService, InvalidateBehaviorsRequest, InvalidateBehaviorsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.InvalidateBehaviorsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -465,9 +469,11 @@ public partial class PuppetmasterClient : IPuppetmasterClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListWatchersResponse>(
-                _directDispatchProvider, _serviceName, "ListWatchersAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IPuppetmasterService, ListWatchersRequest, ListWatchersResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListWatchersAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -557,9 +563,11 @@ public partial class PuppetmasterClient : IPuppetmasterClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<StartWatcherResponse>(
-                _directDispatchProvider, _serviceName, "StartWatcherAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IPuppetmasterService, StartWatcherRequest, StartWatcherResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.StartWatcherAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -648,9 +656,11 @@ public partial class PuppetmasterClient : IPuppetmasterClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<StopWatcherResponse>(
-                _directDispatchProvider, _serviceName, "StopWatcherAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IPuppetmasterService, StopWatcherRequest, StopWatcherResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.StopWatcherAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -740,9 +750,11 @@ public partial class PuppetmasterClient : IPuppetmasterClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<StartWatchersForRealmResponse>(
-                _directDispatchProvider, _serviceName, "StartWatchersForRealmAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IPuppetmasterService, StartWatchersForRealmRequest, StartWatchersForRealmResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.StartWatchersForRealmAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

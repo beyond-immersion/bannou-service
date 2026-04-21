@@ -51,15 +51,27 @@ fi
 # Ensure output directory exists
 mkdir -p "$OUTPUT_DIR"
 
-# Create filtered schema for client generation (remove x-from-authorization parameters)
-FILTERED_SCHEMA_FILE="$SCHEMA_FILE"
-if grep -q "x-from-authorization" "$SCHEMA_FILE"; then
-    echo -e "${YELLOW}🔧 Creating filtered schema for client generation (removing x-from-authorization parameters)...${NC}"
-    FILTERED_SCHEMA_FILE="../schemas/Generated/${SERVICE_NAME}-client-filtered-schema.yaml"
+# Create filtered schema for client generation. Filters applied (all independent):
+#   1. Drop operations with x-controller-only: true (no client method generated —
+#      endpoint exists only as a manual controller override, no service-interface pair)
+#   2. Drop operations with x-manual-implementation: true (same reason — no generated
+#      interface method to dispatch to)
+#   3. For requestBody with multiple content types, keep only application/json so the
+#      NSwag-generated client body type matches the service-interface body type (avoids
+#      string-body client vs. typed-body interface mismatch for yaml/text endpoints)
+#   4. Remove parameters marked x-from-authorization (token is supplied via
+#      WithAuthorization(...) header, not as a public client method parameter); also
+#      annotate the operation with x-direct-dispatch-auth so the client template can
+#      emit specialized direct-dispatch code that extracts the token from
+#      _authorizationHeader and passes it to the service method's typed token parameter
+#
+# Filtered schema is always produced (even when no filter rule fires) so the downstream
+# NSwag invocation has a single code path.
+FILTERED_SCHEMA_FILE="../schemas/Generated/${SERVICE_NAME}-client-filtered-schema.yaml"
+echo -e "${YELLOW}🔧 Creating filtered client schema...${NC}"
 
-    # Use Python to remove x-from-authorization parameters from client schema
-    # Output goes to schemas/Generated/ so cross-file $refs need ../ prefix adjustment
-    python3 -c "
+# Output goes to schemas/Generated/ so cross-file $refs need ../ prefix adjustment
+python3 -c "
 import yaml
 import sys
 import re
@@ -67,30 +79,100 @@ import re
 with open('$SCHEMA_FILE', 'r') as f:
     schema = yaml.safe_load(f)
 
-if 'paths' in schema:
-    for path, path_data in schema['paths'].items():
-        for method, method_data in path_data.items():
-            if isinstance(method_data, dict) and 'parameters' in method_data:
-                # Filter out parameters marked with x-from-authorization
-                original_params = method_data['parameters']
-                filtered_params = []
+HTTP_METHODS = {'get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'trace'}
 
-                for param in original_params:
-                    if param.get('x-from-authorization'):
-                        print(f'Removing x-from-authorization parameter \"{param.get(\"name\", \"unknown\")}\" from {path} {method} for client generation', file=sys.stderr)
+if 'paths' in schema:
+    # Iterate over a snapshot so we can mutate the dict
+    for path in list(schema['paths'].keys()):
+        path_data = schema['paths'][path]
+        if not isinstance(path_data, dict):
+            continue
+
+        # Rule 1+2: drop operations (HTTP methods) with x-controller-only or x-manual-implementation
+        methods_to_drop = []
+        for method in list(path_data.keys()):
+            if method.lower() not in HTTP_METHODS:
+                continue
+            method_data = path_data[method]
+            if not isinstance(method_data, dict):
+                continue
+            if method_data.get('x-controller-only'):
+                print(f'Dropping x-controller-only operation: {method.upper()} {path}', file=sys.stderr)
+                methods_to_drop.append(method)
+            elif method_data.get('x-manual-implementation'):
+                print(f'Dropping x-manual-implementation operation: {method.upper()} {path}', file=sys.stderr)
+                methods_to_drop.append(method)
+
+        for method in methods_to_drop:
+            del path_data[method]
+
+        # If a path has no remaining HTTP method operations, drop the path entry
+        remaining_methods = [m for m in path_data.keys() if m.lower() in HTTP_METHODS]
+        if not remaining_methods:
+            del schema['paths'][path]
+            continue
+
+        # Per-operation rules 3 and 4
+        for method in list(path_data.keys()):
+            if method.lower() not in HTTP_METHODS:
+                continue
+            method_data = path_data[method]
+            if not isinstance(method_data, dict):
+                continue
+
+            # Rule 3: collapse requestBody to application/json when multiple content types exist.
+            # Service-interface methods always accept the typed schema body, so the client
+            # body type must match — otherwise the direct-dispatch static lambda fails to
+            # compile against the service-method signature (e.g., yaml → string vs typed).
+            request_body = method_data.get('requestBody')
+            if isinstance(request_body, dict):
+                content = request_body.get('content')
+                if isinstance(content, dict) and 'application/json' in content and len(content) > 1:
+                    dropped = [ct for ct in content.keys() if ct != 'application/json']
+                    for ct in dropped:
+                        del content[ct]
+                    print(f'Collapsed multi-content requestBody to application/json for {method.upper()} {path} (dropped: {dropped})', file=sys.stderr)
+
+            # Rule 4: strip x-from-authorization parameters; annotate operation so the
+            # client template can emit specialized direct-dispatch with token extraction.
+            parameters = method_data.get('parameters')
+            if isinstance(parameters, list):
+                filtered_params = []
+                auth_scheme = None
+                for param in parameters:
+                    auth_value = param.get('x-from-authorization') if isinstance(param, dict) else None
+                    if auth_value:
+                        name = param.get('name', 'unknown') if isinstance(param, dict) else 'unknown'
+                        print(f'Removing x-from-authorization parameter \"{name}\" from {method.upper()} {path} for client generation', file=sys.stderr)
+                        if auth_scheme is None:
+                            auth_scheme = auth_value
                     else:
                         filtered_params.append(param)
 
+                if auth_scheme is not None:
+                    method_data['x-direct-dispatch-auth'] = auth_scheme
                 method_data['parameters'] = filtered_params
 
-# Fix relative paths: output is in schemas/Generated/ so sibling refs need ../ prefix
+# Fix relative paths: output is in schemas/Generated/ so sibling refs need ../ prefix.
+# Handles three shapes a schema may use for a sibling-file ref:
+#   'common-api.yaml#/x'      → '../common-api.yaml#/x'
+#   './common-api.yaml#/x'    → '../common-api.yaml#/x'   (dot-prefix is legal OpenAPI)
+#   '../something.yaml#/x'    → left alone (already parent-relative, don't double-up)
+# Same-file refs ('#/components/schemas/X') are skipped by the 'not startswith #' guard.
 def fix_refs(obj):
     if isinstance(obj, dict):
         for key, val in obj.items():
             if key == '\$ref' and isinstance(val, str) and '#' in val and not val.startswith('#'):
-                m = re.match(r'([a-zA-Z][a-zA-Z0-9_-]*\\.yaml#.+)', val)
-                if m:
-                    obj[key] = '../' + val
+                # Strip leading './' (may appear multiple times in odd inputs) so the
+                # downstream regex sees the bare filename.
+                normalized = val
+                while normalized.startswith('./'):
+                    normalized = normalized[2:]
+                # Only rewrite when the result is a sibling yaml ref — i.e., filename
+                # starts with a letter and contains '.yaml#'. Parent-relative ('../…')
+                # and absolute ('/…') refs keep their original text.
+                if re.match(r'^[a-zA-Z][a-zA-Z0-9_-]*\\.yaml#', normalized):
+                    obj[key] = '../' + normalized
             else:
                 fix_refs(val)
     elif isinstance(obj, list):
@@ -105,7 +187,6 @@ with open('$FILTERED_SCHEMA_FILE', 'w') as f:
 
 print('Client filtered schema created successfully', file=sys.stderr)
 "
-fi
 
 # Find NSwag executable and ensure DOTNET_ROOT is set
 require_nswag

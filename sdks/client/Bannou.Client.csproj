@@ -69,6 +69,13 @@
     <Compile Include="../../bannou-service/AppConstants.cs" Condition="Exists('../../bannou-service/AppConstants.cs')" />
   </ItemGroup>
 
+  <!-- Attributes referenced by generated models -->
+  <!-- Each attribute is listed individually so new dependencies are explicit. -->
+  <!-- PolymorphicTypeAttribute: emitted on generated properties where the schema type is deliberately broader than the runtime type (e.g., Analytics serviceId is GUID for Game type, logical name for System type). -->
+  <ItemGroup>
+    <Compile Include="../../bannou-service/Attributes/PolymorphicTypeAttribute.cs" Condition="Exists('../../bannou-service/Attributes/PolymorphicTypeAttribute.cs')" />
+  </ItemGroup>
+
   <!-- WebSocket Binary Protocol -->
   <ItemGroup>
     <Compile Include="../../plugins/lib-connect/Protocol/BinaryMessage.cs" Condition="Exists('../../plugins/lib-connect/Protocol/BinaryMessage.cs')" />

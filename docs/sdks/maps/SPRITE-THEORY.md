@@ -13,11 +13,11 @@
 |-------|-------|
 | SDK | sprite-theory |
 | Layer | Theory |
-| Public Types | 40 (21 records, 10 static classes, 3 enums, 4 structs, 2 interfaces) |
-| Public Methods | 16 |
-| Dependencies | None (pure .NET BCL: System.Text.Json, System.Numerics) |
+| Public Types | 41 (22 records, 10 static classes, 3 enums, 4 structs, 2 interfaces) |
+| Public Methods | 17 |
+| Dependencies | `BeyondImmersion.Bannou.Core` (for `Vector3`). .NET BCL: `System.Text.Json`, `MathF`. |
 | Deterministic | Yes (all operations are pure) |
-| Allocation-Free Hot Paths | CaptureAngle construction, BoundingBox operations, Color operations, Vector2/Rectangle operations |
+| Allocation-Free Hot Paths | CaptureAngle construction, BoundingBox operations, Color operations, Vector2/Vector3/Rectangle operations |
 
 ---
 
@@ -64,9 +64,9 @@
 
 | Field | Type | Purpose |
 |-------|------|---------|
-| `Position` | `(float X, float Y, float Z)` | Camera world position |
-| `Direction` | `(float X, float Y, float Z)` | Camera forward direction (normalized) |
-| `Up` | `(float X, float Y, float Z)` | Camera up vector (normalized) |
+| `Position` | `Vector3` | Camera world position |
+| `Direction` | `Vector3` | Camera forward direction (normalized) |
+| `Up` | `Vector3` | Camera up vector (normalized) |
 | `OrthoWidth` | `float` | Orthographic viewport width in world units |
 | `OrthoHeight` | `float` | Orthographic viewport height in world units |
 | `NearPlane` | `float` | Near clip distance |
@@ -80,7 +80,8 @@
 | Member | Type | Purpose |
 |--------|------|---------|
 | `DefaultHumanoidPivot` | `static readonly Vector2` | Terminal fallback pivot `(0.5, 0.85)` — center-X, 85% from top, for upright humanoids |
-| `ComputeFromBounds` | static method | Derives a pivot by projecting the bottom-center of a bounding box onto the camera frame plane, clamped to `[0, 1]` |
+| `ComputeFromBounds` | static method | Thin wrapper: computes the feet point `(Center.X, Min.Y, Center.Z)` and delegates to `ProjectWorldPointToFrame`. Clamped to `[0, 1]`. |
+| `ProjectWorldPointToFrame` | static method | Projects an arbitrary world-space point onto the camera frame plane and returns a normalized `Vector2` pivot, clamped to `[0, 1]`. Falls back to `DefaultHumanoidPivot` on degenerate basis or zero orthographic dimensions. Used directly when consumers have a specific anchor point such as a skeleton bone position. |
 
 ### MultiAtlasStrategy
 
@@ -98,10 +99,10 @@
 
 | Field | Type | Purpose |
 |-------|------|---------|
-| `Min` | `(float X, float Y, float Z)` | Minimum corner |
-| `Max` | `(float X, float Y, float Z)` | Maximum corner |
+| `Min` | `Vector3` | Minimum corner |
+| `Max` | `Vector3` | Maximum corner |
 
-**Computed**: `Center` → midpoint, `Extents` → half-size, `Size` → full size.
+**Computed** (all `Vector3`): `Center` → midpoint, `Extents` → half-size, `Size` → full size.
 
 ### FrameSequence
 
@@ -258,11 +259,14 @@
 | Field | Type | Purpose |
 |-------|------|---------|
 | `Name` | `string` | Variant identifier ("warrior_plate_sword") |
-| `ModelPath` | `string` | Path to base character model |
+| `Model` | `AssetReference` | Reference to base character model (bridge-resolved to engine-specific handle) |
 | `Equipment` | `IReadOnlyList<EquipmentSlot>` | Attached equipment |
-| `MaterialOverrides` | `IReadOnlyDictionary<string, string>?` | Material/palette swaps |
+| `MaterialOverrides` | `IReadOnlyDictionary<string, AssetReference>?` | Material/palette swaps (slot → material reference) |
 | `Scale` | `float` | Model scale (default: 1.0) |
-| `PivotOverride` | `Vector2?` | Per-variant pivot override (null = PivotComputer.ComputeFromBounds auto-compute) |
+| `PivotOverride` | `Vector2?` | Per-variant pivot override (highest priority in pivot resolution) |
+| `AnchorBoneName` | `string?` | Optional skeleton-bone anchor used when set and supported by the bridge |
+
+**Pivot resolution order**: `PivotOverride` → `AnchorBoneName` (via bridge + `ProjectWorldPointToFrame`) → `ComputeFromBounds` → `DefaultHumanoidPivot`. See `SPRITE-THEORY.md` § CharacterVariant for the full specification.
 
 ### EquipmentSlot
 
@@ -272,8 +276,19 @@
 | Field | Type | Purpose |
 |-------|------|---------|
 | `SlotName` | `string` | Slot identifier ("head", "weapon_r") |
-| `MeshPath` | `string` | Path to equipment mesh |
+| `Mesh` | `AssetReference` | Reference to equipment mesh (bridge-resolved) |
 | `BoneName` | `string` | Skeleton bone to attach to |
+
+### AssetReference
+
+**Kind**: Record (immutable)
+**Thread Safety**: Immutable
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `BundleId` | `string` | Asset bundle identifier (or filesystem-source bundle for loose-file workflows) |
+| `AssetId` | `string` | Asset identifier within the bundle |
+| `VariantId` | `string?` | Optional variant (LOD level, palette swap). Null = default variant. |
 
 ### MirrorInfo
 
@@ -336,10 +351,14 @@
 | `DepthData` | `float[]?` | Depth 0.0–1.0 (null if not captured) |
 | `Width` | `int` | Frame width |
 | `Height` | `int` | Frame height |
+| `VariantName` | `string` | Source variant (required; identity nesting: variant ⊃ rig ⊃ angle ⊃ animation ⊃ frame) |
+| `RigName` | `string` | Source rig (required; corresponds to `CameraRig.Name`) |
 | `AngleName` | `string` | Source angle |
 | `AnimationName` | `string` | Source animation |
 | `FrameIndex` | `int` | Frame number in animation |
 | `NormalizedTime` | `float` | Animation time when captured |
+
+**Identity invariant**: `(VariantName, RigName, AngleName, AnimationName, FrameIndex)` is unique within a capture session's `CapturedFrames` list.
 
 ### Enums
 
@@ -370,10 +389,11 @@
 
 | Dependency | Type | Usage |
 |------------|------|-------|
+| `BeyondImmersion.Bannou.Core` | SDK | `Vector3` — shared 3D-vector primitive used by `BoundingBox`, `OrthographicParameters`, and `PivotComputer.ProjectWorldPointToFrame` |
 | `System.Text.Json` | BCL | SpriteSheet JSON serialization |
-| `System.Numerics` | BCL | `MathF` for trigonometry in OrthographicSetup |
+| `MathF` | BCL | Trigonometry in `OrthographicSetup` |
 
-**No external NuGet dependencies.** Pure .NET BCL only.
+**No external NuGet dependencies.** Only depends on a sibling Bannou SDK (`Core`) and the .NET BCL.
 
 ---
 
@@ -397,7 +417,8 @@
 
 | Method | Signature | Det. | Allocation | Notes |
 |--------|-----------|:----:|:----------:|-------|
-| `ComputeFromBounds` | `(BoundingBox, OrthographicParameters) → Vector2` | Yes | Free | Pure math; falls back to `DefaultHumanoidPivot` when camera basis is degenerate or ortho dimensions are zero |
+| `ProjectWorldPointToFrame` | `(Vector3, OrthographicParameters) → Vector2` | Yes | Free | General primitive: projects any world point onto the camera frame plane. Falls back to `DefaultHumanoidPivot` when basis is degenerate or ortho dimensions are zero. |
+| `ComputeFromBounds` | `(BoundingBox, OrthographicParameters) → Vector2` | Yes | Free | Thin wrapper: computes feet point `(Center.X, Min.Y, Center.Z)` and delegates to `ProjectWorldPointToFrame`. |
 
 ### AnimationSampling
 
@@ -528,37 +549,42 @@ RETURN CameraRig(
 ### OrthographicSetup.Compute
 `(angle: CaptureAngle, bounds: BoundingBox, frameSize: (int Width, int Height)) → OrthographicParameters`
 
+// All vector math uses Vector3 from BeyondImmersion.Bannou.Core.Math.
+
 // Step 1: Camera direction from yaw/pitch (spherical → Cartesian)
 COMPUTE yawRad ← angle.Yaw * MathF.PI / 180f
 COMPUTE pitchRad ← angle.Pitch * MathF.PI / 180f
-COMPUTE dirX ← MathF.Sin(yawRad) * MathF.Cos(pitchRad)
-COMPUTE dirY ← MathF.Sin(pitchRad)
-COMPUTE dirZ ← MathF.Cos(yawRad) * MathF.Cos(pitchRad)
-COMPUTE direction ← normalize(dirX, dirY, dirZ)
+COMPUTE direction ← new Vector3(
+  MathF.Sin(yawRad) * MathF.Cos(pitchRad),
+  MathF.Sin(pitchRad),
+  MathF.Cos(yawRad) * MathF.Cos(pitchRad)).Normalized
 
 // Step 2: Camera position — back along direction from bounds center
 COMPUTE center ← bounds.Center
-COMPUTE halfDiag ← length(bounds.Extents)
+COMPUTE halfDiag ← bounds.Extents.Length           // Vector3.Length, matches ||extents||
 COMPUTE distance ← halfDiag * 2.5f                  // 2.5× ensures no clipping at extreme angles
 COMPUTE position ← center - direction * distance
 
 // Step 3: Up vector (handle near-vertical pitch to avoid gimbal lock)
 IF MathF.Abs(angle.Pitch) > 89f
-  COMPUTE up ← (0, 0, -MathF.Sign(angle.Pitch))
+  COMPUTE up ← new Vector3(0, 0, -MathF.Sign(angle.Pitch))
 ELSE
-  COMPUTE up ← (0, 1, 0)
+  COMPUTE up ← Vector3.UnitY
 
 // Step 4: Orthonormal basis via cross products
-COMPUTE right ← normalize(cross(direction, up))
-COMPUTE correctedUp ← cross(right, direction)
+COMPUTE right ← Vector3.Cross(direction, up).Normalized
+COMPUTE correctedUp ← Vector3.Cross(right, direction)
 
 // Step 5: Project all 8 bounding box corners onto the camera's view plane
-COMPUTE corners[8] ← all (Min.X|Max.X, Min.Y|Max.Y, Min.Z|Max.Z) combinations
 SET minU ← +INF, maxU ← -INF, minV ← +INF, maxV ← -INF
-FOREACH corner in corners
-  COMPUTE relative ← corner - position
-  COMPUTE u ← dot(relative, right)
-  COMPUTE v ← dot(relative, correctedUp)
+FOREACH i FROM 0 TO 7
+  COMPUTE corner ← new Vector3(
+    (i & 1) == 0 ? bounds.Min.X : bounds.Max.X,
+    (i & 2) == 0 ? bounds.Min.Y : bounds.Max.Y,
+    (i & 4) == 0 ? bounds.Min.Z : bounds.Max.Z)
+  COMPUTE rel ← corner - position
+  COMPUTE u ← Vector3.Dot(rel, right)
+  COMPUTE v ← Vector3.Dot(rel, correctedUp)
   minU ← min(minU, u); maxU ← max(maxU, u)
   minV ← min(minV, v); maxV ← max(maxV, v)
 
@@ -588,36 +614,43 @@ RETURN OrthographicParameters(
 ### PivotComputer.ComputeFromBounds
 `(bounds: BoundingBox, camera: OrthographicParameters) → Vector2`
 
-// Step 1: Feet world position = bottom-center of bounds (upright-humanoid convention)
-COMPUTE feetX ← (bounds.Min.X + bounds.Max.X) * 0.5f
-COMPUTE feetY ← bounds.Min.Y
-COMPUTE feetZ ← (bounds.Min.Z + bounds.Max.Z) * 0.5f
+// Feet world position = bottom-center of bounds (upright-humanoid convention)
+COMPUTE feet ← new Vector3(
+  (bounds.Min.X + bounds.Max.X) * 0.5f,
+  bounds.Min.Y,
+  (bounds.Min.Z + bounds.Max.Z) * 0.5f)
 
-// Step 2: Relative to camera
-COMPUTE rel ← (feetX - camera.Position.X, feetY - camera.Position.Y, feetZ - camera.Position.Z)
+RETURN ProjectWorldPointToFrame(feet, camera)
 
-// Step 3: Derive camera right axis from basis
-COMPUTE right ← cross(camera.Direction, camera.Up)
-COMPUTE rightLen ← length(right)
-IF rightLen < 1e-10f
+---
+
+### PivotComputer.ProjectWorldPointToFrame
+`(worldPoint: Vector3, camera: OrthographicParameters) → Vector2`
+
+// Step 1: Relative to camera
+COMPUTE rel ← worldPoint - camera.Position
+
+// Step 2: Derive camera right axis from basis
+COMPUTE right ← Vector3.Cross(camera.Direction, camera.Up)
+IF right.LengthSquared < 1e-20f
   // Degenerate basis (direction parallel to up) — no well-defined projection
   RETURN DefaultHumanoidPivot
-COMPUTE right ← right / rightLen
+COMPUTE right ← right.Normalized
 
-// Step 4: Project onto (right, up) plane
-COMPUTE u ← dot(rel, right)
-COMPUTE v ← dot(rel, camera.Up)
+// Step 3: Project onto (right, up) plane
+COMPUTE u ← Vector3.Dot(rel, right)
+COMPUTE v ← Vector3.Dot(rel, camera.Up)
 
-// Step 5: Guard against invalid ortho dimensions
+// Step 4: Guard against invalid ortho dimensions
 IF camera.OrthoWidth <= 0f OR camera.OrthoHeight <= 0f
   RETURN DefaultHumanoidPivot
 
-// Step 6: Map to normalized frame coords
+// Step 5: Map to normalized frame coords
 //   Pivot origin is top-left (Y grows downward), camera V is bottom-up, so flip Y.
 COMPUTE pivotX ← 0.5f + u / camera.OrthoWidth
 COMPUTE pivotY ← 0.5f - v / camera.OrthoHeight
 
-// Step 7: Clamp to [0, 1] so downstream consumers never see out-of-frame pivots
+// Step 6: Clamp to [0, 1] so downstream consumers never see out-of-frame pivots
 RETURN Vector2(clamp01(pivotX), clamp01(pivotY))
 
 ---

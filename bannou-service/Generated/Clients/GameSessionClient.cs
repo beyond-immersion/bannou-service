@@ -339,9 +339,11 @@ public partial class GameSessionClient : IGameSessionClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GameSessionListResponse>(
-                _directDispatchProvider, _serviceName, "ListGameSessionsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IGameSessionService, ListGameSessionsRequest, GameSessionListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListGameSessionsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -431,9 +433,11 @@ public partial class GameSessionClient : IGameSessionClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GameSessionResponse>(
-                _directDispatchProvider, _serviceName, "CreateGameSessionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IGameSessionService, CreateGameSessionRequest, GameSessionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateGameSessionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -522,9 +526,11 @@ public partial class GameSessionClient : IGameSessionClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GameSessionResponse>(
-                _directDispatchProvider, _serviceName, "GetGameSessionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IGameSessionService, GetGameSessionRequest, GameSessionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetGameSessionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -622,9 +628,11 @@ public partial class GameSessionClient : IGameSessionClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<JoinGameSessionResponse>(
-                _directDispatchProvider, _serviceName, "JoinGameSessionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IGameSessionService, JoinGameSessionRequest, JoinGameSessionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.JoinGameSessionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -722,9 +730,11 @@ public partial class GameSessionClient : IGameSessionClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "LeaveGameSessionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IGameSessionService, LeaveGameSessionRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.LeaveGameSessionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -811,9 +821,11 @@ public partial class GameSessionClient : IGameSessionClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "KickPlayerAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IGameSessionService, KickPlayerRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.KickPlayerAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -906,9 +918,11 @@ public partial class GameSessionClient : IGameSessionClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "SendChatMessageAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IGameSessionService, ChatMessageRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SendChatMessageAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -995,9 +1009,11 @@ public partial class GameSessionClient : IGameSessionClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GameActionResponse>(
-                _directDispatchProvider, _serviceName, "PerformGameActionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IGameSessionService, GameActionRequest, GameActionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.PerformGameActionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1101,9 +1117,11 @@ public partial class GameSessionClient : IGameSessionClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<JoinGameSessionResponse>(
-                _directDispatchProvider, _serviceName, "JoinGameSessionByIdAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IGameSessionService, JoinGameSessionByIdRequest, JoinGameSessionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.JoinGameSessionByIdAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1211,9 +1229,11 @@ public partial class GameSessionClient : IGameSessionClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "LeaveGameSessionByIdAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IGameSessionService, LeaveGameSessionByIdRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.LeaveGameSessionByIdAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1305,9 +1325,11 @@ public partial class GameSessionClient : IGameSessionClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PublishJoinShortcutResponse>(
-                _directDispatchProvider, _serviceName, "PublishJoinShortcutAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IGameSessionService, PublishJoinShortcutRequest, PublishJoinShortcutResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.PublishJoinShortcutAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

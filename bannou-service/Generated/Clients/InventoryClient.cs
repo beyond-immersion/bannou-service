@@ -415,9 +415,11 @@ public partial class InventoryClient : IInventoryClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ContainerResponse>(
-                _directDispatchProvider, _serviceName, "CreateContainerAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IInventoryService, CreateContainerRequest, ContainerResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateContainerAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -512,9 +514,11 @@ public partial class InventoryClient : IInventoryClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ContainerWithContentsResponse>(
-                _directDispatchProvider, _serviceName, "GetContainerAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IInventoryService, GetContainerRequest, ContainerWithContentsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetContainerAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -611,9 +615,11 @@ public partial class InventoryClient : IInventoryClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ContainerResponse>(
-                _directDispatchProvider, _serviceName, "GetOrCreateContainerAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IInventoryService, GetOrCreateContainerRequest, ContainerResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetOrCreateContainerAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -702,9 +708,11 @@ public partial class InventoryClient : IInventoryClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListContainersResponse>(
-                _directDispatchProvider, _serviceName, "ListContainersAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IInventoryService, ListContainersRequest, ListContainersResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListContainersAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -793,9 +801,11 @@ public partial class InventoryClient : IInventoryClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ContainerResponse>(
-                _directDispatchProvider, _serviceName, "UpdateContainerAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IInventoryService, UpdateContainerRequest, ContainerResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateContainerAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -891,9 +901,11 @@ public partial class InventoryClient : IInventoryClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeleteContainerResponse>(
-                _directDispatchProvider, _serviceName, "DeleteContainerAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IInventoryService, DeleteContainerRequest, DeleteContainerResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteContainerAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -996,9 +1008,11 @@ public partial class InventoryClient : IInventoryClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AddItemResponse>(
-                _directDispatchProvider, _serviceName, "AddItemToContainerAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IInventoryService, AddItemRequest, AddItemResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.AddItemToContainerAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1100,9 +1114,11 @@ public partial class InventoryClient : IInventoryClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RemoveItemResponse>(
-                _directDispatchProvider, _serviceName, "RemoveItemFromContainerAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IInventoryService, RemoveItemRequest, RemoveItemResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RemoveItemFromContainerAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1199,9 +1215,11 @@ public partial class InventoryClient : IInventoryClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<MoveItemResponse>(
-                _directDispatchProvider, _serviceName, "MoveItemAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IInventoryService, MoveItemRequest, MoveItemResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.MoveItemAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1303,9 +1321,11 @@ public partial class InventoryClient : IInventoryClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<TransferItemResponse>(
-                _directDispatchProvider, _serviceName, "TransferItemAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IInventoryService, TransferItemRequest, TransferItemResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.TransferItemAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1407,9 +1427,11 @@ public partial class InventoryClient : IInventoryClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SplitStackResponse>(
-                _directDispatchProvider, _serviceName, "SplitStackAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IInventoryService, SplitStackRequest, SplitStackResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SplitStackAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1511,9 +1533,11 @@ public partial class InventoryClient : IInventoryClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<MergeStacksResponse>(
-                _directDispatchProvider, _serviceName, "MergeStacksAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IInventoryService, MergeStacksRequest, MergeStacksResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.MergeStacksAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1615,9 +1639,11 @@ public partial class InventoryClient : IInventoryClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QueryItemsResponse>(
-                _directDispatchProvider, _serviceName, "QueryItemsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IInventoryService, QueryItemsRequest, QueryItemsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.QueryItemsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1706,9 +1732,11 @@ public partial class InventoryClient : IInventoryClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CountItemsResponse>(
-                _directDispatchProvider, _serviceName, "CountItemsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IInventoryService, CountItemsRequest, CountItemsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CountItemsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1798,9 +1826,11 @@ public partial class InventoryClient : IInventoryClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<HasItemsResponse>(
-                _directDispatchProvider, _serviceName, "HasItemsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IInventoryService, HasItemsRequest, HasItemsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.HasItemsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1890,9 +1920,11 @@ public partial class InventoryClient : IInventoryClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<FindSpaceResponse>(
-                _directDispatchProvider, _serviceName, "FindSpaceAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IInventoryService, FindSpaceRequest, FindSpaceResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.FindSpaceAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

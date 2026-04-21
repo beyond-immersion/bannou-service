@@ -8,7 +8,13 @@ namespace BeyondImmersion.Bannou.SpriteTheory.Tests.Export;
 
 public class AtlasAssemblerTests
 {
-    private static FrameCapture CreateFrameCapture(int frameIndex, int width, int height, byte fillValue)
+    private static FrameCapture CreateFrameCapture(
+        int frameIndex,
+        int width,
+        int height,
+        byte fillValue,
+        string variantName = "test",
+        string rigName = "TestRig")
     {
         var pixelData = new byte[width * height * 4];
         for (var i = 0; i < pixelData.Length; i += 4)
@@ -24,6 +30,8 @@ public class AtlasAssemblerTests
             DepthData: null,
             Width: width,
             Height: height,
+            VariantName: variantName,
+            RigName: rigName,
             AngleName: "right",
             AnimationName: "idle",
             FrameIndex: frameIndex,
@@ -159,7 +167,9 @@ public class AtlasAssemblerTests
         string angleName,
         int width,
         int height,
-        byte fillValue)
+        byte fillValue,
+        string variantName = "test",
+        string rigName = "TestRig")
     {
         var pixelData = new byte[width * height * 4];
         for (var i = 0; i < pixelData.Length; i += 4)
@@ -175,6 +185,8 @@ public class AtlasAssemblerTests
             DepthData: null,
             Width: width,
             Height: height,
+            VariantName: variantName,
+            RigName: rigName,
             AngleName: angleName,
             AnimationName: animationName,
             FrameIndex: frameIndexInAnimation,

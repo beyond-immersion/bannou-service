@@ -79,7 +79,8 @@ public class RawAssetProcessorTests : IDisposable
         // Act
         var result = await processor.ProcessAsync(
             new[] { asset },
-            new DirectoryInfo(_workingDir));
+            new DirectoryInfo(_workingDir),
+            ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result);
@@ -103,7 +104,8 @@ public class RawAssetProcessorTests : IDisposable
         // Act
         var result = await processor.ProcessAsync(
             new[] { asset },
-            new DirectoryInfo(_workingDir));
+            new DirectoryInfo(_workingDir),
+            ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(expectedHash, result[asset.AssetId].ContentHash);
@@ -122,7 +124,8 @@ public class RawAssetProcessorTests : IDisposable
         // Act
         var result = await processor.ProcessAsync(
             new[] { pngAsset, jsonAsset, wavAsset },
-            new DirectoryInfo(_workingDir));
+            new DirectoryInfo(_workingDir),
+            ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("image/png", result[pngAsset.AssetId].ContentType);
@@ -147,7 +150,8 @@ public class RawAssetProcessorTests : IDisposable
         // Act
         var result = await processor.ProcessAsync(
             assets,
-            new DirectoryInfo(_workingDir));
+            new DirectoryInfo(_workingDir),
+            ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(10, result.Count);
@@ -166,7 +170,8 @@ public class RawAssetProcessorTests : IDisposable
         // Act
         var result = await processor.ProcessAsync(
             Array.Empty<ExtractedAsset>(),
-            new DirectoryInfo(_workingDir));
+            new DirectoryInfo(_workingDir),
+            ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result);
@@ -182,7 +187,8 @@ public class RawAssetProcessorTests : IDisposable
         // Act
         var result = await processor.ProcessAsync(
             new[] { asset },
-            new DirectoryInfo(_workingDir));
+            new DirectoryInfo(_workingDir),
+            ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result[asset.AssetId].Dependencies);
@@ -198,7 +204,8 @@ public class RawAssetProcessorTests : IDisposable
         // Act
         var result = await processor.ProcessAsync(
             new[] { asset },
-            new DirectoryInfo(_workingDir));
+            new DirectoryInfo(_workingDir),
+            ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result[asset.AssetId].Metadata);
@@ -234,7 +241,8 @@ public class RawAssetProcessorTests : IDisposable
         // Act
         var result = await processor.ProcessAsync(
             new[] { asset },
-            new DirectoryInfo(_workingDir));
+            new DirectoryInfo(_workingDir),
+            ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(largeContent, result[asset.AssetId].Data.ToArray());
@@ -272,7 +280,8 @@ public class RawAssetProcessorTests : IDisposable
         // Act
         var result = await processor.ProcessAsync(
             new[] { asset },
-            new DirectoryInfo(_workingDir));
+            new DirectoryInfo(_workingDir),
+            ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(expectedMime, result[asset.AssetId].ContentType);

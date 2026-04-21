@@ -379,9 +379,11 @@ public partial class AchievementClient : IAchievementClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AchievementDefinitionResponse>(
-                _directDispatchProvider, _serviceName, "CreateAchievementDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAchievementService, CreateAchievementDefinitionRequest, AchievementDefinitionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateAchievementDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -476,9 +478,11 @@ public partial class AchievementClient : IAchievementClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AchievementDefinitionResponse>(
-                _directDispatchProvider, _serviceName, "GetAchievementDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAchievementService, GetAchievementDefinitionRequest, AchievementDefinitionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetAchievementDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -573,9 +577,11 @@ public partial class AchievementClient : IAchievementClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListAchievementDefinitionsResponse>(
-                _directDispatchProvider, _serviceName, "ListAchievementDefinitionsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAchievementService, ListAchievementDefinitionsRequest, ListAchievementDefinitionsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListAchievementDefinitionsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -665,9 +671,11 @@ public partial class AchievementClient : IAchievementClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AchievementDefinitionResponse>(
-                _directDispatchProvider, _serviceName, "UpdateAchievementDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAchievementService, UpdateAchievementDefinitionRequest, AchievementDefinitionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateAchievementDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -767,9 +775,11 @@ public partial class AchievementClient : IAchievementClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AchievementDefinitionResponse>(
-                _directDispatchProvider, _serviceName, "DeprecateAchievementDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAchievementService, DeprecateAchievementDefinitionRequest, AchievementDefinitionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeprecateAchievementDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -868,9 +878,11 @@ public partial class AchievementClient : IAchievementClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanDeprecatedStringKeyResponse>(
-                _directDispatchProvider, _serviceName, "CleanDeprecatedAchievementDefinitionsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAchievementService, CleanDeprecatedRequest, CleanDeprecatedStringKeyResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanDeprecatedAchievementDefinitionsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -959,9 +971,11 @@ public partial class AchievementClient : IAchievementClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AchievementProgressResponse>(
-                _directDispatchProvider, _serviceName, "GetAchievementProgressAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAchievementService, GetAchievementProgressRequest, AchievementProgressResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetAchievementProgressAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1051,9 +1065,11 @@ public partial class AchievementClient : IAchievementClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<UpdateAchievementProgressResponse>(
-                _directDispatchProvider, _serviceName, "UpdateAchievementProgressAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAchievementService, UpdateAchievementProgressRequest, UpdateAchievementProgressResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateAchievementProgressAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1149,9 +1165,11 @@ public partial class AchievementClient : IAchievementClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<UnlockAchievementResponse>(
-                _directDispatchProvider, _serviceName, "UnlockAchievementAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAchievementService, UnlockAchievementRequest, UnlockAchievementResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UnlockAchievementAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1252,9 +1270,11 @@ public partial class AchievementClient : IAchievementClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListUnlockedAchievementsResponse>(
-                _directDispatchProvider, _serviceName, "ListUnlockedAchievementsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAchievementService, ListUnlockedAchievementsRequest, ListUnlockedAchievementsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListUnlockedAchievementsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1344,9 +1364,11 @@ public partial class AchievementClient : IAchievementClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SyncPlatformAchievementsResponse>(
-                _directDispatchProvider, _serviceName, "SyncPlatformAchievementsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAchievementService, SyncPlatformAchievementsRequest, SyncPlatformAchievementsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SyncPlatformAchievementsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1435,9 +1457,11 @@ public partial class AchievementClient : IAchievementClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PlatformSyncStatusResponse>(
-                _directDispatchProvider, _serviceName, "GetPlatformSyncStatusAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAchievementService, GetPlatformSyncStatusRequest, PlatformSyncStatusResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetPlatformSyncStatusAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1527,9 +1551,11 @@ public partial class AchievementClient : IAchievementClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanupByCharacterResponse>(
-                _directDispatchProvider, _serviceName, "CleanupByCharacterAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAchievementService, CleanupByCharacterRequest, CleanupByCharacterResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanupByCharacterAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

@@ -311,9 +311,11 @@ public partial class MusicClient : IMusicClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GenerateCompositionResponse>(
-                _directDispatchProvider, _serviceName, "GenerateCompositionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMusicService, GenerateCompositionRequest, GenerateCompositionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GenerateCompositionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -415,9 +417,11 @@ public partial class MusicClient : IMusicClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ValidateMidiJsonResponse>(
-                _directDispatchProvider, _serviceName, "ValidateMidiJsonAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMusicService, ValidateMidiJsonRequest, ValidateMidiJsonResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ValidateMidiJsonAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -507,9 +511,11 @@ public partial class MusicClient : IMusicClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<StyleDefinitionResponse>(
-                _directDispatchProvider, _serviceName, "GetStyleAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMusicService, GetStyleRequest, StyleDefinitionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetStyleAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -604,9 +610,11 @@ public partial class MusicClient : IMusicClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListStylesResponse>(
-                _directDispatchProvider, _serviceName, "ListStylesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMusicService, ListStylesRequest, ListStylesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListStylesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -695,9 +703,11 @@ public partial class MusicClient : IMusicClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<StyleDefinitionResponse>(
-                _directDispatchProvider, _serviceName, "CreateStyleAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMusicService, CreateStyleRequest, StyleDefinitionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateStyleAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -800,9 +810,11 @@ public partial class MusicClient : IMusicClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GenerateProgressionResponse>(
-                _directDispatchProvider, _serviceName, "GenerateProgressionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMusicService, GenerateProgressionRequest, GenerateProgressionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GenerateProgressionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -898,9 +910,11 @@ public partial class MusicClient : IMusicClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GenerateMelodyResponse>(
-                _directDispatchProvider, _serviceName, "GenerateMelodyAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMusicService, GenerateMelodyRequest, GenerateMelodyResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GenerateMelodyAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -996,9 +1010,11 @@ public partial class MusicClient : IMusicClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<VoiceLeadResponse>(
-                _directDispatchProvider, _serviceName, "ApplyVoiceLeadingAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMusicService, VoiceLeadRequest, VoiceLeadResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ApplyVoiceLeadingAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

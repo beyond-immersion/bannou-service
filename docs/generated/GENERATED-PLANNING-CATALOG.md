@@ -147,6 +147,12 @@ Designs a gradient activation system for equipment where affixes have experienti
 
 Generalizes the dungeon core memory inventory pattern to all locations in the game world, where each location accumulates memento items generated from real gameplay events such as deaths, battles, emotional moments, and masterwork creations. Characters with spiritual perception abilities (necromancers, mediums, historians, detectives, bards, craftsmen) interact with these mementos to summon spirit echoes, extract forensic evidence, compose performances, or imbue crafted items with historical significance. Requires zero new services or plugins, composing entirely from Item, Inventory, Location, Actor, and ABML behavior documents. No implementation exists yet; this is the design specification for the spiritual ecology layer of the content flywheel.
 
+### Music Composer SDK: Pre-Authoring DAW-Ready Sessions via DAWproject {#music-composer-sdk}
+
+**Type**: Design | **Status**: All open questions in §11 ratified 2026-04-19. Planning document is complete and ready for implementation. | **Last Updated**: 2026-04-19 (§3.3, §3.4, §6, §10.2, §11.1 revised post-Q1 — reverse-DNS role taxonomy, hierarchical fallback resolution, bulk-import as primary capture path; §3.7, §4.5, §5.2.2, §7.3, §7.10, §10.5, §11.2 revised post-Q2 — counterpoint companion-files-only emission plus mixdown verification tool; §11.3 ratified post-Q3 — MusicComposer stays file-format-only, no workbench scaffold; §2.9, §10.6, §11.4, §13.2 revised post-Q4 — Studio One Pro 7 is the sole DAW target; §11.5 ratified post-Q5 — pluginLibraryProfileId uses soft-preference semantics; §10 introduction + §10.1-§10.6 titles + §10.7 + §12.3 revised to remove MVP concept, time estimates, and invented productivity baselines — the SDK is all-or-nothing, phases represent dependencies not scheduling, implementation time is not estimated) | **North Stars**: #5 (Emergent Over Authored), #4 (Ship Games Fast) | [Full Document](../planning/MUSIC-COMPOSER-SDK.md)
+
+Designs the **MusicComposer** SDK — the composer-layer companion to the existing MusicTheory (primitives) and MusicStoryteller (procedural generation) SDKs. Where MusicStoryteller is a GOAP planner that produces MIDI-JSON, MusicComposer produces DAWproject files — richly authored, near-complete DAW sessions with tracks, plugins, patches, MIDI with expression, automation, markers, and a pre-wired mix bus — so that the human composer's remaining job in their DAW is tweaking rather than authoring. MusicComposer does not generate music on its own; it marshals the output of Storyteller plus a developer-curated plugin library into a file format that opens directly in PreSonus Studio One, Bitwig, Cubase, Cubasis, VST Live, or n-Track and presents the composer with a session that plays meaningfully on first open.
+
 ### Plugin Lifecycle Pipeline: From Idea to Production-Ready {#plugin-lifecycle-pipeline}
 
 **Type**: Design | **Status**: Implemented | **Last Updated**: 2026-03-09 | **North Stars**: #4 | [Full Document](../planning/PLUGIN-LIFECYCLE-PIPELINE.md)
@@ -159,11 +165,29 @@ Formalizes the end-to-end development lifecycle for Bannou plugins across seven 
 
 Designs two complementary sacred geography systems composed from existing Bannou primitives: Sanctuaries (divine non-aggression zones where supernatural peace overrides predator ecology via GOAP action cost modification) and Spirit Dens (leyline convergence points where accumulated species-logos crystallizes into supernatural exemplar animals following the Actor-Bound Entity pattern). Both use Workshop lazy evaluation for scalable spiritual production-vs-decay dynamics, enabling hundreds of sacred sites with zero server ticks. No implementation exists; key dependencies (Environment, Ethology, Workshop, Agency) remain unimplemented.
 
+### Scene Loader SDK: Runtime Scene Instantiation for Game Engines {#scene-loader-sdk}
+
+**Type**: Design | **Status**: Draft (Defenders-authored problem statement + first-consumer requirements; Developer expanding into full plan) | **Last Updated**: 2026-04-21 | [Full Document](../planning/SCENE-LOADER-SDK.md)
+
+A new SDK family filling the runtime half of Bannou's scene pipeline. Where **scene-composer** handles authoring (edit-time scene-graph editing with undo/redo / gizmos / selection) and **asset-loader** handles runtime asset-bytes loading, **scene-loader** handles **runtime scene-structure instantiation** — reading Bannou scene documents and materializing them as engine-native entity hierarchies in a shipping-game binary without editor baggage.
+
+No implementation exists yet. This document captures the problem statement and Defenders-as-first-consumer requirements; the full architectural + phased-implementation plan is Developer-authored from here.
+
 ### Self-Hosted Deployment: Single-Player and Local Server Experiences {#self-hosted-deployment}
 
 **Type**: Design | **Status**: Active | **Last Updated**: 2026-03-09 | **North Stars**: #1, #4, #5 | [Full Document](../planning/SELF-HOSTED-DEPLOYMENT.md)
 
 Designs how Bannou ships as a local dedicated server alongside a game client for single-player or LAN multiplayer experiences. The existing architecture (plugin loading, in-memory infrastructure backends, environment-driven service selection, lazy evaluation) already supports this deployment mode with zero code changes. The SQLite state store backend has been implemented, removing the primary infrastructure gap. Remaining investments are SDK convenience layers, in-process mesh routing for embedded .NET engines, and documentation.
+
+### SpriteBatcher CLI Tool Design {#sprite-batcher}
+
+**Type**: Design | **Status**: Active | **Last Updated**: 2026-04-19 | **North Stars**: #4 (Ship Games Fast), #5 (Emergent Over Authored) | [Full Document](../planning/SPRITE-BATCHER.md)
+
+SpriteBatcher is a headless CLI tool that drives `sprite-composer` + an engine bridge to execute sprite-sheet captures without UI. It consumes the same `.spriteproj.json` files the interactive editor uses — a single `SpriteProject` can drive every capture for an entire class of content (heroes, troops, enemies, bosses) through the batcher, and that same file opens in the interactive editor when a designer wants to tweak a variant.
+
+The batcher exists because the multi-variant `SpriteProject` shape (see SPRITE-COMPOSER-SDK.md § Decision 10.12) collapses Defenders' 50–80 character variants to ~4 project files, and at that scale batch capture is the normal production path — not an occasional CI convenience. Interactive capture through the editor remains for iteration and one-off tweaks; the batcher handles scheduled rebuilds, CI regressions, and bulk production.
+
+This document is the complete design for the tool. Implementation lands as Phase 3.5 of the Sprite Composer SDK roadmap — alongside or just after Phase 3 (sprite-composer-stride bridge), once there is at least one bridge implementation the batcher can drive.
 
 ### Sprite Composer SDK: 3D-to-2D Sprite Sheet Pipeline {#sprite-composer-sdk}
 
@@ -206,6 +230,12 @@ Compiles formal academic research across three domains -- computational cinemato
 **Type**: Research | **Status**: Aspirational | **Last Updated**: 2026-03-09 | **North Stars**: #1, #5 | [Full Document](../planning/PREDATOR-ECOLOGY-PATTERNS.md)
 
 Compiles established wildlife ecology research on predator coexistence, niche partitioning, intraguild predation, mesopredator release, and territorial behavior into a specification for the Ethology service behavioral archetype system. Defines 30+ behavioral float axes across six domains (hunting, temporal, spatial, competition, metabolic, sensory) with concrete species profile examples and seven interaction rules that produce emergent predator ecosystems from parameter interactions. No implementation exists yet; the related plugins (Ethology, Environment, Disposition) remain aspirational with no schemas or generated code.
+
+### Protocol-Mediated Communication: Cross-Entity Signaling Through Shared Ritual Structure {#protocol-mediated-communication}
+
+**Type**: Research | **Status**: Aspirational | **Last Updated**: 2026-04-20 | **North Stars**: #1, #5 | [Full Document](../planning/PROTOCOL-MEDIATED-COMMUNICATION.md)
+
+Explores the thesis that **protocol-mediated communication** — shared ritual structure executed by parties who do not share an internal language — is a richer and more realistic foundation for cross-entity signaling in fantasy worlds than the usual conventions (common tongues, telepathy, or hand-waved "intent understanding"). Draws on real-world linguistics (meta-communication, phatic theory, conversational implicature), anthropology (gift exchange, high-context cultures), documented cross-species working relationships (falconry, mahouts, working dogs), and diplomatic history (Ottoman-European protocol across six centuries of cosmological divide) to establish the phenomenon. Proposes a magic-as-substrate model in which modulations of shared protocol — not semantic content — carry the communicative payload, and translates this into concrete implications for summoning, familiar bonds, demon binding, faerie negotiation, dungeon intelligence, and the actor-bound entity awakening pattern. No implementation exists; informs future design of Actor behavior expressions, Genesis entity progression, Divine pantheon interaction, Dungeon sentience, and Contract-based binding semantics.
 
 ## Implementation Plans
 
@@ -283,7 +313,7 @@ The MCP (Model Context Protocol) server is a new L3 App Features plugin that exp
 
 ## Summary
 
-- **Documents in catalog**: 40
+- **Documents in catalog**: 44
 
 ---
 

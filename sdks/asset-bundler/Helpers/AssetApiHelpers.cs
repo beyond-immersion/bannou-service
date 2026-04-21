@@ -69,7 +69,6 @@ public static class AssetApiHelpers
         return status.ToLowerInvariant() switch
         {
             "active" => BundleLifecycle.Active,
-            "deleted" => BundleLifecycle.Deleted,
             "processing" => BundleLifecycle.Processing,
             _ => null
         };

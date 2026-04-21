@@ -371,9 +371,11 @@ public partial class AccountClient : IAccountClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AccountListResponse>(
-                _directDispatchProvider, _serviceName, "ListAccountsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAccountService, ListAccountsRequest, AccountListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListAccountsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -459,9 +461,11 @@ public partial class AccountClient : IAccountClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AccountResponse>(
-                _directDispatchProvider, _serviceName, "CreateAccountAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAccountService, CreateAccountRequest, AccountResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateAccountAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -559,9 +563,11 @@ public partial class AccountClient : IAccountClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AccountResponse>(
-                _directDispatchProvider, _serviceName, "GetAccountAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAccountService, GetAccountRequest, AccountResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetAccountAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -653,9 +659,11 @@ public partial class AccountClient : IAccountClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AccountResponse>(
-                _directDispatchProvider, _serviceName, "UpdateAccountAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAccountService, UpdateAccountRequest, AccountResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateAccountAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -753,9 +761,11 @@ public partial class AccountClient : IAccountClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "DeleteAccountAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IAccountService, DeleteAccountRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteAccountAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -848,9 +858,11 @@ public partial class AccountClient : IAccountClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AccountResponse>(
-                _directDispatchProvider, _serviceName, "GetAccountByEmailAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAccountService, GetAccountByEmailRequest, AccountResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetAccountByEmailAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -942,9 +954,11 @@ public partial class AccountClient : IAccountClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AuthMethodsResponse>(
-                _directDispatchProvider, _serviceName, "GetAuthMethodsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAccountService, GetAuthMethodsRequest, AuthMethodsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetAuthMethodsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1036,9 +1050,11 @@ public partial class AccountClient : IAccountClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AuthMethodResponse>(
-                _directDispatchProvider, _serviceName, "AddAuthMethodAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAccountService, AddAuthMethodRequest, AuthMethodResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.AddAuthMethodAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1136,9 +1152,11 @@ public partial class AccountClient : IAccountClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "RemoveAuthMethodAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IAccountService, RemoveAuthMethodRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RemoveAuthMethodAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1231,9 +1249,11 @@ public partial class AccountClient : IAccountClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AccountResponse>(
-                _directDispatchProvider, _serviceName, "GetAccountByProviderAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAccountService, GetAccountByProviderRequest, AccountResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetAccountByProviderAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1325,9 +1345,11 @@ public partial class AccountClient : IAccountClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AccountResponse>(
-                _directDispatchProvider, _serviceName, "UpdateProfileAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAccountService, UpdateProfileRequest, AccountResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateProfileAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1419,9 +1441,11 @@ public partial class AccountClient : IAccountClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "UpdatePasswordHashAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IAccountService, UpdatePasswordRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdatePasswordHashAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1513,9 +1537,11 @@ public partial class AccountClient : IAccountClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "UpdateMfaAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IAccountService, UpdateMfaRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateMfaAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1608,9 +1634,11 @@ public partial class AccountClient : IAccountClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BatchGetAccountsResponse>(
-                _directDispatchProvider, _serviceName, "BatchGetAccountsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAccountService, BatchGetAccountsRequest, BatchGetAccountsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.BatchGetAccountsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1696,9 +1724,11 @@ public partial class AccountClient : IAccountClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CountAccountsResponse>(
-                _directDispatchProvider, _serviceName, "CountAccountsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAccountService, CountAccountsRequest, CountAccountsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CountAccountsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1784,9 +1814,11 @@ public partial class AccountClient : IAccountClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BulkUpdateRolesResponse>(
-                _directDispatchProvider, _serviceName, "BulkUpdateRolesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAccountService, BulkUpdateRolesRequest, BulkUpdateRolesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.BulkUpdateRolesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1872,9 +1904,11 @@ public partial class AccountClient : IAccountClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "UpdateVerificationStatusAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IAccountService, UpdateVerificationRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateVerificationStatusAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1961,9 +1995,11 @@ public partial class AccountClient : IAccountClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AccountResponse>(
-                _directDispatchProvider, _serviceName, "UpdateEmailAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAccountService, UpdateEmailRequest, AccountResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateEmailAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

@@ -485,9 +485,11 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RelationshipResponse>(
-                _directDispatchProvider, _serviceName, "CreateRelationshipAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRelationshipService, CreateRelationshipRequest, RelationshipResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateRelationshipAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -585,9 +587,11 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RelationshipResponse>(
-                _directDispatchProvider, _serviceName, "GetRelationshipAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRelationshipService, GetRelationshipRequest, RelationshipResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetRelationshipAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -684,9 +688,11 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RelationshipListResponse>(
-                _directDispatchProvider, _serviceName, "ListRelationshipsByEntityAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRelationshipService, ListRelationshipsByEntityRequest, RelationshipListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListRelationshipsByEntityAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -776,9 +782,11 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RelationshipListResponse>(
-                _directDispatchProvider, _serviceName, "GetRelationshipsBetweenAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRelationshipService, GetRelationshipsBetweenRequest, RelationshipListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetRelationshipsBetweenAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -868,9 +876,11 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RelationshipListResponse>(
-                _directDispatchProvider, _serviceName, "ListRelationshipsByTypeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRelationshipService, ListRelationshipsByTypeRequest, RelationshipListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListRelationshipsByTypeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -959,9 +969,11 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RelationshipResponse>(
-                _directDispatchProvider, _serviceName, "UpdateRelationshipAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRelationshipService, UpdateRelationshipRequest, RelationshipResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateRelationshipAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1059,9 +1071,11 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "EndRelationshipAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IRelationshipService, EndRelationshipRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.EndRelationshipAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1155,9 +1169,11 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanupByEntityResponse>(
-                _directDispatchProvider, _serviceName, "CleanupByEntityAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRelationshipService, CleanupByEntityRequest, CleanupByEntityResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanupByEntityAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1243,9 +1259,11 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RelationshipTypeResponse>(
-                _directDispatchProvider, _serviceName, "GetRelationshipTypeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRelationshipService, GetRelationshipTypeRequest, RelationshipTypeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetRelationshipTypeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1340,9 +1358,11 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RelationshipTypeResponse>(
-                _directDispatchProvider, _serviceName, "GetRelationshipTypeByCodeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRelationshipService, GetRelationshipTypeByCodeRequest, RelationshipTypeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetRelationshipTypeByCodeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1437,9 +1457,11 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RelationshipTypeListResponse>(
-                _directDispatchProvider, _serviceName, "ListRelationshipTypesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRelationshipService, ListRelationshipTypesRequest, RelationshipTypeListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListRelationshipTypesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1528,9 +1550,11 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RelationshipTypeListResponse>(
-                _directDispatchProvider, _serviceName, "GetChildRelationshipTypesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRelationshipService, GetChildRelationshipTypesRequest, RelationshipTypeListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetChildRelationshipTypesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1627,9 +1651,11 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<MatchesHierarchyResponse>(
-                _directDispatchProvider, _serviceName, "MatchesHierarchyAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRelationshipService, MatchesHierarchyRequest, MatchesHierarchyResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.MatchesHierarchyAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1725,9 +1751,11 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RelationshipTypeListResponse>(
-                _directDispatchProvider, _serviceName, "GetAncestorsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRelationshipService, GetAncestorsRequest, RelationshipTypeListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetAncestorsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1819,9 +1847,11 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RelationshipTypeResponse>(
-                _directDispatchProvider, _serviceName, "CreateRelationshipTypeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRelationshipService, CreateRelationshipTypeRequest, RelationshipTypeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateRelationshipTypeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1919,9 +1949,11 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RelationshipTypeResponse>(
-                _directDispatchProvider, _serviceName, "UpdateRelationshipTypeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRelationshipService, UpdateRelationshipTypeRequest, RelationshipTypeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateRelationshipTypeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2024,9 +2056,11 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "DeleteRelationshipTypeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IRelationshipService, DeleteRelationshipTypeRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteRelationshipTypeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -2127,9 +2161,11 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RelationshipTypeResponse>(
-                _directDispatchProvider, _serviceName, "DeprecateRelationshipTypeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRelationshipService, DeprecateRelationshipTypeRequest, RelationshipTypeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeprecateRelationshipTypeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2225,9 +2261,11 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RelationshipTypeResponse>(
-                _directDispatchProvider, _serviceName, "UndeprecateRelationshipTypeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRelationshipService, UndeprecateRelationshipTypeRequest, RelationshipTypeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UndeprecateRelationshipTypeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2332,9 +2370,11 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<MergeRelationshipTypeResponse>(
-                _directDispatchProvider, _serviceName, "MergeRelationshipTypeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRelationshipService, MergeRelationshipTypeRequest, MergeRelationshipTypeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.MergeRelationshipTypeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2443,9 +2483,11 @@ public partial class RelationshipClient : IRelationshipClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SeedRelationshipTypesResponse>(
-                _directDispatchProvider, _serviceName, "SeedRelationshipTypesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRelationshipService, SeedRelationshipTypesRequest, SeedRelationshipTypesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SeedRelationshipTypesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

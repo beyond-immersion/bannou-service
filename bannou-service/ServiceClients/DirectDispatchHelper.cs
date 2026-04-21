@@ -1,5 +1,6 @@
 #nullable enable
 
+using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Concurrent;
 using System.Reflection;
 
@@ -12,6 +13,15 @@ namespace BeyondImmersion.BannouService.ServiceClients;
 /// and invokes methods via cached reflection, adapting the (StatusCodes, TResponse?) tuple
 /// return to the client's TResponse / ApiException pattern.
 /// </summary>
+/// <remarks>
+/// KNOWN ISSUE (tracked in issue #724): this reflection-based implementation is NOT
+/// AOT-compatible. Phase 4 (interface relocation) is complete — interfaces now live in
+/// <c>bannou-service/Generated/Services/</c>. Phase 5 (typed template + helper) requires
+/// coordinated changes to <c>scripts/generate-client.sh</c> (to strip x-controller-only
+/// operations from the client schema so template-emitted typed dispatch calls always
+/// resolve to existing interface methods) and the NSwag template itself. Until that
+/// lands, this reflection path remains the interim surface.
+/// </remarks>
 public static class DirectDispatchHelper
 {
     private static readonly ConcurrentDictionary<string, Type?> _serviceTypeCache = new();
@@ -102,6 +112,144 @@ public static class DirectDispatchHelper
         if (status < 200 || status >= 300)
             throw new BeyondImmersion.Bannou.Core.ApiException(
                 $"Service returned status {status}", status, null, null, null);
+    }
+
+    /// <summary>
+    /// Invokes a service method directly via DI with fully-typed generic dispatch.
+    /// TService, TRequest, and TResponse are closed at compile time; the caller supplies
+    /// a static lambda capturing the concrete interface method. Zero reflection.
+    /// Adapts the (StatusCodes, TResponse?) tuple return to the client's
+    /// TResponse / ApiException pattern.
+    /// </summary>
+    /// <typeparam name="TService">The service interface type (e.g., IAccountService).</typeparam>
+    /// <typeparam name="TRequest">The request body type.</typeparam>
+    /// <typeparam name="TResponse">The expected response type.</typeparam>
+    /// <param name="serviceProvider">The DI service provider for scope creation.</param>
+    /// <param name="body">The request body to pass to the service method.</param>
+    /// <param name="method">Delegate invoking the target method on the resolved service instance.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The deserialized response, or throws ApiException on non-success status.</returns>
+    public static async Task<TResponse> InvokeDirectAsync<TService, TRequest, TResponse>(
+        IServiceProvider serviceProvider,
+        TRequest body,
+        Func<TService, TRequest, CancellationToken, Task<(StatusCodes, TResponse?)>> method,
+        CancellationToken cancellationToken)
+        where TService : class
+        where TResponse : class
+    {
+        using var scope = serviceProvider.CreateScope();
+        var service = scope.ServiceProvider.GetRequiredService<TService>();
+
+        var (status, response) = await method(service, body, cancellationToken).ConfigureAwait(false);
+        int statusInt = (int)status;
+        if (statusInt >= 200 && statusInt < 300)
+        {
+            if (response == null)
+                throw new InvalidOperationException(
+                    $"Service {typeof(TService).Name} returned success status {statusInt} with null response.");
+            return response;
+        }
+        throw new BeyondImmersion.Bannou.Core.ApiException(
+            $"Service returned status {statusInt}", statusInt, null, null, null);
+    }
+
+    /// <summary>
+    /// Invokes a void-returning service method directly via DI with fully-typed generic dispatch.
+    /// Used for endpoints whose interface methods return Task&lt;StatusCodes&gt; (no payload).
+    /// </summary>
+    /// <typeparam name="TService">The service interface type.</typeparam>
+    /// <typeparam name="TRequest">The request body type.</typeparam>
+    /// <param name="serviceProvider">The DI service provider for scope creation.</param>
+    /// <param name="body">The request body to pass to the service method.</param>
+    /// <param name="method">Delegate invoking the target method on the resolved service instance.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public static async Task InvokeDirectVoidAsync<TService, TRequest>(
+        IServiceProvider serviceProvider,
+        TRequest body,
+        Func<TService, TRequest, CancellationToken, Task<StatusCodes>> method,
+        CancellationToken cancellationToken)
+        where TService : class
+    {
+        using var scope = serviceProvider.CreateScope();
+        var service = scope.ServiceProvider.GetRequiredService<TService>();
+
+        var status = await method(service, body, cancellationToken).ConfigureAwait(false);
+        int statusInt = (int)status;
+        if (statusInt < 200 || statusInt >= 300)
+            throw new BeyondImmersion.Bannou.Core.ApiException(
+                $"Service returned status {statusInt}", statusInt, null, null, null);
+    }
+
+    /// <summary>
+    /// Direct dispatch overload for endpoints with an <c>x-from-authorization</c> parameter.
+    /// The extracted token (already stripped of the "Bearer " prefix by the client template)
+    /// is passed as the service method's typed first argument, matching the service-interface
+    /// shape <c>MethodAsync(string jwt, TRequest body, CancellationToken ct)</c>.
+    /// </summary>
+    /// <typeparam name="TService">The service interface type (e.g., IAuthService).</typeparam>
+    /// <typeparam name="TRequest">The request body type.</typeparam>
+    /// <typeparam name="TResponse">The expected response type.</typeparam>
+    /// <param name="serviceProvider">The DI service provider for scope creation.</param>
+    /// <param name="token">The extracted authorization token (no "Bearer " prefix).</param>
+    /// <param name="body">The request body to pass to the service method.</param>
+    /// <param name="method">Delegate invoking the target method on the resolved service instance,
+    /// accepting (service, token, body, cancellationToken).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The response payload, or throws ApiException on non-success status.</returns>
+    public static async Task<TResponse> InvokeDirectWithAuthAsync<TService, TRequest, TResponse>(
+        IServiceProvider serviceProvider,
+        string token,
+        TRequest body,
+        Func<TService, string, TRequest, CancellationToken, Task<(StatusCodes, TResponse?)>> method,
+        CancellationToken cancellationToken)
+        where TService : class
+        where TResponse : class
+    {
+        using var scope = serviceProvider.CreateScope();
+        var service = scope.ServiceProvider.GetRequiredService<TService>();
+
+        var (status, response) = await method(service, token, body, cancellationToken).ConfigureAwait(false);
+        int statusInt = (int)status;
+        if (statusInt >= 200 && statusInt < 300)
+        {
+            if (response == null)
+                throw new InvalidOperationException(
+                    $"Service {typeof(TService).Name} returned success status {statusInt} with null response.");
+            return response;
+        }
+        throw new BeyondImmersion.Bannou.Core.ApiException(
+            $"Service returned status {statusInt}", statusInt, null, null, null);
+    }
+
+    /// <summary>
+    /// Void-returning variant of <see cref="InvokeDirectWithAuthAsync{TService,TRequest,TResponse}"/>
+    /// for endpoints whose interface methods return <see cref="Task{TResult}"/> of <see cref="StatusCodes"/>
+    /// (no payload).
+    /// </summary>
+    /// <typeparam name="TService">The service interface type.</typeparam>
+    /// <typeparam name="TRequest">The request body type.</typeparam>
+    /// <param name="serviceProvider">The DI service provider for scope creation.</param>
+    /// <param name="token">The extracted authorization token (no "Bearer " prefix).</param>
+    /// <param name="body">The request body to pass to the service method.</param>
+    /// <param name="method">Delegate invoking the target method on the resolved service instance,
+    /// accepting (service, token, body, cancellationToken).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public static async Task InvokeDirectWithAuthVoidAsync<TService, TRequest>(
+        IServiceProvider serviceProvider,
+        string token,
+        TRequest body,
+        Func<TService, string, TRequest, CancellationToken, Task<StatusCodes>> method,
+        CancellationToken cancellationToken)
+        where TService : class
+    {
+        using var scope = serviceProvider.CreateScope();
+        var service = scope.ServiceProvider.GetRequiredService<TService>();
+
+        var status = await method(service, token, body, cancellationToken).ConfigureAwait(false);
+        int statusInt = (int)status;
+        if (statusInt < 200 || statusInt >= 300)
+            throw new BeyondImmersion.Bannou.Core.ApiException(
+                $"Service returned status {statusInt}", statusInt, null, null, null);
     }
 
     /// <summary>

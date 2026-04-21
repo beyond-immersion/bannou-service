@@ -184,11 +184,15 @@ public class ClientEndpointMetadataTests
     [Fact]
     public void Count_IsReasonableNumber()
     {
-        // We expect hundreds of endpoints across all services
+        // Sanity check: endpoint count should be in the expected order of magnitude
+        // for the current codebase size (~1100+ endpoints across 78 services per
+        // GENERATED-COMPOSITION-REFERENCE.md). Bounds are intentionally loose to
+        // catch catastrophic regressions (all endpoints missing, 10x explosion)
+        // without requiring updates for routine service growth.
         var count = ClientEndpointMetadata.Count;
 
-        Assert.True(count > 800, $"Expected > 800 endpoints, got {count}");
-        Assert.True(count < 900, $"Expected < 900 endpoints, got {count}");
+        Assert.True(count > 1000, $"Expected > 1000 endpoints, got {count}");
+        Assert.True(count < 2000, $"Expected < 2000 endpoints, got {count}");
     }
 
     // =========================================================================

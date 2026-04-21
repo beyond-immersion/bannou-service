@@ -631,9 +631,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RegisterReferenceResponse>(
-                _directDispatchProvider, _serviceName, "RegisterReferenceAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, RegisterReferenceRequest, RegisterReferenceResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RegisterReferenceAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -723,9 +725,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<UnregisterReferenceResponse>(
-                _directDispatchProvider, _serviceName, "UnregisterReferenceAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, UnregisterReferenceRequest, UnregisterReferenceResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UnregisterReferenceAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -815,9 +819,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CheckReferencesResponse>(
-                _directDispatchProvider, _serviceName, "CheckReferencesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, CheckReferencesRequest, CheckReferencesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CheckReferencesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -907,9 +913,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListReferencesResponse>(
-                _directDispatchProvider, _serviceName, "ListReferencesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, ListReferencesRequest, ListReferencesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListReferencesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1000,9 +1008,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DefineCleanupResponse>(
-                _directDispatchProvider, _serviceName, "DefineCleanupCallbackAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, DefineCleanupRequest, DefineCleanupResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DefineCleanupCallbackAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1093,9 +1103,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ExecuteCleanupResponse>(
-                _directDispatchProvider, _serviceName, "ExecuteCleanupAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, ExecuteCleanupRequest, ExecuteCleanupResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ExecuteCleanupAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1185,9 +1197,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListCleanupCallbacksResponse>(
-                _directDispatchProvider, _serviceName, "ListCleanupCallbacksAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, ListCleanupCallbacksRequest, ListCleanupCallbacksResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListCleanupCallbacksAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1279,9 +1293,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RemoveCleanupCallbackResponse>(
-                _directDispatchProvider, _serviceName, "RemoveCleanupCallbackAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, RemoveCleanupCallbackRequest, RemoveCleanupCallbackResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RemoveCleanupCallbackAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1379,9 +1395,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DefineMigrateCallbackResponse>(
-                _directDispatchProvider, _serviceName, "DefineMigrateCallbackAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, DefineMigrateCallbackRequest, DefineMigrateCallbackResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DefineMigrateCallbackAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1483,9 +1501,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ExecuteMigrateResponse>(
-                _directDispatchProvider, _serviceName, "ExecuteMigrateAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, ExecuteMigrateRequest, ExecuteMigrateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ExecuteMigrateAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1575,9 +1595,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListMigrateCallbacksResponse>(
-                _directDispatchProvider, _serviceName, "ListMigrateCallbacksAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, ListMigrateCallbacksRequest, ListMigrateCallbacksResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListMigrateCallbacksAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1671,9 +1693,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DefineCompressCallbackResponse>(
-                _directDispatchProvider, _serviceName, "DefineCompressCallbackAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, DefineCompressCallbackRequest, DefineCompressCallbackResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DefineCompressCallbackAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1774,9 +1798,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ExecuteCompressResponse>(
-                _directDispatchProvider, _serviceName, "ExecuteCompressAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, ExecuteCompressRequest, ExecuteCompressResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ExecuteCompressAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1869,9 +1895,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ExecuteDecompressResponse>(
-                _directDispatchProvider, _serviceName, "ExecuteDecompressAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, ExecuteDecompressRequest, ExecuteDecompressResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ExecuteDecompressAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1961,9 +1989,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListCompressCallbacksResponse>(
-                _directDispatchProvider, _serviceName, "ListCompressCallbacksAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, ListCompressCallbacksRequest, ListCompressCallbacksResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListCompressCallbacksAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2053,9 +2083,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetArchiveResponse>(
-                _directDispatchProvider, _serviceName, "GetArchiveAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, GetArchiveRequest, GetArchiveResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetArchiveAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2161,9 +2193,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ExecuteSnapshotResponse>(
-                _directDispatchProvider, _serviceName, "ExecuteSnapshotAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, ExecuteSnapshotRequest, ExecuteSnapshotResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ExecuteSnapshotAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2256,9 +2290,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetSnapshotResponse>(
-                _directDispatchProvider, _serviceName, "GetSnapshotAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, GetSnapshotRequest, GetSnapshotResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetSnapshotAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2351,9 +2387,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListSeededResourcesResponse>(
-                _directDispatchProvider, _serviceName, "ListSeededResourcesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, ListSeededResourcesRequest, ListSeededResourcesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListSeededResourcesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2446,9 +2484,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetSeededResourceResponse>(
-                _directDispatchProvider, _serviceName, "GetSeededResourceAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, GetSeededResourceRequest, GetSeededResourceResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetSeededResourceAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2543,9 +2583,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BeginTransactionResponse>(
-                _directDispatchProvider, _serviceName, "BeginTransactionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, BeginTransactionRequest, BeginTransactionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.BeginTransactionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2639,9 +2681,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RegisterProvisionResponse>(
-                _directDispatchProvider, _serviceName, "RegisterProvisionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, RegisterProvisionRequest, RegisterProvisionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RegisterProvisionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2745,9 +2789,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ConfirmProvisionResponse>(
-                _directDispatchProvider, _serviceName, "ConfirmProvisionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, ConfirmProvisionRequest, ConfirmProvisionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ConfirmProvisionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2853,9 +2899,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CommitTransactionResponse>(
-                _directDispatchProvider, _serviceName, "CommitTransactionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, CommitTransactionRequest, CommitTransactionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CommitTransactionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2960,9 +3008,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AbortTransactionResponse>(
-                _directDispatchProvider, _serviceName, "AbortTransactionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, AbortTransactionRequest, AbortTransactionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.AbortTransactionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3064,9 +3114,11 @@ public partial class ResourceClient : IResourceClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<TransactionStatusResponse>(
-                _directDispatchProvider, _serviceName, "GetTransactionStatusAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IResourceService, GetTransactionStatusRequest, TransactionStatusResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetTransactionStatusAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

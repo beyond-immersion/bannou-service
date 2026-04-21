@@ -321,9 +321,21 @@ DELETE _indexStore:"account-subscriptions:{accountId}"        // after loop, unc
 
 ## Non-Standard Implementation Patterns
 
-### ExpireSubscriptionAsync (Partial Interface Extension)
+### ExpireSubscriptionAsync (Concrete-Class Helper)
 
-`ISubscriptionServiceExtensions.cs` extends the generated `ISubscriptionService` with `ExpireSubscriptionAsync(Guid, CancellationToken)`. This method is callable by the background worker via DI-resolved `ISubscriptionService` without being an HTTP endpoint. Follows the pattern established by lib-permission.
+`ExpireSubscriptionAsync(Guid, CancellationToken)` is a plugin-internal helper on the concrete `SubscriptionService` class (defined in `SubscriptionService.Helpers.cs`), NOT a member of the schema-generated `ISubscriptionService` interface. It is not an HTTP endpoint.
+
+The sole caller is `SubscriptionExpirationService`, which resolves `ISubscriptionService` from the DI scope and then casts to the concrete type before invoking the method:
+
+```csharp
+var subscriptionService = (SubscriptionService)scope.ServiceProvider.GetRequiredService<ISubscriptionService>();
+// ...
+var expired = await subscriptionService.ExpireSubscriptionAsync(subscriptionId, cancellationToken);
+```
+
+The cast is safe: `SubscriptionService` is the only `ISubscriptionService` implementation in this plugin and is always co-located with the expiration worker. This mirrors the pattern in lib-permission's `PermissionSessionActivityListener` (which casts `(PermissionService)permissionService`).
+
+Internal pseudocode:
 
 ```
 LOCK subscription-lock:"{subscriptionId}"                      -> return false if fails
@@ -334,3 +346,5 @@ LOCK subscription-lock:"{subscriptionId}"                      -> return false i
   PUSH subscription.status-changed to account sessions (best-effort)
 RETURN true
 ```
+
+> **Historical note**: Prior to the Phase 4 interface relocation (which moved generated service interfaces to `bannou-service/Generated/Services/`), this method was declared on `ISubscriptionService` via a partial-interface extension in `ISubscriptionServiceExtensions.cs`. Once the generated interface moved to a different assembly from the plugin-local partial, the two `public partial interface ISubscriptionService` declarations produced CS0436 type conflicts that hid every schema-defined method from the generated controller. The partial-interface declaration has been removed; the extension file is now empty (comment-only) and may be deleted. The concrete-cast pattern above is now the established approach for plugin-internal service helpers across the codebase.

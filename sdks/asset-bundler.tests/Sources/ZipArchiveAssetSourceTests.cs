@@ -73,7 +73,7 @@ public class ZipArchiveAssetSourceTests : IDisposable
             "test", "Test", "1.0");
 
         // Act
-        var result = await source.ExtractAsync(new DirectoryInfo(_workingDir));
+        var result = await source.ExtractAsync(new DirectoryInfo(_workingDir), ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result.Assets);
@@ -96,7 +96,7 @@ public class ZipArchiveAssetSourceTests : IDisposable
             "nested", "Nested", "1.0");
 
         // Act
-        var result = await source.ExtractAsync(new DirectoryInfo(_workingDir));
+        var result = await source.ExtractAsync(new DirectoryInfo(_workingDir), ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, result.Assets.Count);
@@ -121,7 +121,7 @@ public class ZipArchiveAssetSourceTests : IDisposable
         var inferencer = DefaultTypeInferencer.Instance;
 
         // Act
-        var result = await source.ExtractAsync(new DirectoryInfo(_workingDir), inferencer);
+        var result = await source.ExtractAsync(new DirectoryInfo(_workingDir), inferencer, ct: TestContext.Current.CancellationToken);
 
         // Assert
         var model = result.Assets.FirstOrDefault(a => a.Filename.Contains("model.fbx"));
@@ -151,7 +151,7 @@ public class ZipArchiveAssetSourceTests : IDisposable
             "empty", "Empty", "1.0");
 
         // Act
-        var result = await source.ExtractAsync(new DirectoryInfo(_workingDir));
+        var result = await source.ExtractAsync(new DirectoryInfo(_workingDir), ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result.Assets);
@@ -177,7 +177,7 @@ public class ZipArchiveAssetSourceTests : IDisposable
             "withdirs", "With Dirs", "1.0");
 
         // Act
-        var result = await source.ExtractAsync(new DirectoryInfo(_workingDir));
+        var result = await source.ExtractAsync(new DirectoryInfo(_workingDir), ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result.Assets); // Only the file, not the directory
@@ -210,7 +210,7 @@ public class ZipArchiveAssetSourceTests : IDisposable
             "large", "Large", "1.0");
 
         // Act
-        var result = await source.ExtractAsync(new DirectoryInfo(_workingDir));
+        var result = await source.ExtractAsync(new DirectoryInfo(_workingDir), ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result.Assets);

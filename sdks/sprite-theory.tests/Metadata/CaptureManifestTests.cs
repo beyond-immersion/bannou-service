@@ -10,7 +10,10 @@ public class CaptureManifestTests
 {
     private static CharacterVariant CreateTestVariant()
     {
-        return new CharacterVariant("test", "model.fbx", Array.Empty<EquipmentSlot>());
+        return new CharacterVariant(
+            Name: "test",
+            Model: new AssetReference("test-bundle", "model"),
+            Equipment: Array.Empty<EquipmentSlot>());
     }
 
     private static IReadOnlyList<(AnimationInfo Info, AnimationConfig Config)> CreateAnimations(

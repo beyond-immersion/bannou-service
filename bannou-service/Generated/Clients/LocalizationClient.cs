@@ -368,9 +368,11 @@ public partial class LocalizationClient : ILocalizationClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CategoryResponse>(
-                _directDispatchProvider, _serviceName, "CreateCategoryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocalizationService, CreateCategoryRequest, CategoryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateCategoryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -466,9 +468,11 @@ public partial class LocalizationClient : ILocalizationClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CategoryResponse>(
-                _directDispatchProvider, _serviceName, "GetCategoryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocalizationService, GetCategoryRequest, CategoryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetCategoryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -570,9 +574,11 @@ public partial class LocalizationClient : ILocalizationClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListCategoriesResponse>(
-                _directDispatchProvider, _serviceName, "ListCategoriesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocalizationService, ListCategoriesRequest, ListCategoriesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListCategoriesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -662,9 +668,11 @@ public partial class LocalizationClient : ILocalizationClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CategoryResponse>(
-                _directDispatchProvider, _serviceName, "UpdateCategoryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocalizationService, UpdateCategoryRequest, CategoryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateCategoryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -760,9 +768,11 @@ public partial class LocalizationClient : ILocalizationClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeleteCategoryResponse>(
-                _directDispatchProvider, _serviceName, "DeleteCategoryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocalizationService, DeleteCategoryRequest, DeleteCategoryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteCategoryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -865,9 +875,11 @@ public partial class LocalizationClient : ILocalizationClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EntryResponse>(
-                _directDispatchProvider, _serviceName, "SetEntryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocalizationService, SetEntryRequest, EntryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SetEntryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -968,9 +980,11 @@ public partial class LocalizationClient : ILocalizationClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EntryResponse>(
-                _directDispatchProvider, _serviceName, "GetEntryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocalizationService, GetEntryRequest, EntryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetEntryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1065,9 +1079,11 @@ public partial class LocalizationClient : ILocalizationClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListEntriesResponse>(
-                _directDispatchProvider, _serviceName, "ListEntriesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocalizationService, ListEntriesRequest, ListEntriesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListEntriesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1162,9 +1178,11 @@ public partial class LocalizationClient : ILocalizationClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeleteEntryResponse>(
-                _directDispatchProvider, _serviceName, "DeleteEntryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocalizationService, DeleteEntryRequest, DeleteEntryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteEntryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1261,9 +1279,11 @@ public partial class LocalizationClient : ILocalizationClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BulkSetEntriesResponse>(
-                _directDispatchProvider, _serviceName, "BulkSetEntriesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocalizationService, BulkSetEntriesRequest, BulkSetEntriesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.BulkSetEntriesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1365,9 +1385,11 @@ public partial class LocalizationClient : ILocalizationClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ExportResponse>(
-                _directDispatchProvider, _serviceName, "ExportLocalizationAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocalizationService, ExportRequest, ExportResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ExportLocalizationAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1464,9 +1486,11 @@ public partial class LocalizationClient : ILocalizationClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ExportPlsResponse>(
-                _directDispatchProvider, _serviceName, "ExportPlsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocalizationService, ExportPlsRequest, ExportPlsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ExportPlsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

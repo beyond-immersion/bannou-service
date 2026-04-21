@@ -58,23 +58,6 @@ public partial interface IAuthClient
     System.Threading.Tasks.Task<RegisterResponse> RegisterAsync(RegisterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="provider">The provider parameter.</param>
-    /// <param name="redirectUri">The redirectUri parameter.</param>
-    /// <param name="state">The state parameter.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// Initialize OAuth2 flow (browser redirect)
-    /// </summary>
-    /// <remarks>
-    /// Browser-facing endpoint for initiating OAuth flows. The user's browser navigates
-    /// <br/>to this URL directly, which then redirects to the OAuth provider.
-    /// <br/>
-    /// <br/>**Note**: This endpoint uses GET with path parameters because it's a browser
-    /// <br/>redirect flow, not a WebSocket-routed API call.
-    /// </remarks>
-    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task InitOAuthAsync(OAuthProvider provider, System.Uri redirectUri, string? state = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-    /// <param name="provider">The provider parameter.</param>
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -427,9 +410,11 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LoginResponse>(
-                _directDispatchProvider, _serviceName, "LoginAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAuthService, LoginRequest, LoginResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.LoginAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -527,9 +512,11 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RegisterResponse>(
-                _directDispatchProvider, _serviceName, "RegisterAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAuthService, RegisterRequest, RegisterResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RegisterAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -613,107 +600,6 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
     }
 
     /// <param name="provider">The provider parameter.</param>
-    /// <param name="redirectUri">The redirectUri parameter.</param>
-    /// <param name="state">The state parameter.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// Initialize OAuth2 flow (browser redirect)
-    /// </summary>
-    /// <remarks>
-    /// Browser-facing endpoint for initiating OAuth flows. The user's browser navigates
-    /// <br/>to this URL directly, which then redirects to the OAuth provider.
-    /// <br/>
-    /// <br/>**Note**: This endpoint uses GET with path parameters because it's a browser
-    /// <br/>redirect flow, not a WebSocket-routed API call.
-    /// </remarks>
-    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task InitOAuthAsync(OAuthProvider provider, System.Uri redirectUri, string? state = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-
-        if (redirectUri == null)
-            throw new System.ArgumentNullException("redirectUri");
-
-        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
-        if (_directDispatchProvider != null)
-        {
-        }
-
-        // Build method path (without base URL - mesh client handles endpoint resolution)
-        var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "auth/oauth/{provider}/init"
-        urlBuilder_.Append("auth/oauth/");
-        urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(provider, System.Globalization.CultureInfo.InvariantCulture)));
-        urlBuilder_.Append("/init");
-        urlBuilder_.Append('?');
-        urlBuilder_.Append(System.Uri.EscapeDataString("redirectUri")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(redirectUri, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-        if (state != null)
-        {
-            urlBuilder_.Append(System.Uri.EscapeDataString("state")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(state, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-        }
-        urlBuilder_.Length--;
-
-        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
-        var appId_ = _resolver.GetAppIdForService(ServiceName);
-
-        // Create HTTP request via mesh client
-        using (var request_ = _meshClient.CreateInvokeMethodRequest(
-            new System.Net.Http.HttpMethod("GET"),
-            appId_,
-            methodPath_))
-        {
-
-            // Apply custom headers
-            ApplyHeaders(request_);
-
-            try
-            {
-                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
-                var disposeResponse_ = true;
-                try
-                {
-                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                    foreach (var item_ in response_.Headers)
-                        headers_[item_.Key] = item_.Value;
-                    if (response_.Content != null && response_.Content.Headers != null)
-                    {
-                        foreach (var item_ in response_.Content.Headers)
-                            headers_[item_.Key] = item_.Value;
-                    }
-
-                    var status_ = (int)response_.StatusCode;
-                    if (status_ == 302)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Redirect to OAuth provider", status_, responseText_, headers_, null);
-                    }
-                    else
-
-                    if (status_ == 200 || status_ == 204)
-                    {
-
-                        return;
-                    }
-                    else
-                    {
-                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                    }
-                }
-                finally
-                {
-                    if (disposeResponse_)
-                        response_.Dispose();
-                }
-            }
-            finally
-            {
-                // Clear headers after request (one-time use)
-                ClearHeaders();
-            }
-        }
-    }
-
-    /// <param name="provider">The provider parameter.</param>
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -737,9 +623,6 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AuthResponse>(
-                _directDispatchProvider, _serviceName, "CompleteOAuthAsync",
-                body, cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -832,9 +715,11 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AuthResponse>(
-                _directDispatchProvider, _serviceName, "VerifySteamAuthAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAuthService, SteamVerifyRequest, AuthResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.VerifySteamAuthAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -932,9 +817,26 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AuthResponse>(
-                _directDispatchProvider, _serviceName, "RefreshTokenAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            // x-from-authorization: extract JWT from the in-flight WithAuthorization(...) header
+            // and pass it as the service method's typed first argument.
+            var directDispatchToken_ = _authorizationHeader != null && _authorizationHeader.StartsWith("Bearer ", System.StringComparison.OrdinalIgnoreCase)
+                ? _authorizationHeader.Substring(7)
+                : _authorizationHeader;
+            if (string.IsNullOrEmpty(directDispatchToken_))
+                throw new BeyondImmersion.Bannou.Core.ApiException("Missing or invalid Authorization header for direct dispatch.", 401, null, null, null);
+            try
+            {
+                return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectWithAuthAsync<IAuthService, RefreshRequest, AuthResponse>(
+                    _directDispatchProvider,
+                    directDispatchToken_,
+                    body,
+                    static (svc, token, req, ct) => svc.RefreshTokenAsync(token, req, ct),
+                    cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                ClearHeaders();
+            }
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1107,10 +1009,27 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "LogoutAsync",
-                body, cancellationToken).ConfigureAwait(false);
-            return;
+            // x-from-authorization: extract JWT from the in-flight WithAuthorization(...) header
+            // and pass it as the service method's typed first argument.
+            var directDispatchToken_ = _authorizationHeader != null && _authorizationHeader.StartsWith("Bearer ", System.StringComparison.OrdinalIgnoreCase)
+                ? _authorizationHeader.Substring(7)
+                : _authorizationHeader;
+            if (string.IsNullOrEmpty(directDispatchToken_))
+                throw new BeyondImmersion.Bannou.Core.ApiException("Missing or invalid Authorization header for direct dispatch.", 401, null, null, null);
+            try
+            {
+                await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectWithAuthVoidAsync<IAuthService, LogoutRequest?>(
+                    _directDispatchProvider,
+                    directDispatchToken_,
+                    body,
+                    static (svc, token, req, ct) => svc.LogoutAsync(token, req, ct),
+                    cancellationToken).ConfigureAwait(false);
+                return;
+            }
+            finally
+            {
+                ClearHeaders();
+            }
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1268,10 +1187,27 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "TerminateSessionAsync",
-                body, cancellationToken).ConfigureAwait(false);
-            return;
+            // x-from-authorization: extract JWT from the in-flight WithAuthorization(...) header
+            // and pass it as the service method's typed first argument.
+            var directDispatchToken_ = _authorizationHeader != null && _authorizationHeader.StartsWith("Bearer ", System.StringComparison.OrdinalIgnoreCase)
+                ? _authorizationHeader.Substring(7)
+                : _authorizationHeader;
+            if (string.IsNullOrEmpty(directDispatchToken_))
+                throw new BeyondImmersion.Bannou.Core.ApiException("Missing or invalid Authorization header for direct dispatch.", 401, null, null, null);
+            try
+            {
+                await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectWithAuthVoidAsync<IAuthService, TerminateSessionRequest>(
+                    _directDispatchProvider,
+                    directDispatchToken_,
+                    body,
+                    static (svc, token, req, ct) => svc.TerminateSessionAsync(token, req, ct),
+                    cancellationToken).ConfigureAwait(false);
+                return;
+            }
+            finally
+            {
+                ClearHeaders();
+            }
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1362,9 +1298,11 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RevocationListResponse>(
-                _directDispatchProvider, _serviceName, "GetRevocationListAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAuthService, GetRevocationListRequest, RevocationListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetRevocationListAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1456,9 +1394,11 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "RequestPasswordResetAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IAuthService, PasswordResetRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RequestPasswordResetAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1539,9 +1479,11 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "ConfirmPasswordResetAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IAuthService, PasswordResetConfirmRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ConfirmPasswordResetAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1799,10 +1741,27 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "EnableMfaAsync",
-                body, cancellationToken).ConfigureAwait(false);
-            return;
+            // x-from-authorization: extract JWT from the in-flight WithAuthorization(...) header
+            // and pass it as the service method's typed first argument.
+            var directDispatchToken_ = _authorizationHeader != null && _authorizationHeader.StartsWith("Bearer ", System.StringComparison.OrdinalIgnoreCase)
+                ? _authorizationHeader.Substring(7)
+                : _authorizationHeader;
+            if (string.IsNullOrEmpty(directDispatchToken_))
+                throw new BeyondImmersion.Bannou.Core.ApiException("Missing or invalid Authorization header for direct dispatch.", 401, null, null, null);
+            try
+            {
+                await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectWithAuthVoidAsync<IAuthService, MfaEnableRequest>(
+                    _directDispatchProvider,
+                    directDispatchToken_,
+                    body,
+                    static (svc, token, req, ct) => svc.EnableMfaAsync(token, req, ct),
+                    cancellationToken).ConfigureAwait(false);
+                return;
+            }
+            finally
+            {
+                ClearHeaders();
+            }
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1899,10 +1858,27 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "DisableMfaAsync",
-                body, cancellationToken).ConfigureAwait(false);
-            return;
+            // x-from-authorization: extract JWT from the in-flight WithAuthorization(...) header
+            // and pass it as the service method's typed first argument.
+            var directDispatchToken_ = _authorizationHeader != null && _authorizationHeader.StartsWith("Bearer ", System.StringComparison.OrdinalIgnoreCase)
+                ? _authorizationHeader.Substring(7)
+                : _authorizationHeader;
+            if (string.IsNullOrEmpty(directDispatchToken_))
+                throw new BeyondImmersion.Bannou.Core.ApiException("Missing or invalid Authorization header for direct dispatch.", 401, null, null, null);
+            try
+            {
+                await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectWithAuthVoidAsync<IAuthService, MfaDisableRequest>(
+                    _directDispatchProvider,
+                    directDispatchToken_,
+                    body,
+                    static (svc, token, req, ct) => svc.DisableMfaAsync(token, req, ct),
+                    cancellationToken).ConfigureAwait(false);
+                return;
+            }
+            finally
+            {
+                ClearHeaders();
+            }
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1998,9 +1974,11 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "AdminDisableMfaAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IAuthService, AdminDisableMfaRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.AdminDisableMfaAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -2093,9 +2071,11 @@ public partial class AuthClient : IAuthClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AuthResponse>(
-                _directDispatchProvider, _serviceName, "VerifyMfaAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAuthService, MfaVerifyRequest, AuthResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.VerifyMfaAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

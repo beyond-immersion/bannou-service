@@ -591,9 +591,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ConditionSnapshotResponse>(
-                _directDispatchProvider, _serviceName, "GetConditionsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, GetConditionsRequest, ConditionSnapshotResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetConditionsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -688,9 +690,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ConditionSnapshotResponse>(
-                _directDispatchProvider, _serviceName, "GetConditionsByCodeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, GetConditionsByCodeRequest, ConditionSnapshotResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetConditionsByCodeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -785,9 +789,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BatchConditionSnapshotResponse>(
-                _directDispatchProvider, _serviceName, "BatchGetConditionsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, BatchGetConditionsRequest, BatchConditionSnapshotResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.BatchGetConditionsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -876,9 +882,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<TemperatureResponse>(
-                _directDispatchProvider, _serviceName, "GetTemperatureAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, GetTemperatureRequest, TemperatureResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetTemperatureAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -973,9 +981,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ClimateTemplateResponse>(
-                _directDispatchProvider, _serviceName, "SeedClimateAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, SeedClimateRequest, ClimateTemplateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SeedClimateAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1082,9 +1092,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ClimateTemplateResponse>(
-                _directDispatchProvider, _serviceName, "GetClimateAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, GetClimateRequest, ClimateTemplateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetClimateAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1179,9 +1191,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PagedClimateTemplateResponse>(
-                _directDispatchProvider, _serviceName, "ListClimatesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, ListClimatesRequest, PagedClimateTemplateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListClimatesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1270,9 +1284,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ClimateTemplateResponse>(
-                _directDispatchProvider, _serviceName, "UpdateClimateAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, UpdateClimateRequest, ClimateTemplateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateClimateAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1379,9 +1395,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ClimateTemplateResponse>(
-                _directDispatchProvider, _serviceName, "DeprecateClimateAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, DeprecateClimateRequest, ClimateTemplateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeprecateClimateAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1476,9 +1494,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ClimateTemplateResponse>(
-                _directDispatchProvider, _serviceName, "UndeprecateClimateAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, UndeprecateClimateRequest, ClimateTemplateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UndeprecateClimateAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1573,9 +1593,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "DeleteClimateAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IEnvironmentService, DeleteClimateRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteClimateAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1671,9 +1693,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BulkSeedClimatesResponse>(
-                _directDispatchProvider, _serviceName, "BulkSeedClimatesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, BulkSeedClimatesRequest, BulkSeedClimatesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.BulkSeedClimatesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1768,9 +1792,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CreateWeatherEventResponse>(
-                _directDispatchProvider, _serviceName, "CreateWeatherEventAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, CreateWeatherEventRequest, CreateWeatherEventResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateWeatherEventAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1877,9 +1903,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<WeatherEventResponse>(
-                _directDispatchProvider, _serviceName, "GetWeatherEventAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, GetWeatherEventRequest, WeatherEventResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetWeatherEventAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1974,9 +2002,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PagedWeatherEventResponse>(
-                _directDispatchProvider, _serviceName, "ListWeatherEventsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, ListWeatherEventsRequest, PagedWeatherEventResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListWeatherEventsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2065,9 +2095,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "CancelWeatherEventAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IEnvironmentService, CancelWeatherEventRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CancelWeatherEventAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -2169,9 +2201,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<WeatherEventResponse>(
-                _directDispatchProvider, _serviceName, "ExtendWeatherEventAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, ExtendWeatherEventRequest, WeatherEventResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ExtendWeatherEventAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2272,9 +2306,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CancelWeatherEventsBySourceResponse>(
-                _directDispatchProvider, _serviceName, "CancelWeatherEventsBySourceAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, CancelWeatherEventsBySourceRequest, CancelWeatherEventsBySourceResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CancelWeatherEventsBySourceAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2363,9 +2399,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmWeatherSummaryResponse>(
-                _directDispatchProvider, _serviceName, "GetRealmWeatherSummaryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, GetRealmWeatherSummaryRequest, RealmWeatherSummaryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetRealmWeatherSummaryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2460,9 +2498,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<WeatherByRegionResponse>(
-                _directDispatchProvider, _serviceName, "GetWeatherByRegionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, GetWeatherByRegionRequest, WeatherByRegionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetWeatherByRegionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2557,9 +2597,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ResourceAvailabilityResponse>(
-                _directDispatchProvider, _serviceName, "GetResourceAvailabilityAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, GetResourceAvailabilityRequest, ResourceAvailabilityResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetResourceAvailabilityAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2654,9 +2696,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmResourceSummaryResponse>(
-                _directDispatchProvider, _serviceName, "GetRealmResourceSummaryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, GetRealmResourceSummaryRequest, RealmResourceSummaryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetRealmResourceSummaryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2751,9 +2795,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ClimateBindingResponse>(
-                _directDispatchProvider, _serviceName, "CreateClimateBindingAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, CreateClimateBindingRequest, ClimateBindingResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateClimateBindingAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2860,9 +2906,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ClimateBindingResponse>(
-                _directDispatchProvider, _serviceName, "GetClimateBindingAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, GetClimateBindingRequest, ClimateBindingResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetClimateBindingAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2957,9 +3005,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ClimateBindingResponse>(
-                _directDispatchProvider, _serviceName, "UpdateClimateBindingAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, UpdateClimateBindingRequest, ClimateBindingResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateClimateBindingAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3060,9 +3110,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "DeleteClimateBindingAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IEnvironmentService, DeleteClimateBindingRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteClimateBindingAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -3152,9 +3204,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BulkSeedBindingsResponse>(
-                _directDispatchProvider, _serviceName, "BulkSeedBindingsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, BulkSeedBindingsRequest, BulkSeedBindingsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.BulkSeedBindingsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3243,9 +3297,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmEnvironmentConfigResponse>(
-                _directDispatchProvider, _serviceName, "SetRealmConfigAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, SetRealmConfigRequest, RealmEnvironmentConfigResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SetRealmConfigAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3346,9 +3402,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmEnvironmentConfigResponse>(
-                _directDispatchProvider, _serviceName, "GetRealmConfigAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEnvironmentService, GetRealmConfigRequest, RealmEnvironmentConfigResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetRealmConfigAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3443,9 +3501,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "CleanupByRealmAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IEnvironmentService, CleanupByRealmRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanupByRealmAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -3529,9 +3589,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "CleanupByGameServiceAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IEnvironmentService, CleanupByGameServiceRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanupByGameServiceAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -3615,9 +3677,11 @@ public partial class EnvironmentClient : IEnvironmentClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "CleanupByLocationAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IEnvironmentService, CleanupByLocationRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanupByLocationAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 

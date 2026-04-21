@@ -49,7 +49,7 @@ public class BundlerPipelineTests : IDisposable
         var options = CreateOptions();
 
         // Act
-        var result = await _pipeline.ExecuteAsync(source.Object, null, state, null, options);
+        var result = await _pipeline.ExecuteAsync(source.Object, null, state, null, options, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(BundleResultStatus.Success, result.Status);
@@ -85,7 +85,7 @@ public class BundlerPipelineTests : IDisposable
         var options = CreateOptions();
 
         // Act
-        var result = await _pipeline.ExecuteAsync(source.Object, null, state, uploader.Object, options);
+        var result = await _pipeline.ExecuteAsync(source.Object, null, state, uploader.Object, options, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(BundleResultStatus.Success, result.Status);
@@ -106,7 +106,7 @@ public class BundlerPipelineTests : IDisposable
         var options = CreateOptions();
 
         // Act
-        var result = await _pipeline.ExecuteAsync(source.Object, null, state, null, options);
+        var result = await _pipeline.ExecuteAsync(source.Object, null, state, null, options, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(BundleResultStatus.Empty, result.Status);
@@ -126,10 +126,10 @@ public class BundlerPipelineTests : IDisposable
         var options = CreateOptions();
 
         // First execution
-        await _pipeline.ExecuteAsync(source.Object, null, state, null, options);
+        await _pipeline.ExecuteAsync(source.Object, null, state, null, options, TestContext.Current.CancellationToken);
 
         // Act - second run with same content hash
-        var result = await _pipeline.ExecuteAsync(source.Object, null, state, null, options);
+        var result = await _pipeline.ExecuteAsync(source.Object, null, state, null, options, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(BundleResultStatus.Skipped, result.Status);
@@ -148,10 +148,10 @@ public class BundlerPipelineTests : IDisposable
         var options = CreateOptions(forceRebuild: true);
 
         // First execution
-        await _pipeline.ExecuteAsync(source.Object, null, state, null, options);
+        await _pipeline.ExecuteAsync(source.Object, null, state, null, options, TestContext.Current.CancellationToken);
 
         // Act - second run with force rebuild
-        var result = await _pipeline.ExecuteAsync(source.Object, null, state, null, options);
+        var result = await _pipeline.ExecuteAsync(source.Object, null, state, null, options, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(BundleResultStatus.Success, result.Status);
@@ -177,7 +177,7 @@ public class BundlerPipelineTests : IDisposable
         var options = CreateOptions();
 
         // Act
-        var result = await _pipeline.ExecuteAsync(source.Object, null, state, null, options);
+        var result = await _pipeline.ExecuteAsync(source.Object, null, state, null, options, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(BundleResultStatus.Failed, result.Status);
@@ -205,7 +205,7 @@ public class BundlerPipelineTests : IDisposable
         var options = CreateOptions();
 
         // Act
-        var result = await _pipeline.ExecuteAsync(source.Object, null, state, uploader.Object, options);
+        var result = await _pipeline.ExecuteAsync(source.Object, null, state, uploader.Object, options, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(BundleResultStatus.Failed, result.Status);
@@ -226,7 +226,7 @@ public class BundlerPipelineTests : IDisposable
         var options = CreateOptions();
 
         // Act
-        var result = await _pipeline.ExecuteAsync(source.Object, null, state, null, options);
+        var result = await _pipeline.ExecuteAsync(source.Object, null, state, null, options, TestContext.Current.CancellationToken);
 
         // Assert - verify bundle can be read
         Assert.Equal(BundleResultStatus.Success, result.Status);
@@ -234,7 +234,7 @@ public class BundlerPipelineTests : IDisposable
 
         await using var stream = File.OpenRead(result.BundlePath);
         using var reader = new BannouBundleReader(stream);
-        await reader.ReadHeaderAsync();
+        await reader.ReadHeaderAsync(TestContext.Current.CancellationToken);
 
         Assert.NotNull(reader.Manifest);
         Assert.Equal("test/valid", reader.Manifest.BundleId);
@@ -254,7 +254,7 @@ public class BundlerPipelineTests : IDisposable
         var options = CreateOptions();
 
         // Act
-        await _pipeline.ExecuteAsync(source.Object, null, state, null, options);
+        await _pipeline.ExecuteAsync(source.Object, null, state, null, options, TestContext.Current.CancellationToken);
 
         // Assert - verify state was recorded
         Assert.False(state.NeedsProcessing(source.Object));
@@ -293,7 +293,8 @@ public class BundlerPipelineTests : IDisposable
             null,
             state,
             null,
-            options);
+            options,
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(3, results.Count);
@@ -320,7 +321,8 @@ public class BundlerPipelineTests : IDisposable
             null,
             state,
             null,
-            options);
+            options,
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, results.Count);
@@ -362,7 +364,8 @@ public class BundlerPipelineTests : IDisposable
             null,
             state,
             uploader.Object,
-            options);
+            options,
+            TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(2, results.Count);

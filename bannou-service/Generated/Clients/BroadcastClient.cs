@@ -255,51 +255,6 @@ public partial interface IBroadcastClient
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Twitch EventSub webhook callback
-    /// </summary>
-    /// <remarks>
-    /// Receives Twitch EventSub webhook callbacks. Validates HMAC-SHA256 signature
-    /// <br/>before processing. Handles verification challenges, stream events, and chat
-    /// <br/>messages. Always returns 200 to Twitch per webhook contract. Internet-facing
-    /// <br/>via NGINX (justified exception for platform callbacks).
-    /// </remarks>
-    /// <returns>Webhook processed</returns>
-    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<WebhookResponse> WebhookTwitchAsync(WebhookPayload body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-    /// <param name="body">The body parameter.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// YouTube webhook callback
-    /// </summary>
-    /// <remarks>
-    /// Receives YouTube push notification callbacks. Validates verification token
-    /// <br/>before processing. Handles live chat messages, super chats, and subscriptions.
-    /// <br/>Always returns 200 to YouTube per webhook contract. Internet-facing via NGINX
-    /// <br/>(justified exception for platform callbacks).
-    /// </remarks>
-    /// <returns>Webhook processed</returns>
-    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<WebhookResponse> WebhookYouTubeAsync(WebhookPayload body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-    /// <param name="body">The body parameter.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// Custom platform webhook callback
-    /// </summary>
-    /// <remarks>
-    /// Receives custom platform webhook callbacks. Validates configurable HMAC
-    /// <br/>signature before processing. Routes to generic sentiment processor.
-    /// <br/>Always returns 200 per webhook contract. Internet-facing via NGINX
-    /// <br/>(justified exception for platform callbacks).
-    /// </remarks>
-    /// <returns>Webhook processed</returns>
-    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<WebhookResponse> WebhookCustomAsync(WebhookPayload body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-    /// <param name="body">The body parameter.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
     /// Get the latest sentiment pulse for a session
     /// </summary>
     /// <remarks>
@@ -508,9 +463,11 @@ public partial class BroadcastClient : IBroadcastClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LinkPlatformResponse>(
-                _directDispatchProvider, _serviceName, "LinkPlatformAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IBroadcastService, LinkPlatformRequest, LinkPlatformResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.LinkPlatformAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -618,9 +575,11 @@ public partial class BroadcastClient : IBroadcastClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PlatformCallbackResponse>(
-                _directDispatchProvider, _serviceName, "PlatformCallbackAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IBroadcastService, PlatformCallbackRequest, PlatformCallbackResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.PlatformCallbackAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -722,9 +681,11 @@ public partial class BroadcastClient : IBroadcastClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "UnlinkPlatformAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IBroadcastService, UnlinkPlatformRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UnlinkPlatformAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -827,9 +788,11 @@ public partial class BroadcastClient : IBroadcastClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<PlatformListResponse>(
-                _directDispatchProvider, _serviceName, "ListPlatformsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IBroadcastService, ListPlatformsRequest, PlatformListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListPlatformsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -919,9 +882,11 @@ public partial class BroadcastClient : IBroadcastClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<StartSessionResponse>(
-                _directDispatchProvider, _serviceName, "StartSessionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IBroadcastService, StartSessionRequest, StartSessionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.StartSessionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1029,9 +994,11 @@ public partial class BroadcastClient : IBroadcastClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "StopSessionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IBroadcastService, StopSessionRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.StopSessionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1135,9 +1102,11 @@ public partial class BroadcastClient : IBroadcastClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "AssociateSessionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IBroadcastService, AssociateSessionRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.AssociateSessionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1240,9 +1209,11 @@ public partial class BroadcastClient : IBroadcastClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SessionStatusResponse>(
-                _directDispatchProvider, _serviceName, "GetSessionStatusAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IBroadcastService, GetSessionStatusRequest, SessionStatusResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetSessionStatusAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1344,9 +1315,11 @@ public partial class BroadcastClient : IBroadcastClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SessionListResponse>(
-                _directDispatchProvider, _serviceName, "ListSessionsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IBroadcastService, ListSessionsRequest, SessionListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListSessionsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1436,9 +1409,11 @@ public partial class BroadcastClient : IBroadcastClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CameraAnnounceResponse>(
-                _directDispatchProvider, _serviceName, "AnnounceCameraAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IBroadcastService, AnnounceCameraRequest, CameraAnnounceResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.AnnounceCameraAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1534,9 +1509,11 @@ public partial class BroadcastClient : IBroadcastClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "RetireCameraAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IBroadcastService, RetireCameraRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RetireCameraAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1628,9 +1605,11 @@ public partial class BroadcastClient : IBroadcastClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<StartOutputResponse>(
-                _directDispatchProvider, _serviceName, "StartOutputAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IBroadcastService, StartOutputRequest, StartOutputResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.StartOutputAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1732,9 +1711,11 @@ public partial class BroadcastClient : IBroadcastClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "StopOutputAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IBroadcastService, StopOutputRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.StopOutputAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1832,9 +1813,11 @@ public partial class BroadcastClient : IBroadcastClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "UpdateOutputAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IBroadcastService, UpdateOutputRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateOutputAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1938,9 +1921,11 @@ public partial class BroadcastClient : IBroadcastClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<OutputStatusResponse>(
-                _directDispatchProvider, _serviceName, "GetOutputStatusAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IBroadcastService, GetOutputStatusRequest, OutputStatusResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetOutputStatusAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2036,9 +2021,11 @@ public partial class BroadcastClient : IBroadcastClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<OutputListResponse>(
-                _directDispatchProvider, _serviceName, "ListOutputsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IBroadcastService, ListOutputsRequest, OutputListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListOutputsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2112,306 +2099,6 @@ public partial class BroadcastClient : IBroadcastClient, BeyondImmersion.BannouS
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Twitch EventSub webhook callback
-    /// </summary>
-    /// <remarks>
-    /// Receives Twitch EventSub webhook callbacks. Validates HMAC-SHA256 signature
-    /// <br/>before processing. Handles verification challenges, stream events, and chat
-    /// <br/>messages. Always returns 200 to Twitch per webhook contract. Internet-facing
-    /// <br/>via NGINX (justified exception for platform callbacks).
-    /// </remarks>
-    /// <returns>Webhook processed</returns>
-    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<WebhookResponse> WebhookTwitchAsync(WebhookPayload body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-        if (body == null)
-            throw new System.ArgumentNullException("body");
-
-        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
-        if (_directDispatchProvider != null)
-        {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<WebhookResponse>(
-                _directDispatchProvider, _serviceName, "WebhookTwitchAsync",
-                body, cancellationToken).ConfigureAwait(false);
-        }
-
-        // Build method path (without base URL - mesh client handles endpoint resolution)
-        var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "broadcast/webhook/twitch"
-        urlBuilder_.Append("broadcast/webhook/twitch");
-
-        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
-        var appId_ = _resolver.GetAppIdForService(ServiceName);
-
-        // Create HTTP request via mesh client
-        using (var request_ = _meshClient.CreateInvokeMethodRequest(
-            new System.Net.Http.HttpMethod("POST"),
-            appId_,
-            methodPath_))
-        {
-            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
-            var content_ = new System.Net.Http.ByteArrayContent(json_);
-            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-            request_.Content = content_;
-            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-            // Apply custom headers
-            ApplyHeaders(request_);
-
-            try
-            {
-                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
-                var disposeResponse_ = true;
-                try
-                {
-                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                    foreach (var item_ in response_.Headers)
-                        headers_[item_.Key] = item_.Value;
-                    if (response_.Content != null && response_.Content.Headers != null)
-                    {
-                        foreach (var item_ in response_.Content.Headers)
-                            headers_[item_.Key] = item_.Value;
-                    }
-
-                    var status_ = (int)response_.StatusCode;
-                    if (status_ == 200)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<WebhookResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        return objectResponse_.Object;
-                    }
-                    else
-                    if (status_ == 401)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Signature validation failed", status_, responseText_, headers_, null);
-                    }
-                    else
-                    {
-                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                    }
-                }
-                finally
-                {
-                    if (disposeResponse_)
-                        response_.Dispose();
-                }
-            }
-            finally
-            {
-                // Clear headers after request (one-time use)
-                ClearHeaders();
-            }
-        }
-    }
-
-    /// <param name="body">The body parameter.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// YouTube webhook callback
-    /// </summary>
-    /// <remarks>
-    /// Receives YouTube push notification callbacks. Validates verification token
-    /// <br/>before processing. Handles live chat messages, super chats, and subscriptions.
-    /// <br/>Always returns 200 to YouTube per webhook contract. Internet-facing via NGINX
-    /// <br/>(justified exception for platform callbacks).
-    /// </remarks>
-    /// <returns>Webhook processed</returns>
-    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<WebhookResponse> WebhookYouTubeAsync(WebhookPayload body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-        if (body == null)
-            throw new System.ArgumentNullException("body");
-
-        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
-        if (_directDispatchProvider != null)
-        {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<WebhookResponse>(
-                _directDispatchProvider, _serviceName, "WebhookYouTubeAsync",
-                body, cancellationToken).ConfigureAwait(false);
-        }
-
-        // Build method path (without base URL - mesh client handles endpoint resolution)
-        var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "broadcast/webhook/youtube"
-        urlBuilder_.Append("broadcast/webhook/youtube");
-
-        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
-        var appId_ = _resolver.GetAppIdForService(ServiceName);
-
-        // Create HTTP request via mesh client
-        using (var request_ = _meshClient.CreateInvokeMethodRequest(
-            new System.Net.Http.HttpMethod("POST"),
-            appId_,
-            methodPath_))
-        {
-            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
-            var content_ = new System.Net.Http.ByteArrayContent(json_);
-            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-            request_.Content = content_;
-            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-            // Apply custom headers
-            ApplyHeaders(request_);
-
-            try
-            {
-                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
-                var disposeResponse_ = true;
-                try
-                {
-                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                    foreach (var item_ in response_.Headers)
-                        headers_[item_.Key] = item_.Value;
-                    if (response_.Content != null && response_.Content.Headers != null)
-                    {
-                        foreach (var item_ in response_.Content.Headers)
-                            headers_[item_.Key] = item_.Value;
-                    }
-
-                    var status_ = (int)response_.StatusCode;
-                    if (status_ == 200)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<WebhookResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        return objectResponse_.Object;
-                    }
-                    else
-                    if (status_ == 401)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Token validation failed", status_, responseText_, headers_, null);
-                    }
-                    else
-                    {
-                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                    }
-                }
-                finally
-                {
-                    if (disposeResponse_)
-                        response_.Dispose();
-                }
-            }
-            finally
-            {
-                // Clear headers after request (one-time use)
-                ClearHeaders();
-            }
-        }
-    }
-
-    /// <param name="body">The body parameter.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
-    /// Custom platform webhook callback
-    /// </summary>
-    /// <remarks>
-    /// Receives custom platform webhook callbacks. Validates configurable HMAC
-    /// <br/>signature before processing. Routes to generic sentiment processor.
-    /// <br/>Always returns 200 per webhook contract. Internet-facing via NGINX
-    /// <br/>(justified exception for platform callbacks).
-    /// </remarks>
-    /// <returns>Webhook processed</returns>
-    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<WebhookResponse> WebhookCustomAsync(WebhookPayload body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-    {
-        if (body == null)
-            throw new System.ArgumentNullException("body");
-
-        // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
-        if (_directDispatchProvider != null)
-        {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<WebhookResponse>(
-                _directDispatchProvider, _serviceName, "WebhookCustomAsync",
-                body, cancellationToken).ConfigureAwait(false);
-        }
-
-        // Build method path (without base URL - mesh client handles endpoint resolution)
-        var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "broadcast/webhook/custom"
-        urlBuilder_.Append("broadcast/webhook/custom");
-
-        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
-        var appId_ = _resolver.GetAppIdForService(ServiceName);
-
-        // Create HTTP request via mesh client
-        using (var request_ = _meshClient.CreateInvokeMethodRequest(
-            new System.Net.Http.HttpMethod("POST"),
-            appId_,
-            methodPath_))
-        {
-            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
-            var content_ = new System.Net.Http.ByteArrayContent(json_);
-            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
-            request_.Content = content_;
-            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
-
-            // Apply custom headers
-            ApplyHeaders(request_);
-
-            try
-            {
-                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
-                var disposeResponse_ = true;
-                try
-                {
-                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
-                    foreach (var item_ in response_.Headers)
-                        headers_[item_.Key] = item_.Value;
-                    if (response_.Content != null && response_.Content.Headers != null)
-                    {
-                        foreach (var item_ in response_.Content.Headers)
-                            headers_[item_.Key] = item_.Value;
-                    }
-
-                    var status_ = (int)response_.StatusCode;
-                    if (status_ == 200)
-                    {
-                        var objectResponse_ = await ReadObjectResponseAsync<WebhookResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                        if (objectResponse_.Object == null)
-                        {
-                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                        }
-                        return objectResponse_.Object;
-                    }
-                    else
-                    if (status_ == 401)
-                    {
-                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Signature validation failed", status_, responseText_, headers_, null);
-                    }
-                    else
-                    {
-                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                    }
-                }
-                finally
-                {
-                    if (disposeResponse_)
-                        response_.Dispose();
-                }
-            }
-            finally
-            {
-                // Clear headers after request (one-time use)
-                ClearHeaders();
-            }
-        }
-    }
-
-    /// <param name="body">The body parameter.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <summary>
     /// Get the latest sentiment pulse for a session
     /// </summary>
     /// <remarks>
@@ -2428,9 +2115,11 @@ public partial class BroadcastClient : IBroadcastClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LatestPulseResponse>(
-                _directDispatchProvider, _serviceName, "GetLatestPulseAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IBroadcastService, GetLatestPulseRequest, LatestPulseResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetLatestPulseAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2527,9 +2216,11 @@ public partial class BroadcastClient : IBroadcastClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<TestSentimentResponse>(
-                _directDispatchProvider, _serviceName, "TestSentimentAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IBroadcastService, TestSentimentRequest, TestSentimentResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.TestSentimentAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2620,9 +2311,11 @@ public partial class BroadcastClient : IBroadcastClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "CleanupByAccountAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IBroadcastService, CleanupByAccountRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanupByAccountAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 

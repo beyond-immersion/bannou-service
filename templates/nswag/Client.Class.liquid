@@ -214,19 +214,90 @@
             throw new System.ArgumentNullException("{{ operation.ContentParameter.VariableName }}");
 
 {%     endif -%}
+{%     comment -%}
+        Direct dispatch (embedded/sidecar mode): resolve service from DI and invoke
+        the concrete interface method via a static lambda — zero reflection, AOT-safe.
+
+        The lambda's signature must match the service-interface method's argument
+        shape exactly. We emit direct dispatch ONLY when the operation's argument
+        shape is one of the two supported forms:
+
+        Form A (standard body):        MethodAsync(TRequest body, CancellationToken ct)
+        Form B (with extracted auth):  MethodAsync(string jwt, TRequest body, CancellationToken ct)
+
+        Operations that carry additional parameters NSwag would surface on the client
+        method (path parameters, query parameters, non-auth header parameters) do NOT
+        match either shape, so we skip direct dispatch for them — those calls fall
+        through to the HTTP mesh path. The client-schema Python filter strips
+        x-from-authorization parameters and tags the operation with
+        x-direct-dispatch-auth so Form B can be detected here.
+{%-     endcomment -%}
+{%-     assign directDispatchAuth = operation.ExtensionData["x-direct-dispatch-auth"] -%}
+{%-     assign hasExtraParams = false -%}
+{%-     for p in operation.PathParameters -%}{%- assign hasExtraParams = true -%}{%- endfor -%}
+{%-     for p in operation.QueryParameters -%}{%- assign hasExtraParams = true -%}{%- endfor -%}
+{%-     for p in operation.HeaderParameters -%}{%- assign hasExtraParams = true -%}{%- endfor -%}
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-{%     if operation.HasContent -%}
-{%         if operation.HasResult -%}
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<{{ operation.UnwrappedResultType }}>(
-                _directDispatchProvider, _serviceName, "{{ operation.ActualOperationName }}Async",
-                {{ operation.ContentParameter.VariableName }}, cancellationToken).ConfigureAwait(false);
+{%     if operation.HasContent and hasExtraParams == false -%}
+{%         if directDispatchAuth -%}
+            // x-from-authorization: extract JWT from the in-flight WithAuthorization(...) header
+            // and pass it as the service method's typed first argument.
+{%             if directDispatchAuth == "bearer" -%}
+            var directDispatchToken_ = _authorizationHeader != null && _authorizationHeader.StartsWith("Bearer ", System.StringComparison.OrdinalIgnoreCase)
+                ? _authorizationHeader.Substring(7)
+                : _authorizationHeader;
+{%             else -%}
+            var directDispatchToken_ = _authorizationHeader;
+{%             endif -%}
+            if (string.IsNullOrEmpty(directDispatchToken_))
+                throw new BeyondImmersion.Bannou.Core.ApiException("Missing or invalid Authorization header for direct dispatch.", 401, null, null, null);
+{%             if operation.HasResult -%}
+            try
+            {
+                return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectWithAuthAsync<I{{ Class | replace: "Client", "" }}Service, {{ operation.ContentParameter.Type }}, {{ operation.UnwrappedResultType }}>(
+                    _directDispatchProvider,
+                    directDispatchToken_,
+                    {{ operation.ContentParameter.VariableName }},
+                    static (svc, token, req, ct) => svc.{{ operation.ActualOperationName }}Async(token, req, ct),
+                    cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                ClearHeaders();
+            }
+{%             else -%}
+            try
+            {
+                await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectWithAuthVoidAsync<I{{ Class | replace: "Client", "" }}Service, {{ operation.ContentParameter.Type }}>(
+                    _directDispatchProvider,
+                    directDispatchToken_,
+                    {{ operation.ContentParameter.VariableName }},
+                    static (svc, token, req, ct) => svc.{{ operation.ActualOperationName }}Async(token, req, ct),
+                    cancellationToken).ConfigureAwait(false);
+                return;
+            }
+            finally
+            {
+                ClearHeaders();
+            }
+{%             endif -%}
 {%         else -%}
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "{{ operation.ActualOperationName }}Async",
-                {{ operation.ContentParameter.VariableName }}, cancellationToken).ConfigureAwait(false);
+{%             if operation.HasResult -%}
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<I{{ Class | replace: "Client", "" }}Service, {{ operation.ContentParameter.Type }}, {{ operation.UnwrappedResultType }}>(
+                _directDispatchProvider,
+                {{ operation.ContentParameter.VariableName }},
+                static (svc, req, ct) => svc.{{ operation.ActualOperationName }}Async(req, ct),
+                cancellationToken).ConfigureAwait(false);
+{%             else -%}
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<I{{ Class | replace: "Client", "" }}Service, {{ operation.ContentParameter.Type }}>(
+                _directDispatchProvider,
+                {{ operation.ContentParameter.VariableName }},
+                static (svc, req, ct) => svc.{{ operation.ActualOperationName }}Async(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
+{%             endif -%}
 {%         endif -%}
 {%     endif -%}
         }

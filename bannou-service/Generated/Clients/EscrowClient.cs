@@ -504,9 +504,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CreateEscrowResponse>(
-                _directDispatchProvider, _serviceName, "CreateEscrowAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, CreateEscrowRequest, CreateEscrowResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateEscrowAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -601,9 +603,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetEscrowResponse>(
-                _directDispatchProvider, _serviceName, "GetEscrowAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, GetEscrowRequest, GetEscrowResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetEscrowAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -698,9 +702,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListEscrowsResponse>(
-                _directDispatchProvider, _serviceName, "ListEscrowsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, ListEscrowsRequest, ListEscrowsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListEscrowsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -792,9 +798,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetMyTokenResponse>(
-                _directDispatchProvider, _serviceName, "GetMyTokenAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, GetMyTokenRequest, GetMyTokenResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetMyTokenAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -893,9 +901,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DepositResponse>(
-                _directDispatchProvider, _serviceName, "DepositAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, DepositRequest, DepositResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DepositAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -990,9 +1000,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ValidateDepositResponse>(
-                _directDispatchProvider, _serviceName, "ValidateDepositAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, ValidateDepositRequest, ValidateDepositResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ValidateDepositAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1081,9 +1093,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetDepositStatusResponse>(
-                _directDispatchProvider, _serviceName, "GetDepositStatusAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, GetDepositStatusRequest, GetDepositStatusResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetDepositStatusAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1172,9 +1186,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ConsentResponse>(
-                _directDispatchProvider, _serviceName, "RecordConsentAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, ConsentRequest, ConsentResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RecordConsentAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1269,9 +1285,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetConsentStatusResponse>(
-                _directDispatchProvider, _serviceName, "GetConsentStatusAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, GetConsentStatusRequest, GetConsentStatusResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetConsentStatusAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1362,9 +1380,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ReleaseResponse>(
-                _directDispatchProvider, _serviceName, "ReleaseAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, ReleaseRequest, ReleaseResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ReleaseAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1459,9 +1479,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RefundResponse>(
-                _directDispatchProvider, _serviceName, "RefundAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, RefundRequest, RefundResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RefundAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1556,9 +1578,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CancelResponse>(
-                _directDispatchProvider, _serviceName, "CancelAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, CancelRequest, CancelResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CancelAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1653,9 +1677,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DisputeResponse>(
-                _directDispatchProvider, _serviceName, "DisputeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, DisputeRequest, DisputeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DisputeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1751,9 +1777,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ConfirmReleaseResponse>(
-                _directDispatchProvider, _serviceName, "ConfirmReleaseAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, ConfirmReleaseRequest, ConfirmReleaseResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ConfirmReleaseAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1855,9 +1883,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ConfirmRefundResponse>(
-                _directDispatchProvider, _serviceName, "ConfirmRefundAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, ConfirmRefundRequest, ConfirmRefundResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ConfirmRefundAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1958,9 +1988,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ResolveResponse>(
-                _directDispatchProvider, _serviceName, "ResolveAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, ResolveRequest, ResolveResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ResolveAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2056,9 +2088,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<VerifyConditionResponse>(
-                _directDispatchProvider, _serviceName, "VerifyConditionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, VerifyConditionRequest, VerifyConditionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.VerifyConditionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2153,9 +2187,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ValidateEscrowResponse>(
-                _directDispatchProvider, _serviceName, "ValidateEscrowAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, ValidateEscrowRequest, ValidateEscrowResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ValidateEscrowAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2244,9 +2280,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ReaffirmResponse>(
-                _directDispatchProvider, _serviceName, "ReaffirmAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, ReaffirmRequest, ReaffirmResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ReaffirmAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2341,9 +2379,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RegisterHandlerResponse>(
-                _directDispatchProvider, _serviceName, "RegisterHandlerAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, RegisterHandlerRequest, RegisterHandlerResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RegisterHandlerAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2438,9 +2478,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListHandlersResponse>(
-                _directDispatchProvider, _serviceName, "ListHandlersAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, ListHandlersRequest, ListHandlersResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListHandlersAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2529,9 +2571,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeregisterHandlerResponse>(
-                _directDispatchProvider, _serviceName, "DeregisterHandlerAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, DeregisterHandlerRequest, DeregisterHandlerResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeregisterHandlerAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2629,9 +2673,11 @@ public partial class EscrowClient : IEscrowClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanupByCharacterResponse>(
-                _directDispatchProvider, _serviceName, "CleanupByCharacterAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IEscrowService, CleanupByCharacterRequest, CleanupByCharacterResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanupByCharacterAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

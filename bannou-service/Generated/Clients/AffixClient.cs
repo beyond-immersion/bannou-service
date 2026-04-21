@@ -583,9 +583,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AffixDefinitionResponse>(
-                _directDispatchProvider, _serviceName, "CreateDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, CreateDefinitionRequest, AffixDefinitionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -686,9 +688,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AffixDefinitionResponse>(
-                _directDispatchProvider, _serviceName, "GetDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, GetDefinitionRequest, AffixDefinitionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -783,9 +787,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListDefinitionsResponse>(
-                _directDispatchProvider, _serviceName, "ListDefinitionsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, ListDefinitionsRequest, ListDefinitionsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListDefinitionsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -875,9 +881,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AffixDefinitionResponse>(
-                _directDispatchProvider, _serviceName, "UpdateDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, UpdateDefinitionRequest, AffixDefinitionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -986,9 +994,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AffixDefinitionResponse>(
-                _directDispatchProvider, _serviceName, "DeprecateDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, DeprecateDefinitionRequest, AffixDefinitionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeprecateDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1084,9 +1094,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SeedDefinitionsResponse>(
-                _directDispatchProvider, _serviceName, "SeedDefinitionsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, SeedDefinitionsRequest, SeedDefinitionsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SeedDefinitionsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1181,9 +1193,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListModGroupsResponse>(
-                _directDispatchProvider, _serviceName, "ListModGroupsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, ListModGroupsRequest, ListModGroupsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListModGroupsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1276,9 +1290,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanDeprecatedResponse>(
-                _directDispatchProvider, _serviceName, "CleanDeprecatedDefinitionsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, CleanDeprecatedRequest, CleanDeprecatedResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanDeprecatedDefinitionsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1368,9 +1384,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ImplicitMappingResponse>(
-                _directDispatchProvider, _serviceName, "CreateImplicitMappingAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, CreateImplicitMappingRequest, ImplicitMappingResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateImplicitMappingAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1471,9 +1489,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ImplicitMappingResponse>(
-                _directDispatchProvider, _serviceName, "GetImplicitMappingAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, GetImplicitMappingRequest, ImplicitMappingResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetImplicitMappingAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1568,9 +1588,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SeedImplicitMappingsResponse>(
-                _directDispatchProvider, _serviceName, "SeedImplicitMappingsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, SeedImplicitMappingsRequest, SeedImplicitMappingsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SeedImplicitMappingsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1661,9 +1683,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RollImplicitsResponse>(
-                _directDispatchProvider, _serviceName, "RollImplicitsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, RollImplicitsRequest, RollImplicitsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RollImplicitsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1759,9 +1783,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AffixInstanceResponse>(
-                _directDispatchProvider, _serviceName, "InitializeItemAffixesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, InitializeItemAffixesRequest, AffixInstanceResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.InitializeItemAffixesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1862,9 +1888,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AffixInstanceResponse>(
-                _directDispatchProvider, _serviceName, "GetAffixInstanceAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, GetAffixInstanceRequest, AffixInstanceResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetAffixInstanceAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1962,9 +1990,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ApplyAffixResponse>(
-                _directDispatchProvider, _serviceName, "ApplyAffixAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, ApplyAffixRequest, ApplyAffixResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ApplyAffixAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2073,9 +2103,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RemoveAffixResponse>(
-                _directDispatchProvider, _serviceName, "RemoveAffixAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, RemoveAffixRequest, RemoveAffixResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RemoveAffixAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2184,9 +2216,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RerollValuesResponse>(
-                _directDispatchProvider, _serviceName, "RerollValuesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, RerollValuesRequest, RerollValuesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RerollValuesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2295,9 +2329,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SetItemStateResponse>(
-                _directDispatchProvider, _serviceName, "SetItemStateAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, SetItemStateRequest, SetItemStateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SetItemStateAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2405,9 +2441,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SetInfluenceResponse>(
-                _directDispatchProvider, _serviceName, "SetInfluenceAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, SetInfluenceRequest, SetInfluenceResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SetInfluenceAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2516,9 +2554,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AffixPoolResponse>(
-                _directDispatchProvider, _serviceName, "GenerateAffixPoolAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, GenerateAffixPoolRequest, AffixPoolResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GenerateAffixPoolAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2609,9 +2649,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AffixSetDataResponse>(
-                _directDispatchProvider, _serviceName, "GenerateAffixSetAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, GenerateAffixSetRequest, AffixSetDataResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GenerateAffixSetAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2701,9 +2743,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BatchGenerateAffixSetsResponse>(
-                _directDispatchProvider, _serviceName, "BatchGenerateAffixSetsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, BatchGenerateAffixSetsRequest, BatchGenerateAffixSetsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.BatchGenerateAffixSetsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2794,9 +2838,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EnrichedAffixInstanceResponse>(
-                _directDispatchProvider, _serviceName, "GetItemAffixesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, GetItemAffixesRequest, EnrichedAffixInstanceResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetItemAffixesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2893,9 +2939,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ComputedItemStatsResponse>(
-                _directDispatchProvider, _serviceName, "ComputeItemStatsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, ComputeItemStatsRequest, ComputedItemStatsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ComputeItemStatsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2992,9 +3040,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EquipmentStatsResponse>(
-                _directDispatchProvider, _serviceName, "ComputeEquipmentStatsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, ComputeEquipmentStatsRequest, EquipmentStatsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ComputeEquipmentStatsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3084,9 +3134,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ItemComparisonResponse>(
-                _directDispatchProvider, _serviceName, "CompareItemsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, CompareItemsRequest, ItemComparisonResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CompareItemsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3183,9 +3235,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ItemValueEstimateResponse>(
-                _directDispatchProvider, _serviceName, "EstimateItemValueAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, EstimateItemValueRequest, ItemValueEstimateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.EstimateItemValueAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3282,9 +3336,11 @@ public partial class AffixClient : IAffixClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanupByGameServiceResponse>(
-                _directDispatchProvider, _serviceName, "CleanupByGameServiceAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAffixService, CleanupByGameServiceRequest, CleanupByGameServiceResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanupByGameServiceAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

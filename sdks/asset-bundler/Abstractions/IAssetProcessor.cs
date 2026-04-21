@@ -53,5 +53,5 @@ public class ProcessorOptions
     /// <summary>
     /// Maximum parallel processing operations.
     /// </summary>
-    public int MaxParallelism { get; init; } = Environment.ProcessorCount;
+    public int MaxParallelism { get; init; } = System.Environment.ProcessorCount;
 }

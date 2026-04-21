@@ -369,9 +369,11 @@ public partial class RealmHistoryClient : IRealmHistoryClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmHistoricalParticipation>(
-                _directDispatchProvider, _serviceName, "RecordRealmParticipationAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmHistoryService, RecordRealmParticipationRequest, RealmHistoricalParticipation>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RecordRealmParticipationAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -473,9 +475,11 @@ public partial class RealmHistoryClient : IRealmHistoryClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmParticipationListResponse>(
-                _directDispatchProvider, _serviceName, "GetRealmParticipationAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmHistoryService, GetRealmParticipationRequest, RealmParticipationListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetRealmParticipationAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -565,9 +569,11 @@ public partial class RealmHistoryClient : IRealmHistoryClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmParticipationListResponse>(
-                _directDispatchProvider, _serviceName, "GetRealmEventParticipantsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmHistoryService, GetRealmEventParticipantsRequest, RealmParticipationListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetRealmEventParticipantsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -657,9 +663,11 @@ public partial class RealmHistoryClient : IRealmHistoryClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "DeleteRealmParticipationAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IRealmHistoryService, DeleteRealmParticipationRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteRealmParticipationAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -751,9 +759,11 @@ public partial class RealmHistoryClient : IRealmHistoryClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmLoreResponse>(
-                _directDispatchProvider, _serviceName, "GetRealmLoreAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmHistoryService, GetRealmLoreRequest, RealmLoreResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetRealmLoreAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -849,9 +859,11 @@ public partial class RealmHistoryClient : IRealmHistoryClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmLoreResponse>(
-                _directDispatchProvider, _serviceName, "SetRealmLoreAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmHistoryService, SetRealmLoreRequest, RealmLoreResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SetRealmLoreAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -947,9 +959,11 @@ public partial class RealmHistoryClient : IRealmHistoryClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmLoreResponse>(
-                _directDispatchProvider, _serviceName, "AddRealmLoreElementAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmHistoryService, AddRealmLoreElementRequest, RealmLoreResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.AddRealmLoreElementAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1045,9 +1059,11 @@ public partial class RealmHistoryClient : IRealmHistoryClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "DeleteRealmLoreAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IRealmHistoryService, DeleteRealmLoreRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteRealmLoreAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1138,9 +1154,11 @@ public partial class RealmHistoryClient : IRealmHistoryClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeleteAllRealmHistoryResponse>(
-                _directDispatchProvider, _serviceName, "DeleteAllRealmHistoryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmHistoryService, DeleteAllRealmHistoryRequest, DeleteAllRealmHistoryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteAllRealmHistoryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1230,9 +1248,11 @@ public partial class RealmHistoryClient : IRealmHistoryClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmHistorySummaryResponse>(
-                _directDispatchProvider, _serviceName, "SummarizeRealmHistoryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmHistoryService, SummarizeRealmHistoryRequest, RealmHistorySummaryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SummarizeRealmHistoryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1323,9 +1343,11 @@ public partial class RealmHistoryClient : IRealmHistoryClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmHistoryArchive>(
-                _directDispatchProvider, _serviceName, "GetCompressDataAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmHistoryService, GetCompressDataRequest, RealmHistoryArchive>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetCompressDataAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1422,9 +1444,11 @@ public partial class RealmHistoryClient : IRealmHistoryClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RestoreFromArchiveResponse>(
-                _directDispatchProvider, _serviceName, "RestoreFromArchiveAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmHistoryService, RestoreFromArchiveRequest, RestoreFromArchiveResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RestoreFromArchiveAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

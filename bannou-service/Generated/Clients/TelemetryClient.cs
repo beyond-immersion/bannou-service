@@ -228,9 +228,11 @@ public partial class TelemetryClient : ITelemetryClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<TelemetryHealthResponse>(
-                _directDispatchProvider, _serviceName, "HealthAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ITelemetryService, TelemetryHealthRequest?, TelemetryHealthResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.HealthAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -316,9 +318,11 @@ public partial class TelemetryClient : ITelemetryClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<TelemetryStatusResponse>(
-                _directDispatchProvider, _serviceName, "StatusAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ITelemetryService, TelemetryStatusRequest?, TelemetryStatusResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.StatusAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

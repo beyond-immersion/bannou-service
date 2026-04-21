@@ -415,15 +415,17 @@ SHUTDOWN: Best-effort final flush after loop exits
 
 ## Non-Standard Implementation Patterns
 
-#### IPermissionServiceExtensions Interface
+#### Plugin-Internal PermissionService Helpers (Not on Interface)
 
-`IPermissionServiceExtensions.cs` declares a partial `IPermissionService` interface adding non-schema methods callable internally by `PermissionSessionActivityListener`:
+Three plugin-internal async methods live on the concrete `PermissionService` class (in `PermissionService.Helpers.cs`) and are NOT declared on the schema-generated `IPermissionService` interface:
 
 - `HandleSessionConnectedAsync(sessionId, accountId, roles, authorizations)` — session connection lifecycle
 - `HandleSessionDisconnectedAsync(sessionId, reconnectable)` — session disconnection lifecycle
 - `RecompileForReconnectionAsync(sessionId)` — reconnection recompile trigger
 
-These are NOT HTTP endpoints. They are DI-invoked by the `PermissionSessionActivityListener` which holds a direct cast reference to `PermissionService` (same assembly, always co-located).
+None of these are HTTP endpoints. Their sole caller, `PermissionSessionActivityListener`, casts `IPermissionService` to the concrete `PermissionService` at construction (`_permissionService = (PermissionService)permissionService`) and invokes them on the concrete reference. The cast is safe: `PermissionService` is the only `IPermissionService` implementation and is always co-located with the listener (same plugin).
+
+> **Historical note**: Prior to the Phase 4 interface relocation (which moved generated service interfaces to `bannou-service/Generated/Services/`), the first two methods were declared on `IPermissionService` via a partial-interface extension in `IPermissionServiceExtensions.cs`. After the generated interface moved to a different assembly, the two `public partial interface IPermissionService` declarations produced CS0436 type conflicts and a cascade CS0540 on the generated explicit-implementation of `IBannouService.RegisterServicePermissionsAsync`. The partial-interface declaration has been removed; the extension file is now empty (comment-only) and may be deleted. The concrete-cast pattern above is the established approach for plugin-internal service helpers across the codebase (see also lib-subscription's `SubscriptionExpirationService`).
 
 #### IPermissionRegistry.RegisterServiceAsync (DI Override)
 

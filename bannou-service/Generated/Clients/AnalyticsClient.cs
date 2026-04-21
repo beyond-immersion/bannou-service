@@ -345,9 +345,11 @@ public partial class AnalyticsClient : IAnalyticsClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<IngestEventResponse>(
-                _directDispatchProvider, _serviceName, "IngestEventAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAnalyticsService, IngestEventRequest, IngestEventResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.IngestEventAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -437,9 +439,11 @@ public partial class AnalyticsClient : IAnalyticsClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<IngestEventBatchResponse>(
-                _directDispatchProvider, _serviceName, "IngestEventBatchAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAnalyticsService, IngestEventBatchRequest, IngestEventBatchResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.IngestEventBatchAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -529,9 +533,11 @@ public partial class AnalyticsClient : IAnalyticsClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EntitySummaryResponse>(
-                _directDispatchProvider, _serviceName, "GetEntitySummaryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAnalyticsService, GetEntitySummaryRequest, EntitySummaryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetEntitySummaryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -627,9 +633,11 @@ public partial class AnalyticsClient : IAnalyticsClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QueryEntitySummariesResponse>(
-                _directDispatchProvider, _serviceName, "QueryEntitySummariesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAnalyticsService, QueryEntitySummariesRequest, QueryEntitySummariesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.QueryEntitySummariesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -722,9 +730,11 @@ public partial class AnalyticsClient : IAnalyticsClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ResetEntitySummariesResponse>(
-                _directDispatchProvider, _serviceName, "ResetEntitySummariesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAnalyticsService, ResetEntitySummariesRequest, ResetEntitySummariesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ResetEntitySummariesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -820,9 +830,11 @@ public partial class AnalyticsClient : IAnalyticsClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SkillRatingResponse>(
-                _directDispatchProvider, _serviceName, "GetSkillRatingAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAnalyticsService, GetSkillRatingRequest, SkillRatingResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetSkillRatingAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -919,9 +931,11 @@ public partial class AnalyticsClient : IAnalyticsClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<UpdateSkillRatingResponse>(
-                _directDispatchProvider, _serviceName, "UpdateSkillRatingAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAnalyticsService, UpdateSkillRatingRequest, UpdateSkillRatingResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateSkillRatingAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1012,9 +1026,11 @@ public partial class AnalyticsClient : IAnalyticsClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "RecordControllerEventAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IAnalyticsService, RecordControllerEventRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RecordControllerEventAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1099,9 +1115,11 @@ public partial class AnalyticsClient : IAnalyticsClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QueryControllerHistoryResponse>(
-                _directDispatchProvider, _serviceName, "QueryControllerHistoryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAnalyticsService, QueryControllerHistoryRequest, QueryControllerHistoryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.QueryControllerHistoryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1191,9 +1209,11 @@ public partial class AnalyticsClient : IAnalyticsClient, BeyondImmersion.BannouS
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanupControllerHistoryResponse>(
-                _directDispatchProvider, _serviceName, "CleanupControllerHistoryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IAnalyticsService, CleanupControllerHistoryRequest, CleanupControllerHistoryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanupControllerHistoryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

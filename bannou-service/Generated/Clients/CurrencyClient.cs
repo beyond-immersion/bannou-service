@@ -667,9 +667,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CurrencyDefinitionResponse>(
-                _directDispatchProvider, _serviceName, "CreateCurrencyDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, CreateCurrencyDefinitionRequest, CurrencyDefinitionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateCurrencyDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -771,9 +773,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CurrencyDefinitionResponse>(
-                _directDispatchProvider, _serviceName, "GetCurrencyDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, GetCurrencyDefinitionRequest, CurrencyDefinitionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetCurrencyDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -875,9 +879,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListCurrencyDefinitionsResponse>(
-                _directDispatchProvider, _serviceName, "ListCurrencyDefinitionsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, ListCurrencyDefinitionsRequest, ListCurrencyDefinitionsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListCurrencyDefinitionsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -967,9 +973,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CurrencyDefinitionResponse>(
-                _directDispatchProvider, _serviceName, "UpdateCurrencyDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, UpdateCurrencyDefinitionRequest, CurrencyDefinitionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateCurrencyDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1073,9 +1081,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CurrencyDefinitionResponse>(
-                _directDispatchProvider, _serviceName, "DeprecateCurrencyDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, DeprecateCurrencyDefinitionRequest, CurrencyDefinitionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeprecateCurrencyDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1174,9 +1184,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanDeprecatedResponse>(
-                _directDispatchProvider, _serviceName, "CleanDeprecatedCurrencyDefinitionsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, CleanDeprecatedRequest, CleanDeprecatedResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanDeprecatedCurrencyDefinitionsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1266,9 +1278,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<WalletResponse>(
-                _directDispatchProvider, _serviceName, "CreateWalletAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, CreateWalletRequest, WalletResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateWalletAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1364,9 +1378,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<WalletWithBalancesResponse>(
-                _directDispatchProvider, _serviceName, "GetWalletAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, GetWalletRequest, WalletWithBalancesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetWalletAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1462,9 +1478,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetOrCreateWalletResponse>(
-                _directDispatchProvider, _serviceName, "GetOrCreateWalletAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, GetOrCreateWalletRequest, GetOrCreateWalletResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetOrCreateWalletAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1554,9 +1572,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<WalletResponse>(
-                _directDispatchProvider, _serviceName, "FreezeWalletAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, FreezeWalletRequest, WalletResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.FreezeWalletAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1657,9 +1677,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<WalletResponse>(
-                _directDispatchProvider, _serviceName, "UnfreezeWalletAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, UnfreezeWalletRequest, WalletResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UnfreezeWalletAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1761,9 +1783,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CloseWalletResponse>(
-                _directDispatchProvider, _serviceName, "CloseWalletAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, CloseWalletRequest, CloseWalletResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CloseWalletAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1866,9 +1890,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetBalanceResponse>(
-                _directDispatchProvider, _serviceName, "GetBalanceAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, GetBalanceRequest, GetBalanceResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetBalanceAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1964,9 +1990,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BatchGetBalancesResponse>(
-                _directDispatchProvider, _serviceName, "BatchGetBalancesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, BatchGetBalancesRequest, BatchGetBalancesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.BatchGetBalancesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2056,9 +2084,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CreditCurrencyResponse>(
-                _directDispatchProvider, _serviceName, "CreditCurrencyAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, CreditCurrencyRequest, CreditCurrencyResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreditCurrencyAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2172,9 +2202,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DebitCurrencyResponse>(
-                _directDispatchProvider, _serviceName, "DebitCurrencyAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, DebitCurrencyRequest, DebitCurrencyResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DebitCurrencyAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2282,9 +2314,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<TransferCurrencyResponse>(
-                _directDispatchProvider, _serviceName, "TransferCurrencyAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, TransferCurrencyRequest, TransferCurrencyResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.TransferCurrencyAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2392,9 +2426,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BatchCreditResponse>(
-                _directDispatchProvider, _serviceName, "BatchCreditCurrencyAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, BatchCreditRequest, BatchCreditResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.BatchCreditCurrencyAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2484,9 +2520,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BatchDebitResponse>(
-                _directDispatchProvider, _serviceName, "BatchDebitCurrencyAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, BatchDebitRequest, BatchDebitResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.BatchDebitCurrencyAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2576,9 +2614,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CalculateConversionResponse>(
-                _directDispatchProvider, _serviceName, "CalculateConversionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, CalculateConversionRequest, CalculateConversionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CalculateConversionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2680,9 +2720,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ExecuteConversionResponse>(
-                _directDispatchProvider, _serviceName, "ExecuteConversionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, ExecuteConversionRequest, ExecuteConversionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ExecuteConversionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2784,9 +2826,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetExchangeRateResponse>(
-                _directDispatchProvider, _serviceName, "GetExchangeRateAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, GetExchangeRateRequest, GetExchangeRateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetExchangeRateAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2888,9 +2932,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<UpdateExchangeRateResponse>(
-                _directDispatchProvider, _serviceName, "UpdateExchangeRateAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, UpdateExchangeRateRequest, UpdateExchangeRateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateExchangeRateAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2991,9 +3037,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<TransactionResponse>(
-                _directDispatchProvider, _serviceName, "GetTransactionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, GetTransactionRequest, TransactionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetTransactionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3089,9 +3137,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetTransactionHistoryResponse>(
-                _directDispatchProvider, _serviceName, "GetTransactionHistoryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, GetTransactionHistoryRequest, GetTransactionHistoryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetTransactionHistoryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3187,9 +3237,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetTransactionsByReferenceResponse>(
-                _directDispatchProvider, _serviceName, "GetTransactionsByReferenceAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, GetTransactionsByReferenceRequest, GetTransactionsByReferenceResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetTransactionsByReferenceAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3279,9 +3331,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetGlobalSupplyResponse>(
-                _directDispatchProvider, _serviceName, "GetGlobalSupplyAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, GetGlobalSupplyRequest, GetGlobalSupplyResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetGlobalSupplyAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3377,9 +3431,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetWalletDistributionResponse>(
-                _directDispatchProvider, _serviceName, "GetWalletDistributionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, GetWalletDistributionRequest, GetWalletDistributionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetWalletDistributionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3475,9 +3531,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EscrowDepositResponse>(
-                _directDispatchProvider, _serviceName, "EscrowDepositAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, EscrowDepositRequest, EscrowDepositResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.EscrowDepositAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3579,9 +3637,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EscrowReleaseResponse>(
-                _directDispatchProvider, _serviceName, "EscrowReleaseAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, EscrowReleaseRequest, EscrowReleaseResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.EscrowReleaseAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3677,9 +3737,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EscrowRefundResponse>(
-                _directDispatchProvider, _serviceName, "EscrowRefundAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, EscrowRefundRequest, EscrowRefundResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.EscrowRefundAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3776,9 +3838,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<HoldResponse>(
-                _directDispatchProvider, _serviceName, "CreateHoldAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, CreateHoldRequest, HoldResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateHoldAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3880,9 +3944,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CaptureHoldResponse>(
-                _directDispatchProvider, _serviceName, "CaptureHoldAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, CaptureHoldRequest, CaptureHoldResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CaptureHoldAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3984,9 +4050,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<HoldResponse>(
-                _directDispatchProvider, _serviceName, "ReleaseHoldAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, ReleaseHoldRequest, HoldResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ReleaseHoldAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -4087,9 +4155,11 @@ public partial class CurrencyClient : ICurrencyClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<HoldResponse>(
-                _directDispatchProvider, _serviceName, "GetHoldAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICurrencyService, GetHoldRequest, HoldResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetHoldAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

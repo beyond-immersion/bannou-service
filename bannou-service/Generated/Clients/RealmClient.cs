@@ -374,9 +374,11 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmResponse>(
-                _directDispatchProvider, _serviceName, "GetRealmAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmService, GetRealmRequest, RealmResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetRealmAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -471,9 +473,11 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmResponse>(
-                _directDispatchProvider, _serviceName, "GetRealmByCodeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmService, GetRealmByCodeRequest, RealmResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetRealmByCodeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -568,9 +572,11 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmListResponse>(
-                _directDispatchProvider, _serviceName, "ListRealmsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmService, ListRealmsRequest, RealmListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListRealmsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -656,9 +662,11 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmResponse>(
-                _directDispatchProvider, _serviceName, "CreateRealmAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmService, CreateRealmRequest, RealmResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateRealmAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -756,9 +764,11 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmResponse>(
-                _directDispatchProvider, _serviceName, "UpdateRealmAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmService, UpdateRealmRequest, RealmResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateRealmAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -862,9 +872,11 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "DeleteRealmAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IRealmService, DeleteRealmRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteRealmAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -964,9 +976,11 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmResponse>(
-                _directDispatchProvider, _serviceName, "DeprecateRealmAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmService, DeprecateRealmRequest, RealmResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeprecateRealmAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1062,9 +1076,11 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmResponse>(
-                _directDispatchProvider, _serviceName, "UndeprecateRealmAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmService, UndeprecateRealmRequest, RealmResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UndeprecateRealmAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1167,9 +1183,11 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<MergeRealmsResponse>(
-                _directDispatchProvider, _serviceName, "MergeRealmsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmService, MergeRealmsRequest, MergeRealmsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.MergeRealmsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1271,9 +1289,11 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmExistsResponse>(
-                _directDispatchProvider, _serviceName, "RealmExistsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmService, RealmExistsRequest, RealmExistsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RealmExistsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1364,9 +1384,11 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmsExistBatchResponse>(
-                _directDispatchProvider, _serviceName, "RealmsExistBatchAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmService, RealmsExistBatchRequest, RealmsExistBatchResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RealmsExistBatchAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1457,9 +1479,11 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SeedRealmsResponse>(
-                _directDispatchProvider, _serviceName, "SeedRealmsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmService, SeedRealmsRequest, SeedRealmsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SeedRealmsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1556,9 +1580,11 @@ public partial class RealmClient : IRealmClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmLocationArchiveContext>(
-                _directDispatchProvider, _serviceName, "GetLocationCompressContextAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IRealmService, GetLocationCompressContextRequest, RealmLocationArchiveContext>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetLocationCompressContextAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

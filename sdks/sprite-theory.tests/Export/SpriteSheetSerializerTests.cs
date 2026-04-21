@@ -11,7 +11,10 @@ public class SpriteSheetSerializerTests
 {
     private static SpriteSheet CreateTestSpriteSheet(Dictionary<string, string>? customProperties = null)
     {
-        var variant = new CharacterVariant("test", "model.fbx", Array.Empty<EquipmentSlot>());
+        var variant = new CharacterVariant(
+            Name: "test",
+            Model: new AssetReference("test-bundle", "model"),
+            Equipment: Array.Empty<EquipmentSlot>());
         var rig = CameraRigPresets.SideViewBrawler();
         var frames = new List<SpriteFrame>
         {
@@ -45,7 +48,7 @@ public class SpriteSheetSerializerTests
         Assert.Equal(original.Version, deserialized.Version);
         Assert.Equal(original.Generator, deserialized.Generator);
         Assert.Equal(original.Variant.Name, deserialized.Variant.Name);
-        Assert.Equal(original.Variant.ModelPath, deserialized.Variant.ModelPath);
+        Assert.Equal(original.Variant.Model, deserialized.Variant.Model);
         Assert.Equal(original.Rig.Name, deserialized.Rig.Name);
         Assert.Equal(original.Atlases.Count, deserialized.Atlases.Count);
         Assert.Equal(original.Atlases[0].Filename, deserialized.Atlases[0].Filename);
@@ -98,7 +101,7 @@ public class SpriteSheetSerializerTests
         Assert.Equal("1.0", sheet.Version);
         Assert.Equal("Test", sheet.Generator);
         Assert.Equal("test", sheet.Variant.Name);
-        Assert.Equal("model.fbx", sheet.Variant.ModelPath);
+        Assert.Equal(new AssetReference("test-bundle", "model"), sheet.Variant.Model);
         Assert.Single(sheet.Atlases);
         Assert.Equal("test_atlas.png", sheet.Atlases[0].Filename);
         Assert.Equal(128, sheet.Atlases[0].Width);

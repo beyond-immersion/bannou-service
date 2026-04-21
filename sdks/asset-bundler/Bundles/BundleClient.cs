@@ -8,7 +8,8 @@ namespace BeyondImmersion.Bannou.AssetBundler.Bundles;
 
 /// <summary>
 /// Client for managing bundle metadata, lifecycle, and version history.
-/// Provides high-level operations for bundle CRUD, soft-delete/restore, and querying.
+/// Provides high-level operations for bundle CRUD and querying. Bundle deletion
+/// is final (no soft-delete or restore).
 /// </summary>
 public sealed class BundleClient
 {
@@ -121,84 +122,28 @@ public sealed class BundleClient
     }
 
     /// <summary>
-    /// Soft-deletes a bundle (can be restored within retention period).
+    /// Permanently deletes a bundle. Deletion is final; the bundle cannot be restored.
     /// </summary>
     /// <param name="bundleId">Bundle identifier.</param>
-    /// <param name="reason">Optional deletion reason.</param>
-    /// <param name="permanent">If true, permanently deletes the bundle.</param>
+    /// <param name="reason">Optional deletion reason (recorded in version history).</param>
     /// <param name="ct">Cancellation token.</param>
-    /// <returns>Deletion result.</returns>
-    public async Task<DeleteResult> DeleteAsync(
+    public async Task DeleteAsync(
         string bundleId,
         string? reason = null,
-        bool permanent = false,
         CancellationToken ct = default)
     {
-        _logger?.LogInformation(
-            "Deleting bundle {BundleId} (permanent={Permanent})",
-            bundleId, permanent);
+        _logger?.LogInformation("Deleting bundle {BundleId}", bundleId);
 
         var request = new DeleteBundleRequest
-        {
-            BundleId = bundleId,
-            Reason = reason,
-            Permanent = permanent
-        };
-
-        var response = await _client.InvokeAsync<DeleteBundleRequest, DeleteBundleResponse>(
-            "/bundles/delete", request, cancellationToken: ct);
-
-        var result = AssetApiHelpers.EnsureSuccess(response, "delete bundle");
-
-        _logger?.LogInformation(
-            "Deleted bundle {BundleId}, status={Status}",
-            bundleId, result.Status);
-
-        return new DeleteResult
-        {
-            BundleId = bundleId,
-            Status = result.Status.ToString(),
-            DeletedAt = result.DeletedAt,
-            RetentionUntil = result.RetentionUntil
-        };
-    }
-
-    /// <summary>
-    /// Restores a soft-deleted bundle.
-    /// </summary>
-    /// <param name="bundleId">Bundle identifier.</param>
-    /// <param name="reason">Optional restore reason.</param>
-    /// <param name="ct">Cancellation token.</param>
-    /// <returns>Restore result.</returns>
-    public async Task<RestoreResult> RestoreAsync(
-        string bundleId,
-        string? reason = null,
-        CancellationToken ct = default)
-    {
-        _logger?.LogInformation("Restoring bundle {BundleId}", bundleId);
-
-        var request = new RestoreBundleRequest
         {
             BundleId = bundleId,
             Reason = reason
         };
 
-        var response = await _client.InvokeAsync<RestoreBundleRequest, RestoreBundleResponse>(
-            "/bundles/restore", request, cancellationToken: ct);
+        await _client.SendEventAsync<DeleteBundleRequest>(
+            "/bundles/delete", request, cancellationToken: ct);
 
-        var result = AssetApiHelpers.EnsureSuccess(response, "restore bundle");
-
-        _logger?.LogInformation(
-            "Restored bundle {BundleId} from version {FromVersion}",
-            bundleId, result.RestoredFromVersion);
-
-        return new RestoreResult
-        {
-            BundleId = bundleId,
-            Status = result.Status.ToString(),
-            RestoredAt = DateTimeOffset.UtcNow,
-            RestoredFromVersion = result.RestoredFromVersion
-        };
+        _logger?.LogInformation("Deleted bundle {BundleId}", bundleId);
     }
 
     /// <summary>
@@ -273,8 +218,7 @@ public sealed class BundleClient
             Realm = AssetApiHelpers.ParseRealm(query.Realm),
             BundleType = AssetApiHelpers.ParseBundleType(query.BundleType),
             Limit = query.Limit,
-            Offset = query.Offset,
-            IncludeDeleted = query.IncludeDeleted
+            Offset = query.Offset
         };
 
         var response = await _client.InvokeAsync<QueryBundlesRequest, QueryBundlesResponse>(
@@ -337,8 +281,7 @@ public sealed class BundleClient
             AssetCount = info.AssetCount,
             SizeBytes = info.SizeBytes ?? 0,
             CreatedAt = info.CreatedAt,
-            UpdatedAt = info.UpdatedAt,
-            DeletedAt = info.DeletedAt
+            UpdatedAt = info.UpdatedAt
         };
     }
 
@@ -464,11 +407,6 @@ public sealed class BundleMetadataResult
     /// When the bundle was last updated.
     /// </summary>
     public DateTimeOffset? UpdatedAt { get; init; }
-
-    /// <summary>
-    /// When the bundle was deleted.
-    /// </summary>
-    public DateTimeOffset? DeletedAt { get; init; }
 }
 
 /// <summary>
@@ -536,58 +474,6 @@ public sealed class UpdateResult
     /// When the update was made.
     /// </summary>
     public required DateTimeOffset UpdatedAt { get; init; }
-}
-
-/// <summary>
-/// Result of deleting a bundle.
-/// </summary>
-public sealed class DeleteResult
-{
-    /// <summary>
-    /// Bundle identifier.
-    /// </summary>
-    public required string BundleId { get; init; }
-
-    /// <summary>
-    /// Deletion status (deleted or permanently_deleted).
-    /// </summary>
-    public required string Status { get; init; }
-
-    /// <summary>
-    /// When the bundle was deleted.
-    /// </summary>
-    public required DateTimeOffset DeletedAt { get; init; }
-
-    /// <summary>
-    /// When the bundle will be permanently purged (null if permanent).
-    /// </summary>
-    public DateTimeOffset? RetentionUntil { get; init; }
-}
-
-/// <summary>
-/// Result of restoring a bundle.
-/// </summary>
-public sealed class RestoreResult
-{
-    /// <summary>
-    /// Bundle identifier.
-    /// </summary>
-    public required string BundleId { get; init; }
-
-    /// <summary>
-    /// Current status (should be "active").
-    /// </summary>
-    public required string Status { get; init; }
-
-    /// <summary>
-    /// When the bundle was restored.
-    /// </summary>
-    public required DateTimeOffset RestoredAt { get; init; }
-
-    /// <summary>
-    /// Version the bundle was restored from.
-    /// </summary>
-    public required int RestoredFromVersion { get; init; }
 }
 
 /// <summary>
@@ -673,7 +559,7 @@ public sealed record BundleQuery
     public IReadOnlyList<string>? TagNotExists { get; init; }
 
     /// <summary>
-    /// Filter by status (active, deleted, processing).
+    /// Filter by status (active, processing).
     /// </summary>
     public string? Status { get; init; }
 
@@ -711,11 +597,6 @@ public sealed record BundleQuery
     /// Pagination offset.
     /// </summary>
     public int Offset { get; init; } = 0;
-
-    /// <summary>
-    /// Include soft-deleted bundles.
-    /// </summary>
-    public bool IncludeDeleted { get; init; } = false;
 }
 
 /// <summary>

@@ -386,9 +386,11 @@ public partial class SpeciesClient : ISpeciesClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SpeciesResponse>(
-                _directDispatchProvider, _serviceName, "GetSpeciesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ISpeciesService, GetSpeciesRequest, SpeciesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetSpeciesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -483,9 +485,11 @@ public partial class SpeciesClient : ISpeciesClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SpeciesResponse>(
-                _directDispatchProvider, _serviceName, "GetSpeciesByCodeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ISpeciesService, GetSpeciesByCodeRequest, SpeciesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetSpeciesByCodeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -580,9 +584,11 @@ public partial class SpeciesClient : ISpeciesClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SpeciesListResponse>(
-                _directDispatchProvider, _serviceName, "ListSpeciesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ISpeciesService, ListSpeciesRequest, SpeciesListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListSpeciesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -671,9 +677,11 @@ public partial class SpeciesClient : ISpeciesClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SpeciesListResponse>(
-                _directDispatchProvider, _serviceName, "ListSpeciesByRealmAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ISpeciesService, ListSpeciesByRealmRequest, SpeciesListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListSpeciesByRealmAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -765,9 +773,11 @@ public partial class SpeciesClient : ISpeciesClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SpeciesResponse>(
-                _directDispatchProvider, _serviceName, "CreateSpeciesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ISpeciesService, CreateSpeciesRequest, SpeciesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateSpeciesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -865,9 +875,11 @@ public partial class SpeciesClient : ISpeciesClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SpeciesResponse>(
-                _directDispatchProvider, _serviceName, "UpdateSpeciesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ISpeciesService, UpdateSpeciesRequest, SpeciesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateSpeciesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -970,9 +982,11 @@ public partial class SpeciesClient : ISpeciesClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "DeleteSpeciesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<ISpeciesService, DeleteSpeciesRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteSpeciesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1073,9 +1087,11 @@ public partial class SpeciesClient : ISpeciesClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SpeciesResponse>(
-                _directDispatchProvider, _serviceName, "DeprecateSpeciesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ISpeciesService, DeprecateSpeciesRequest, SpeciesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeprecateSpeciesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1171,9 +1187,11 @@ public partial class SpeciesClient : ISpeciesClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SpeciesResponse>(
-                _directDispatchProvider, _serviceName, "UndeprecateSpeciesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ISpeciesService, UndeprecateSpeciesRequest, SpeciesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UndeprecateSpeciesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1278,9 +1296,11 @@ public partial class SpeciesClient : ISpeciesClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<MergeSpeciesResponse>(
-                _directDispatchProvider, _serviceName, "MergeSpeciesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ISpeciesService, MergeSpeciesRequest, MergeSpeciesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.MergeSpeciesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1387,9 +1407,11 @@ public partial class SpeciesClient : ISpeciesClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SpeciesResponse>(
-                _directDispatchProvider, _serviceName, "AddSpeciesToRealmAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ISpeciesService, AddSpeciesToRealmRequest, SpeciesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.AddSpeciesToRealmAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1490,9 +1512,11 @@ public partial class SpeciesClient : ISpeciesClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SpeciesResponse>(
-                _directDispatchProvider, _serviceName, "RemoveSpeciesFromRealmAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ISpeciesService, RemoveSpeciesFromRealmRequest, SpeciesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RemoveSpeciesFromRealmAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1595,9 +1619,11 @@ public partial class SpeciesClient : ISpeciesClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SeedSpeciesResponse>(
-                _directDispatchProvider, _serviceName, "SeedSpeciesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ISpeciesService, SeedSpeciesRequest, SeedSpeciesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SeedSpeciesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1695,9 +1721,11 @@ public partial class SpeciesClient : ISpeciesClient, BeyondImmersion.BannouServi
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<MigrateByRealmResponse>(
-                _directDispatchProvider, _serviceName, "MigrateByRealmAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ISpeciesService, MigrateByRealmRequest, MigrateByRealmResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.MigrateByRealmAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

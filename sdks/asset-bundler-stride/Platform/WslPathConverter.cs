@@ -33,7 +33,9 @@ public static class WslPathConverter
             try
             {
                 // WSL sets WSL_DISTRO_NAME environment variable
-                if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WSL_DISTRO_NAME")))
+                // Fully-qualified System.Environment to disambiguate from
+                // BeyondImmersion.Bannou.Environment (pulled in transitively via client SDK)
+                if (!string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("WSL_DISTRO_NAME")))
                 {
                     _isWsl = true;
                     return true;

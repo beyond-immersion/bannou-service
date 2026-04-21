@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core.Math;
 using BeyondImmersion.Bannou.SpriteTheory;
 using BeyondImmersion.Bannou.SpriteTheory.Camera;
 using Xunit;
@@ -7,8 +8,8 @@ namespace BeyondImmersion.Bannou.SpriteTheory.Tests.Camera;
 public class OrthographicSetupTests
 {
     private static readonly BoundingBox UnitCube = new(
-        min: (-0.5f, -0.5f, -0.5f),
-        max: (0.5f, 0.5f, 0.5f));
+        min: new Vector3(-0.5f, -0.5f, -0.5f),
+        max: new Vector3(0.5f, 0.5f, 0.5f));
 
     private static readonly (int Width, int Height) DefaultFrameSize = (128, 128);
 
@@ -139,7 +140,7 @@ public class OrthographicSetupTests
     public void Compute_Deterministic_SameInputSameOutput()
     {
         var angle = new CaptureAngle(Name: "SE", Yaw: 135f, Pitch: -45f);
-        var bounds = new BoundingBox((-1f, 0f, -1f), (1f, 2f, 1f));
+        var bounds = new BoundingBox(new Vector3(-1f, 0f, -1f), new Vector3(1f, 2f, 1f));
         var frameSize = (Width: 96, Height: 96);
 
         var result1 = OrthographicSetup.Compute(angle, bounds, frameSize);

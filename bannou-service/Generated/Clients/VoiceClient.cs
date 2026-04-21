@@ -352,9 +352,11 @@ public partial class VoiceClient : IVoiceClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<VoiceRoomResponse>(
-                _directDispatchProvider, _serviceName, "CreateVoiceRoomAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IVoiceService, CreateVoiceRoomRequest, VoiceRoomResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateVoiceRoomAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -455,9 +457,11 @@ public partial class VoiceClient : IVoiceClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<VoiceRoomResponse>(
-                _directDispatchProvider, _serviceName, "GetVoiceRoomAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IVoiceService, GetVoiceRoomRequest, VoiceRoomResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetVoiceRoomAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -555,9 +559,11 @@ public partial class VoiceClient : IVoiceClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<JoinVoiceRoomResponse>(
-                _directDispatchProvider, _serviceName, "JoinVoiceRoomAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IVoiceService, JoinVoiceRoomRequest, JoinVoiceRoomResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.JoinVoiceRoomAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -664,9 +670,11 @@ public partial class VoiceClient : IVoiceClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "LeaveVoiceRoomAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IVoiceService, LeaveVoiceRoomRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.LeaveVoiceRoomAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -756,9 +764,11 @@ public partial class VoiceClient : IVoiceClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "DeleteVoiceRoomAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IVoiceService, DeleteVoiceRoomRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteVoiceRoomAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -849,9 +859,11 @@ public partial class VoiceClient : IVoiceClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "PeerHeartbeatAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IVoiceService, PeerHeartbeatRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.PeerHeartbeatAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -947,9 +959,11 @@ public partial class VoiceClient : IVoiceClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "AnswerPeerAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IVoiceService, AnswerPeerRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.AnswerPeerAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1046,9 +1060,11 @@ public partial class VoiceClient : IVoiceClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BroadcastConsentStatus>(
-                _directDispatchProvider, _serviceName, "RequestBroadcastConsentAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IVoiceService, BroadcastConsentRequest, BroadcastConsentStatus>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RequestBroadcastConsentAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1149,9 +1165,11 @@ public partial class VoiceClient : IVoiceClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BroadcastConsentStatus>(
-                _directDispatchProvider, _serviceName, "RespondBroadcastConsentAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IVoiceService, BroadcastConsentResponse, BroadcastConsentStatus>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RespondBroadcastConsentAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1246,9 +1264,11 @@ public partial class VoiceClient : IVoiceClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "StopBroadcastAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IVoiceService, StopBroadcastConsentRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.StopBroadcastAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1338,9 +1358,11 @@ public partial class VoiceClient : IVoiceClient, BeyondImmersion.BannouService.S
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BroadcastConsentStatus>(
-                _directDispatchProvider, _serviceName, "GetBroadcastStatusAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IVoiceService, BroadcastStatusRequest, BroadcastConsentStatus>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetBroadcastStatusAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

@@ -160,6 +160,82 @@
         <member name="P:BeyondImmersion.Bannou.SpriteTheory.Animation.FrameSequence.FrameCount">
             <summary>Number of frames in the sequence.</summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.SpriteTheory.AssetReference">
+            <summary>
+            Engine-agnostic asset identifier used across the sprite-composer family for model,
+            equipment mesh, and material references.
+            </summary>
+            <remarks>
+            <para>
+            The bridge resolves an <see cref="T:BeyondImmersion.Bannou.SpriteTheory.AssetReference"/> to an engine-specific handle at
+            load time (e.g., a Stride <c>Model</c>, a Godot <c>PackedScene</c>). For raw-FBX
+            workflows, engine bridges supporting filesystem asset sources register loose files
+            as single-asset bundles and use the bundle identifier as a stable handle — the
+            exact convention is the bridge's concern, not sprite-theory's.
+            </para>
+            <para>
+            Round-trips through <c>System.Text.Json</c> with default record serialization —
+            no custom converter required. Properties serialize as <c>bundleId</c>, <c>assetId</c>,
+            and <c>variantId</c> in camelCase JSON.
+            </para>
+            </remarks>
+            <param name="BundleId">
+            Asset bundle identifier. For raw-FBX workflows, engine bridges supporting filesystem
+            asset sources register loose files as single-asset bundles and use the bundle ID as
+            a stable handle.
+            </param>
+            <param name="AssetId">Asset identifier within the bundle.</param>
+            <param name="VariantId">
+            Optional variant identifier for assets with multiple visual variants (e.g., LOD levels,
+            palette swaps). Null for the default variant.
+            </param>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.AssetReference.#ctor(System.String,System.String,System.String)">
+            <summary>
+            Engine-agnostic asset identifier used across the sprite-composer family for model,
+            equipment mesh, and material references.
+            </summary>
+            <remarks>
+            <para>
+            The bridge resolves an <see cref="T:BeyondImmersion.Bannou.SpriteTheory.AssetReference"/> to an engine-specific handle at
+            load time (e.g., a Stride <c>Model</c>, a Godot <c>PackedScene</c>). For raw-FBX
+            workflows, engine bridges supporting filesystem asset sources register loose files
+            as single-asset bundles and use the bundle identifier as a stable handle — the
+            exact convention is the bridge's concern, not sprite-theory's.
+            </para>
+            <para>
+            Round-trips through <c>System.Text.Json</c> with default record serialization —
+            no custom converter required. Properties serialize as <c>bundleId</c>, <c>assetId</c>,
+            and <c>variantId</c> in camelCase JSON.
+            </para>
+            </remarks>
+            <param name="BundleId">
+            Asset bundle identifier. For raw-FBX workflows, engine bridges supporting filesystem
+            asset sources register loose files as single-asset bundles and use the bundle ID as
+            a stable handle.
+            </param>
+            <param name="AssetId">Asset identifier within the bundle.</param>
+            <param name="VariantId">
+            Optional variant identifier for assets with multiple visual variants (e.g., LOD levels,
+            palette swaps). Null for the default variant.
+            </param>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.AssetReference.BundleId">
+            <summary>
+            Asset bundle identifier. For raw-FBX workflows, engine bridges supporting filesystem
+            asset sources register loose files as single-asset bundles and use the bundle ID as
+            a stable handle.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.AssetReference.AssetId">
+            <summary>Asset identifier within the bundle.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.AssetReference.VariantId">
+            <summary>
+            Optional variant identifier for assets with multiple visual variants (e.g., LOD levels,
+            palette swaps). Null for the default variant.
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasLayout">
             <summary>
             The result of atlas packing via <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasPacker.Pack(System.Collections.Generic.IReadOnlyList{System.ValueTuple{System.Int32,System.Int32,System.Int32}},BeyondImmersion.Bannou.SpriteTheory.Atlas.AtlasOptions)"/>. Contains per-frame
@@ -394,7 +470,7 @@
         <member name="P:BeyondImmersion.Bannou.SpriteTheory.BoundingBox.Max">
             <summary>Maximum corner of the bounding box (largest X, Y, Z values).</summary>
         </member>
-        <member name="M:BeyondImmersion.Bannou.SpriteTheory.BoundingBox.#ctor(System.ValueTuple{System.Single,System.Single,System.Single},System.ValueTuple{System.Single,System.Single,System.Single})">
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.BoundingBox.#ctor(BeyondImmersion.Bannou.Core.Math.Vector3,BeyondImmersion.Bannou.Core.Math.Vector3)">
             <summary>
             Creates a new bounding box with the specified minimum and maximum corners.
             </summary>
@@ -608,8 +684,9 @@
             needed to configure an orthographic camera that frames a bounding box from a given angle.
             </summary>
             <remarks>
-            All vectors use (float X, float Y, float Z) tuples. The bridge maps these to
-            engine-specific camera types (e.g., Stride's CameraComponent).
+            All vectors use the shared <see cref="T:BeyondImmersion.Bannou.Core.Math.Vector3"/> primitive from
+            <c>BeyondImmersion.Bannou.Core.Math</c>. The bridge maps these to engine-specific
+            camera types (e.g., Stride's <c>CameraComponent</c>).
             </remarks>
             <param name="Position">Camera world position, placed along the negative direction from the bounding box center.</param>
             <param name="Direction">Camera forward direction vector (normalized).</param>
@@ -619,14 +696,15 @@
             <param name="NearPlane">Near clip plane distance.</param>
             <param name="FarPlane">Far clip plane distance.</param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters.#ctor(System.ValueTuple{System.Single,System.Single,System.Single},System.ValueTuple{System.Single,System.Single,System.Single},System.ValueTuple{System.Single,System.Single,System.Single},System.Single,System.Single,System.Single,System.Single)">
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters.#ctor(BeyondImmersion.Bannou.Core.Math.Vector3,BeyondImmersion.Bannou.Core.Math.Vector3,BeyondImmersion.Bannou.Core.Math.Vector3,System.Single,System.Single,System.Single,System.Single)">
             <summary>
             Output of <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicSetup.Compute(BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle,BeyondImmersion.Bannou.SpriteTheory.BoundingBox,System.ValueTuple{System.Int32,System.Int32})"/>: the complete set of camera parameters
             needed to configure an orthographic camera that frames a bounding box from a given angle.
             </summary>
             <remarks>
-            All vectors use (float X, float Y, float Z) tuples. The bridge maps these to
-            engine-specific camera types (e.g., Stride's CameraComponent).
+            All vectors use the shared <see cref="T:BeyondImmersion.Bannou.Core.Math.Vector3"/> primitive from
+            <c>BeyondImmersion.Bannou.Core.Math</c>. The bridge maps these to engine-specific
+            camera types (e.g., Stride's <c>CameraComponent</c>).
             </remarks>
             <param name="Position">Camera world position, placed along the negative direction from the bounding box center.</param>
             <param name="Direction">Camera forward direction vector (normalized).</param>
@@ -684,9 +762,9 @@
         </member>
         <member name="T:BeyondImmersion.Bannou.SpriteTheory.Camera.PivotComputer">
             <summary>
-            Computes sprite pivot points from model bounding boxes and camera parameters.
-            Projects the bottom-center of the bounding box (a standing humanoid's feet) onto the
-            capture camera's frame plane, yielding a pivot expressed in normalized frame coordinates.
+            Computes sprite pivot points from model bounding boxes, arbitrary world points, and camera parameters.
+            Projects points in world space onto the capture camera's frame plane, yielding pivots expressed in
+            normalized frame coordinates.
             </summary>
             <remarks>
             <para>
@@ -696,23 +774,26 @@
             typical camera angles, and diverge for subjects with non-humanoid proportions.
             </para>
             <para>
-            Use <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Camera.PivotComputer.ComputeFromBounds(BeyondImmersion.Bannou.SpriteTheory.BoundingBox,BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters)"/> when you have both the model bounds and the configured
-            orthographic camera for an angle — the computed pivot accounts for the camera's viewpoint.
+            Use <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Camera.PivotComputer.ComputeFromBounds(BeyondImmersion.Bannou.SpriteTheory.BoundingBox,BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters)"/> for the common feet-on-ground convention — it projects the
+            bottom-center of the bounding box onto the frame plane. Use <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Camera.PivotComputer.ProjectWorldPointToFrame(BeyondImmersion.Bannou.Core.Math.Vector3,BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters)"/>
+            when you have a specific anchor point (e.g., a skeleton bone's world position from the bridge).
             For subjects whose feet projection is unreliable (flying enemies, asymmetric bosses),
             consumers should provide a <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.PivotOverride"/>
-            and skip auto-computation.
+            or a bone-based <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.AnchorBoneName"/>
+            and skip bounds-based auto-computation.
             </para>
             </remarks>
         </member>
         <member name="F:BeyondImmersion.Bannou.SpriteTheory.Camera.PivotComputer.DefaultHumanoidPivot">
             <summary>
             The humanoid-standing default pivot: center-X, 85% from the top.
-            Used as a fallback when neither a per-variant override nor auto-computation is applied.
+            Used as a fallback when neither a per-variant override nor auto-computation is applied,
+            and when the camera basis is degenerate or the orthographic dimensions are zero.
             </summary>
         </member>
         <member name="M:BeyondImmersion.Bannou.SpriteTheory.Camera.PivotComputer.ComputeFromBounds(BeyondImmersion.Bannou.SpriteTheory.BoundingBox,BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters)">
             <summary>
-            Computes a pivot point by projecting the bottom-center of a bounding box onto the
+            Computes a pivot by projecting the bottom-center of a bounding box ("feet point") onto the
             frame plane of an orthographic camera, returning normalized frame coordinates.
             </summary>
             <remarks>
@@ -720,16 +801,33 @@
             The "feet" point is defined as (Center.X, Min.Y, Center.Z) in world space — the
             midpoint of the bounding box in the horizontal plane, at the lowest vertical extent.
             For an upright humanoid with the Y axis pointing up, this is where the feet touch the
-            ground.
+            ground. This method is a thin wrapper around <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Camera.PivotComputer.ProjectWorldPointToFrame(BeyondImmersion.Bannou.Core.Math.Vector3,BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters)"/>
+            that computes the feet point and delegates.
             </para>
+            </remarks>
+            <param name="bounds">Axis-aligned model bounds in world space.</param>
+            <param name="camera">Orthographic camera parameters (typically from <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicSetup.Compute(BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle,BeyondImmersion.Bannou.SpriteTheory.BoundingBox,System.ValueTuple{System.Int32,System.Int32})"/>).</param>
+            <returns>Pivot in normalized frame coordinates, clamped to [0, 1] × [0, 1].</returns>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Camera.PivotComputer.ProjectWorldPointToFrame(BeyondImmersion.Bannou.Core.Math.Vector3,BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters)">
+            <summary>
+            Projects a world-space point onto the frame plane of an orthographic camera and returns
+            the result in normalized frame coordinates.
+            </summary>
+            <remarks>
             <para>
             The point is projected into the camera's (right, up) plane via dot products with the
             camera basis vectors, then mapped to normalized frame coordinates where (0, 0) is the
             top-left and (1, 1) is the bottom-right. The result is clamped to [0, 1] to guarantee
-            the pivot stays within the frame even if the feet project slightly outside.
+            the pivot stays within the frame even if the world point projects slightly outside.
+            </para>
+            <para>
+            Returns <see cref="F:BeyondImmersion.Bannou.SpriteTheory.Camera.PivotComputer.DefaultHumanoidPivot"/> when the camera basis is degenerate
+            (direction parallel to up) or the orthographic dimensions are zero — these cases
+            admit no well-defined projection.
             </para>
             </remarks>
-            <param name="bounds">Axis-aligned model bounds in world space.</param>
+            <param name="worldPoint">Point in world space to project.</param>
             <param name="camera">Orthographic camera parameters (typically from <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicSetup.Compute(BeyondImmersion.Bannou.SpriteTheory.Camera.CaptureAngle,BeyondImmersion.Bannou.SpriteTheory.BoundingBox,System.ValueTuple{System.Int32,System.Int32})"/>).</param>
             <returns>Pivot in normalized frame coordinates, clamped to [0, 1] × [0, 1].</returns>
         </member>
@@ -1112,56 +1210,106 @@
             a unique visual variant (e.g., "warrior_plate_sword").
             </summary>
             <remarks>
+            <para>
             Serialized as part of <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet"/> metadata and sprite project files.
             The variant fully describes what was captured, enabling reproducible batch captures.
+            </para>
+            <para>
+            <b>Pivot resolution order</b> (evaluated by consumers such as sprite-composer during capture):
+            <list type="number">
+            <item><description><see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.PivotOverride"/> — used verbatim when non-null.</description></item>
+            <item><description><see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.AnchorBoneName"/> — when non-null AND the bridge supports skeleton
+              introspection AND the bone exists, the bone's world position is projected onto the frame plane
+              via <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Camera.PivotComputer.ProjectWorldPointToFrame(BeyondImmersion.Bannou.Core.Math.Vector3,BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters)"/>.</description></item>
+            <item><description><see cref="M:BeyondImmersion.Bannou.SpriteTheory.Camera.PivotComputer.ComputeFromBounds(BeyondImmersion.Bannou.SpriteTheory.BoundingBox,BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters)"/> — falls back to feet-on-ground
+              projection from the model bounds.</description></item>
+            <item><description><see cref="F:BeyondImmersion.Bannou.SpriteTheory.Camera.PivotComputer.DefaultHumanoidPivot"/> — terminal fallback when
+              the camera basis is degenerate.</description></item>
+            </list>
+            </para>
             </remarks>
             <param name="Name">Variant identifier (e.g., "warrior_plate_sword").</param>
-            <param name="ModelPath">Path to the base character model (FBX/glTF).</param>
+            <param name="Model">Reference to the base character model asset (FBX/glTF/engine-native).</param>
             <param name="Equipment">Attached equipment pieces defining slot-to-mesh-to-bone mappings.</param>
-            <param name="MaterialOverrides">Material or palette swaps applied during capture. Null if no overrides.</param>
+            <param name="MaterialOverrides">
+            Material or palette swaps applied during capture, keyed by material slot name. Null if no overrides.
+            </param>
             <param name="Scale">Model scale factor. Defaults to 1.0 (no scaling).</param>
             <param name="PivotOverride">
             Optional per-variant pivot override in normalized frame coordinates (0,0 = top-left;
-            0.5, 0.85 = center-bottom humanoid default). When null, consumers should auto-compute
-            from bounds via <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Camera.PivotComputer.ComputeFromBounds(BeyondImmersion.Bannou.SpriteTheory.BoundingBox,BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters)"/>.
-            Set this for subjects whose feet projection is unreliable (flying enemies, tall bosses,
-            quadrupeds with unusual proportions).
+            0.5, 0.85 = center-bottom humanoid default). When set, takes precedence over every
+            auto-computation path — see the pivot resolution order in this type's remarks.
+            Use for subjects whose auto-computed pivot is unreliable even with a bone anchor.
+            </param>
+            <param name="AnchorBoneName">
+            Optional skeleton bone whose world position anchors the pivot. When set, the bridge's
+            <c>TryGetBonePosition</c> is queried and the returned point is projected onto the frame plane
+            via <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Camera.PivotComputer.ProjectWorldPointToFrame(BeyondImmersion.Bannou.Core.Math.Vector3,BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters)"/>. Null to skip bone anchoring
+            and fall through to bounds-based auto-computation. Use for subjects whose bounding-box minimum
+            is not a sensible anchor (flowing cloth extending bounds below the feet, weapons extending
+            bounds outward, asymmetric rigs).
             </param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.#ctor(System.String,System.String,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.SpriteTheory.Metadata.EquipmentSlot},System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.Single,System.Nullable{BeyondImmersion.Bannou.SpriteTheory.Vector2})">
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.#ctor(System.String,BeyondImmersion.Bannou.SpriteTheory.AssetReference,System.Collections.Generic.IReadOnlyList{BeyondImmersion.Bannou.SpriteTheory.Metadata.EquipmentSlot},System.Collections.Generic.IReadOnlyDictionary{System.String,BeyondImmersion.Bannou.SpriteTheory.AssetReference},System.Single,System.Nullable{BeyondImmersion.Bannou.SpriteTheory.Vector2},System.String)">
             <summary>
             Input definition describing a specific character configuration to capture.
             Combines a base model with equipment, material overrides, and scale to define
             a unique visual variant (e.g., "warrior_plate_sword").
             </summary>
             <remarks>
+            <para>
             Serialized as part of <see cref="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.SpriteSheet"/> metadata and sprite project files.
             The variant fully describes what was captured, enabling reproducible batch captures.
+            </para>
+            <para>
+            <b>Pivot resolution order</b> (evaluated by consumers such as sprite-composer during capture):
+            <list type="number">
+            <item><description><see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.PivotOverride"/> — used verbatim when non-null.</description></item>
+            <item><description><see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.AnchorBoneName"/> — when non-null AND the bridge supports skeleton
+              introspection AND the bone exists, the bone's world position is projected onto the frame plane
+              via <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Camera.PivotComputer.ProjectWorldPointToFrame(BeyondImmersion.Bannou.Core.Math.Vector3,BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters)"/>.</description></item>
+            <item><description><see cref="M:BeyondImmersion.Bannou.SpriteTheory.Camera.PivotComputer.ComputeFromBounds(BeyondImmersion.Bannou.SpriteTheory.BoundingBox,BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters)"/> — falls back to feet-on-ground
+              projection from the model bounds.</description></item>
+            <item><description><see cref="F:BeyondImmersion.Bannou.SpriteTheory.Camera.PivotComputer.DefaultHumanoidPivot"/> — terminal fallback when
+              the camera basis is degenerate.</description></item>
+            </list>
+            </para>
             </remarks>
             <param name="Name">Variant identifier (e.g., "warrior_plate_sword").</param>
-            <param name="ModelPath">Path to the base character model (FBX/glTF).</param>
+            <param name="Model">Reference to the base character model asset (FBX/glTF/engine-native).</param>
             <param name="Equipment">Attached equipment pieces defining slot-to-mesh-to-bone mappings.</param>
-            <param name="MaterialOverrides">Material or palette swaps applied during capture. Null if no overrides.</param>
+            <param name="MaterialOverrides">
+            Material or palette swaps applied during capture, keyed by material slot name. Null if no overrides.
+            </param>
             <param name="Scale">Model scale factor. Defaults to 1.0 (no scaling).</param>
             <param name="PivotOverride">
             Optional per-variant pivot override in normalized frame coordinates (0,0 = top-left;
-            0.5, 0.85 = center-bottom humanoid default). When null, consumers should auto-compute
-            from bounds via <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Camera.PivotComputer.ComputeFromBounds(BeyondImmersion.Bannou.SpriteTheory.BoundingBox,BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters)"/>.
-            Set this for subjects whose feet projection is unreliable (flying enemies, tall bosses,
-            quadrupeds with unusual proportions).
+            0.5, 0.85 = center-bottom humanoid default). When set, takes precedence over every
+            auto-computation path — see the pivot resolution order in this type's remarks.
+            Use for subjects whose auto-computed pivot is unreliable even with a bone anchor.
+            </param>
+            <param name="AnchorBoneName">
+            Optional skeleton bone whose world position anchors the pivot. When set, the bridge's
+            <c>TryGetBonePosition</c> is queried and the returned point is projected onto the frame plane
+            via <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Camera.PivotComputer.ProjectWorldPointToFrame(BeyondImmersion.Bannou.Core.Math.Vector3,BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters)"/>. Null to skip bone anchoring
+            and fall through to bounds-based auto-computation. Use for subjects whose bounding-box minimum
+            is not a sensible anchor (flowing cloth extending bounds below the feet, weapons extending
+            bounds outward, asymmetric rigs).
             </param>
         </member>
         <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.Name">
             <summary>Variant identifier (e.g., "warrior_plate_sword").</summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.ModelPath">
-            <summary>Path to the base character model (FBX/glTF).</summary>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.Model">
+            <summary>Reference to the base character model asset (FBX/glTF/engine-native).</summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.Equipment">
             <summary>Attached equipment pieces defining slot-to-mesh-to-bone mappings.</summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.MaterialOverrides">
-            <summary>Material or palette swaps applied during capture. Null if no overrides.</summary>
+            <summary>
+            Material or palette swaps applied during capture, keyed by material slot name. Null if no overrides.
+            </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.Scale">
             <summary>Model scale factor. Defaults to 1.0 (no scaling).</summary>
@@ -1169,10 +1317,19 @@
         <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.PivotOverride">
             <summary>
             Optional per-variant pivot override in normalized frame coordinates (0,0 = top-left;
-            0.5, 0.85 = center-bottom humanoid default). When null, consumers should auto-compute
-            from bounds via <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Camera.PivotComputer.ComputeFromBounds(BeyondImmersion.Bannou.SpriteTheory.BoundingBox,BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters)"/>.
-            Set this for subjects whose feet projection is unreliable (flying enemies, tall bosses,
-            quadrupeds with unusual proportions).
+            0.5, 0.85 = center-bottom humanoid default). When set, takes precedence over every
+            auto-computation path — see the pivot resolution order in this type's remarks.
+            Use for subjects whose auto-computed pivot is unreliable even with a bone anchor.
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.CharacterVariant.AnchorBoneName">
+            <summary>
+            Optional skeleton bone whose world position anchors the pivot. When set, the bridge's
+            <c>TryGetBonePosition</c> is queried and the returned point is projected onto the frame plane
+            via <see cref="M:BeyondImmersion.Bannou.SpriteTheory.Camera.PivotComputer.ProjectWorldPointToFrame(BeyondImmersion.Bannou.Core.Math.Vector3,BeyondImmersion.Bannou.SpriteTheory.Camera.OrthographicParameters)"/>. Null to skip bone anchoring
+            and fall through to bounds-based auto-computation. Use for subjects whose bounding-box minimum
+            is not a sensible anchor (flowing cloth extending bounds below the feet, weapons extending
+            bounds outward, asymmetric rigs).
             </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.EquipmentSlot">
@@ -1181,23 +1338,23 @@
             Maps a named slot to a specific mesh and skeleton bone for attachment.
             </summary>
             <param name="SlotName">Slot identifier (e.g., "head", "weapon_r", "shield_l").</param>
-            <param name="MeshPath">Path to the equipment mesh asset.</param>
+            <param name="Mesh">Reference to the equipment mesh asset.</param>
             <param name="BoneName">Skeleton bone to attach the equipment mesh to.</param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Metadata.EquipmentSlot.#ctor(System.String,System.String,System.String)">
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Metadata.EquipmentSlot.#ctor(System.String,BeyondImmersion.Bannou.SpriteTheory.AssetReference,System.String)">
             <summary>
             Defines a single equipment attachment point on a character model.
             Maps a named slot to a specific mesh and skeleton bone for attachment.
             </summary>
             <param name="SlotName">Slot identifier (e.g., "head", "weapon_r", "shield_l").</param>
-            <param name="MeshPath">Path to the equipment mesh asset.</param>
+            <param name="Mesh">Reference to the equipment mesh asset.</param>
             <param name="BoneName">Skeleton bone to attach the equipment mesh to.</param>
         </member>
         <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.EquipmentSlot.SlotName">
             <summary>Slot identifier (e.g., "head", "weapon_r", "shield_l").</summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.EquipmentSlot.MeshPath">
-            <summary>Path to the equipment mesh asset.</summary>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.EquipmentSlot.Mesh">
+            <summary>Reference to the equipment mesh asset.</summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.EquipmentSlot.BoneName">
             <summary>Skeleton bone to attach the equipment mesh to.</summary>
@@ -1205,8 +1362,8 @@
         <member name="T:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture">
             <summary>
             Engine-agnostic container for captured pixel data produced by the bridge after each frame render.
-            Contains RGBA pixel data, optional depth buffer data, and metadata identifying which angle,
-            animation, and frame this capture represents.
+            Contains RGBA pixel data, optional depth buffer data, and metadata identifying which variant,
+            rig, angle, animation, and frame this capture represents.
             </summary>
             <remarks>
             <para>
@@ -1217,21 +1374,31 @@
             through 1.0 (far plane). The bridge is responsible for normalizing GPU depth to this range,
             as different graphics APIs store depth differently. Null if depth was not captured.
             </para>
+            <para>
+            <b>Identity invariant:</b> the tuple
+            (<see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.VariantName"/>, <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.RigName"/>, <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.AngleName"/>,
+            <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.AnimationName"/>, <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.FrameIndex"/>) is unique within a single capture
+            session's <c>CapturedFrames</c> list. Identity fields are ordered by nesting depth —
+            variant contains rig contains angle contains animation contains frame — and appear after
+            the pixel dimensions for readability.
+            </para>
             </remarks>
             <param name="PixelData">RGBA pixels (4 bytes per pixel, row-major top-to-bottom).</param>
             <param name="DepthData">Depth values 0.0–1.0 per pixel. Null if depth was not captured.</param>
             <param name="Width">Frame width in pixels.</param>
             <param name="Height">Frame height in pixels.</param>
+            <param name="VariantName">Which character variant this capture is for. Unique within a capture session.</param>
+            <param name="RigName">Which CameraRig was active when this frame was captured. Corresponds to <c>CameraRig.Name</c>.</param>
             <param name="AngleName">Which CaptureAngle this frame was rendered from.</param>
             <param name="AnimationName">Which animation was playing during capture.</param>
             <param name="FrameIndex">Frame number within the animation (0-based).</param>
             <param name="NormalizedTime">Animation time when captured (0.0–1.0).</param>
         </member>
-        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.#ctor(System.Byte[],System.Single[],System.Int32,System.Int32,System.String,System.String,System.Int32,System.Single)">
+        <member name="M:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.#ctor(System.Byte[],System.Single[],System.Int32,System.Int32,System.String,System.String,System.String,System.String,System.Int32,System.Single)">
             <summary>
             Engine-agnostic container for captured pixel data produced by the bridge after each frame render.
-            Contains RGBA pixel data, optional depth buffer data, and metadata identifying which angle,
-            animation, and frame this capture represents.
+            Contains RGBA pixel data, optional depth buffer data, and metadata identifying which variant,
+            rig, angle, animation, and frame this capture represents.
             </summary>
             <remarks>
             <para>
@@ -1242,11 +1409,21 @@
             through 1.0 (far plane). The bridge is responsible for normalizing GPU depth to this range,
             as different graphics APIs store depth differently. Null if depth was not captured.
             </para>
+            <para>
+            <b>Identity invariant:</b> the tuple
+            (<see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.VariantName"/>, <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.RigName"/>, <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.AngleName"/>,
+            <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.AnimationName"/>, <see cref="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.FrameIndex"/>) is unique within a single capture
+            session's <c>CapturedFrames</c> list. Identity fields are ordered by nesting depth —
+            variant contains rig contains angle contains animation contains frame — and appear after
+            the pixel dimensions for readability.
+            </para>
             </remarks>
             <param name="PixelData">RGBA pixels (4 bytes per pixel, row-major top-to-bottom).</param>
             <param name="DepthData">Depth values 0.0–1.0 per pixel. Null if depth was not captured.</param>
             <param name="Width">Frame width in pixels.</param>
             <param name="Height">Frame height in pixels.</param>
+            <param name="VariantName">Which character variant this capture is for. Unique within a capture session.</param>
+            <param name="RigName">Which CameraRig was active when this frame was captured. Corresponds to <c>CameraRig.Name</c>.</param>
             <param name="AngleName">Which CaptureAngle this frame was rendered from.</param>
             <param name="AnimationName">Which animation was playing during capture.</param>
             <param name="FrameIndex">Frame number within the animation (0-based).</param>
@@ -1263,6 +1440,12 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.Height">
             <summary>Frame height in pixels.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.VariantName">
+            <summary>Which character variant this capture is for. Unique within a capture session.</summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.RigName">
+            <summary>Which CameraRig was active when this frame was captured. Corresponds to <c>CameraRig.Name</c>.</summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.SpriteTheory.Metadata.FrameCapture.AngleName">
             <summary>Which CaptureAngle this frame was rendered from.</summary>

@@ -10,6 +10,7 @@ These tenets define quality standards to verify before merging code. Use them as
 
 ---
 
+<!-- TENET:T10 -->
 ## Tenet 10: Logging Standards (REQUIRED)
 
 **Rule**: All operations MUST include appropriate logging with structured data.
@@ -42,9 +43,11 @@ _logger.LogDebug($"Getting account {body.AccountId}");
 Use **Debug** for individual retry attempts, **Error** only when all retries exhausted.
 
 **NEVER log**: Passwords, JWT tokens (log length only), API keys, secrets, PII.
+<!-- /TENET:T10 -->
 
 ---
 
+<!-- TENET:T11 -->
 ## Tenet 11: Testing Requirements (THREE-TIER)
 
 **Rule**: All services MUST have tests at appropriate tiers.
@@ -75,9 +78,11 @@ Osherove standard: `UnitOfWork_StateUnderTest_ExpectedBehavior` (e.g., `GetAccou
 | Unit | `lib-{service}.tests/` | Business logic with mocked dependencies |
 | HTTP | `http-tester/Tests/` | Service-to-service calls via lib-mesh, generated code |
 | Edge | `edge-tester/Tests/` | Client perspective through Connect and binary protocol |
+<!-- /TENET:T11 -->
 
 ---
 
+<!-- TENET:T12 -->
 ## Tenet 12: Test Integrity (ABSOLUTE)
 
 **Rule**: Tests MUST validate the intended behavior path and assert CORRECT expected behavior. A failing test with correct assertions = implementation bug that needs fixing.
@@ -105,9 +110,11 @@ await Assert.ThrowsAsync<ArgumentNullException>(() => _service.GetAccountAsync(n
 public async Task<Response> GetAccountAsync(string? optionalFilter)
 var result = await _service.GetAccountAsync(null);  // null is allowed by type signature
 ```
+<!-- /TENET:T12 -->
 
 ---
 
+<!-- TENET:T16 -->
 ## Tenet 16: Naming Conventions (CONSOLIDATED)
 
 **Rule**: All identifiers MUST follow consistent naming patterns.
@@ -135,9 +142,11 @@ var result = await _service.GetAccountAsync(null);  // null is allowed by type s
 **Prefer single-word actions**: Where a single word captures the same meaning, prefer it over a compound action. For example, `contract.consented` over `contract.consent-received`; `realm.merged` over `realm.merge-completed`. Multi-word actions are acceptable when a single word would be ambiguous or lose meaning (e.g., `prebound-api.validation-failed` is distinct from `prebound-api.failed` — collapsing to `prebound-api.rejected` would lose the "response validation" specificity).
 
 Configuration properties: PascalCase, include units in time-based names (`HeartbeatIntervalSeconds`), document environment variable in XML comment.
+<!-- /TENET:T16 -->
 
 ---
 
+<!-- TENET:T19 -->
 ## Tenet 19: XML Documentation Standards (REQUIRED)
 
 **Rule**: All public classes, interfaces, methods, and properties MUST have XML documentation.
@@ -147,9 +156,11 @@ Configuration properties: PascalCase, include units in time-based names (`Heartb
 Configuration properties MUST document their environment variable in the summary. Use `<inheritdoc/>` when the base interface documentation is sufficient; don't use it when the implementation has important differences.
 
 Generated files get XML docs from OpenAPI schema `description` fields (NSwag converts to `<summary>`). Therefore **all schema properties MUST have `description` fields** - see T1.
+<!-- /TENET:T19 -->
 
 ---
 
+<!-- TENET:T22 -->
 ## Tenet 22: Warning Suppression (FORBIDDEN)
 
 **Rule**: Warning suppressions (`#pragma warning disable`, `[SuppressMessage]`, `NoWarn`) are FORBIDDEN except for specific documented exceptions.
@@ -196,6 +207,59 @@ For `IAsyncDisposable`, same pattern with `await` in finally. `#pragma warning d
 
 **Reflection-Based Test Fixtures**:
 - CA1822, IDE0051, IDE0052 - Members accessed via reflection that analyzers can't track. Inline `#pragma warning disable/restore` with comment explaining reflection access. Assembly-level suppressions NOT allowed.
+<!-- /TENET:T22 -->
+
+---
+
+<!-- TENET:T33 -->
+## Tenet 33: Design Specification Fidelity (ABSOLUTE)
+
+**Rule**: When a planning document (in `docs/planning/`, `docs/reference/`, or any committed design artifact) prescribes a technical approach in a labeled section, phase, or layer, the implementation MUST match that approach STRUCTURALLY. Functional equivalence is NOT structural fidelity. Implementers who believe a prescribed approach is wrong MUST stop and present the conflict before writing code.
+
+### What "Structural Fidelity" Means
+
+- **Same data-flow topology**: if the spec describes compile-time type resolution, the implementation uses compile-time type resolution
+- **Same type-parameter shape**: if the spec describes a generic `<TRequest, TResponse>` delegate, the implementation uses a generic `<TRequest, TResponse>` delegate
+- **Same reflection posture**: if the spec describes zero reflection, the implementation contains zero reflection
+- **Same error-handling topology**: if the spec describes per-method tuple deconstruction, the implementation does per-method tuple deconstruction
+- **Same call-site surface**: if the spec shows the generated code pattern per operation, the generated code matches line-for-line shape
+
+### What "Functional Equivalence" Is NOT
+
+Same inputs producing same outputs via a different machine-code path. Reflection-based dispatch that produces the same DI-resolved result as statically-typed dispatch is NOT equivalent for this tenet — the shape of the shipped code matters, not just the observable behavior. Tests that validate outputs will pass for both; this tenet is the layer that catches what tests cannot.
+
+### When the Spec Says X and You Are About to Ship Y
+
+Stop. Write down what the spec prescribes, what you are about to ship, and why they differ. Present this to the user and wait for direction. The user may:
+
+- Confirm the spec was wrong and X should become Y (they update the doc, then you ship Y)
+- Confirm X is still correct and you were about to take a shortcut (you ship X)
+- Offer a third option neither you nor they had considered
+
+What you MUST NOT do:
+
+- Ship Y silently because it passes tests
+- Ship Y silently because it was easier to template or write
+- Ship Y silently because X felt over-engineered
+- Bundle Y into a multi-concern commit so the divergence is invisible to review
+
+### Reference Incident
+
+`DirectDispatchHelper` (commit `14af8ed33`, 2026-03-15) — `docs/planning/BANNOU-EMBEDDED.md` § Section 3 prescribed inline direct-dispatch with statically-typed `Func&lt;object, TRequest, CT, Task&lt;(StatusCodes, TResponse?)&gt;&gt;` delegates baked into each generated client method. Implementation shipped a `DirectDispatchHelper.InvokeAsync(serviceName, methodName, ...)` that uses runtime reflection (`AppDomain.GetAssemblies().GetTypes()`, `method.Invoke`, `ValueTuple.GetField("Item1")`) for the same functional result. Functionally equivalent; structurally opposite; AOT-hostile. Commit bundled the divergence with unrelated map-generation and plugin-audit work, making it invisible to review. See `docs/reference/INCIDENT-HISTORY.md` #19 and QUALITY TENETS for the corrective discipline.
+
+### How to Avoid the Trap
+
+1. Before implementing a planning-doc'd feature, write your implementation plan in prose and quote the planning doc lines that prescribe each element
+2. If any element has no prescription, that element is a design gap — present it to the user
+3. If any prescription is structurally inconvenient (e.g., requires template changes, requires generic delegates the template ergonomics don't make easy), that inconvenience is a signal, not a license to diverge
+4. If you believe the prescription is wrong, the only approved response is "stop, present the conflict, wait for direction"
+
+### Relationship to Other Tenets
+
+- QUALITY TENETS (T12 Test Integrity): tests cannot distinguish a correct implementation from a functionally-equivalent divergent one; this tenet is what catches divergences tests cannot
+- IMPLEMENTATION TENETS (T34 AOT Compatibility): one common category of divergence is substituting runtime reflection for static dispatch; that pattern is forbidden outright by T34, and divergences into it are caught by both tenets simultaneously
+- CLAUDE-PRACTICES.md § 3 (Follow Instructions as Given) and § 4 (Decision Checkpoints): the behavioral discipline this tenet codifies into a reviewable rule
+<!-- /TENET:T33 -->
 
 ---
 

@@ -355,9 +355,11 @@ public partial class MatchmakingClient : IMatchmakingClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListQueuesResponse>(
-                _directDispatchProvider, _serviceName, "ListQueuesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMatchmakingService, ListQueuesRequest, ListQueuesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListQueuesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -446,9 +448,11 @@ public partial class MatchmakingClient : IMatchmakingClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QueueResponse>(
-                _directDispatchProvider, _serviceName, "GetQueueAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMatchmakingService, GetQueueRequest, QueueResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetQueueAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -545,9 +549,11 @@ public partial class MatchmakingClient : IMatchmakingClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QueueResponse>(
-                _directDispatchProvider, _serviceName, "CreateQueueAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMatchmakingService, CreateQueueRequest, QueueResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateQueueAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -643,9 +649,11 @@ public partial class MatchmakingClient : IMatchmakingClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QueueResponse>(
-                _directDispatchProvider, _serviceName, "UpdateQueueAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMatchmakingService, UpdateQueueRequest, QueueResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateQueueAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -741,9 +749,11 @@ public partial class MatchmakingClient : IMatchmakingClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "DeleteQueueAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IMatchmakingService, DeleteQueueRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteQueueAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -836,9 +846,11 @@ public partial class MatchmakingClient : IMatchmakingClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<JoinMatchmakingResponse>(
-                _directDispatchProvider, _serviceName, "JoinMatchmakingAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMatchmakingService, JoinMatchmakingRequest, JoinMatchmakingResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.JoinMatchmakingAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -940,9 +952,11 @@ public partial class MatchmakingClient : IMatchmakingClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "LeaveMatchmakingAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IMatchmakingService, LeaveMatchmakingRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.LeaveMatchmakingAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1033,9 +1047,11 @@ public partial class MatchmakingClient : IMatchmakingClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<MatchmakingStatusResponse>(
-                _directDispatchProvider, _serviceName, "GetMatchmakingStatusAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMatchmakingService, GetMatchmakingStatusRequest, MatchmakingStatusResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetMatchmakingStatusAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1132,9 +1148,11 @@ public partial class MatchmakingClient : IMatchmakingClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AcceptMatchResponse>(
-                _directDispatchProvider, _serviceName, "AcceptMatchAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMatchmakingService, AcceptMatchRequest, AcceptMatchResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.AcceptMatchAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1231,9 +1249,11 @@ public partial class MatchmakingClient : IMatchmakingClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "DeclineMatchAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IMatchmakingService, DeclineMatchRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeclineMatchAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1324,9 +1344,11 @@ public partial class MatchmakingClient : IMatchmakingClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<MatchmakingStatsResponse>(
-                _directDispatchProvider, _serviceName, "GetMatchmakingStatsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IMatchmakingService, GetMatchmakingStatsRequest, MatchmakingStatsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetMatchmakingStatsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

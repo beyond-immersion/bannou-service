@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core.Math;
 using BeyondImmersion.Bannou.SpriteTheory;
 using BeyondImmersion.Bannou.SpriteTheory.Camera;
 using Xunit;
@@ -7,12 +8,12 @@ namespace BeyondImmersion.Bannou.SpriteTheory.Tests.Camera;
 public class PivotComputerTests
 {
     private static readonly BoundingBox UnitCube = new(
-        min: (-0.5f, -0.5f, -0.5f),
-        max: (0.5f, 0.5f, 0.5f));
+        min: new Vector3(-0.5f, -0.5f, -0.5f),
+        max: new Vector3(0.5f, 0.5f, 0.5f));
 
     private static readonly BoundingBox HumanoidBounds = new(
-        min: (-0.5f, 0f, -0.5f),
-        max: (0.5f, 2f, 0.5f));
+        min: new Vector3(-0.5f, 0f, -0.5f),
+        max: new Vector3(0.5f, 2f, 0.5f));
 
     private static readonly (int Width, int Height) DefaultFrameSize = (128, 128);
 
@@ -81,9 +82,9 @@ public class PivotComputerTests
     {
         // Construct parameters with a degenerate basis: direction parallel to up.
         var degenerate = new OrthographicParameters(
-            Position: (0f, 0f, 0f),
-            Direction: (0f, 1f, 0f),
-            Up: (0f, 1f, 0f),
+            Position: new Vector3(0f, 0f, 0f),
+            Direction: new Vector3(0f, 1f, 0f),
+            Up: new Vector3(0f, 1f, 0f),
             OrthoWidth: 2.0f,
             OrthoHeight: 2.0f,
             NearPlane: 0.01f,
@@ -98,9 +99,9 @@ public class PivotComputerTests
     public void ComputeFromBounds_ZeroOrthoWidth_ReturnsDefault()
     {
         var invalidCamera = new OrthographicParameters(
-            Position: (0f, 0f, -2f),
-            Direction: (0f, 0f, 1f),
-            Up: (0f, 1f, 0f),
+            Position: new Vector3(0f, 0f, -2f),
+            Direction: new Vector3(0f, 0f, 1f),
+            Up: new Vector3(0f, 1f, 0f),
             OrthoWidth: 0f,
             OrthoHeight: 2.0f,
             NearPlane: 0.01f,
@@ -115,9 +116,9 @@ public class PivotComputerTests
     public void ComputeFromBounds_ZeroOrthoHeight_ReturnsDefault()
     {
         var invalidCamera = new OrthographicParameters(
-            Position: (0f, 0f, -2f),
-            Direction: (0f, 0f, 1f),
-            Up: (0f, 1f, 0f),
+            Position: new Vector3(0f, 0f, -2f),
+            Direction: new Vector3(0f, 0f, 1f),
+            Up: new Vector3(0f, 1f, 0f),
             OrthoWidth: 2.0f,
             OrthoHeight: 0f,
             NearPlane: 0.01f,
@@ -134,9 +135,9 @@ public class PivotComputerTests
         // Use a tiny orthoWidth/orthoHeight so the feet projection lands far outside [0, 1].
         // This verifies the clamp protects downstream consumers from degenerate pivot values.
         var camera = new OrthographicParameters(
-            Position: (0f, 0f, -2f),
-            Direction: (0f, 0f, 1f),
-            Up: (0f, 1f, 0f),
+            Position: new Vector3(0f, 0f, -2f),
+            Direction: new Vector3(0f, 0f, 1f),
+            Up: new Vector3(0f, 1f, 0f),
             OrthoWidth: 0.01f,
             OrthoHeight: 0.01f,
             NearPlane: 0.01f,
@@ -165,8 +166,8 @@ public class PivotComputerTests
     {
         // Humanoid standing off-center in X. Feet should project off-center in pivot X.
         var offCenterBounds = new BoundingBox(
-            min: (1f, 0f, -0.5f),
-            max: (3f, 2f, 0.5f));
+            min: new Vector3(1f, 0f, -0.5f),
+            max: new Vector3(3f, 2f, 0.5f));
         var angle = new CaptureAngle(Name: "N", Yaw: 0f, Pitch: 0f);
         var camera = OrthographicSetup.Compute(angle, offCenterBounds, DefaultFrameSize);
 
@@ -280,5 +281,68 @@ public class PivotComputerTests
         // Y must differ — proves per-angle pivot computation is required EVERYWHERE,
         // not just for custom rigs with mixed pitches.
         Assert.NotEqual(nPivot.Y, nePivot.Y);
+    }
+
+    // --- ProjectWorldPointToFrame (general primitive) ---
+    //
+    // ComputeFromBounds is a thin wrapper that computes the feet point and delegates
+    // to ProjectWorldPointToFrame. These tests exercise the general case — projecting
+    // an arbitrary world-space point (e.g., a skeleton bone position reported by the
+    // bridge) onto the camera frame. The feet case is already covered above; the tests
+    // below verify that non-feet anchor points produce correspondingly non-feet pivots.
+
+    [Fact]
+    public void ProjectWorldPointToFrame_BoundsCenter_IsFrameCenter()
+    {
+        // The center of the bounding box is exactly where the camera is pointed, so it
+        // must project to the frame center (0.5, 0.5) for any well-formed orthographic
+        // setup. This is the anchor test: "point on the look-at axis" → "frame center".
+        var angle = new CaptureAngle(Name: "N", Yaw: 0f, Pitch: 0f);
+        var camera = OrthographicSetup.Compute(angle, HumanoidBounds, DefaultFrameSize);
+
+        var pivot = PivotComputer.ProjectWorldPointToFrame(HumanoidBounds.Center, camera);
+
+        Assert.Equal(0.5f, pivot.X, precision: 4);
+        Assert.Equal(0.5f, pivot.Y, precision: 4);
+    }
+
+    [Fact]
+    public void ProjectWorldPointToFrame_HeadPoint_YieldsHigherPivotThanFeet()
+    {
+        // A bone anchor near the top of a humanoid (e.g., a "head" bone at y=1.8) must
+        // produce a pivot ABOVE the feet pivot in frame coordinates — smaller pivotY,
+        // since pivot origin is top-left. This is the sprite-composer scenario: if the
+        // variant sets AnchorBoneName = "head", the pivot should track the head, not
+        // the feet.
+        var angle = new CaptureAngle(Name: "N", Yaw: 0f, Pitch: 0f);
+        var camera = OrthographicSetup.Compute(angle, HumanoidBounds, DefaultFrameSize);
+
+        var feetPivot = PivotComputer.ComputeFromBounds(HumanoidBounds, camera);
+        var headPivot = PivotComputer.ProjectWorldPointToFrame(
+            new Vector3(0f, 1.8f, 0f), camera);
+
+        Assert.True(
+            headPivot.Y < feetPivot.Y,
+            $"Expected head pivot.Y ({headPivot.Y}) < feet pivot.Y ({feetPivot.Y}) — " +
+            "head is above feet in world space, which maps to smaller pivot.Y (top-left origin).");
+    }
+
+    [Fact]
+    public void ProjectWorldPointToFrame_DegenerateCamera_ReturnsDefault()
+    {
+        // Same degenerate-basis fallback as ComputeFromBounds — the underlying
+        // projection is undefined when Direction is parallel to Up.
+        var degenerate = new OrthographicParameters(
+            Position: new Vector3(0f, 0f, 0f),
+            Direction: new Vector3(0f, 1f, 0f),
+            Up: new Vector3(0f, 1f, 0f),
+            OrthoWidth: 2.0f,
+            OrthoHeight: 2.0f,
+            NearPlane: 0.01f,
+            FarPlane: 10f);
+
+        var pivot = PivotComputer.ProjectWorldPointToFrame(new Vector3(1f, 2f, 3f), degenerate);
+
+        Assert.Equal(PivotComputer.DefaultHumanoidPivot, pivot);
     }
 }

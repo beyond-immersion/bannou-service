@@ -380,9 +380,11 @@ public partial class LeaderboardClient : ILeaderboardClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LeaderboardDefinitionResponse>(
-                _directDispatchProvider, _serviceName, "CreateLeaderboardDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILeaderboardService, CreateLeaderboardDefinitionRequest, LeaderboardDefinitionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateLeaderboardDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -477,9 +479,11 @@ public partial class LeaderboardClient : ILeaderboardClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LeaderboardDefinitionResponse>(
-                _directDispatchProvider, _serviceName, "GetLeaderboardDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILeaderboardService, GetLeaderboardDefinitionRequest, LeaderboardDefinitionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetLeaderboardDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -574,9 +578,11 @@ public partial class LeaderboardClient : ILeaderboardClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListLeaderboardDefinitionsResponse>(
-                _directDispatchProvider, _serviceName, "ListLeaderboardDefinitionsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILeaderboardService, ListLeaderboardDefinitionsRequest, ListLeaderboardDefinitionsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListLeaderboardDefinitionsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -666,9 +672,11 @@ public partial class LeaderboardClient : ILeaderboardClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LeaderboardDefinitionResponse>(
-                _directDispatchProvider, _serviceName, "UpdateLeaderboardDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILeaderboardService, UpdateLeaderboardDefinitionRequest, LeaderboardDefinitionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateLeaderboardDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -765,9 +773,11 @@ public partial class LeaderboardClient : ILeaderboardClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LeaderboardDefinitionResponse>(
-                _directDispatchProvider, _serviceName, "DeprecateLeaderboardDefinitionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILeaderboardService, DeprecateLeaderboardDefinitionRequest, LeaderboardDefinitionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeprecateLeaderboardDefinitionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -866,9 +876,11 @@ public partial class LeaderboardClient : ILeaderboardClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanDeprecatedStringKeyResponse>(
-                _directDispatchProvider, _serviceName, "CleanDeprecatedLeaderboardDefinitionsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILeaderboardService, CleanDeprecatedRequest, CleanDeprecatedStringKeyResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanDeprecatedLeaderboardDefinitionsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -962,9 +974,11 @@ public partial class LeaderboardClient : ILeaderboardClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SubmitScoreResponse>(
-                _directDispatchProvider, _serviceName, "SubmitScoreAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILeaderboardService, SubmitScoreRequest, SubmitScoreResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SubmitScoreAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1060,9 +1074,11 @@ public partial class LeaderboardClient : ILeaderboardClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SubmitScoreBatchResponse>(
-                _directDispatchProvider, _serviceName, "SubmitScoreBatchAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILeaderboardService, SubmitScoreBatchRequest, SubmitScoreBatchResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SubmitScoreBatchAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1151,9 +1167,11 @@ public partial class LeaderboardClient : ILeaderboardClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EntityRankResponse>(
-                _directDispatchProvider, _serviceName, "GetEntityRankAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILeaderboardService, GetEntityRankRequest, EntityRankResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetEntityRankAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1248,9 +1266,11 @@ public partial class LeaderboardClient : ILeaderboardClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LeaderboardEntriesResponse>(
-                _directDispatchProvider, _serviceName, "GetTopRanksAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILeaderboardService, GetTopRanksRequest, LeaderboardEntriesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetTopRanksAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1340,9 +1360,11 @@ public partial class LeaderboardClient : ILeaderboardClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LeaderboardEntriesResponse>(
-                _directDispatchProvider, _serviceName, "GetRanksAroundAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILeaderboardService, GetRanksAroundRequest, LeaderboardEntriesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetRanksAroundAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1438,9 +1460,11 @@ public partial class LeaderboardClient : ILeaderboardClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SeasonResponse>(
-                _directDispatchProvider, _serviceName, "CreateSeasonAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILeaderboardService, CreateSeasonRequest, SeasonResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateSeasonAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1541,9 +1565,11 @@ public partial class LeaderboardClient : ILeaderboardClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SeasonResponse>(
-                _directDispatchProvider, _serviceName, "GetSeasonAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILeaderboardService, GetSeasonRequest, SeasonResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetSeasonAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

@@ -4,7 +4,7 @@
 > **Location**: `sdks/sprite-composer/` (planned)
 > **Layer**: Composer
 > **Domain**: Sprite
-> **Dependencies**: sprite-theory
+> **Dependencies**: `sprite-theory` (transitively brings in `BeyondImmersion.Bannou.Core` for the shared `Vector3` primitive).
 > **Status**: Aspirational — no code exists.
 > **Implementation Map**: [docs/sdks/maps/SPRITE-COMPOSER.md](maps/SPRITE-COMPOSER.md)
 > **Planning Document**: [docs/planning/SPRITE-COMPOSER-SDK.md](../planning/SPRITE-COMPOSER-SDK.md)
@@ -69,9 +69,10 @@ It follows the composer pattern established by scene-composer and voxel-builder:
 | Type | Kind | Purpose |
 |------|------|---------|
 | `AnimationBrowser` | Class | Queries the bridge for available animations, filters by tag/pattern, exposes per-animation configuration. |
-| `EquipmentManager` | Class | Tracks current equipment attachments, validates bone compatibility via the bridge, executes attach/detach through the bridge. |
-| `AnimationConfigMap` | Class | Per-animation `AnimationConfig` lookup with defaults fallback. |
+| `EquipmentManager` | Class | Tracks current equipment attachments per variant, validates bone compatibility via the bridge, executes attach/detach through the bridge. |
 | `AnimationFilter` | Record | Optional filter: name prefix/suffix/contains, tag list, limit count. |
+
+**Animation config lookup is not a class.** Per-animation `AnimationConfig` resolution lives on `AnimationSet` (the reusable named configuration) and `VariantBinding` (per-variant overrides / exclusions). See the `SpriteProject` section below.
 
 ### Preview
 
@@ -85,7 +86,9 @@ It follows the composer pattern established by scene-composer and voxel-builder:
 
 | Type | Kind | Purpose |
 |------|------|---------|
-| `SpriteProject` | Record | Complete project definition: variant, rigs, per-animation configs, export options, normal map options, metadata. |
+| `SpriteProject` | Record | Multi-variant container: rigs, named reusable `AnimationSets`, `Variants` list, export options, normal map options, custom properties. |
+| `AnimationSet` | Record | Named reusable animation configuration — `SelectedAnimationNames` + `AnimationConfigs` map + default config. Multiple `VariantBindings` bind to a set by name. |
+| `VariantBinding` | Record | One entry per character variant: `Variant` (sprite-theory `CharacterVariant`), `AnimationSetName` reference, optional per-animation overrides, optional per-animation exclusions. |
 | `ProjectSerializer` | Static class | `SpriteProject` ↔ JSON serialization (mirrors sprite-theory's `SpriteSheetSerializer` conventions). |
 | `RecentProjects` | Class | MRU project path list with simple JSON persistence (per-user, optional). |
 
@@ -104,22 +107,25 @@ It follows the composer pattern established by scene-composer and voxel-builder:
 | `IEditorCommand` | Interface | Scene-composer-compatible command contract (Description, Execute, Undo, CanMergeWith, TryMerge). Reused pattern, not reused type — local to sprite-composer to avoid scene-composer dependency. |
 | `CommandStack` | Class | Undo/redo stack with merge window, compound commands, events. Same contract as scene-composer's `CommandStack`. |
 | `CompoundCommand` | Class | Groups multiple commands into one atomic undo unit. |
-| `AddRigCommand` | Class | Add a camera rig to the project. |
-| `RemoveRigCommand` | Class | Remove a camera rig. |
-| `ModifyRigCommand` | Class | Change rig parameters (frame size, padding, background, normal map / trim flags). |
-| `SetAnimationConfigCommand` | Class | Change per-animation configuration (frame count, speed, trim, loop mode). |
-| `SelectAnimationCommand` / `DeselectAnimationCommand` | Class | Toggle animation inclusion in `SelectedAnimationNames`. |
-| `AttachEquipmentCommand` | Class | Add an equipment slot; calls through to bridge. |
-| `DetachEquipmentCommand` | Class | Remove an equipment slot; calls through to bridge. |
-| `SetModelCommand` | Class | Change the base character model; unloads the previous model handle via the bridge. |
-| `SetScaleCommand` | Class | Change the variant scale. |
-| `SetMaterialOverrideCommand` | Class | Add or change a material override entry on the variant. |
+| `AddRigCommand` / `RemoveRigCommand` / `ModifyRigCommand` | Class | Project-level — operate on the shared `Rigs` list; affect every variant in the project. |
+| `AddAnimationSetCommand` / `RemoveAnimationSetCommand` / `ModifyAnimationSetCommand` | Class | Project-level — operate on the named `AnimationSets` dictionary. Remove fails when any variant still binds to the set. |
+| `AddVariantCommand` / `RemoveVariantCommand` | Class | Project-level — operate on the `Variants` list of `VariantBindings`. |
+| `SetVariantModelCommand(variantName, Model: AssetReference)` | Class | Variant-level — change the variant's `Model` reference. Unloads the previous model via the bridge on redo; reloads the previous on undo. |
+| `SetVariantScaleCommand(variantName, scale)` | Class | Variant-level — change variant scale. |
+| `SetVariantPivotOverrideCommand(variantName, pivot?)` | Class | Variant-level — set or clear `PivotOverride`. |
+| `SetVariantAnchorBoneNameCommand(variantName, boneName?)` | Class | Variant-level — set or clear `AnchorBoneName`. |
+| `AttachEquipmentCommand(variantName, slot)` | Class | Variant-level — attach equipment to a specific variant's slot; calls through to bridge. |
+| `DetachEquipmentCommand(variantName, slotName)` | Class | Variant-level — detach; calls through to bridge. |
+| `SetMaterialOverrideCommand(variantName, slotName, material: AssetReference?)` | Class | Variant-level — add, change, or clear a material override on the variant. |
+| `BindVariantToAnimationSetCommand(variantName, setName)` | Class | Variant-level — change which `AnimationSet` a variant binds to. |
+| `SetVariantAnimationOverrideCommand(variantName, animName, config?)` | Class | Variant-level — set or clear a per-variant animation-config override. |
+| `SetVariantExcludedAnimationsCommand(variantName, names)` | Class | Variant-level — change the variant's exclusion list. |
 
 ### Events
 
 | Type | Kind | Purpose |
 |------|------|---------|
-| `ComposerEvents` | Class / aggregated | ProjectLoaded, ProjectSaved, DirtyStateChanged, CaptureStarted, CaptureProgress, CaptureCompleted, CaptureError, UndoRedoStateChanged, EquipmentAttached, EquipmentDetached, ModelChanged. |
+| `ComposerEvents` | Class / aggregated | ProjectLoaded, ProjectSaved, DirtyStateChanged, CaptureStarted, CaptureProgress, CaptureCompleted, **ExportCompleted** (fired after each `(variant, rig)` atlas + JSON pair is written), CaptureError, UndoRedoStateChanged, EquipmentAttached, EquipmentDetached, ModelChanged, VariantAdded, VariantRemoved, AnimationSetAdded, AnimationSetRemoved. |
 | `PreviewEvents` | Class / aggregated | PreviewAnimationChanged, PreviewFrameChanged, PreviewAngleChanged, PreviewStateChanged. |
 
 ---
@@ -152,11 +158,25 @@ SpriteComposer
 The bridge contract is the single most important artifact in this SDK. It defines everything the composer delegates to the engine:
 
 ```
-ISpriteComposerBridge
+ISpriteComposerBridge : IAsyncDisposable
+
+  // ── Capability flags ──
+  SupportsDepthCapture: bool
+      True when the bridge can populate FrameCapture.DepthData. False → composer skips
+      normal-map atlas generation even when rig.IncludeNormalMap = true and logs a
+      single warning per capture session.
+
+  SupportsSkeletonIntrospection: bool
+      True when the bridge can resolve bone names to world positions via TryGetBonePosition.
+      False → composer falls back to ComputeFromBounds when AnchorBoneName is set and
+      logs a single warning per capture session.
 
   // ── Model Management ──
-  LoadModelAsync(modelPath: string, ct: CancellationToken) → IModelHandle
-      Load a 3D model (FBX, compiled or raw) into the engine scene. Returns an opaque handle.
+  LoadModelAsync(model: AssetReference, ct: CancellationToken) → IModelHandle
+      Resolve the asset reference to an engine-specific handle and instantiate it.
+      The bridge defines how AssetReference(BundleId, AssetId, VariantId?) maps to
+      engine assets (compiled Stride model, Godot PackedScene, raw FBX via filesystem
+      asset source, etc.).
 
   DisposeModel(handle: IModelHandle) → void
       Unload and clean up engine resources for a model. Idempotent.
@@ -168,16 +188,22 @@ ISpriteComposerBridge
   SetModelScale(handle: IModelHandle, scale: float) → void
       Apply a uniform scale to the loaded model. GetModelBounds returns scaled bounds afterward.
 
+  // ── Skeleton introspection (conditional on SupportsSkeletonIntrospection) ──
+  TryGetBonePosition(handle: IModelHandle, boneName: string) → Vector3?
+      Return the named bone's current world position, or null when the bone is missing
+      or the capability is unsupported. Used by pivot resolution when the current
+      variant sets AnchorBoneName.
+
   // ── Equipment ──
   AttachEquipmentAsync(model: IModelHandle, slot: EquipmentSlot, ct) → IEquipmentHandle
-      Load equipment mesh and parent it to the specified skeleton bone.
+      Resolve slot.Mesh (AssetReference), parent it to slot.BoneName, return a handle.
       Throws if the bone name doesn't exist on the model's skeleton.
 
   DetachEquipment(model: IModelHandle, handle: IEquipmentHandle) → void
       Remove attached equipment and release engine resources.
 
-  SetMaterialOverride(model: IModelHandle, materialSlot: string, materialPath: string?) → void
-      Override a material on the model or equipment. Null path restores the original.
+  SetMaterialOverride(model: IModelHandle, materialSlot: string, material: AssetReference?) → void
+      Override a material on the model or equipment. Null material restores the original.
 
   // ── Animation ──
   GetAvailableAnimations(model: IModelHandle) → IReadOnlyList<AnimationInfo>
@@ -185,78 +211,155 @@ ISpriteComposerBridge
       Returns sprite-theory's AnimationInfo records (name, duration, frame count, looping flag).
 
   SetAnimation(model: IModelHandle, animationName: string) → void
-      Set the active animation clip. No automatic playback — the animation is now "scrubbable" via SetAnimationTime.
+      Set the active animation clip. No automatic playback — the animation is now
+      "scrubbable" via SetAnimationTime.
 
   SetAnimationTime(model: IModelHandle, normalizedTime: float) → void
-      Seek the animation to a normalized point (0.0 = clip start, 1.0 = clip end).
-      The model's pose updates synchronously. Does NOT advance time from the game loop.
+      Seek the animation to a normalized point (0.0 = clip start, 1.0 = clip end)
+      and force-evaluate the skeleton pose synchronously. Does NOT advance time from
+      the game loop.
+
+  // ── Rig/Angle lifecycle hooks ──
+  BeginRigAsync(rig: CameraRig, ct) → Task
+  EndRigAsync(rig: CameraRig, ct) → Task
+      Called once per rig at the boundaries of a rig's capture pass. Lets bridges
+      allocate/release per-rig resources (render targets sized to rig.FrameSize, etc.).
+
+  BeginAngleAsync(angle: CaptureAngle, ct) → Task
+  EndAngleAsync(angle: CaptureAngle, ct) → Task
+      Called once per angle within a rig. Lets bridges snapshot per-angle state
+      (post-processing, IBL rotation, etc.).
+
+  All four default to no-ops on SpriteComposerBridgeBase — bridges only override
+  them when they need per-rig or per-angle setup.
 
   // ── Camera ──
   ConfigureCamera(parameters: OrthographicParameters, frameSize: (int Width, int Height)) → void
-      Position, orient, and configure the capture camera using sprite-theory's computed parameters.
+      Apply the composer-computed camera basis to the engine's capture camera.
+      The composer computes parameters via OrthographicSetup.Compute once per angle
+      (outside the animation/frame loops) and passes the result. The bridge does not
+      re-compute — it applies the parameters to the engine's camera (position, ortho
+      matrix, frame-sized render target).
 
   // ── Frame Capture ──
   CaptureFrameAsync(
-      animationName: string,
+      variantName: string,
+      rigName: string,
       angleName: string,
+      animationName: string,
       frameIndex: int,
       normalizedTime: float,
       captureDepth: bool,
       ct: CancellationToken) → FrameCapture
-      Render the current scene to an off-screen target and return RGBA pixel data.
-      If captureDepth is true, also return normalized 0.0–1.0 depth data.
-      The returned FrameCapture carries identity metadata so the composer can reassemble into an atlas.
+      Render the current scene to an off-screen target and return RGBA pixel data,
+      tagged with the full 5-tuple identity (variant, rig, angle, animation, frame).
+      captureDepth is composer-resolved as rig.IncludeNormalMap AND SupportsDepthCapture —
+      the bridge may return DepthData = null if a frame-specific failure prevents depth
+      capture, and this is non-fatal.
 
   // ── Preview (interactive 3D) ──
   SetPreviewCamera(yaw: float, pitch: float, distance: float) → void
       Position an orbit camera around the model for interactive preview.
-      Separate from the capture camera — the capture camera positions change per-angle per-frame;
-      the preview camera stays put for user-driven orbit viewing.
+      Separate from the capture camera — the capture camera positions change per-angle
+      per-frame; the preview camera stays put for user-driven orbit viewing.
 
   SetPreviewAnimationPlayback(playing: bool, normalizedSpeed: float) → void
       Start or stop real-time animation playback in the preview.
       Only used when the user is inspecting the live 3D model, not during capture.
 
   // ── Lifecycle ──
-  Dispose() → void
-      Release all engine resources: disposed models, disposed equipment, released render targets, camera reset.
+  DisposeAsync() → ValueTask
+      Release all engine resources: disposed models, disposed equipment, released
+      render targets, camera reset.
 ```
 
 **Key contract decisions**:
 
 1. **Opaque handles** (`IModelHandle`, `IEquipmentHandle`, `IAnimationHandle`) are marker interfaces. The bridge defines concrete types (`StrideModelHandle`, etc.) that internally wrap engine entities. The composer never touches engine types.
 
-2. **Normalized time on `SetAnimationTime`.** The composer computes the normalized timestamp from `FrameSequence.Timestamps` (already 0.0–1.0). The bridge maps this to engine-specific time units (Stride: `TimeSpan.FromSeconds(normalizedTime * clip.Duration.TotalSeconds)`).
+2. **`AssetReference` is the engine-agnostic asset identifier.** Models, equipment meshes, and material overrides all cross the bridge boundary as `AssetReference(BundleId, AssetId, VariantId?)` rather than raw string paths. The bridge resolves the reference at load time; the composer never constructs paths. This matches the pattern scene-composer uses and keeps project files portable across engines. See `docs/planning/SPRITE-COMPOSER-SDK.md` § Decision 10.10.
 
-3. **Camera configuration uses sprite-theory.** The composer calls `OrthographicSetup.Compute(captureAngle, modelBounds, frameSize)` and passes the resulting `OrthographicParameters` to the bridge. The math lives in sprite-theory; the bridge applies it to the engine's camera.
+3. **Capability flags with graceful degradation.** `SupportsDepthCapture` and `SupportsSkeletonIntrospection` advertise optional bridge features. The composer inspects them before requesting depth capture or bone lookups and degrades gracefully (no normal-map atlas, fall back to bounds-based pivot) with a single warning per capture session. See § Decision 10.8.
 
-4. **FrameCapture is the sole output of rendering.** Raw RGBA byte array + optional depth float array + dimensions + identity metadata. No engine types cross the bridge boundary. `FrameCapture` is defined in sprite-theory (the composer doesn't redefine it).
+4. **Rig/Angle lifecycle hooks.** Four async hooks (`BeginRigAsync`/`EndRigAsync`/`BeginAngleAsync`/`EndAngleAsync`) wrap the capture loop boundaries. Default no-op implementations on `SpriteComposerBridgeBase` mean bridges only override when they need per-rig or per-angle setup. The composer calls them whether or not the bridge overrides them — cost-free when unused.
 
-5. **Separation of capture camera and preview camera.** During a capture session, the camera position changes per-angle per-frame. During preview, the user orbits freely. The bridge distinguishes these with separate methods (`ConfigureCamera` vs. `SetPreviewCamera`) so neither mode interferes with the other.
+5. **Normalized time on `SetAnimationTime`.** The composer computes the normalized timestamp from `FrameSequence.Timestamps` (already 0.0–1.0). The bridge maps this to engine-specific time units (Stride: `TimeSpan.FromSeconds(normalizedTime * clip.Duration.TotalSeconds)`). The bridge must force-evaluate the skeleton pose synchronously — the call must not depend on the game loop advancing.
 
-### SpriteProject
+6. **Pre-computed camera parameters.** The composer computes `orthoParams = OrthographicSetup.Compute(angle, modelBounds, rig.FrameSize)` once per angle (outside the animation/frame loops) and passes the already-computed `OrthographicParameters` to `ConfigureCamera`. The bridge applies the parameters to the engine's camera; it never re-computes. The same `orthoParams` also feeds pivot resolution (see Capture Orchestration below) so camera configuration and pivot stamping are guaranteed to agree. See § Decision 10.11.
 
-The complete configuration for a reproducible capture. Serializable, version-controllable, and the input format for the future SpriteBatcher.
+7. **`FrameCapture` carries the full 5-tuple identity.** The bridge stamps `(VariantName, RigName, AngleName, AnimationName, FrameIndex)` onto every capture. Downstream assembly groups by `(VariantName, RigName)` to produce one `SpriteSheet` per grouping — this is structurally required by the multi-variant `SpriteProject` container (below). See § Decision 10.7.
+
+8. **FrameCapture is otherwise engine-agnostic.** Raw RGBA byte array + optional depth float array + dimensions + identity strings + normalized time. No engine types cross the bridge boundary. `FrameCapture` is defined in sprite-theory (the composer doesn't redefine it).
+
+9. **Separation of capture camera and preview camera.** During a capture session, the camera position changes per-angle per-frame. During preview, the user orbits freely. The bridge distinguishes these with separate methods (`ConfigureCamera` vs. `SetPreviewCamera`) so neither mode interferes with the other.
+
+### SpriteProject (Multi-Variant Container)
+
+A project is a **multi-variant container** — a single project holds every variant that shares rigs and an animation vocabulary. Defenders' 50–80 variants (heroes + troop specs × tiers + enemies + bosses + NPCs) collapse to ~4 project files (one per class of content — heroes, troops, enemies, bosses) instead of 50–80 single-variant projects. See `docs/planning/SPRITE-COMPOSER-SDK.md` § Decision 10.12.
 
 ```
 SpriteProject
-├── Name: string                                                        // "warrior" (often matches variant name)
-├── Variant: CharacterVariant                                           // Model path, equipment, materials, scale, PivotOverride (from sprite-theory)
-├── Rigs: IReadOnlyList<CameraRig>                                      // Camera rigs to capture with (from sprite-theory)
-├── SelectedAnimationNames: IReadOnlyList<string>                       // Explicit capture-list (sorted alphabetically for deterministic order)
-├── AnimationConfigs: IReadOnlyDictionary<string, AnimationConfig>      // Per-animation overrides keyed by animation name
-├── DefaultAnimationConfig: AnimationConfig                             // Defaults for animations without explicit config
-├── ExportOptions: ExportOptions                                        // Output paths, filenames, which rigs to export
-├── NormalMapOptions: NormalMapOptions?                                 // Null = use sprite-theory defaults (Strength=1.0, BlurRadius=0)
-├── CustomProperties: IReadOnlyDictionary<string, string>?              // Game-specific opaque metadata (propagates to SpriteSheet output)
-└── SchemaVersion: string                                               // "1.0" — project file format version
+├── Name: string                                                       // "Heroes", "Troops", "Enemies", "Bosses"
+├── Rigs: IReadOnlyList<CameraRig>                                     // Camera rigs shared by all variants
+├── AnimationSets: IReadOnlyDictionary<string, AnimationSet>           // Named reusable animation configurations
+├── Variants: IReadOnlyList<VariantBinding>                            // One entry per character variant
+├── ExportOptions: ExportOptions                                       // Output paths, filenames, which rigs to export, AtlasEncoder
+├── NormalMapOptions: NormalMapOptions?                                // Null = use sprite-theory defaults (Strength=1.0, BlurRadius=0)
+├── CustomProperties: IReadOnlyDictionary<string, string>?             // Game-specific opaque metadata (propagates to every SpriteSheet output)
+└── SchemaVersion: string                                              // "1.0" — project file format version
 ```
 
-**Animation config resolution**: During capture, for each animation X in `SelectedAnimationNames`, the composer resolves `AnimationConfigs[X] ?? DefaultAnimationConfig`. This lets projects set one default (e.g., `FrameCount=8, LoopMode=Loop`) and override only specific animations that need different treatment (e.g., `attack_heavy` with `FrameCount=16` and `LoopMode=None`).
+```
+AnimationSet
+├── Name: string                                                       // "humanoid-combat", "ranged-attacker", "quadruped", "boss-multi-phase"
+├── SelectedAnimationNames: IReadOnlyList<string>                      // Which bridge-reported animations to capture
+├── AnimationConfigs: IReadOnlyDictionary<string, AnimationConfig>     // Per-animation overrides within the set
+└── DefaultAnimationConfig: AnimationConfig                            // Defaults for unconfigured animations
+```
 
-**Pivot resolution**: The per-variant pivot override lives on `CharacterVariant.PivotOverride` (sprite-theory), not on `SpriteProject`. During assembly, the composer resolves `SpriteFrame.Pivot` in order: `project.Variant.PivotOverride` if non-null → else `PivotComputer.ComputeFromBounds(modelBounds, orthographicParameters)` → else `PivotComputer.DefaultHumanoidPivot` `(0.5, 0.85)` as the terminal fallback. Mirror frames apply `FlipPivot` to the resolved pivot via `MirrorOptimizer.GenerateMirrorFrames`.
+```
+VariantBinding
+├── Variant: CharacterVariant                                          // sprite-theory record: Model, Equipment, MaterialOverrides, Scale, PivotOverride, AnchorBoneName
+├── AnimationSetName: string                                           // Which AnimationSet this variant uses (must exist in project.AnimationSets)
+├── AnimationOverrides: IReadOnlyDictionary<string, AnimationConfig>?  // Per-variant overrides on specific animations within the set
+└── ExcludedAnimations: IReadOnlyList<string>?                         // Animations in the set this variant should skip
+```
 
-**Why project-level rigs, not global presets**: Each project can define its own rigs (typically by calling `CameraRigPresets.TopDown8Dir()` + `CameraRigPresets.SideViewBrawler()`), but custom rigs are fully supported. A project for a flying enemy might use a top-down-only rig; a wall-mounted trap might use a fixed-angle single-view rig.
+**How AnimationSets eliminate duplication**: All nine warrior-tier troops (warrior-bronze / iron / steel × spearman / guardian / berserker) share the same animation set. Instead of nine `AnimationConfigs` dictionaries, the project holds one `AnimationSet` named `humanoid-combat` and binds all nine variants to it. When the set needs a tweak (add an animation, change a frame count), one edit affects every bound variant.
+
+**How VariantBinding scopes the overrides**: A specific warrior variant might have an unusually long wind-up animation that needs different trim values. `binding.AnimationOverrides["attack_heavy"]` overrides just that entry without forking the whole set. A boss that shares the general humanoid combat set but has no ranged attack sets `ExcludedAnimations = ["shoot_bow"]` without forking.
+
+**Effective config for a variant + animation**:
+
+```
+variantBinding.AnimationOverrides.GetValueOrDefault(
+    animName,
+    project.AnimationSets[variantBinding.AnimationSetName]
+        .AnimationConfigs.GetValueOrDefault(
+            animName,
+            project.AnimationSets[variantBinding.AnimationSetName].DefaultAnimationConfig))
+```
+
+**Effective animation list for a variant**:
+
+```
+project.AnimationSets[variantBinding.AnimationSetName]
+    .SelectedAnimationNames
+    .Except(variantBinding.ExcludedAnimations ?? [])
+```
+
+**Pivot resolution** (per-variant, per-angle — evaluated during capture, not assembly):
+
+1. `variantBinding.Variant.PivotOverride` — used verbatim if set. Highest priority.
+2. `variantBinding.Variant.AnchorBoneName` — if set AND `bridge.SupportsSkeletonIntrospection` AND `bridge.TryGetBonePosition` returns non-null, project the bone's world position via `PivotComputer.ProjectWorldPointToFrame(bonePos, orthoParams)`.
+3. `PivotComputer.ComputeFromBounds(modelBounds, orthoParams)` — feet-on-ground fallback.
+4. `PivotComputer.DefaultHumanoidPivot` — terminal fallback when the camera basis is degenerate.
+
+The capture session stores the resolved pivot alongside each `FrameCapture`; assembly stamps it onto the `SpriteFrame`. Mirror frames apply `FlipPivot` via `MirrorOptimizer.GenerateMirrorFrames`. See § Decision 10.9 for why this is per-angle.
+
+**Why project-level rigs, not per-variant rigs**: Every variant in a project captures through the same rig list. A mixed project containing both a humanoid (needs side-view + top-down) and a flying enemy (top-down only) would require splitting into two projects — which is the right answer. Rig sharing is the primary unit of "this content group captures together."
+
+**Output grouping**: one `SpriteSheet` per `(VariantName, RigName)` grouping. A 4-variant × 2-rig project produces 8 sprite sheets. Filenames template on both variables via `ExportOptions.AtlasFilenamePattern` — the default is `"{variant}_{rig}_{atlas}.png"`.
 
 ### ExportOptions
 
@@ -345,7 +448,7 @@ AnimationBrowser
 └── SelectedAnimationNames: IReadOnlySet<string>         // Which animations the user has chosen to include
 ```
 
-**Explicit selection**: Not all animations on a Synty model need to be captured. A character might have 40 animations but the project only needs 20 of them. `SelectedAnimationNames` drives which animations `CaptureSession.ExecuteAsync` iterates over. The capture session only captures the selected set; `AnimationConfigMap` provides per-animation config for each selected animation.
+**Explicit selection**: Not all animations on a Synty model need to be captured. A character might have 40 animations but the project only needs 20 of them. `AnimationBrowser.SelectedAnimationNames` reflects the current session's selection for UI purposes (checkboxes, filter results). The persisted source of truth for what a variant captures is `project.AnimationSets[binding.AnimationSetName].SelectedAnimationNames` minus `binding.ExcludedAnimations` — the browser view mirrors the active variant binding's effective list.
 
 ### EquipmentManager
 
@@ -398,89 +501,150 @@ SpriteComposer.SaveProjectAsync(path)
   → Fire ProjectSaved
 ```
 
-### Model Load Flow
+### Model Load Flow (Editor — Interactive Variant Preview)
+
+When the editor is focused on a specific variant (the user has a `VariantBinding` selected in the UI), the composer loads that variant's model so the 3D preview reflects the correct equipment, scale, and materials. This is distinct from capture — capture loads every variant's model in turn. The editor preview is for the currently-focused variant only.
 
 ```
-SpriteComposer.LoadModelAsync(modelPath)
+SpriteComposer.SetActiveVariantAsync(variantName)
   → Require bridge
-  → If ModelHandle exists: bridge.DisposeModel(ModelHandle) + detach all equipment
-  → ModelHandle ← await bridge.LoadModelAsync(modelPath)
+  → Locate binding = Project.Variants.First(v => v.Variant.Name == variantName)
+  → If ModelHandle exists for the previous variant:
+      FOREACH attachedHandle IN EquipmentManager.Attachments.Values:
+        bridge.DetachEquipment(ModelHandle, attachedHandle)
+      bridge.DisposeModel(ModelHandle)
+      EquipmentManager.Clear()
+  → ModelHandle ← await bridge.LoadModelAsync(binding.Variant.Model, ct)   // AssetReference, not string
+  → bridge.SetModelScale(ModelHandle, binding.Variant.Scale)
+  → FOREACH slot IN binding.Variant.Equipment:
+      handle ← await bridge.AttachEquipmentAsync(ModelHandle, slot, ct)
+      EquipmentManager.Track(slot.SlotName, slot, handle)
+  → FOREACH (materialSlot, materialRef) IN (binding.Variant.MaterialOverrides ?? {}):
+      bridge.SetMaterialOverride(ModelHandle, materialSlot, materialRef)
   → Refresh AnimationBrowser: animations ← bridge.GetAvailableAnimations(ModelHandle)
-  → Variant.ModelPath ← modelPath (via SetModelCommand if inside interactive flow)
-  → Fire ModelChanged
+  → ActiveVariantName ← variantName
+  → Fire ActiveVariantChanged
 ```
+
+**`SetVariantModelCommand` re-invokes this flow** under the command stack: its `Execute` updates the binding's `Variant.Model` then calls `SetActiveVariantAsync(variantName)` to reload the 3D preview. Its `Undo` restores the previous `Variant.Model` and re-invokes `SetActiveVariantAsync` to reload the prior asset.
 
 ### Equipment Attach Flow
 
 ```
-SpriteComposer.AttachEquipment(slotName, meshPath, boneName)
-  → Build EquipmentSlot record (sprite-theory type)
-  → Execute new AttachEquipmentCommand(this, slot):
+SpriteComposer.AttachEquipment(variantName, slotName, mesh: AssetReference, boneName)
+  → Locate binding = Project.Variants.First(v => v.Variant.Name == variantName)
+  → Build EquipmentSlot record (sprite-theory type) with the AssetReference mesh
+  → Execute new AttachEquipmentCommand(this, variantName, slot):
       If slot already occupied: detach previous first (as a compound sub-command)
-      handle ← await bridge.AttachEquipmentAsync(ModelHandle, slot)
-      EquipmentManager.Attachments[slotName] = (slot, handle)
-      Variant.Equipment ← Variant.Equipment with slot added
-      Fire EquipmentAttached
+      // Bridge work only when this is the active variant (preview reflects current edit)
+      IF ActiveVariantName == variantName:
+        handle ← await bridge.AttachEquipmentAsync(ModelHandle, slot)
+        EquipmentManager.Attachments[slotName] = (slot, handle)
+      binding.Variant.Equipment ← binding.Variant.Equipment with slot added
+      Fire EquipmentAttached(variantName, slot)
   → Push to CommandStack
 ```
 
+When the user attaches equipment to a non-active variant (e.g., editing variant B while previewing variant A), the project state updates but the bridge is not called — the attachment will materialize the next time that variant becomes active or gets captured.
+
 ### Capture Session Pipeline
+
+The capture session loops **per variant** as the outer dimension, with the rig × angle × animation × frame nesting inside. Each captured frame carries its resolved pivot alongside the pixel data so assembly can stamp it onto the `SpriteFrame` without re-computing.
 
 ```
 CaptureSession.ExecuteAsync(progress: IProgress<CaptureProgress>, ct)
   // Precomputation
-  animationsWithConfigs ← FOREACH name IN Project.SelectedAnimationNames:
-      (AnimationBrowser.LookupAnimationInfo(name), Project.AnimationConfigs[name] ?? DefaultAnimationConfig)
-  manifest ← CaptureManifest.Compute(variant, rigs, animationsWithConfigs)   // sprite-theory
+  manifest ← ComputeMultiVariantManifest(Project)      // Expected total across every variant × rig × animation × frame
   State ← Running
   Fire CaptureStarted(manifest)
 
-  // Main iteration — nested loops over rigs × angles × animations × frames
-  FOREACH rig IN Project.Rigs (filtered by ExportOptions.RigsToExport if set)
-    modelBounds ← Bridge.GetModelBounds(ModelHandle)
+  capturedFrames ← new List<(FrameCapture Capture, Vector2 Pivot)>()
 
-    FOREACH angle IN rig.Angles                             // Every angle IS captured (no mirror targets)
-      orthoParams ← OrthographicSetup.Compute(angle, modelBounds, rig.FrameSize)   // sprite-theory
-      Bridge.ConfigureCamera(orthoParams, rig.FrameSize)
+  // ── Outer loop: per variant ──
+  FOREACH binding IN Project.Variants
+    variant ← binding.Variant
+    set ← Project.AnimationSets[binding.AnimationSetName]
+    effectiveAnimations ← set.SelectedAnimationNames.Except(binding.ExcludedAnimations ?? [])
 
-      FOREACH selectedAnimation IN Project.SelectedAnimationNames (sorted, deterministic)
-        animInfo ← AnimationBrowser.LookupAnimationInfo(selectedAnimation)
-        animConfig ← Project.AnimationConfigs.GetValueOrDefault(
-                       selectedAnimation, Project.DefaultAnimationConfig)
-        sequence ← AnimationSampling.GenerateFromConfig(animInfo, animConfig)   // sprite-theory
-        Bridge.SetAnimation(ModelHandle, selectedAnimation)
+    // Load the variant's model + equipment
+    handle ← await Bridge.LoadModelAsync(variant.Model, ct)
+    Bridge.SetModelScale(handle, variant.Scale)
+    FOREACH slot IN variant.Equipment:  await Bridge.AttachEquipmentAsync(handle, slot, ct)
+    FOREACH (materialSlot, materialRef) IN (variant.MaterialOverrides ?? {}):
+      Bridge.SetMaterialOverride(handle, materialSlot, materialRef)
 
-        FOREACH (timestamp, frameIndex) IN sequence.Timestamps (enumerated):
-          CheckPausedOrCancelled(ct)
-          Bridge.SetAnimationTime(ModelHandle, timestamp)
-          Try:
-            capture ← await Bridge.CaptureFrameAsync(
-                selectedAnimation, angle.Name, frameIndex, timestamp,
-                rig.IncludeNormalMap, ct)
-            CapturedFrames.Add(capture)
-            Progress.CapturedFrames++
-          Catch (Exception ex):
-            Errors.Add(new CaptureError(ex, rig.Name, angle.Name, selectedAnimation, frameIndex))
-            Progress.FailedFrames++
-          ReportProgress (throttled to 100ms)
+    modelBounds ← Bridge.GetModelBounds(handle)
 
-  // Assembly phase — for each rig, pack + mirror + serialize
-  perRigOutputs ← new List<RigCaptureOutput>()
-  FOREACH rig IN Project.Rigs
-    rigFrames ← CapturedFrames.Where(c => c was captured under this rig)
-    packInputs ← rigFrames.Select((c, i) => (c.Width, c.Height, i))
-    atlasLayout ← AtlasPacker.Pack(packInputs, buildAtlasOptions(rig))      // sprite-theory
-    mirrors ← MirrorOptimizer.ComputeMirrors(rig)                           // sprite-theory
-    capturedSpriteFrames ← BuildSpriteFrames(rigFrames, atlasLayout, project.PivotOverride)
+    // ── Rig loop ──
+    FOREACH rig IN Project.Rigs (filtered by ExportOptions.RigsToExport if set)
+      await Bridge.BeginRigAsync(rig, ct)
+
+      // ── Angle loop ──
+      FOREACH angle IN rig.Angles                         // Every angle IS captured (ProducesMirror is additive)
+        await Bridge.BeginAngleAsync(angle, ct)
+
+        orthoParams ← OrthographicSetup.Compute(angle, modelBounds, rig.FrameSize)   // sprite-theory
+        pivot ← ResolvePivot(variant, Bridge, handle, modelBounds, orthoParams)      // see below
+        Bridge.ConfigureCamera(orthoParams, rig.FrameSize)
+
+        // ── Animation loop ──
+        FOREACH animName IN effectiveAnimations (sorted alphabetically for determinism)
+          animInfo ← Bridge.GetAvailableAnimations(handle).First(a => a.Name == animName)
+          animConfig ← binding.AnimationOverrides?.GetValueOrDefault(animName)
+                    ?? set.AnimationConfigs.GetValueOrDefault(animName, set.DefaultAnimationConfig)
+          sequence ← AnimationSampling.GenerateFromConfig(animInfo, animConfig)   // sprite-theory
+          Bridge.SetAnimation(handle, animName)
+
+          // ── Frame loop ──
+          FOREACH (timestamp, frameIndex) IN sequence.Timestamps (enumerated)
+            CheckPausedOrCancelled(ct)
+            Bridge.SetAnimationTime(handle, timestamp)
+            Try:
+              capture ← await Bridge.CaptureFrameAsync(
+                  variantName: variant.Name,
+                  rigName: rig.Name,
+                  angleName: angle.Name,
+                  animationName: animName,
+                  frameIndex: frameIndex,
+                  normalizedTime: timestamp,
+                  captureDepth: rig.IncludeNormalMap AND Bridge.SupportsDepthCapture,
+                  ct: ct)
+              capturedFrames.Add((capture, pivot))
+              Progress.CapturedFrames++
+            Catch (Exception ex):
+              Errors.Add(new CaptureError(ex, variant.Name, rig.Name, angle.Name, animName, frameIndex))
+              Progress.FailedFrames++
+            ReportProgress (throttled to 100ms)
+
+        await Bridge.EndAngleAsync(angle, ct)
+
+      await Bridge.EndRigAsync(rig, ct)
+
+    // Tear the variant down before moving to the next
+    FOREACH attachedHandle IN EquipmentManager.Attachments.Values:  Bridge.DetachEquipment(handle, attachedHandle)
+    Bridge.DisposeModel(handle)
+
+  // ── Assembly phase: one SpriteSheet per (VariantName, RigName) grouping ──
+  perGroupOutputs ← new List<GroupCaptureOutput>()
+  FOREACH (variantName, rigName) IN capturedFrames.GroupKeys
+    binding ← Project.Variants.First(v => v.Variant.Name == variantName)
+    rig ← Project.Rigs.First(r => r.Name == rigName)
+    groupFrames ← capturedFrames.Where(f => f.Capture.VariantName == variantName
+                                          AND f.Capture.RigName == rigName)
+
+    packInputs ← groupFrames.Select((f, i) => (f.Capture.Width, f.Capture.Height, i))
+    atlasLayout ← AtlasPacker.Pack(packInputs, buildAtlasOptions(rig))          // sprite-theory
+    mirrors ← MirrorOptimizer.ComputeMirrors(rig)                               // sprite-theory
+    capturedSpriteFrames ← BuildSpriteFrames(groupFrames, atlasLayout)         // pivot stamped from groupFrames[i].Pivot
     mirrorSpriteFrames ← MirrorOptimizer.GenerateMirrorFrames(capturedSpriteFrames, mirrors)
-    atlasImages ← AtlasAssembler.Assemble(rigFrames, atlasLayout, rig.BackgroundColor)
-    atlasInfos ← BuildAtlasInfos(rig, atlasLayout, Project.ExportOptions)
+    atlasImages ← AtlasAssembler.Assemble(groupFrames.Select(f => f.Capture), atlasLayout, rig.BackgroundColor)
+    atlasInfos ← BuildAtlasInfos(variantName, rigName, atlasLayout, Project.ExportOptions)
     spriteAnimations ← BuildSpriteAnimations(capturedSpriteFrames + mirrorSpriteFrames)
     spriteSheet ← new SpriteSheet(
         Version: "1.0",
         Generator: "BeyondImmersion.Bannou.SpriteComposer",
         GeneratedAt: UtcNow,
-        Variant: Project.Variant,
+        Variant: binding.Variant,
         Rig: rig,
         Atlases: atlasInfos,
         Animations: spriteAnimations,
@@ -489,53 +653,86 @@ CaptureSession.ExecuteAsync(progress: IProgress<CaptureProgress>, ct)
 
     // Optional normal map atlases (share layout with color atlases)
     normalAtlases ← null
-    IF rig.IncludeNormalMap:
-      normalAtlases ← BuildNormalAtlases(rigFrames, atlasLayout, Project.NormalMapOptions)
+    IF rig.IncludeNormalMap AND Bridge.SupportsDepthCapture:
+      normalAtlases ← BuildNormalAtlases(groupFrames.Select(f => f.Capture), atlasLayout, Project.NormalMapOptions)
 
-    perRigOutputs.Add(RigCaptureOutput(rig, atlasImages, normalAtlases, spriteSheet))
+    perGroupOutputs.Add(GroupCaptureOutput(variantName, rig, atlasImages, normalAtlases, spriteSheet))
 
-  Result ← CaptureResult(CapturedFrames, perRigOutputs, Errors)
+  Result ← CaptureResult(capturedFrames, perGroupOutputs, Errors)
   State ← Completed (or Failed if Errors.Count exceeds threshold)
   Fire CaptureCompleted(Result)
+
+
+FUNCTION ResolvePivot(variant, bridge, handle, bounds, orthoParams) → Vector2
+  // § Decision 10.9 — resolved per angle, inside the angle loop
+  IF variant.PivotOverride is not null:
+    RETURN variant.PivotOverride.Value
+  IF variant.AnchorBoneName is not null AND bridge.SupportsSkeletonIntrospection:
+    bonePos ← bridge.TryGetBonePosition(handle, variant.AnchorBoneName)
+    IF bonePos is not null:
+      RETURN PivotComputer.ProjectWorldPointToFrame(bonePos.Value, orthoParams)
+  RETURN PivotComputer.ComputeFromBounds(bounds, orthoParams)
 ```
 
-**Frame count estimation** (same formula as sprite-theory's `CaptureManifest.Compute`):
+**Pause semantics**: `CheckPausedOrCancelled(ct)` runs between frame captures. When the user requests a pause, the session completes the current frame then awaits a resume signal via `TaskCompletionSource<bool>`. The resume signal is a shared TCS stored on the session; `Pause()` replaces it with a fresh incomplete TCS, `Resume()` sets `TrySetResult(true)` on the current TCS. The capture thread awaits `currentTcs.Task` between frames, completing immediately when the task is already in the completed state. Cancellation is via the standard `CancellationToken` passed to `ExecuteAsync` — it propagates through the TCS await.
+
+**Frame count estimation** (multi-variant):
 
 ```
-totalCaptured = Σ (rig.Angles.Count × animation.FrameCount) for each rig × selectedAnimation
-totalMirror   = Σ (rig.Angles.Count(a => a.ProducesMirror) × animation.FrameCount) for each rig × selectedAnimation
+totalCaptured = Σ_variants Σ_rigs (rig.Angles.Count × Σ_effectiveAnimations effectiveConfig.FrameCount)
+totalMirror   = Σ_variants Σ_rigs (rig.Angles.Count(a => a.ProducesMirror)
+                                   × Σ_effectiveAnimations effectiveConfig.FrameCount)
 ```
 
-For a Defenders character (TopDown8Dir + SideViewBrawler, 20 selected animations at 8 frames each):
-- TopDown8Dir: 5 angles × 20 × 8 = 800 captured + 3 mirrors × 20 × 8 = 480 mirror
-- SideViewBrawler: 1 angle × 20 × 8 = 160 captured + 1 mirror × 20 × 8 = 160 mirror
-- **Total**: 960 captured + 640 mirror = 1,600 total frames. At ~50 ms/frame: ~48 s per variant.
+For a Defenders heroes project (4 variants × TopDown8Dir + SideViewBrawler × 20 animations × 8 frames each):
+
+| Component | Captured | Mirror |
+|---|---|---|
+| Per-variant TopDown8Dir | 5 × 20 × 8 = 800 | 3 × 20 × 8 = 480 |
+| Per-variant SideViewBrawler | 1 × 20 × 8 = 160 | 1 × 20 × 8 = 160 |
+| Per-variant total | 960 captured | 640 mirror |
+| **4 variants** | **3,840 captured** | **2,560 mirror** |
+
+At ~50 ms/frame: **~3.2 minutes per heroes project**. A full Defenders roster (~4 projects × ~60 variants total average) is on the order of 48 minutes of wall-clock capture time — well within a headless CI nightly budget.
 
 ### Export Flow
 
 ```
 ExportPipeline.ExportAsync(captureResult, project, ct)
-  FOREACH rigOutput in captureResult.PerRigOutputs:
-    IF project.ExportOptions.RigsToExport is not null AND rigOutput.Rig.Name not in RigsToExport:
+  FOREACH groupOutput in captureResult.PerGroupOutputs:             // One entry per (variantName, rigName) grouping
+    IF project.ExportOptions.RigsToExport is not null AND groupOutput.Rig.Name not in RigsToExport:
       CONTINUE
 
-    FOREACH (atlasIndex, atlasBytes) in rigOutput.AtlasImages:
-      filename ← ResolveFilename(ExportOptions.AtlasFilenamePattern, project.Name, rigOutput.Rig.Name, atlasIndex)
+    FOREACH (atlasIndex, atlasBytes) in groupOutput.AtlasImages:
+      filename ← ResolveFilename(ExportOptions.AtlasFilenamePattern,
+                                  variant: groupOutput.VariantName,
+                                  rig:     groupOutput.Rig.Name,
+                                  atlas:   atlasIndex)
       encoded ← project.ExportOptions.AtlasEncoder.EncodeRgba(atlasBytes, atlasWidth, atlasHeight)
       File.WriteAllBytesAsync(Path.Combine(ExportOptions.OutputDirectory, filename), encoded, ct)
 
-    IF rigOutput.NormalAtlases is not null:
-      FOREACH (atlasIndex, normalBytes) in rigOutput.NormalAtlases:
-        filename ← ResolveFilename(ExportOptions.NormalMapFilenamePattern, ...)
-        encoded ← AtlasEncoder.EncodeRgba(...)
-        File.WriteAllBytesAsync(...)
+    IF groupOutput.NormalAtlases is not null:
+      FOREACH (atlasIndex, normalBytes) in groupOutput.NormalAtlases:
+        filename ← ResolveFilename(ExportOptions.NormalMapFilenamePattern,
+                                    variant: groupOutput.VariantName,
+                                    rig:     groupOutput.Rig.Name,
+                                    atlas:   atlasIndex)
+        encoded ← AtlasEncoder.EncodeRgba(normalBytes, atlasWidth, atlasHeight)
+        File.WriteAllBytesAsync(Path.Combine(ExportOptions.OutputDirectory, filename), encoded, ct)
 
-    metadataJson ← SpriteSheetSerializer.Serialize(rigOutput.SpriteSheet)       // sprite-theory
-    metadataFilename ← ResolveFilename(ExportOptions.MetadataFilenamePattern, project.Name, rigOutput.Rig.Name, 0)
+    metadataJson ← SpriteSheetSerializer.Serialize(groupOutput.SpriteSheet)       // sprite-theory
+    metadataFilename ← ResolveFilename(ExportOptions.MetadataFilenamePattern,
+                                        variant: groupOutput.VariantName,
+                                        rig:     groupOutput.Rig.Name,
+                                        atlas:   0)
     File.WriteAllTextAsync(Path.Combine(ExportOptions.OutputDirectory, metadataFilename), metadataJson, ct)
 
-  Fire ExportCompleted
+    Fire ExportCompleted(variantName: groupOutput.VariantName, rigName: groupOutput.Rig.Name)
+
+  Fire AllExportsCompleted
 ```
+
+**Filename templating**: `AtlasFilenamePattern`, `NormalMapFilenamePattern`, and `MetadataFilenamePattern` must support both `{variant}` and `{rig}` placeholders (plus `{atlas}` for multi-atlas overflow). Defaults: `"{variant}_{rig}_{atlas}.png"` (atlas), `"{variant}_{rig}_{atlas}_normal.png"` (normal map), `"{variant}_{rig}.json"` (metadata). A multi-variant project that doesn't include `{variant}` in its patterns would overwrite its own outputs as each variant's files land in the same directory — `ExportPipeline` validates the patterns at export start and throws `InvalidOperationException` if a pattern is missing a required placeholder.
 
 ### Undo/Redo (Configuration Only)
 
@@ -662,9 +859,16 @@ The core technical risk: can Stride's `AnimationProcessor` / `AnimationUpdater` 
 
 **Resolution**: This is a bridge-side concern that doesn't affect the composer's contract. The composer simply demands the guarantee; the bridge is responsible for fulfilling it. However, if no solution exists, it forces either a bridge-specific workaround (documented in sprite-composer-stride) or a composer-level accommodation (e.g., the composer could await multiple small delays between `SetAnimationTime` and `CaptureFrameAsync` to let the animation system settle — ugly, but a fallback).
 
-### 2. Pivot auto-detection — RESOLVED 2026-04-15
+### 2. Pivot auto-detection — RESOLVED (2026-04-15 / refined 2026-04-19)
 
-Resolved by sprite-theory's `PivotComputer.ComputeFromBounds` + `CharacterVariant.PivotOverride`. The composer's assembly pipeline resolves `SpriteFrame.Pivot` in order: `project.Variant.PivotOverride` if non-null → else `PivotComputer.ComputeFromBounds(bounds, cameraParams)` → else `PivotComputer.DefaultHumanoidPivot`. See `docs/planning/SPRITE-COMPOSER-SDK.md` § Part 10.1 for the ratified design and `docs/sdks/SPRITE-THEORY.md` for the PivotComputer contract. The previously-proposed `SpriteProject.PivotOverride` has been removed — the single source of truth is `CharacterVariant`.
+Resolved as a four-step resolution order evaluated **per variant, per angle, during capture** (§ Decisions 10.1, 10.9, 10.15):
+
+1. `variantBinding.Variant.PivotOverride` — used verbatim if set. Highest priority.
+2. `variantBinding.Variant.AnchorBoneName` — if set AND `bridge.SupportsSkeletonIntrospection` AND `bridge.TryGetBonePosition` returns non-null, the bone's world position is projected onto the frame plane via `PivotComputer.ProjectWorldPointToFrame(bonePos, orthoParams)`.
+3. `PivotComputer.ComputeFromBounds(modelBounds, orthoParams)` — feet-on-ground fallback.
+4. `PivotComputer.DefaultHumanoidPivot` `(0.5, 0.85)` — terminal fallback when the camera basis is degenerate.
+
+The pivot travels with each `FrameCapture` entry in `capturedFrames` (as `(Capture, Pivot)` tuples) so assembly can stamp it onto the `SpriteFrame` without re-computing. Mirror frames apply `FlipPivot` via `MirrorOptimizer.GenerateMirrorFrames`. The previously-proposed `SpriteProject.PivotOverride` is absent — the single source of truth per variant is `CharacterVariant`. See `docs/planning/SPRITE-COMPOSER-SDK.md` §§ 10.1, 10.9, 10.15 for the ratified design and `docs/sdks/SPRITE-THEORY.md` for the `PivotComputer` contract (which now exposes `ProjectWorldPointToFrame` as the general primitive).
 
 ### 3. Compound commands for continuous inputs
 

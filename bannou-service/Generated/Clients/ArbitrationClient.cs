@@ -545,9 +545,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<FileCaseResponse>(
-                _directDispatchProvider, _serviceName, "FileCaseAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, FileCaseRequest, FileCaseResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.FileCaseAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -648,9 +650,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ArbitrationCaseInfo>(
-                _directDispatchProvider, _serviceName, "GetCaseAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, GetCaseRequest, ArbitrationCaseInfo>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetCaseAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -745,9 +749,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ArbitrationCaseInfo>(
-                _directDispatchProvider, _serviceName, "GetCaseByCodeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, GetCaseByCodeRequest, ArbitrationCaseInfo>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetCaseByCodeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -844,9 +850,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListCasesResponse>(
-                _directDispatchProvider, _serviceName, "ListCasesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, ListCasesRequest, ListCasesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListCasesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -936,9 +944,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ArbitrationCaseInfo>(
-                _directDispatchProvider, _serviceName, "WithdrawCaseAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, WithdrawCaseRequest, ArbitrationCaseInfo>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.WithdrawCaseAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1041,9 +1051,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ArbitrationCaseInfo>(
-                _directDispatchProvider, _serviceName, "DismissCaseAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, DismissCaseRequest, ArbitrationCaseInfo>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DismissCaseAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1146,9 +1158,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ArbitrationCaseInfo>(
-                _directDispatchProvider, _serviceName, "ChallengeJurisdictionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, ChallengeJurisdictionRequest, ArbitrationCaseInfo>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ChallengeJurisdictionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1250,9 +1264,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetTimelineResponse>(
-                _directDispatchProvider, _serviceName, "GetTimelineAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, GetTimelineRequest, GetTimelineResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetTimelineAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1349,9 +1365,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SubmitEvidenceResponse>(
-                _directDispatchProvider, _serviceName, "SubmitEvidenceAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, SubmitEvidenceRequest, SubmitEvidenceResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SubmitEvidenceAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1458,9 +1476,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListEvidenceResponse>(
-                _directDispatchProvider, _serviceName, "ListEvidenceAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, ListEvidenceRequest, ListEvidenceResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListEvidenceAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1552,9 +1572,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ArbitrationEvidenceInfo>(
-                _directDispatchProvider, _serviceName, "GetEvidenceAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, GetEvidenceRequest, ArbitrationEvidenceInfo>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetEvidenceAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1652,9 +1674,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AssignArbiterResponse>(
-                _directDispatchProvider, _serviceName, "AssignArbiterAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, AssignArbiterRequest, AssignArbiterResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.AssignArbiterAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1763,9 +1787,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ArbitrationCaseInfo>(
-                _directDispatchProvider, _serviceName, "RecuseArbiterAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, RecuseArbiterRequest, ArbitrationCaseInfo>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RecuseArbiterAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1868,9 +1894,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListQualifiedArbitersResponse>(
-                _directDispatchProvider, _serviceName, "ListQualifiedArbitersAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, ListQualifiedArbitersRequest, ListQualifiedArbitersResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListQualifiedArbitersAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1965,9 +1993,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetArbiterCaseloadResponse>(
-                _directDispatchProvider, _serviceName, "GetArbiterCaseloadAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, GetArbiterCaseloadRequest, GetArbiterCaseloadResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetArbiterCaseloadAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2059,9 +2089,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<IssueRulingResponse>(
-                _directDispatchProvider, _serviceName, "IssueRulingAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, IssueRulingRequest, IssueRulingResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.IssueRulingAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2164,9 +2196,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ArbitrationCaseInfo>(
-                _directDispatchProvider, _serviceName, "AppealRulingAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, AppealRulingRequest, ArbitrationCaseInfo>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.AppealRulingAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2267,9 +2301,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ArbitrationRulingInfo>(
-                _directDispatchProvider, _serviceName, "GetRulingAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, GetRulingRequest, ArbitrationRulingInfo>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetRulingAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2367,9 +2403,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EnforceRulingResponse>(
-                _directDispatchProvider, _serviceName, "EnforceRulingAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, EnforceRulingRequest, EnforceRulingResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.EnforceRulingAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2473,9 +2511,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ResolveJurisdictionResponse>(
-                _directDispatchProvider, _serviceName, "ResolveJurisdictionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, ResolveJurisdictionRequest, ResolveJurisdictionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ResolveJurisdictionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2576,9 +2616,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetJurisdictionHierarchyResponse>(
-                _directDispatchProvider, _serviceName, "GetJurisdictionHierarchyAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, GetJurisdictionHierarchyRequest, GetJurisdictionHierarchyResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetJurisdictionHierarchyAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2681,9 +2723,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanupResponse>(
-                _directDispatchProvider, _serviceName, "CleanupByCharacterAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, CleanupByCharacterRequest, CleanupResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanupByCharacterAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2773,9 +2817,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanupResponse>(
-                _directDispatchProvider, _serviceName, "CleanupByRealmAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, CleanupByRealmRequest, CleanupResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanupByRealmAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2866,9 +2912,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanupResponse>(
-                _directDispatchProvider, _serviceName, "CleanupByFactionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, CleanupByFactionRequest, CleanupResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanupByFactionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2959,9 +3007,11 @@ public partial class ArbitrationClient : IArbitrationClient, BeyondImmersion.Ban
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanupResponse>(
-                _directDispatchProvider, _serviceName, "CleanupByLocationAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IArbitrationService, CleanupByLocationRequest, CleanupResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanupByLocationAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

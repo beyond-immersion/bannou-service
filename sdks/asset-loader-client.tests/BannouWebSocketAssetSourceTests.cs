@@ -16,16 +16,16 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
     /// <summary>
     /// Initializes test resources.
     /// </summary>
-    public Task InitializeAsync()
+    public ValueTask InitializeAsync()
     {
         _realClient = new BannouClient();
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>
     /// Cleans up test resources.
     /// </summary>
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (_realClient != null)
         {
@@ -137,7 +137,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            source.ResolveBundlesAsync(new[] { "asset-1" }));
+            source.ResolveBundlesAsync(new[] { "asset-1" }, ct: TestContext.Current.CancellationToken));
     }
 
     /// <summary>
@@ -151,7 +151,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            source.GetBundleDownloadInfoAsync("bundle-1"));
+            source.GetBundleDownloadInfoAsync("bundle-1", TestContext.Current.CancellationToken));
     }
 
     /// <summary>
@@ -165,7 +165,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            source.GetBundleDownloadInfoAsync(""));
+            source.GetBundleDownloadInfoAsync("", TestContext.Current.CancellationToken));
     }
 
     /// <summary>
@@ -179,7 +179,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            source.GetAssetDownloadInfoAsync("asset-1"));
+            source.GetAssetDownloadInfoAsync("asset-1", TestContext.Current.CancellationToken));
     }
 
     /// <summary>
@@ -193,7 +193,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            source.GetAssetDownloadInfoAsync(""));
+            source.GetAssetDownloadInfoAsync("", TestContext.Current.CancellationToken));
     }
 
     #endregion
@@ -219,7 +219,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
         });
 
         // Act
-        await source.ResolveBundlesAsync(assetIds);
+        await source.ResolveBundlesAsync(assetIds, ct: TestContext.Current.CancellationToken);
 
         // Assert
         mockClient.Verify(c => c.InvokeAsync<ResolveBundlesRequest, ResolveBundlesResponse>(
@@ -266,7 +266,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
         });
 
         // Act
-        var result = await source.ResolveBundlesAsync(new[] { "asset-1", "asset-2" });
+        var result = await source.ResolveBundlesAsync(new[] { "asset-1", "asset-2" }, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result.Bundles);
@@ -309,7 +309,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
         });
 
         // Act
-        var result = await source.ResolveBundlesAsync(new[] { "asset-1" });
+        var result = await source.ResolveBundlesAsync(new[] { "asset-1" }, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.Bundles[0].IsMetabundle);
@@ -343,7 +343,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
         });
 
         // Act
-        var result = await source.ResolveBundlesAsync(new[] { "standalone-1" });
+        var result = await source.ResolveBundlesAsync(new[] { "standalone-1" }, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result.Bundles);
@@ -373,7 +373,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
         });
 
         // Act
-        var result = await source.ResolveBundlesAsync(new[] { "missing-asset-1", "missing-asset-2" });
+        var result = await source.ResolveBundlesAsync(new[] { "missing-asset-1", "missing-asset-2" }, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result.Bundles);
@@ -410,7 +410,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<AssetSourceException>(() =>
-            source.ResolveBundlesAsync(new[] { "asset-1" }));
+            source.ResolveBundlesAsync(new[] { "asset-1" }, ct: TestContext.Current.CancellationToken));
 
         Assert.Contains("Database connection failed", ex.Message);
     }
@@ -448,7 +448,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
             }));
 
         // Act
-        var result = await source.GetBundleDownloadInfoAsync("bundle-123");
+        var result = await source.GetBundleDownloadInfoAsync("bundle-123", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -483,7 +483,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
             }));
 
         // Act
-        var result = await source.GetBundleDownloadInfoAsync("nonexistent-bundle");
+        var result = await source.GetBundleDownloadInfoAsync("nonexistent-bundle", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -535,7 +535,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
             }));
 
         // Act
-        var result = await source.GetAssetDownloadInfoAsync("asset-456");
+        var result = await source.GetAssetDownloadInfoAsync("asset-456", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -572,7 +572,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
             }));
 
         // Act
-        var result = await source.GetAssetDownloadInfoAsync("nonexistent-asset");
+        var result = await source.GetAssetDownloadInfoAsync("nonexistent-asset", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -604,7 +604,7 @@ public class BannouWebSocketAssetSourceTests : IAsyncLifetime
             }));
 
         // Act
-        var result = await source.GetAssetDownloadInfoAsync("asset-789");
+        var result = await source.GetAssetDownloadInfoAsync("asset-789", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);

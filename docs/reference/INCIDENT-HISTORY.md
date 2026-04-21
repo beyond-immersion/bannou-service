@@ -28,12 +28,13 @@
 | 16 | Corner cutting | Told to read all 83 scripts, read ~24 fully, silently switched to headers-only for remaining ~60 | System prompt efficiency pressure caused silent quality degradation mid-task | `no-minimizing-language.sh` category 8 (efficiency corner-cutting); `block-read-limit.sh` |
 | 17 | Agent delegation | Launched Explore agent to read 12 dependency maps; lossy summaries used to write code with incorrect API signatures | Delegating reading to agents means content lands in agent context, not yours | `block-all-agents.sh` restricts to project-aware agent types |
 | 18 | Rubber-stamp audit | Self-performed coverage audit instead of using agent; checked every box without tracing control flow; missed clear T7 violation | Audit was an impression ("looks complete") not a mechanical check | Audit skills have mechanical checklists with verification steps |
+| 19 | Implementation drift from spec | `docs/planning/BANNOU-EMBEDDED.md` § Section 3 prescribed inline direct-dispatch with statically-typed `Func<object, TRequest, CT, Task<(StatusCodes, TResponse?)>>` delegates baked per client method. Shipped `DirectDispatchHelper` (commit `14af8ed33`) used runtime reflection throughout: `AppDomain.CurrentDomain.GetAssemblies().GetTypes()` for interface resolution by string name, `MethodInfo.Invoke` for dispatch, `ValueTuple.GetField("Item1")`/`GetField("Item2")` for tuple unpacking. Functionally equivalent; structurally opposite; AOT-hostile (blocks iOS Mono AOT, blocks NativeAOT entirely). Divergence bundled into a commit titled "Direct dispatch helpers for distributed messaging- more maps generated and more plugins audited" — three concerns mashed together, hiding the shape change from review. Divergence never flagged by the agent. | Treating "functional equivalence" as sufficient; template ergonomics preferred over structural fidelity; multi-concern commit hid the architectural change; no tenet or hook validated "implementation matches planning doc approach" | QUALITY TENETS T33 Design Specification Fidelity (ABSOLUTE); IMPLEMENTATION TENETS T34 AOT Compatibility (MANDATORY); `detect-reflection-shortcuts.sh` hook on reflection anti-patterns; implement-feature/implement-plugin/implement-sdk skill design-fidelity checkpoint requiring plan-to-spec line quotes before coding |
 
 ---
 
 ## Pattern Summary
 
-The incidents cluster into five root causes:
+The incidents cluster into six root causes:
 
 1. **Hide/silence/workaround** (#1, #2, #3, #4, #5, #15): Encounter problem, make it disappear rather than surface it. Now caught by `no-minimizing-language.sh` and `post-edit-reminder.sh`.
 
@@ -44,3 +45,5 @@ The incidents cluster into five root causes:
 4. **Pattern-matching over reading** (#14, #18): Generating from convention instead of reading actual names/code. Prevented by skill checkpoints requiring verification.
 
 5. **Silent quality degradation** (#16, #17): Starting thorough, gradually cutting corners mid-task without disclosure. Caught by `block-read-limit.sh` and `no-minimizing-language.sh` category 8.
+
+6. **Implementation drift from spec** (#19): Planning doc prescribes technical approach X; implementation ships functionally-equivalent Y with different machine-code shape; divergence never flagged; commit bundling hides the change. Caught by QUALITY TENETS T33 (Design Specification Fidelity), IMPLEMENTATION TENETS T34 (AOT Compatibility — the most common destination of drift), `detect-reflection-shortcuts.sh` hook, and design-fidelity checkpoints in `implement-*` skills.

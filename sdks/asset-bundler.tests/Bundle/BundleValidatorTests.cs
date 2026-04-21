@@ -48,7 +48,7 @@ public class BundleValidatorTests : IDisposable
 
         // Act
         await using var stream = File.OpenRead(bundlePath);
-        var result = await _validator.ValidateAsync(stream, "test-bundle");
+        var result = await _validator.ValidateAsync(stream, "test-bundle", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.IsValid);
@@ -61,11 +61,11 @@ public class BundleValidatorTests : IDisposable
     {
         // Arrange
         var bundlePath = Path.Combine(_tempDir, "empty.bannou");
-        await File.WriteAllBytesAsync(bundlePath, Array.Empty<byte>());
+        await File.WriteAllBytesAsync(bundlePath, Array.Empty<byte>(), TestContext.Current.CancellationToken);
 
         // Act
         await using var stream = File.OpenRead(bundlePath);
-        var result = await _validator.ValidateAsync(stream, "empty");
+        var result = await _validator.ValidateAsync(stream, "empty", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result.IsValid);
@@ -80,7 +80,7 @@ public class BundleValidatorTests : IDisposable
 
         // Act
         await using var stream = File.OpenRead(bundlePath);
-        var result = await _validator.ValidateAsync(stream, "expected-id"); // Different ID
+        var result = await _validator.ValidateAsync(stream, "expected-id", TestContext.Current.CancellationToken); // Different ID
 
         // Assert
         Assert.False(result.IsValid);
@@ -95,7 +95,7 @@ public class BundleValidatorTests : IDisposable
 
         // Act
         await using var stream = File.OpenRead(bundlePath);
-        var result = await _validator.ValidateAsync(stream, "test-bundle");
+        var result = await _validator.ValidateAsync(stream, "test-bundle", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.IsValid);
@@ -129,7 +129,7 @@ public class BundleValidatorTests : IDisposable
 
         // Act
         await using var stream = File.OpenRead(bundlePath);
-        var result = await validator.ValidateAsync(stream, "test-bundle");
+        var result = await validator.ValidateAsync(stream, "test-bundle", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.False(result.IsValid);

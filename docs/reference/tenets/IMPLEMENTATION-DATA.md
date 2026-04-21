@@ -11,6 +11,7 @@ These tenets define how the **code is written** — modeling patterns, type disc
 
 ---
 
+<!-- TENET:T14 -->
 ## Tenet 14: Polymorphic Associations (STANDARDIZED)
 
 **Rule**: When entities reference multiple entity types, use **Entity ID + Type Column** in schemas and **composite string keys** for state store operations.
@@ -69,9 +70,11 @@ Polymorphic type discriminator fields (`ownerType`, `entityType`, `partyType`, e
 | 4 | All valid values are Bannou entity types? | `$ref: EntityType` (Category A) | Seed `ownerType`, Currency wallet owner, Divine blessing target |
 
 **Key clarification**: Hierarchy isolation (test 2) applies ONLY when a lower-layer service would need to enumerate types from HIGHER layers. L2 services referencing entity types within L1/L2 (e.g., Currency referencing `account`, `character`, `guild`) is NOT a hierarchy violation — use `EntityType`.
+<!-- /TENET:T14 -->
 
 ---
 
+<!-- TENET:T20 -->
 ## Tenet 20: JSON Serialization (MANDATORY)
 
 **Rule**: All JSON serialization/deserialization MUST use `BannouJson` (from `BeyondImmersion.Bannou.Core`). Direct `JsonSerializer` use is forbidden except in unit tests specifically testing serialization behavior (with `BannouJson.Options`).
@@ -100,9 +103,11 @@ var model = JsonSerializer.Deserialize<MyModel>(jsonString);
 | **Numbers** | Strict parsing (no string coercion) |
 
 > **Helpers**: See [Helpers & Common Patterns § Shared Models](../HELPERS-AND-COMMON-PATTERNS.md#11-shared-models--enums) for `BannouJson` location and usage.
+<!-- /TENET:T20 -->
 
 ---
 
+<!-- TENET:T21 -->
 ## Tenet 21: Configuration-First Development (MANDATORY)
 
 **Rule**: All runtime configuration MUST be defined in `schemas/{service}-configuration.yaml` and accessed through generated configuration classes. Direct `Environment.GetEnvironmentVariable` is forbidden except for documented exceptions.
@@ -173,9 +178,11 @@ _connectionString = config.ConnectionString
 Environment.GetEnvironmentVariable("...");  // Use config class
 ?? "amqp://guest:guest@localhost";          // Masks config issues
 ```
+<!-- /TENET:T21 -->
 
 ---
 
+<!-- TENET:T23 -->
 ## Tenet 23: Async Method Pattern (MANDATORY)
 
 **Rule**: All methods returning `Task`, `Task<T>`, `ValueTask`, or `ValueTask<T>` MUST use `async` and contain at least one `await`. Non-async methods returning these types have different exception handling (synchronous throw vs captured in task), incomplete stack traces, and broken `using` semantics. This applies equally to `ValueTask` variants — `ValueTask.FromResult` in a non-async method has the same problems as `Task.FromResult`.
@@ -224,9 +231,11 @@ public async Task DoWorkAsync()
     await Task.CompletedTask;
 }
 ```
+<!-- /TENET:T23 -->
 
 ---
 
+<!-- TENET:T24 -->
 ## Tenet 24: Using Statement Pattern (MANDATORY)
 
 **Rule**: All disposable objects with method-scoped lifetimes MUST use `using` statements. Manual `.Dispose()` misses exception paths and leaks resources.
@@ -251,9 +260,11 @@ Only when disposal scope extends beyond the creating method:
 3. **Async disposal constraints** - When `await using` is impossible due to framework limitations
 
 Enforced via `CA2000` (warning) and `IDE0063` (suggestion) in `.editorconfig`.
+<!-- /TENET:T24 -->
 
 ---
 
+<!-- TENET:T25 -->
 ## Tenet 25: Type Safety Across All Models (MANDATORY)
 
 **Rule**: ALL models (requests, responses, events, configuration, internal POCOs) MUST use the strongest available C# type. String representations of typed values are **forbidden**.
@@ -395,9 +406,11 @@ var enumVal = stringValue.MapByNameOrDefault(MyEnum.Default);
 **Incident** (2026-03-11): An agent replaced 5 correct `Enum.TryParse` calls at A2 boundaries with this anti-pattern, adding try-catch blocks that were functionally equivalent but strictly worse.
 
 Tests follow the same rules. `DeploymentMode = "bannou"` in a test is wrong - use `DeploymentMode.Bannou`.
+<!-- /TENET:T25 -->
 
 ---
 
+<!-- TENET:T26 -->
 ## Tenet 26: No Sentinel Values (MANDATORY)
 
 **Rule**: Never use "magic values" to represent absence. If a value can be absent, make it nullable.
@@ -438,6 +451,7 @@ internal class ItemInstanceModel
 ### Migration Path
 
 For existing sentinel values: update schema to nullable → regenerate → update POCOs → replace sentinel comparisons with `HasValue`/null checks → migrate stored data.
+<!-- /TENET:T26 -->
 
 ---
 

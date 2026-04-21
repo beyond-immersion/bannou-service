@@ -491,4 +491,66 @@ metadata:
 
 ---
 
+## Defenders as First Consumer — Phase 1 Scope Additions
+
+This section captures first-consumer input from Defenders of Ba'hara for Phase 1. Items emerge from review of the Phase 1 plan against locked Defenders narrative / character / level content (decisions D3, D106, D50, D91, D103, D105, D119, D122, D132 in the sibling `defenders-kb` repository).
+
+**Defenders-side reference**: `defenders-kb/00-meta/DECISIONS.md` D132 ("Defenders' cinematic-composer Phase 1 scope — first-consumer requirements") captures Phase 1 scope from the Defenders side. The Q93 resolution in `defenders-kb/00-meta/QUESTIONS-RESOLVED.md` maps D132 requirements onto this Phase 1 plan and identifies the action-catalog gap below. Pattern parallels `bannou/docs/planning/SPRITE-COMPOSER-SDK.md` Part 11.
+
+### Action catalog: first-class types for dialogue, sound, wait (gap)
+
+**Defenders requirement**: the locked Defenders cutscene content relies heavily on spoken dialogue, sound / music cues, and explicit waits for dramatic timing — Act openings, boss intros, banishment ritual (D122), closing dread beat at Everathi (D105), per-MC Gee dying words (D91), Jackal dialog (D119), flashback cutscenes (D50), pre-banishment council. Defenders' D132 item #6 enumerates the required action catalog: **camera + animation + dialogue + sound + wait + sync**.
+
+**Gap in current Phase 1 scope**: Sub-Phase 1B § Key Types defines four typed `ActionDefinition` subclasses — `AnimateAction`, `CameraAction`, `EnvironmentalAction` (prop interaction), `QteAction`. Dialogue, sound, and explicit wait are not represented as typed subclasses. They are expressible via generic `DomainAction(name, parameters)` per the runtime's action-type-agnostic dispatch ([CINEMATIC-SYSTEM.md § 1.2](../planning/CINEMATIC-SYSTEM.md#12-the-client-integration-surface-complete)), but this degrades authoring ergonomics — Designers would manually construct string-keyed action entries for Defenders' most common content types (dialogue delivery appears in essentially every authored cutscene).
+
+**Proposed Phase 1 additions** (typed `ActionDefinition` subclasses in `sdks/cinematic-composer/Actions/`):
+
+- **`SpeakAction`** — dialogue delivery. Parameters: `speaker` (participant-slot reference), `line` (localizable key OR literal string), `duration` (seconds; explicit timing rather than derived from audio clip length to keep the authoring format audio-file-agnostic). Runtime maps to the game's dialogue-rendering system (subtitle display + optional voice-line playback).
+- **`PlaySoundAction`** — sound effect / music cue trigger. Parameters: `sound` (identifier — SFX cue name or music-track name), `channel` (optional — `"music"` / `"sfx"` / `"ambience"` / etc.), `volume` (optional), `fade_in` / `fade_out` (optional, seconds). Runtime maps to the game's audio system.
+- **`WaitAction`** — explicit delay on a track. Parameters: `duration` (seconds). Functionally equivalent to a track-clip gap, but making it a first-class action lets Designers express timing intent in the authoring format (e.g., "dramatic pause after Gee's line") rather than encoding as an implicit gap between clips.
+
+**Optional — Phase 1 or later**:
+
+- **`VfxAction`** — particle / visual-effect cue trigger. Parameters: `effect` (identifier), `target` (entity / position), optional timing/intensity params. Could be folded into `EnvironmentalAction` or added as a standalone type. Defenders has magic-cast VFX (per `defenders-kb/21-vfx/`) that aren't literally prop interactions; a standalone type aids authoring clarity but is lower-priority than Speak/PlaySound/Wait.
+
+**Runtime impact**: **none**. The runtime's `IClientCutsceneHandler.ExecuteActionAsync(entityId, action, parameters)` is already action-type-agnostic per CINEMATIC-SYSTEM.md § 1.2 — "the composition layer can define new action types without changing the client interface." Adding typed subclasses is an authoring-layer ergonomic; `AbmlExporter` continues to emit `domain_action` ABML nodes the existing `behavior-compiler` handles. `TimelineValidator` accepts the new action types without structural changes.
+
+**Acceptance**: Phase 1 `sdks/cinematic-composer/Actions/` includes `SpeakAction.cs`, `PlaySoundAction.cs`, `WaitAction.cs` (and optionally `VfxAction.cs`). `AbmlExporter` maps each to appropriate ABML `domain_action` nodes with the parameter dictionary. `TimelineValidator` accepts the new action types.
+
+### Scope items already covered (traceability)
+
+Defenders requirements from D132 that the current Phase 1 plan already covers — listed here for traceability, no Phase 1 scope change needed:
+
+| D132 item | Phase 1 plan coverage |
+|---|---|
+| Timeline-based authoring (#1) | Sub-Phase 1B: `CinematicTimeline` + `Track` + `TrackClip` |
+| Per-MC variant branching (#2) | Sub-Phase 1B: `ParticipantSlot` + `AbmlExporter(scenario, bindings)` + `Segments` branch targeting |
+| QTE reaction-commands per D106 (#3) | Sub-Phase 1B: `QteAction` + `ContinuationPoint` + branch mapping |
+| Parallel cutscenes (#4) | Multi-channel `Tracks` + `SyncBarrier` — core pattern |
+| Scene-composer integration (#5) | `scene-composer` dependency for spatial primitives + `EnvironmentalAction` scene-node references |
+| Game-code triggering (#8) | Phase 1 exports ABML; game code invokes `CinematicRunner.StartAsync` via the existing runtime without the Phase 2 matcher |
+
+### Preview / scrub authoring UI — Defenders-side
+
+**Defenders handles preview in a separate Stride UI project** (working name `defenders-cinematic-composer`, analogous to the Phase 4 `defenders-sprite-composer` pattern documented in `bannou/docs/planning/SPRITE-COMPOSER-SDK.md`). Bannou's Phase 1 scope remains data model + validator + exporter only; Defenders builds the authoring UI (including timeline scrub + preview) consuming the Phase 1 SDK's validated scenario data.
+
+**No Bannou-side Phase 1 scope addition needed for preview** — called out here for clarity. The decoupling matches the sprite-composer ecosystem where Phase 4 is a Defenders deliverable on top of Phase 1–3 Bannou SDKs. Defenders' D132 item #7 ("Authoring preview/scrub") is satisfied by the Defenders-side Stride UI project.
+
+### Scope exclusions
+
+Defenders does NOT consume in Phase 1 (confirming D132 exclusions):
+
+- **GOAP auto-composition via triggers/metadata** — The authoring format's `triggers` + `metadata.priority/cooldown/exclusivity_tags` blocks are Phase 2 matcher input. Defenders authors leave these empty or minimal; cutscenes are game-code-triggered, not matcher-discovered.
+- **CinematicStoryteller SDK** (Phase 2 of CINEMATIC-SYSTEM.md) — GOAP-based emergent composition. Not Defenders' use case.
+- **lib-cinematic plugin** ([CINEMATIC-PHASE-2-PLUGIN.md](CINEMATIC-PHASE-2-PLUGIN.md)) — HTTP API + agency-gated QTE density + composition caching. Not Defenders (embedded mode; authored cutscenes; no agency-gated dynamic content).
+- **Phase 3 Arcadia integration** ([CINEMATIC-PHASE-3-INTEGRATION.md](CINEMATIC-PHASE-3-INTEGRATION.md)) — Event Brain / Gardener / Puppetmaster wiring. Not Defenders.
+
+### Co-evolution commitment
+
+When Phase 1 lands, Defenders becomes the validation consumer. Additional Phase 1 action-catalog requirements may emerge from actual cutscene authoring (e.g., specific `VfxAction` parameterization once 21-vfx design stabilizes); appended as further Ds in `defenders-kb`.
+
+Section reflects Defenders' first-consumer input as of Q93 resolution (2026-04-20). Updates follow new Defenders Ds or Q resolutions extending Phase 1 requirements.
+
+---
+
 *This is the Phase 1 implementation plan. For architectural context, see [CINEMATIC-SYSTEM.md](CINEMATIC-SYSTEM.md). For the pattern being followed, see [Phase 0](CINEMATIC-PHASE-0-SCENARIO-SDK.md).*

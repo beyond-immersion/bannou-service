@@ -105,7 +105,7 @@ public class BannouMeshAssetSourceTests
             .ReturnsAsync(response);
 
         // Act
-        var result = await _source.ResolveBundlesAsync(new[] { "asset-1", "asset-2" });
+        var result = await _source.ResolveBundlesAsync(new[] { "asset-1", "asset-2" }, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Single(result.Bundles);
@@ -142,7 +142,7 @@ public class BannouMeshAssetSourceTests
             .ReturnsAsync(response);
 
         // Act
-        var result = await _source.ResolveBundlesAsync(new[] { "asset-1" });
+        var result = await _source.ResolveBundlesAsync(new[] { "asset-1" }, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.True(result.Bundles[0].IsMetabundle);
@@ -175,7 +175,7 @@ public class BannouMeshAssetSourceTests
             .ReturnsAsync(response);
 
         // Act
-        var result = await _source.ResolveBundlesAsync(new[] { "standalone-1" });
+        var result = await _source.ResolveBundlesAsync(new[] { "standalone-1" }, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Empty(result.Bundles);
@@ -203,7 +203,7 @@ public class BannouMeshAssetSourceTests
             .ReturnsAsync(response);
 
         // Act
-        await _source.ResolveBundlesAsync(new[] { "asset-1" });
+        await _source.ResolveBundlesAsync(new[] { "asset-1" }, ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(capturedRequest);
@@ -223,7 +223,7 @@ public class BannouMeshAssetSourceTests
     {
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            _source.GetBundleDownloadInfoAsync(""));
+            _source.GetBundleDownloadInfoAsync("", TestContext.Current.CancellationToken));
     }
 
     /// <summary>
@@ -250,7 +250,7 @@ public class BannouMeshAssetSourceTests
             .ReturnsAsync(response);
 
         // Act
-        var result = await _source.GetBundleDownloadInfoAsync("bundle-1");
+        var result = await _source.GetBundleDownloadInfoAsync("bundle-1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -276,7 +276,7 @@ public class BannouMeshAssetSourceTests
                 null));
 
         // Act
-        var result = await _source.GetBundleDownloadInfoAsync("non-existent");
+        var result = await _source.GetBundleDownloadInfoAsync("non-existent", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -294,7 +294,7 @@ public class BannouMeshAssetSourceTests
     {
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            _source.GetAssetDownloadInfoAsync(""));
+            _source.GetAssetDownloadInfoAsync("", TestContext.Current.CancellationToken));
     }
 
     /// <summary>
@@ -320,7 +320,7 @@ public class BannouMeshAssetSourceTests
             .ReturnsAsync(response);
 
         // Act
-        var result = await _source.GetAssetDownloadInfoAsync("asset-1");
+        var result = await _source.GetAssetDownloadInfoAsync("asset-1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -351,7 +351,7 @@ public class BannouMeshAssetSourceTests
             .ReturnsAsync(response);
 
         // Act
-        var result = await _source.GetAssetDownloadInfoAsync("asset-1");
+        var result = await _source.GetAssetDownloadInfoAsync("asset-1", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -374,7 +374,7 @@ public class BannouMeshAssetSourceTests
                 null));
 
         // Act
-        var result = await _source.GetAssetDownloadInfoAsync("non-existent");
+        var result = await _source.GetAssetDownloadInfoAsync("non-existent", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);

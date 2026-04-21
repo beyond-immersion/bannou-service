@@ -423,9 +423,11 @@ public partial class WorldstateClient : IWorldstateClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GameTimeSnapshot>(
-                _directDispatchProvider, _serviceName, "GetRealmTimeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IWorldstateService, GetRealmTimeRequest, GameTimeSnapshot>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetRealmTimeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -520,9 +522,11 @@ public partial class WorldstateClient : IWorldstateClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GameTimeSnapshot>(
-                _directDispatchProvider, _serviceName, "GetRealmTimeByCodeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IWorldstateService, GetRealmTimeByCodeRequest, GameTimeSnapshot>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetRealmTimeByCodeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -617,9 +621,11 @@ public partial class WorldstateClient : IWorldstateClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BatchGetRealmTimesResponse>(
-                _directDispatchProvider, _serviceName, "BatchGetRealmTimesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IWorldstateService, BatchGetRealmTimesRequest, BatchGetRealmTimesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.BatchGetRealmTimesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -708,9 +714,11 @@ public partial class WorldstateClient : IWorldstateClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetElapsedGameTimeResponse>(
-                _directDispatchProvider, _serviceName, "GetElapsedGameTimeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IWorldstateService, GetElapsedGameTimeRequest, GetElapsedGameTimeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetElapsedGameTimeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -805,9 +813,11 @@ public partial class WorldstateClient : IWorldstateClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<TriggerTimeSyncResponse>(
-                _directDispatchProvider, _serviceName, "TriggerTimeSyncAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IWorldstateService, TriggerTimeSyncRequest, TriggerTimeSyncResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.TriggerTimeSyncAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -902,9 +912,11 @@ public partial class WorldstateClient : IWorldstateClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<InitializeRealmClockResponse>(
-                _directDispatchProvider, _serviceName, "InitializeRealmClockAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IWorldstateService, InitializeRealmClockRequest, InitializeRealmClockResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.InitializeRealmClockAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1011,9 +1023,11 @@ public partial class WorldstateClient : IWorldstateClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SetTimeRatioResponse>(
-                _directDispatchProvider, _serviceName, "SetTimeRatioAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IWorldstateService, SetTimeRatioRequest, SetTimeRatioResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SetTimeRatioAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1108,9 +1122,11 @@ public partial class WorldstateClient : IWorldstateClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AdvanceClockResponse>(
-                _directDispatchProvider, _serviceName, "AdvanceClockAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IWorldstateService, AdvanceClockRequest, AdvanceClockResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.AdvanceClockAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1211,9 +1227,11 @@ public partial class WorldstateClient : IWorldstateClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CalendarTemplateResponse>(
-                _directDispatchProvider, _serviceName, "SeedCalendarAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IWorldstateService, SeedCalendarRequest, CalendarTemplateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SeedCalendarAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1320,9 +1338,11 @@ public partial class WorldstateClient : IWorldstateClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CalendarTemplateResponse>(
-                _directDispatchProvider, _serviceName, "GetCalendarAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IWorldstateService, GetCalendarRequest, CalendarTemplateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetCalendarAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1417,9 +1437,11 @@ public partial class WorldstateClient : IWorldstateClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListCalendarsResponse>(
-                _directDispatchProvider, _serviceName, "ListCalendarsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IWorldstateService, ListCalendarsRequest, ListCalendarsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListCalendarsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1508,9 +1530,11 @@ public partial class WorldstateClient : IWorldstateClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CalendarTemplateResponse>(
-                _directDispatchProvider, _serviceName, "UpdateCalendarAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IWorldstateService, UpdateCalendarRequest, CalendarTemplateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateCalendarAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1611,9 +1635,11 @@ public partial class WorldstateClient : IWorldstateClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeleteCalendarResponse>(
-                _directDispatchProvider, _serviceName, "DeleteCalendarAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IWorldstateService, DeleteCalendarRequest, DeleteCalendarResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteCalendarAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1714,9 +1740,11 @@ public partial class WorldstateClient : IWorldstateClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmConfigResponse>(
-                _directDispatchProvider, _serviceName, "GetRealmConfigAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IWorldstateService, GetRealmConfigRequest, RealmConfigResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetRealmConfigAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1811,9 +1839,11 @@ public partial class WorldstateClient : IWorldstateClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RealmConfigResponse>(
-                _directDispatchProvider, _serviceName, "UpdateRealmConfigAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IWorldstateService, UpdateRealmConfigRequest, RealmConfigResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateRealmConfigAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1908,9 +1938,11 @@ public partial class WorldstateClient : IWorldstateClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListRealmClocksResponse>(
-                _directDispatchProvider, _serviceName, "ListRealmClocksAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IWorldstateService, ListRealmClocksRequest, ListRealmClocksResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListRealmClocksAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1999,9 +2031,11 @@ public partial class WorldstateClient : IWorldstateClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanupByRealmResponse>(
-                _directDispatchProvider, _serviceName, "CleanupByRealmAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IWorldstateService, CleanupByRealmRequest, CleanupByRealmResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanupByRealmAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2090,9 +2124,11 @@ public partial class WorldstateClient : IWorldstateClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanupByGameServiceResponse>(
-                _directDispatchProvider, _serviceName, "CleanupByGameServiceAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IWorldstateService, CleanupByGameServiceRequest, CleanupByGameServiceResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanupByGameServiceAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

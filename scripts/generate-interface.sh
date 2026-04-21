@@ -35,8 +35,15 @@ SERVICE_NAME="$1"
 SCHEMA_FILE="${2:-../schemas/${SERVICE_NAME}-api.yaml}"
 
 SERVICE_PASCAL=$(to_pascal_case "$SERVICE_NAME")
-OUTPUT_DIR="../plugins/lib-${SERVICE_NAME}/Generated"
+# Service interfaces live in bannou-service so the generated mesh clients
+# (also in bannou-service) can reference them at compile time for AOT-clean
+# typed direct dispatch. See docs/planning/BANNOU-EMBEDDED.md § Section 3
+# and IMPLEMENTATION TENETS (AOT Compatibility).
+OUTPUT_DIR="../bannou-service/Generated/Services"
 OUTPUT_FILE="$OUTPUT_DIR/I${SERVICE_PASCAL}Service.cs"
+# Legacy location — interfaces used to be generated per-plugin. Clean up any
+# stale file so the type is not defined twice when the plugin is rebuilt.
+LEGACY_FILE="../plugins/lib-${SERVICE_NAME}/Generated/I${SERVICE_PASCAL}Service.cs"
 echo -e "${YELLOW}🔧 Generating service interface for: $SERVICE_NAME${NC}"
 echo -e "  📋 Schema: $SCHEMA_FILE"
 echo -e "  📁 Output: $OUTPUT_FILE"
@@ -49,6 +56,12 @@ fi
 
 # Ensure output directory exists
 mkdir -p "$OUTPUT_DIR"
+
+# Remove stale legacy-location interface file if present
+if [ -f "$LEGACY_FILE" ]; then
+    rm "$LEGACY_FILE"
+    echo -e "  🧹 Removed legacy interface file: $LEGACY_FILE"
+fi
 
 echo -e "${YELLOW}🔄 Extracting interface from schema...${NC}"
 

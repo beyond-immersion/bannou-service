@@ -610,9 +610,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RoomTypeResponse>(
-                _directDispatchProvider, _serviceName, "RegisterRoomTypeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, RegisterRoomTypeRequest, RoomTypeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RegisterRoomTypeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -701,9 +703,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RoomTypeResponse>(
-                _directDispatchProvider, _serviceName, "GetRoomTypeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, GetRoomTypeRequest, RoomTypeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetRoomTypeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -792,9 +796,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListRoomTypesResponse>(
-                _directDispatchProvider, _serviceName, "ListRoomTypesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, ListRoomTypesRequest, ListRoomTypesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListRoomTypesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -883,9 +889,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RoomTypeResponse>(
-                _directDispatchProvider, _serviceName, "UpdateRoomTypeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, UpdateRoomTypeRequest, RoomTypeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateRoomTypeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -977,9 +985,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RoomTypeResponse>(
-                _directDispatchProvider, _serviceName, "DeprecateRoomTypeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, DeprecateRoomTypeRequest, RoomTypeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeprecateRoomTypeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1072,9 +1082,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanDeprecatedResponse>(
-                _directDispatchProvider, _serviceName, "CleanDeprecatedRoomTypesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, CleanDeprecatedRequest, CleanDeprecatedResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanDeprecatedRoomTypesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1163,9 +1175,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ChatRoomResponse>(
-                _directDispatchProvider, _serviceName, "CreateRoomAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, CreateRoomRequest, ChatRoomResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateRoomAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1254,9 +1268,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ChatRoomResponse>(
-                _directDispatchProvider, _serviceName, "GetRoomAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, GetRoomRequest, ChatRoomResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetRoomAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1345,9 +1361,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListRoomsResponse>(
-                _directDispatchProvider, _serviceName, "ListRoomsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, ListRoomsRequest, ListRoomsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListRoomsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1436,9 +1454,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ChatRoomResponse>(
-                _directDispatchProvider, _serviceName, "UpdateRoomAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, UpdateRoomRequest, ChatRoomResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateRoomAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1527,9 +1547,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ChatRoomResponse>(
-                _directDispatchProvider, _serviceName, "DeleteRoomAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, DeleteRoomRequest, ChatRoomResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteRoomAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1618,9 +1640,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ChatRoomResponse>(
-                _directDispatchProvider, _serviceName, "ArchiveRoomAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, ArchiveRoomRequest, ChatRoomResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ArchiveRoomAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1709,9 +1733,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ChatRoomResponse>(
-                _directDispatchProvider, _serviceName, "JoinRoomAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, JoinRoomRequest, ChatRoomResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.JoinRoomAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1800,9 +1826,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ChatRoomResponse>(
-                _directDispatchProvider, _serviceName, "LeaveRoomAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, LeaveRoomRequest, ChatRoomResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.LeaveRoomAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1891,9 +1919,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ParticipantsResponse>(
-                _directDispatchProvider, _serviceName, "ListParticipantsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, ListParticipantsRequest, ParticipantsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListParticipantsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1982,9 +2012,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ChatRoomResponse>(
-                _directDispatchProvider, _serviceName, "KickParticipantAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, KickParticipantRequest, ChatRoomResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.KickParticipantAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2073,9 +2105,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ChatRoomResponse>(
-                _directDispatchProvider, _serviceName, "BanParticipantAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, BanParticipantRequest, ChatRoomResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.BanParticipantAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2164,9 +2198,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ChatRoomResponse>(
-                _directDispatchProvider, _serviceName, "UnbanParticipantAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, UnbanParticipantRequest, ChatRoomResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UnbanParticipantAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2255,9 +2291,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ChatRoomResponse>(
-                _directDispatchProvider, _serviceName, "MuteParticipantAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, MuteParticipantRequest, ChatRoomResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.MuteParticipantAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2346,9 +2384,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ChatRoomResponse>(
-                _directDispatchProvider, _serviceName, "UnmuteParticipantAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, UnmuteParticipantRequest, ChatRoomResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UnmuteParticipantAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2437,9 +2477,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ChatRoomResponse>(
-                _directDispatchProvider, _serviceName, "ChangeParticipantRoleAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, ChangeParticipantRoleRequest, ChatRoomResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ChangeParticipantRoleAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2528,9 +2570,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ChatMessageResponse>(
-                _directDispatchProvider, _serviceName, "SendMessageAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, SendMessageRequest, ChatMessageResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SendMessageAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2619,9 +2663,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SendMessageBatchResponse>(
-                _directDispatchProvider, _serviceName, "SendMessageBatchAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, SendMessageBatchRequest, SendMessageBatchResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SendMessageBatchAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2710,9 +2756,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<MessageHistoryResponse>(
-                _directDispatchProvider, _serviceName, "GetMessageHistoryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, MessageHistoryRequest, MessageHistoryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetMessageHistoryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2801,9 +2849,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ChatMessageResponse>(
-                _directDispatchProvider, _serviceName, "DeleteMessageAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, DeleteMessageRequest, ChatMessageResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteMessageAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2892,9 +2942,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ChatMessageResponse>(
-                _directDispatchProvider, _serviceName, "PinMessageAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, PinMessageRequest, ChatMessageResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.PinMessageAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2983,9 +3035,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ChatMessageResponse>(
-                _directDispatchProvider, _serviceName, "UnpinMessageAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, UnpinMessageRequest, ChatMessageResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UnpinMessageAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3074,9 +3128,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SearchMessagesResponse>(
-                _directDispatchProvider, _serviceName, "SearchMessagesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, SearchMessagesRequest, SearchMessagesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SearchMessagesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3165,9 +3221,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListRoomsResponse>(
-                _directDispatchProvider, _serviceName, "AdminListRoomsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, AdminListRoomsRequest, ListRoomsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.AdminListRoomsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3256,9 +3314,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AdminStatsResponse>(
-                _directDispatchProvider, _serviceName, "AdminGetStatsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, AdminGetStatsRequest, AdminStatsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.AdminGetStatsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3347,9 +3407,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<AdminCleanupResponse>(
-                _directDispatchProvider, _serviceName, "AdminForceCleanupAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IChatService, AdminForceCleanupRequest, AdminCleanupResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.AdminForceCleanupAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3438,9 +3500,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "TypingAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IChatService, TypingRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.TypingAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -3524,9 +3588,11 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "EndTypingAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IChatService, EndTypingRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.EndTypingAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 

@@ -1,3 +1,5 @@
+using BeyondImmersion.Bannou.Core.Math;
+
 namespace BeyondImmersion.Bannou.SpriteTheory;
 
 /// <summary>
@@ -11,42 +13,30 @@ namespace BeyondImmersion.Bannou.SpriteTheory;
 public readonly struct BoundingBox : IEquatable<BoundingBox>
 {
     /// <summary>Minimum corner of the bounding box (smallest X, Y, Z values).</summary>
-    public (float X, float Y, float Z) Min { get; }
+    public Vector3 Min { get; }
 
     /// <summary>Maximum corner of the bounding box (largest X, Y, Z values).</summary>
-    public (float X, float Y, float Z) Max { get; }
+    public Vector3 Max { get; }
 
     /// <summary>
     /// Creates a new bounding box with the specified minimum and maximum corners.
     /// </summary>
     /// <param name="min">Minimum corner (smallest X, Y, Z).</param>
     /// <param name="max">Maximum corner (largest X, Y, Z).</param>
-    public BoundingBox((float X, float Y, float Z) min, (float X, float Y, float Z) max)
+    public BoundingBox(Vector3 min, Vector3 max)
     {
         Min = min;
         Max = max;
     }
 
     /// <summary>Center point of the bounding box, computed as the midpoint of Min and Max.</summary>
-    public (float X, float Y, float Z) Center => (
-        (Min.X + Max.X) * 0.5f,
-        (Min.Y + Max.Y) * 0.5f,
-        (Min.Z + Max.Z) * 0.5f
-    );
+    public Vector3 Center => (Min + Max) * 0.5f;
 
     /// <summary>Half-size of the bounding box along each axis (distance from center to face).</summary>
-    public (float X, float Y, float Z) Extents => (
-        (Max.X - Min.X) * 0.5f,
-        (Max.Y - Min.Y) * 0.5f,
-        (Max.Z - Min.Z) * 0.5f
-    );
+    public Vector3 Extents => (Max - Min) * 0.5f;
 
     /// <summary>Full size of the bounding box along each axis.</summary>
-    public (float X, float Y, float Z) Size => (
-        Max.X - Min.X,
-        Max.Y - Min.Y,
-        Max.Z - Min.Z
-    );
+    public Vector3 Size => Max - Min;
 
     /// <inheritdoc />
     public bool Equals(BoundingBox other) => Min.Equals(other.Min) && Max.Equals(other.Max);

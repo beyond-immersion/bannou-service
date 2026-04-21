@@ -294,9 +294,11 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SubscriptionListResponse>(
-                _directDispatchProvider, _serviceName, "GetAccountSubscriptionsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ISubscriptionService, GetAccountSubscriptionsRequest, SubscriptionListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetAccountSubscriptionsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -390,9 +392,11 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QuerySubscriptionsResponse>(
-                _directDispatchProvider, _serviceName, "QueryCurrentSubscriptionsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ISubscriptionService, QueryCurrentSubscriptionsRequest, QuerySubscriptionsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.QueryCurrentSubscriptionsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -484,9 +488,11 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SubscriptionInfo>(
-                _directDispatchProvider, _serviceName, "GetSubscriptionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ISubscriptionService, GetSubscriptionRequest, SubscriptionInfo>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetSubscriptionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -581,9 +587,11 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SubscriptionInfo>(
-                _directDispatchProvider, _serviceName, "CreateSubscriptionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ISubscriptionService, CreateSubscriptionRequest, SubscriptionInfo>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateSubscriptionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -690,9 +698,11 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SubscriptionInfo>(
-                _directDispatchProvider, _serviceName, "UpdateSubscriptionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ISubscriptionService, UpdateSubscriptionRequest, SubscriptionInfo>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateSubscriptionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -788,9 +798,11 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SubscriptionInfo>(
-                _directDispatchProvider, _serviceName, "CancelSubscriptionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ISubscriptionService, CancelSubscriptionRequest, SubscriptionInfo>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CancelSubscriptionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -891,9 +903,11 @@ public partial class SubscriptionClient : ISubscriptionClient, BeyondImmersion.B
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SubscriptionInfo>(
-                _directDispatchProvider, _serviceName, "RenewSubscriptionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ISubscriptionService, RenewSubscriptionRequest, SubscriptionInfo>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RenewSubscriptionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

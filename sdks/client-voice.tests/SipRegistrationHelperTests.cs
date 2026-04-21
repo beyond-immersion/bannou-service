@@ -54,11 +54,11 @@ public class SipRegistrationHelperTests
         var credentials = CreateValidCredentials();
 
         // Start registration without waiting
-        var registrationTask = helper.RegisterAsync(credentials);
+        var registrationTask = helper.RegisterAsync(credentials, cancellationToken: TestContext.Current.CancellationToken);
 
         // Act & Assert - second registration attempt should throw
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => helper.RegisterAsync(credentials));
+            () => helper.RegisterAsync(credentials, cancellationToken: TestContext.Current.CancellationToken));
 
         // Clean up - cancel the first registration
         try
@@ -97,7 +97,7 @@ public class SipRegistrationHelperTests
 
         // Act & Assert
         await Assert.ThrowsAsync<ObjectDisposedException>(
-            () => helper.RegisterAsync(credentials));
+            () => helper.RegisterAsync(credentials, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -139,7 +139,7 @@ public class SipRegistrationHelperTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => helper.RefreshAsync());
+            () => helper.RefreshAsync(cancellationToken: TestContext.Current.CancellationToken));
     }
 
     #endregion

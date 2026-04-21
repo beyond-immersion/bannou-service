@@ -541,9 +541,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeityResponse>(
-                _directDispatchProvider, _serviceName, "CreateDeityAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IDivineService, CreateDeityRequest, DeityResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateDeityAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -644,9 +646,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeityResponse>(
-                _directDispatchProvider, _serviceName, "GetDeityAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IDivineService, GetDeityRequest, DeityResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetDeityAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -741,9 +745,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeityResponse>(
-                _directDispatchProvider, _serviceName, "GetDeityByCodeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IDivineService, GetDeityByCodeRequest, DeityResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetDeityByCodeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -839,9 +845,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListDeitiesResponse>(
-                _directDispatchProvider, _serviceName, "ListDeitiesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IDivineService, ListDeitiesRequest, ListDeitiesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListDeitiesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -931,9 +939,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeityResponse>(
-                _directDispatchProvider, _serviceName, "UpdateDeityAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IDivineService, UpdateDeityRequest, DeityResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateDeityAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1035,9 +1045,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeityResponse>(
-                _directDispatchProvider, _serviceName, "ActivateDeityAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IDivineService, ActivateDeityRequest, DeityResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ActivateDeityAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1139,9 +1151,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeityResponse>(
-                _directDispatchProvider, _serviceName, "DeactivateDeityAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IDivineService, DeactivateDeityRequest, DeityResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeactivateDeityAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1244,9 +1258,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeityResponse>(
-                _directDispatchProvider, _serviceName, "DeprecateDeityAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IDivineService, DeprecateDeityRequest, DeityResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeprecateDeityAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1342,9 +1358,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeityResponse>(
-                _directDispatchProvider, _serviceName, "UndeprecateDeityAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IDivineService, UndeprecateDeityRequest, DeityResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UndeprecateDeityAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1442,9 +1460,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<MergeDeprecatedResponse>(
-                _directDispatchProvider, _serviceName, "MergeDeityAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IDivineService, MergeDeprecatedRequest, MergeDeprecatedResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.MergeDeityAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1548,9 +1568,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "DeleteDeityAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IDivineService, DeleteDeityRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteDeityAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1646,9 +1668,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DivinityBalanceResponse>(
-                _directDispatchProvider, _serviceName, "GetDivinityBalanceAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IDivineService, GetDivinityBalanceRequest, DivinityBalanceResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetDivinityBalanceAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1744,9 +1768,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DivinityBalanceResponse>(
-                _directDispatchProvider, _serviceName, "CreditDivinityAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IDivineService, CreditDivinityRequest, DivinityBalanceResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreditDivinityAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1843,9 +1869,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DivinityBalanceResponse>(
-                _directDispatchProvider, _serviceName, "DebitDivinityAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IDivineService, DebitDivinityRequest, DivinityBalanceResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DebitDivinityAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1946,9 +1974,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DivinityHistoryResponse>(
-                _directDispatchProvider, _serviceName, "GetDivinityHistoryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IDivineService, GetDivinityHistoryRequest, DivinityHistoryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetDivinityHistoryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2047,9 +2077,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BlessingResponse>(
-                _directDispatchProvider, _serviceName, "GrantBlessingAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IDivineService, GrantBlessingRequest, BlessingResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GrantBlessingAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2158,9 +2190,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BlessingResponse>(
-                _directDispatchProvider, _serviceName, "RevokeBlessingAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IDivineService, RevokeBlessingRequest, BlessingResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RevokeBlessingAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2261,9 +2295,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListBlessingsResponse>(
-                _directDispatchProvider, _serviceName, "ListBlessingsByEntityAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IDivineService, ListBlessingsByEntityRequest, ListBlessingsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListBlessingsByEntityAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2352,9 +2388,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListBlessingsResponse>(
-                _directDispatchProvider, _serviceName, "ListBlessingsByDeityAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IDivineService, ListBlessingsByDeityRequest, ListBlessingsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListBlessingsByDeityAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2443,9 +2481,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<BlessingResponse>(
-                _directDispatchProvider, _serviceName, "GetBlessingAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IDivineService, GetBlessingRequest, BlessingResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetBlessingAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2542,9 +2582,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<FollowerResponse>(
-                _directDispatchProvider, _serviceName, "RegisterFollowerAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IDivineService, RegisterFollowerRequest, FollowerResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RegisterFollowerAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2646,9 +2688,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "UnregisterFollowerAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IDivineService, UnregisterFollowerRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UnregisterFollowerAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -2738,9 +2782,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListFollowersResponse>(
-                _directDispatchProvider, _serviceName, "GetFollowersAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IDivineService, GetFollowersRequest, ListFollowersResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetFollowersAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2838,9 +2884,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "CleanupByCharacterAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IDivineService, CleanupByCharacterRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanupByCharacterAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -2926,9 +2974,11 @@ public partial class DivineClient : IDivineClient, BeyondImmersion.BannouService
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "CleanupByGameServiceAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<IDivineService, CleanupByGameServiceRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanupByGameServiceAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 

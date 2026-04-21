@@ -14,14 +14,15 @@ This document is the authoritative index for Bannou development standards. All s
 
 ---
 
-## Tenet 0: Never Reference Tenet Numbers in Source Code
+<!-- TENET:T0 -->
+## Tenet 0: Never Reference Tenet Numbers in Source Code (INVIOLABLE)
 
-When documenting tenet compliance in source code comments, **NEVER use specific tenet numbers** (e.g., "T9", "Tenet 21", "TENET T4"). Tenet numbers change over time as tenets are added, removed, or reorganized.
+Source code, schemas, scripts, and non-documentation files MUST cite tenets by stable category name (`FOUNDATION TENETS`, `IMPLEMENTATION TENETS`, `QUALITY TENETS`, `SERVICE HIERARCHY`) — never by specific number (`T9`, `Tenet 21`, `TENET T4`). Tenet numbers change as the catalog is reorganized, so any number citation silently decays into a wrong or dangling reference. Category names are structural and survive renumbering.
 
 **Instead, use category names:**
 - `FOUNDATION TENETS` - for T4, T5, T6, T13, T15, T18, T27, T28, T29, T32
-- `IMPLEMENTATION TENETS` - for T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26, T30, T31
-- `QUALITY TENETS` - for T10, T11, T12, T16, T19, T22
+- `IMPLEMENTATION TENETS` - for T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26, T30, T31, T34
+- `QUALITY TENETS` - for T10, T11, T12, T16, T19, T22, T33
 - `SERVICE HIERARCHY` - for Tenet 2 (service layer dependencies)
 
 > **Note**: Tenets 1 and 2 are special - they reference external documents ([SCHEMA-RULES.md](SCHEMA-RULES.md) and [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md)) for detailed rules. In source code, reference them as `FOUNDATION TENETS` or by their specific names ("per schema-first development", "per service hierarchy").
@@ -38,9 +39,11 @@ When documenting tenet compliance in source code comments, **NEVER use specific 
 ```
 
 This rule applies to: source code comments, schema descriptions, generator scripts, and any non-documentation files. The tenet definition documents (`docs/reference/tenets/*.md`) are the only place where specific numbers should appear.
+<!-- /TENET:T0 -->
 
 ---
 
+<!-- TENET:T1 -->
 ## Tenet 1: Schema-First Development (INVIOLABLE)
 
 **All service code is generated from OpenAPI schemas. This rule is inviolable.**
@@ -115,9 +118,11 @@ Schema-first applies to **HTTP APIs and service contracts**. Some components are
 - Service-to-service events → use event schemas
 - Configuration → use configuration schemas
 - Request/response models → use API schemas
+<!-- /TENET:T1 -->
 
 ---
 
+<!-- TENET:T2 -->
 ## Tenet 2: Service Hierarchy (INVIOLABLE)
 
 **Services are organized into layers (L0-L5). Dependencies may only flow downward.** The Service Registry in `generated/GENERATED-COMPOSITION-REFERENCE.md` shows every service's layer. Before adding ANY service client dependency, read [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md).
@@ -143,6 +148,7 @@ public class ActorService  // Layer 4
 ### Reference Counting the Right Way
 
 If a foundational service needs to know about references from higher layers (for cleanup eligibility), higher-layer services call **lib-resource's API directly** to register/unregister references, and lib-resource coordinates cleanup with policies (CASCADE/RESTRICT/DETACH). See [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md) for the full pattern and T27/T28 in [FOUNDATION.md](tenets/FOUNDATION.md) for the communication and cleanup rules.
+<!-- /TENET:T2 -->
 
 ---
 
@@ -155,9 +161,9 @@ Tenets are organized into categories based on when they're needed:
 | [**Schema Rules**](SCHEMA-RULES.md) | Tenet 1 | Before creating or modifying any schema file |
 | [**Service Hierarchy**](SERVICE-HIERARCHY.md) | Tenet 2 | Before adding any service client dependency |
 | [**Foundation**](tenets/FOUNDATION.md) | T4, T5, T6, T13, T15, T18, T27, T28, T29, T32 | Before starting any new service or feature |
-| [**Implementation: Behavior**](tenets/IMPLEMENTATION-BEHAVIOR.md) | T3, T7, T8, T9, T17, T30, T31 | While designing service method behavior |
+| [**Implementation: Behavior**](tenets/IMPLEMENTATION-BEHAVIOR.md) | T3, T7, T8, T9, T17, T30, T31, T34 | While designing service method behavior |
 | [**Implementation: Data**](tenets/IMPLEMENTATION-DATA.md) | T14, T20, T21, T23, T24, T25, T26 | While writing code and modeling data |
-| [**Quality**](tenets/QUALITY.md) | T10, T11, T12, T16, T19, T22 | During code review or before PR submission |
+| [**Quality**](tenets/QUALITY.md) | T10, T11, T12, T16, T19, T22, T33 | During code review or before PR submission |
 | [**Helpers & Common Patterns**](HELPERS-AND-COMMON-PATTERNS.md) | *(reference)* | When implementing — shared helpers, test validators, common patterns |
 
 > **Note**: Tenets 1 and 2 reference standalone documents (SCHEMA-RULES.md and SERVICE-HIERARCHY.md) that contain their own detailed rules. Helpers & Common Patterns is not a rules document — it catalogs available infrastructure to help implement the tenets correctly.
@@ -196,6 +202,7 @@ Tenets are organized into categories based on when they're needed:
 | **T17** | Client Event Schema Pattern | Use IClientEventPublisher for WebSocket push; not IMessageBus |
 | **T30** | Telemetry Span Instrumentation | All async methods get `StartActivity` spans; zero-signature-change via `Activity.Current` ambient context |
 | **T31** | Deprecation Lifecycle | Two categories (definitions vs templates); idempotent deprecation; standardized storage/events/behavior; Category B clean-deprecated sweep for safe deletion; no deprecation on instances. Marker interfaces: `IDeprecateAndMergeEntity` (Cat A), `ICleanDeprecatedEntity` (Cat B). See [Helpers § Category B Deprecation Template](HELPERS-AND-COMMON-PATTERNS.md#15-category-b-deprecation-template) for implementation patterns |
+| **T34** | AOT Compatibility | Runtime reflection, dynamic assembly loading, and runtime generic construction are forbidden in bannou-service and plugins paths; consumer targets include iOS (Mono AOT) and NativeAOT. |
 
 ---
 
@@ -227,6 +234,7 @@ Tenets are organized into categories based on when they're needed:
 | **T16** | Naming Conventions | Consistent patterns for methods, models, events, topics |
 | **T19** | XML Documentation | All public APIs documented with summary, params, returns |
 | **T22** | Warning Suppression | Forbidden except Moq/NSwag/enum exceptions; fix warnings, don't hide them |
+| **T33** | Design Specification Fidelity | When a planning doc prescribes a technical approach, implementation MUST match that approach structurally (not just functionally); divergence MUST be flagged before coding. |
 
 ---
 
@@ -252,6 +260,9 @@ Tenets are organized into categories based on when they're needed:
 | Direct RabbitMQ connection | T4 | Use IMessageBus via lib-messaging |
 | Direct HTTP service calls | T4 | Use generated clients via lib-mesh |
 | Graceful degradation for L0/L1/L2 dependency | T4 | Use constructor injection; see SERVICE-HIERARCHY.md |
+| Lua script when interface method exists | T4 | Use `ICacheableStateStore` or `IRedisOperations` methods |
+| Inline Lua script string | T4 | Move to `.lua` file with loader class |
+| Loop/iteration in Lua script | T4 | Restructure; use C# for loops |
 | Anonymous event objects | T5 | Define typed event in schema |
 | Manually defining lifecycle events | T5 | Use `x-lifecycle` in events schema |
 | Inline topic string when generated publisher exists | T5 | Use `_messageBus.Publish*Async()` extension method |
@@ -261,12 +272,13 @@ Tenets are organized into categories based on when they're needed:
 | Service class missing `partial` | T6 | Add `partial` keyword |
 | Inline `GetStore<T>()` calls in service method bodies | T4, T6 | Constructor-cache all store references as `readonly` fields |
 | Storing `IStateStoreFactory` as a field when only used in constructor | T4, T6 | Use constructor parameter directly; do not store as field |
-| BackgroundService passing `IStateStoreFactory` to sub-methods | T6 | Resolve stores once per scope, pass `IStateStore<T>` references |
 | BackgroundService calling `GetStore<T>()` per sub-method | T6 | Acquire all stores once at scope creation, pass as parameters |
 | Inline string interpolation for state store keys | T6 | Use `Build*Key()` method with `const` prefix |
 | `private static` key builder method | T6 | Use `internal static` for provider/test accessibility |
 | `Get*Key` naming for key construction | T6 | Use `Build*Key` — `Get` implies store retrieval |
+| BackgroundService passing `IStateStoreFactory` to sub-methods | T6 | Resolve stores once per scope, pass `IStateStore<T>` references |
 | Missing x-permissions on endpoint | T13 | Add to schema; use `[]` for service-to-service only, `role: anonymous` for pre-auth public |
+| Designing browser-facing endpoint without justification | T15 | Use POST-only WebSocket pattern; new browser-facing endpoints require approval (see T15 list) |
 | GPL library in NuGet package | T18 | Use MIT/BSD alternative |
 | Missing event consumer registration | T3 | Add RegisterEventConsumers call |
 | Tuple-destructuring a generated client call (`var (status, resp) = await _client.MethodAsync(...)`) | T7, T8 | Generated clients return `Task<TResponse>` and throw `ApiException` on error — they do NOT return tuples; only service implementation methods return `(StatusCodes, TResponse?)` |
@@ -355,6 +367,7 @@ Tenets are organized into categories based on when they're needed:
 | Reading metadata keys from another service's response by convention | T29 | Query the service that owns the domain concept via API |
 | Storing higher-layer domain data in lower-layer metadata bags | T29 | Higher-layer service owns binding table, references lower-layer entity by ID |
 | Documentation specifying "put X in service Y's metadata" | T29 | X belongs in the schema of the service that owns concept X |
+| `JsonElement` navigation on another service's metadata field | T29 | Define data in owning service's schema, use generated types |
 | Compression callback for game-mechanical state (proficiency, rankings, known recipes) | T29 | Use Seed/Collection/License primitives; those L2 services handle their own archival |
 | Reading archive data to gate API operations (authorization via archive) | T29 | Archives are for behavioral self-knowledge (GOAP, narrative), not operational authority |
 | Publishing event to lower-layer's topic instead of calling API | T27 | Use generated client directly (hierarchy permits the call) |
@@ -409,7 +422,18 @@ Tenets are organized into categories based on when they're needed:
 | Polymorphic string field "accountId or service name" | T32, T14 | Use ownerType enum + ownerId; use sessionId for user-initiated operations |
 | Service outside identity boundary accepting accountId with `role: user` | T32 | Use shortcut system or remove accountId from request |
 | Adding service to identity boundary without approval | T32 | Discuss with team; justify domain-level accountId requirement |
-
+| Implementation diverges from planning doc's prescribed technical approach | T33 | Match the approach structurally; stop and present the conflict to the user before shipping a divergent shape |
+| Shipping a functional equivalent with different machine-code shape (e.g., reflection where spec prescribed static generics) | T33 | Functional equivalence is NOT structural fidelity; ship the prescribed shape, not a same-output substitute |
+| Architectural change bundled into multi-concern commit, hiding divergence from review | T33 | Divergences from a prescribed design get their own commit with an explicit flag in the message |
+| Assembly.LoadFrom or Assembly.LoadFile in bannou-service or plugins code paths | T34 | Use static plugin registration manifest (source generator); see issue #724 for the refactor plan |
+| MakeGenericMethod or MakeGenericType with runtime-discovered types in shipping code | T34 | Bake the closed generic at the template or source-gen boundary; call with compile-time-known TRequest/TResponse |
+| method.Invoke on runtime-resolved MethodInfo in hot paths | T34 | Use a statically-typed delegate (Func or Action) or direct method call on the concrete interface |
+| Activator.CreateInstance with a runtime Type variable (non-typeof) in shipping code | T34 | Use Activator.CreateInstance&lt;T&gt;() with T closed at call site, or resolve via DI |
+| ValueTuple GetField("Item1") reflection unpacking | T34 | Use tuple deconstruction: var (status, result) = await method(...); |
+| AppDomain.CurrentDomain.GetAssemblies().GetTypes() in runtime paths | T34 | Use source-generated type catalog produced at build time from BannouService attributes |
+| Expression.Compile() on hot paths in shipping code | T34 | Use source-generated delegates or precomputed expression trees |
+| Reflection.Emit, DynamicMethod, AssemblyBuilder, ModuleBuilder, TypeBuilder, or ILGenerator in shipping path | T34 | Use source generators or compile-time factories; IL emission is never AOT-compatible |
+| Roslyn scripting (CSharpScript, Microsoft.CodeAnalysis.Scripting) in runtime paths | T34 | Move to precompiled configuration or source generators; runtime C# compilation is AOT-incompatible |
 ---
 
 ## Enforcement

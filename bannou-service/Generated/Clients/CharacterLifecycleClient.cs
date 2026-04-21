@@ -676,9 +676,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<InitiateMarriageResponse>(
-                _directDispatchProvider, _serviceName, "InitiateMarriageAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, InitiateMarriageRequest, InitiateMarriageResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.InitiateMarriageAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -786,9 +788,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<InitiateProcreationResponse>(
-                _directDispatchProvider, _serviceName, "InitiateProcreationAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, InitiateProcreationRequest, InitiateProcreationResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.InitiateProcreationAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -897,9 +901,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RecordDeathResponse>(
-                _directDispatchProvider, _serviceName, "RecordDeathAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, RecordDeathRequest, RecordDeathResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RecordDeathAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1000,9 +1006,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetLifecycleProfileResponse>(
-                _directDispatchProvider, _serviceName, "GetLifecycleProfileAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, GetLifecycleProfileRequest, GetLifecycleProfileResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetLifecycleProfileAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1099,9 +1107,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QueryByStageResponse>(
-                _directDispatchProvider, _serviceName, "QueryByStageAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, QueryByStageRequest, QueryByStageResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.QueryByStageAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1190,9 +1200,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QueryByBloodlineResponse>(
-                _directDispatchProvider, _serviceName, "QueryByBloodlineAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, QueryByBloodlineRequest, QueryByBloodlineResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.QueryByBloodlineAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1288,9 +1300,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SetNaturalDeathYearResponse>(
-                _directDispatchProvider, _serviceName, "SetNaturalDeathYearAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, SetNaturalDeathYearRequest, SetNaturalDeathYearResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SetNaturalDeathYearAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1393,9 +1407,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SeedLifecycleProfileResponse>(
-                _directDispatchProvider, _serviceName, "SeedLifecycleProfileAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, SeedLifecycleProfileRequest, SeedLifecycleProfileResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SeedLifecycleProfileAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1484,9 +1500,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetGeneticProfileResponse>(
-                _directDispatchProvider, _serviceName, "GetGeneticProfileAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, GetGeneticProfileRequest, GetGeneticProfileResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetGeneticProfileAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1581,9 +1599,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetPhenotypeResponse>(
-                _directDispatchProvider, _serviceName, "GetPhenotypeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, GetPhenotypeRequest, GetPhenotypeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetPhenotypeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1678,9 +1698,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QueryByAptitudeResponse>(
-                _directDispatchProvider, _serviceName, "QueryByAptitudeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, QueryByAptitudeRequest, QueryByAptitudeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.QueryByAptitudeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1771,9 +1793,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SeedGeneticProfileResponse>(
-                _directDispatchProvider, _serviceName, "SeedGeneticProfileAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, SeedGeneticProfileRequest, SeedGeneticProfileResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SeedGeneticProfileAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1875,9 +1899,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SimulateOffspringResponse>(
-                _directDispatchProvider, _serviceName, "SimulateOffspringAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, SimulateOffspringRequest, SimulateOffspringResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SimulateOffspringAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1973,9 +1999,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetFamilyTreeResponse>(
-                _directDispatchProvider, _serviceName, "GetFamilyTreeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, GetFamilyTreeRequest, GetFamilyTreeResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetFamilyTreeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2070,9 +2098,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SeedLifecycleTemplateResponse>(
-                _directDispatchProvider, _serviceName, "SeedLifecycleTemplateAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, SeedLifecycleTemplateRequest, SeedLifecycleTemplateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SeedLifecycleTemplateAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2173,9 +2203,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SeedHeritableTraitTemplateResponse>(
-                _directDispatchProvider, _serviceName, "SeedHeritableTraitTemplateAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, SeedHeritableTraitTemplateRequest, SeedHeritableTraitTemplateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SeedHeritableTraitTemplateAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2276,9 +2308,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SeedHybridTemplateResponse>(
-                _directDispatchProvider, _serviceName, "SeedHybridTemplateAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, SeedHybridTemplateRequest, SeedHybridTemplateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SeedHybridTemplateAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2379,9 +2413,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetLifecycleTemplateResponse>(
-                _directDispatchProvider, _serviceName, "GetLifecycleTemplateAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, GetLifecycleTemplateRequest, GetLifecycleTemplateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetLifecycleTemplateAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2476,9 +2512,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetHeritableTraitTemplateResponse>(
-                _directDispatchProvider, _serviceName, "GetHeritableTraitTemplateAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, GetHeritableTraitTemplateRequest, GetHeritableTraitTemplateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetHeritableTraitTemplateAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2573,9 +2611,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListTemplatesResponse>(
-                _directDispatchProvider, _serviceName, "ListTemplatesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, ListTemplatesRequest, ListTemplatesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListTemplatesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2668,9 +2708,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetLifecycleTemplateResponse>(
-                _directDispatchProvider, _serviceName, "DeprecateLifecycleTemplateAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, DeprecateLifecycleTemplateRequest, GetLifecycleTemplateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeprecateLifecycleTemplateAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2769,9 +2811,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetHeritableTraitTemplateResponse>(
-                _directDispatchProvider, _serviceName, "DeprecateHeritableTraitTemplateAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, DeprecateHeritableTraitTemplateRequest, GetHeritableTraitTemplateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeprecateHeritableTraitTemplateAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2871,9 +2915,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetHybridTraitTemplateResponse>(
-                _directDispatchProvider, _serviceName, "DeprecateHybridTraitTemplateAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, DeprecateHybridTraitTemplateRequest, GetHybridTraitTemplateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeprecateHybridTraitTemplateAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2972,9 +3018,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanDeprecatedStringKeyResponse>(
-                _directDispatchProvider, _serviceName, "CleanDeprecatedLifecycleTemplatesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, CleanDeprecatedRequest, CleanDeprecatedStringKeyResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanDeprecatedLifecycleTemplatesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3068,9 +3116,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanDeprecatedStringKeyResponse>(
-                _directDispatchProvider, _serviceName, "CleanDeprecatedHeritableTraitTemplatesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, CleanDeprecatedRequest, CleanDeprecatedStringKeyResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanDeprecatedHeritableTraitTemplatesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3164,9 +3214,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanDeprecatedStringKeyResponse>(
-                _directDispatchProvider, _serviceName, "CleanDeprecatedHybridTraitTemplatesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, CleanDeprecatedRequest, CleanDeprecatedStringKeyResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanDeprecatedHybridTraitTemplatesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3255,9 +3307,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetBloodlineResponse>(
-                _directDispatchProvider, _serviceName, "GetBloodlineAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, GetBloodlineRequest, GetBloodlineResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetBloodlineAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3352,9 +3406,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListBloodlinesResponse>(
-                _directDispatchProvider, _serviceName, "ListBloodlinesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, ListBloodlinesRequest, ListBloodlinesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListBloodlinesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3444,9 +3500,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<EstablishBloodlineResponse>(
-                _directDispatchProvider, _serviceName, "EstablishBloodlineAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, EstablishBloodlineRequest, EstablishBloodlineResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.EstablishBloodlineAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3543,9 +3601,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<DeleteBloodlineResponse>(
-                _directDispatchProvider, _serviceName, "DeleteBloodlineAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, DeleteBloodlineRequest, DeleteBloodlineResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteBloodlineAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3640,9 +3700,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<QueryBloodlineMembersResponse>(
-                _directDispatchProvider, _serviceName, "QueryBloodlineMembersAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, QueryBloodlineMembersRequest, QueryBloodlineMembersResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.QueryBloodlineMembersAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3738,9 +3800,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanupByCharacterResponse>(
-                _directDispatchProvider, _serviceName, "CleanupByCharacterAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, CleanupByCharacterRequest, CleanupByCharacterResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanupByCharacterAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3829,9 +3893,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CleanupByRealmResponse>(
-                _directDispatchProvider, _serviceName, "CleanupByRealmAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, CleanupByRealmRequest, CleanupByRealmResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CleanupByRealmAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3922,9 +3988,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LifecycleArchive>(
-                _directDispatchProvider, _serviceName, "GetCompressDataAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, GetCompressDataRequest, LifecycleArchive>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetCompressDataAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -4019,9 +4087,11 @@ public partial class CharacterLifecycleClient : ICharacterLifecycleClient, Beyon
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RestoreFromArchiveResponse>(
-                _directDispatchProvider, _serviceName, "RestoreFromArchiveAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ICharacterLifecycleService, RestoreFromArchiveRequest, RestoreFromArchiveResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RestoreFromArchiveAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

@@ -214,7 +214,8 @@
         <member name="T:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleClient">
             <summary>
             Client for managing bundle metadata, lifecycle, and version history.
-            Provides high-level operations for bundle CRUD, soft-delete/restore, and querying.
+            Provides high-level operations for bundle CRUD and querying. Bundle deletion
+            is final (no soft-delete or restore).
             </summary>
         </member>
         <member name="M:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleClient.#ctor(BeyondImmersion.Bannou.Client.BannouClient,Microsoft.Extensions.Logging.ILogger{BeyondImmersion.Bannou.AssetBundler.Bundles.BundleClient})">
@@ -249,24 +250,13 @@
             <param name="ct">Cancellation token.</param>
             <returns>Update result with new version.</returns>
         </member>
-        <member name="M:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleClient.DeleteAsync(System.String,System.String,System.Boolean,System.Threading.CancellationToken)">
+        <member name="M:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleClient.DeleteAsync(System.String,System.String,System.Threading.CancellationToken)">
             <summary>
-            Soft-deletes a bundle (can be restored within retention period).
+            Permanently deletes a bundle. Deletion is final; the bundle cannot be restored.
             </summary>
             <param name="bundleId">Bundle identifier.</param>
-            <param name="reason">Optional deletion reason.</param>
-            <param name="permanent">If true, permanently deletes the bundle.</param>
+            <param name="reason">Optional deletion reason (recorded in version history).</param>
             <param name="ct">Cancellation token.</param>
-            <returns>Deletion result.</returns>
-        </member>
-        <member name="M:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleClient.RestoreAsync(System.String,System.String,System.Threading.CancellationToken)">
-            <summary>
-            Restores a soft-deleted bundle.
-            </summary>
-            <param name="bundleId">Bundle identifier.</param>
-            <param name="reason">Optional restore reason.</param>
-            <param name="ct">Cancellation token.</param>
-            <returns>Restore result.</returns>
         </member>
         <member name="M:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleClient.GetVersionsAsync(System.String,System.Int32,System.Int32,System.Threading.CancellationToken)">
             <summary>
@@ -414,11 +404,6 @@
             When the bundle was last updated.
             </summary>
         </member>
-        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataResult.DeletedAt">
-            <summary>
-            When the bundle was deleted.
-            </summary>
-        </member>
         <member name="T:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataUpdate">
             <summary>
             Metadata update request.
@@ -482,56 +467,6 @@
         <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.UpdateResult.UpdatedAt">
             <summary>
             When the update was made.
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.AssetBundler.Bundles.DeleteResult">
-            <summary>
-            Result of deleting a bundle.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.DeleteResult.BundleId">
-            <summary>
-            Bundle identifier.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.DeleteResult.Status">
-            <summary>
-            Deletion status (deleted or permanently_deleted).
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.DeleteResult.DeletedAt">
-            <summary>
-            When the bundle was deleted.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.DeleteResult.RetentionUntil">
-            <summary>
-            When the bundle will be permanently purged (null if permanent).
-            </summary>
-        </member>
-        <member name="T:BeyondImmersion.Bannou.AssetBundler.Bundles.RestoreResult">
-            <summary>
-            Result of restoring a bundle.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.RestoreResult.BundleId">
-            <summary>
-            Bundle identifier.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.RestoreResult.Status">
-            <summary>
-            Current status (should be "active").
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.RestoreResult.RestoredAt">
-            <summary>
-            When the bundle was restored.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.RestoreResult.RestoredFromVersion">
-            <summary>
-            Version the bundle was restored from.
             </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.AssetBundler.Bundles.VersionHistoryResult">
@@ -616,7 +551,7 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleQuery.Status">
             <summary>
-            Filter by status (active, deleted, processing).
+            Filter by status (active, processing).
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleQuery.CreatedAfter">
@@ -652,11 +587,6 @@
         <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleQuery.Offset">
             <summary>
             Pagination offset.
-            </summary>
-        </member>
-        <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleQuery.IncludeDeleted">
-            <summary>
-            Include soft-deleted bundles.
             </summary>
         </member>
         <member name="T:BeyondImmersion.Bannou.AssetBundler.Bundles.QueryResult">

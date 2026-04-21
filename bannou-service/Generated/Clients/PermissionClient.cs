@@ -311,9 +311,11 @@ public partial class PermissionClient : IPermissionClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<CapabilityResponse>(
-                _directDispatchProvider, _serviceName, "GetCapabilitiesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IPermissionService, CapabilityRequest, CapabilityResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetCapabilitiesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -402,9 +404,11 @@ public partial class PermissionClient : IPermissionClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ValidationResponse>(
-                _directDispatchProvider, _serviceName, "ValidateApiAccessAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IPermissionService, ValidationRequest, ValidationResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ValidateApiAccessAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -493,9 +497,11 @@ public partial class PermissionClient : IPermissionClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RegistrationResponse>(
-                _directDispatchProvider, _serviceName, "RegisterServicePermissionsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IPermissionService, ServicePermissionMatrix, RegistrationResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RegisterServicePermissionsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -584,9 +590,11 @@ public partial class PermissionClient : IPermissionClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SessionUpdateResponse>(
-                _directDispatchProvider, _serviceName, "UpdateSessionStateAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IPermissionService, SessionStateUpdate, SessionUpdateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateSessionStateAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -675,9 +683,11 @@ public partial class PermissionClient : IPermissionClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SessionUpdateResponse>(
-                _directDispatchProvider, _serviceName, "UpdateSessionRoleAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IPermissionService, SessionRoleUpdate, SessionUpdateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateSessionRoleAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -768,9 +778,11 @@ public partial class PermissionClient : IPermissionClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SessionUpdateResponse>(
-                _directDispatchProvider, _serviceName, "ClearSessionStateAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IPermissionService, ClearSessionStateRequest, SessionUpdateResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ClearSessionStateAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -859,9 +871,11 @@ public partial class PermissionClient : IPermissionClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SessionInfo>(
-                _directDispatchProvider, _serviceName, "GetSessionInfoAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IPermissionService, SessionInfoRequest, SessionInfo>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetSessionInfoAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -956,9 +970,11 @@ public partial class PermissionClient : IPermissionClient, BeyondImmersion.Banno
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<RegisteredServicesResponse>(
-                _directDispatchProvider, _serviceName, "GetRegisteredServicesAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<IPermissionService, ListServicesRequest, RegisteredServicesResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetRegisteredServicesAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)

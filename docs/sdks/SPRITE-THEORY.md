@@ -4,8 +4,8 @@
 > **Location**: `sdks/sprite-theory/`
 > **Layer**: Theory
 > **Domain**: Sprite
-> **Dependencies**: None (pure .NET BCL only)
-> **Status**: Implemented — all types and methods from implementation map complete. 77 unit tests passing.
+> **Dependencies**: `BeyondImmersion.Bannou.Core` (for the shared `Vector3` primitive). No external NuGet dependencies.
+> **Status**: Implemented — all types and methods from implementation map complete. 100 unit tests passing.
 > **Implementation Map**: [docs/sdks/maps/SPRITE-THEORY.md](maps/SPRITE-THEORY.md)
 > **Planning Document**: [docs/planning/SPRITE-COMPOSER-SDK.md](../planning/SPRITE-COMPOSER-SDK.md)
 > **Consumers**: sprite-composer, sprite-composer-stride, future SpriteBatcher
@@ -78,9 +78,9 @@ It follows the same pattern as music-theory, storyline-theory, and voxel-core: p
 | `CameraRigPresets` | Static class | Built-in rig factories: `SideViewBrawler()`, `TopDown8Dir()`, `TopDown4Dir()` |
 | `OrthographicSetup` | Static class | Compute orthographic camera parameters to fit a bounding box at a given angle |
 | `OrthographicParameters` | Record | Output of OrthographicSetup: camera position, direction, up, ortho dimensions, clip planes |
-| `PivotComputer` | Static class | Auto-compute sprite pivot from bounding box + orthographic camera (feet-on-ground projection) |
+| `PivotComputer` | Static class | Auto-compute sprite pivot from bounding box + orthographic camera (feet projection), and project arbitrary world points onto the frame plane via `ProjectWorldPointToFrame` (e.g., skeleton bone anchors) |
 | `ProjectionType` | Enum | `Orthographic`, `Perspective` |
-| `BoundingBox` | Struct | Axis-aligned 3D bounding box (min/max float3) for model bounds |
+| `BoundingBox` | Struct | Axis-aligned 3D bounding box (min/max `Vector3`) for model bounds |
 
 ### Animation Subsystem
 
@@ -118,8 +118,9 @@ It follows the same pattern as music-theory, storyline-theory, and voxel-core: p
 | `SpriteFrame` | Record | Per-frame: atlas position, pivot, duration, angle, animation, mirror source if applicable |
 | `SpriteAnimation` | Record | Per-animation: name, loop mode, total duration, per-angle frame index lookup |
 | `AtlasInfo` | Record | Per-atlas image: index, filename, width, height |
-| `CharacterVariant` | Record | Capture input definition: model path, equipment list, material overrides, scale |
-| `EquipmentSlot` | Record | Single equipment attachment: slot name, mesh path, skeleton bone name |
+| `CharacterVariant` | Record | Capture input definition: model `AssetReference`, equipment list, material-override `AssetReference` map, scale, optional pivot override, optional anchor-bone name |
+| `EquipmentSlot` | Record | Single equipment attachment: slot name, mesh `AssetReference`, skeleton bone name |
+| `AssetReference` | Record | Engine-agnostic asset identifier (`BundleId`, `AssetId`, optional `VariantId`) used for model, equipment mesh, and material references |
 | `CaptureManifest` | Record | Pre-capture estimation: expected frame counts, atlas sizes, capture time per rig |
 | `RigManifest` | Record | Per-rig estimation within a CaptureManifest |
 | `AnimationEvent` | Record | Optional per-frame event marker: frame index, event type string, event data string |
@@ -146,6 +147,7 @@ It follows the same pattern as music-theory, storyline-theory, and voxel-core: p
 |------|------|---------|
 | `Color` | Struct (4 bytes) | RGBA color, byte-valued (0–255 per channel) |
 | `Vector2` | Struct (8 bytes) | 2D float vector for pivot points |
+| `Vector3` | Struct (12 bytes) | 3D float vector imported from `BeyondImmersion.Bannou.Core.Math`. Used by `BoundingBox`, `OrthographicParameters`, `PivotComputer.ProjectWorldPointToFrame`, and the sprite-composer bridge contract. |
 | `Rectangle` | Struct (16 bytes) | Integer rectangle (x, y, width, height) for atlas positions |
 | `FrameCapture` | Record | Bridge-produced capture data: RGBA pixels, optional depth, dimensions, source metadata |
 
@@ -268,15 +270,23 @@ Input definition describing what to capture. Serializable as part of SpriteSheet
 
 ```
 CharacterVariant
-├── Name: string                                            // "warrior_plate_sword"
-├── ModelPath: string                                       // Path to base character model (FBX)
-├── Equipment: IReadOnlyList<EquipmentSlot>                 // Attached equipment pieces
-├── MaterialOverrides: IReadOnlyDictionary<string, string>? // Material/palette swaps (null if none)
-├── Scale: float                                            // Model scale factor (default: 1.0)
-└── PivotOverride: Vector2?                                 // Per-variant pivot override (null = use PivotComputer auto-compute)
+├── Name: string                                                       // "warrior_plate_sword"
+├── Model: AssetReference                                              // Reference to base character model
+├── Equipment: IReadOnlyList<EquipmentSlot>                            // Attached equipment pieces
+├── MaterialOverrides: IReadOnlyDictionary<string, AssetReference>?    // Material/palette swaps (null if none)
+├── Scale: float                                                       // Model scale factor (default: 1.0)
+├── PivotOverride: Vector2?                                            // Per-variant pivot override (highest priority)
+└── AnchorBoneName: string?                                            // Optional skeleton-bone anchor (bridge-resolved)
 ```
 
-**PivotOverride**: When non-null, every frame in the resulting SpriteSheet uses this pivot verbatim. When null, consumers call `PivotComputer.ComputeFromBounds` to derive a pivot from the model's bounds and the capture camera. Use the override for subjects where feet-projection is unreliable — flying enemies, asymmetric bosses, quadrupeds with unusual proportions.
+**Pivot resolution order** (applied by consumers such as sprite-composer during capture):
+
+1. **`PivotOverride`** — if non-null, used verbatim. Highest priority; bypasses every auto-computation path.
+2. **`AnchorBoneName`** — if non-null AND the bridge advertises `SupportsSkeletonIntrospection` AND the bone exists, the bridge's `TryGetBonePosition` returns the bone's world position, which is projected onto the frame plane via `PivotComputer.ProjectWorldPointToFrame`. Use this for subjects whose bounding-box minimum is not a sensible anchor (cloth extending bounds below the feet, weapons extending bounds outward, asymmetric rigs).
+3. **`PivotComputer.ComputeFromBounds`** — fallback for the common feet-on-ground case. Projects the bottom-center of the bounding box onto the frame plane.
+4. **`PivotComputer.DefaultHumanoidPivot`** — terminal fallback `(0.5, 0.85)` when the camera basis is degenerate.
+
+Use `PivotOverride` for subjects where even a bone anchor is unreliable. Use `AnchorBoneName` for the common case of flowing clothing or asymmetric gear — it avoids hand-tuning pivots per variant while still producing correct feet placement. Leave both null to accept the feet-from-bounds default.
 
 ### FrameCapture
 
@@ -288,13 +298,32 @@ FrameCapture
 ├── DepthData: float[]?    // Depth values 0.0 (near) to 1.0 (far), null if not captured
 ├── Width: int             // Frame width in pixels
 ├── Height: int            // Frame height in pixels
+├── VariantName: string    // Which character variant this capture is for
+├── RigName: string        // Which CameraRig was active when this frame was captured
 ├── AngleName: string      // Which CaptureAngle this was rendered from
 ├── AnimationName: string  // Which animation was playing
 ├── FrameIndex: int        // Frame number within the animation (0-based)
 └── NormalizedTime: float  // Animation time when captured (0.0–1.0)
 ```
 
+**Identity invariant**: the tuple (`VariantName`, `RigName`, `AngleName`, `AnimationName`, `FrameIndex`) is unique within a single capture session's `CapturedFrames` list. Identity fields are ordered by nesting depth — variant contains rig contains angle contains animation contains frame — and appear after the pixel dimensions for readability. This is the positional identity every downstream consumer (atlas assembly, sprite-sheet grouping, mirror generation) relies on when captures come from multi-variant, multi-rig sessions.
+
 **DepthData normalization**: The bridge MUST normalize GPU depth values to the 0.0–1.0 range (0.0 = near plane, 1.0 = far plane) before creating a FrameCapture. Different graphics APIs store depth differently (0–1 vs -1–1, reversed vs non-reversed). Normalization is the bridge's responsibility; sprite-theory always sees linear 0.0–1.0.
+
+### AssetReference
+
+Engine-agnostic asset identifier used across the sprite-composer family. Identifies a model, equipment mesh, or material without binding the capture pipeline to a specific engine's asset-handle type.
+
+```
+AssetReference
+├── BundleId: string       // Asset bundle identifier (or filesystem-source bundle for loose FBX)
+├── AssetId: string        // Asset identifier within the bundle
+└── VariantId: string?     // Optional variant (LOD level, palette swap). Null = default variant.
+```
+
+**Bridge resolution**: The bridge translates an `AssetReference` to an engine-specific handle at load time (Stride `Model`, Godot `PackedScene`, Unity `GameObject` prefab). For raw-FBX workflows, bridges supporting filesystem asset sources register loose files as single-asset bundles — the exact convention is the bridge's concern, not sprite-theory's.
+
+**JSON round-trip**: Default record serialization via `System.Text.Json` — no custom converter. Properties serialize as `bundleId`, `assetId`, and `variantId` in camelCase JSON, with `variantId` omitted when null (per `JsonIgnoreCondition.WhenWritingNull`).
 
 ---
 
@@ -378,25 +407,33 @@ Phase 2 — GenerateMirrorFrames:
 
 ### Pivot Computation
 
-The `PivotComputer` static class derives sprite pivots from the model's bounding box and the configured capture camera. Called by consumers (sprite-composer) when `CharacterVariant.PivotOverride` is null.
+The `PivotComputer` static class provides two entry points:
+
+- **`ProjectWorldPointToFrame(Vector3 worldPoint, OrthographicParameters camera)` — the general primitive.** Projects any world-space point onto the camera frame plane and returns a normalized pivot. Consumers call this directly when they have a specific anchor point (e.g., a skeleton bone position reported by the bridge for an `AnchorBoneName` override).
+- **`ComputeFromBounds(BoundingBox bounds, OrthographicParameters camera)` — the feet-on-ground convenience.** A thin wrapper that computes the feet point `(Center.X, Min.Y, Center.Z)` from the bounds and delegates to `ProjectWorldPointToFrame`.
 
 ```
-Input:  BoundingBox (model bounds) + OrthographicParameters (from OrthographicSetup.Compute)
-Output: Vector2 (normalized frame coords, (0,0) top-left, (1,1) bottom-right)
+ProjectWorldPointToFrame:
+  Input:  worldPoint: Vector3 + camera: OrthographicParameters (from OrthographicSetup.Compute)
+  Output: Vector2 (normalized frame coords, (0,0) top-left, (1,1) bottom-right)
 
-Steps:
-1. Identify the "feet" point: (Center.X, Min.Y, Center.Z) in world space — bottom-center of bounds
-2. Transform to camera space: relP = feet - camera.Position
-3. Derive camera right axis: right = normalize(cross(camera.Direction, camera.Up))
-   (If the cross product has near-zero length, the camera basis is degenerate — return DefaultHumanoidPivot)
-4. Project relP onto (right, up) plane:
-     u = dot(relP, right)
-     v = dot(relP, camera.Up)
-5. Normalize to frame coords:
-     pivotX = 0.5 + u / orthoWidth
-     pivotY = 0.5 - v / orthoHeight   // Y flipped because pivot origin is top-left
-6. Clamp both to [0, 1] to guarantee the pivot stays inside the frame
+  Steps:
+  1. Transform to camera space: rel = worldPoint - camera.Position
+  2. Derive camera right axis: right = normalize(cross(camera.Direction, camera.Up))
+     (If the cross product has near-zero squared length, the camera basis is degenerate — return DefaultHumanoidPivot)
+  3. Project rel onto (right, up) plane:
+       u = dot(rel, right)
+       v = dot(rel, camera.Up)
+  4. Guard against invalid ortho dimensions: if OrthoWidth ≤ 0 or OrthoHeight ≤ 0, return DefaultHumanoidPivot
+  5. Normalize to frame coords:
+       pivotX = 0.5 + u / orthoWidth
+       pivotY = 0.5 - v / orthoHeight   // Y flipped because pivot origin is top-left
+  6. Clamp both to [0, 1] to guarantee the pivot stays inside the frame
 ```
+
+`ComputeFromBounds` adds a single step 0: compute `feet = Vector3(Center.X, Min.Y, Center.Z)` and pass it to `ProjectWorldPointToFrame`. Its behavior is unchanged from the pre-refactor implementation — all existing tests continue to pass against it.
+
+**Why this matters for mixed-pitch rigs**: sprite-composer's capture loop MUST call the pivot-computation entry per angle, not once per rig. Angles at different pitches project feet to different frame-Y positions (side-view places feet near the frame bottom; top-down pulls them toward the frame center), and even angles at the same pitch but different yaws project to different frame-Y positions because the convex-hull-on-camera-plane of the 8 world-space bounding corners — and therefore `orthoHeight` — varies with yaw. Per-angle pivot computation is mandatory, not optional. This is enforced by the `PivotComputer` regression tests in `sprite-theory.tests/Camera/PivotComputerTests.cs`.
 
 Fallback to `DefaultHumanoidPivot` (0.5, 0.85) when the camera basis is degenerate (direction parallel to up) or the ortho dimensions are zero.
 
@@ -446,7 +483,8 @@ All operations are deterministic. Same inputs → identical outputs.
 | AtlasPacker.Pack | Yes | Deterministic sort (height → width → index) + MaxRects-BSSF with stable tie-breaking |
 | MirrorOptimizer.ComputeMirrors | Yes | Single iteration over angle list in order |
 | MirrorOptimizer.GenerateMirrorFrames | Yes | Iteration over mirrors × source frames, both in deterministic order |
-| PivotComputer.ComputeFromBounds | Yes | Pure linear algebra on bounds + camera basis |
+| PivotComputer.ProjectWorldPointToFrame | Yes | Pure linear algebra on world-point + camera basis |
+| PivotComputer.ComputeFromBounds | Yes | Thin wrapper — computes feet point from bounds, delegates to ProjectWorldPointToFrame |
 | MultiAtlasStrategy.OpenNextAtlas | Yes | Pure arithmetic + list reset (identical inputs produce identical outputs) |
 | DepthToNormal.Generate | Yes | Per-pixel independent Sobel convolution |
 | AtlasAssembler.Assemble | Yes | Pixel copy at deterministic atlas positions |
@@ -559,6 +597,15 @@ None known.
   - Ratified the `ProducesMirror` semantic redesign (vs the plan's `CanMirror` skip-flag) in the Intentional Quirks section and cross-referenced the planning doc's Resolved Decisions.
   - Ratified PNG-encoding-by-consumer (the `byte[][]` return from `AtlasAssembler`) in the Intentional Quirks section with the engine-native rationale and the Six Labors licensing rationale. The entry moved out of "Design Considerations (Requires Planning)" because it is now planned, not pending.
   - Total tests: 87 passing. Public types: 40 (+2 new static classes, +1 new `PivotOverride` field on existing record). Public methods: 16 (+2).
+
+- **2026-04-19**: Sprite-composer remediation — schema changes landing in sprite-theory (findings F2, F3, R1, F11, I1/I8/I9 from the sprite-composer critical review).
+  - **F2 — AtlasAssembler indexing**: `AtlasAssembler.Assemble` now indexes captures by `frames[placement.FrameIndex]` directly (list position), matching the implementation map's specification and throwing `ArgumentOutOfRangeException` on invalid layout input. The previous `Dictionary<int, FrameCapture>` keyed by `FrameCapture.FrameIndex` (an intra-animation index) collided the moment any two captures shared an intra-animation index — i.e., every realistic multi-animation session. Four new `AtlasAssemblerTests` cover multi-animation scenarios at the Defenders scale (3 animations × 3 angles × 2 frames = 18 captures).
+  - **F3 — FrameCapture identity**: `FrameCapture` gains required `VariantName: string` and `RigName: string` fields positioned after dimensions to reflect identity nesting depth. The tuple (`VariantName`, `RigName`, `AngleName`, `AnimationName`, `FrameIndex`) is the unique identity of a capture within a session. The bridge's `CaptureFrameAsync` will take both fields in its parameter list (sprite-composer Phase 2).
+  - **R1 — CharacterVariant anchor**: added optional `AnchorBoneName: string?`. Combined with the new `PivotComputer.ProjectWorldPointToFrame` primitive and the bridge's `TryGetBonePosition` (sprite-composer Phase 2), variants can anchor their pivot to a named skeleton bone — resolving the fragile bounds-min projection for characters with flowing cloth, asymmetric gear, or non-standard proportions. The four-step pivot resolution order is documented on `CharacterVariant` and enforced by the sprite-composer capture loop.
+  - **F11 — PivotComputer refactor**: extracted `ProjectWorldPointToFrame(Vector3, OrthographicParameters) → Vector2` as the general primitive. `ComputeFromBounds` is now a thin wrapper that computes the feet point and delegates. Three new divergence tests prove per-angle pivot computation is required even for single-pitch presets (different yaws produce different `orthoHeight` values, which produce different `pivotY` values).
+  - **I1, I8, I9 — AssetReference**: new `AssetReference(BundleId, AssetId, VariantId?)` record replaces raw `string` paths on `CharacterVariant.Model`, `CharacterVariant.MaterialOverrides` values, and `EquipmentSlot.Mesh`. Bridges resolve the reference to engine-specific handles at load time; for raw-FBX workflows, filesystem asset sources register loose files as single-asset bundles.
+  - **Vector3 primitive**: introduced `BeyondImmersion.Bannou.Core.Math.Vector3` (float, 12-byte struct) as the shared 3D vector primitive for sprite-theory, the sprite-composer bridge contract, and any future SDK that needs graphics-precision 3D math. `BoundingBox.Min`/`Max`/`Center`/`Extents`/`Size`, `OrthographicParameters.Position`/`Direction`/`Up`, and `PivotComputer.ProjectWorldPointToFrame` all use it. The scene-composer SDK retains its own double-precision `SceneComposer.Math.Vector3` for large-world accuracy — the two types have different namespaces and do not conflict. 30 new Vector3 unit tests in `sdks/core.tests/Math/Vector3Tests.cs`.
+  - Total tests: 100 passing (sprite-theory) + 30 passing (core Vector3) = 130 new-or-validated. Public types: 41 (+1 `AssetReference`). Public methods: 17 (+1 `ProjectWorldPointToFrame`).
 
 ### Pending
 

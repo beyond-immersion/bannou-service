@@ -561,9 +561,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LocationResponse>(
-                _directDispatchProvider, _serviceName, "GetLocationAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, GetLocationRequest, LocationResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetLocationAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -658,9 +660,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LocationResponse>(
-                _directDispatchProvider, _serviceName, "GetLocationByCodeAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, GetLocationByCodeRequest, LocationResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetLocationByCodeAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -755,9 +759,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LocationListResponse>(
-                _directDispatchProvider, _serviceName, "ListLocationsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, ListLocationsRequest, LocationListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListLocationsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -848,9 +854,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LocationListResponse>(
-                _directDispatchProvider, _serviceName, "ListLocationsByRealmAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, ListLocationsByRealmRequest, LocationListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListLocationsByRealmAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -940,9 +948,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LocationListResponse>(
-                _directDispatchProvider, _serviceName, "ListLocationsByParentAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, ListLocationsByParentRequest, LocationListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListLocationsByParentAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1038,9 +1048,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LocationListResponse>(
-                _directDispatchProvider, _serviceName, "ListRootLocationsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, ListRootLocationsRequest, LocationListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListRootLocationsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1131,9 +1143,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LocationListResponse>(
-                _directDispatchProvider, _serviceName, "GetLocationAncestorsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, GetLocationAncestorsRequest, LocationListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetLocationAncestorsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1233,9 +1247,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ValidateTerritoryResponse>(
-                _directDispatchProvider, _serviceName, "ValidateTerritoryAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, ValidateTerritoryRequest, ValidateTerritoryResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ValidateTerritoryAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1332,9 +1348,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LocationListResponse>(
-                _directDispatchProvider, _serviceName, "GetLocationDescendantsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, GetLocationDescendantsRequest, LocationListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetLocationDescendantsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1426,9 +1444,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LocationResponse>(
-                _directDispatchProvider, _serviceName, "CreateLocationAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, CreateLocationRequest, LocationResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.CreateLocationAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1526,9 +1546,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LocationResponse>(
-                _directDispatchProvider, _serviceName, "UpdateLocationAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, UpdateLocationRequest, LocationResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UpdateLocationAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1633,9 +1655,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LocationResponse>(
-                _directDispatchProvider, _serviceName, "SetLocationParentAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, SetLocationParentRequest, LocationResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SetLocationParentAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1737,9 +1761,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LocationResponse>(
-                _directDispatchProvider, _serviceName, "RemoveLocationParentAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, RemoveLocationParentRequest, LocationResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.RemoveLocationParentAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -1838,9 +1864,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeVoidAsync(
-                _directDispatchProvider, _serviceName, "DeleteLocationAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectVoidAsync<ILocationService, DeleteLocationRequest>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeleteLocationAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -1940,9 +1968,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LocationResponse>(
-                _directDispatchProvider, _serviceName, "TransferLocationToRealmAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, TransferLocationToRealmRequest, LocationResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.TransferLocationToRealmAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2047,9 +2077,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LocationResponse>(
-                _directDispatchProvider, _serviceName, "DeprecateLocationAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, DeprecateLocationRequest, LocationResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.DeprecateLocationAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2151,9 +2183,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LocationResponse>(
-                _directDispatchProvider, _serviceName, "UndeprecateLocationAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, UndeprecateLocationRequest, LocationResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.UndeprecateLocationAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2255,9 +2289,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LocationExistsResponse>(
-                _directDispatchProvider, _serviceName, "LocationExistsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, LocationExistsRequest, LocationExistsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.LocationExistsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2349,9 +2385,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LocationListResponse>(
-                _directDispatchProvider, _serviceName, "QueryLocationsByPositionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, QueryLocationsByPositionRequest, LocationListResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.QueryLocationsByPositionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2443,9 +2481,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<SeedLocationsResponse>(
-                _directDispatchProvider, _serviceName, "SeedLocationsAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, SeedLocationsRequest, SeedLocationsResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.SeedLocationsAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2547,9 +2587,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ReportEntityPositionResponse>(
-                _directDispatchProvider, _serviceName, "ReportEntityPositionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, ReportEntityPositionRequest, ReportEntityPositionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ReportEntityPositionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2645,9 +2687,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<GetEntityLocationResponse>(
-                _directDispatchProvider, _serviceName, "GetEntityLocationAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, GetEntityLocationRequest, GetEntityLocationResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetEntityLocationAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2738,9 +2782,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ListEntitiesAtLocationResponse>(
-                _directDispatchProvider, _serviceName, "ListEntitiesAtLocationAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, ListEntitiesAtLocationRequest, ListEntitiesAtLocationResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ListEntitiesAtLocationAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2830,9 +2876,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<ClearEntityPositionResponse>(
-                _directDispatchProvider, _serviceName, "ClearEntityPositionAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, ClearEntityPositionRequest, ClearEntityPositionResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.ClearEntityPositionAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -2923,9 +2971,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<LocationBaseArchive>(
-                _directDispatchProvider, _serviceName, "GetLocationCompressDataAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, GetLocationCompressDataRequest, LocationBaseArchive>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.GetLocationCompressDataAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
@@ -3029,9 +3079,11 @@ public partial class LocationClient : ILocationClient, BeyondImmersion.BannouSer
         // Direct dispatch path: resolve service from DI and call directly (embedded/sidecar mode)
         if (_directDispatchProvider != null)
         {
-            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeAsync<MigrateByRealmResponse>(
-                _directDispatchProvider, _serviceName, "MigrateByRealmAsync",
-                body, cancellationToken).ConfigureAwait(false);
+            return await BeyondImmersion.BannouService.ServiceClients.DirectDispatchHelper.InvokeDirectAsync<ILocationService, MigrateByRealmRequest, MigrateByRealmResponse>(
+                _directDispatchProvider,
+                body,
+                static (svc, req, ct) => svc.MigrateByRealmAsync(req, ct),
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
