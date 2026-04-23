@@ -318,30 +318,38 @@ Communication uses structured Lexicon entries (concept tuples) that are machine-
 ### Procedural Content Generation Pipeline
 
 ```
-Artist authors HDA (Houdini Digital Asset) ──stored in──▶ Asset Service (L3)
-                                                                │
-Game server / NPC / World Builder sends request ────────────────┤
-  with template ID, parameters, seed                            │
-                                                                ▼
-                                                   Procedural Service (L4)
-                                                   Acquires Houdini worker
-                                                   from Orchestrator pool
-                                                                │
-                                                                ▼
-                                                   Headless Houdini execution
-                                                   (deterministic: same seed = same output)
-                                                                │
-                                                                ▼
-                                                   Generated asset ──▶ Asset Service
-                                                   Optionally bundled (.bannou format)
-                                                                │
-                                                   ┌────────────┼────────────┐
-                                                   ▼            ▼            ▼
-                                               Mapping      Scene       Client
-                                             (terrain)   (buildings)  (download)
+Geometry primitive:                                                  Material primitive:
+Artist authors HDA (Houdini Digital Asset)          Artist authors .sbsar (Substance Designer smart material)
+              │                                                             │
+              └────────────stored in────────────▶ Asset Service (L3) ◀──────┘
+                                                         │
+Game server / NPC / World Builder sends request ─────────┤
+  with template ID, parameters, seed                     │
+                                                         ▼
+                                              Procedural Service (L4)
+                                              Acquires Houdini worker
+                                              from Orchestrator pool
+                                                         │
+                                                         ▼
+                                              Headless Houdini execution
+                                               • HDA generates geometry
+                                               • SideFX Labs Substance plugin
+                                                 renders .sbsar maps (diffuse,
+                                                 normal, roughness, metallic, AO)
+                                               • Materials bound to mesh UVs
+                                              (deterministic: same seed = same output)
+                                                         │
+                                                         ▼
+                                              Textured geometry ──▶ Asset Service
+                                              Optionally bundled (.bannou format)
+                                                         │
+                                              ┌──────────┼──────────┐
+                                              ▼          ▼          ▼
+                                          Mapping    Scene       Client
+                                         (terrain) (buildings) (download)
 ```
 
-**Why this matters**: This turns Bannou from a platform that *manages* pre-made content into one that *generates* content on demand. Combined with autonomous NPCs, this means worlds can be both behaviorally AND geometrically procedural. An NPC builder character could trigger generation of a unique building. A dungeon could grow new chambers through procedural terrain generation. The world physically changes through simulation, not just through hand-placed assets.
+**Why this matters**: This turns Bannou from a platform that *manages* pre-made content into one that *generates* content on demand — both geometry (HDAs) and materials (Substance smart materials), bound together at bake time on Linux Houdini workers via the free SideFX Labs Substance plugin (Substance Automation Toolkit is Enterprise-only and deliberately not on the critical path). Combined with autonomous NPCs, this means worlds can be both behaviorally AND geometrically procedural, with material variation that responds to the same parametric seed system. An NPC builder character could trigger generation of a unique building weathered to its biome and age. A dungeon could grow new chambers with moss patterns that reflect the realm's humidity. The world physically changes through simulation, not just through hand-placed assets. This follows the formal-theory pattern established by MusicTheory/StorylineTheory: smart materials are the *primitive*, authored infrequently by a human in a GUI tool; parametric composition runs at scale on Linux Houdini workers at Bannou bake time. Mobile consumers ship pre-baked sprite atlases (2.5D sprite pipeline) or static GLB/USD bundles — no Substance Engine at game runtime.
 
 ---
 

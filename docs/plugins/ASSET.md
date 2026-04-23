@@ -48,7 +48,7 @@ The Asset service (L3 AppFeatures) provides storage, versioning, and distributio
 | lib-save-load | Stores versioned game save data, handles export/import/migration/cleanup via `IAssetClient` |
 | sdk: asset-loader-server (`BannouMeshAssetSource`) | Server-side asset loading via mesh invocation |
 | sdk: asset-loader-client (`BannouWebSocketAssetSource`) | Client-side asset loading via WebSocket protocol |
-| lib-procedural (planned) | Will store HDA templates and retrieve generated geometry assets via `IAssetClient` |
+| lib-procedural (planned) | Will store HDA templates and Substance smart-material (`.sbsar`) templates, and retrieve generated textured-mesh bundles via `IAssetClient`. See [PROCEDURAL.md § Substance Integration](PROCEDURAL.md#substance-integration-material-generation) for the HDA + sbsar bake pipeline. |
 
 No external services subscribe to asset events; all event consumption is internal.
 

@@ -7,7 +7,7 @@
 > **Related SDKs**: scene-composer (authoring-time counterpart), asset-loader (runtime asset-bytes companion), asset-bundler (authoring-time asset packaging)
 > **Related Repos**: defenders-kb (first consumer surfacing the architectural gap)
 > **Primary Consumer**: Defenders of Ba'hara — single-player embedded-mode Bannou consumer; first game using Bannou without a remote server tier
-> **Services**: `scene-loader` (new, engine-agnostic), `scene-loader-stride` (new, Stride bridge — Defenders' immediate need), `scene-loader-godot` (new, Godot bridge, future)
+> **Services**: `scene-loader` (new, engine-agnostic), `scene-loader-godot` (new, Godot bridge — Defenders' immediate need per defenders-kb engine pivot 2026-04-22), `scene-loader-stride` (new, Stride bridge — peer deliverable at parity)
 
 ## Summary
 
@@ -88,9 +88,9 @@ Scene-loader reads scene **structure** (node graph, transforms, parent-child, as
 Matches the existing scene-composer + asset-loader patterns:
 
 - `scene-loader` (new) — engine-agnostic core: scene-document reader, scene-graph walker, `ISceneLoaderBridge` contract
-- `scene-loader-stride` (new) — `StrideSceneLoaderBridge` implementing the bridge contract against Stride's `Scene` / `Entity` / component model
-- `scene-loader-godot` (new, future) — `GodotSceneLoaderBridge` implementing against Godot's scene tree
-- No Unity bridge needed for Defenders (D56 locks Stride)
+- `scene-loader-godot` (new) — `GodotSceneLoaderBridge` implementing the bridge contract against Godot's Node3D scene tree. **Defenders' immediate need** per the 2026-04-22 engine pivot (see defenders-kb decision log; D56 is superseded by the Godot 4.6 commit).
+- `scene-loader-stride` (new) — `StrideSceneLoaderBridge` implementing the bridge contract against Stride's `Scene` / `Entity` / component model. Peer deliverable at parity with the Godot bridge; non-Defenders Stride consumers benefit.
+- No Unity bridge needed for Defenders (Godot is the locked engine).
 
 ### 2.4: Async loading with `CancellationToken`
 
@@ -131,7 +131,8 @@ Scene-loader reads the same scene document format scene-composer emits (`Compose
 
 Defenders does NOT consume in Phase 1 (confirming scope):
 
-- **scene-loader-godot / scene-loader-unity** — Defenders uses Stride per D56. Other-engine bridges benefit future Bannou consumers but aren't Defenders' concern.
+- **scene-loader-unity** — Defenders uses Godot per the 2026-04-22 engine pivot. A Unity bridge benefits future Bannou consumers but isn't Defenders' concern.
+- **scene-loader-stride at Defenders-runtime** — Stride is a peer bridge deliverable for other Bannou consumers, but Defenders' shipping binary links scene-loader-godot. If Bannou Phase 1 ships the Godot bridge first, the Stride bridge can follow in Phase 1 peer or Phase 2 depending on Bannou-side scheduling.
 - **Multi-player scene reconciliation** — Defenders is single-player per D2. Server-authoritative scene state / client-side extrapolation are out of scope.
 - **Server-side scene instantiation** (hypothetical `scene-loader-server` if ever planned) — Defenders has no server tier.
 - **Runtime scene editing** — scene modifications at shipping-game runtime (player-built structures, destructible environment persistence) are game-side concerns, not scene-loader's. Scene-loader is read + instantiate + teardown; runtime mutation is the game's responsibility.
@@ -147,7 +148,7 @@ Items the Developer expands during full-plan authoring (not Defenders-side decis
 2. **lib-scene runtime interaction model**: does scene-loader call `POST /scene/get` via a generated client (embedded DI-resolved per D128) OR does it consume scene documents directly from asset-loader-packaged bundles? Both patterns are viable; both may need to be supported.
 3. **`scene.instantiated` event responsibility**: does scene-loader publish the event post-instantiation (satisfying the pattern in SCENE-SYSTEM.md lines 610-618) automatically, or does the calling game code publish it explicitly? Defenders leans "scene-loader publishes automatically" for ergonomic consistency, but this is a Bannou-side design choice.
 4. **Asset-loader coupling shape**: scene-loader-stride depends on asset-loader-stride for asset loading. Direct project reference, DI injection, or runtime discovery? Affects assembly layout + testing.
-5. **Phased implementation**: Phase 1 could ship just the core + Stride bridge (Defenders' immediate need); Godot bridge in Phase 2. Matches precedent in [SPRITE-COMPOSER-SDK.md](SPRITE-COMPOSER-SDK.md) phased plan.
+5. **Phased implementation**: Phase 1 could ship just the core + Godot bridge (Defenders' immediate need); Stride bridge in Phase 1 peer or Phase 2 depending on Bannou-side scheduling. Matches precedent in [SPRITE-COMPOSER-SDK.md](SPRITE-COMPOSER-SDK.md) phased plan.
 6. **Hot-reload API surface**: explicit `ReloadAsync(instanceHandle, newSceneDocument)` or just `DestroyInstance(h)` + `InstantiateAsync(newDoc)` sequence? Minor ergonomic call.
 7. **Transform / Vector3 primitive reuse**: scene-composer uses double-precision math types (large-world accuracy per the sprite-theory precedent in [SPRITE-COMPOSER-SDK.md § Decision 10.16](SPRITE-COMPOSER-SDK.md)). Does scene-loader match scene-composer's double precision or adopt a different primitive?
 
@@ -178,7 +179,7 @@ Items the Developer expands during full-plan authoring (not Defenders-side decis
 
 ## Part 7: Co-evolution Commitment
 
-Defenders becomes the first consumer when the SDK lands. **Phase 1 acceptance criterion**: Defenders' Stride runtime successfully loads a scene-composer-authored scene document and instantiates it into a playable Stride scene hierarchy via scene-loader-stride, without any dependency on scene-composer-stride in the shipping binary.
+Defenders becomes the first consumer when the SDK lands. **Phase 1 acceptance criterion**: Defenders' Godot runtime successfully loads a scene-composer-authored scene document and instantiates it into a playable Godot scene tree via scene-loader-godot, without any dependency on scene-composer-godot in the shipping binary.
 
 Additional Phase 1 requirements may emerge during Defenders' first real scene-loading implementation; appended as further decisions in `defenders-kb` referencing this doc + D135.
 

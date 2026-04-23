@@ -173,11 +173,11 @@ The runtime infrastructure already exists. The missing piece is the compositiona
 
 | Component | What It Does |
 |---|---|
-| `lib-procedural` (L4) | Dispatches parametric generation requests to headless Houdini Digital Asset workers |
-| `lib-asset` (L3) | Stores HDAs and generated output bundles |
+| `lib-procedural` (L4) | Dispatches parametric generation requests to headless Houdini Digital Asset workers; Houdini's bundled SideFX Labs Substance plugin loads `.sbsar` smart-material templates inline for textured output |
+| `lib-asset` (L3) | Stores HDAs, Substance smart materials (`.sbsar`), and generated textured output bundles |
 | `Orchestrator` (L3) | Manages Houdini worker pool scaling |
 
-Artists author Houdini Digital Assets (self-contained parametric templates). The game sends parameters and a seed. Output is deterministic geometry -- same seed always produces the same result. Combined with autonomous NPCs, this means worlds can be both behaviorally AND geometrically procedural.
+Artists author Houdini Digital Assets (self-contained parametric geometry templates) in Houdini, and smart materials (`.sbsar`) in Substance Designer. The game sends parameters and a seed. Output is deterministic textured geometry -- same seed always produces the same result across both geometry and materials. The authoring split (HDAs + smart materials) matches the formal-theory pattern used by MusicTheory/MusicStoryteller and StorylineTheory/StorylineStoryteller: human-creative work authors the primitives once, parametric composition at runtime generates unbounded variations. Combined with autonomous NPCs, this means worlds can be both behaviorally AND geometrically AND materially procedural.
 
 ---
 

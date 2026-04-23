@@ -202,7 +202,7 @@ Tenets are organized into categories based on when they're needed:
 | **T17** | Client Event Schema Pattern | Use IClientEventPublisher for WebSocket push; not IMessageBus |
 | **T30** | Telemetry Span Instrumentation | All async methods get `StartActivity` spans; zero-signature-change via `Activity.Current` ambient context |
 | **T31** | Deprecation Lifecycle | Two categories (definitions vs templates); idempotent deprecation; standardized storage/events/behavior; Category B clean-deprecated sweep for safe deletion; no deprecation on instances. Marker interfaces: `IDeprecateAndMergeEntity` (Cat A), `ICleanDeprecatedEntity` (Cat B). See [Helpers § Category B Deprecation Template](HELPERS-AND-COMMON-PATTERNS.md#15-category-b-deprecation-template) for implementation patterns |
-| **T34** | AOT Compatibility | Runtime reflection, dynamic assembly loading, and runtime generic construction are forbidden in bannou-service and plugins paths; consumer targets include iOS (Mono AOT) and NativeAOT. |
+| **T34** | AOT Compatibility | Runtime reflection, dynamic assembly loading, and runtime generic construction are forbidden in bannou-service and plugins paths; consumer targets include iOS (Stride: Mono AOT; Godot: NativeAOT — Godot is the stricter constraint and primary Defenders target). |
 
 ---
 

@@ -8,7 +8,7 @@
 > **Status**: Implemented — all types and methods from implementation map complete. 100 unit tests passing.
 > **Implementation Map**: [docs/sdks/maps/SPRITE-THEORY.md](maps/SPRITE-THEORY.md)
 > **Planning Document**: [docs/planning/SPRITE-COMPOSER-SDK.md](../planning/SPRITE-COMPOSER-SDK.md)
-> **Consumers**: sprite-composer, sprite-composer-stride, future SpriteBatcher
+> **Consumers**: sprite-composer, sprite-composer-godot, sprite-composer-stride, future SpriteBatcher
 > **Short**: Camera math, atlas packing, mirror optimization, normal maps, and sprite sheet JSON metadata
 
 ---
@@ -60,7 +60,8 @@ It follows the same pattern as music-theory, storyline-theory, and voxel-core: p
 | Consumer | Type | Usage |
 |----------|------|-------|
 | sprite-composer | SDK | Uses CameraRig, AtlasPacker, MirrorOptimizer, SpriteSheetSerializer, DepthToNormal, AtlasAssembler, and all metadata types for capture orchestration and export |
-| sprite-composer-stride | Bridge | Uses OrthographicSetup to configure Stride cameras, CaptureAngle for positioning, FrameCapture as the pixel data container |
+| sprite-composer-godot | Bridge | Uses OrthographicSetup to configure Godot cameras, CaptureAngle for positioning, FrameCapture as the pixel data container (primary bridge for Defenders per 2026-04-22 pivot) |
+| sprite-composer-stride | Bridge | Uses OrthographicSetup to configure Stride cameras, CaptureAngle for positioning, FrameCapture as the pixel data container (peer bridge) |
 | Future SpriteBatcher | Tool | Uses CameraRigPresets for batch definitions, AtlasPacker for layout, SpriteSheetSerializer for output |
 | Game runtime | Consumer | Reads SpriteSheet JSON metadata to drive sprite animation, mirror flips, and normal map sampling |
 | CI/CD pipeline | Tool | Uses SpriteSheetSerializer for validation, CaptureManifest for expected output verification |

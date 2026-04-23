@@ -26,7 +26,7 @@ This document is the complete design for the tool. Implementation lands as Phase
 A `dotnet` CLI tool at `tools/sprite-batcher/` that:
 
 1. Accepts one or more `.spriteproj.json` files on the command line.
-2. Instantiates an `ISpriteComposerBridge` implementation (Stride by default) in a long-running process.
+2. Instantiates an `ISpriteComposerBridge` implementation (Godot by default; Stride and Unity available via `--bridge`) in a long-running process.
 3. For each project, runs `sprite-composer.CaptureSession.ExecuteAsync` across every `VariantBinding` × `CameraRig` × effective animation × frame, in the same loop order the interactive editor uses.
 4. Exports per-group (per variant × rig) atlases + JSON metadata via `ExportPipeline.ExportAsync`.
 5. Reports a structured summary: variants succeeded / failed, frames captured / skipped, atlases produced, per-frame errors with full identity (variant, rig, angle, animation, frame).
@@ -60,7 +60,7 @@ SpriteBatcher entry point
   │       Print expected totals (variants, rigs, frames captured, frames mirrored, atlases)
   │     Exit 0 (validation pass) or non-zero (invalid project)
   │
-  ├── Instantiate bridge (Stride by default; --bridge flag selects others as they land)
+  ├── Instantiate bridge (Godot by default; Stride + Unity available via --bridge as they land)
   │
   ├── For each project (sequentially, or in parallel per --parallel):
   │     Load .spriteproj.json → SpriteProject
@@ -94,7 +94,8 @@ sprite-batcher
   --projects <path>                   Required. Repeatable. Path to a .spriteproj.json file.
   --output <dir>                      Optional. Override every project's OutputDirectory for this invocation.
   --parallel <N>                      Optional. Default 1. Capture N variants in parallel (GPU memory permitting).
-  --bridge <stride|godot|unity>       Optional. Default stride. Selects the bridge implementation.
+  --bridge <godot|stride|unity>       Optional. Default godot (Defenders' target per 2026-04-22 engine pivot).
+                                      Selects the bridge implementation.
   --asset-bundles <dir>               Optional. Directory containing .bannou asset bundles (or loose FBX the
                                       filesystem asset source will register as single-asset bundles).
                                       The bridge uses this to resolve AssetReference(BundleId, AssetId).
@@ -127,7 +128,7 @@ sprite-batcher \
   --verbose
 ```
 
-Runs every Defenders project sequentially through the Stride bridge, writes atlases + JSON into `./assets/sprites/`, resolves Synty asset references from the bundle directory, logs per-frame progress.
+Runs every Defenders project sequentially through the Godot bridge, writes atlases + JSON into `./assets/sprites/`, resolves Synty asset references from the bundle directory, logs per-frame progress.
 
 ### Worked example — CI regression gate
 
@@ -169,9 +170,9 @@ This means:
 
 | Bridge | `--parallel 1` | `--parallel N` |
 |--------|---------------|----------------|
-| `stride` | Supported | Experimental — requires `N` separate Stride `Game` instances in-process. Not validated for Phase 3.5 initial implementation. |
-| `godot` (future) | Planned | Same constraint as Stride. |
-| `unity` (future) | Planned | Same constraint as Stride. |
+| `godot` | Supported (Phase 3 primary for Defenders) | Experimental — requires `N` separate Godot scene tree instances. Not validated for Phase 3.5 initial implementation. |
+| `stride` | Supported (Phase 3 peer) | Experimental — requires `N` separate Stride `Game` instances in-process. Same per-bridge constraint as Godot. |
+| `unity` (future) | Planned | Same constraint as other bridges. |
 
 Each bridge's documentation declares whether `--parallel > 1` is supported and what memory / GPU budget it requires. The CLI rejects unsupported combinations at startup.
 
@@ -296,7 +297,7 @@ This format is consumed by CI dashboards, Git commit statuses, and batch-log vie
 
 ### Headless bridge requirement
 
-The Stride bridge normally requires a graphics context. Phase 1.5's Stride capture spike (see SPRITE-COMPOSER-SDK.md § Phase 1.5) validates whether Stride can run without a window — if not, the CI runner needs a GPU with a display (Xvfb + GPU acceleration on Linux, normal console on Windows). This is a bridge-specific concern; the batcher does not abstract it. Each bridge's documentation declares its headless-mode support level.
+Engine bridges normally require a graphics context. Godot supports headless mode natively via `godot --headless`, making it the more CI-friendly default. Phase 1.5's engine capture spike (see SPRITE-COMPOSER-SDK.md § Phase 1.5) validates headless capture for both Godot (primary) and Stride (peer). If Stride requires a display for rendering, the Stride CI runner needs a GPU with a display (Xvfb + GPU acceleration on Linux, normal console on Windows). This is a bridge-specific concern; the batcher does not abstract it. Each bridge's documentation declares its headless-mode support level.
 
 ### Exit codes
 
@@ -416,7 +417,7 @@ sprite-batcher \
 
 ### 2. Should `--parallel N` spawn separate CLI processes or use in-process bridge instances?
 
-**Open**: Process-per-parallel gives clean GPU resource isolation but duplicates bridge startup cost (~1–3 seconds for Stride). In-process parallel shares startup cost but requires the bridge to support concurrent `Game` instances — non-trivial for Stride.
+**Open**: Process-per-parallel gives clean GPU resource isolation but duplicates bridge startup cost (~1–3 seconds for Godot or Stride). In-process parallel shares startup cost but requires the bridge to support concurrent engine instances — non-trivial for either Godot or Stride.
 
 **Recommendation**: In-process for `--parallel N` where the bridge explicitly supports it (declared via a capability flag on `ISpriteComposerBridge` or a bridge-specific static method). Fall back to process-per-parallel via self-spawning subprocesses when the bridge does not support in-process concurrency. Defer both implementations to Phase 3.5's second iteration — ship `--parallel 1` only in the first version.
 
@@ -438,10 +439,10 @@ sprite-batcher \
 
 When Phase 3.5 starts, the following work items land in this order:
 
-1. **Project skeleton**: `tools/sprite-batcher/sprite-batcher.csproj` targeting `net10.0`; references `sprite-composer` and at least the Stride bridge. Add to `bannou-sdks.sln`.
+1. **Project skeleton**: `tools/sprite-batcher/sprite-batcher.csproj` targeting `net10.0`; references `sprite-composer` and at least the Godot bridge (primary for Defenders) plus the Stride bridge (peer). Add to `bannou-sdks.sln`.
 2. **CLI argument parser**: `System.CommandLine` or equivalent. Validate option combinations at parse time.
 3. **Dry-run path**: `ProjectSerializer.Deserialize` → `ComputeCaptureManifest` → print summary. No bridge, no rendering. Exercises every structural validation the batcher needs.
-4. **Bridge factory**: `--bridge stride` instantiates `StrideSpriteComposerBridge` (Phase 3 output). Factory hook for future bridges.
+4. **Bridge factory**: `--bridge godot` (default) instantiates `GodotSpriteComposerBridge`; `--bridge stride` instantiates `StrideSpriteComposerBridge` (both Phase 3 outputs). Factory hook for future bridges.
 5. **Per-project capture + export**: `SpriteComposer.StartCaptureAsync` + `ExportAsync`. Apply `--filter-variants` / `--filter-rigs` before capture.
 6. **Summary formatter**: Console output + `--summary-json` writer.
 7. **Integration test**: End-to-end capture of a synthetic 1-variant project with a mock bridge, asserting atlas bytes + JSON metadata match expected fixtures.

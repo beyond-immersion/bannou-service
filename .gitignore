@@ -3,7 +3,6 @@
 project.lock.json
 .DS_Store
 *.pyc
-.claude
 nupkg/
 .env
 # Allow CI-specific environment files (non-sensitive)

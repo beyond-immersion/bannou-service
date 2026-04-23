@@ -1,0 +1,12 @@
+{
+  "name": "bannou-read-mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "MCP server providing full file reading without truncation. Replaces built-in Read for large files.",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "playwright": "^1.52.0",
+    "ws": "^8.20.0"
+  }
+}

@@ -51,3 +51,4 @@ is a one-line description of what changed.
 | 2026-04-20T14:15:25.475Z | `add_violation` | T34 | Added row "Expression.Compile() on hot paths in shipping code" citing T34 |
 | 2026-04-20T14:15:27.221Z | `add_violation` | T34 | Added row "Reflection.Emit, DynamicMethod, AssemblyBuilder, ModuleBuilder, TypeBuilder, or…" citing T34 |
 | 2026-04-20T14:15:28.778Z | `add_violation` | T34 | Added row "Roslyn scripting (CSharpScript, Microsoft.CodeAnalysis.Scripting) in runtime pa…" citing T34 |
+| 2026-04-22T11:58:13.321Z | `edit_tenet` | T34 | Edited body of T34 (AOT Compatibility) in docs/reference/tenets/IMPLEMENTATION-BEHAVIOR.md: 4755 → 6793 chars |

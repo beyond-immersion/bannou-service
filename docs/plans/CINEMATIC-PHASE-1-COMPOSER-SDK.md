@@ -532,7 +532,7 @@ Defenders requirements from D132 that the current Phase 1 plan already covers �
 
 ### Preview / scrub authoring UI — Defenders-side
 
-**Defenders handles preview in a separate Stride UI project** (working name `defenders-cinematic-composer`, analogous to the Phase 4 `defenders-sprite-composer` pattern documented in `bannou/docs/planning/SPRITE-COMPOSER-SDK.md`). Bannou's Phase 1 scope remains data model + validator + exporter only; Defenders builds the authoring UI (including timeline scrub + preview) consuming the Phase 1 SDK's validated scenario data.
+**Defenders handles preview in a separate Godot UI project** (working name `defenders-cinematic-composer`, analogous to the Phase 4 `defenders-sprite-composer` pattern documented in `bannou/docs/planning/SPRITE-COMPOSER-SDK.md` — both reframed to Godot per the 2026-04-22 engine pivot). Bannou's Phase 1 scope remains data model + validator + exporter only; Defenders builds the authoring UI (including timeline scrub + preview) consuming the Phase 1 SDK's validated scenario data.
 
 **No Bannou-side Phase 1 scope addition needed for preview** — called out here for clarity. The decoupling matches the sprite-composer ecosystem where Phase 4 is a Defenders deliverable on top of Phase 1–3 Bannou SDKs. Defenders' D132 item #7 ("Authoring preview/scrub") is satisfied by the Defenders-side Stride UI project.
 

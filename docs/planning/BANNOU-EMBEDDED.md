@@ -383,9 +383,55 @@ Plus regeneration of all clients (automated, ~45 files of generated output).
 
 ---
 
+## iOS / NativeAOT Support
+
+Embedded Bannou must ship on iOS for Godot-based consumer games (committed target — per the 2026-04-22 Defenders of Ba'hara engine pivot; see GitHub issue [#724](https://github.com/beyond-immersion/bannou-service/issues/724) for the tracked Bannou-side work). iOS introduces AOT constraints that Android and PC do not:
+
+### The constraint
+
+- **Apple prohibits JIT** on iOS. All managed code must be AOT-compiled.
+- **Godot 4.6 iOS uses NativeAOT** (not Mono AOT). NativeAOT trimming is aggressive — types and members not statically reachable are stripped from the shipped binary.
+- **Runtime reflection over trimmed types fails** — whatever patterns pass under CoreCLR (server / PC / Android) may throw or silently return empty results under NativeAOT.
+- Stride consumers (Stride 4.3 today) use Mono AOT for iOS, which is more permissive than NativeAOT — basic reflection works with linker preservation. **If the PluginLoader refactor satisfies NativeAOT, Mono AOT is automatically satisfied.** Tackling the stricter target first is strategic.
+
+### Current blocker
+
+The existing `PluginLoader` uses `Assembly.LoadFrom(path)` with runtime-discovered paths to load plugin assemblies. This is **AOT-blocking under both NativeAOT and Mono AOT** — the compiler cannot pre-compile code in an assembly whose identity is not known at build time.
+
+**See T34 in [`docs/reference/tenets/IMPLEMENTATION-BEHAVIOR.md`](../reference/tenets/IMPLEMENTATION-BEHAVIOR.md) for the full Bannou AOT tenet.** Forbidden patterns in `bannou-service/` and `plugins/*/` code paths include: `Assembly.LoadFrom` with dynamic paths, `Reflection.Emit`, `Expression.Compile()` in hot paths, Roslyn scripting, `MakeGenericType`/`MakeGenericMethod` with runtime-discovered types, and runtime generic construction generally.
+
+### Required refactors
+
+Until the Bannou-side PluginLoader refactor (issue [#724](https://github.com/beyond-immersion/bannou-service/issues/724)) ships, embedded Bannou cannot ship on iOS for any consumer:
+
+1. **Source-generated plugin registration manifest** — replace runtime `Assembly.LoadFrom` discovery with a build-time source generator that produces a static `PluginRegistrationManifest.g.cs` containing all `[BannouService]`-marked types. Issue #724 tracks the design options (see the issue for Option A/B/C/D tradeoffs).
+2. **Trimming-safe annotations on generated controller entry points** — even though controllers are dead code in embedded mode (never instantiated in-process), their types exist in the assembly. NativeAOT trimming must preserve any type whose runtime-reachable code path includes it. `[DynamicallyAccessedMembers]` annotations on relevant types ensure trimming keeps what's needed.
+3. **Audit sweep** — the rest of the codebase must be audited for AOT-blocking patterns per the Phase 3 section of issue #724.
+
+### Layer 5 preview (iOS / NativeAOT specifics)
+
+Once issue #724 lands:
+
+| Change | Files | Notes |
+|--------|-------|-------|
+| Source-gen plugin manifest | 1 source generator + generated output | Replaces `Assembly.LoadFrom` dispatch |
+| `[DynamicallyAccessedMembers]` annotations on source-generated entry points | generated output | Keeps trimmer honest |
+| Per-consumer iOS build template | consumer-side (Godot export preset) | Consumer responsibility; Bannou verifies support |
+| CI iOS AOT compilation pass | CI runner on macOS | Catches AOT regressions early |
+
+### What this affects
+
+- **Godot consumers (Defenders of Ba'hara)**: iOS ship gated on #724 — treat as medium-term roadmap, not immediate blocker for Android/PC.
+- **Stride consumers** (future): also benefit — Mono AOT consumers inherit a NativeAOT-clean PluginLoader automatically.
+- **Unity / Unreal future integrations**: face looser constraints by construction.
+
+The refactor is validated once against the strictest target (NativeAOT) and all consumer paths benefit.
+
+---
+
 ## What This Does NOT Cover
 
-1. **Android-specific build configuration**: .NET for Android project setup, APK packaging, assembly trimming. These are Stride/MAUI concerns, not Bannou concerns.
+1. **Android-specific build configuration**: .NET for Android project setup, APK packaging, assembly trimming. These are Stride/Godot/MAUI concerns, not Bannou concerns.
 
 2. **Sync layer for online/offline**: The Defenders proposal's Pattern B/C sync architecture (local-first with cloud sync on reconnect). This is game-side logic that uses Bannou as a local or remote backend interchangeably.
 

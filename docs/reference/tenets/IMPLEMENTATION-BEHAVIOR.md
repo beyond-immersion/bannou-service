@@ -913,7 +913,7 @@ catch (ApiException)
 <!-- TENET:T34 -->
 ## Tenet 34: AOT Compatibility (MANDATORY)
 
-**Rule**: Runtime reflection, dynamic code generation, and dynamic assembly loading are FORBIDDEN in `bannou-service/` and `plugins/*/` code paths. Consumer shipping targets include iOS (Mono AOT, JIT prohibited by Apple) and the path forward includes NativeAOT for standalone builds. All code in these paths MUST be AOT-clean by default.
+**Rule**: Runtime reflection, dynamic code generation, and dynamic assembly loading are FORBIDDEN in `bannou-service/` and `plugins/*/` code paths. Consumer shipping targets include BOTH **iOS Mono AOT** (Stride 4.3 consumers; basic reflection works with linker preservation) AND **iOS NativeAOT** (Godot 4.6 consumers — NativeAOT is Godot 4.x's only supported iOS runtime; stricter trimming, aggressive member removal, no runtime type discovery over trimmed types). All code in these paths MUST be AOT-clean by default, validated against the stricter NativeAOT constraint so Mono AOT consumers inherit AOT-cleanness by construction.
 
 ### Forbidden Patterns
 
@@ -923,20 +923,22 @@ catch (ApiException)
 | `Reflection.Emit`, `DynamicMethod`, `AssemblyBuilder`, `ModuleBuilder`, `TypeBuilder`, `ILGenerator` | Emits IL at runtime; incompatible with any AOT target | Source generators or compile-time factories |
 | `MakeGenericMethod(runtimeType)` / `MakeGenericType(runtimeType)` | Requires closed-generic instantiation not known at compile time | Baked-in generic dispatch via template or source generator |
 | `method.Invoke(target, args)` on a runtime-resolved `MethodInfo` in hot paths | Bypasses the AOT inliner; NativeAOT cannot resolve | Direct method call or statically-typed delegate |
-| `Activator.CreateInstance(runtimeType, args)` with a non-`typeof(T)` `Type` | Needs `[DynamicallyAccessedMembers]` at minimum; often breaks under NativeAOT trimming | `Activator.CreateInstance&lt;T&gt;()` or DI resolution |
-| `Expression.Compile()` on hot paths | Compiles to IL at runtime | Source-generated delegates or precomputed expression trees |
+| `Activator.CreateInstance(runtimeType, args)` with a non-`typeof(T)` `Type` | Needs `[DynamicallyAccessedMembers]` at minimum; often breaks under NativeAOT trimming | `Activator.CreateInstance<T>()` or DI resolution |
+| `Expression.Compile()` on hot paths | Compiles to IL at runtime; uses IL emit under the hood | Source-generated delegates or precomputed expression trees |
 | `ValueTuple.GetField("Item1")` / `GetField("Item2")` reflection | Erases the whole point of tuple static typing; forces AOT-hostile boxing | `var (status, result) = await ...;` deconstruction |
 | `AppDomain.CurrentDomain.GetAssemblies().GetTypes()` in runtime paths | Runtime assembly scanning; forces all-inclusive trimming preservation | Source-generated type catalogs |
 | Roslyn scripting (`CSharpScript`, `Microsoft.CodeAnalysis.Scripting`) | Compiles C# at runtime | Precompiled configuration or source generators |
 
 ### Allowed Patterns
 
-- Typed generics known at compile time: `GetService&lt;TService&gt;()`, `IStateStore&lt;TModel&gt;`
-- `Activator.CreateInstance&lt;T&gt;()` with `T` closed at the call site
+- Typed generics known at compile time: `GetService<TService>()`, `IStateStore<TModel>`
+- `Activator.CreateInstance<T>()` with `T` closed at the call site
 - Source-generated dispatch tables (`[BannouService]` manifest, `[Generated]` factories)
-- DI resolution via `IServiceProvider.GetRequiredService&lt;TService&gt;()` or `GetRequiredService(typeof(TService))`
+- DI resolution via `IServiceProvider.GetRequiredService<TService>()` or `GetRequiredService(typeof(TService))`
 - `System.Text.Json` with source-generated `JsonSerializerContext` (already via `BannouJson`)
-- Closed-form generic method calls: `SubscribeDynamicAsync&lt;ConcreteEvent&gt;(...)` where `ConcreteEvent` is known at the call site
+- Closed-form generic method calls: `SubscribeDynamicAsync<ConcreteEvent>(...)` where `ConcreteEvent` is known at the call site
+
+**NativeAOT-specific discipline**: Types consumed via reflection (attribute scanning, DI collection iteration) SHOULD carry `[DynamicallyAccessedMembers]` annotations so the NativeAOT trimmer preserves what's needed. Mono AOT with default linker preservation tolerates looser annotation; NativeAOT does not. Annotating conservatively keeps both paths working.
 
 ### Exception Paths (Allow-Listed Directories)
 
@@ -953,13 +955,21 @@ All other paths (`bannou-service/`, `plugins/*/`, `sdks/*/` that are consumed by
 
 ### Reference Issue and Pre-Existing Violations
 
-GitHub issue #724 tracks the PluginLoader AOT-safe refactor, the source-generated plugin registration manifest design, and the audit sweep for existing violations in `bannou-service/` and `plugins/`. Until that issue ships, known pre-existing violations remain tracked tech debt — they are not a license for NEW violations.
+GitHub issue [#724](https://github.com/beyond-immersion/bannou-service/issues/724) tracks the PluginLoader AOT-safe refactor, the source-generated plugin registration manifest design, and the audit sweep for existing violations in `bannou-service/` and `plugins/`. Until that issue ships, known pre-existing violations remain tracked tech debt — they are not a license for NEW violations.
+
+**Design priority on #724**: Phase 2 options should be evaluated against NativeAOT compatibility first. NativeAOT-clean code is automatically Mono-AOT-clean, so validating against the stricter constraint eliminates duplicate work for the Stride consumer path. Option A (source-generated registration manifest) is the preferred approach — a compile-time type catalog sidesteps NativeAOT's runtime-reflection trimming surface entirely.
 
 **NEW violations introduced after this tenet is landed are rejected outright in code review.** Pre-existing violations are enumerated in issue #724 and are the only approved residual surface.
 
-### The One Test
+### The Two Tests
 
-"If we compiled this into a Mono AOT iOS binary today, would it throw `System.ExecutionEngineException` with 'Attempting to JIT compile method while running in aot-only mode' the first time it ran?" If yes, the code violates this tenet.
+Validate against the stricter constraint (NativeAOT) first — Mono AOT is satisfied by construction.
+
+**Test 1 — The NativeAOT trimming test** (Godot 4.6 iOS consumers; primary target for Defenders of Ba'hara and future Arcadia iOS builds): "If we compiled this with `<PublishAot>true</PublishAot>` and strict trimming today, would the compiler emit trim-analysis warnings (IL2026, IL2067, IL3050, etc.), would runtime reflection over trimmed members throw `MissingMethodException` / `MissingMemberException`, or would dynamic code generation throw `PlatformNotSupportedException`?" If yes to any, the code violates this tenet.
+
+**Test 2 — The Mono AOT JIT test** (Stride 4.3 iOS consumers): "If we compiled this into a Mono AOT iOS binary today, would it throw `System.ExecutionEngineException` with 'Attempting to JIT compile method while running in aot-only mode' the first time it ran?" If yes, the code violates this tenet.
+
+Code that passes Test 1 passes Test 2 automatically. Code that passes Test 2 but fails Test 1 is acceptable for Mono-AOT-only consumers (Stride path today) but MUST be fixed before Godot-iOS ship.
 
 ### Relationship to Other Tenets
 

@@ -8,7 +8,7 @@
 > **Status**: Aspirational — no code exists.
 > **Implementation Map**: [docs/sdks/maps/SPRITE-COMPOSER.md](maps/SPRITE-COMPOSER.md)
 > **Planning Document**: [docs/planning/SPRITE-COMPOSER-SDK.md](../planning/SPRITE-COMPOSER-SDK.md)
-> **Consumers**: sprite-composer-stride (primary bridge), future sprite-composer-godot / sprite-composer-unity bridges, future SpriteBatcher automation tool, defenders-sprite-composer Stride project
+> **Consumers**: sprite-composer-godot (Defenders' primary bridge per 2026-04-22 engine pivot), sprite-composer-stride (peer bridge, shipped in parity), future sprite-composer-unity bridge, future SpriteBatcher automation tool, defenders-sprite-composer Godot project
 > **Short**: Engine-agnostic orchestrator for 3D-to-2D sprite capture — projects, capture sessions, equipment/animation configuration, preview, and atlas export
 
 ---
@@ -27,11 +27,11 @@ It follows the composer pattern established by scene-composer and voxel-builder:
 
 | Consumer | Type | Usage |
 |----------|------|-------|
-| sprite-composer-stride | Bridge | Implements ISpriteComposerBridge using Stride 4.3 rendering, animation, and content systems (primary engine for Defenders) |
-| sprite-composer-godot | Bridge (planned) | Potential future Godot 4.x implementation for studios standardizing on Godot |
+| sprite-composer-godot | Bridge | Implements ISpriteComposerBridge using Godot 4.6 rendering, animation, and content systems (primary engine for Defenders per 2026-04-22 pivot) |
+| sprite-composer-stride | Bridge | Implements ISpriteComposerBridge using Stride 4.3 rendering, animation, and content systems (peer bridge at parity; shipped for non-Defenders Stride consumers) |
 | sprite-composer-unity | Bridge (planned) | Potential future Unity implementation |
 | Future SpriteBatcher | Tool | Reads SpriteProject files, drives CaptureSession through a headless-or-GPU bridge, exports atlases without UI — the automation layer for production sprite batches |
-| defenders-sprite-composer | Stride project | Hosts the interactive sprite composer UI as a Stride game-as-editor application (Phase 4 of the planning document) |
+| defenders-sprite-composer | Godot project | Hosts the interactive sprite composer UI as a Godot game-as-editor application (Phase 4 of the planning document; reframed to Godot per 2026-04-22 engine pivot) |
 | Content pipelines / CI/CD | Tool | Uses headless mode for project validation, CaptureManifest computation, and JSON metadata verification |
 
 ---

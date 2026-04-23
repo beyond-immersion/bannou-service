@@ -6,35 +6,37 @@
 > **Layer**: GameFeatures
 > **State Stores**: procedural-templates (MySQL), procedural-jobs (MySQL), procedural-cache (Redis), procedural-lock (Redis)
 > **Status**: Pre-implementation (architectural specification)
-> **Short**: Procedural 3D asset generation via headless Houdini Digital Assets with deterministic output
+> **Short**: Procedural textured 3D asset generation via headless Houdini Digital Assets + SideFX Labs Substance plugin, with deterministic output
 
 ---
 
 ## Overview
 
-On-demand procedural 3D asset generation service (L4 GameFeatures) using headless Houdini Digital Assets (HDAs) — self-contained parametric procedural tools packaged as `.hda` files with exposed parameter interfaces (sliders, menus, toggles, ramps) that generate infinite geometry variations from a single authored template — as parametric generation templates. A thin orchestration layer that composes existing Bannou primitives (Asset service for HDA storage and output bundling, Orchestrator for Houdini worker pool management) to deliver procedural geometry generation as an API. Game-agnostic — the service knows nothing about what it generates, it executes HDAs and returns geometry. Internal-only, never internet-facing.
+On-demand procedural textured 3D asset generation service (L4 GameFeatures) using headless Houdini Digital Assets (HDAs) — self-contained parametric procedural tools packaged as `.hda` files with exposed parameter interfaces (sliders, menus, toggles, ramps) that generate infinite geometry variations from a single authored template — as parametric generation templates, optionally paired with Substance smart materials (`.sbsar` files) loaded through Houdini's SideFX Labs Substance plugin for parametric material generation. A thin orchestration layer that composes existing Bannou primitives (Asset service for HDA/sbsar storage and output bundling, Orchestrator for Houdini worker pool management) to deliver procedural textured-mesh generation as an API. Game-agnostic — the service knows nothing about what it generates, it executes HDAs (with optional Substance material baking inside the HDA) and returns textured geometry. Internal-only, never internet-facing.
 
 ---
 
 ## Why This Service Exists
 
-**The authoring-to-runtime bridge**: lib-procedural bridges content authoring and runtime generation. Artists author HDAs (parametric procedural tools with exposed controls) in Houdini's GUI. Those HDAs are uploaded to the Asset service as templates. At runtime, any service (dungeon cores exercising domain_expansion, regional watchers sculpting terrain, NPC builders constructing buildings, world seeding during realm creation) can request generation by providing a template ID, parameters, and a seed. The same HDA with different parameters produces dramatically different geometry -- infinite variations from a single authored template.
+**The authoring-to-runtime bridge**: lib-procedural bridges content authoring and runtime generation. Artists author HDAs (parametric procedural tools with exposed controls) in Houdini's GUI and smart materials (`.sbsar`) in Substance Designer. Both are uploaded to the Asset service as templates. At runtime, any service (dungeon cores exercising domain_expansion, regional watchers sculpting terrain, NPC builders constructing buildings, world seeding during realm creation) can request generation by providing a template ID, parameters, and a seed. The same HDA with different parameters produces dramatically different geometry; the same smart material with different parameters produces dramatically different textures; combined via Houdini's Substance COP integration, a single HDA + sbsar pair produces infinite **textured** variations from two authored primitives.
 
-**Composability**: Template storage and output bundling are Asset (L3). Worker pool lifecycle is Orchestrator (L3). Job status tracking is internal. Generation execution is delegated to headless Houdini containers running hwebserver. lib-procedural orchestrates the pipeline: receive request, fetch HDA from Asset, acquire worker from Orchestrator, execute generation, upload result to Asset, optionally bundle, return reference.
+**The formal-theory / procedural-composition pattern**: This is the material analog of MusicTheory + MusicStoryteller and StorylineTheory + StorylineStoryteller. Smart materials are structural primitives (a compressed design space with parameter axes); procedural composition at runtime selects parameters per game-state context. Authoring is human-creative (Substance Designer's node graph — one-time, per primitive); consumption is LLM/game-logic-friendly (picking parameter values per biome/corruption/age/story-state — unbounded at runtime).
+
+**Composability**: Template storage (HDAs + sbsar smart materials) and output bundling are Asset (L3). Worker pool lifecycle is Orchestrator (L3). Job status tracking is internal. Generation execution is delegated to headless Houdini containers running hwebserver. lib-procedural orchestrates the pipeline: receive request, fetch HDA (and any referenced sbsar) from Asset, acquire worker from Orchestrator, execute HDA with Substance material baking inline, upload result to Asset, optionally bundle, return reference.
 
 **Deterministic generation**: Same template + same parameters + same seed = identical output. This enables Redis-cached generation results (keyed by hash of template_id + parameters + seed), reproducible dungeon layouts, and predictable world seeding. The cache key is canonical -- if the same generation has been requested before, the cached result is returned without invoking Houdini.
 
 ### The Content Generation Gap
 
-Bannou can manage, store, version, spatially index, and compose 3D assets. It cannot **create** them. Every piece of geometry in the system was authored by a human and uploaded. This creates a bottleneck:
+Bannou can manage, store, version, spatially index, and compose 3D assets. It cannot **create** them. Every piece of geometry and every texture in the system was authored by a human and uploaded. This creates a bottleneck:
 
-- **Dungeons** that grow new chambers need geometry for those chambers
-- **Terrain** for procedurally-generated regions needs heightmaps and meshes
-- **Buildings** constructed by NPC builders need facade variations
-- **Vegetation** scattered across regions needs species-appropriate variations
-- **World seeding** during realm creation needs massive quantities of varied geometry
+- **Dungeons** that grow new chambers need geometry AND material variations (weathered stone, corrupted surfaces, living walls)
+- **Terrain** for procedurally-generated regions needs heightmaps, meshes, and biome-appropriate textures
+- **Buildings** constructed by NPC builders need facade variations with culturally-appropriate materials
+- **Vegetation** scattered across regions needs species-appropriate variations and seasonal material states
+- **World seeding** during realm creation needs massive quantities of varied textured geometry
 
-lib-procedural closes this gap. With it, Bannou becomes a platform that both **manages** and **generates** content on demand.
+lib-procedural closes this gap on both axes simultaneously. With it, Bannou becomes a platform that both **manages** and **generates** textured content on demand.
 
 ### Consumers
 
@@ -245,13 +247,20 @@ All endpoints require `developer` role (or `procedural.generate` permission for 
 ```dockerfile
 FROM aaronsmithtv/houdini:20.5
 
+# SideFX Labs (ships the Substance plugin + Substance Engine runtime)
+COPY sidefx-labs/ /opt/houdini/sidefx-labs/
+ENV HOUDINI_PATH=/opt/houdini/sidefx-labs;&
+
 COPY houdini_server.py /opt/houdini/server.py
 COPY hdas/ /opt/houdini/hdas/ # Pre-cached common HDAs
+COPY sbsar/ /opt/houdini/sbsar/ # Pre-cached common Substance archives
 
 EXPOSE 8008
 
 CMD ["hython", "/opt/houdini/server.py"]
 ```
+
+The Substance Engine runtime library is distributed with the free SideFX Labs Substance plugin — no Substance Automation Toolkit (SAT) license required. See § "Substance Integration" below for the authoring/consumption split and material pipeline detail.
 
 ### Worker API (hwebserver)
 
@@ -289,6 +298,75 @@ Houdini startup + HDA loading can take 5-30 seconds. Mitigations:
 - Cache HDA installations in worker container filesystem
 - Use in-memory session persistence between requests (hython stays running)
 - Async generation mode is the primary pattern (callers don't block)
+
+---
+
+## Substance Integration (Material Generation)
+
+The Houdini worker image bundles the SideFX Labs Substance plugin, which loads Substance Archive files (`.sbsar`) into Houdini's COP (compositing) context and renders textures parametrically via the embedded Substance Engine runtime. HDAs can reference `.sbsar` templates via Substance Archive COPs and use the rendered maps as materials bound to the HDA's geometry output. This lets lib-procedural deliver textured meshes from a single Generate call — no separate texture-generation service, no per-asset material authoring.
+
+### The Authoring / Consumption Split
+
+| Product | Role | Platform | Frequency |
+|---------|------|----------|-----------|
+| **Substance 3D Designer** | Author smart materials interactively (node graph editor) | Windows / macOS | Occasional — one session per primitive, batched creative work |
+| **Substance 3D Painter** | Paint textures directly on 3D meshes | Windows / macOS | Rarely used by this pipeline — the sprite/HDA pipeline prefers parametric smart materials |
+| **Substance Engine** (runtime library) | Renders `.sbsar` → textures at runtime | **Cross-platform, including Linux** | Per generation request |
+| **SideFX Labs Substance plugin** (Houdini) | Loads `.sbsar` in Houdini's COP context, drives the Substance Engine | Wherever Houdini runs (including headless Linux containers) | Per generation request |
+| **Substance Automation Toolkit (SAT)** | Standalone `sbsrender` CLI | Cross-platform | **Not used by this pipeline** — see licensing note below |
+
+Authoring is infrequent, human-creative, and happens on a Windows or macOS workstation (Substance Indie subscription, ~$19.99/mo). Consumption is frequent, parametric, and happens on the same Linux Houdini workers that already run HDA generation. The two parts of the workflow never share a workstation — the `.sbsar` output flows from authoring → `lib-asset` → Houdini workers.
+
+### Architecture
+
+```
+Authoring workstation (Windows/macOS)
+  Substance Designer → weathered-stone.sbsar
+  Houdini → dungeon-wall.hda (references sbsar via Substance Archive COP)
+  Both published to lib-asset via the developer tooling.
+
+Production (Linux Houdini workers, at scale):
+  Request: {template: "dungeon-wall", corruption: 0.6, age: "old", biome: "mountain"}
+   → lib-procedural → Orchestrator-managed worker (existing path)
+   → Load dungeon-wall.hda; set geometry parameters
+   → SideFX Labs Substance Archive COP loads weathered-stone.sbsar
+   → Substance Engine renders material maps (diffuse, normal, roughness, metallic, AO) with
+     the same parameters propagated through the HDA's parameter network
+   → HDA binds maps to mesh UVs via standard Houdini material assignment
+   → Export textured mesh (GLB/USD/bgeo)
+   → Upload to lib-asset, bundle, return reference (existing path)
+```
+
+### Downstream Consumption
+
+Output is a standard textured mesh in the target format (GLB/USD/bgeo). Downstream consumers decide what to do with it:
+
+- **2.5D sprite pipelines** (via sprite-composer): the textured mesh is captured as a sprite atlas; Substance materials are pre-baked into the sprite color/normal atlases. Mobile runtime has zero Substance Engine overhead — textures are static.
+- **3D runtime consumers** (Godot/Stride/Unity): the textured mesh with baked PBR material maps loads via standard engine asset loaders. No runtime Substance Engine required unless the consumer explicitly adds one for live material parameter changes.
+- **Content authoring / preview tools**: can pass through the raw `.sbsar` for live-parameter tweaking if desired, but that's an authoring-tool concern, not a runtime concern.
+
+### Substance Licensing Notes
+
+| Component | Licensing | Path |
+|-----------|-----------|------|
+| **Substance 3D Designer** (authoring) | Per-user subscription (Indie ~$19.99/mo with revenue cap; higher tiers for larger studios) | Author buys own subscription; credentials never transit the pipeline |
+| **SideFX Labs Substance plugin** (Houdini-integrated consumption) | **Free** with SideFX Labs; ships the Substance Engine runtime | Bundled in the worker image |
+| **Substance Engine** (runtime library) | Free to redistribute as part of the SideFX Labs plugin | Bundled — no separate license required |
+| **Substance Automation Toolkit (SAT)** | Enterprise/Team-only under Adobe (was free with Indie historically, relicensed ~2024-2025) | **NOT used by this pipeline** — the Houdini plugin path avoids the SAT license requirement entirely |
+
+Pre-built `.sbsar` files are also available from Adobe's community library and third-party marketplaces (Cubebrush, Gumroad, ArtStation), which can seed the material primitive set without authoring from scratch.
+
+### Substance-Specific Configuration
+
+Substance integration inherits all the existing configuration (worker pool, timeouts, cache, etc.) — no separate Substance pool is needed. The `.sbsar` files are stored in lib-asset alongside HDAs and referenced from within HDAs via standard Houdini asset references. An HDA that doesn't reference a `.sbsar` simply doesn't use the Substance COP, and the generation pipeline works identically to pre-Substance geometry-only generation.
+
+### Houdini + Substance References
+
+- [SideFX Labs Substance Plugin](https://www.sidefx.com/tutorials/sidefx-labs-substance-plugin/) — official tutorial: loading `.sbsar` into Houdini COPs, chaining Substance nodes with Houdini networks
+- [Labs Substance Archive COP node docs](https://www.sidefx.com/docs/houdini/nodes/cop2/labs--sbs_archive.html)
+- [Adobe: Houdini Ecosystem & Plug-ins](https://helpx.adobe.com/substance-3d-integrations/3d-applications/houdini.html) — official integration page
+- [SideFX Labs on GitHub](https://github.com/sideeffects/SideFXLabs) — plugin source + distribution
+- [Substance 3D Automation Toolkit docs](https://helpx.adobe.com/substance-3d-sat.html) — reference only; SAT is not used by this pipeline
 
 ---
 
@@ -364,10 +442,11 @@ Key external documentation for implementers. Houdini provides built-in headless 
 
 ### Phase 4: Advanced Features (ongoing)
 - PDG integration for massive parallel generation
-- Texture generation (Substance integration potential)
 - LOD pipeline (generate multiple detail levels per asset)
 - Client-side parameter preview (lightweight HDA preview without full generation)
 - Generation analytics (template popularity, average generation times, cache effectiveness)
+
+> **Substance integration** was previously planned here as "Texture generation (Substance integration potential)" in Phase 4. It is promoted to Phase 1/2 scope as of 2026-04-22 (see § "Substance Integration (Material Generation)"). The Houdini Worker Image includes the SideFX Labs Substance plugin from day one; `.sbsar` template storage lands with the existing `lib-asset` integration; no separate phase is required.
 
 ---
 
@@ -495,19 +574,19 @@ Note that **player/NPC sculpting** (statues, carvings, decor) does NOT route thr
 
 ## Potential Extensions
 
-1. **Texture generation**: Substance Designer integration for procedural textures alongside geometry. Same worker pool pattern, different tool.
+> **Note**: Substance smart-material integration was previously listed here as a potential extension. As of 2026-04-22 it is promoted to a primary integrated workflow — see § "Substance Integration (Material Generation)" above.
 
-2. **Audio generation**: Procedural sound effects from parameters (material impacts, environmental ambience). Lighter-weight than geometry generation.
+1. **Audio generation**: Procedural sound effects from parameters (material impacts, environmental ambience). Lighter-weight than geometry generation.
 
-3. **Batch pre-generation**: Pre-generate common variations during off-peak hours. Cache warming for anticipated generation requests.
+2. **Batch pre-generation**: Pre-generate common variations during off-peak hours. Cache warming for anticipated generation requests.
 
-4. **HDA marketplace**: Third-party artists create and sell HDA templates through the Asset service. lib-procedural becomes a platform for procedural content creation.
+3. **HDA / sbsar marketplace**: Third-party artists create and sell HDA templates and smart materials through the Asset service. lib-procedural becomes a platform for procedural content creation.
 
-5. **Client-side preview**: Lightweight parameter preview using simplified HDA execution or pre-computed thumbnails. Useful for dungeon masters choosing chamber styles.
+4. **Client-side preview**: Lightweight parameter preview using simplified HDA execution or pre-computed thumbnails. Useful for dungeon masters choosing chamber styles, or for designers previewing Substance material variations without a full generation pass.
 
-6. **Version-aware generation**: HDA templates have versions. Existing cached generations reference the template version. Template updates don't invalidate existing geometry but new requests use the latest version.
+5. **Version-aware generation**: HDA templates and sbsar smart materials have versions. Existing cached generations reference the template + material versions. Updates don't invalidate existing geometry but new requests use the latest versions.
 
-7. **Composite generation**: Chain multiple HDAs -- generate terrain, then place buildings on it, then add vegetation. Pipeline orchestration for complex environments.
+6. **Composite generation**: Chain multiple HDAs -- generate terrain, then place buildings on it, then add vegetation. Pipeline orchestration for complex environments.
 
 ---
 
