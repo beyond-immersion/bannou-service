@@ -105,7 +105,13 @@ This plugin does not consume external events.
 
 #### DI Interfaces Implemented by This Plugin
 
-None. Behavior does not implement any cross-layer DI provider or listener interfaces.
+| Interface | Registered As | Direction | Consumer |
+|-----------|---------------|-----------|----------|
+| `ILocalizationSource` | Singleton | aggregator(self)→all sources pull | `BehaviorEmbeddedLocalizationSource` registers at priority 50 (loads YAML strings from assembly embedded resources via `EmbeddedYamlLocalizationSource` base class). The aggregator (`FileLocalizationProvider`, also in this plugin) auto-discovers all `ILocalizationSource` instances from DI via `IEnumerable<ILocalizationSource>` and orders them by descending priority. lib-localization's `LocalizationServiceSource` (priority 100) joins this aggregator when the plugin is loaded. See `Dialogue/BehaviorEmbeddedLocalizationSource.cs` and issue #689. |
+
+**Note**: `ILocalizationProvider` / `IAggregateLocalizationProvider` are implemented by `Dialogue/FileLocalizationProvider.cs` (singleton helper, registered via `[BannouHelperService]`), but consumption is plugin-internal — no other plugin currently injects `ILocalizationProvider` directly. The consumer-side wiring (`${localization()}` ABML built-in or `DialogueResolver` augmentation) is tracked in #726.
+
+No cross-layer Provider/Listener interfaces (in the `bannou-service/Providers/` sense) are implemented.
 
 ---
 

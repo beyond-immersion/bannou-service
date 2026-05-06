@@ -1,0 +1,13 @@
+ui:
+  menu:
+    start: "Start Game"
+    quit: "Quit"
+  hud:
+    health: "Health"
+dialogue:
+  greeting: "Hello!"
+  farewell: "Goodbye!"
+items:
+  direwolf:
+    name: "Direwolf"
+    description: "A massive wolf-like creature."

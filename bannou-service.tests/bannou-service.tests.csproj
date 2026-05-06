@@ -31,4 +31,19 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Embedded YAML fixtures for EmbeddedYamlLocalizationSource tests.
+         Resource names follow the pattern:
+         BeyondImmersion.BannouService.Tests.Behavior.Fixtures.strings.{locale}.yaml
+
+         WithCulture=false is required because MSBuild otherwise treats
+         filenames like "strings.en.yaml" as culture-coded resources and
+         routes them into satellite assemblies (en/, fr/) instead of embedding
+         them in the main assembly. We want them in the main assembly so the
+         EmbeddedYamlLocalizationSource pattern works correctly. -->
+    <EmbeddedResource Include="Behavior\Fixtures\*.yaml">
+      <WithCulture>false</WithCulture>
+    </EmbeddedResource>
+  </ItemGroup>
+
 </Project>

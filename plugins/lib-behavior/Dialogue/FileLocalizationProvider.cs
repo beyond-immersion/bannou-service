@@ -47,13 +47,21 @@ public sealed class FileLocalizationProvider : IAggregateLocalizationProvider, I
     private bool _disposed;
 
     /// <summary>
-    /// Creates a new file localization provider with specified configuration.
+    /// Creates a new aggregate localization provider that auto-discovers
+    /// <see cref="ILocalizationSource"/> implementations from DI.
     /// </summary>
     /// <param name="config">Localization configuration.</param>
+    /// <param name="sources">
+    /// Localization sources resolved from DI. Every singleton registered against
+    /// <see cref="ILocalizationSource"/> is seeded into the aggregate at construction
+    /// time. Additional sources can still be added imperatively via
+    /// <see cref="RegisterSource"/> for tests or runtime extension scenarios.
+    /// </param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public FileLocalizationProvider(
         LocalizationConfiguration config,
+        IEnumerable<ILocalizationSource> sources,
         ILogger<FileLocalizationProvider> logger,
         ITelemetryProvider telemetryProvider)
     {
@@ -62,6 +70,17 @@ public sealed class FileLocalizationProvider : IAggregateLocalizationProvider, I
         _telemetryProvider = telemetryProvider;
         _sources = new ConcurrentDictionary<string, ILocalizationSource>(StringComparer.OrdinalIgnoreCase);
         _reloadLock = new SemaphoreSlim(1, 1);
+
+        // Auto-seed sources discovered via DI. Mirrors the IEnumerable<T> pattern
+        // used elsewhere in the codebase (ILocalizationKeyValidator, IControlGate, etc.).
+        foreach (var source in sources)
+        {
+            _sources[source.Name] = source;
+            _logger.LogDebug(
+                "Auto-registered localization source from DI: {Name}, priority: {Priority}",
+                source.Name,
+                source.Priority);
+        }
     }
 
     /// <inheritdoc/>

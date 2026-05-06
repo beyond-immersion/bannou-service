@@ -106,6 +106,7 @@ This plugin does not consume external events. No `account.deleted` handler neede
 | Interface | Registered As | Direction | Consumer |
 |-----------|---------------|-----------|----------|
 | `ILocalizationKeyValidator` | `Singleton` | L2+→L1 pull | L2+ services discover via `IEnumerable<ILocalizationKeyValidator>` to validate localizationKeyPrefix fields at entity creation |
+| `ILocalizationSource` | `Singleton` | L4(aggregator)→L1 pull | `FileLocalizationProvider` (in lib-behavior) discovers all sources via `IEnumerable<ILocalizationSource>`. This plugin's `LocalizationServiceSource` registers at priority 100 (overrides embedded YAML sources at priority 50). Implements `GetText(key, locale)` for the 3-part dotted form `{categoryCode}.{key}` against per-locale `ExportLocalizationAsync` bundles cached in memory. Cache invalidation via dual event subscriptions: `localization.category.updated` invalidates the affected language; `localization.category.deleted` invalidates ALL cached bundles (cascade-deleted entries span every language the category had — the event payload doesn't enumerate them). Both subscriptions ensure multi-node correctness. See `LocalizationServiceSource.cs`. |
 
 ---
 

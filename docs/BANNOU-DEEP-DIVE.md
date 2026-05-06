@@ -319,11 +319,14 @@ Cooperative scheduling for multi-channel ABML execution (cinematic choreography)
 
 ### Dialogue System
 
-| Interface | Purpose |
-|-----------|---------|
+| Interface / Type | Purpose |
+|------------------|---------|
 | `IDialogueResolver` | 3-step resolution: override → localization → inline default |
 | `IExternalDialogueLoader` | Load external YAML dialogue files with localizations and conditional overrides |
-| `ILocalizationProvider` | Multi-locale text lookup with fallback chains |
+| `ILocalizationProvider` | Multi-locale text lookup with fallback chains. Defined alongside `LocalizedText` (record), `ILocalizationSource` (single-source extension point), `IAggregateLocalizationProvider` (multi-source aggregation), and `LocalizationConfiguration` (config record) in the same `ILocalizationProvider.cs` file |
+| `ILocalizationSource` | Pluggable single-source extension point: `Name`, `Priority`, `GetText(key, locale)`, `SupportedLocales`, `ReloadAsync`. Implementations are auto-discovered by `FileLocalizationProvider` (lib-behavior) via `IEnumerable<ILocalizationSource>` constructor injection. Service-backed sources (lib-localization's `LocalizationServiceSource` at priority 100) and embedded-resource-backed sources (priority 50) coexist; the aggregate iterates by descending priority |
+| `IAggregateLocalizationProvider` | Extends `ILocalizationProvider` with `Sources` (priority-ordered) and `RemoveSource(name)`. Implemented by `FileLocalizationProvider` in lib-behavior |
+| `EmbeddedYamlLocalizationSource` | **Abstract base class** for `ILocalizationSource` implementations that load YAML strings from assembly embedded resources. Mirrors the `EmbeddedResourceProvider` pattern from `Providers/`. Subclasses specify `ResourceAssembly` (`typeof(MyClass).Assembly`) and `ResourcePrefix`. AOT-safe (no runtime type discovery, only manifest-resource enumeration on a compile-time-known assembly). Default `FilePattern` is `strings.{locale}.yaml`. **Important MSBuild caveat**: `<EmbeddedResource>` entries with locale-coded filenames require `<WithCulture>false</WithCulture>` to avoid being routed into satellite assemblies — see the class XML doc remarks for the trap and fix |
 
 ### Cognition Pipeline Interfaces
 
@@ -516,6 +519,8 @@ Tracking what's documented in HELPERS vs. what lives only in this deep dive.
 | EventTemplate system | **Deep dive only** | ABML event publishing only |
 | IMessageTap | **Deep dive only** | Event forwarding between exchanges |
 | ServiceHeartbeatManager | **Deep dive only** | Periodic heartbeat publishing |
+| `EmbeddedYamlLocalizationSource` | **Deep dive only** | Abstract base for embedded-YAML `ILocalizationSource` implementations (issue #689). Parallel to `EmbeddedResourceProvider`. AOT-safe; subclasses point at their own assembly. **Mandatory MSBuild caveat** (`<WithCulture>false</WithCulture>`) documented in the class XML doc remarks |
+| `ILocalizationSource` extension point | **Deep dive only** | Pluggable single-source contract for the localization aggregate. `FileLocalizationProvider` (lib-behavior) auto-discovers all sources via `IEnumerable<ILocalizationSource>` DI injection. Adopted by issue #689 — bridges lib-localization (L1) into the behavior system without hierarchy violations |
 | Plugin System (PluginLoader) | **Synced** | HELPERS §16 covers base classes, lifecycle, attributes. Full internals here. |
 | DirectDispatchHelper | **Synced** | HELPERS §8 |
 | ServiceNavigator raw/prebound API | **Synced** | HELPERS §8 |

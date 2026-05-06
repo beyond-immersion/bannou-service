@@ -25,11 +25,17 @@ public sealed class FileLocalizationProviderTests : IDisposable
         _tempDir = Path.Combine(Path.GetTempPath(), "loc_tests_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_tempDir);
 
-        _provider = new FileLocalizationProvider(new LocalizationConfiguration
-        {
-            DefaultLocale = "en",
-            LogMissingKeys = false
-        }, NullLogger<FileLocalizationProvider>.Instance, new NullTelemetryProvider());
+        _provider = new FileLocalizationProvider(
+            new LocalizationConfiguration
+            {
+                DefaultLocale = "en",
+                LogMissingKeys = false
+            },
+            // Imperative-only registration in this fixture; pass empty enumerable
+            // so the DI auto-seed path is a no-op for the existing tests.
+            Array.Empty<ILocalizationSource>(),
+            NullLogger<FileLocalizationProvider>.Instance,
+            new NullTelemetryProvider());
     }
 
     public void Dispose()

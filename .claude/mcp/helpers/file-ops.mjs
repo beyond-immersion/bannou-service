@@ -91,6 +91,38 @@ export function countOccurrences(haystack, needle) {
   return count;
 }
 
+// ─── Tagged Tool Response ──────────────────────────────────────────────────
+
+/**
+ * Construct a tagged MCP tool response with a machine-parseable status prefix.
+ *
+ * Every response from this server's mutation/read tools should pass through
+ * this helper so that crossover/leak between tool results can be detected
+ * definitively. The tag is on the first line:
+ *
+ *   [mcp:{toolName}:{status}]
+ *   {body text...}
+ *
+ * Two practical guarantees this provides:
+ *   1. An agent (or downstream caller) can verify that the response it
+ *      received actually came from the tool it called. If `edit_file` returns
+ *      `[mcp:read_file:ok]`, something is wrong with tool routing or response
+ *      caching — surface it loudly instead of silently using the wrong data.
+ *   2. Failure responses are syntactically distinguishable from success
+ *      responses without parsing the body — `:ok]` vs `:err]`.
+ *
+ * @param {string} toolName — name of the calling MCP tool (e.g., "edit_file")
+ * @param {"ok" | "err"} status — whether the call succeeded
+ * @param {string} text — body of the response (preserved verbatim after the tag)
+ * @returns {Object} MCP tool response object
+ */
+export function mcpResponse(toolName, status, text) {
+  const tag = `[mcp:${toolName}:${status}]`;
+  const result = { content: [{ type: "text", text: `${tag}\n${text}` }] };
+  if (status === "err") result.isError = true;
+  return result;
+}
+
 // ─── Response Size Estimation ──────────────────────────────────────────────
 
 /**
@@ -163,41 +195,38 @@ export function extractPersistedContent(jsonContent) {
  * Returns an error response if the file hasn't been read or has unread continuations.
  * Returns null if the file is clear for modification.
  *
+ * @param {string} resolvedPath — absolute path being checked
+ * @param {string} [toolName="file_gate"] — name of the calling tool, used to tag the
+ *   error response so the agent can tell which tool's gate fired. Pass the actual
+ *   tool name (e.g., "edit_file") for the most diagnostic output.
+ *
  * Note: run_command uses a separate global gate (any pending continuations block all commands).
  */
-export function checkFileGate(resolvedPath) {
+export function checkFileGate(resolvedPath, toolName = "file_gate") {
   if (!readFiles.has(resolvedPath)) {
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Error: ${resolvedPath} has not been read yet. Use read_file first.`,
-        },
-      ],
-      isError: true,
-    };
+    return mcpResponse(
+      toolName,
+      "err",
+      `Error: ${resolvedPath} has not been read yet. Use read_file first.`,
+    );
   }
 
   const pending = pendingContinuations.get(resolvedPath);
   if (pending && pending.size > 0) {
     const unreadPaths = [...pending].map((p) => `  ${p}`).join("\n");
-    return {
-      content: [
-        {
-          type: "text",
-          text: [
-            `Error: ${resolvedPath} was split into multiple parts during reading.`,
-            `You have ${pending.size} unread continuation file(s). You MUST read ALL parts before editing.`,
-            "",
-            "Unread continuation files:",
-            unreadPaths,
-            "",
-            "Read each file above with read_file, then retry.",
-          ].join("\n"),
-        },
-      ],
-      isError: true,
-    };
+    return mcpResponse(
+      toolName,
+      "err",
+      [
+        `Error: ${resolvedPath} was split into multiple parts during reading.`,
+        `You have ${pending.size} unread continuation file(s). You MUST read ALL parts before editing.`,
+        "",
+        "Unread continuation files:",
+        unreadPaths,
+        "",
+        "Read each file above with read_file, then retry.",
+      ].join("\n"),
+    );
   }
 
   return null; // Clear
@@ -209,33 +238,33 @@ export function checkFileGate(resolvedPath) {
  * Global gate: blocks all mutation tools while requiredReading is non-empty.
  * Returns null if clear, or an error response if blocked.
  *
+ * @param {string} [toolName="required_reading_gate"] — name of the calling tool,
+ *   used to tag the error response for traceability.
+ *
  * NOT checked by: read_file, prepare_context (always allowed).
  * Checked by: edit_file, write_file, move_lines, validate_structure,
  *             run_command, write_script.
  */
-export function checkRequiredReadingGate() {
+export function checkRequiredReadingGate(toolName = "required_reading_gate") {
   if (requiredReading.size === 0) return null;
 
   const paths = [...requiredReading].map((p) => `  ${p}`).join("\n");
-  return {
-    content: [
-      {
-        type: "text",
-        text: [
-          `Error: Required context files have not been read yet.`,
-          `${requiredReading.size} composite(s) remaining:`,
-          "",
-          paths,
-          "",
-          "Read each file with read_file to load context, then retry.",
-        ].join("\n"),
-      },
-    ],
-    isError: true,
-  };
+  return mcpResponse(
+    toolName,
+    "err",
+    [
+      `Error: Required context files have not been read yet.`,
+      `${requiredReading.size} composite(s) remaining:`,
+      "",
+      paths,
+      "",
+      "Read each file with read_file to load context, then retry.",
+    ].join("\n"),
+  );
 }
 
 // Re-export fs functions and constants used by tool handlers
 export { readFile, writeFile, stat, access, resolve, extname, basename, constants, tmpdir, join, createHash };
+// (mcpResponse is exported inline above)
 // Re-export state for direct manipulation by read_file handler
 export { readFiles, pendingContinuations, continuationToOriginal, requiredReading, BINARY_EXTENSIONS, CHUNK_BYTE_LIMIT, RESPONSE_SERIALIZED_LIMIT, CONTINUATION_PREFIX, COMPOSITE_PREFIX };

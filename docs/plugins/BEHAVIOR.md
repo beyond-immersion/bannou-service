@@ -932,6 +932,7 @@ flows:
 
 ### Completed
 
+- **2026-04-26**: Issue #689 (in lib-localization) — Modified `Dialogue/FileLocalizationProvider` constructor to accept `IEnumerable<ILocalizationSource>` for DI auto-discovery (replaces the empty-`_sources`-on-startup defect; `LocalizationConfiguration` is now also DI-registered in `BehaviorServicePlugin`). Added `Dialogue/BehaviorEmbeddedLocalizationSource` (priority 50) — auto-registered `ILocalizationSource` for assembly-embedded YAML defaults via the new `EmbeddedYamlLocalizationSource` abstract base in `bannou-service/Behavior/`. lib-localization's `LocalizationServiceSource` (priority 100) joins the same aggregator when loaded. No YAML files shipped yet — drop them under `Localization/` with `<EmbeddedResource Include="Localization\*.yaml"><WithCulture>false</WithCulture></EmbeddedResource>` to enable. Follow-up #726 tracks the missing `${localization()}` ABML consumer.
 - **2026-03-16**: Full maintenance + audit cycle. Migrated 5 operational sections to implementation map. Fixed 2 bugs (configurable key prefixes → const fields with Build*Key methods; ContentHash event field → SHA256 populated). Resolved 4 false-positive stubs (DI registrations were auto-discovered via `[BannouHelperService]`). All 14 linked GitHub issues verified OPEN. Zero actionable gaps remaining.
 
 ### AUDIT Markers

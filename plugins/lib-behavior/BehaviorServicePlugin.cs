@@ -77,6 +77,13 @@ public class BehaviorServicePlugin : StandardServicePlugin<IBehaviorService>
         services.AddSingleton<IActionHandler, TriggerGoapReplanHandler>();
 
         // Register dialogue & localization layer (Layer 6)
+
+        // LocalizationConfiguration is consumed by FileLocalizationProvider via DI.
+        // FileLocalizationProvider auto-discovers all ILocalizationSource implementations
+        // (e.g., BehaviorEmbeddedLocalizationSource, lib-localization's LocalizationServiceSource)
+        // through IEnumerable<ILocalizationSource> constructor injection.
+        services.AddSingleton(new LocalizationConfiguration());
+
         // External dialogue loader for YAML-based dialogue files
         services.AddSingleton<IExternalDialogueLoader>(sp =>
         {
@@ -90,6 +97,12 @@ public class BehaviorServicePlugin : StandardServicePlugin<IBehaviorService>
                 sp.GetRequiredService<ITelemetryProvider>());
             return loader;
         });
+
+        // Note: ILocalizationSource implementations (BehaviorEmbeddedLocalizationSource,
+        // and lib-localization's LocalizationServiceSource when loaded) are auto-registered
+        // by PluginLoader via [BannouHelperService(interfaceType: typeof(ILocalizationSource))].
+        // FileLocalizationProvider receives the full IEnumerable<ILocalizationSource> at
+        // construction time and seeds its priority-ordered _sources dictionary.
 
         // Register cognition layering system (Layer 7)
         // Template registry for base cognition templates (humanoid, creature, object)

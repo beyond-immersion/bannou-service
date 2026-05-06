@@ -89,6 +89,7 @@ import {
   pathHash, splitIntoChunks, countOccurrences,
   wouldExceedResponseLimit,
   checkFileGate, checkRequiredReadingGate,
+  mcpResponse,
   readFile, writeFile, stat, access, resolve, extname, basename, constants, tmpdir, join,
   createHash,
 } from "./helpers/file-ops.mjs";
@@ -207,18 +208,18 @@ server.registerTool(
       try {
         await access(resolvedPath, constants.R_OK);
       } catch {
-        return { content: [{ type: "text", text: `Error: File not found or not readable: ${resolvedPath}` }], isError: true };
+        return mcpResponse("read_file", "err", `Error: File not found or not readable: ${resolvedPath}`);
       }
 
       const fileStats = await stat(resolvedPath);
 
       if (fileStats.isDirectory()) {
-        return { content: [{ type: "text", text: `Error: ${resolvedPath} is a directory, not a file. Use ls or Glob to list directory contents.` }], isError: true };
+        return mcpResponse("read_file", "err", `Error: ${resolvedPath} is a directory, not a file. Use ls or Glob to list directory contents.`);
       }
 
       const ext = extname(resolvedPath).toLowerCase();
       if (BINARY_EXTENSIONS.has(ext)) {
-        return { content: [{ type: "text", text: `Error: ${resolvedPath} is a binary file (${ext}). Binary files cannot be read as text.` }], isError: true };
+        return mcpResponse("read_file", "err", `Error: ${resolvedPath} is a binary file (${ext}). Binary files cannot be read as text.`);
       }
 
       // --- Persisted tool output: parse JSON and extract text content ---
@@ -229,7 +230,7 @@ server.registerTool(
         if (extracted) {
           readFiles.add(resolvedPath);
           const sizeKB = (Buffer.byteLength(extracted, "utf-8") / 1024).toFixed(1);
-          return { content: [{ type: "text", text: `${resolvedPath} (persisted output, ${sizeKB} KB extracted)\n${extracted}` }] };
+          return mcpResponse("read_file", "ok", `${resolvedPath} (persisted output, ${sizeKB} KB extracted)\n${extracted}`);
         }
         // If extraction fails, fall through to normal read (returns raw JSON)
       }
@@ -249,7 +250,7 @@ server.registerTool(
         }
 
         const content = await readFile(resolvedPath, "utf-8");
-        return { content: [{ type: "text", text: content }] };
+        return mcpResponse("read_file", "ok", content);
       }
 
       // --- Composite context file: return as-is, clear from requiredReading ---
@@ -259,7 +260,7 @@ server.registerTool(
 
         const content = await readFile(resolvedPath, "utf-8");
         const sizeKB = (fileStats.size / 1024).toFixed(1);
-        return { content: [{ type: "text", text: `${resolvedPath} (${sizeKB} KB — context composite)\n${content}` }] };
+        return mcpResponse("read_file", "ok", `${resolvedPath} (${sizeKB} KB — context composite)\n${content}`);
       }
 
       // --- Normal file: read and number ---
@@ -286,7 +287,7 @@ server.registerTool(
 
       // Small file: return everything (check serialized size to avoid Claude Code persisting the response)
       if (!wouldExceedResponseLimit(responseText)) {
-        return { content: [{ type: "text", text: responseText }] };
+        return mcpResponse("read_file", "ok", responseText);
       }
 
       // Large file: split and write continuation files
@@ -303,13 +304,13 @@ server.registerTool(
         pendingContinuations.set(resolvedPath, new Set([contPath]));
         continuationToOriginal.set(contPath, resolvedPath);
 
-        return { content: [{ type: "text", text: [
+        return mcpResponse("read_file", "ok", [
           `${resolvedPath} (${lines.length} lines, ${sizeKB} KB, ${sizeBytes} bytes — continuation required)`,
           "",
           `File exceeds inline response limit after JSON serialization.`,
           `Read the continuation file to access the full content:`,
           `  ${contPath}`,
-        ].join("\n") }] };
+        ].join("\n"));
       }
 
       const continuationPaths = [];
@@ -338,9 +339,9 @@ server.registerTool(
         `Part 1 of ${chunks.length}: lines ${firstChunk.startLine}-${firstChunk.endLine}`,
       ].join("\n") + "\n";
 
-      return { content: [{ type: "text", text: header + firstChunk.text }] };
+      return mcpResponse("read_file", "ok", header + firstChunk.text);
     } catch (err) {
-      return { content: [{ type: "text", text: `Error reading ${file_path}: ${err.message}` }], isError: true };
+      return mcpResponse("read_file", "err", `Error reading ${file_path}: ${err.message}`);
     }
   },
 );
@@ -376,23 +377,23 @@ server.registerTool(
 
       const protection = await isPathProtected(resolvedPath);
       if (protection.blocked) {
-        return { content: [{ type: "text", text: `Error: ${protection.reason}` }], isError: true };
+        return mcpResponse("edit_file", "err", `Error: ${protection.reason}`);
       }
 
-      const readingGate = checkRequiredReadingGate();
+      const readingGate = checkRequiredReadingGate("edit_file");
       if (readingGate) return readingGate;
 
-      const gateResult = checkFileGate(resolvedPath);
+      const gateResult = checkFileGate(resolvedPath, "edit_file");
       if (gateResult) return gateResult;
 
-      if (old_string === new_string) return { content: [{ type: "text", text: "Error: old_string and new_string are identical. Nothing to change." }], isError: true };
-      if (old_string.length === 0) return { content: [{ type: "text", text: "Error: old_string cannot be empty." }], isError: true };
+      if (old_string === new_string) return mcpResponse("edit_file", "err", "Error: old_string and new_string are identical. Nothing to change.");
+      if (old_string.length === 0) return mcpResponse("edit_file", "err", "Error: old_string cannot be empty.");
 
       const content = await readFile(resolvedPath, "utf-8");
       const occurrences = countOccurrences(content, old_string);
 
-      if (occurrences === 0) return { content: [{ type: "text", text: `Error: old_string not found in ${resolvedPath}.\n\nEnsure you are matching the exact text from the file, including\nindentation (tabs/spaces). Do not include line number prefixes.` }], isError: true };
-      if (!replace_all && occurrences > 1) return { content: [{ type: "text", text: `Error: old_string appears ${occurrences} times in ${resolvedPath}.\nProvide more surrounding context to make it unique, or set replace_all to true.` }], isError: true };
+      if (occurrences === 0) return mcpResponse("edit_file", "err", `Error: old_string not found in ${resolvedPath}.\n\nEnsure you are matching the exact text from the file, including\nindentation (tabs/spaces). Do not include line number prefixes.`);
+      if (!replace_all && occurrences > 1) return mcpResponse("edit_file", "err", `Error: old_string appears ${occurrences} times in ${resolvedPath}.\nProvide more surrounding context to make it unique, or set replace_all to true.`);
 
       let newContent;
       if (replace_all) {
@@ -403,10 +404,36 @@ server.registerTool(
       }
 
       await writeFile(resolvedPath, newContent, "utf-8");
+
+      // ── Post-write verification: read back and confirm edit landed ──
+      // Defends against silent failures (transient disk issues, client-side
+      // tool-result caching glitches, race conditions). If on-disk content
+      // doesn't match what we just wrote, return an error rather than a
+      // deceptive "success" response. The agent then re-reads the file to
+      // inspect actual state and retry.
+      const verifyContent = await readFile(resolvedPath, "utf-8");
+      if (verifyContent !== newContent) {
+        return mcpResponse(
+          "edit_file",
+          "err",
+          [
+            `Edit applied to ${resolvedPath} but POST-WRITE VERIFICATION FAILED.`,
+            `  Expected: ${Buffer.byteLength(newContent, "utf-8")} bytes`,
+            `  On-disk:  ${Buffer.byteLength(verifyContent, "utf-8")} bytes`,
+            ``,
+            `Re-read the file with read_file to inspect actual state, then retry.`,
+          ].join("\n"),
+        );
+      }
+
       const count = replace_all ? occurrences : 1;
-      return { content: [{ type: "text", text: `Successfully edited ${resolvedPath}. ${count} replacement${count > 1 ? "s" : ""} made.` }] };
+      return mcpResponse(
+        "edit_file",
+        "ok",
+        `Successfully edited ${resolvedPath}. ${count} replacement${count > 1 ? "s" : ""} made (verified).`,
+      );
     } catch (err) {
-      return { content: [{ type: "text", text: `Error editing ${file_path}: ${err.message}` }], isError: true };
+      return mcpResponse("edit_file", "err", `Error editing ${file_path}: ${err.message}`);
     }
   },
 );
@@ -440,7 +467,7 @@ server.registerTool(
     try {
       const resolvedPath = resolve(file_path);
 
-      const readingGate = checkRequiredReadingGate();
+      const readingGate = checkRequiredReadingGate("write_file");
       if (readingGate) return readingGate;
 
       const protection = await isPathProtected(resolvedPath);
@@ -475,7 +502,7 @@ server.registerTool(
 
       if (fileExists) {
         // ── Gate: file must have been read ──
-        const gateResult = checkFileGate(resolvedPath);
+        const gateResult = checkFileGate(resolvedPath, "write_file");
         if (gateResult) {
           if (dry_run) {
             return {
@@ -564,27 +591,37 @@ server.registerTool(
       const lines = content.split("\n").length;
       const sizeKB = (Buffer.byteLength(content, "utf-8") / 1024).toFixed(1);
 
-      return {
-        content: [{
-          type: "text",
-          text: `Successfully wrote ${resolvedPath} (${lines} lines, ${sizeKB} KB).${fileExists ? "" : " [new file created]"}`,
-        }],
-      };
+      // ── Post-write verification: read back, confirm content landed ──
+      // Detects silent failures from disk issues, races, or upstream caching.
+      const verifyContent = await readFile(resolvedPath, "utf-8");
+      if (verifyContent !== content) {
+        return mcpResponse(
+          "write_file",
+          "err",
+          [
+            `Write to ${resolvedPath} completed but POST-WRITE VERIFICATION FAILED.`,
+            `  Expected: ${Buffer.byteLength(content, "utf-8")} bytes`,
+            `  On-disk:  ${Buffer.byteLength(verifyContent, "utf-8")} bytes`,
+            ``,
+            `Re-read the file with read_file to inspect actual state, then retry.`,
+          ].join("\n"),
+        );
+      }
+
+      return mcpResponse(
+        "write_file",
+        "ok",
+        `Successfully wrote ${resolvedPath} (${lines} lines, ${sizeKB} KB)${fileExists ? "" : " [new file created]"} (verified).`,
+      );
     } catch (err) {
       // Last resort: try to save content to /tmp even on unexpected errors
       try {
         const hash = createHash("md5").update(file_path).digest("hex").slice(0, 12);
         const recoveryPath = join(tmpdir(), `bannou-write-recovery-${hash}.txt`);
         await writeFile(recoveryPath, content, "utf-8");
-        return {
-          content: [{ type: "text", text: `Error writing ${file_path}: ${err.message}\n\nContent preserved at: ${recoveryPath}` }],
-          isError: true,
-        };
+        return mcpResponse("write_file", "err", `Error writing ${file_path}: ${err.message}\n\nContent preserved at: ${recoveryPath}`);
       } catch {
-        return {
-          content: [{ type: "text", text: `Error writing ${file_path}: ${err.message} (content could not be preserved)` }],
-          isError: true,
-        };
+        return mcpResponse("write_file", "err", `Error writing ${file_path}: ${err.message} (content could not be preserved)`);
       }
     }
   },
@@ -625,7 +662,7 @@ server.registerTool(
   async ({ source_file, start_line, end_line, dest_file, dest_insert_after_line,
            expect_first_line_contains, expect_last_line_contains }) => {
     try {
-      const readingGate = checkRequiredReadingGate();
+      const readingGate = checkRequiredReadingGate("move_lines");
       if (readingGate) return readingGate;
 
       const resolvedSource = resolve(source_file);
@@ -634,37 +671,37 @@ server.registerTool(
       // Scope/frozen protection — both files must be writable
       const sourceProtection = await isPathProtected(resolvedSource);
       if (sourceProtection.blocked) {
-        return { content: [{ type: "text", text: `Error (source): ${sourceProtection.reason}` }], isError: true };
+        return mcpResponse("move_lines", "err", `Error (source): ${sourceProtection.reason}`);
       }
       const destProtection = await isPathProtected(resolvedDest);
       if (destProtection.blocked) {
-        return { content: [{ type: "text", text: `Error (dest): ${destProtection.reason}` }], isError: true };
+        return mcpResponse("move_lines", "err", `Error (dest): ${destProtection.reason}`);
       }
 
-      const sourceGate = checkFileGate(resolvedSource);
+      const sourceGate = checkFileGate(resolvedSource, "move_lines");
       if (sourceGate) return sourceGate;
-      const destGate = checkFileGate(resolvedDest);
+      const destGate = checkFileGate(resolvedDest, "move_lines");
       if (destGate) return destGate;
 
-      if (end_line < start_line) return { content: [{ type: "text", text: `Error: end_line (${end_line}) must be >= start_line (${start_line}).` }], isError: true };
+      if (end_line < start_line) return mcpResponse("move_lines", "err", `Error: end_line (${end_line}) must be >= start_line (${start_line}).`);
 
       const sourceContent = await readFile(resolvedSource, "utf-8");
       const destContent = await readFile(resolvedDest, "utf-8");
       const sourceLines = sourceContent.split("\n");
       const destLines = destContent.split("\n");
 
-      if (start_line > sourceLines.length) return { content: [{ type: "text", text: `Error: start_line (${start_line}) exceeds source file length (${sourceLines.length} lines).` }], isError: true };
-      if (end_line > sourceLines.length) return { content: [{ type: "text", text: `Error: end_line (${end_line}) exceeds source file length (${sourceLines.length} lines).` }], isError: true };
-      if (dest_insert_after_line > destLines.length) return { content: [{ type: "text", text: `Error: dest_insert_after_line (${dest_insert_after_line}) exceeds dest file length (${destLines.length} lines).` }], isError: true };
+      if (start_line > sourceLines.length) return mcpResponse("move_lines", "err", `Error: start_line (${start_line}) exceeds source file length (${sourceLines.length} lines).`);
+      if (end_line > sourceLines.length) return mcpResponse("move_lines", "err", `Error: end_line (${end_line}) exceeds source file length (${sourceLines.length} lines).`);
+      if (dest_insert_after_line > destLines.length) return mcpResponse("move_lines", "err", `Error: dest_insert_after_line (${dest_insert_after_line}) exceeds dest file length (${destLines.length} lines).`);
 
       const firstLine = sourceLines[start_line - 1];
       const lastLine = sourceLines[end_line - 1];
 
       if (expect_first_line_contains && !firstLine.includes(expect_first_line_contains)) {
-        return { content: [{ type: "text", text: `Error: Safety anchor mismatch on start_line ${start_line}.\nExpected line to contain: "${expect_first_line_contains}"\nActual line content: "${firstLine.slice(0, 200)}"\n\nThis usually means a line number is off by one or the file was modified.` }], isError: true };
+        return mcpResponse("move_lines", "err", `Error: Safety anchor mismatch on start_line ${start_line}.\nExpected line to contain: "${expect_first_line_contains}"\nActual line content: "${firstLine.slice(0, 200)}"\n\nThis usually means a line number is off by one or the file was modified.`);
       }
       if (expect_last_line_contains && !lastLine.includes(expect_last_line_contains)) {
-        return { content: [{ type: "text", text: `Error: Safety anchor mismatch on end_line ${end_line}.\nExpected line to contain: "${expect_last_line_contains}"\nActual line content: "${lastLine.slice(0, 200)}"\n\nThis usually means a line number is off by one or the file was modified.` }], isError: true };
+        return mcpResponse("move_lines", "err", `Error: Safety anchor mismatch on end_line ${end_line}.\nExpected line to contain: "${expect_last_line_contains}"\nActual line content: "${lastLine.slice(0, 200)}"\n\nThis usually means a line number is off by one or the file was modified.`);
       }
 
       const movedLines = sourceLines.slice(start_line - 1, end_line);
@@ -676,22 +713,47 @@ server.registerTool(
       await writeFile(resolvedSource, newSourceContent, "utf-8");
       await writeFile(resolvedDest, newDestContent, "utf-8");
 
+      // ── Post-write verification: read back both files, confirm content landed ──
+      // Defends against silent failures (transient disk issues, races, caching glitches).
+      // If either file mismatches, both may now be in inconsistent state — surface loudly.
+      const verifySource = await readFile(resolvedSource, "utf-8");
+      const verifyDest = await readFile(resolvedDest, "utf-8");
+      if (verifySource !== newSourceContent || verifyDest !== newDestContent) {
+        const mismatches = [];
+        if (verifySource !== newSourceContent) {
+          mismatches.push(`  Source: expected ${Buffer.byteLength(newSourceContent, "utf-8")} bytes, on-disk ${Buffer.byteLength(verifySource, "utf-8")} bytes`);
+        }
+        if (verifyDest !== newDestContent) {
+          mismatches.push(`  Dest:   expected ${Buffer.byteLength(newDestContent, "utf-8")} bytes, on-disk ${Buffer.byteLength(verifyDest, "utf-8")} bytes`);
+        }
+        return mcpResponse(
+          "move_lines",
+          "err",
+          [
+            `Move completed but POST-WRITE VERIFICATION FAILED.`,
+            ...mismatches,
+            ``,
+            `Re-read both files to inspect actual state. Source/dest may now be in an inconsistent state.`,
+          ].join("\n"),
+        );
+      }
+
       // Post-move structure validation (shared helper)
       const sourceValidation = validateStructure(newSourceContent, resolvedSource);
       const destValidation = validateStructure(newDestContent, resolvedDest);
       const validationReport = formatValidationResults(sourceValidation, resolvedSource, destValidation, resolvedDest);
 
-      return { content: [{ type: "text", text: [
-        `Successfully moved ${movedLines.length} lines (${start_line}-${end_line}) from source to dest.`,
+      return mcpResponse("move_lines", "ok", [
+        `Successfully moved ${movedLines.length} lines (${start_line}-${end_line}) from source to dest (verified).`,
         `  Source: ${resolvedSource} (${sourceLines.length} \u2192 ${newSourceLines.length} lines)`,
         `  Dest:   ${resolvedDest} (${destLines.length} \u2192 ${newDestLines.length} lines)`,
         `  Inserted after line ${dest_insert_after_line} in dest.`,
         `  First moved line: "${firstLine.slice(0, 120)}"`,
         `  Last moved line:  "${lastLine.slice(0, 120)}"`,
         validationReport,
-      ].join("\n") }] };
+      ].join("\n"));
     } catch (err) {
-      return { content: [{ type: "text", text: `Error moving lines: ${err.message}` }], isError: true };
+      return mcpResponse("move_lines", "err", `Error moving lines: ${err.message}`);
     }
   },
 );
@@ -716,11 +778,11 @@ server.registerTool(
   },
   async ({ file_path }) => {
     try {
-      const readingGate = checkRequiredReadingGate();
+      const readingGate = checkRequiredReadingGate("validate_structure");
       if (readingGate) return readingGate;
 
       const resolvedPath = resolve(file_path);
-      const gateResult = checkFileGate(resolvedPath);
+      const gateResult = checkFileGate(resolvedPath, "validate_structure");
       if (gateResult) return gateResult;
 
       const content = await readFile(resolvedPath, "utf-8");
@@ -730,9 +792,9 @@ server.registerTool(
 
       const lines = [`\u26a0\ufe0f ${basename(resolvedPath)}: ${result.findings.length} structural issue(s) found:`, ""];
       for (const f of result.findings) lines.push(`  [${f.type}] ${f.message}${f.line ? ` (line ${f.line})` : ""}`);
-      return { content: [{ type: "text", text: lines.join("\n") }] };
+      return mcpResponse("validate_structure", "ok", lines.join("\n"));
     } catch (err) {
-      return { content: [{ type: "text", text: `Error validating ${file_path}: ${err.message}` }], isError: true };
+      return mcpResponse("validate_structure", "err", `Error validating ${file_path}: ${err.message}`);
     }
   },
 );
